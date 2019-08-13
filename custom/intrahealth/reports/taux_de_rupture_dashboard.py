@@ -65,24 +65,26 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         else:
             return 'Region'
 
+    def get_products(self):
+        products_names = []
+
+        for row in self.clean_rows:
+            for product_info in row['products']:
+                product_name = product_info['product_name']
+                if product_name not in products_names:
+                    products_names.append(product_name)
+
+        products_names = sorted(products_names)
+
+        return products_names
+
     @property
     def headers(self):
-        def get_products():
-            products_names = []
-
-            for row in self.clean_rows:
-                for product_info in row['products']:
-                    product_name = product_info['product_name']
-                    if product_name not in products_names:
-                        products_names.append(product_name)
-
-            return products_names
-
         headers = DataTablesHeader(
             DataTablesColumn(self.selected_location_type),
         )
 
-        products = get_products()
+        products = self.get_products()
         for product in products:
             headers.add_column(DataTablesColumn(product))
 
@@ -111,116 +113,75 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
     @property
     def clean_rows(self):
-        stocks = TauxDeRuptureRateData(config=self.config).rows
-        stocks = sorted(stocks, key=lambda x: x['{}_name'.format(self.selected_location_type.lower())])
-
-        stocks_list = []
-        added_locations = []
-        added_products_for_locations = {}
-
-        for stock in stocks:
-            location_name = stock['{}_name'.format(self.selected_location_type.lower())]
-            location_id = stock['{}_id'.format(self.selected_location_type.lower())]
-            product_name = stock['product_name']
-            product_id = stock['product_id']
-            data_dict = {
-                'location_name': location_name,
-                'location_id': location_id,
-                'products': []
-            }
-            if location_id in added_locations:
-                amount_of_stocks = len(stocks_list)
-
-                location_position = 0
-                for r in range(0, amount_of_stocks):
-                    current_location = stocks_list[r]['location_id']
-                    if current_location == location_id:
-                        location_position = r
-                        break
-
-                added_products_for_location = [x['product_id'] for x in added_products_for_locations[location_id]]
-                products_for_location = added_products_for_locations[location_id]
-                if product_id not in added_products_for_location:
-                    product_data = {
-                        'product_name': product_name,
-                        'product_id': product_id,
-                        'out_in_ppses': 0,
-                        'all_ppses': 0,
-                    }
-                    added_products_for_locations[location_id].append(product_data)
-                    stocks_list[location_position]['products'].append(product_data)
-                amount_of_products_for_location = len(added_products_for_locations[location_id])
-
-                product_position = 0
-                for s in range(0, amount_of_products_for_location):
-                    current_product = products_for_location[s]['product_id']
-                    if current_product == product_id:
-                        product_position = s
-                        break
-
-                product_is_outstock = True if stock['product_is_outstock'] == 0 else False
-                overall_position = stocks_list[location_position]['products'][product_position]
-                if product_is_outstock:
-                    overall_position['out_in_ppses'] += 1
-                overall_position['all_ppses'] += 1
-            else:
-                added_locations.append(location_id)
-                product_data = {
-                    'product_name': product_name,
-                    'product_id': product_id,
-                    'out_in_ppses': 0,
-                    'all_ppses': 0,
-                }
-                product_is_outstock = True if stock['product_is_outstock'] == 0 else False
-                if product_is_outstock:
-                    product_data['out_in_ppses'] += 1
-                product_data['all_ppses'] += 1
-                data_dict['products'].append(product_data)
-                stocks_list.append(data_dict) 
-                added_products_for_locations[location_id] = [product_data]
-
-        stocks_list = sorted(stocks_list, key=lambda x: x['location_id'])
-
-        return stocks_list
+        return TauxDeRuptureRateData(config=self.config).rows
 
     def calculate_rows(self):
 
         def data_to_rows(stocks_list):
             stocks_to_return = []
-            product_ids = []
-            product_names = []
-            for stock in stocks_list:
-                for product in stock['products']:
-                    product_name = product['product_name']
-                    product_id = product['product_id']
-                    if product_id not in product_ids:
-                        product_ids.append(product_id)
-                        product_names.append(product_name)
+            added_locations = []
+            locations_with_products = {}
+            all_products = self.get_products()
 
             for stock in stocks_list:
-                products_list = []
+                location_id = stock['location_id']
                 location_name = stock['location_name']
-                for product in stock['products']:
-                    products_list.append(product)
-                products_names_from_list = [x['product_name'] for x in stock['products']]
-                for product_name in product_names:
-                    if product_name not in products_names_from_list:
-                        products_list.append({
+                products = sorted(stock['products'], key=lambda x: x['product_name'])
+                if location_id in added_locations:
+                    length = len(locations_with_products[location_name])
+                    for r in range(0, length):
+                        product_for_location = locations_with_products[location_name][r]
+                        for product in products:
+                            if product_for_location['product_id'] == product['product_id']:
+                                out_in_ppses = product['out_in_ppses']
+                                all_ppses = product['all_ppses']
+                                locations_with_products[location_name][r]['out_in_ppses'] += out_in_ppses
+                                locations_with_products[location_name][r]['all_ppses'] += all_ppses
+                else:
+                    added_locations.append(location_id)
+                    locations_with_products[location_name] = []
+                    unique_products_for_location = []
+                    products_to_add = []
+                    for product in products:
+                        product_name = product['product_name']
+                        if product_name not in unique_products_for_location and product_name in all_products:
+                            unique_products_for_location.append(product_name)
+                            products_to_add.append(product)
+                        else:
+                            index = unique_products_for_location.index(product_name)
+                            out_in_ppses = product['out_in_ppses']
+                            all_ppses = product['all_ppses']
+                            products_to_add[index]['out_in_ppses'] += out_in_ppses
+                            products_to_add[index]['all_ppses'] += all_ppses
+
+                    for product in products_to_add:
+                        locations_with_products[location_name].append(product)
+
+            for location, products in locations_with_products.items():
+                products_names = [x['product_name'] for x in products]
+                for product_name in all_products:
+                    if product_name not in products_names:
+                        locations_with_products[location].append({
+                            'product_id': None,
                             'product_name': product_name,
                             'out_in_ppses': 0,
-                            'all_ppses': 0
+                            'all_ppses': 0,
                         })
-                stocks_to_return.append([
-                    location_name,
-                ])
 
-                products_list = sorted(products_list, key=lambda x: x['product_name'])
+            for location, products in locations_with_products.items():
+                stocks_to_return.append([
+                    location,
+                ])
+                products_list = sorted(products, key=lambda x: x['product_name'])
                 for product_info in products_list:
-                    product_available_in_ppses = product_info['out_in_ppses']
-                    number_of_ppses = product_info['all_ppses']
-                    percent = (product_available_in_ppses / float(number_of_ppses) * 100) if number_of_ppses != 0 else 0
+                    out_in_ppses = product_info['out_in_ppses']
+                    all_ppses = product_info['all_ppses']
+                    percent = (out_in_ppses / float(all_ppses) * 100) \
+                        if all_ppses != 0 else 'pas de données'
+                    if percent != 'pas de données':
+                        percent = '{:.2f} %'.format(percent)
                     stocks_to_return[-1].append({
-                        'html': '{:.2f} %'.format(percent),
+                        'html': '{}'.format(percent),
                         'sort_key': percent
                     })
 
@@ -237,31 +198,40 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
         def data_to_chart(stocks_list):
             stocks_to_return = []
-            products_names_list = []
-            products_ids_list = []
-            products_dict = {}
+            products_data = []
+            added_products = []
+
             for stock in stocks_list:
                 for product in stock['products']:
-                    product_name = product['product_name']
                     product_id = product['product_id']
+                    product_name = product['product_name']
                     out_in_ppses = product['out_in_ppses']
                     all_ppses = product['all_ppses']
-                    if product_id not in products_ids_list:
-                        products_ids_list.append(product_id)
-                        products_names_list.append(product_name)
-                        products_dict[product_name] = [out_in_ppses, all_ppses]
+                    if product_id not in added_products:
+                        added_products.append(product_id)
+                        product_dict = {
+                            'product_id': product_id,
+                            'product_name': product_name,
+                            'out_in_ppses': out_in_ppses,
+                            'all_ppses': all_ppses,
+                        }
+                        products_data.append(product_dict)
                     else:
-                        products_dict[product_name][0] += out_in_ppses
-                        products_dict[product_name][1] += all_ppses
-            for product, data in products_dict.items():
-                out_in_ppses = data[0]
-                all_ppses = data[1]
-                percent = ((out_in_ppses) / float(all_ppses)) * 100 if all_ppses is not 0 else 0
+                        for product_data in products_data:
+                            if product_data['product_id'] == product_id:
+                                product_data['out_in_ppses'] += out_in_ppses
+                                product_data['all_ppses'] += all_ppses
+
+            for product in products_data:
+                product_name = product['product_name']
+                out_in_ppses = product['out_in_ppses']
+                all_ppses = product['all_ppses']
+                percent = (out_in_ppses / float(all_ppses)) * 100 if all_ppses is not 0 else 0
                 stocks_to_return.append([
-                    product,
+                    product_name,
                     {
                         'html': '{}'.format(percent),
-                        'sort_key': percent          
+                        'sort_key': percent
                     }
                 ])
 

@@ -200,10 +200,15 @@ class ProgramsAndProductsFilter(BaseDrilldownOptionFilter):
             program_id = data_row[0]
             program_name = data_row[1]
             product_ids = data_row[2]
-            for product_id in product_ids:
-                if product_id not in products:
-                    index = product_ids.index(product_id)
+            length = len(product_ids)
+            index = 0
+            while index < length:
+                product_id = product_ids[index]
+                if product_id not in products.keys():
                     product_ids.pop(index)
+                    index -= 1
+                    length -= 1
+                index += 1
 
             products_list = [
                 [x, products[x]] for x in product_ids

@@ -143,5 +143,4 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
         config['product_program'] = self.request.GET.get('product_program')
         config['product_product'] = self.request.GET.get('product_product')
         config['selected_location'] = self.request.GET.get('location_id')
-        config['products'] = ['product1', 'product2', 'product3'] # TODO: self.request.GET.get('products')
         return config

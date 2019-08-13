@@ -93,56 +93,53 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
         return context
 
+    @property
+    def clean_rows(self):
+        return VisiteDeLOperateurPerProductV2DataSource(config=self.config).rows
+
     def calculate_rows(self):
-        stocks = VisiteDeLOperateurPerProductV2DataSource(config=self.config).rows
 
         def to_report_row(s):
-            loc_type = self.selected_location_type.lower()
-            stocks_list = []
             stocks_to_return = []
+            added_locations = []
+            added_locations_with_products = {}
 
             for stock in s:
-                data_dict = {
-                    'location_name': stock['{}_name'.format(loc_type)],
-                    'location_id': stock['{}_id'.format(loc_type)],
-                    'product_available_in_ppses': 0,
-                    'number_of_ppses': 0,
-                }
-
-                length = len(stocks_list)
-                if not stocks_list:
-                    data_dict['product_available_in_ppses'] = 1 if stock['product_is_outstock'] == 1 else 0
-                    data_dict['number_of_ppses'] = 1
-                    stocks_list.append(data_dict)
+                location_id = stock['location_id']
+                location_name = stock['location_name']
+                products = stock['products']
+                if location_id in added_locations:
+                    in_ppses = added_locations_with_products[location_name][0]
+                    all_ppses = added_locations_with_products[location_name][1]
+                    for product in products:
+                        in_ppses += product['in_ppses']
+                        all_ppses += product['all_ppses']
+                    added_locations_with_products[location_name][0] = in_ppses
+                    added_locations_with_products[location_name][1] = all_ppses
                 else:
-                    for r in range(0, length):
-                        location_id = stocks_list[r]['location_id']
-                        if stock['{}_id'.format(loc_type)] == location_id:
-                            if stock['product_is_outstock'] == 1:
-                                stocks_list[r]['product_available_in_ppses'] += 1
-                            stocks_list[r]['number_of_ppses'] += 1
-                        else:
-                            if r == len(stocks_list) - 1:
-                                data_dict['product_available_in_ppses'] = 1 if stock['product_is_outstock'] == 1 else 0
-                                data_dict['number_of_ppses'] = 1
-                                stocks_list.append(data_dict)
+                    added_locations.append(location_id)
+                    in_ppses = 0
+                    all_ppses = 0
+                    for product in products:
+                        in_ppses += product['in_ppses']
+                        all_ppses += product['all_ppses']
+                    added_locations_with_products[location_name] = [in_ppses, all_ppses]
 
-            for stock in stocks_list:
-                amount_of_products = stock['product_available_in_ppses']
-                amount_of_ppses = stock['number_of_ppses']
-                percent = (amount_of_products / float(amount_of_ppses)) * 100 \
-                    if amount_of_ppses != 0 else 0
+            for location, products in added_locations_with_products.items():
+                in_ppses = products[0]
+                all_ppses = products[1]
+                percent = (in_ppses / float(all_ppses)) * 100
                 stocks_to_return.append([
-                    stock['location_name'],
+                    location,
                     {
                         'html': '{:.2f} %'.format(percent),
-                        'sort_key': percent
+                        'sort_key': percent,
                     }
                 ])
 
             return stocks_to_return
 
-        rows = to_report_row(stocks)
+        rows = to_report_row(self.clean_rows)
         return rows
 
     @property

@@ -3957,8 +3957,8 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
     @property
     def group_by(self):
         group_by = [
-            'real_date_precise', self.loc_id, self.loc_name, 'product_is_outstock', 'product_id', 'program_id'
-            # 'region_id', 'region_name', 'district_id', 'district_name', 'pps_id', 'pps_name',
+            'real_date_precise', self.loc_id, self.loc_name, 'product_is_outstock',
+            'product_id', 'product_name', 'program_id'
         ]
 
         return group_by
@@ -3967,17 +3967,11 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
     def columns(self):
         columns = [
             DatabaseColumn('Date', SimpleColumn('real_date_precise')),
-            # DatabaseColumn('Region ID', SimpleColumn('region_id')),
-            # DatabaseColumn('Region Name', SimpleColumn('region_name')),
-            # DatabaseColumn('District ID', SimpleColumn('district_id')),
-            # DatabaseColumn('District Name', SimpleColumn('district_name')),
-            # DatabaseColumn('PPS ID', SimpleColumn('pps_id')),
-            # DatabaseColumn('PPS Name', SimpleColumn('pps_name')),
             DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
             DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
             DatabaseColumn('Product ID', SimpleColumn('product_id')),
             DatabaseColumn('Program ID', SimpleColumn('program_id')),
-            # DatabaseColumn('Product Name', SimpleColumn('product_name')),
+            DatabaseColumn('Product Name', SimpleColumn('product_name')),
             DatabaseColumn('Is product outstock', SimpleColumn('product_is_outstock')),
         ]
         return columns
@@ -3986,37 +3980,120 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
     def rows(self):
         rows_to_return = []
         rows = self.get_data()
-        product_program = self.config['product_program']
-        product_product = self.config['product_product']
-        selected_program = product_program if product_program != '' else 'All'
-        selected_product = product_product if product_product != '' else 'All'
 
-        print(len(rows))
+        def clean_rows(data_to_clean):
+            stocks = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
+
+            stocks_list = []
+            stocks_list_to_return = []
+            added_locations = []
+            added_programs = []
+            added_products_for_locations = {}
+
+            for stock in stocks:
+                location_name = stock['{}'.format(self.loc_name)]
+                location_id = stock['{}'.format(self.loc_id)]
+                product_name = stock['product_name']
+                product_id = stock['product_id']
+                program_id = stock['program_id']
+                data_dict = {
+                    'location_name': location_name,
+                    'location_id': location_id,
+                    'program_id': program_id,
+                    'products': []
+                }
+                if location_id in added_locations and program_id in added_programs:
+                    amount_of_stocks = len(stocks_list)
+
+                    location_position = 0
+                    for r in range(0, amount_of_stocks):
+                        current_location = stocks_list[r]['location_id']
+                        if current_location == location_id:
+                            location_position = r
+                            break
+
+                    added_products_for_location = [x['product_id'] for x in added_products_for_locations[location_id]]
+                    products_for_location = added_products_for_locations[location_id]
+                    if product_id not in added_products_for_location:
+                        product_data = {
+                            'product_name': product_name,
+                            'product_id': product_id,
+                            'in_ppses': 0,
+                            'all_ppses': 0,
+                        }
+                        added_products_for_locations[location_id].append(product_data)
+                        stocks_list[location_position]['products'].append(product_data)
+                    amount_of_products_for_location = len(added_products_for_locations[location_id])
+
+                    product_position = 0
+                    for s in range(0, amount_of_products_for_location):
+                        current_product = products_for_location[s]['product_id']
+                        if current_product == product_id:
+                            product_position = s
+                            break
+
+                    product_is_stock = True if stock['product_is_outstock'] == 0 else False
+                    overall_position = stocks_list[location_position]['products'][product_position]
+                    if product_is_stock:
+                        overall_position['in_ppses'] += 1
+                    overall_position['all_ppses'] += 1
+                else:
+                    if location_id not in added_locations:
+                        added_locations.append(location_id)
+                    if program_id not in added_programs:
+                        added_programs.append(program_id)
+                    product_data = {
+                        'product_name': product_name,
+                        'product_id': product_id,
+                        'in_ppses': 0,
+                        'all_ppses': 0,
+                    }
+                    product_is_stock = True if stock['product_is_outstock'] == 0 else False
+                    if product_is_stock:
+                        product_data['in_ppses'] += 1
+                    product_data['all_ppses'] += 1
+                    data_dict['products'].append(product_data)
+                    stocks_list.append(data_dict)
+                    added_products_for_locations[location_id] = [product_data]
+
+            for stock in stocks_list:
+                programs = stock['program_id'].split(' ')
+                amount_of_programs = len(programs)
+                if amount_of_programs > 1:
+                    index = stocks_list.index(stock)
+                    stocks_list.pop(index)
+                    for program in programs:
+                        stock['program_id'] = program
+                        stocks_list.append(stock)
+
+            stocks_list = sorted(stocks_list, key=lambda x: x['location_id'])
+
+            for stock in stocks_list:
+                if stock not in stocks_list_to_return:
+                    stocks_list_to_return.append(stock)
+
+            return stocks_list_to_return
+
         for row in rows:
-            print(row)
-            # row_program = row['program_id']
-            # print(row_program)
-            # if row_program == selected_program:
-            #     print('no siema')
-            # if not rows_to_return:
-            #     rows_to_return.append(row)
-            # else:
-            #     length = len(rows_to_return)
-            #     for r in range(0, length):
-            #         current_product = rows_to_return[r]
-            #         current_location_id = current_product[self.loc_id]
-            #         current_product_id = current_product['product_id']
-            #         if current_location_id == row[self.loc_id] and current_product_id == row['product_id']:
-            #             current_date = current_product['real_date_precise']
-            #             new_date = row['real_date_precise']
-            #             if current_date > new_date:
-            #                 rows_to_return[r] = row
-            #         elif r == length - 1:
-            #             rows_to_return.append(row)
+            if not rows_to_return:
+                rows_to_return.append(row)
+            else:
+                length = len(rows_to_return)
+                for r in range(0, length):
+                    current_product = rows_to_return[r]
+                    current_location_id = current_product[self.loc_id]
+                    current_product_id = current_product['product_id']
+                    if current_location_id == row[self.loc_id] and current_product_id == row['product_id']:
+                        current_date = current_product['real_date_precise']
+                        new_date = row['real_date_precise']
+                        if current_date > new_date:
+                            rows_to_return[r] = row
+                    elif r == length - 1:
+                        rows_to_return.append(row)
 
-        print(len(rows_to_return))
+        clean_data = clean_rows(rows_to_return)
 
-        return rows_to_return
+        return clean_data
 
 
 class EffectiveDeLivraisonDataSource(SqlData):
@@ -4103,21 +4180,22 @@ class TauxDeRuptureRateData(SqlData):
 
     @property
     def table_name(self):
-        # TODO: we don't know if we need to create data source or use existing one
-        return get_table_name(self.config['domain'], "")
+        return get_table_name(self.config['domain'], 'yeksi_naa_reports_consumption')
 
     @property
     def group_by(self):
-        return ['real_date', self.loc_name, self.loc_id]
+        return [
+            'real_date_precise', self.loc_name, self.loc_id,
+            'program_id', 'product_id', 'product_name', 'product_is_outstock'
+        ]
 
     @property
     def columns(self):
         columns = [
-            DatabaseColumn('Date', SimpleColumn('real_date')),
+            DatabaseColumn('Date', SimpleColumn('real_date_precise')),
             DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
             DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-            # DatabaseColumn('Program ID', SimpleColumn('program_id')),
-            # DatabaseColumn('Program name', SimpleColumn('program_name')),
+            DatabaseColumn('Program ID', SimpleColumn('program_id')),
             DatabaseColumn('Product ID', SimpleColumn('product_id')),
             DatabaseColumn('Product name', SimpleColumn('product_name')),
             DatabaseColumn("Product is outstock", SimpleColumn('product_is_outstock')),
@@ -4156,80 +4234,133 @@ class TauxDeRuptureRateData(SqlData):
 
     @property
     def filters(self):
-        filters = []
+        filters = [BETWEEN('real_date_precise', 'startdate', 'enddate')]
         if self.config['selected_location']:
             filters.append(EQ(self.loc_id, 'selected_location'))
+        if self.config['product_product']:
+            filters.append(EQ('product_id', 'product_product'))
+        elif self.config['product_program']:
+            filters.append(EQ('program_id', 'product_program'))
         return filters
 
     @property
     def rows(self):
-        # TODO: we need only the latest value of total_stock from selected daterange
-        # rows = self.get_data()
-        return [
-            {
-                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
-                'pps_name': 'PPS 1.1.1', 'pps_id': 1, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
-                'real_date': date(2019, 6, 2)
-            },
-            {
-                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
-                'pps_name': 'PPS 1.1.2', 'pps_id': 2, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 2', 'product_id': 2, 'product_is_outstock': 0,
-                'real_date': date(2019, 6, 1)
-            },
-            {
-                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
-                'pps_name': 'PPS 1.1.3', 'pps_id': 3, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
-                'real_date': date(2019, 6, 9)
-            },
-            {
-                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.2', 'district_id': 4,
-                'pps_name': 'PPS 1.2.1', 'pps_id': 10, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
-                'real_date': date(2019, 6, 8)
-            },
+        rows_to_return = []
+        rows = self.get_data()
 
-            {
-                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
-                'pps_name': 'PPS 2.1.1', 'pps_id': 4, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 0,
-                'real_date': date(2019, 6, 7)
-            },
-            {
-                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
-                'pps_name': 'PPS 2.1.2', 'pps_id': 5, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
-                'real_date': date(2019, 6, 6)
-            },
-            {
-                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
-                'pps_name': 'PPS 2.1.3', 'pps_id': 6, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 2', 'product_id': 2, 'product_is_outstock': 0,
-                'real_date': date(2019, 6, 13)
-            },
+        def clean_rows(data_to_clean):
+            stocks = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
 
-            {
-                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
-                'pps_name': 'PPS 3.1.1', 'pps_id': 7, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
-                'real_date': date(2019, 6, 12)
-            },
-            {
-                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
-                'pps_name': 'PPS 3.1.2', 'pps_id': 8, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 2', 'product_id': 2, 'product_is_outstock': 1,
-                'real_date': date(2019, 6, 11)
-            },
-            {
-                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
-                'pps_name': 'PPS 3.1.3', 'pps_id': 9, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'product_is_outstock': 1,
-                'real_date': date(2019, 6, 10)
-            },
-        ]
-        # return self.get_data()
+            stocks_list = []
+            stocks_list_to_return = []
+            added_locations = []
+            added_programs = []
+            added_products_for_locations = {}
+
+            for stock in stocks:
+                location_name = stock['{}'.format(self.loc_name)]
+                location_id = stock['{}'.format(self.loc_id)]
+                product_name = stock['product_name']
+                product_id = stock['product_id']
+                program_id = stock['program_id']
+                data_dict = {
+                    'location_name': location_name,
+                    'location_id': location_id,
+                    'program_id': program_id,
+                    'products': []
+                }
+                if location_id in added_locations and program_id in added_programs:
+                    amount_of_stocks = len(stocks_list)
+
+                    location_position = 0
+                    for r in range(0, amount_of_stocks):
+                        current_location = stocks_list[r]['location_id']
+                        if current_location == location_id:
+                            location_position = r
+                            break
+
+                    added_products_for_location = [x['product_id'] for x in added_products_for_locations[location_id]]
+                    products_for_location = added_products_for_locations[location_id]
+                    if product_id not in added_products_for_location:
+                        product_data = {
+                            'product_name': product_name,
+                            'product_id': product_id,
+                            'out_in_ppses': 0,
+                            'all_ppses': 0,
+                        }
+                        added_products_for_locations[location_id].append(product_data)
+                        stocks_list[location_position]['products'].append(product_data)
+                    amount_of_products_for_location = len(added_products_for_locations[location_id])
+
+                    product_position = 0
+                    for s in range(0, amount_of_products_for_location):
+                        current_product = products_for_location[s]['product_id']
+                        if current_product == product_id:
+                            product_position = s
+                            break
+
+                    product_is_outstock = True if stock['product_is_outstock'] == 1 else False
+                    overall_position = stocks_list[location_position]['products'][product_position]
+                    if product_is_outstock:
+                        overall_position['out_in_ppses'] += 1
+                    overall_position['all_ppses'] += 1
+                else:
+                    if location_id not in added_locations:
+                        added_locations.append(location_id)
+                    if program_id not in added_programs:
+                        added_programs.append(program_id)
+                    product_data = {
+                        'product_name': product_name,
+                        'product_id': product_id,
+                        'out_in_ppses': 0,
+                        'all_ppses': 0,
+                    }
+                    product_is_outstock = True if stock['product_is_outstock'] == 1 else False
+                    if product_is_outstock:
+                        product_data['out_in_ppses'] += 1
+                    product_data['all_ppses'] += 1
+                    data_dict['products'].append(product_data)
+                    stocks_list.append(data_dict)
+                    added_products_for_locations[location_id] = [product_data]
+
+            for stock in stocks_list:
+                programs = stock['program_id'].split(' ')
+                amount_of_programs = len(programs)
+                if amount_of_programs > 1:
+                    index = stocks_list.index(stock)
+                    stocks_list.pop(index)
+                    for program in programs:
+                        stock['program_id'] = program
+                        stocks_list.append(stock)
+
+            stocks_list = sorted(stocks_list, key=lambda x: x['location_id'])
+
+            for stock in stocks_list:
+                if stock not in stocks_list_to_return:
+                    stocks_list_to_return.append(stock)
+
+            return stocks_list_to_return
+
+        for row in rows:
+            if not rows_to_return:
+                rows_to_return.append(row)
+            else:
+                length = len(rows_to_return)
+                for r in range(0, length):
+                    current_product = rows_to_return[r]
+                    current_location_id = current_product[self.loc_id]
+                    current_product_id = current_product['product_id']
+                    if current_location_id == row[self.loc_id] and current_product_id == row['product_id']:
+                        current_date = current_product['real_date_precise']
+                        new_date = row['real_date_precise']
+                        if current_date > new_date:
+                            rows_to_return[r] = row
+                    elif r == length - 1:
+                        rows_to_return.append(row)
+
+        clean_data = clean_rows(rows_to_return)
+
+        return clean_data
 
 
 class ConsommationPerProductData(SqlData):
@@ -4440,12 +4571,14 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
 
     @property
     def group_by(self):
-        return ['real_date_repeat', self.loc_id, self.loc_name]
+        return ['real_date_repeat', self.loc_id, self.loc_name, 'product_id', 'product_name']
 
     @property
     def columns(self):
         columns = [
             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Product Name", SimpleColumn('product_name')),
             DatabaseColumn("Total number of PNA lost product", SumColumn('loss_amt')),
             DatabaseColumn("PNA final stock", SumColumn('final_pna_stock')),
         ]
@@ -4525,41 +4658,8 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
 
     @property
     def rows(self):
-        # TODO: ADD NORMAL DATA INSTEAD OF EMPTYLITS
-        # Warning: Mocked records, need check if works
-
-        records = [
-            {'region_id': 'region_id1',
-             'region_name': 'region_name1',
-             'loss_amt': {'html': 20},
-             'final_pna_stock': {'html': 30},
-             'real_date_repeat': datetime.strptime('May 2, 2019', "%b %d, %Y").date(),
-             'product_name': 'product1'},
-            {'region_id': 'region_id1',
-             'region_name': 'region_name1',
-             'loss_amt': {'html': 25},
-             'final_pna_stock': {'html': 35},
-             'real_date_repeat': datetime.strptime('May 2, 2019', "%b %d, %Y").date(),
-             'product_name': 'product2'},
-            {'region_id': 'region_id2',
-             'region_name': 'region_name2',
-             'loss_amt': {'html': 40},
-             'final_pna_stock': {'html': 45},
-             'real_date_repeat': datetime.strptime('Jul 5, 2019', "%b %d, %Y").date(),
-             'product_name': 'product1'},
-            {'region_id': 'region_id2',
-             'region_name': 'region_name2',
-             'loss_amt': {'html': 40},
-             'final_pna_stock': {'html': 45},
-             'real_date_repeat': datetime.strptime('Jul 5, 2019', "%b %d, %Y").date(),
-             'product_name': 'product2'},
-            {'region_id': 'region_id2',
-             'region_name': 'region_name2',
-             'loss_amt': {'html': 40},
-             'final_pna_stock': {'html': 45},
-             'real_date_repeat': datetime.strptime('Jul 5, 2019', "%b %d, %Y").date(),
-             'product_name': 'product3'},
-        ]  # self.get_data()
+        records = self.get_data()
+        print(records)
         loc_names, data = self.get_loss_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_loss_rate_to_rows(loc_names, data)
