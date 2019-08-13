@@ -15,7 +15,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 )
 from corehq.form_processor.change_publishers import (
-    publish_form_saved, publish_case_saved, publish_ledger_v2_saved)
+    publish_form_saved, publish_case_saved)
 from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
@@ -143,10 +143,6 @@ class FormProcessorSQL(object):
         cases = cases or []
         for case in cases:
             publish_case_saved(case)
-
-        if stock_result:
-            for ledger in stock_result.models_to_save:
-                publish_ledger_v2_saved(ledger)
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):

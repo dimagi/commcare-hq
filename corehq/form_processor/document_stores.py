@@ -67,69 +67,6 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
             yield wrapped_case.to_json()
 
 
-class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
-
-    def __init__(self, domain):
-        assert should_use_sql_backend(domain), "Only SQL backend supported: {}".format(domain)
-        self.domain = domain
-        self.ledger_accessors = LedgerAccessorSQL
-
-    def get_document(self, doc_id):
-        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-        try:
-            ref = UniqueLedgerReference.from_id(doc_id)
-            return self.ledger_accessors.get_ledger_value(**ref._asdict()).to_json()
-        except LedgerValueNotFound as e:
-            raise DocumentNotFoundError(e)
-
-    @property
-    @quickcache(['self.domain'], timeout=30 * 60)
-    def product_ids(self):
-        from corehq.apps.products.models import Product
-        return Product.ids_by_domain(self.domain)
-
-    def iter_document_ids(self, last_id=None):
-        if should_use_sql_backend(self.domain):
-            accessor = LedgerReindexAccessor(self.domain)
-            return iter_all_ids(accessor)
-        else:
-            return iter(self._couch_iterator())
-
-    def _couch_iterator(self):
-        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-        case_accessors = CaseAccessors(domain=self.domain)
-        # assuming we're only interested in the 'stock' section for now
-        for case_id in case_accessors.get_case_ids_in_domain():
-            for product_id in self.product_ids:
-                yield UniqueLedgerReference(case_id, 'stock', product_id).to_id()
-
-    def iter_documents(self, ids):
-        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-        case_id_map = defaultdict(list)
-        for id_string in ids:
-            case_id, section_id, entry_id = UniqueLedgerReference.from_id(id_string)
-            case_id_map[(section_id, entry_id)].append(case_id)
-        for section_entry, case_ids in six.iteritems(case_id_map):
-            section_id, entry_id = section_entry
-            results = self.ledger_accessors.get_ledger_values_for_cases(case_ids, section_id, entry_id)
-            for ledger_value in results:
-                yield ledger_value.to_json()
-
-
-class LedgerV1DocumentStore(DjangoDocumentStore):
-
-    def __init__(self, domain):
-        from corehq.apps.commtrack.models import StockState
-        assert not should_use_sql_backend(domain), "Only non-SQL backend supported"
-        self.domain = domain
-
-        def _doc_gen_fn(obj):
-            return obj.to_json()
-
-        super(LedgerV1DocumentStore, self).__init__(
-            StockState, _doc_gen_fn, model_manager=StockState.include_archived)
-
-
 class DocStoreLoadTracker(object):
 
     def __init__(self, store, track_load):

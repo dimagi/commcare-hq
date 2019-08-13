@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.commtrack.processing import compute_ledger_values
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.change_publishers import publish_ledger_v2_saved, publish_ledger_v2_deleted
 from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult, \
     LedgerDBInterface
@@ -117,13 +116,11 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id, section_id, entry_id)
         if not transactions:
             LedgerAccessorSQL.delete_ledger_values(case_id, section_id, entry_id)
-            publish_ledger_v2_deleted(domain, case_id, section_id, entry_id)
             return
         ledger_value = LedgerAccessorSQL.get_ledger_value(case_id, section_id, entry_id)
         ledger_value = LedgerProcessorSQL._rebuild_ledger_value_from_transactions(
             ledger_value, transactions, domain)
         LedgerAccessorSQL.save_ledger_values([ledger_value])
-        publish_ledger_v2_saved(ledger_value)
 
     @staticmethod
     def _rebuild_ledger_value_from_transactions(ledger_value, transactions, domain):
@@ -159,8 +156,6 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         result = process_stock([form])
         result.populate_models()
         LedgerAccessorSQL.save_ledger_values(result.models_to_save)
-        for ledger_value in result.models_to_save:
-            publish_ledger_v2_saved(ledger_value)
 
         refs_to_rebuild = {
             ledger_value.ledger_reference for ledger_value in result.models_to_save

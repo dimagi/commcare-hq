@@ -8,10 +8,8 @@ from corehq.apps.locations.document_store import ReadonlyLocationDocumentStore, 
 from corehq.apps.sms.document_stores import ReadonlySMSDocumentStore
 from corehq.form_processor.document_stores import (
     DocStoreLoadTracker,
-    LedgerV1DocumentStore,
     ReadonlyCaseDocumentStore,
     ReadonlyFormDocumentStore,
-    ReadonlyLedgerV2DocumentStore,
 )
 from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couchdb_management import couch_config
@@ -31,8 +29,6 @@ SOURCE_SQL = 'sql'
 FORM_SQL = 'form-sql'
 CASE_SQL = 'case-sql'
 SMS = 'sms'
-LEDGER_V2 = 'ledger-v2'
-LEDGER_V1 = 'ledger-v1'
 LOCATION = 'location'
 SYNCLOG_SQL = 'synclog-sql'
 
@@ -57,12 +53,6 @@ def get_document_store(data_source_type, data_source_name, domain, load_source="
     elif SMS in type_or_name:
         store = ReadonlySMSDocumentStore()
         load_counter = sms_load_counter
-    elif LEDGER_V2 in type_or_name:
-        store = ReadonlyLedgerV2DocumentStore(domain)
-        load_counter = ledger_load_counter
-    elif LEDGER_V1 in type_or_name:
-        store = LedgerV1DocumentStore(domain)
-        load_counter = ledger_load_counter
     elif LOCATION in type_or_name:
         return ReadonlyLocationDocumentStore(domain)
     elif SYNCLOG_SQL in type_or_name:
@@ -92,8 +82,6 @@ def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None, l
         load_counter = case_load_counter
     elif doc_type == LOCATION_DOC_TYPE:
         return ReadonlyLocationDocumentStore(domain)
-    elif doc_type == topics.LEDGER:
-        return ReadonlyLedgerV2DocumentStore(domain)
     else:
         # all other types still live in couchdb
         return CouchDocumentStore(
