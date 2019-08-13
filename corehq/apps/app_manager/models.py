@@ -5614,13 +5614,12 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
         source = get_app(None, app_id)
         source_domain = source['domain']
         source = source.export_json(dump_json=False)
-        report_map = get_static_report_mapping(source_domain, domain)
     else:
         cls = get_correct_app_class(app_id_or_source)
         # Don't modify original app source
         app = cls.wrap(deepcopy(app_id_or_source))
+        source_domain = app['domain']
         source = app.export_json(dump_json=False)
-        report_map = {}
     try:
         attachments = source['_attachments']
     except KeyError:
@@ -5639,6 +5638,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
+    report_map = get_static_report_mapping(source_domain, domain)
     if report_map:
         for module in app.get_report_modules():
             for config in module.report_configs:
