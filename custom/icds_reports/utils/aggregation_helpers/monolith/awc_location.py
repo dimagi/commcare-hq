@@ -172,8 +172,9 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             return
 
         def _save_icds_file(query):
-            location_data = io.StringIO()
-            cursor.cursor.copy_to(location_data, query)
+            location_data = io.BytesIO()
+            copy_query = "COPY ({query}) TO STDOUT WITH CSV HEADER".format(query=query)
+            cursor.cursor.copy_expert(copy_query, location_data)
             icds_file = IcdsFile(blob_id=uuid.uuid4().hex, data_type='location_change')
             location_data.seek(0)
             icds_file.store_file_in_blobdb(location_data)
@@ -181,24 +182,26 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             return icds_file
 
         old_location_file = _save_icds_file(
-            """
-            SELECT *
-            FROM "{tablename}"
-            WHERE aggregation_level = 5 AND doc_id IN {changed_awc_ids}
-            """.format(
-                tablename=self.base_tablename,
-                changed_awc_ids=(changed_awc_ids,),
-            )
+            cursor.mogrify(
+                """
+                SELECT *
+                FROM "{tablename}"
+                WHERE aggregation_level = 5 AND doc_id = ANY(%s)
+                """.format(
+                    tablename=self.base_tablename,
+                ), [changed_awc_ids]
+            ).decode('utf-8')
         )
         new_location_file = _save_icds_file(
-            """
-            SELECT *
-            FROM "{temporary_tablename}"
-            WHERE aggregation_level = 5 AND doc_id IN {changed_awc_ids}
-            """.format(
-                tablename=self.temporary_tablename,
-                changed_awc_ids=(changed_awc_ids,),
-            )
+            cursor.mogrify(
+                """
+                SELECT *
+                FROM "{temporary_tablename}"
+                WHERE aggregation_level = 5 AND doc_id = ANY(%s)
+                """.format(
+                    temporary_tablename=self.temporary_tablename,
+                ), [changed_awc_ids]
+            ).decode('utf-8')
         )
         email_location_changes.delay(self.domain, old_location_file.blob_id, new_location_file.blob_id)
 
