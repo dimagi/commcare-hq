@@ -25,15 +25,9 @@
         </p>
         <p class="alert alert-info">
           <i class="fa fa-info-circle"></i>
-          {% if is_saas_environment %}
-            {% blocktrans %}
-              For even more reports please contact our team at <a href="mailto:sales@dimagi.com">sales@dimagi.com</a>.
-            {% endblocktrans %}
-          {% else %}
-            {% blocktrans %}
-              For even more reports please contact our team at <strong>{{ support_email }}</strong>.
-            {% endblocktrans %}
-          {% endif %}
+          {% blocktrans %}
+            For even more reports please contact our team at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.
+          {% endblocktrans %}
         </p>
       </div>
     {% endblock %}

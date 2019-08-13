@@ -358,7 +358,7 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
             'has_report_builder_access': has_report_builder_access(self.request),
             'at_report_limit': num_builder_reports >= max_allowed_reports,
             'max_allowed_reports': max_allowed_reports,
-            'support_email': settings.SUPPORT_EMAIL,
+            'support_email': settings.BILLING_EMAIL,
             'pricing_page_url': settings.PRICING_PAGE_URL,
         })
         return context
