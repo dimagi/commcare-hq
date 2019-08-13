@@ -90,13 +90,6 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "KafkaDomainPillow"
     },
-    "LedgerToElasticsearchPillow": {
-        "advertised_name": "LedgerToElasticsearchPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "LedgerToElasticsearchPillow-test_ledgers_2016-03-15",
-        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
-        "name": "LedgerToElasticsearchPillow"
-    },
     "M4ChangeFormFluffPillow": {
         "advertised_name": "M4ChangeFormFluffPillow",
         "change_feed_type": "KafkaChangeFeed",

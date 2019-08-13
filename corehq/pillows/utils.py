@@ -13,7 +13,6 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
@@ -93,7 +92,6 @@ def get_all_expected_es_indices():
     yield GROUP_INDEX_INFO
     yield SMS_INDEX_INFO
     yield CASE_SEARCH_INDEX_INFO
-    yield LEDGER_INDEX_INFO
 
 
 def format_form_meta_for_es(form_metadata):

@@ -14,7 +14,6 @@ from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from dimagi.utils.dates import DateSpan
