@@ -6,7 +6,7 @@ from django.db import migrations
 
 TABLE_NAME = 'form_processor_casetransaction'
 INDEX_NAME = 'form_processor_casetrans_case_id_server_date_sync_f7e3e655_idx'
-COLUMNS = ('case_id', 'server_date')
+COLUMNS = ('case_id', 'server_date', 'sync_log_id')
 
 CREATE_INDEX_SQL = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({})".format(
     INDEX_NAME, TABLE_NAME, ','.join(COLUMNS))
