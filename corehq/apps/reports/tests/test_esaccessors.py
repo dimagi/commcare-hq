@@ -1152,60 +1152,6 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         self.assertEqual({'t1', 't2'}, get_case_types_for_domain_es(self.domain))
 
 
-class TestLedgerESAccessors(BaseESAccessorsTest):
-    es_index_info = LEDGER_INDEX_INFO
-    domain = uuid.uuid4().hex
-
-    def _send_ledger_to_es(self, section_id, case_id, entry_id, balance):
-        ledger = {
-            "_id": uuid.uuid4().hex,
-            "domain": self.domain,
-            "section_id": section_id,
-            "case_id": case_id,
-            "entry_id": entry_id,
-            "balance": balance,
-        }
-        send_to_elasticsearch('ledgers', ledger)
-        self.es.indices.refresh(self.es_index_info.index)
-        return ledger
-
-    def _check_result(self, expected, entry_ids=None):
-        result = []
-        for row in get_aggregated_ledger_values(self.domain, 'case', 'section', entry_ids):
-            result.append(row._asdict())
-        self.assertItemsEqual(result, expected)
-
-    def test_one_ledger(self):
-        self._send_ledger_to_es('section', 'case', 'entry_id', 1)
-        self._check_result([
-            {'entry_id': 'entry_id', 'balance': 1}
-        ])
-
-    def test_two_ledger(self):
-        self._send_ledger_to_es('section', 'case', 'entry_id', 1)
-        self._send_ledger_to_es('section', 'case', 'entry_id', 3)
-        self._check_result([
-            {'entry_id': 'entry_id', 'balance': 4}
-        ])
-
-    def test_multiple_entries(self):
-        self._send_ledger_to_es('section', 'case', 'entry_id', 1)
-        self._send_ledger_to_es('section', 'case', 'entry_id', 3)
-        self._send_ledger_to_es('section', 'case', 'entry_id2', 3)
-        self._check_result([
-            {'entry_id': 'entry_id2', 'balance': 3},
-            {'entry_id': 'entry_id', 'balance': 4},
-        ])
-
-    def test_filter_entries(self):
-        self._send_ledger_to_es('section', 'case', 'entry_id', 1)
-        self._send_ledger_to_es('section', 'case', 'entry_id', 3)
-        self._send_ledger_to_es('section', 'case', 'entry_id2', 3)
-        self._check_result([
-            {'entry_id': 'entry_id', 'balance': 4},
-        ], entry_ids=['entry_id'])
-
-
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestCaseESAccessorsSQL(TestCaseESAccessors):
 
