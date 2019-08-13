@@ -166,6 +166,17 @@ def commcare_hq_names(request=None):
     }
 
 
+def emails(request=None):
+    """
+    Emails commonly referenced in user-facing templates.
+    Please use (and add to) these references rather than hard-coding or adding
+    a page-specific context variable.
+    """
+    return {
+        'SALES_EMAIL': settings.SALES_EMAIL,
+    }
+
+
 def _get_cc_name(request, var):
     value = getattr(settings, var)
     if isinstance(value, six.string_types):
