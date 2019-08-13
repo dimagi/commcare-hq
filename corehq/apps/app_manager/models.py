@@ -5637,12 +5637,15 @@ class LinkedApplication(Application):
 
     @memoized
     def _get_version_comparison_build(self):
-        previous_version = super(LinkedApplication, self)._get_version_comparison_build()
+        # Get the last version that uses the same master as the current version
+        previous_version = self.get_latest_build_from_upstream(self.upstream_app_id)
+
+        # If there's no previous version, check for a previous version in the same family.
+        # This allows projects using multiple masters to copy a master app and start pulling
+        # from that copy without resetting the form and multimedia versions.
         if not previous_version:
-            # If there's no previous version, check for a previous version in the same family.
-            # This allows projects using multiple masters to copy a master app and start pulling
-            # from that copy without resetting the form and multimedia versions.
-            previous_version = self.get_latest_build_from_upstream(self.progenitor_app_id)
+            current_master = self.get_latest_master_release(self.upstream_app_id)
+            previous_version = self.get_latest_build_from_upstream(current_master.progenitor_app_id)
         return previous_version
 
     @classmethod
