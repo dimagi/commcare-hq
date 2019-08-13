@@ -88,25 +88,73 @@ class WorkflowHelper(PostProcessor):
         form_datums = module_datums[target_form_id]
         frame_children = []
 
+        root_datums_list = [[]]
+        root_module_command = None
+        target_module_command = None
+
         if module_command == id_strings.ROOT:
             datums_list = self.root_module_datums
         else:
             datums_list = list(module_datums.values())  # [ [datums for f0], [datums for f1], ...]
             root_module = target_module.root_module
             if root_module and include_target_root:
-                datums_list = datums_list + list(self.get_module_datums(id_strings.menu_id(root_module)).values())
+                #datums_list = datums_list + list(self.get_module_datums(id_strings.menu_id(root_module)).values())
+                root_datums_list = list(self.get_module_datums(id_strings.menu_id(root_module)).values())
                 root_module_command = id_strings.menu_id(target_module.root_module)
                 if root_module_command != id_strings.ROOT:
-                    frame_children.append(CommandId(root_module_command))
-            frame_children.append(CommandId(module_command))
+                    #frame_children.append(CommandId(root_module_command))
+                    root_module_command = CommandId(root_module_command)
+            #frame_children.append(CommandId(module_command))
+            target_module_command = CommandId(module_command)
 
+        '''
+        datums_list      = list of lists of datums needed for each form in target module
+        root_datums_list = list of lists of datums needed for each form in parent module
+        form_datums      = list of datums needed for target form
+
+        stack should have...
+        - ? datums common to root module and target module
+        - root module id
+        - ? remaining datums to get to target module
+        - target module id
+        - remaining datums to get to target form
+        - target form id (will get popped)
+        - NOTHING ELSE
+        '''
+        '''
+        For the test that is failing, the session needs to have...
+
+        '''
+        #if target_module_id == 'm3' and target_form_id == 'f9':
+        #if target_module_id == 'm1' and target_form_id == 'f0':
+        #    import pdb; pdb.set_trace()
+
+        # common ROOT datums > PARENT > remaining common datums > TARGET > FORM > remaining form datums
+        common_root_datums = commonprefix(root_datums_list)
         common_datums = commonprefix(datums_list)
-        remaining_datums = form_datums[len(common_datums):]
+        very_common_datums = commonprefix([common_datums, common_root_datums])
 
+        for datum in common_root_datums:
+            if datum in common_datums:
+                common_datums.remove(datum)
+            if datum in form_datums:
+                form_datums.remove(datum)
+        for datum in common_datums:
+            if datum in form_datums:
+                form_datums.remove(datum)
+
+        # TRYING common ROOT datums > PARENT > remaining common datums > TARGET > FORM > remaining form datums
+        frame_children.extend(common_root_datums)
+        if root_module_command:
+            frame_children.append(root_module_command)
         frame_children.extend(common_datums)
+        if target_module_command:
+            frame_children.append(target_module_command)
+        #frame_children.extend(common_datums)
         if not module_only:
             frame_children.append(CommandId(command))
-            frame_children.extend(remaining_datums)
+            #frame_children.extend(remaining_datums)
+            frame_children.extend(form_datums)
 
         return frame_children
 
@@ -282,8 +330,40 @@ class EndOfFormNavigationWorkflow(object):
                 frame_children = frame_children_for_module(root_module)
                 return StackFrameMeta(xpath, frame_children)
             elif form_workflow == WORKFLOW_PREVIOUS:
-                frame_children = self.helper.get_frame_children(id_strings.form_command(form),
-                                                                module, include_target_root=True)
+                '''
+                Test, in master code, gets
+                    frame_children = m0 > m1 > case_id:gold-fish > case_id_new_guppy_0:guppy > m1-f0 > case_id_guppy:guppy
+                    and then pops off just the last one (which requires selection)
+                    leaving m0 > m1 > case_id:gold-fish > case_id_new_guppy_0:guppy > m1-f0
+
+                    common_datums      = case_id:gold-fish, case_id_new_guppy_0:guppy, case_id_guppy:guppy
+                    common_root_datums = case_id:gold-fish, case_id_new_guppy_0:guppy
+                    form_datums        = case_id:gold-fish, case_id_new_guppy_0:guppy, case_id_guppy:guppy
+
+                    PARENT > TARGET > common ROOT datums > FORM > reamining form datums
+
+                ICDS, in master code, gets
+                    frame_children = m2 > m3 > case_id_load_household_0:household > m3-f9 > case_id_load_person_0:person > case_id_new_ag_care_0:ag_care
+                    and then pops off last and also person, since ag_care didn't require selection
+                    leaving m2 > m3 > case_id_load_household_0:household > m3-f9
+                    WHICH IS WRONG, because it's missing the person case and goes right into the form
+
+                    common_datums      = case_id_load_household_0:household, case_id_load_person_0:person
+                    common_root_datums = case_id_load_household_0:household
+                    form_datums        = case_id_load_household_0:household, case_id_load_person_0:person, case_id_new_ag_care_0:ag_care
+
+                ICDS, in new code, gets
+                    frame_children = m2 > m3 > case_id_load_household_0:household > case_id_load_person_0:person > m3-f9 > case_id_new_ag_care_0:ag_care
+                    and then pops off last and also m3-f9, since ag_care didn't require selection
+                    WHICH IS CORRECT
+
+                So what if I...
+
+                    common ROOT datums > PARENT > remaining common datums > TARGET > FORM > remaining form datums
+                '''
+                #if id_strings.form_command(form) in ['m3-f9', 'm1-f0']:
+                #    import pdb; pdb.set_trace()
+                frame_children = self.helper.get_frame_children(id_strings.form_command(form), module, include_target_root=True)
 
                 # since we want to go the 'previous' screen we need to drop the last
                 # datum
