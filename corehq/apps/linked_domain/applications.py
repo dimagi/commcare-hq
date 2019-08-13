@@ -21,7 +21,7 @@ def get_master_app_briefs(domain_link, progenitor_app_id):
     else:
         apps = get_brief_apps_in_domain(domain_link.master_domain, include_remote=False)
 
-    apps = [app for app in apps if app.progenitor_app_id == progenitor_app_id]
+    apps = [app for app in apps if progenitor_app_id in [app._id, app.progenitor_app_id]]
 
     # Ignore deleted, linked and remote apps
     return [app for app in apps if app.doc_type == 'Application']
