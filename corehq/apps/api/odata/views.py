@@ -28,14 +28,14 @@ odata_auth = method_decorator([
 class ODataCaseServiceView(View):
 
     urlname = 'odata_case_service_from_export_instance'
-    urlname_table = 'odata_case_service_from_export_instance_table'
+    table_urlname = 'odata_case_service_from_export_instance_table'
 
     def get(self, request, domain, config_id, **kwargs):
         table_id = int(kwargs.get('table_id', 0))
         urlname = ODataCaseMetadataView.urlname
         url_args = [domain, config_id]
         if table_id > 0:
-            urlname = ODataCaseMetadataView.urlname_table
+            urlname = ODataCaseMetadataView.table_urlname
             url_args.append(table_id)
         service_document_content = {
             '@odata.context': absolute_reverse(urlname, args=url_args),
@@ -52,7 +52,7 @@ class ODataCaseServiceView(View):
 class ODataCaseMetadataView(View):
 
     urlname = 'odata_case_metadata_from_export_instance'
-    urlname_table = 'odata_case_metadata_from_export_instance_table'
+    table_urlname = 'odata_case_metadata_from_export_instance_table'
 
     def get(self, request, domain, config_id, **kwargs):
         table_id = int(kwargs.get('table_id', 0))
@@ -67,14 +67,14 @@ class ODataCaseMetadataView(View):
 class ODataFormServiceView(View):
 
     urlname = 'odata_form_service_from_export_instance'
-    urlname_table = 'odata_form_service_from_export_instance_table'
+    table_urlname = 'odata_form_service_from_export_instance_table'
 
     def get(self, request, domain, config_id, **kwargs):
         table_id = int(kwargs.get('table_id', 0))
         urlname = ODataFormMetadataView.urlname
         url_args = [domain, config_id]
         if table_id > 0:
-            urlname = ODataFormMetadataView.urlname_table
+            urlname = ODataFormMetadataView.table_urlname
             url_args.append(table_id)
         service_document_content = {
             '@odata.context': absolute_reverse(urlname, args=url_args),
@@ -91,7 +91,7 @@ class ODataFormServiceView(View):
 class ODataFormMetadataView(View):
 
     urlname = 'odata_form_metadata_from_export_instance'
-    urlname_table = 'odata_form_metadata_from_export_instance_table'
+    table_urlname = 'odata_form_metadata_from_export_instance_table'
 
     def get(self, request, domain, config_id, **kwargs):
         table_id = int(kwargs.get('table_id', 0))

@@ -91,7 +91,7 @@ class ODataBaseSerializer(Serializer):
 class ODataCaseSerializer(ODataBaseSerializer):
 
     metadata_url = ODataCaseMetadataView.urlname
-    table_metadata_url = ODataCaseMetadataView.urlname_table
+    table_metadata_url = ODataCaseMetadataView.table_urlname
 
     def get_config(self, config_id):
         return CaseExportInstance.get(config_id)
@@ -100,7 +100,7 @@ class ODataCaseSerializer(ODataBaseSerializer):
 class ODataFormSerializer(ODataBaseSerializer):
 
     metadata_url = ODataFormMetadataView.urlname
-    table_metadata_url = ODataFormMetadataView.urlname_table
+    table_metadata_url = ODataFormMetadataView.table_urlname
 
     def get_config(self, config_id):
         return FormExportInstance.get(config_id)
