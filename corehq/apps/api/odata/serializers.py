@@ -50,8 +50,9 @@ class ODataCaseSerializer(Serializer):
         api_path = data.pop('api_path', None)
         table_id = data.pop('table_id', None)
 
-        assert (all([domain, config_id, api_path, table_id]),
-                [domain, config_id, api_path, table_id])
+        assert all([domain, config_id, api_path, table_id]), [
+            domain, config_id, api_path, table_id
+        ]
 
         context_urlname = ODataCaseMetadataView.urlname
         context_url_args = [domain, config_id]
@@ -100,8 +101,9 @@ class ODataFormSerializer(Serializer):
         api_path = data.pop('api_path', None)
         table_id = data.pop('table_id', None)
 
-        assert (all([domain, config_id, api_path, table_id]),
-                [domain, config_id, api_path, table_id])
+        assert all([domain, config_id, api_path, table_id]), [
+            domain, config_id, api_path, table_id
+        ]
 
         context_urlname = ODataFormMetadataView.urlname
         context_url_args = [domain, config_id]
