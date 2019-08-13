@@ -626,7 +626,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             ('domain', 'user_id'),
         ]
         indexes = [
-            models.Index(['xmlns'])
+            models.Index(fields=['xmlns'])
         ]
 
 
@@ -1534,7 +1534,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ('case', 'server_date', 'sync_log_id'),
         ]
-        indexes = [models.Index(['form_id'])]
+        indexes = [models.Index(fields=['form_id'])]
 
 
 class CaseTransactionDetail(JsonObject):
@@ -1765,7 +1765,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ["case", "section_id", "entry_id"],
         ]
-        indexes = [models.Index(['form_id'])]
+        indexes = [models.Index(fields=['form_id'])]
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):
