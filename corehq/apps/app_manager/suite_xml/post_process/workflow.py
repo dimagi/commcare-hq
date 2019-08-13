@@ -110,15 +110,15 @@ class WorkflowHelper(PostProcessor):
                 if root_module_command != id_strings.ROOT:
                     root_module_command = CommandId(root_module_command)
 
-        # First add parent module, if any: datums needed by all of its forms, then menu command
-        _add_new_datums(commonprefix(root_datums))
+        # First add menu commands
         if root_module_command:
             frame_children.append(root_module_command)
-
-        # Then add target module: datums needed by all of its forms, then menu command
-        _add_new_datums(commonprefix(target_module_datums))
         if target_module_command:
             frame_children.append(target_module_command)
+
+        # Then add datums needed by parent menu and target menu
+        _add_new_datums(commonprefix(root_datums))
+        _add_new_datums(commonprefix(target_module_datums))
 
         # Then add form itself and any additional datums it needs
         if not module_only:
