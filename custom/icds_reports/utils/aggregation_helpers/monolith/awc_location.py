@@ -165,7 +165,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             )
         )
         changed_awc_ids = [row[0] for row in cursor.fetchall()]
-        if changed_awc_ids:
+        if not changed_awc_ids:
             return None, None
 
         cursor.execute(
