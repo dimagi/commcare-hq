@@ -53,7 +53,7 @@ urlpatterns = [
     url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(), name=TwoFactorPhoneSetupView.urlname),
     url(r'^account/two_factor/backup/phone/unregister/(?P<pk>\d+)/$', TwoFactorPhoneDeleteView.as_view(),
         name=TwoFactorPhoneDeleteView.urlname),
-    url(r'', include((tf_urls + tf_twilio_urls, 'two_factor'), namespace='two_factor')),
+    url(r'', include((tf_urls[0] + tf_twilio_urls[0], 'two_factor'), namespace='two_factor')),
     url(r'^account/two_factor/reset/$', TwoFactorResetView.as_view(), name=TwoFactorResetView.urlname),
     url(r'^hq/admin/session_details/$', SessionDetailsView.as_view(),
         name=SessionDetailsView.urlname),

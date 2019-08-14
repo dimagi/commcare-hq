@@ -73,8 +73,8 @@ Pygments~=2.0
 Jinja2~=2.10
 tinys3==0.1.12
 django-formtools==2.1
-django-otp==0.3.13
-django-two-factor-auth==1.6.2
+django-otp>=0.3.13
+django-two-factor-auth>=1.6.2
 datadog==0.15.0
 ddtrace==0.14.1
 django-websocket-redis==0.5.2
