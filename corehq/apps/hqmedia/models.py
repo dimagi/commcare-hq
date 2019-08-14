@@ -447,7 +447,6 @@ class HQMediaMapItem(DocumentSchema):
 
     multimedia_id = StringProperty()
     media_type = StringProperty()
-    output_size = DictProperty()
     version = IntegerProperty()
     unique_id = StringProperty()
 
