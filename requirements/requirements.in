@@ -55,9 +55,11 @@ six~=1.11
 socketpool==0.5.3
 markdown==2.2.1
 sqlagg>=0.13.0
-django-redis~=4.9
-redis==2.10.6
-redis-py-cluster==1.3.6
+django-redis
+redis
+# Add back once https://github.com/Grokzen/redis-py-cluster/pull/296 is released
+# Currently pins to redis==2.10.6
+# redis-py-cluster
 twilio==6.5.1
 django-countries==4.6
 reportlab==3.0
@@ -77,8 +79,8 @@ django-otp>=0.3.13
 django-two-factor-auth>=1.6.2
 datadog==0.15.0
 ddtrace==0.14.1
-django-websocket-redis==0.5.2
-django-redis-sessions==0.6.1
+django-websocket-redis
+django-redis-sessions
 SQLAlchemy~=1.3.0
 alembic==0.8.6
 pyzxcvbn==0.8.0
@@ -99,7 +101,7 @@ raven==6.1.0
 quickcache~=0.5
 ethiopian-date-converter==0.1.5
 contextlib2~=0.5.4
-hiredis==0.2.0
+hiredis
 xlwt==1.3.0
 django-prbac>=0.0.7
 qrcode==4.0.4
