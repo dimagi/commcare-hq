@@ -107,9 +107,9 @@ class WorkflowHelper(PostProcessor):
             if root_module and include_target_root:
                 # Module has a parent. Store the parent's needed datums and command.
                 root_datums = list(self.get_module_datums(id_strings.menu_id(root_module)).values())
-                root_module_command = id_strings.menu_id(target_module.root_module)
-                if root_module_command != id_strings.ROOT:
-                    root_module_command = CommandId(root_module_command)
+                root_module_id = id_strings.menu_id(target_module.root_module)
+                if root_module_id != id_strings.ROOT:
+                    root_module_command = CommandId(root_module_id)
 
         # First add menu commands
         if root_module_command:
