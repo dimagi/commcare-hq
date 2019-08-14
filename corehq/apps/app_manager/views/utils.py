@@ -38,7 +38,7 @@ from corehq.apps.linked_domain.exceptions import (
     ActionNotPermitted,
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
-from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
+from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
 
 from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.userreports.util import get_static_report_mapping
@@ -53,7 +53,7 @@ CASE_TYPE_CONFLICT_MSG = (
 
 
 @require_deploy_apps
-def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
+def back_to_main(request, domain, app_id, module_id=None, form_id=None,
                  form_unique_id=None, module_unique_id=None):
     """
     returns an HttpResponseRedirect back to the main page for the App Manager app
@@ -63,56 +63,40 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     which then redirect to the main page.
 
     """
-    page = None
-    params = {}
-    args = [domain]
-    view_name = 'dashboard_default'
+    args = [domain, app_id]
+    view_name = 'view_app'
 
-    form_view = 'form_source'
+    app = get_app(domain, app_id)
 
-    if app_id is not None:
-        view_name = 'view_app'
-        args.append(app_id)
+    module = None
+    try:
+        if module_id is not None:
+            module = app.get_module(module_id)
+        elif module_unique_id is not None:
+            module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        raise Http404()
 
-        app = get_app(domain, app_id)
-
-        module = None
+    form = None
+    if form_id is not None and module is not None:
         try:
-            if module_id is not None:
-                module = app.get_module(module_id)
-            elif module_unique_id is not None:
-                module = app.get_module_by_unique_id(module_unique_id)
-        except ModuleNotFoundException:
+            form = module.get_form(form_id)
+        except IndexError:
+            raise Http404()
+    elif form_unique_id is not None:
+        try:
+            form = app.get_form(form_unique_id)
+        except FormNotFoundException:
             raise Http404()
 
-        form = None
-        if form_id is not None and module is not None:
-            try:
-                form = module.get_form(form_id)
-            except IndexError:
-                raise Http404()
-        elif form_unique_id is not None:
-            try:
-                form = app.get_form(form_unique_id)
-            except FormNotFoundException:
-                raise Http404()
+    if form is not None:
+        view_name = 'view_form' if form.no_vellum else 'form_source'
+        args.append(form.unique_id)
+    elif module is not None:
+        view_name = 'view_module'
+        args.append(module.unique_id)
 
-        if form is not None:
-            view_name = 'view_form' if form.no_vellum else form_view
-            args.append(form.unique_id)
-        elif module is not None:
-            view_name = 'view_module'
-            args.append(module.unique_id)
-
-    if page:
-        view_name = page
-
-    return HttpResponseRedirect(
-        "%s%s" % (
-            reverse(view_name, args=args),
-            "?%s" % urlencode(params) if params else ""
-        )
-    )
+    return HttpResponseRedirect(reverse(view_name, args=args))
 
 
 def get_langs(request, app):
@@ -362,7 +346,7 @@ def update_linked_app(app, user_id):
             ))
 
         report_map = get_static_report_mapping(latest_master_build.domain, app['domain'])
-
+        old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
         try:
             app = overwrite_app(app, latest_master_build, report_map)
         except AppEditingError as e:
@@ -373,18 +357,19 @@ def update_linked_app(app, user_id):
                 ).format(ucr_id=str(e))
             )
 
-    if app.master_is_remote:
-        try:
-            pull_missing_multimedia_for_app(app)
-        except RemoteRequestError:
-            raise AppLinkError(_(
-                'Error fetching multimedia from remote server. Please try again later.'
-            ))
+        if app.master_is_remote:
+            try:
+                pull_missing_multimedia_for_app(app, old_multimedia_ids)
+            except RemoteRequestError:
+                raise AppLinkError(_(
+                    'Error fetching multimedia from remote server. Please try again later.'
+                ))
+
+        # reapply linked application specific data
+        app.reapply_overrides()
+        app.save()
 
     app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))
-
-    # reapply linked application specific data
-    app.reapply_overrides()
 
 
 def clear_xmlns_app_id_cache(domain):

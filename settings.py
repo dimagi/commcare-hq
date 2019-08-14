@@ -262,7 +262,6 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
-    'corehq.apps.calendar_fixture',
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
@@ -342,7 +341,6 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'hsph',
     'pact',
 
     'custom.reports.mc',
@@ -482,7 +480,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.programs.fixtures.program_fixture_generator",
     "corehq.apps.app_manager.fixtures.report_fixture_generator",
     "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
-    "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.locations.fixtures.related_locations_fixture_generator",
@@ -648,6 +645,8 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 # seconds.
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
+
+SYNC_CASE_FOR_MESSAGING_ON_SAVE = True
 
 PILLOW_RETRY_QUEUE_ENABLED = False
 
@@ -1344,7 +1343,6 @@ COUCHDB_APPS = [
     'openclinica',
 
     # custom reports
-    'hsph',
     'pact',
     'accounting',
     'succeed',
@@ -1729,6 +1727,11 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
         },
+        {
+            'name': 'case_messaging_sync_pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.messaging.pillow.get_case_messaging_sync_pillow',
+        },
     ],
     'core_ext': [
         {
@@ -1916,9 +1919,6 @@ COUCH_CACHE_BACKENDS = [
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
-    'hsph',
-    'hsph-dev',
-    'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
     'crs-remind',
     'succeed',
@@ -1975,8 +1975,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'hsph-dev': 'hsph',
-    'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
     'pact': 'pact',
 

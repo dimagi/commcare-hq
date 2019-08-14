@@ -45,7 +45,9 @@ from corehq.apps.app_manager.models import (
     load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
+from corehq.apps.app_manager.tasks import (
+    update_linked_app_and_notify_task,
+)
 from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
@@ -391,7 +393,7 @@ def copy_app(request, domain):
     form = CopyApplicationForm(domain, app, request.POST)
     if not form.is_valid():
         from corehq.apps.app_manager.views.view_generic import view_generic
-        return view_generic(request, domain, app_id=app_id, copy_app_form=form)
+        return view_generic(request, domain, app_id, copy_app_form=form)
 
     def _inner(request, link_domain, data, master_domain=domain):
         clear_app_cache(request, link_domain)
@@ -549,14 +551,14 @@ def import_app(request, domain):
 
 @require_GET
 @require_deploy_apps
-def app_settings(request, domain, app_id=None):
+def app_settings(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id)
 
 
 @require_GET
 @require_deploy_apps
-def view_app(request, domain, app_id=None):
+def view_app(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, release_manager=True)
 
