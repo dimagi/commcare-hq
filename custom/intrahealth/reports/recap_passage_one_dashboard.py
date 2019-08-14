@@ -110,6 +110,11 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
                 rows=rows,
                 project=self.request.GET.get('project_name') or "Malaria",
                 default_rows=self.default_rows,
+            ),
+            aggregated_table=dict(
+                headers=aggregated_headers,
+                rows=aggregated_rows,
+                number_of_agregated=2
             )
         )
 
