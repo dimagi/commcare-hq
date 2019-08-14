@@ -118,7 +118,7 @@ def get_awc_covered_data(step, domain, config, loc_level, location, include_test
     return data
 
 
-# @icds_quickcache(['step', 'domain', 'config', 'loc_level', 'location', 'include_test'], timeout=30 * 60)
+@icds_quickcache(['step', 'domain', 'config', 'loc_level', 'location', 'include_test'], timeout=30 * 60)
 def get_awc_covered_data_with_retrying(step, domain, config, loc_level, location, include_test):
     retry = 0
     while True:

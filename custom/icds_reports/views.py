@@ -1206,7 +1206,7 @@ class AWCsCoveredView(BaseReportView):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = get_awc_covered_data_with_retrying(step, domain, config, loc_level,location, include_test)
+        data = get_awc_covered_data_with_retrying(step, domain, config, loc_level, location, include_test)
 
         return JsonResponse(data={
             'report_data': data,
