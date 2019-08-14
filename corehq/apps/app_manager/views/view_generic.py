@@ -137,6 +137,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     if not app.is_remote_app():
         context.update({
             'add_ons': add_ons.get_dict(request, app, module, form),
+            'add_ons_privileges': add_ons.get_privileges_dict(request),
             'add_ons_layout': add_ons.get_layout(request),
         })
 

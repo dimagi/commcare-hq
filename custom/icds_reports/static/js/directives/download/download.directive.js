@@ -123,10 +123,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 7, name: 'ICDS-CAS Monthly Register'},
         {id: 8, name: 'AWW Performance Report'},
         {id: 9, name: 'LS Performance Report'},
+        {id: 10, name: 'Take Home Ration (THR)'}
     ];
-    if (vm.haveAccessToFeatures) {
-        vm.indicators.push({id: 10, name: 'Take Home Ration (THR)'});
-    }
+
 
     var ALL_OPTION = {
         name: 'All',

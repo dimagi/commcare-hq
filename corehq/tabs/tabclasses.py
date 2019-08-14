@@ -285,7 +285,7 @@ class SetupTab(UITab):
                 ) for item in dropdown_items
             ] + [
                 dropdown_dict(None, is_divider=True),
-                dropdown_dict(_("View All"), url=ProductListView.urlname),
+                dropdown_dict(_("View All"), url=reverse(ProductListView.urlname, args=[self.domain])),
             ]
 
         return []
