@@ -4122,7 +4122,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         when making a new build and setting the versions of those items.
         For normal applications, this is just the previous build.
         '''
-        return self.get_previous_version()
+        return self.get_latest_build()
 
     @memoized
     def get_latest_saved(self):
@@ -4756,8 +4756,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
-        previous_version = self._get_version_comparison_build()
-        if not previous_version:
+        latest_build = self._get_version_comparison_build()
+        if not latest_build:
             return
         force_new_version = self.build_profiles != latest_build.build_profiles
         for form_stuff in self.get_forms(bare=False):
