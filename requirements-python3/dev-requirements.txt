@@ -12,7 +12,7 @@ argparse==1.4.0           # via unittest2
 attrs==18.2.0
 babel==2.7.0              # via django-phonenumber-field, sphinx
 beautifulsoup4==4.8.0
-billiard==3.6.0.0
+billiard==3.6.1.0
 boto3==1.9.207
 botocore==1.12.207        # via boto3, s3transfer
 cairocffi==1.0.2          # via cairosvg, weasyprint
@@ -94,6 +94,7 @@ html5lib==1.0.1           # via weasyprint
 httpagentparser==1.8.4
 idna==2.8                 # via email-validator, requests
 imagesize==1.1.0          # via sphinx
+importlib-metadata==0.19  # via kombu
 ipdb==0.11
 ipython-genutils==0.2.0   # via traitlets
 ipython==5.2.2
@@ -108,7 +109,7 @@ jsonobject-couchdbkit==0.9.17
 jsonobject==0.9.9
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
-kombu==4.6.3
+kombu==4.6.4
 laboratory==0.2.0
 line_profiler==1.0
 linecache2==1.0.0         # via traceback2
@@ -186,7 +187,7 @@ sphinxcontrib-django==0.5
 sphinxcontrib-websupport==1.1.2  # via sphinx
 sqlagg==0.13.0
 sqlalchemy-postgres-copy==0.5.0
-sqlalchemy==1.3.6
+sqlalchemy==1.3.7
 sqlparse==0.3.0           # via django-debug-toolbar
 stripe==1.67.0
 subprocess32==3.5.4
@@ -214,6 +215,7 @@ wheel==0.29.0
 wrapt==1.11.2             # via ddtrace
 xlrd==1.0.0
 xlwt==1.3.0
+zipp==0.5.2               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools==41.1.0        # via cairocffi, django-websocket-redis, ipdb, ipython, python-levenshtein, python-termstyle, sphinx, tinycss2

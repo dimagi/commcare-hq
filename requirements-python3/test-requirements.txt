@@ -11,7 +11,7 @@ argparse==1.4.0           # via unittest2
 attrs==18.2.0
 babel==2.7.0              # via django-phonenumber-field
 beautifulsoup4==4.8.0
-billiard==3.6.0.0
+billiard==3.6.1.0
 boto3==1.9.207
 botocore==1.12.207        # via boto3, s3transfer
 cairocffi==1.0.2          # via cairosvg, weasyprint
@@ -84,6 +84,7 @@ hiredis==0.2.0
 html5lib==1.0.1           # via weasyprint
 httpagentparser==1.8.4
 idna==2.8                 # via email-validator, requests
+importlib-metadata==0.19  # via kombu
 iso8601==0.1.12
 jdcal==1.4.1              # via openpyxl
 jinja2==2.10.1
@@ -94,7 +95,7 @@ jsonobject-couchdbkit==0.9.17
 jsonobject==0.9.9
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
-kombu==4.6.3
+kombu==4.6.4
 laboratory==0.2.0
 linecache2==1.0.0         # via traceback2
 lxml==4.3.5
@@ -154,7 +155,7 @@ socketpool==0.5.3
 soupsieve==1.9.2          # via beautifulsoup4
 sqlagg==0.13.0
 sqlalchemy-postgres-copy==0.5.0
-sqlalchemy==1.3.6
+sqlalchemy==1.3.7
 stripe==1.67.0
 subprocess32==3.5.4
 suds-jurko==0.6
@@ -177,6 +178,7 @@ werkzeug==0.11.15
 wrapt==1.11.2             # via ddtrace
 xlrd==1.0.0
 xlwt==1.3.0
+zipp==0.5.2               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools==41.1.0        # via cairocffi, django-websocket-redis, python-levenshtein, tinycss2
