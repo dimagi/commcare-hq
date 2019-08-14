@@ -2,9 +2,7 @@ attrs~=18.1
 iso8601==0.1.12
 jsonobject==0.9.9
 jsonobject-couchdbkit~=0.9
-# celery 4.1.1 forked to work around https://github.com/celery/celery/issues/4737
-# upgrade when https://github.com/celery/celery/issues/4980 is fixed
-git+git://github.com/nickpell/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
+celery>=4.3
 # required by django-digest
 decorator==4.0.11
 django>=1.11.22  # security update
@@ -24,7 +22,7 @@ ghdiff==0.4
 gunicorn
 lxml~=4.3.0
 kafka-python==1.4.4
-kombu==4.2.2.post1
+kombu>=4.2.2.post1
 billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
 mock==2.0.0
 Pillow~=6.0
