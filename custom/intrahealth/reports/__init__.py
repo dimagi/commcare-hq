@@ -33,7 +33,6 @@ CUSTOM_REPORTS = (
         Dashboard2Report,
         Dashboard3Report,
         DisponibiliteReport,
-        # TODO: initialize when calculations for reports are ready
         TauxDeRuptureReport,
         ConsommationReport,
         TauxDePerteReport,

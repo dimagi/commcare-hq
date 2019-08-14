@@ -65,7 +65,8 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         else:
             return 'Region'
 
-    def get_products(self):
+    @property
+    def products(self):
         products_names = []
 
         for row in self.clean_rows:
@@ -84,7 +85,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
             DataTablesColumn(self.selected_location_type),
         )
 
-        products = self.get_products()
+        products = self.products
         for product in products:
             headers.add_column(DataTablesColumn(product))
 
@@ -121,7 +122,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
             stocks_to_return = []
             added_locations = []
             locations_with_products = {}
-            all_products = self.get_products()
+            all_products = self.products
 
             for stock in stocks_list:
                 location_id = stock['location_id']
@@ -188,6 +189,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
             return stocks_to_return
 
         rows = data_to_rows(self.clean_rows)
+
         return rows
 
     @property
