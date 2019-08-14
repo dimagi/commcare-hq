@@ -6,7 +6,11 @@ from collections import defaultdict, OrderedDict
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
-from django.urls import RegexURLResolver, Resolver404
+try:
+    from django.urls import URLResolver
+except ImportError:
+    from django.urls import RegexURLPattern as URLResolver
+from django.urls import Resolver404
 from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -252,7 +256,7 @@ def download_file(request, domain, app_id, path):
         full_path = 'files/%s' % path
 
     def resolve_path(path):
-        return RegexURLResolver(
+        return URLResolver(
             r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
 
     def create_build_files_if_necessary_handling_conflicts(is_retry=False):
