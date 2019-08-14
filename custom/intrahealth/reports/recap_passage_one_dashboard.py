@@ -21,7 +21,7 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
     name = 'Recap Passage 1'
     default_rows = 10
 
-    report_template_path = 'yeksi_naa/tabular_report.html'
+    report_template_path = 'yeksi_naa/recap_passage.html'
 
     @property
     def fields(self):
@@ -60,29 +60,55 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
 
     @property
     def headers(self):
+        return RecapPassageOneData(config=self.config).headers
+
+    @property
+    def aggregated_headers(self):
         # TODO: needs further implementation
+
+        headers = RecapPassageOneData(config=self.config).headers.header
         return DataTablesHeader(
-            DataTablesColumn(self.selected_location_type),
-            DataTablesColumn(
-                'Rows'
-            ),
+            *(headers[:2])
+        )
+
+    @property
+    def comment(self):
+        choosen_product = RecapPassageOneData(config=self.config).program_name
+        return choosen_product or None
+
+    def aggregated_rows(self):
+        # TODO: needs further implementation
+
+        headers = RecapPassageOneData(config=self.config).headers.header
+        return DataTablesHeader(
+            DataTablesColumn('uno'),
+            DataTablesColumn('dos'),
         )
 
     def get_report_context(self):
         if self.needs_filters:
             headers = []
+            aggregated_headers = []
             rows = []
+            aggregated_rows = []
+            comment = ""
         else:
-            rows = self.calculate_rows()
-            headers = self.headers
+            rows, headers = self.calculate_table()
+            aggregated_rows, aggregated_headers = self.calculate_aggregated_table()
+            
+            for n in range(len(aggregated_headers)):
+                aggregated_headers.header[n].row = aggregated_rows[n]
+
+            comment = self.comment
 
         context = dict(
             report_table=dict(
                 title=self.name,
                 slug=self.slug,
-                comment=self.comment,
+                comment=comment,
                 headers=headers,
                 rows=rows,
+                project=self.request.GET.get('project_name') or "Malaria",
                 default_rows=self.default_rows,
             )
         )
@@ -90,9 +116,14 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
         return context
 
     def calculate_rows(self):
-        # TODO: needs further implementation
         rows = RecapPassageOneData(config=self.config).rows
         return rows
+
+    def calculate_table(self):
+        return RecapPassageOneData(config=self.config).rows_and_headers
+
+    def calculate_aggregated_table(self):
+        return RecapPassageOneData(config=self.config).aggregated_data
 
     @property
     def config(self):
@@ -109,6 +140,6 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
             enddate = datetime.datetime.now()
         config['startdate'] = startdate
         config['enddate'] = enddate
-        config['product_program'] = self.request.GET.get('product_program')
+        config['product_program'] = self.request.GET.get('program')
         config['selected_location'] = self.request.GET.get('location_id')
         return config
