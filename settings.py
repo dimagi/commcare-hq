@@ -442,10 +442,11 @@ BILLING_EMAIL = 'billing-comm@example.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
 GROWTH_EMAIL = 'growth@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
-REPORT_BUILDER_ADD_ON_EMAIL = 'sales@example.com'
+SALES_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
+PRIVACY_EMAIL = 'privacy@example.com'
 CONTACT_EMAIL = 'info@example.com'
-FEEDBACK_EMAIL = 'hq-feedback@dimagi.com'
+FEEDBACK_EMAIL = 'feedback@example.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
@@ -977,6 +978,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
+                'corehq.util.context_processors.emails',
             ],
             'debug': DEBUG,
             'loaders': [
