@@ -166,4 +166,4 @@ xlrd==1.0.0
 xlwt==1.3.0
 
 # The following packages are considered to be unsafe in a requirements file:
-# setuptools==41.0.1        # via django-websocket-redis, python-levenshtein
+# setuptools==41.1.0        # via django-websocket-redis, python-levenshtein
