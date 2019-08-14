@@ -45,7 +45,11 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL,
     LedgerAccessorSQL,
 )
-from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
+from corehq.form_processor.exceptions import (
+    CaseNotFound,
+    FormEditNotAllowed,
+    MissingFormXml,
+)
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -721,6 +725,30 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3", "test-4", "test-5"})
         self.assertEqual(self._get_case_ids(), {"test-case"})
 
+    def test_edit_form_after_live_migration(self):
+        now = datetime.utcnow()
+        self.assert_backend("couch")
+        self.submit_form(make_test_form("test-1"), now - timedelta(minutes=90))
+
+        self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), {"test-1"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.assert_backend("couch")
+        with self.assertRaises(FormEditNotAllowed):
+            self.submit_form(make_test_form("test-1", age=30))
+
+        self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([])
+        self.assertEqual(self._get_form_ids(), {"test-1"})
+        self.assertEqual(self._get_form_ids("XFormDeprecated"), set())
+        form = FormAccessorSQL.get_form("test-1")
+        self.assertIsNone(form.edited_on)
+        self.assertEqual(form.form_data["age"], '27')
+        case = self._get_case("test-case")
+        self.assertEqual(case.dynamic_case_properties()["age"], '27')
+
     def test_reset_migration(self):
         now = datetime.utcnow()
         self.submit_form(make_test_form("test-1"), now - timedelta(minutes=95))
@@ -937,9 +965,12 @@ def create_form_with_missing_xml(domain_name):
 
 
 @nottest
-def make_test_form(form_id):
-    assert TEST_FORM.count(">test-form<") == 1
-    return TEST_FORM.replace(">test-form<", ">%s<" % form_id)
+def make_test_form(form_id, age=27):
+    form = TEST_FORM
+    assert form.count(">test-form<") == 1
+    assert form.count(">27<") == 2
+    form = form.replace(">27<", ">%s<" % age)
+    return form.replace(">test-form<", ">%s<" % form_id)
 
 
 @attr.s(cmp=False)

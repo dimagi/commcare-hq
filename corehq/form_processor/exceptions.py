@@ -77,3 +77,7 @@ class XFormLockError(Exception):
 
 class MissingFormXml(Exception):
     pass
+
+
+class FormEditNotAllowed(Exception):
+    pass
