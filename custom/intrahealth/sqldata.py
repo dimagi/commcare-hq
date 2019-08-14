@@ -4737,7 +4737,6 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
     @property
     def rows(self):
         records = self.get_data()
-        print(records)
         loc_names, data = self.get_loss_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_loss_rate_to_rows(loc_names, data)
@@ -4899,7 +4898,6 @@ class ExpirationRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
         data = defaultdict(list)
         loc_names = {}
         for record in records:
-            print(loc_names)
             if not self.date_in_selected_date_range(record['real_date_repeat']) \
                 or record['product_name'] not in self.products:
                 continue
@@ -5211,7 +5209,6 @@ class ValuationOfPNAStockPerProductV2Data(SqlData):
 
 
 class RecapPassageOneData(SqlData):
-    # TODO: Utilize the same calculations as in the existing table within ‘tableau de bord 3’
     slug = 'recap_passage_1'
     comment = 'recap passage 1'
     title = 'Recap Passage 1'
@@ -5226,7 +5223,6 @@ class RecapPassageOneData(SqlData):
 
     @property
     def table_name(self):
-        # TODO: we don't know if we need to create data source or use existing one
         return get_table_name(self.config['domain'], OPERATEUR_COMBINED2)
 
     @property
