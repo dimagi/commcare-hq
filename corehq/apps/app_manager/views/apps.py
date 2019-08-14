@@ -407,7 +407,9 @@ def copy_app(request, domain):
             # Create a new linked application
             # Linked apps can only be created from released versions
             error = None
-            if data['build_id']:
+            if from_domain == to_domain:
+                error = _("You may not create a linked app in the same domain as its master app.")
+            elif data['build_id']:
                 from_app = Application.get(data['build_id'])
                 if not from_app.is_released:
                     error = _("Make sure the version you are copying from is released.")
