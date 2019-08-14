@@ -731,7 +731,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 1
+ELASTICSEARCH_MAJOR_VERSION = 2
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
