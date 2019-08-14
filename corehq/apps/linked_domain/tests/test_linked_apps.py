@@ -254,26 +254,34 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_update_from_specific_build(self, *args):
-        self.linked_app.master = self.plain_master_app.get_id
+        master_app = Application.new_app(self.domain, "Master Application")
+        master_app.linked_whitelist = [self.linked_domain]
+        master_app.save()
+        self.addCleanup(master_app.delete)
 
-        self.plain_master_app.add_module(Module.new_module('M1', None))
-        copy1 = self.plain_master_app.make_build()
+        linked_app = LinkedApplication.new_app(self.linked_domain, "Linked Application")
+        linked_app.master = master_app.get_id
+        linked_app.save()
+        self.addCleanup(linked_app.delete)
+
+        master_app.add_module(Module.new_module('M1', None))
+        copy1 = master_app.make_build()
         copy1.save()
         self.addCleanup(copy1.delete)
 
-        self.plain_master_app.add_module(Module.new_module('M2', None))
-        self.plain_master_app.save()  # increment version number
-        copy2 = self.plain_master_app.make_build()
+        master_app.add_module(Module.new_module('M2', None))
+        master_app.save()  # increment version number
+        copy2 = master_app.make_build()
         copy2.is_released = True
         copy2.save()
         self.addCleanup(copy2.delete)
 
-        update_linked_app(self.linked_app, 'test_update_from_specific_build', master_build=copy1)
+        update_linked_app(linked_app, 'test_update_from_specific_build', master_build=copy1)
         # fetch after update to get the new version
-        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        linked_app = LinkedApplication.get(linked_app._id)
 
-        self.assertEqual(len(self.linked_app.modules), 1)
-        self.assertEqual(self.linked_app.version, copy1.version)
+        self.assertEqual(len(linked_app.modules), 1)
+        self.assertEqual(linked_app.version, copy1.version)
 
 
 class TestRemoteLinkedApps(BaseLinkedAppsTest):
