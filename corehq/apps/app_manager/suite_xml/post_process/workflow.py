@@ -86,7 +86,8 @@ class WorkflowHelper(PostProcessor):
         frame_children = []
 
         def _add_new_datums(datums):
-            frame_children.extend([d for d in datums if d not in frame_children])
+            datum_frames = [f for f in frame_children if isinstance(f, WorkflowDatumMeta)]
+            frame_children.extend([d for d in datums if d not in datum_frames])
 
         # Determine datums needed for target form
         module_datums = self.get_module_datums(target_module_id)
