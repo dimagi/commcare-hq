@@ -151,36 +151,39 @@ class DataAccessorTest(TestCase):
 
     def test_retrying_data_for_awc_covered_chart(self):
         step = 'chart'
+        get_awc_covered_data_with_retrying.clear(step, self.domain, self.config, 1, 'st1', True)
         with mock.patch(
             "custom.icds_reports.utils.data_accessor.get_awcs_covered_data_chart",
             return_value=self.defected_chart_data,
             autospec=True
         ) as get_awcs_covered_data_chart:
             get_awc_covered_data_with_retrying(
-                step, self.domain, self.config, self.now, False, True
+                step, self.domain, self.config, 1, 'st1', True
             )
             self.assertEqual(get_awcs_covered_data_chart.call_count, 3)
 
     def test_data_for_awc_covered_chart(self):
         step = 'chart'
+        get_awc_covered_data_with_retrying.clear(step, self.domain, self.config, 1, 'st1', True)
         with mock.patch(
             "custom.icds_reports.utils.data_accessor.get_awcs_covered_data_chart",
             return_value=self.valid_chart_data,
             autospec=True
         ) as get_awcs_covered_data_chart:
             get_awc_covered_data_with_retrying(
-                step, self.domain, self.config, self.now, False, True
+                step, self.domain, self.config, 1, 'st1', True
             )
             self.assertEqual(get_awcs_covered_data_chart.call_count, 1)
 
     def test_retrying_data_for_awc_covered_map(self):
         step = 'map'
+        get_awc_covered_data_with_retrying.clear(step, self.domain, self.config, 1, 'st1', True)
         with mock.patch(
             "custom.icds_reports.utils.data_accessor.get_awcs_covered_data_map",
             return_value=self.defected_map_data,
             autospec=True
         ) as get_awcs_covered_data_map:
             get_awc_covered_data_with_retrying(
-                step, self.domain, self.config, self.now, False, True
+                step, self.domain, self.config, 1, 'st1', True
             )
             self.assertEqual(get_awcs_covered_data_map.call_count, 3)
