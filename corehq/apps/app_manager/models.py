@@ -4515,7 +4515,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
-        copy.create_build_files()
+        if copy.create_build_files_on_build:
+            copy.create_build_files()
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
@@ -4537,6 +4538,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         prune_auto_generated_builds.delay(self.domain, self._id)
 
         return copy
+
+    @property
+    @memoized
+    def create_build_files_on_build(self):
+        return not toggles.SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD.enabled(self.domain)
 
     def delete_app(self):
         domain_has_apps.clear(self.domain)
