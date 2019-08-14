@@ -345,7 +345,7 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
         if section_id:
             filters['section_id'] = section_id
         if entry_id:
-            filters['entry_id'] = entry_id
+            filters['product_id'] = entry_id
         if date_start:
             filters['last_modifed__gte'] = date_start
         if date_end:
