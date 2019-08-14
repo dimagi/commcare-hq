@@ -96,7 +96,7 @@ def _all_zeros_graph(step, data, agg_level):
 
     retry = all(values)
     if retry:
-        create_datadog_event('ICDS 0s', 'All indicators in program summary equals 0', aggregation_key='icds_0')
+        create_datadog_event('ICDS 0s', 'All indicators in awc_covered equals 0', aggregation_key='icds_0')
     return retry
 
 
