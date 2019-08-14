@@ -583,3 +583,13 @@ class PatchMeta(type):
     def __init__(self, *args, **kwargs):
         super(PatchMeta, self).__init__(*args, **kwargs)
         self.patch(self)
+
+
+@contextmanager
+def catch_signal(signal):
+    """Catch django signal and return the mocked call."""
+    import mock
+    handler = mock.Mock()
+    signal.connect(handler)
+    yield handler
+    signal.disconnect(handler)

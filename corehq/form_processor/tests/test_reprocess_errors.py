@@ -20,7 +20,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAcce
 from corehq.form_processor.reprocess import reprocess_xform_error, reprocess_unfinished_stub
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.util.context_managers import catch_signal
+from corehq.util.test_utils import catch_signal
 from couchforms.models import UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
 
