@@ -23,7 +23,7 @@ from custom.intrahealth.report_calcs import _locations_per_type
 from custom.intrahealth.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
     YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT, YEKSI_NAA_REPORTS_LOGISTICIEN, \
     YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM, \
-    OPERATEUR_COMBINED, COMMANDE_COMBINED, RAPTURE_COMBINED, LIVRAISON_COMBINED, RECOUVREMENT_COMBINED
+    OPERATEUR_COMBINED, OPERATEUR_COMBINED2, COMMANDE_COMBINED, RAPTURE_COMBINED, LIVRAISON_COMBINED, RECOUVREMENT_COMBINED
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
@@ -5218,37 +5218,71 @@ class RecapPassageOneData(SqlData):
     show_total = True
     custom_total_calculate = True
 
+
     def __init__(self, config):
         super(RecapPassageOneData, self).__init__()
         self.config = config
+        self.product_names = []
 
     @property
     def table_name(self):
         # TODO: we don't know if we need to create data source or use existing one
-        return get_table_name(self.config['domain'], "")
+        return get_table_name(self.config['domain'], OPERATEUR_COMBINED2)
 
     @property
     def group_by(self):
-        return ['real_date_repeat', self.loc_name, self.loc_id, 'product_id', 'product_name']
+        return ['real_date_repeat', 'product_id', self.loc_name, self.loc_id, 'product_name']
+
+    @property
+    def program_products(self):
+        program_id = self.config.get('product_program', None)
+        program_products = []
+        if program_id:
+            programs = ProductsInProgramData(config=dict(domain=self.config['domain'])).rows
+            for program in programs:
+                if program[0] == program_id:
+                    list_of_program_ids = program[1].split(' ')
+                    program_products.extend(list_of_program_ids)
+            return list(set(program_products))
+        else:
+            return None
+
+    @property
+    def program_name(self):
+        program_id = self.config.get('product_program', None)
+        domain = self.config['domain']
+        if program_id:
+            rows = ProgramData(config={'domain': domain, 'program_id': program_id}).rows
+            name = next(row[1] for row in rows if row[0] == program_id)
+            return name
+        else:
+            return None
 
     @property
     def columns(self):
         columns = [
             DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
-            DatabaseColumn(_("Designations"), SimpleColumn('product_name')),
-            DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('old_stock_total')),
+            DatabaseColumn(_("Product name"), SimpleColumn('product_name')),
+            DatabaseColumn(_("Product id"), SimpleColumn('product_id')),
+            DatabaseColumn(_("Precedent"),    SumColumn('old_stock_pps')),
+            DatabaseColumn(_("Old stock total"), SumColumn('old_stock_total')),
             DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('total_stock')),
-            DatabaseColumn(_("Stock Total"), SumColumn('display_total_stock', alias='stock_total')),
-            DatabaseColumn(_("Precedent"), SumColumn('old_stock_pps')),
-            DatabaseColumn(_("Recu hors entrepots mobiles"), SumColumn('outside_receipts_amt')),
-            DatabaseColumn(_("Facturable"), SumColumn('billed_consumption')),
+            DatabaseColumn(_("Stock Total"), SumColumn('display_total_stock')),
+            DatabaseColumn(_("Outside AMT"), SumColumn('outside_receipts_amt')),
             DatabaseColumn(_("Reelle"), SumColumn('actual_consumption')),
-            DatabaseColumn("Stock Total", AliasColumn('stock_total')),
-            DatabaseColumn("PPS Restant", SumColumn('pps_stock')),
+            DatabaseColumn(_("Facturable"), SumColumn('billed_consumption')),
             DatabaseColumn("Pertes et Adjustement", SumColumn('loss_amt')),
-            DatabaseColumn(_("Livraison"), SumColumn('livraison'))
+            DatabaseColumn("Amount billed", SumColumn('amount_billed')),
+            DatabaseColumn("Amount owed", SumColumn('amount_owed')),
+            DatabaseColumn("Amt delivered", SumColumn('amt_delivered_convenience')),
+            DatabaseColumn("Total loss amt", SumColumn('total_loss_amt')),
+            DatabaseColumn("Expired pna", SumColumn('expired_pna')),
+            DatabaseColumn("Ajustment", SumColumn('ajustment')),
+            DatabaseColumn("Nb days outsotck", SumColumn('nb_days_outstock')),
+            DatabaseColumn("Consommations non facturable", SumColumn('consommations_non_facturable')),
+            DatabaseColumn("Adjusted monthly consuptions", SumColumn('adjusted_monthly_consumption')),
+            DatabaseColumn("PPS stock new", SumColumn('pps_stock_new')),
         ]
         return columns
 
@@ -5269,7 +5303,9 @@ class RecapPassageOneData(SqlData):
     def loc_type(self):
         if self.selected_location_type == 'national':
             return 'region'
-        elif self.selected_location_type == 'region':
+        if self.selected_location_type == 'region':
+            return 'region'
+        elif self.selected_location_type == 'district':
             return 'district'
         else:
             return 'pps'
@@ -5287,14 +5323,122 @@ class RecapPassageOneData(SqlData):
         filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
         if self.config['selected_location']:
             filters.append(EQ(self.loc_id, 'selected_location'))
-        if self.config['product_product']:
-            filters.append(EQ('product_id', 'product_product'))
-        elif self.config['product_program']:
-            filters.append(EQ('program_id', 'product_program'))
         return filters
 
+    def get_value(self, cell):
+        if cell:
+            return cell['html']
+        return 0
+
     @property
-    def rows(self):
-        # TODO: we don't know in which format data will be displaied
-        return []
-    # return self.get_data()
+    def rows_and_headers(self):
+        rows = self.get_data()
+        product_names = set()
+        data = {}
+        valid_products = self.program_products
+        for row in rows:
+            product_name = row['product_name']
+            product_id = row['product_id']
+            if valid_products and \
+                product_id not in valid_products:
+                continue
+            product_names.add(product_name)
+            if not data.get(product_name):
+                data[product_name] = defaultdict(int)
+
+            product_data = data[product_name]
+            product_data['Stock ε PPS Précédent'] += self.get_value(row['old_stock_pps'])
+            product_data['Stock Total Précédent'] += self.get_value(row['old_stock_total'])
+            product_data['Stock Disponible Utilisable'] += self.get_value(row['total_stock'])
+            product_data['Stock Total Restant'] += self.get_value(row['display_total_stock'])
+            product_data['Réception Hors Entrepot'] += self.get_value(row['outside_receipts_amt'])
+            product_data['Consommations Réelle'] += self.get_value(row['actual_consumption'])
+            product_data['Consommations Facturable'] += self.get_value(row['billed_consumption'])
+            product_data['Pertes Facturables PNA'] += self.get_value(row['loss_amt'])
+            product_data['Facturation Produit'] += self.get_value(row['amount_billed'])
+            product_data['amount_owed'] += self.get_value(row['amount_owed'])
+            product_data['Livraison'] += self.get_value(row['amt_delivered_convenience'])
+            product_data['Pertes / Péremptions PPS'] += self.get_value(row['total_loss_amt'])
+            product_data['Péremptions PNA'] += self.get_value(row['expired_pna'])
+            product_data['Ajustements / Retraits PNA'] += self.get_value(row['ajustment'])
+            product_data['Nombre Jours de rupture'] += self.get_value(row['nb_days_outstock'])
+            product_data['Consommations Non Facturable'] += self.get_value(row['consommations_non_facturable'])
+            product_data['CMM Ajustée'] += self.get_value(row['adjusted_monthly_consumption'])
+            product_data['Stock Restant ε PPS'] += self.get_value(row['pps_stock_new'])
+
+        product_names = sorted(product_names)
+        self.product_names = product_names
+
+        rows = []
+        # In case of no products
+        if len(product_names) == 0:
+            return self.empty_table
+        for key in data[product_names[0]]:
+            next_row = [key]
+            for product in product_names:
+                next_row.append(data[product][key])
+
+            rows.append(next_row)
+
+        amount_billed_sum = sum([data[product]['amount_billed'] for product in self.product_names])
+        rows.append(['Facturation Groupe', amount_billed_sum])
+        return rows, self.get_headers()
+
+    @property
+    def aggregated_data(self):
+        rows = self.get_data()
+        data = {
+            'Total Facture': 0,
+            'Net à Payer': 0,
+        }
+        valid_products = self.program_products
+        for row in rows:
+            if valid_products and \
+                row['product_id'] not in valid_products:
+                continue
+
+            data['Total Facture'] += self.get_value(row['amount_billed'])
+            data['Net à Payer'] += self.get_value(row['amount_owed'])
+
+        rows = []
+        headers = data.keys()
+        for header in headers:
+            value = data[header]
+            rows.append([dict(html=value)])
+
+        headers = [DataTablesColumn(header_name) for header_name in headers]
+        return rows, DataTablesHeader(*headers)
+
+    @property
+    def empty_table(self):
+        rows = [['Stock ε PPS Précédent','pas de données'],
+                ['Stock Total Précédent','pas de données'],
+                ['Stock Disponible Utilisable','pas de données'],
+                ['Stock Total Restant','pas de données'],
+                ['Réception Hors Entrepot','pas de données'],
+                ['Consommations Réelle','pas de données'],
+                ['Consommations Facturable','pas de données'],
+                ['Pertes Facturables PNA','pas de données'],
+                ['Facturation Produit','pas de données'],
+                ['amount_owed','pas de données'],
+                ['Livraison','pas de données'],
+                ['Pertes / Péremptions PPS','pas de données'],
+                ['Péremptions PNA','pas de données'],
+                ['Ajustements / Retraits PNA','pas de données'],
+                ['Nombre Jours de rupture','pas de données'],
+                ['Consommations Non Facturable','pas de données'],
+                ['CMM Ajustée','pas de données'],
+                ['Stock Restant ε PPS','pas de données']]
+        empty_headers = DataTablesHeader(DataTablesColumn(''), DataTablesColumn('pas de produits'))
+        return rows, empty_headers
+
+    @property
+    def headers(self):
+        return self.get_headers()
+
+    def get_headers(self):
+        headers = DataTablesHeader(DataTablesColumn(''))
+
+        for name in self.product_names:
+            headers.add_column(DataTablesColumn(name))
+        return headers

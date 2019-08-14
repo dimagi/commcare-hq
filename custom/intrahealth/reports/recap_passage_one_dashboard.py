@@ -60,12 +60,7 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
 
     @property
     def headers(self):
-        # TODO: needs further implementation
         return RecapPassageOneData(config=self.config).headers
-        # headers = RecapPassageOneData(config=self.config).headers.header
-        # return DataTablesHeader(
-        #     *headers
-        # )
 
     @property
     def aggregated_headers(self):
@@ -98,13 +93,7 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
             aggregated_rows = []
             comment = ""
         else:
-            rows = [[dict(html='a'), dict(html='b'), dict(html='c'),
-                           dict(html='d'), dict(html='c'),dict(html='c'), dict(html='c'),
-                           dict(html='d'), dict(html='c'),dict(html='c'), dict(html='c'), dict(html='c'),
-                           dict(html='c')]]
-            #rows =self.calculate_rows()
             rows, headers = self.calculate_table()
-           # headers = self.headers
             aggregated_rows, aggregated_headers = self.calculate_aggregated_table()
             
             for n in range(len(aggregated_headers)):
@@ -118,35 +107,22 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
                 slug=self.slug,
                 comment=comment,
                 headers=headers,
-                rows=rows, #rows should be [aggregation, values for products]
+                rows=rows,
                 project=self.request.GET.get('project_name') or "Malaria",
                 default_rows=self.default_rows,
-            ),
-            aggregated_table=dict(
-                headers=aggregated_headers,
-                date="jAKAŚdATA",
-                title="P1",
-                rows=aggregated_rows,
-                number_of_agregated=2,
-                regular_rows=[[dict(html='aggr_1_name', colspan='2')],
-                              [dict(html='aggr_2_name', colspan='2')],
-                              [dict(html='aggr_3_name', colspan='2')]]
             )
         )
 
         return context
 
     def calculate_rows(self):
-        # TODO: needs further implementation
         rows = RecapPassageOneData(config=self.config).rows
         return rows
 
     def calculate_table(self):
-        # TODO: needs further implementation
         return RecapPassageOneData(config=self.config).rows_and_headers
 
     def calculate_aggregated_table(self):
-        # TODO: needs further implementation
         return RecapPassageOneData(config=self.config).aggregated_data
 
     @property
@@ -167,28 +143,3 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
         config['product_program'] = self.request.GET.get('program')
         config['selected_location'] = self.request.GET.get('location_id')
         return config
-
-
-class CustomHeaderField(DataTablesColumn):
-    @property
-    def render_html(self):
-            template = '''
-<div>
-<tr>
-        <th><strong>Name</strong></th>
-        <th><strong>Date</strong></th>
-        <th style="text-align: center" colspan="13"><strong>Malaria</strong></th>
-        <tr>
-    <tr>
-        <td><strong>Total Facture</strong></td>
-        <td><strong>12345</strong></td>
-    <tr>
-        <td><strong>Net a Payer</strong></td>
-        <td><strong>54321</strong></td>
-        </tr>
-    </th>
-<div>'''
-
-            css_class = ' class="col-sm-%d"' % self.css_span if self.css_span > 0 else ''
-            return template % dict(title=self.html, css_class=css_class,
-                                   colspan=2) if True else ""
