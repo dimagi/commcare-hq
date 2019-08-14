@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.generic import View
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation, JSONResponseException
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation, JSONResponseException
 
 from memoized import memoized
 

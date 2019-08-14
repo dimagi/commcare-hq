@@ -166,7 +166,7 @@ have to include
 
 We use our own `dimagi/jquery.rmi` library to post ajax calls to methods in Django Views that have been tagged to allow remote method invocation. Each RMI request creates a Promise for handling the server response.
 
-`dimagi/jquery.rmi` was modeled after [Djangular's RMI](http://django-angular.readthedocs.org/en/latest/remote-method-invocation.html)), and currently relies on a portion of that library to handle server responses.
+`dimagi/jquery.rmi` was modeled after [Django-Angular's RMI](http://django-angular.readthedocs.org/en/latest/remote-method-invocation.html)), and currently relies on a portion of that library to handle server responses.
 
 The [README for dimagi/jquery.rmi](http://github.com/dimagi/jquery.rmi) has excellent instructions for usage.
 

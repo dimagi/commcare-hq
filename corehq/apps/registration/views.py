@@ -16,7 +16,7 @@ from django.views.decorators.http import require_POST
 import sys
 
 from django.views.generic.base import TemplateView, View
-from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+from djng.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_is_on_trial

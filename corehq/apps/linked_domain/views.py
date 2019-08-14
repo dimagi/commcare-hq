@@ -13,7 +13,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy, ugettext
 from django.views import View
 from django.urls import reverse
-from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+from djng.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app, get_brief_apps_in_domain

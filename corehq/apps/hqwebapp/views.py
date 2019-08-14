@@ -39,7 +39,6 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
-from djangular.views.mixins import JSONResponseMixin
 
 import httpagentparser
 from couchdbkit import ResourceNotFound

@@ -55,7 +55,6 @@ from django.db import transaction
 from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError, HttpResponseBadRequest
 from django.shortcuts import render
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 from no_exceptions.exceptions import Http403
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
