@@ -19,8 +19,17 @@
   ],
   "server_environment": [
     "india",
-    "icds-new",
     "icds"
+  ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
   ],
   "config": {
     "table_id": "static-awc_mgt_forms",
@@ -93,7 +102,7 @@
         "column_id": "awc_id"
       },
       {
-        "display_name": "",
+        "display_name": "[DEPRECATED] TO BE REMOVED",
         "datatype": "string",
         "type": "expression",
         "expression": {
@@ -115,8 +124,8 @@
           "name": "user_location_id"
         },
         "transform": {},
-        "is_nullable": true,
-        "is_primary_key": false,
+        "is_nullable": false,
+        "is_primary_key": true,
         "column_id": "location_id",
         "type": "expression"
       },
@@ -481,6 +490,13 @@
     },
     "named_filters": {},
     "engine_id": "icds-ucr",
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "location_id"
+      },
+      "primary_key": ["location_id","doc_id"]
+    }
   }
 }

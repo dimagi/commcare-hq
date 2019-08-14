@@ -1353,3 +1353,15 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # HIERARCHICAL_LOCATION_FIXTURE. In such case the domain stays on flat fixture format
         configuration_mock_obj.sync_hierarchical_fixture = False
         self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+
+    def test_unicode_lookup_table_instance(self):
+        self.form.form_filter = "instance('item-list:província')/província/"
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <instance id='item-list:província' src='jr://fixture/item-list:província' />
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )

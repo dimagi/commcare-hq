@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'complementary-forms-ccs-record'
     ucr_data_source_id = 'static-complementary_feeding_forms'
     aggregate_parent_table = AGG_CCS_RECORD_CF_TABLE
     aggregate_child_table_prefix = 'icds_db_child_ccs_cf_form_'

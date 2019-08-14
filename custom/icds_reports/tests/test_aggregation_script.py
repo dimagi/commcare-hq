@@ -1,25 +1,36 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from datetime import date, time
-from decimal import Decimal
 import os
 import re
-
-import six
-import sqlalchemy
+from datetime import date, datetime, time
+from decimal import Decimal
 
 from django.test.testcases import TestCase, override_settings
 
-from corehq.sql_db.connections import connection_manager
+import six
+import sqlalchemy
+from freezegun import freeze_time
 from six.moves import zip
 
-from custom.icds_reports.models.aggregate import get_cursor, AggregateInactiveAWW
-from custom.icds_reports.tests import CSVTestCase, OUTPUT_PATH
-from custom.icds_reports.utils.aggregation_helpers.monolith import InactiveAwwsAggregationHelper
+from custom.icds_reports.exceptions import LocationRemovedException
+from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.tests.util import setup_locations_and_types
+from corehq.sql_db.connections import connection_manager
+from custom.icds_reports.models.aggregate import (
+    AggregateInactiveAWW,
+    AwcLocation,
+    get_cursor,
+    maybe_atomic,
+)
+from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
+from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
+from custom.icds_reports.utils.aggregation_helpers.monolith import (
+    InactiveAwwsAggregationHelper,
+    LocationAggregationHelper,
+)
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class AggregationScriptTestBase(CSVTestCase):
     """
     Note: test setup and teardown are done at module level using
@@ -50,8 +61,10 @@ class AggregationScriptTestBase(CSVTestCase):
         else:
             return value_str
 
-    def _load_data_from_db(self, table_name, sort_key):
-        engine = connection_manager.get_session_helper('icds-ucr').engine
+    def _load_data_from_db(self, table_name, sort_key, filter_by=None):
+        session_helper = connection_manager.get_session_helper('icds-ucr')
+        engine = session_helper.engine
+        session = session_helper.Session
         metadata = sqlalchemy.MetaData(bind=engine)
         metadata.reflect(bind=engine)
         table = metadata.tables[table_name]
@@ -60,7 +73,10 @@ class AggregationScriptTestBase(CSVTestCase):
             for column in table.columns
         ]
         with engine.begin() as connection:
-            rows = connection.execute(table.select().order_by(*sort_key)).fetchall()
+            query = session.query(table).order_by(*sort_key)
+            if filter_by:
+                query = query.filter_by(**filter_by)
+            rows = query.all()
             for row in rows:
                 row = list(row)
                 for idx, value in enumerate(row):
@@ -76,19 +92,19 @@ class AggregationScriptTestBase(CSVTestCase):
                         row[idx] = ''
                 yield dict(zip(columns, row))
 
-    def _load_and_compare_data(self, table_name, path, sort_key=None):
+    def _load_and_compare_data(self, table_name, path, sort_key=None, filter_by=None):
         # To speed up tests, we use a sort_key wherever possible
         #   to presort before comparing data
         if sort_key:
             self._fasterAssertListEqual(
-                list(self._load_data_from_db(table_name, sort_key)),
+                list(self._load_data_from_db(table_name, sort_key, filter_by)),
                 self._load_csv(path)
             )
         else:
             sort_key = lambda x: x
             self._fasterAssertListEqual(
                 sorted(
-                    list(self._load_data_from_db(table_name, [])),
+                    list(self._load_data_from_db(table_name, [], filter_by)),
                     key=sort_key
                 ),
                 sorted(
@@ -112,16 +128,18 @@ class CcsRecordMonthlyAggregationTest(AggregationScriptTestBase):
 
     def test_ccs_record_monthly_2017_04_01(self):
         self._load_and_compare_data(
-            'ccs_record_monthly_2017-04-01',
+            'ccs_record_monthly',
             os.path.join(OUTPUT_PATH, 'ccs_record_monthly_2017-04-01_sorted.csv'),
-            sort_key=['awc_id', 'case_id']
+            sort_key=['awc_id', 'case_id'],
+            filter_by={'month': '2017-04-01'}
         )
 
     def test_ccs_record_monthly_2017_05_01(self):
         self._load_and_compare_data(
-            'ccs_record_monthly_2017-05-01',
+            'ccs_record_monthly',
             os.path.join(OUTPUT_PATH, 'ccs_record_monthly_2017-05-01_sorted.csv'),
-            sort_key=['awc_id', 'case_id']
+            sort_key=['awc_id', 'case_id'],
+            filter_by={'month': '2017-05-01'}
         )
 
 
@@ -134,72 +152,82 @@ class CcsRecordAggregationTest(AggregationScriptTestBase):
 
     def test_agg_ccs_record_2017_04_01_1(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_1',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_1_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 1}
         )
 
     def test_agg_ccs_record_2017_04_01_2(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_2',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_2_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 2}
         )
 
     def test_agg_ccs_record_2017_04_01_3(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_3',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_3_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 3}
         )
 
     def test_agg_ccs_record_2017_04_01_4(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_4',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_4_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 4}
         )
 
     def test_agg_ccs_record_2017_04_01_5(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_5',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_5_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 5}
         )
 
     def test_agg_ccs_record_2017_05_01_1(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_1',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_1_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 1}
         )
 
     def test_agg_ccs_record_2017_05_01_2(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_2',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_2_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 2}
         )
 
     def test_agg_ccs_record_2017_05_01_3(self):
         self._load_and_compare_data(
             'agg_ccs_record_2017-05-01_3',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_3_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 3}
         )
 
     def test_agg_ccs_record_2017_05_01_4(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_4',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_4_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 4}
         )
 
     def test_agg_ccs_record_2017_05_01_5(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_5',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_5_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 5}
         )
 
 
@@ -214,69 +242,79 @@ class AggChildHealthAggregationTest(AggregationScriptTestBase):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_1',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_1_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 1}
         )
 
     def test_agg_child_health_2017_04_01_2(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_2',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_2_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 2}
         )
 
     def test_agg_child_health_2017_04_01_3(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_3',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_3_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 3}
         )
 
     def test_agg_child_health_2017_04_01_4(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_4',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_4_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 4}
         )
 
     def test_agg_child_health_2017_04_01_5(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_5',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_5_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 5}
         )
 
     def test_agg_child_health_2017_05_01_1(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_1',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_1_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 1}
         )
     def test_agg_child_health_2017_05_01_2(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_2',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_2_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 2}
         )
 
     def test_agg_child_health_2017_05_01_3(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_3',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_3_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 3}
         )
 
     def test_agg_child_health_2017_05_01_4(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_4',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_4_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 4}
         )
 
     def test_agg_child_health_2017_05_01_5(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_5',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_5_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 5}
         )
 
 
@@ -398,57 +436,65 @@ class ChildHealthMonthlyAggregationTest(AggregationScriptTestBase):
 
     def test_child_health_monthly_2017_04_01(self):
         self._load_and_compare_data(
-            'child_health_monthly_2017-04-01',
+            'child_health_monthly',
             os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-04-01_sorted.csv'),
-            sort_key=['awc_id', 'case_id']
+            sort_key=['awc_id', 'case_id'],
+            filter_by={'month': '2017-04-01'}
         )
 
     def test_child_health_monthly_2017_05_01(self):
         self._load_and_compare_data(
-            'child_health_monthly_2017-05-01',
+            'child_health_monthly',
             os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-05-01_sorted.csv'),
-            sort_key=['awc_id', 'case_id']
+            sort_key=['awc_id', 'case_id'],
+            filter_by={'month': '2017-05-01'}
         )
 
 
 class DailyAttendanceAggregationTest(AggregationScriptTestBase):
     def test_daily_attendance_2017_04_01(self):
         self._load_and_compare_data(
-            'daily_attendance_2017-04-01',
+            'daily_attendance',
             os.path.join(OUTPUT_PATH, 'daily_attendance_2017-04-01_sorted.csv'),
-            sort_key=['awc_id', 'pse_date']
+            sort_key=['awc_id', 'pse_date'],
+            filter_by={'month': date(2017, 4, 1)}
         )
 
     def test_daily_attendance_2017_05_01(self):
         self._load_and_compare_data(
-            'daily_attendance_2017-05-01',
+            'daily_attendance',
             os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01_sorted.csv'),
-            sort_key=['awc_id', 'pse_date']
+            sort_key=['awc_id', 'pse_date'],
+            filter_by={'month': date(2017, 5, 1)}
         )
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class InactiveAWWsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        last_sync = date(2017, 4, 1)
-        cls.helper = InactiveAwwsAggregationHelper(last_sync)
         super(InactiveAWWsTest, cls).setUpClass()
+        last_sync = date(2017, 4, 1)
+        cls.agg_time = datetime(2017, 7, 31, 18)
+        helper_class = get_helper(InactiveAwwsAggregationHelper.helper_key)
+        cls.helper = helper_class(last_sync)
 
     def tearDown(self):
         AggregateInactiveAWW.objects.all().delete()
 
     def test_missing_locations_query(self):
-        missing_location_query = self.helper.missing_location_query()
+        with freeze_time(self.agg_time):
+            missing_location_query = self.helper.missing_location_query()
         with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
         self.assertEquals(records.count(), 0)
 
     def test_aggregate_query(self):
-        missing_location_query = self.helper.missing_location_query()
-        aggregation_query, agg_params = self.helper.aggregate_query()
+        with freeze_time(self.agg_time):
+            missing_location_query = self.helper.missing_location_query()
+            aggregation_query, agg_params = self.helper.aggregate_query()
         with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
             cursor.execute(aggregation_query, agg_params)
@@ -456,11 +502,86 @@ class InactiveAWWsTest(TestCase):
         self.assertEquals(records.count(), 46)
 
     def test_submission_dates(self):
-        missing_location_query = self.helper.missing_location_query()
-        aggregation_query, agg_params = self.helper.aggregate_query()
+        with freeze_time(self.agg_time):
+            missing_location_query = self.helper.missing_location_query()
+            aggregation_query, agg_params = self.helper.aggregate_query()
         with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
             cursor.execute(aggregation_query, agg_params)
         record = AggregateInactiveAWW.objects.filter(awc_id='a10').first()
         self.assertEquals(date(2017, 4, 5), record.first_submission)
         self.assertEquals(date(2017, 5, 5), record.last_submission)
+
+
+@override_settings(SERVER_ENVIRONMENT='icds')
+class LocationAggregationTest(TestCase):
+    domain_name = 'icds-cas'
+
+    @classmethod
+    def setUpClass(cls):
+        super(LocationAggregationTest, cls).setUpClass()
+
+        # save locations that are setup in module so we can add them back later
+        cls.all_locations = list(SQLLocation.objects.filter(domain=cls.domain_name).all())
+        cls.all_location_types = list(LocationType.objects.filter(domain=cls.domain_name).all())
+        SQLLocation.objects.filter(domain=cls.domain_name).delete()
+        LocationType.objects.filter(domain=cls.domain_name).delete()
+
+        setup_locations_and_types(
+            cls.domain_name,
+            ['state', 'district', 'block', 'supervisor', 'awc'],
+            [],
+            [
+                ('State1', [
+                    ('District1', [
+                        ('Block1', [
+                            ('Supervisor1', [
+                                ('Awc1', []),
+                                ('Awc2', []),
+                            ]),
+                            ('Supervisor2', [
+                                ('Awc3', []),
+                            ]),
+                        ]),
+                        ('Block2', []),
+                    ]),
+                ])
+            ]
+        )
+
+        cls.helper = LocationAggregationHelper()
+
+    @classmethod
+    def tearDownClass(cls):
+        SQLLocation.objects.filter(domain=cls.domain_name).delete()
+        LocationType.objects.filter(domain=cls.domain_name).delete()
+        LocationType.objects.bulk_create(cls.all_location_types)
+        SQLLocation.objects.bulk_create(cls.all_locations)
+        super(LocationAggregationTest, cls).tearDownClass()
+
+    def test_number_rows_csv(self):
+        csv = self.helper.generate_csv()
+        self.assertEqual(len(csv.readlines()), 4)
+
+    def test_agg(self):
+        # This is copied over in the module
+        self.assertEqual(AwcLocation.objects.count(), 92)
+
+        with maybe_atomic(AwcLocation):
+            # if we ran the aggregation now, we'd have 55 fewer locations
+            with self.assertRaisesRegex(LocationRemovedException, '55'):
+                with get_cursor(AwcLocation) as cursor:
+                    self.helper.aggregate(cursor)
+
+            try:
+                with maybe_atomic(AwcLocation):
+                    # run agg again without any locations in awc_location
+                    with get_cursor(AwcLocation) as cursor:
+                        cursor.execute("DELETE FROM awc_location")
+                        self.helper.aggregate(cursor)
+
+                    self.assertEqual(AwcLocation.objects.count(), 8)
+                    raise Exception("Don't allow this to be commited")
+            except Exception as e:
+                if 'allow this' not in str(e):
+                    raise

@@ -14,6 +14,12 @@
           </div>
         </div>
         <div class="form-group">
+          <label class="control-label col-sm-2">{% trans "Description" %}</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" data-bind="value: description, valueUpdate: 'afterkeydown'"/>
+          </div>
+        </div>
+        <div class="form-group">
           <label class="control-label col-sm-2">
             {% trans "Visibility" %}
           </label>

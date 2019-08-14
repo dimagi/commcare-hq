@@ -33,8 +33,23 @@ class GIRTableGenerator(object):
         self.monthspan_list = datespan_object_list
 
     def build_table(self):
+
+        def fetch_latest_doc(dom1_id, dom2_id):
+            dom1 = Domain.get(dom1_id)
+            dom2 = Domain.get(dom2_id)
+            assert dom1.name == dom2.name
+            return dom2 if dom1.last_modified < dom2.last_modified else dom1
+
+        domains_by_name = {}
         rows = []
+        # filter out duplicate domain docs
         for domain in Domain.get_all():
+            if domain.name in domains_by_name:
+                latest_domain = fetch_latest_doc(domain.get_id, domains_by_name[domain.name].get_id)
+                domains_by_name[domain.name] = latest_domain
+            else:
+                domains_by_name[domain.name] = domain
+        for _, domain in six.iteritems(domains_by_name):
             for monthspan in self.monthspan_list:
                 gir_dict = GIRTableGenerator.get_gir_dict_for_domain_and_monthspan(domain, monthspan)
                 rows.append(gir_dict)

@@ -8,13 +8,6 @@
     .media-status-icon {
       font-size: 22px;
     }
-
-    .media-status-icon .media-status-warning {
-      color: #ff8400;
-    }
-    .media-status-icon .media-status-ok {
-      color: #4aba32;
-    }
   </style>
 {% endblock %}
 
@@ -63,7 +56,7 @@
       </div>
       <div class="col-sm-5" data-bind="visible: totals().length">
         <div class="well">
-          {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True is_multimedia_reference_checker=True %}
+          {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True %}
           <ul class="list-unstyled" data-bind="foreach: totals">
             <li class="media-totals" data-bind="event: {refMediaAdded: $parent.incrementTotals}">
               <i data-bind="attr: {class: icon_class}"></i>

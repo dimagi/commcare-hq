@@ -1,4 +1,7 @@
+from __future__ import absolute_import
 from __future__ import unicode_literals
+from django.conf import settings
+
 SUPERVISOR_APP_ID = '48cc1709b7f62ffea24cc6634a00660c'
 VHND_SURVEY_XMLNS = "http://openrosa.org/formdesigner/A1C9EF1B-8B42-43AB-BA81-9484DB9D8293"
 
@@ -26,3 +29,10 @@ ENGLISH = 'en'
 HINDI = 'hin'
 TELUGU = 'tel'
 MARATHI = 'mar'
+
+FILE_TYPE_CHOICE_ZIP = 1
+FILE_TYPE_CHOICE_DOC = 2
+DISPLAY_CHOICE_LIST = 1
+DISPLAY_CHOICE_FOOTER = 2
+
+ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES = getattr(settings, 'ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES', 60 * 24 * 2)

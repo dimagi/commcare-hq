@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS "tmp_awc_location"
+{}
+CREATE TABLE "tmp_awc_location" (LIKE "awc_location" INCLUDING INDEXES)
+{}

@@ -18,6 +18,16 @@
     "india",
     "icds"
   ],
+  "mirrored_engine_ids": [
+    {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
+      "server_environment": "india",
+      "engine_ids": ["icds-ucr-citus"]
+    }
+  ],
   "config": {
     "table_id": "static-dashboard_delivery_forms",
     "display_name": "Forms - Delivery Forms (Dashboard)",
@@ -79,8 +89,10 @@
             "name": "user_location_id"
           },
           "location_type": "supervisor",
-          "location_property": "_id"
-        }
+      	  "location_property": "_id"
+        },
+        "is_primary_key": true,
+        "is_nullable": false
       },
       {
         "column_id": "case_load_ccs_record0",
@@ -255,6 +267,13 @@
       }
     },
     "engine_id": "icds-ucr",
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
+    }
   }
 }

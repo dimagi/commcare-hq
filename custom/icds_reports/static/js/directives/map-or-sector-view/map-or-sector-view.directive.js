@@ -44,8 +44,6 @@ function MapOrSectorController($location, storageService, locationsService) {
 
         chart: {
             type: 'multiBarHorizontalChart',
-            width: 1400,
-            height: 550,
             margin: {
                 bottom: 40,
                 left: 100,

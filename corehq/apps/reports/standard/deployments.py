@@ -4,40 +4,52 @@ from __future__ import absolute_import, division, unicode_literals
 from collections import namedtuple
 from datetime import date, datetime, timedelta
 
-from couchdbkit import ResourceNotFound
-from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.http import HttpResponseRedirect
-from django.utils.translation import (ugettext as _, ugettext_lazy,
-    ugettext_noop)
+
+from django.db.models import Q
+
+from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from couchdbkit import ResourceNotFound
 from memoized import memoized
 from six.moves import range
 
+from couchexport.export import SCALAR_NEVER_WAS
+from dimagi.utils.dates import safe_strftime
+from dimagi.utils.parsing import string_to_utc_datetime
+from phonelog.models import UserErrorEntry
+
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import (get_app,
-    get_brief_apps_in_domain)
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_brief_apps_in_domain,
+)
 from corehq.apps.es import UserES, filters
 from corehq.apps.es.aggregations import DateHistogram
 from corehq.apps.hqwebapp.decorators import use_nvd3
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.reports.generic import (GenericTabularReport, GetParamsMixin,
-    PaginatedReportMixin)
-from corehq.apps.reports.standard import (ProjectReport,
-    ProjectReportParametersMixin)
+from corehq.apps.reports.generic import (
+    GenericTabularReport,
+    GetParamsMixin,
+    PaginatedReportMixin,
+)
+from corehq.apps.reports.standard import (
+    ProjectReport,
+    ProjectReportParametersMixin,
+)
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
+from corehq.util.queries import paginated_queryset
 from corehq.util.quickcache import quickcache
 from corehq.warehouse.models.facts import ApplicationStatusFact
-from couchexport.export import SCALAR_NEVER_WAS
-from dimagi.utils.dates import safe_strftime
-from dimagi.utils.parsing import string_to_utc_datetime
-from django.urls import reverse
-from phonelog.models import UserErrorEntry
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -48,7 +60,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 
 @location_safe
 class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsReport):
-    name = ugettext_noop("Application Status")
+    name = ugettext_lazy("Application Status")
     slug = "app_status"
     emailable = True
     exportable = True
@@ -62,7 +74,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def warehouse(self):
-        return toggles.WAREHOUSE_APP_STATUS.enabled(self.domain)
+        return toggles.WAREHOUSE_APP_STATUS.enabled_for_request(self.request)
 
     @property
     def headers(self):
@@ -169,9 +181,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     def get_data_for_app(self, options, app_id):
         try:
-            data = filter(lambda option: option['app_id'] == app_id,
-                          options)[0]
-            return data
+            return list(filter(lambda option: option['app_id'] == app_id, options))[0]
         except IndexError:
             return {}
 
@@ -209,8 +219,71 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                        )
         return user_query
 
+    def get_location_columns(self, grouped_ancestor_locs):
+        from corehq.apps.locations.models import LocationType
+        location_types = LocationType.objects.by_domain(self.domain)
+        all_user_locations = grouped_ancestor_locs.values()
+        all_user_loc_types = {loc.location_type_id for user_locs in all_user_locations for loc in user_locs}
+        required_loc_columns = [loc_type for loc_type in location_types if loc_type.id in all_user_loc_types]
+        return required_loc_columns
+
+    def user_locations(self, ancestors, location_types):
+        ancestors_by_type_id = {loc.location_type_id: loc.name for loc in ancestors}
+        return [
+            ancestors_by_type_id.get(location_type.id, '---')
+            for location_type in location_types
+        ]
+
+    def get_bulk_ancestors(self, location_ids):
+        """
+        Returns the grouped ancestors for the location ids passed in the
+        dictionary of following pattern
+        {location_id_1: [self, parent, parent_of_parent,.,.,.,],
+        location_id_2: [self, parent, parent_of_parent,.,.,.,],
+
+        }
+        :param domain: domain for which locations is to be pulled out
+        :param location_ids: locations ids whose ancestors needs to be find
+        :param kwargs: extra parameters
+        :return: dict
+        """
+        where = Q(domain=self.domain, location_id__in=location_ids)
+        location_ancestors = SQLLocation.objects.get_ancestors(where)
+        location_by_id = {location.location_id: location for location in location_ancestors}
+        location_by_pk = {location.id: location for location in location_ancestors}
+
+        grouped_location = {}
+        for location_id in location_ids:
+
+            location_parents = []
+            current_location = location_by_id[location_id].id if location_id in location_by_id else None
+
+            while current_location is not None:
+                location_parents.append(location_by_pk[current_location])
+                current_location = location_by_pk[current_location].parent_id
+
+            grouped_location[location_id] = location_parents
+
+        return grouped_location
+
+    def include_location_data(self):
+        toggle = toggles.LOCATION_COLUMNS_APP_STATUS_REPORT
+        return (
+            (
+                toggle.enabled(self.request.domain, toggles.NAMESPACE_DOMAIN)
+                and self.rendered_as in ['export']
+            )
+        )
+
     def process_rows(self, users, fmt_for_export=False):
         rows = []
+        users = list(users)
+
+        if self.include_location_data():
+            location_ids = {user['location_id'] for user in users if user['location_id']}
+            grouped_ancestor_locs = self.get_bulk_ancestors(location_ids)
+            self.required_loc_columns = self.get_location_columns(grouped_ancestor_locs)
+
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
             build_version = _("Unknown")
@@ -247,29 +320,35 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
                     app_name = self.get_app_name(last_build['app_id'])
-            rows.append([
+
+            row_data = [
                 user_display_string(user.get('username', ''),
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version or '---'
-            ])
+            ]
+
+            if self.include_location_data():
+                location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []),
+                                                    self.required_loc_columns)
+                row_data = location_data + row_data
+
+            rows.append(row_data)
         return rows
 
-    def process_users(self, users, fmt_for_export=False):
+    def process_facts(self, app_status_facts, fmt_for_export=False):
         rows = []
-        first = self.pagination.start
-        last = first + self.pagination.count
-        for user in users[first:last]:
+        for fact in app_status_facts:
             rows.append([
-                user_display_string(user.user_dim.username,
-                                    user.user_dim.first_name,
-                                    user.user_dim.last_name),
-                _fmt_date(user.last_form_submission_date, fmt_for_export),
-                _fmt_date(user.last_sync_log_date, fmt_for_export),
-                getattr(user.app_dim, 'name', '---'),
-                user.last_form_app_build_version,
-                user.last_form_app_commcare_version
+                user_display_string(fact.user_dim.username,
+                                    fact.user_dim.first_name,
+                                    fact.user_dim.last_name),
+                _fmt_date(fact.last_form_submission_date, fmt_for_export),
+                _fmt_date(fact.last_sync_log_date, fmt_for_export),
+                getattr(fact.app_dim, 'name', '---'),
+                fact.last_form_app_build_version,
+                fact.last_form_app_commcare_version
             ])
         return rows
 
@@ -307,33 +386,49 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @property
     def rows(self):
         if self.warehouse:
-            mobile_user_and_group_slugs = set(
-                # Cater for old ReportConfigs
-                self.request.GET.getlist('location_restricted_mobile_worker') +
-                self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
-            )
-            users = ExpandedMobileWorkerFilter.user_es_query(
-                self.domain,
-                mobile_user_and_group_slugs,
-                self.request.couch_user,
-            ).values_list('_id', flat=True)
+            user_ids = self.get_user_ids()
             sort_clause = self.get_sql_sort()
             rows = ApplicationStatusFact.objects.filter(
-                user_dim__user_id__in=users
+                user_dim__user_id__in=user_ids
             ).order_by(sort_clause).select_related('user_dim', 'app_dim')
             if self.selected_app_id:
                 rows = rows.filter(app_dim__application_id=self.selected_app_id)
             self._total_records = rows.count()
-            return self.process_users(rows)
+            first = self.pagination.start
+            last = first + self.pagination.count
+            return self.process_facts(rows[first:last])
         else:
             users = self.user_query().run()
             self._total_records = users.total
             return self.process_rows(users.hits)
 
+    def get_user_ids(self):
+        mobile_user_and_group_slugs = set(
+            # Cater for old ReportConfigs
+            self.request.GET.getlist('location_restricted_mobile_worker') +
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+        )
+        user_ids = ExpandedMobileWorkerFilter.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+            self.request.couch_user,
+        ).values_list('_id', flat=True)
+        return user_ids
+
     @property
     def get_all_rows(self):
-        users = self.user_query(False).scroll()
-        return self.process_rows(users, True)
+        if self.warehouse:
+            user_ids = self.get_user_ids()
+            rows = ApplicationStatusFact.objects.filter(
+                user_dim__user_id__in=user_ids
+            ).select_related('user_dim', 'app_dim')
+            if self.selected_app_id:
+                rows = rows.filter(app_dim__application_id=self.selected_app_id)
+            self._total_records = rows.count()
+            return self.process_facts(paginated_queryset(rows, 10000))
+        else:
+            users = self.user_query(False).scroll()
+            return self.process_rows(users, True)
 
     @property
     def export_table(self):
@@ -344,11 +439,18 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         result = super(ApplicationStatusReport, self).export_table
         table = list(result[0][1])
+        location_colums = []
+
+        if self.include_location_data():
+            location_colums = ['{} Name'.format(loc_col.name.title()) for loc_col in self.required_loc_columns]
+
+        table[0] = location_colums + table[0]
+
         for row in table[1:]:
             # Last submission
-            row[1] = _fmt_timestamp(row[1])
+            row[len(location_colums) + 1] = _fmt_timestamp(row[len(location_colums) + 1])
             # Last sync
-            row[2] = _fmt_timestamp(row[2])
+            row[len(location_colums) + 2] = _fmt_timestamp(row[len(location_colums) + 2])
         result[0][1] = table
         return result
 
@@ -414,7 +516,7 @@ def _bootstrap_class(obj, severe, warn):
 
 
 class ApplicationErrorReport(GenericTabularReport, ProjectReport):
-    name = ugettext_noop("Application Error Report")
+    name = ugettext_lazy("Application Error Report")
     slug = "application_error"
     ajax_pagination = True
     sortable = False

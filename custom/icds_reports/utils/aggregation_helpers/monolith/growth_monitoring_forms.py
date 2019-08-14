@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'growth-monitoring-forms'
     ucr_data_source_id = 'static-dashboard_growth_monitoring_forms'
     aggregate_parent_table = AGG_GROWTH_MONITORING_TABLE
     aggregate_child_table_prefix = 'icds_db_gm_form_'

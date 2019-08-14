@@ -4,11 +4,12 @@ from __future__ import unicode_literals
 
 from sqlagg.columns import SimpleColumn
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin
 
 
-class LadySupervisorExport(ExportableMixin, SqlData):
+class LadySupervisorExport(ExportableMixin, IcdsSqlData):
     title = 'Lady Supervisor'
     table_name = 'agg_ls_monthly'
 
@@ -19,7 +20,7 @@ class LadySupervisorExport(ExportableMixin, SqlData):
             DatabaseColumn('District', SimpleColumn('district_name'), slug='district_name'),
             DatabaseColumn('Block', SimpleColumn('block_name'), slug='block_name'),
             DatabaseColumn('Sector Name', SimpleColumn('supervisor_name'), slug='supervisor_name'),
-            DatabaseColumn('Name of Lady Supervisor', SimpleColumn('supervisor_site_code'),
+            DatabaseColumn('Lady Supervisor User ID', SimpleColumn('supervisor_site_code'),
                            slug='supervisor_site_code'),
             DatabaseColumn('Total No. of AWCs visited', SimpleColumn('awc_visits'), slug='awc_visits'),
             DatabaseColumn(
@@ -27,7 +28,7 @@ class LadySupervisorExport(ExportableMixin, SqlData):
                 SimpleColumn('beneficiary_vists'),
                 slug='beneficiary_vists'
             ),
-            DatabaseColumn('Total No. of VHNDs observed', SimpleColumn('vhnd_observed'), slug='vhnd_observed'),
+            DatabaseColumn('Total No. of VHSNDs observed', SimpleColumn('vhnd_observed'), slug='vhnd_observed'),
         ]
 
     @property

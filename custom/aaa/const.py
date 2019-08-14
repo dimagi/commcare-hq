@@ -3,7 +3,9 @@ from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_noop as _
 
-BLOB_EXPIRATION_TIME = 60 * 60 * 24
+from corehq.const import ONE_DAY
+
+BLOB_EXPIRATION_TIME = ONE_DAY
 
 INDICATOR_LIST = {
     'registered_eligible_couples': _('Registered Eligible Couples'),

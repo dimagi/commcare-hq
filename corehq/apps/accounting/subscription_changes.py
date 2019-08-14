@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
 import json
+import time
 
 from couchdbkit import ResourceConflict
 from django.urls import reverse
@@ -34,7 +35,18 @@ from django.db import transaction
 class BaseModifySubscriptionHandler(object):
 
     def __init__(self, domain, new_plan_version, changed_privs, date_start=None):
-        self.domain = domain if isinstance(domain, Domain) else Domain.get_by_name(domain)
+
+        def get_domain(domain):
+            obj = Domain.get_by_name(domain)
+            if obj:
+                return obj
+            else:
+                # This could happen in when there is an issue with couch cluster
+                #   that makes the obj not available
+                time.sleep(5)
+                return Domain.get_by_name(domain)
+
+        self.domain = domain if isinstance(domain, Domain) else get_domain(domain)
         if self.domain is None:
             # This fails down the line anyway
             # and failing now gives a much better traceback
@@ -161,7 +173,7 @@ def _deactivate_schedules(domain, survey_only=False):
             else:
                 raise TypeError("Expected AlertSchedule or TimedSchedule")
 
-            initiate_messaging_rule_run(domain.name, rule.pk)
+            initiate_messaging_rule_run(rule)
 
 
 class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
@@ -389,7 +401,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
                 if report.config.is_deactivated:
                     report.config.is_deactivated = False
                     report.config.save()
-                    rebuild_indicators.delay(report.config._id)
+                    rebuild_indicators.delay(report.config._id, source='subscription_change')
             except DataSourceConfigurationNotFoundError:
                 pass
         return True

@@ -1,6 +1,6 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ServiceDeliveryDashboardController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations, haveAccessToFeatures) {
+function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
     var vm = this;
     vm.data = {};
     vm.label = "Service Delivery Dashboard";
@@ -9,12 +9,21 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
     vm.showTable = true;
-    vm.dataAgeSDD = '0_3';
     vm.dataAggregationLevel = 1;
+
+    vm.showMessage = $rootScope.dateChanged;
+    $rootScope.dateChanged = false;
+
+    vm.steps = {
+        'pw_lw_children': {route: '/service_delivery_dashboard/pw_lw_children', label: 'PW, LW & Children 0-3 years (0-1095 days)'},
+        'children': {route: '/service_delivery_dashboard/children', label: 'Children 3-6 years (1096-2190 days)'},
+    };
+
+    vm.step = $routeParams.step;
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
-            url: url('service_delivery_dashboard'),
+            url: url('service_delivery_dashboard', vm.step),
             data: $location.search(),
             type: 'GET',
         })
@@ -57,7 +66,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
             locationLevelName
         ).renderWith(renderCellValue('raw', locationLevelNameField)
         ).withClass('medium-col')];
-        if (vm.dataAgeSDD === '0_3') {
+        if (vm.step === 'pw_lw_children') {
             if (vm.dataAggregationLevel <= 4) {
                 vm.dtColumns = vm.dtColumns.concat([
                     DTColumnBuilder.newColumn('num_launched_awcs').withTitle(renderNumLaunchedAwcsTooltip()).renderWith(renderCellValue('raw','num_launched_awcs')).withClass('medium-col'),
@@ -133,7 +142,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     }
 
     function renderPercentageAndPartials(percentage, nominator, denominator, indicator) {
-        if (haveAccessToFeatures && isZeroNullUnassignedOrDataNotEntered(denominator)) {
+        if (isZeroNullUnassignedOrDataNotEntered(denominator)) {
             return '<div> No expected ' + indicator + ' </div>';
         }
         else {
@@ -154,7 +163,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
 
         return function (data, type, full) {
 
-            if (haveAccessToFeatures && ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs'].indexOf(indicator) === -1 && isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
+            if (['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs'].indexOf(indicator) === -1 && isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
                 return '<div>Not Launched</div>';
             }
 
@@ -223,7 +232,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     };
 
     vm.getData = function () {
-        var getUrl = url('service_delivery_dashboard');
+        var getUrl = url('service_delivery_dashboard', vm.step);
         vm.myPromise = $http({
             method: "GET",
             url: getUrl,
@@ -231,7 +240,6 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
         }).then(
             function (response) {
                 vm.data = response.data.data;
-                vm.dataAgeSDD = response.data.ageSDD;
                 vm.dataAggregationLevel = response.data.aggregationLevel;
                 vm.setDtColumns();
             },
@@ -248,7 +256,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     vm.getData();
 }
 
-ServiceDeliveryDashboardController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
+ServiceDeliveryDashboardController.$inject = ['$rootScope', '$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('serviceDeliveryDashboard', function () {
     return {

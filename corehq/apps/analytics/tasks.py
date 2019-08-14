@@ -50,13 +50,6 @@ from corehq.apps.analytics.utils import analytics_enabled_for_email
 from io import open
 from six.moves import range
 
-_hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
-                                               '{}@{}'.format('biyeun', 'dimagi.com'),
-                                               '{}@{}'.format('jschweers', 'dimagi.com'),
-                                               '{}@{}'.format('aphilippot', 'dimagi.com'),
-                                               '{}@{}'.format('colaughlin', 'dimagi.com')],
-                                           send_to_ops=False)
-
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
 
@@ -78,6 +71,10 @@ HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
 
 
+HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', False)
+KISSMETRICS_ENABLED = settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', False)
+
+
 def _raise_for_urllib3_response(response):
     '''
     this mimics the behavior of requests.response.raise_for_status so we can
@@ -97,15 +94,13 @@ def _track_on_hubspot(webuser, properties):
     """
     if webuser.analytics_enabled:
         # Note: Hubspot recommends OAuth instead of api key
-        data = {}
-        if properties:
-            data = {'properties': [{'property': k, 'value': v} for k, v in properties.items()]}
-            _hubspot_post(
-                url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-                    six.moves.urllib.parse.quote(webuser.get_email())
-                ),
-                data=json.dumps(data),
-            )
+        data = {'properties': [{'property': k, 'value': v} for k, v in properties.items()]}
+        _hubspot_post(
+            url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+                six.moves.urllib.parse.quote(webuser.get_email())
+            ),
+            data=json.dumps(data),
+        )
 
 
 def _track_on_hubspot_by_email(email, properties):
@@ -221,10 +216,6 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
 
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     if hubspot_id and hubspot_cookie:
-        url = "https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
-            hubspot_id=hubspot_id,
-            form_id=form_id
-        )
         data = {
             'email': email if email else webuser.username,
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
@@ -234,24 +225,27 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
                 'firstname': webuser.first_name,
                 'lastname': webuser.last_name,
             })
+        if extra_fields:
+            data.update(extra_fields)
 
-        response = _send_hubspot_form_request(url, data)
+        response = _send_hubspot_form_request(hubspot_id, form_id, data)
         _log_response('HS', data, response)
         response.raise_for_status()
 
-        # these must be submitted after the form to ensure
-        # the contact has been created in hubspot
-        if extra_fields:
-            update_hubspot_properties_v2(webuser, extra_fields)
-
 
 @count_by_response_code(DATADOG_HUBSPOT_SENT_FORM_METRIC)
-def _send_hubspot_form_request(url, data):
+def _send_hubspot_form_request(hubspot_id, form_id, data):
+    # Submits a urlencoded form, not JSON.  data should use "true"/"false" for bools
+    # https://developers.hubspot.com/docs/methods/forms/submit_form
+    url = "https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
+        hubspot_id=hubspot_id,
+        form_id=form_id
+    )
     return requests.post(url, data=data)
 
 
 @analytics_task(serializer='pickle', )
-def update_hubspot_properties_v2(webuser, properties):
+def update_hubspot_properties(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         _track_on_hubspot(webuser, properties)
@@ -262,8 +256,8 @@ def track_web_user_registration_hubspot(request, web_user, properties):
         return
 
     tracking_info = {
-        'created_account_in_hq': True,
-        'is_a_commcare_user': True,
+        'created_account_in_hq': 'true',
+        'is_a_commcare_user': 'true',
         'lifecyclestage': 'lead',
     }
     env = get_instance_string()
@@ -276,7 +270,7 @@ def track_web_user_registration_hubspot(request, web_user, properties):
 
     if web_user.atypical_user:
         tracking_info.update({
-            'atypical_user': True
+            'atypical_user': 'true'
         })
 
     tracking_info.update(get_ab_test_properties(web_user))
@@ -289,12 +283,12 @@ def track_web_user_registration_hubspot(request, web_user, properties):
 
 
 @analytics_task(serializer='pickle', )
-def track_user_sign_in_on_hubspot_v2(webuser, hubspot_cookie, meta, path):
+def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
 @analytics_task(serializer='pickle', )
-def track_built_app_on_hubspot_v2(webuser):
+def track_built_app_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         # Only track the property if the contact already exists.
@@ -302,7 +296,7 @@ def track_built_app_on_hubspot_v2(webuser):
 
 
 @analytics_task(serializer='pickle', )
-def track_confirmed_account_on_hubspot_v2(webuser):
+def track_confirmed_account_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         # Only track the property if the contact already exists.
@@ -326,14 +320,14 @@ def send_hubspot_form(form_id, request, user=None, extra_fields=None):
         user = getattr(request, 'couch_user', None)
     if request and user and user.is_web_user():
         meta = get_meta(request)
-        send_hubspot_form_task_v2.delay(
+        send_hubspot_form_task.delay(
             form_id, user.user_id, request.COOKIES.get(HUBSPOT_COOKIE),
             meta, extra_fields=extra_fields
         )
 
 
 @analytics_task()
-def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
+def send_hubspot_form_task(form_id, web_user_id, hubspot_cookie, meta,
                               extra_fields=None):
     web_user = WebUser.get_by_user_id(web_user_id)
     _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
@@ -341,7 +335,7 @@ def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
 
 
 @analytics_task(serializer='pickle', )
-def track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta):
+def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
     ab = {
         'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
     }
@@ -349,7 +343,7 @@ def track_clicked_deploy_on_hubspot_v2(webuser, hubspot_cookie, meta):
 
 
 @analytics_task(serializer='pickle', )
-def track_job_candidate_on_hubspot_v2(user_email):
+def track_job_candidate_on_hubspot(user_email):
     properties = {
         'job_candidate': True
     }
@@ -357,7 +351,7 @@ def track_job_candidate_on_hubspot_v2(user_email):
 
 
 @analytics_task(serializer='pickle', )
-def track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta):
+def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
     if number < 0.33:
@@ -384,13 +378,13 @@ def track_workflow(email, event, properties=None):
     try:
         if analytics_enabled_for_email(email):
             timestamp = unix_time(datetime.utcnow())   # Dimagi KISSmetrics account uses UTC
-            _track_workflow_task_v2.delay(email, event, properties, timestamp)
+            _track_workflow_task.delay(email, event, properties, timestamp)
     except Exception:
         notify_exception(None, "Error tracking kissmetrics workflow")
 
 
 @analytics_task(serializer='pickle', )
-def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
+def _track_workflow_task(email, event, properties=None, timestamp=0):
     def _no_nonascii_unicode(value):
         if isinstance(value, six.text_type):
             return value.encode('utf-8')
@@ -411,7 +405,7 @@ def _track_workflow_task_v2(email, event, properties=None, timestamp=0):
 
 
 @analytics_task(serializer='pickle', )
-def identify_v2(email, properties):
+def identify(email, properties):
     """
     Set the given properties on a KISSmetrics user.
     :param email: The email address by which to identify the user.
@@ -441,15 +435,6 @@ def _get_report_count(domain):
     return get_report_builder_count(domain)
 
 
-def _log_failed_periodic_data(email, message):
-    soft_assert(to='{}@{}'.format('bbuczyk', 'dimagi.com'))(
-        False, "ANALYTICS - Failed to sync periodic data", {
-            'user_email': email,
-            'message': message,
-        }
-    )
-
-
 @periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
@@ -457,6 +442,10 @@ def track_periodic_data():
     :return:
     """
     # Start by getting a list of web users mapped to their domains
+
+    if not KISSMETRICS_ENABLED and not HUBSPOT_ENABLED:
+        return
+
     three_months_ago = date.today() - timedelta(days=90)
 
     user_query = (UserES()
@@ -597,7 +586,13 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except requests.exceptions.HTTPError as e:
-            _hubspot_failure_soft_assert(False, e.response.content)
+            soft_assert(to=[settings.SUPPORT_EMAIL,
+                            '{}@{}'.format('miemma', 'dimagi.com'),
+                            '{}@{}'.format('aphilippot', 'dimagi.com'),
+                            '{}@{}'.format('colaughlin', 'dimagi.com')],
+                        send_to_ops=False)(False,
+                                           'Error submitting periodic analytics data to Hubspot or Kissmetrics',
+                                           {'response': e.response.content.decode('utf-8')})
         except Exception as e:
             notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
 
@@ -628,7 +623,7 @@ def _track_periodic_data_on_kiss(submit_json):
     ] + ['Prop:{}'.format(prop['property']) for prop in periodic_data_list[0]['properties']]
 
     filename = 'periodic_data.{}.csv'.format(date.today().strftime('%Y%m%d'))
-    with open(filename, 'wb') as csvfile:
+    with open(filename, 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(headers)
 
@@ -691,8 +686,8 @@ def update_subscription_properties_by_domain(domain):
 @analytics_task()
 def update_subscription_properties_by_user(web_user_id, properties):
     web_user = WebUser.get_by_user_id(web_user_id)
-    identify_v2(web_user.username, properties)
-    update_hubspot_properties_v2(web_user, properties)
+    identify(web_user.username, properties)
+    update_hubspot_properties(web_user, properties)
 
 
 def get_subscription_properties_by_user(couch_user):

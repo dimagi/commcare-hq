@@ -1,0 +1,1289 @@
+# From 1 - SOP Morn Mob
+http://openrosa.org/formdesigner/9C9BEDDA-9BF8-447F-A713-3148BDC2C1CE:
+  - question: [sop_physical]
+    base_path: [morning_mobilization_grp, Q1]
+    comment: [sop_physical_comments]
+    flag_name: "1. Have the Team Leaders performed a physical inspection of each Spray Operator, looking for symptoms such as nausea, dizziness, confusion, breathing problems, skin irritation, excessive sweating, fatigue, weakness, alcohol intoxication, etc.?"
+    flag_name_fr: "1. Les chefs d'équipe ont-ils procédé à une inspection physique de chaque opérateur de pulvérisation pour rechercher des symptômes tels que nausées, vertiges, confusion, problèmes respiratoires, irritation cutanée, transpiration excessive, fatigue, faiblesse, intoxication alcoolique, etc.?"
+    flag_name_por: "1. Os chefes de equipa realizaram a inspecção fisica de cada roceador , verificando para sintomas tais como nauseas, tonturas, convulsões, problemas respiratorios, alergia, transpiração excessiva, fadiga, fraqueza, intoxicação alcoolica, etc?"
+    answer: "no"
+    warning: "Problem reported: Team Leaders not performing casual physical inspection of SOs in the morning."
+    warning_fr: "Problème signalé: Les chefs d'équipe n'effectuent pas d'inspection physique occasionnelle des opérations spéciales le matin."
+    warning_por: "Problema reportado: Chefes de Equipa nao conduzem inspeccao fisica casualaos roceadores nas manhas."
+  - question: [sop_health_problems]
+    base_path: [morning_mobilization_grp]
+    comment: [sop_health_problems_comments]
+    flag_name: "1a. Were any health problems observed among the Spray Operators?"
+    flag_name_fr: "1a. Des problèmes de santé ont-ils été observés parmi les opérateurs de pulvérisation?"
+    flag_name_por: "1a. Observou-se algum problema de saude nos operadores de pulverizacao?"
+    answer: "yes"
+    warning: "Problem reported: Health problem observed among spray operators. Complete an Incident Report Form, if symptoms are possibly work-related."
+    warning_fr: "Problème de santé observé chez les opérateurs de pulvérisation. Remplissez un formulaire de rapport d'incident, si les symptômes sont probablement liés au travail."
+    warning_por: "Problema reportado: Problemas de saude observado entre os roceadores. Preencher o Formulario de Relatorio de Incidente, se os sintomas estao relacionados com o trabalho."
+  - question: [sop_eaten]
+    base_path: [morning_mobilization_grp, Q2]
+    comment: [sop_eaten_comments]
+    flag_name: "2. Have the Spray Operators eaten breakfast and had plenty of water to drink prior to donning PPE?"
+    flag_name_fr: "2. Les opérateurs de pulvérisation ont-ils déjeuné et bu beaucoup d'eau avant d'enfiler les EPI?"
+    flag_name_por: "2. Os roceadores tiveram o pequeno almoço e beberam muita agua antes de vestir o EPI?"
+    answer: "no"
+    warning: "Problem reported: Spray operators not properly fed or hydrated prior to donning PPE."
+    warning_fr: "Problème signalé: Les opérateurs de pulvérisation ne sont pas correctement nourris ou hydratés avant d'enfiler les EPI."
+    warning_por: "Problema reportado: Roceador nao se alimentou ou hidratou propriamente antes de vestir EPI."
+  - question: [sop_full_ppe]
+    base_path: [morning_mobilization_grp, Q3]
+    comment: [sop_full_ppe_comments]
+    flag_name: "3. Are SOs in full PPE before boarding truck?"
+    flag_name_fr: "3. Les OPs sont-ils en EPI complet avant l'embarquement?"
+    flag_name_por: "3. Os roceadores  estao completamente equipados antes de embarcar?"
+    warning_type: unchecked
+    ignore: ["none"]
+    section: "Morning_Mobilization_2018"
+    warning: "Problem reported: Spray operator(s) not wearing {msg} before boarding transport. "
+    warning_fr: "Problème signalé: Le (s) opérateur (s) de pulvérisation ne porte (s) pas {msg} avant l'embarquement."
+    warning_por: "Problema reportado: Roceador (s) nao esta usando {msg} antes de subir na viatura. "
+  - question: [sop_eating_after_ppe]
+    base_path: [morning_mobilization_grp, Q4]
+    comment: [sop_eating_after_ppe_comments]
+    flag_name: "4. Are any Spray Operators eating or drinking after donning PPE?"
+    flag_name_fr: "4. Les opérateurs de pulvérisation mangent-ils ou boivent-ils après avoir porté des EPI?"
+    flag_name_por: "4. Esta algum roceador esta comer ou beber depois de se equipar com o EPI?"
+    answer: "yes"
+    warning: "Problem reported: Spray operator(s) eating or drinking after donning PPE."
+    warning_fr: "Problème signalé: Opérateur (s) de pulvérisation mangeant ou buvant après avoir enfilé des EPI."
+    warning_por: "Problema reportedo: Roceador(s) comendo ou bebendo antes de vestir EPI."
+  - question: [sop_fill_pumps]
+    comment: [sop_fill_pumps_comments]
+    base_path: [morning_mobilization_grp, Q5]
+    flag_name: "5. Do operators fill spray pumps using the contents of drums 1, 3, and 5 and 7 from the previous day's progressive rinse?"
+    flag_name_fr: "5. Les opérateurs remplissent-ils les pompes de pulvérisation en utilisant le contenu des fûts 1, 3 et 5 et 7 du rinçage progressif de la veille?"
+    flag_name_por: "5. Os roceadores  enchem as bombas usando o conteudo dos bidões 1, 3, 5 e 7 da lavagem progressiva do dia anterior?"
+    answer: "no"
+    warning: "Problem reported: Spray operator(s) not using insecticide left over from previous day."
+    warning_fr: "Problème signalé: Opérateur (s) de pulvérisation n'utilisant pas l'insecticide restant de la veille."
+    warning_por: "Problema reportado: roceador (s) nao usam insecticida remanescente do dia anterior."
+  - question: [barrels_empty_check]
+    comment: [barrels_empty_check_comments]
+    base_path: [morning_mobilization_grp, Q6]
+    flag_name: "6. Are barrels 1, 3, 5 and 7 empty when Spray Operators depart for the field?"
+    flag_name_fr: "6. Les fûts  1, 3, 5 et 7 sont-ils vides lorsque les opérateurs de pulvérisation partent pour le travail?"
+    flag_name_por: "6. Os barris 1, 3, 5 e 7 estao vazias quando os roceadores partem para o campo?"
+    answer: "no"
+    warning: "Problem reported: Not all pesticide and contaminated rinse water used up to fill SOs' tanks."
+    warning_fr: "Problème signalé: Tous les pesticides et l'eau de rinçage contaminée ne sont pas utilisés pour remplir les réservoirs des OP."
+    warning_por: "Problema reportado: Os roceadores nao e usam todo insecticida e agua contaminada para encher os tanques das bombas."
+# Form 2 - Trans Veh Insp
+http://openrosa.org/formdesigner/DBE47466-9B6A-45F0-AF48-16D4CC605CC3:
+  - question: [current_certificate_issued]
+    comment: [current_certificate_issued_comments]
+    base_path: [vehicle_inspection_grp, Q1]
+    flag_name: "1. Is the current certificate issued after the ECO or authorized VectorLink representative inspected this vehicle in the vehicle?"
+    flag_name_fr: "1. Le certificat actuel est-il délivré après que le représentant autorisé ou le représentant autorisé de VectorLink a inspecté ce véhicule dans le véhicule?"
+    flag_name_por: "1. O presente certificado foi emitido após a inspecção do veiculo pela ECO ou por um representante autorizado do VectorLink no veiculo?"
+    answer: "no"
+    warning: "Problem noted: Vehicle was not inspected prior to contract."
+    warning_fr: "Problème noté: Le véhicule n'a pas été inspecté avant le contrat."
+    warning_por: "Problema notado: Viatura nao foi inspecionada antes do celebrar o contrato."
+  - question: [transport_certification]
+    comment: [transport_certification_comments]
+    base_path: [vehicle_inspection_grp, transport_certification_grp, Q2]
+    flag_name: "2. Does the driver and/or vehicle have the needed certification (driver's license, etc.) for transporting hazardous goods or numerous people?"
+    flag_name_fr: "2. Le conducteur et / ou le véhicule ont-ils la certification requise (permis de conduire, etc.) pour transporter des marchandises dangereuses ou de nombreuses personnes?"
+    flag_name_por: "2. O motorista e o veiculo tem a documentação necessária (carta de condução, etc) para transportar carga perigosa e número elevado de pessoas?"
+    answer: "no"
+    warning: "Problem noted: Driver is not driving with their license and/or certificate."
+    warning_fr: "Problème noté: Le conducteur ne conduit pas avec sa licence et / ou son certificat."
+    warning_por: "Problema notado: Motoristas nao estao a conduzir com suas cartas de conducao e /ou certificados."
+  - question: [driver_safety_training]
+    comment: [driver_safety_training_comments]
+    base_path: [vehicle_inspection_grp, Q3]
+    flag_name: "3. Has the driver attended safety training?"
+    flag_name_fr: "3. Le conducteur a-t-il suivi une formation à la sécurité?"
+    flag_name_por: "3. O motorista participou na capacitacao sobre segurança?"
+    answer: "no"
+    warning: "Problem noted: Provide safety training for driver."
+    warning_fr: "Problème noté: Fournir une formation de sécurité au conducteur."
+    warning_por: "Problema notado: Providenciar o treinamento de seguranca ao motorista."
+  - question: [pesticides_transported]
+    comment: [pesticides_transported_comments]
+    base_path: [vehicle_inspection_grp, Q4]
+    flag_name: "4. Other than the pesticide sachets or bottles for the day's use, are any pesticides transported in the same vehicle with the operators?"
+    flag_name_fr: "4. À part les sachets ou bouteilles de pesticide pour l'utilisation quotidienne, y a-t-il des pesticides transportés dans le même véhicule avec les opérateurs?"
+    flag_name_por: "4. Para alem das saquetas ou garrafas de pesticidas para o uso diario, ha algum outro pesticida sendo transportado no mesmo veiculo que os roceadores?"
+    answer: "yes"
+    warning: "Problem noted: Separate transportation needed for operators and pesticides other than the day's supply."
+    warning_fr: "Problème noté: Séparer le transport des pesticides nécessaires pour les opérateurs et les pesticides autres que l'approvisionnement du jour."
+    warning_por: "Problema notado: Necessidade de um transporte separado para os roceadores e pesticidas para alem dos de uso do dia."
+  - question: [consumer_goods_transported]
+    comment: [consumer_goods_transported_comments]
+    base_path: [vehicle_inspection_grp, Q5]
+    flag_name: "5. Are food products, animal feed, or consumer goods transported in the same truck as pesticides?"
+    flag_name_fr: "5. Les produits alimentaires, les aliments pour animaux ou les biens de consommation sont-ils transportés dans le même camion que les pesticides?"
+    flag_name_por: "5. Ha produtos alimentares, ração animal ou bens consumiveis sendo transportados no mesmo veiculo que os pesticidas?"
+    answer: "yes"
+    warning: "Problem noted: Mixed goods transportation violation, suggest re-training."
+    warning_fr: "Problème noté: Violation en transportant des marchandises mixtes, suggére une nouvelle formation."
+    warning_por: "Problema notado: Mistura no transporte de bens, violacao, sugere-se um re- treinamento."
+  - question: [drivers_equipped]
+    comment: [drivers_equipped_comments]
+    base_path: [vehicle_inspection_grp, Q6]
+    flag_name: "6. Do drivers have a cellphone and appropriate PPE (boots, gloves, and filter mask) in case of a spill or accident?"
+    flag_name_fr: "6. Les conducteurs ont-ils un téléphone portable et des EPI appropriés (bottes, gants et masque filtrant) en cas de déversement ou d'accident?"
+    flag_name_por: "6. Os motoristas possuem telefones celulares e PPE adequado (botas, luvas e mascaras de filtro) em caso de se derramar ou acidente?"
+    answer: "no"
+    warning: "Problem noted: Drivers do not have cell telephone and/or appropriate PPE."
+    warning_fr: "Problème noté: Les conducteurs n'ont pas de téléphone cellulaire et / ou d'EPI approprié."
+    warning_por: "Problema notado: Motoristas nao tem telefone e/ ou EPI apropriado."
+  - question: [pesticides_secured]
+    comment: [pesticides_secured_comments]
+    base_path: [vehicle_inspection_grp, Q7]
+    flag_name: "7. If this vehicle transports pesticide, can the pesticides be adequately secured and tied down in the vehicle?"
+    flag_name_fr: "7. Si ce véhicule transporte des pesticides, les pesticides peuvent-ils être correctement fixés et attachés dans le véhicule?"
+    flag_name_por: "7. Se este veiculo transporta pesticidas, estes podem ser bem segurados ou amarrados no veiculo?"
+    answer: "no"
+    warning: "Problem noted: Need to provide materials for securing and tying down pesticides in the vehicle"
+    warning_fr: "Problème noté: Nécessité de fournir des matériaux pour sécuriser et attacher les pesticides dans le véhicule"
+    warning_por: "Problema notada: Necessita de providenciar materialpara segurar e marrar os insecticidas no veiculo."
+  - question: [fire_extinguisher]
+    comment: [fire_extinguisher_comments]
+    base_path: [vehicle_inspection_grp, Q8]
+    flag_name: "8. Does the vehicle have a fire extinguisher?"
+    flag_name_fr: "8. Le véhicule est-il équipé d'un extincteur?"
+    flag_name_por: "8. O veiculo tem um extintor de incendios?"
+    answer: "no"
+    warning: "Problem reported: Pesticide transport vehicle must always carry a fire extinguisher."
+    warning_fr: "Problème signalé: Le véhicule de transport de pesticides doit toujours transporter un extincteur."
+    warning_por: "Problema reportado: Veiculo de transporte de pesticida deve sempre ter o extintor de fogo."
+  - question: [seats_railings]
+    comment: [seats_railings_comments]
+    base_path: [vehicle_inspection_grp, Q9]
+    flag_name: "9. If this vehicle transports operators, does the spray operator transport vehicle have seats and railings?"
+    flag_name_fr: "9. Si ce véhicule transporte des opérateurs, le véhicule de transport de l'opérateur de pulvérisation a-t-il des sièges et des rampes?"
+    flag_name_por: "9. Se este veiculo transporta agentes, possui assentos e grades?"
+    answer: "no"
+    warning: "Problem noted: Spray operator transport vehicle must be configured with seats and railings"
+    warning_fr: "Problème noté: Le véhicule de transport par des opérateurs de pulvérisation doit être configuré avec des sièges et des rampes"
+    warning_por: "Problema notado: Veiculo de transporte de roceadores deve estar munido de bancos e corrimãos "
+  - question: [first_aid_stocked]
+    comment: [first_aid_stocked_comments]
+    base_path: [vehicle_inspection_grp, Q10]
+    flag_name: "10. Is there a fully-stocked first aid kit in the vehicle?"
+    flag_name_fr: "10. Y a-t-il une trousse de premiers soins bien garnie dans le véhicule?"
+    flag_name_por: "10. Existe um quite completo equipado de material de primeiros socorros guardado no veiculo?"
+    warning_type: unchecked
+    ignore: ["none"]
+    section: 'Vehicle_Transportaion_2018'
+    warning: "Problem noted: Missing {msg} for first aid kit for the vehicle. Confirm delivery date for {msg} for first aid kit."
+    warning_fr: "Problème noté: Manquant {msg} pour la trousse de premiers soins pour le véhicule. Confirmer la date de livraison pour {msg} pour la trousse de premiers soins."
+    warning_por: "Problema notado: Em falta {msg} para kit de primeiros socorros da viatura. Confirmar datas de entrega para {msg} para kit de primeiros socorros."
+  - question: [spill_prep]
+    comment: [spill_prep_comments]
+    base_path: [vehicle_inspection_grp, Q11]
+    flag_name: "11. Is there a 1. spill kit, and 2. spill/emergency/accident response procedures in the vehicle?"
+    flag_name_fr: "11. Y a-t-il une 1. trousse de déversement et 2. des procédures d'intervention en cas de déversement / urgence / accident dans le véhicule?"
+    flag_name_por: "11. Ha 1. Kit de derramamento, e 2. procedimentos de resposta á acidentes/ emergencia/ derramamento no veiculo?"
+    warning_type: unchecked
+    ignore: ["none"]
+    section: 'Vehicle_Transportaion_2018'
+    warning: "Problem noted: Missing {msg} for the vehicle. Confirm delivery date for (List missing items)."
+    warning_fr: "Problème noté: Manquant {msg} pour le véhicule. Confirmer la date de livraison pour {msg}."
+    warning_por: "Problema notado: Faltando {msg} para o veiculo. Confirmar as datas de entrega {msg}."
+  - question: [sops_seated_properly]
+    comment: [sops_seated_properly_comments]
+    base_path: [vehicle_inspection_grp, sears_grp, Q12]
+    flag_name: "12. Are the operators properly seated in the transport vehicle with the pump secured between their legs?"
+    flag_name_fr: "12. Les opérateurs sont-ils correctement assis dans le véhicule de transport avec les pompes fixées entre leurs jambes?"
+    flag_name_por: "12. Os roceadores estão devidamente sentados no veiculo de transporte com as bombas entre as suas pernas?"
+    answer: "no"
+    warning: "Problem reported: Spray operators must be properly seated with the pump secured between their legs in the transport vehicle."
+    warning_fr: "Problème signalé: Les opérateurs de pulvérisation doivent être correctement assis avec la pompe fixée entre leurs jambes dans le véhicule de transport."
+    warning_por: "Problema reportado: Roceadores deverao estar propriamente sentados com bombas segurdas entre as suas pernas na viatura."
+  - question: [vehicle_overcrowded]
+    comment: [vehicle_overcrowded_comments]
+    base_path: [vehicle_inspection_grp, Q13]
+    flag_name: "13. Is the vehicle overcrowded?"
+    flag_name_fr: "13. Le véhicule est-il trop plein?"
+    flag_name_por: "13. O veiculo esta super lotado?"
+    answer: "yes"
+    warning: "Problem noted: Need to provide additional vehicle for spray operators."
+    warning_fr: "Problème noté: Nécessité de fournir un véhicule supplémentaire pour les opérateurs de pulvérisation."
+    warning_por: "Problema notado: Necessita providenciar uma viatura adicional para os roceadores."
+  - question: [pesticide_leakage]
+    comment: [pesticide_leakage_comments]
+    base_path: [vehicle_inspection_grp, Q14]
+    flag_name: "14. Is there evidence of pesticide leakage in the trucks?"
+    flag_name_fr: "14. Y a-t-il des signes de fuite de pesticide dans les camions?"
+    flag_name_por: "14. Ha evidencias de escape ou dispersão de pesticidas nos camioes?"
+    answer: "yes"
+    warning: "Problem noted: Evidence of pesticide leakage in vehicle."
+    warning_fr: "Problème noté: Preuve de fuite de pesticide dans le véhicule."
+    warning_por: "Problema notado: Evidencia de vazamento de insecticidas na viatura."
+# Form 3 - End of Day clean up
+http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
+  - question: [sop_return_in_ppe]
+    comment: [sop_return_in_ppe_comments]
+    base_path: [obs_rcd_mgmt_grp, Q1]
+    flag_name: "1. Do the spray operators continue to wear PPE on the way back to the operations site?"
+    flag_name_fr: "1. Les opérateurs de pulvérisation continuent-ils à porter des EPI sur le chemin du retour vers le site d'exploitation?"
+    flag_name_por: "1. Os roceadores continuam equipados de EPI no regresso a base operacional?"
+    answer: "no"
+    warning: "Problem reported: All spray operators must continue to wear PPE on the way back to the operations site."
+    warning_fr: "Problème signalé: tous les opérateurs de pulvérisation doivent continuer de porter l'EPI sur le chemin de retour des sites opérationnels"
+    warning_por: "Problema reportado: Todos os roceadores deverão continuar usar o EPI no caminho de regresso a base operacional."
+  - question: [eating_in_ppe]
+    comment: [eating_in_ppe_comments]
+    base_path: [obs_rcd_mgmt_grp, Q2]
+    flag_name: "2. Is anyone eating or drinking prior to removing PPE and washing?"
+    flag_name_fr: "2. Est-ce que vous observez quelqu'un qui mange ou qui boit avant d'enlever l'équipement de protection individuelle et de se laver?"
+    flag_name_por: "2. Ha alguem que come ou bebe antes retirar e lavar o PPE?"
+    answer: "yes"
+    warning: "Problem reported: Eating and/or drinking violation."
+    warning_fr: "Problème signalé: infrcomments faite en mangeant et/ou en buvant "
+    warning_por: "Problema reportado: Violação relacionado a comer e/ou beber."
+  - question: [wash_criteria_met]
+    comment: [wash_criteria_met_comments]
+    base_path: [obs_rcd_mgmt_grp, Q3]
+    flag_name: "Team Leaders are supervising the cleaning and wash-up"
+    flag_name_fr: "Les chefs d'équipe supervisent le nettoyage des materiels et que les OPs se douchent"
+    flag_name_por: "Os chefes de equipa estão a supervisionar a limpeza e lavagem"
+    warning_type: not_selected
+    value: "supervised"
+    warning: "Problem reported: Team Leaders not supervising cleaning and wash-up."
+    warning_fr: "Problème signalé: Les chefs d'équipe ne supervisent pas le rinçage et le nettoyage"
+    warning_por: "Problema reportado: Chefes de equipa nao supervisionam a lavagem do final do dia."
+  - question: [wash_criteria_met]
+    comment: [wash_criteria_met_comments]
+    base_path: [obs_rcd_mgmt_grp, Q3]
+    flag_name: "The wash facilities have soap and water available for operators"
+    flag_name_fr: "Les douches disposent du savon et de l'eau pour les opérateurs"
+    flag_name_por: "Os locais de lavagem dispoem de detergente e agua para os operadores"
+    warning_type: not_selected
+    value: "soap_water"
+    warning: "Problem reported: Wash facilities with soap and water must be available to operators."
+    warning_fr: "Problem reported: Wash facilities with soap and water must be available to operators."
+    warning_por: "Problema reportado: Casas de banho com água e sabão  estar disponiveis para os roceadores."
+  - question: [wash_criteria_met]
+    comment: [wash_criteria_met_comments]
+    base_path: [obs_rcd_mgmt_grp, Q3]
+    flag_name: "All people (spray operators, washers, maintenance techs) in the wash/soak pit area are wearing full PPE"
+    flag_name_fr: "Toutes les personnes (opérateurs de pulvérisation, laveuses, techniciennes d'entretien) dans la zone de lavage / puits d'infiltration portent un EPI complet"
+    flag_name_por: "Todos (roceadores, lavadores, tecnicos de bomba) na area de lavagem ou tanque de imersao, vestem-se completamente do EPI."
+    warning_type: not_selected
+    value: "ppe_wash_area"
+    warning: "Problem reported: All personnel in the wash area must wear full PPE."
+    warning_fr: "Problème signalé: Tout le personnel dans l'aire de lavage doit porter un EPI complet."
+    warning_por: "Problema reportado: Todo pessoal na area de lavagem deverão usar EPI completo.."
+  - question: [accidents]
+    comment: [accidents_comments]
+    base_path: [obs_rcd_mgmt_grp, Q4]
+    flag_name: "4. Have there been any accidents today? (Pesticide exposure, vehicle accidents, other injuries or property damage)"
+    flag_name_fr: "4. Est-ce qu'il y a eu des accidents aujourd'hui? (Exposition aux pesticides, accidents de la route, autres blessures ou dommages matériels)"
+    flag_name_por: "4. Houve algum acidente hoje? (Exposição aos pesticidas, acidentes de viação, outros ferimentos ou dano aos bens)"
+    answer: "yes"
+    warning: "Problem reported: An incident has been reported and an Incident Report Form is needed immediately. Follow up with Sector Manager to be sure accident report form is filed and sent to TPM and ECM."
+    warning_fr: "Problème signalé: Un incident a été signalé et un formulaire de rapport d'incident est nécessaire immédiatement. Effectuez un suivi auprès du chef de secteur pour vous assurer que le formulaire de rapport d'accident est rempli et envoyé à TPM et à ECM."
+    warning_por: "Problema reportado: Algum incidente foi reportado e um relatório de incidente e necessário imediatamente. Seguimento com gestor do sector para certificar que o relatorio de acidente e preecnhido e enviado para  GTP e GCA."
+  - question: [sop_irritation]
+    comment: [sop_irritation_comments]
+    base_path: [obs_rcd_mgmt_grp, Q5]
+    flag_name: "5. Have any spray operators complained of irritation (throat, skin, etc.)?"
+    flag_name_fr: "5. Les opérateurs de pulvérisation se sont-ils plaints d'irritation (gorge, peau, etc.)?"
+    flag_name_por: "5. Ha algum roceador que tera se queixado de alergia (na garganta ou pele, etc)?"
+    answer: "yes"
+    warning: "Possible exposure reported: Follow-up on status of SO complaining of irritation and ensure incident report has been sent to home office TPM and ECM."
+    warning_fr: "Exposition possible signalée: Suivi du statut de OP se plaignant d'irritation et s'assurer que le rapport d'incident a été envoyé au bureau à domicile TPM et ECM."
+    warning_por: "Possivel exposição reportada: Seguimento do estado do roceador que reclamou de irritação e certificar-se que relatorio de incidente foi enviado para o escritório central GTP e GCA."
+  - question: [form_criteria_check]
+    comment: [form_criteria_check_comments]
+    base_path: [obs_rcd_mgmt_grp, Q6]
+    flag_name: "Spray operators completed their daily report forms"
+    flag_name_fr: "Les opérateurs de pulvérisation ont rempli leur formulaire de rapport quotidien"
+    flag_name_por: "Os roceadores preencheram os seus formulario de relatorios diarios?"
+    warning_type: not_selected
+    value: "daily_report"
+    warning: "Problem reported: Spray operators must complete daily report forms."
+    warning_fr: "Problème signalé: Les opérateurs de pulvérisation doivent remplir des formulaires de rapport quotidiens."
+    warning_por: "Problema reportado: Roceadores deverao completar suas fichas d relatório diario."
+  - question: [form_criteria_check]
+    comment: [form_criteria_check_comments]
+    base_path: [obs_rcd_mgmt_grp, Q6]
+    flag_name: "Forms are checked by spray supervisors"
+    flag_name_fr: "Les formulaires sont vérifiés par les superviseurs de pulvérisation"
+    flag_name_por: "Os formularios são verificados pelos supervisores de pulverização"
+    warning_type: not_selected
+    value: "forms_checked"
+    warning: "Problem reported: Supervisors must check spray forms."
+    warning_fr: "Problème signalé: Les superviseurs doivent vérifier les formulaires de pulvérisation."
+    warning_por: "Problema reportado: Supervisores deverão verificar s fichas de pulverização."
+  - question: [adequate_gravel]
+    comment: [adequate_gravel_comments]
+    base_path: [fsp_grp, Q7]
+    flag_name: "7. Is there adequate gravel to act as a filter?"
+    flag_name_fr: "7. Y a-t-il suffisamment de gravier pour agir comme un filtre?"
+    flag_name_por: "7. Existe areia grossa adequada para servir de filtro?"
+    answer: "no"
+    warning: "Problem reported: Inadequate gravel in soak pit."
+    warning_fr: "Problème signalé: Gravier inadéquat dans la fosse d'infiltration"
+    warning_por: "Problema reportado: Inadequado gravidade no tanque de retencaot."
+  - question: [empties_returned]
+    comment: [empties_returned_comments]
+    base_path: [fsp_grp, Q8]
+    flag_name: "8. Upon return to the storehouse, are full and empty sachets/bottles returned to stores?"
+    flag_name_fr: "8. À leur retour à l'entrepôt, les sachets / bouteilles pleins et vides sont-ils retournés dans les magasins?"
+    flag_name_por: "8. Apos o regresso ao armazem, as saquetas/garrafas cheias e vazias sao trazidas aos armazens?"
+    answer: "no"
+    warning: "Problem reported: Storekeeper must keep records of pesticides handed out and returned."
+    warning_fr: "Problème signalé: Le magasinier doit tenir des registres des pesticides distribués et retournés."
+    warning_por: "Problema reportado: Fieis devem manter registos de insecticidas enviados e retornados."
+  - question: [effluent_catch]
+    comment: [effluent_catch_comments]
+    base_path: [fsp_grp, Q9]
+    flag_name: "9. Is there a sloped concrete catchment area or tarpaulin spread out on the ground to catch all effluent?"
+    flag_name_fr: "9. Y a-t-il un aire de lavage en pente ou un morceau de plastique etalée sur le sol pour capter tous les effluents?"
+    flag_name_por: "9. Existe uma area de betao inclinada de captacao ou lona deitada no chao para captar todo o efluente?"
+    answer: "no"
+    warning: "Problem reported: Triple rinse and wash area must be covered with leak-proof surface and sloped soak pit."
+    warning_fr: "Problème signalé: Le triple rinçage et la zone de lavage doivent être couverts d'une surface étanche et d'une fosse d'infiltration inclinée"
+    warning_por: "Problema reportado: Tripla lavagem e area de lavagem deve estar coberto com lona plastica inclinada para o tanque de retencao."
+  - question: [drums_water]
+    comment: [drums_water_comments]
+    base_path: [fsp_grp, Q10]
+    flag_name: "10. Do the #2, 4 and 6 drums have sufficient water for today's cleanup?"
+    flag_name_fr: "10. Les tambours n ° 2, 4 et 6 ont-ils assez d'eau pour le nettoyage d'aujourd'hui?"
+    flag_name_por: "10. Os tambores 2, 4 e 6 contem agua suficiente para a limpeza de hoje?"
+    answer: "no"
+    warning: "Problem reported: Insufficient water for triple rinse."
+    warning_fr: "Problème signalé: Eau insuffisante pour le triple rinçage."
+    warning_por: "Problema reportado: Agua insufficiente para a tripla lavagem."
+  - question: [pesticide_emptied]
+    comment: [pesticide_emptied_comments]
+    base_path: [fsp_grp, Q11]
+    flag_name: "11. Is all pesticide remaining in pumps emptied into the #1 drum?"
+    flag_name_fr: "11. Tout le pesticide restant dans les pompes est-il vidé dans le fut numero 1 ?"
+    flag_name_por: "11. Todo o pesticida que resta  nas bombas e drenado no tambor 1?"
+    answer: "no"
+    warning: "Notify operations coordinator of triple-rinse violations."
+    warning_fr: "Informer le coordinateur des opérations des violations de triple rinçage."
+    warning_por: "Noticar ao coordenador das operações sobre a violação de procediemtno de tripla lavagem."
+  - question: [pumps_rinsed]
+    comment: [pumps_rinsed_comments]
+    base_path: [fsp_grp, Q12]
+    flag_name: "12. Are spray pumps triple rinsed using the progressive rinse method?"
+    flag_name_fr: "12. Les pompes de pulvérisation sont-elles rincées trois fois en utilisant la méthode de rinçage progressif?"
+    flag_name_por: "12. As bombas de pulverização são feitas a tripla lavagem observando o metodo progressivo?"
+    answer: "no"
+    warning: "Problem reported: Triple-rinse violations."
+    warning_fr: "Problème signalé: violations du triple rinçage."
+    warning_por: "Problema reportado: Viloção de tripla lavagem."
+  - question: [pumps_outside_rinsed]
+    comment: [pumps_outside_rinsed_comments]
+    base_path: [fsp_grp, Q13]
+    flag_name: "13. Are the outsides of the pumps rinsed off into the soak pit?"
+    flag_name_fr: "13. L'extérieur des pompes est-il rincé dans le puisard ?"
+    flag_name_por: "13. As partes externas das bombas sao lavadas em tanques de imersao?"
+    answer: "no"
+    warning: "Problem reported: Pumps not properly washed"
+    warning_fr: "Problème signalé: Pompes pas bien lavées"
+    warning_por: "Problema reportado: Bombas nao adequadamente lavadas"
+  - question: [equipment_rinsed]
+    comment: [equipment_rinsed_comments]
+    base_path: [fsp_grp, Q14]
+    flag_name: "14. Are the helmets, face shields, boots, and gloves rinsed off into the soak pit?"
+    flag_name_fr: "14. Les casques, les masques, les bottes et les gants sont-ils rincés dans le puisard ?"
+    flag_name_por: "14. Os capacetes, viseiras, mascaras, botas e luvas sao lavados no tanque de retenção?"
+    answer: "no"
+    warning: "Problem reported: PPE not properly washed"
+    warning_fr: "Problème signalé: EPI pas bien lavé"
+    warning_por: "Problema reportado: EPI nao propriamente lavado"
+  - question: [contaminated_water_disposed]
+    comment: [contaminated_water_disposed_comments]
+    base_path: [fsp_grp, Q15]
+    flag_name: "15. Is the soak pit used to dispose of all contaminated water?"
+    flag_name_fr: "15. Est-ce que le puisard est utilisé pour recuiellir toute l'eau contaminée?"
+    flag_name_por: "15. O tanque de retenção e usado para a eliminação de toda a agua contaminada?"
+    answer: "no"
+    warning: "Problem reported:  Improper disposal of wastewater."
+    warning_fr: "Problème signalé: Mauvais traitement des eaux usées."
+    warning_por: "Problema reportado: Roceadores deverao lavar as mãos e cara com agua e sabao depois de remover o EPI."
+  - question: [contaminated_water_drains]
+    comment: [contaminated_water_drains_comments]
+    base_path: [fsp_grp, Q16]
+    flag_name: "16. Does all contaminated water drain properly into the soak pit?"
+    flag_name_fr: "16. L'eau contaminée est-elle drainée correctement dans le puisard ?"
+    flag_name_por: "16. Toda a agua contaminada e devidamente dreinada no tanque de imersao?"
+    answer: "no"
+    warning: "Problem reported: Water not draining properly into soak-pit."
+    warning_fr: "Problème signalé: L'eau ne s'écoule pas correctement dans la fosse."
+    warning_por: "Problema reportado:  Deposição impropria de residuos liquidos."
+  - question: [effluent_absorbed]
+    comment: [effluent_absorbed_comments]
+    base_path: [fsp_grp, Q17]
+    flag_name: "17. Is the soak pit absorbing all the effluent waste without creating a puddle and/or run off?"
+    flag_name_fr: "17. Le puisard absorbe-t-elle tous les effluents sans créer de flaque d'eau et / ou de ruissellement?"
+    flag_name_por: "17. O tanque de retenção absorve todo o residuo efluente sem criar um charco ou poças?"
+    answer: "no"
+    warning: "Problem reported: Soak-pit not draining properly."
+    warning_fr: "Problème signalé: La fosse n'est pas drainée correctement."
+    warning_por: "Problema reportado: Agua nao drenando propriamnete para o tanque de retencao."
+  - question: [pumps_hung]
+    comment: [pumps_hung_comments]
+    base_path: [fsp_grp, Q18]
+    flag_name: "18. Are spray pumps hung upside down to dry?"
+    flag_name_fr: "18. Les pompes de pulvérisation sont-elles suspendues à l'envers pour sécher?"
+    flag_name_por: "18. As bombas de pulverização são viradas para baixo para poderem secar."
+    answer: "no"
+    warning: "Problem reported: Pumps not hung up to dry"
+    warning_fr: "Problème signalé: Les pompes ne sont pas suspendues à sécher"
+    warning_por: "Problema reportado: Tanque de retenção nao drenando propriamente."
+  - question: [pumps_stored_properly]
+    comment: [pumps_stored_properly_comments]
+    base_path: [fsp_grp, Q19]
+    flag_name: "19. Are washed spray pumps stored in an orderly way for easy preparation the next day?"
+    flag_name_fr: "19. Est-ce que les pompes nettoyées sont rangées de manière ordonnée pour une préparation facile le jour suivant?"
+    flag_name_por: "19. As bombas lavadas sao colocadas em ordem para facilitar a preparação para o dia seguinte?"
+    answer: "no"
+    warning: "Problem reported: Pumps not stored properly."
+    warning_fr: "Problème signalé: Les pompes ne sont pas stockées correctement.."
+    warning_por: "Problema reportado: Bombas nao penduradas para secar"
+  - question: [drums_covered]
+    comment: [drums_covered_comments]
+    base_path: [fsp_grp, Q20]
+    flag_name: "20. Are the covers placed on the 7 triple-rinse drums after all pumps are cleaned?"
+    flag_name_fr: "20. Les couvercles sont-ils placés sur les 7 fûts  à triple rinçage après le nettoyage de toutes les pompes?"
+    flag_name_por: "20. As tampas sao colocadas no tambor 7 de apos a limpeza de todas as bombas?"
+    answer: "no"
+    warning: "Problem reported: Rinse and/or waste drums not covered overnight."
+    warning_fr: "Problème signalé: Barils d'eau de rinçage  et / ou d'effluents non couverts pendant la nuit."
+    warning_por: "Problema reportado: Bombas nao armazenadas propiamente."
+  - question: [msp_avoid_water]
+    comment: [msp_avoid_water_comments]
+    base_path: [msp_grp, Q21]
+    flag_name: "21. Is the mobile soak pit located away from water bodies, steep slopes or flood prone areas?"
+    flag_name_fr: "21. Le puisard mobile est- il situé à l'écart des plans d'eau, des pentes abruptes ou des zones sujettes aux inondations?"
+    flag_name_por: "21. O tanque de retenção movel localiza-se longe dos corpos de agua, declives ingrimes ou areas propensas a inundações?"
+    answer: "no"
+    warning: "Problem reported: Mobile soak pit not installed away from water bodies, steep slopes, or flood prone areas."
+    warning_fr: "Problème signalé: Le puisard mobile n'est pas installé à l'écart des plans d'eau, des pentes abruptes ou des zones sujettes aux inondations"
+    warning_por: "Problema reportado: Lavagem e/ou baldes de lixo nao cobertos durante a noite."
+  - question: [sachets_returned]
+    comment: [sachets_returned_comments]
+    base_path: [msp_grp, Q22]
+    flag_name: "22. Are empty sachets/bottles and full sachets/bottles returned to the team leader and recorded?"
+    flag_name_fr: "22. Les sachets / bouteilles vides et les sachets / bouteilles pleins sont-ils retournés au chef d'équipe et enregistrés?"
+    flag_name_por: "22. As saquetas/garrafas vazias e cheias sao devolvidas ao chefe de equipa para fins de registo?"
+    answer: "no"
+    warning: "Problem reported: Storekeeper must keep records of pesticides handed out and returned."
+    warning_fr: "Problème signalé: Le magasinier doit tenir des registres des pesticides distribués et retournés."
+    warning_por: "Problema reportado: Tanque de retencao Movel nao instalado distante de corpos de agua, inclinacoes ou locais propensos a inundacoes ."
+  - question: [barrel_water_present]
+    comment: [barrel_water_present_comments]
+    base_path: [msp_grp]
+    flag_name: "23a. Is there any water in the collection barrel at the beginning of clean up?"
+    flag_name_fr: "23a. Y a-t-il de l'eau dans le tonneau de collecte au début du nettoyage?"
+    flag_name_por: "23a. Ha alguma agua no barril de colecção no inicio da limpeza?"
+    answer: "yes"
+    warning: "Problem reported: Waste water from collection barrel left at the wash area overnight."
+    warning_fr: "Problème signalé: Les eaux usées provenant du fût de collecte sont restées dans l'aire de lavage pendant la nuit."
+    warning_por: "Problema reportado: Fieis deverão manter os registos de pesticidas enviados e retornados."
+  - question: [msp_correctly_installed]
+    comment: [msp_correctly_installed_comments]
+    base_path: [msp_grp, Q24]
+    flag_name: "24. Is the mobile soak pit correctly installed with tarpaulin spread out on the ground that is sloped towards the mobile soak pit to catch all effluent?"
+    flag_name_fr: "24. Le puisard mobile est-elle correctement installé avec un morceau de plastic éparpillées sur le sol incliné vers le puisard recuiellir tous les effluents?"
+    flag_name_por: "24. O tanque de retenção móvel esta devidamente instalado com uma lona esticada no chão com uma inclinação em direcção ao tanque de retenção móvel para captar todo o efluente?"
+    answer: "no"
+    warning: "Problem reported: Triple rinse and wash area must be covered with leak-proof surface and sloped to mobile soak pit."
+    warning_fr: "Problème signalé: L'aire de triple rinçage et  lavage doit être couvert d'une surface étanche et incliné vers le puisard mobile."
+    warning_por: "Problema reportado: Residuos liquidos ficaram no balde de colecta durante na area de lavagem durante a noite."
+  - question: [rinse_water_drums]
+    comment: [rinse_water_drums_comments]
+    base_path: [msp_grp, Q25]
+    flag_name: "25. Do the 3 rinse water drums have sufficient water for today's cleanup?"
+    flag_name_fr: "25. Les 3 bidons d'eau de rinçage ont-ils suffisamment d'eau pour le nettoyage d'aujourd'hui?"
+    flag_name_por: "25. Os 3 tambores de tripla lavagem contem agua suficiente para a limpeza do dia?"
+    answer: "no"
+    warning: "Problem reported: Insufficient water for triple rinse."
+    warning_fr: "Problème signalé: Eau insuffisante pour le triple rinçage."
+    warning_por: "Problema reportado: Lavagem tripla e e area de lavagem deverão estar cobertos com lona plastica inlcinada para o tanque de retencao movel."
+  - question: [pesticide_emptied]
+    comment: [pesticide_emptied_comments]
+    base_path: [msp_grp, Q26]
+    flag_name: "26. Is all pesticide remaining in pumps emptied into the collection drum?"
+    flag_name_fr: "26. Tous les résidus de pesticides dans les pompes sont-ils vidés dans le fût de collecte?"
+    flag_name_por: "26. Todo o pesticida que resta nas bombas e drenado no tambor de colecta?"
+    answer: "no"
+    warning: "Notify operations coordinator of triple-rinse violations."
+    warning_fr: "Informer le coordinateur des opérations des violations de triple rinçage  "
+    warning_por: "Problema reportado: Agua insufficiente para a tripla lavagem."
+  - question: [pumps_depressurized]
+    comment: [pumps_depressurized_comments]
+    base_path: [msp_grp, Q28]
+    flag_name: "28. Are the pumps depressurized into the collection drum before opening them to dump rinse water?"
+    flag_name_fr: "28. Les pompes sont-elles dépressurisées dans le tonneau de collecte avant de les ouvrir pour vider l'eau de rinçage?"
+    flag_name_por: "28. As bombas sao despressurizadas no tambor de colecta antes de abri-los para despejar na agua de lavagem?"
+    answer: "no"
+    warning: "Problem reported: Pumps not properly emptied"
+    warning_fr: "Problème signalé: Pompes mal vidées"
+    warning_por: "Notifficar o coordenador das operacoes sobre as violacoes da tripla lavagem."
+  - question: [pumps_rinsed]
+    comment: [pumps_rinsed_comments]
+    base_path: [msp_grp, Q27]
+    flag_name: "27. Are spray pumps triple rinsed using the progressive rinse method?"
+    flag_name_fr: "27. Les pompes de pulvérisation sont-elles rincées trois fois en utilisant la méthode de rinçage progressif?"
+    flag_name_por: "27. As bombas de pulverizacao sao feitas a tripla lavagem observando o metodo progressivo?"
+    answer: "no"
+    warning: "Problem reported: Triple-rinse violations."
+    warning_fr: "Problème signalé: violations du triple rinçage."
+    warning_por: "Problema reportado: Violações da tripla lavagem."
+  - question: [pumps_rinsed_outside]
+    comment: [pumps_rinsed_outside_comments]
+    base_path: [msp_grp, Q29]
+    flag_name: "29. Are the outsides of the pumps rinsed off in the wash area so that wash water drains to the soak pit?"
+    flag_name_fr: "29. L'extérieur des pompes est-il rincé dans la zone de lavage de sorte que l'eau  s'écoule dans le puisard ?"
+    flag_name_por: "29. As partes externas das bombas sao lavadas na area de lavagem para que os residuos de agua possam dreinar no tanque de retenção ?"
+    answer: "no"
+    warning: "Problem reported: Pumps not properly washed"
+    warning_fr: "Problème signalé: Pompes pas bien lavées"
+    warning_por: "Problema reportado: Bombas nao lavadas propriamente"
+  - question: [waste_water_distributed]
+    comment: [waste_water_distributed_comments]
+    base_path: [msp_grp, Q30]
+    flag_name: "30. Is the waste water from the collection drum distributed among the spray pumps for the next day?"
+    flag_name_fr: "30. Les eaux usées provenant du tonneau de collecte sont-elles réparties entre les pompes de pulvérisation pour le lendemain?"
+    flag_name_por: "30. Os residuos de agua dos tambores de colecta sao distribuidos entre as bombas para o dia seguinte?"
+    answer: "no"
+    warning: "Problem reported: Waste water from collection drum not distributed into spray pumps."
+    warning_fr: "Problème signalé: Les eaux usées provenant du fût de collecte ne sont pas distribuées dans les pompes de pulvérisation."
+    warning_por: "Problema reportado: Residuos liquidos do balde de colecta nao distribuida para as bombas."
+  - question: [equipment_rinsed]
+    comment: [equipment_rinsed_comments]
+    base_path: [msp_grp, Q31]
+    flag_name: "31. Are the helmets, face shields, boots, and gloves rinsed off in the wash area?"
+    flag_name_fr: "31. Les casques, masques, bottes et gants sont-ils rincés dans la zone de lavage?"
+    flag_name_por: "31. Os capacetes, viseiras, mascaras, botas e luvas são lavadas no local de lavagem?"
+    answer: "no"
+    warning: "Problem reported: PPE not properly washed"
+    warning_fr: "Problème signalé: EPI mal lavé"
+    warning_por: "Problema reportado: EPI nao lavado propriamente."
+  - question: [workers_wash]
+    comment: [workers_wash_comments]
+    base_path: [msp_grp, Q32]
+    flag_name: "32. Do workers at a minimum wash their face and hands with soap and water?"
+    flag_name_fr: "32. Les travailleurs se lavent -ils au moins le visage et les mains avec de l'eau et du savon?"
+    flag_name_por: "32. Os roceadores lavam as suas mãos e cara com agua e sabão no minimo?"
+    answer: "no"
+    warning: "Problem reported: Operators must wash hands and face with soap and water after removing PPE."
+    warning_fr: "Problème signalé: Les opérateurs doivent se laver les mains et le visage avec de l'eau et du savon après avoir retiré l'EPI."
+    warning_por: "Problema reportado: Roceadores deverao lavar as mãos e cara com agua e sabao depois de tirar o EPI."
+  - question: [msp_used]
+    comment: [msp_used_comments]
+    base_path: [msp_grp, Q33]
+    flag_name: "33. Is the mobile soak pit used to dispose of all contaminated waste water from cleaning the helmet, face shield, gloves, boots, and outside of the pump?"
+    flag_name_fr: "33. Le puisard mobile est-il utilisée pour se débarrasser de toutes les eaux usées contaminées provenant du nettoyage du casque, du masque facial, des gants, des bottes et de l'extérieur de la pompe?"
+    flag_name_por: "33. O tanque de retenção movel é usado para a eliminação de todos os residuos de agua contaminados, a partir da lavagem do capacete,viseiras, máscaras, luvas, botas e parte externa da bomba?"
+    answer: "no"
+    warning: "Problem reported:  Improper disposal of wastewater."
+    warning_fr: "Problème signalé: Mauvais traitement des eaux usées."
+    warning_por: "Problema reportado:  Deposição impróprio de residuos liquidos."
+  - question: [contaminated_water_drains]
+    comment: [contaminated_water_drains_comments]
+    base_path: [msp_grp, Q34]
+    flag_name: "34. Does all contaminated waste water drain properly into the mobile soak pit?"
+    flag_name_fr: "34. Toutes les eaux usées contaminées sont-elles évacuées correctement dans le puisard mobile?"
+    flag_name_por: "34. Todos os residuos contaminados de agua sao devidamente drenados no tanque de retenção movel?"
+    answer: "no"
+    warning: "Problem reported: Water not draining properly into mobile soak pit."
+    warning_fr: "Problème signalé: L'eau ne s'écoule pas correctement vers le puisard mobile."
+    warning_por: "Problema reportado: Drenamento improprio de agua para o tanque de retencao."
+  - question: [effluent_absorbed]
+    comment: [effluent_absorbed_comments]
+    base_path: [msp_grp, Q35]
+    flag_name: "35. Is the soak pit absorbing all the effluent waste without creating a puddle and/or run off?"
+    flag_name_fr: "35. Le puisard absorbe-t-il tous les effluents sans créer de flaque d'eau et / ou de ruissellement?"
+    flag_name_por: "35. O tanque de retenção absorve todo o residuo efluente sem criar um charco ou poças?"
+    answer: "no"
+    warning: "Problem reported: Mobile soak pit not draining properly."
+    warning_fr: "Problème signalé: L'eau ne se vide pas correctement du puisard"
+    warning_por: "Problema reportado: Tanque de retenção móvel nao esta drenando propriamente."
+  - question: [drums_covered]
+    comment: [drums_covered_comments]
+    base_path: [msp_grp, Q36]
+    flag_name: "36. Are the covers placed on the 4 triple-rinse drums after all pumps are cleaned?"
+    flag_name_fr: "36. Les couvercles sont-ils placés sur les 4 tonneaux à triple rinçage après le nettoyage de toutes les pompes?"
+    flag_name_por: "36. As tampas sao colocadas nos tambores 4 de tripla lavagem, depois de limpar todas as bombas?"
+    answer: "no"
+    warning: "Problem reported: Rinse and/or waste drums not covered overnight."
+    warning_fr: "Problème signalé: Barils d'eau de rinçage  et / ou d'effluents non couverts pendant la nuit."
+    warning_por: "Problema reportado: Lavagem e /ou baldes de lixo nao foi coberto durante a noite."
+  - question: [ground_restored]
+    comment: [ground_restored_comments]
+    base_path: [msp_grp]
+    flag_name: "37a. Have the barrels been removed, hole for MSP refilled, and the ground returned to its original state?"
+    flag_name_fr: "37a. Les tonneaux ont-ils été enlevés, les trous de puisards mobile effacer et le sol est remis à son état d'origine?"
+    flag_name_por: ""
+    answer: "no"
+    warning: "Problem reported: MSP not properly restored."
+    warning_fr: "Problème signalé: MSP pas correctement restauré."
+    warning_por: "Problema reportado: TRM nao foi propiramnete retornado ao cova."
+  - question: [msp_removed]
+    comment: [msp_removed_comments]
+    base_path: [msp_grp]
+    flag_name: "37b. Has the MSP been pulled out of the ground with the hole covered and site secured?"
+    flag_name_fr: "37a. Les tonneaux ont-ils été enlevés, le trou pour le PM a-t-il été rempli et le sol est revenu à son état d'origine?"
+    flag_name_por: "37a. Os barris foram removidos, as cavidades do TRM reabastecidas, e chao devolvido ao seu estado original?"
+    answer: "no"
+    warning: "Problem reported: MSP installation site not secured at the end of the day."
+    warning_fr: "Problème signalé: Le site d'installation de MSP n'est pas sécurisé à la fin de la journée."
+    warning_por: "Problema reportado: Instalação do TRM no local nao foi seguradano final do dia."
+  - question: [msp_secure]
+    comment: [msp_secure_comments]
+    base_path: [msp_grp]
+    flag_name: "38a. Is the MSP kept in a secure room after returning from cleaning up?"
+    flag_name_fr: "38a. Le PM est-il gardé dans une pièce sécurisée après être son nettoyage?"
+    flag_name_por: "38a. O TRM e colocado numa sala segura depois de vir da limpeza?"
+    answer: "no"
+    warning: "Problem reported: MSP has to be secured at the end of day."
+    warning_fr: "Problème signalé: MSP doit être sécurisé à la fin de la journée."
+    warning_por: "Problema reportado: TRM tem que ser segurado no final do dia."
+  - question: [overalls_wash]
+    comment: [overalls_wash_comments]
+    base_path: [msp_grp, Q39]
+    flag_name: "39. Are the overalls transported back to the main fixed soak pit to be washed?"
+    flag_name_fr: "39. Les salopettes sont-elles transportées dans le principal puisard pour les à laver?"
+    flag_name_por: "39. Os fatos de trabalho são levados de volta ao tanque de retenção fixo para serem lavados?"
+    answer: "no"
+    warning: "Problem reported: Porters not transporting overalls to be washed and dried"
+    warning_fr: "Problème signalé: Les porteurs ne transportent pas les combinaisons à laver et sécher"
+    warning_por: "Problema reportado: Carregadores nao transportam fatos de trabalho para ser lavados e secos"
+  - question: [overalls_clean]
+    comment: [overalls_clean_comments]
+    base_path: [msp_grp, Q40]
+    flag_name: "40. Do the operators have clean overalls for the next day?"
+    flag_name_fr: "40. Les opérateurs ont-ils des salopettes pour le lendemain?"
+    flag_name_por: "40. Os roceadores dispoem de aventais limpos para o dia seguinte?"
+    answer: "no"
+    warning: "Problem reported: Porters not transporting clean overalls to field teams"
+    warning_fr: "Problème signalé: Les porteurs ne transportent pas de combinaisons propres aux équipes de terrain"
+    warning_por: "Problema reportado: Carregadores nao transportam os fatos de trabalho limpos para o campo"
+# Form 4 - Storekeeper
+http://openrosa.org/formdesigner/FC8DCFC3-F595-40E2-955B-90721FCD246F:
+  - question: [ledger_present]
+    comment: [ledger_present_comments]
+    base_path: [stock_audit_grp, Q1]
+    flag_name: "1. Is a stock ledger/register present at the store?"
+    flag_name_fr: "1. Est-ce-que le registre / registre des stocks est présent dans le magasin?"
+    flag_name_por: "1. Existe um livro de registo no armazem?"
+    answer: "no"
+    warning: "Problem reported: Stock ledger not present."
+    warning_fr: "Problème signalé: pas de registre de stock dans le magasin"
+    warning_por: "Problema reportado: Registo de estoque nao presente."
+  - question: [ledger_updated]
+    comment: [ledger_updated_comments]
+    base_path: [stock_audit_grp, Q2]
+    flag_name: "2. Is the store ledger book fully updated?"
+    flag_name_fr: "2. Est-ce-que le livre grand du magasin est entièrement mis à jour?"
+    flag_name_por: "2. O livro de registo do armazem esta completamente actualizado?"
+    answer: "no"
+    warning: "Problem reported: The store ledger book is not fully updated."
+    warning_fr: "Problème signalé: le registre de stock n'est pas entièrement mis à jour "
+    warning_por: "Problema reportado: o livro do registo do armazem nao esta completa,ente actualizado."
+  - question: [stock_cards_mounted]
+    comment: [stock_cards_mounted_comments]
+    base_path: [stock_audit_grp, Q3]
+    flag_name: "3. Are the stock cards mounted for each item?"
+    flag_name_fr: "3. Est-ce-que chaque article possède sa propre fiche de stock ?"
+    flag_name_por: "3. Os cartões de stock estão afixados para cada artigo?"
+    answer: "no"
+    warning: "Problem reported: Stock cards not mounted."
+    warning_fr: "Problème signalé : fiches de stocks non montées "
+    warning_por: "Problema reportado: Cartoes de estoque nao estao montados."
+  - question: [stock_cards_updated]
+    comment: [stock_cards_updated_comments]
+    base_path: [stock_audit_grp, Q4]
+    flag_name: "4. Are the stock cards up to date?"
+    flag_name_fr: "4. Est-ce-que les cartes de stock sont à jour?"
+    flag_name_por: "4. Os cartões de stock estão actualizados?"
+    answer: "no"
+    warning: "Problem reported: Deficient stock record-keeping."
+    warning_fr: "Problème signalé: les fiches de stocks insuffisants "
+    warning_por: "Problema reportado: Deficiente arquivo de registo de estoque ."
+  - question: [separate_pages_updated]
+    comment: [separate_pages_updated_comments]
+    base_path: [stock_audit_grp, Q5]
+    flag_name: "5. Are the separate ledger pages and stock cards for empty bottles/sachets and used dust masks up to date?"
+    flag_name_fr: "5. Est-ce-que les pages de registre et les fiches de stock séparées pour les bouteilles / sachets vides et les masques antipoussières usagés sont à jour?"
+    flag_name_por: "5. As paginas separadas do livro de registo, cartoes de stock para as garravas/saquetas vazias e mascaras usadas estão actualizadas?"
+    answer: "no"
+    warning: "Problem reported: Deficient stock record-keeping: empty bottles and waste stock."
+    warning_fr: "Problème signalé: fiches de stocks manquantes : bouteilles/sachets vides et stocks de déchets "
+    warning_por: "Problema reportado: Deficiente arquivo de registo de estoque: garrfas vazias e estoque de lixo."
+  - question: [separate_cards_batch]
+    comment: [separate_cards_batch_comments]
+    base_path: [stock_audit_grp, Q6]
+    flag_name: "6. If there are insecticides that expire during spray, are there separate stock cards for each batch of insecticide?"
+    flag_name_fr: "6. S'il y a des insecticides qui expirent pendant la pulvérisation, existe-t-il des fiches de stock distinctes pour chaque lot d'insecticide?"
+    flag_name_por: "6. Se ha insecticidas que expiram durante a pulverização, existem cartões de estoque separados para cada lote de insecticidas?"
+    answer: "no"
+    warning: "Problem reported: No separate stock cards for expiring insecticide."
+    warning_fr: "Problème signalé: pas de fiches de sotck séparés pour les insecticides périmés "
+    warning_por: "Problema reportado: Nao ha separacao de cartoes de estoque de insecticida expirado."
+  - question: [expired_insecticides_separate]
+    comment: [expired_insecticides_separate_comments]
+    base_path: [stock_audit_grp, Q7]
+    flag_name: "7. Have insecticides that expire during the spray season been physically separated from the other insecticides in the store room?"
+    flag_name_fr: "7. Est-ce-que les insecticides qui expirent pendant la saison de pulvérisation ont été physiquement séparés des autres insecticides dans le magasin?"
+    flag_name_por: "7. Os insecticidas que expiram durante a época de pulverização foram fisicamente separados dos outros estão no armazem?"
+    answer: "no"
+    warning: "Problem reported: Expiring insecticide not physically separated from others."
+    warning_fr: "Problème signalé: les insecticides périmés ne sont pas séparés physiquement des autres insecticides dans le magasin"
+    warning_por: "Problema reportado: Insecticida expirado nao esta fisicamente separado de outros."
+  - question: [stock_used_cards]
+    comment: [stock_used_cards_comments]
+    base_path: [stock_audit_grp, Q8]
+    flag_name: "8. Using the stock cards, can the storekeeper indicate the quantity of stock that has been used to date?"
+    flag_name_fr: "8. À l'aide des fiches de stock, le magasinier peut-il indiquer la quantité de stock utilisée à ce jour?"
+    flag_name_por: "8. Usando os cartoes de estoque, o fiel é capaz de indicar a quantidade de estoque usado até a data?"
+    answer: "no"
+    warning: "Problem reported: Deficient record-keeping: usage."
+    warning_fr: "Problème signalé: fiches de stock déficient: utilisation."
+    warning_por: "Problema reportado: Deficiente arquivo de registo: uso."
+  - question: [balance_mismatch]
+    comment: [balance_mismatch_comments]
+    base_path: [stock_audit_grp, Q9]
+    flag_name: "9. Is the balance in the store ledger book different from the balance on the stock card for all stock items?"
+    flag_name_fr: "9. La balance du livre du grand magasin est-elle différente du solde de la carte de stock pour tous les articles en stock?"
+    flag_name_por: "9. O saldo no livro de registo se difere do saldo nos cartões de estoque  para todos os artigos de estoque?"
+    answer: "yes"
+    warning: "Problem reported: The balance in the store ledger book does not match the balance on the stock card for all stock items."
+    warning_fr: "Problème signalé: La balance dans du registre du magasin ne correspond pas au solde de la fiche de stock pour tous les articles en stock."
+    warning_por: "Problema reportado: O balanco no livro de registo nao confere com o registo de cartoes de estoque para todos itens."
+  - question: [balance_match_stock]
+    comment: [balance_match_stock_comments]
+    base_path: [stock_audit_grp, Q10]
+    flag_name: "10. Does the balance on the stock card equal to the result of a physical stock count for each item?"
+    flag_name_fr: "10. Est-ce-que le solde de la carte de stock est égal au résultat d'un compte de stock physique pour chaque article?"
+    flag_name_por: "10. O saldo nos cartões de estoque corresponde ao estoque fisico existente contabilizado para cada item?"
+    answer: "no"
+    warning: "Problem reported: The balance on the stock card does not equal the result of a physical stock count for all items."
+    warning_fr: "Problème signalé: le solde des fiches de stock ne correspond pas au résultat d'un comptage physique"
+    warning_por: "Problema reportado: O balanco no cartao de estoque nao e igual ao resultado da contagem fisica do estoque para todos itens."
+  - question: [reconciliation_completed]
+    comment: [reconciliation_completed_comments]
+    base_path: [stock_audit_grp, Q11]
+    flag_name: "11. Is the Insecticide Reconciliation Form completed daily?"
+    flag_name_fr: "11. Est-ce-que le formulaire de rapprochement des insecticides est-il rempli journalièrement?"
+    flag_name_por: "11. O formulario de reconciliação de insecticida e diariamente preenchido?"
+    answer: "no"
+    warning: "Problem reported: The Insecticide Reconciliation Form is not completed daily."
+    warning_fr: "Problème signalé: Le formulaire de rapprochement des insecticides n'est pas rempli tous les jours."
+    warning_por: "Problema reportado: A ficha diaria de registo de insecticida nao e completa diariamente ."
+  - question: [balance_match_opening]
+    comment: [balance_match_opening_comments]
+    base_path: [stock_audit_grp, Q12]
+    flag_name: "12. Does the sum of the stock balance on the stock card + the stock issued out for the day + the stock balance of empty sachets/bottles, equal to the opening balance plus any subsequent receipts in the ledger?"
+    flag_name_fr: "12. Est-ce que la somme du solde du stock sur la carte de stock + le stock émis pour la journée + le solde du stock de sachets / bouteilles vides, égal au solde d'ouverture plus les reçus ultérieurs dans le grand livre?"
+    flag_name_por: "12. A soma do saldo do stock nos cartoes de estoque + o estoque  emitido para o dia + o saldo de estoque das saquetas/garrafas vazias, é igual ao saldo de abertura mais qualquer subsequentes entrada no livro de registo?"
+    answer: "no"
+    warning: "Problem reported: The stock balance records of pesticides does not reconcile."
+    warning_fr: "Problème signalé: Les registres de stocks de pesticides ne concordent pas."
+    warning_por: "Problema reportado: O resgisto do balanco do insecticida nao e reconciliado."
+  - question: [pesticide_mishandling]
+    comment: [pesticide_mishandling_comments]
+    base_path: [safety_reqs_grp, Q13]
+    flag_name: "13. Do people handle pesticides while not wearing masks, gloves, boots and overalls?"
+    flag_name_fr: "13. Les gens manipulent-ils des pesticides sans porter de masques, de gants, de bottes et de combinaisons?"
+    flag_name_por: "13. As pessoas manuseam pesticidas sem usar mascaras, luvas, botas ou fatos de trabalho?"
+    answer: "yes"
+    warning: "Problem reported: Personnel handling pesticides without wearing masks, gloves, boots, and overalls."
+    warning_fr: "Problème signalé: le personnel manipule le pesticide sans porter masque, gants, bottes et combinaison"
+    warning_por: "Problema reportado: Manuseio individual de insecticida sem o uso de mascaras , luvas, bootas and fato de trabalho."
+  - question: [eating_warehouse]
+    comment: [eating_warehouse_comments]
+    base_path: [safety_reqs_grp, Q14]
+    flag_name: "14. Do warehouse teams eat inside the warehouse?"
+    flag_name_fr: "14. Est-ce que les équipes d'entrepôt mangent à l'intérieur de l'entrepôt?"
+    flag_name_por: "14. As equipas do armazen comem dentro do armazem?"
+    answer: "yes"
+    warning: "Problem reported: Workers eating inside warehouse while IRS pesticides are in stock."
+    warning_fr: "Problème signalé: le personnel entrain de manger dans le magasin de pesticide "
+    warning_por: "Problema reportado: Trabalhadores comendo dentro do armazem enquanto ha insecicida de PIDOM  em estoque."
+  - question: [poisoning_symptoms]
+    comment: [poisoning_symptoms_comments]
+    base_path: [safety_reqs_grp, Q15]
+    flag_name: "15. Are storekeepers familiar with the symptoms of pesticide poisoning?"
+    flag_name_fr: "15. Est-ce que les charge de stocks sont-ils familiers avec les symptômes de l'empoisonnement aux pesticides?"
+    flag_name_por: "15. Os fies estão familiarizados sobre os sintomas de intoxicação por pesticidas?"
+    answer: "no"
+    warning: "Problem reported: Storekeeper not familiar with symptoms of poisoning for the current pesticide(s)."
+    warning_fr: "Problème signalé: le magasinier n'est pas familier aux signes d'intoxication"
+    warning_por: "Problema reportado: Fiel do armazem nao esta familiarizado com sintomas de intoxicao do insecticida em uso."
+  - question: [first_aid_check]
+    comment: [first_aid_check_comments]
+    base_path: [safety_reqs_grp, Q16]
+    flag_name: "16. Are the following items in the emergency first aid kit?"
+    flag_name_fr: "16. Les articles suivants sont-ils inclus dans la trousse de premiers soins d'urgence?"
+    flag_name_por: "16. Os seguintes artigosestão no kit de emergência  de primeiros socorros?"
+    warning_type: unchecked
+    ignore: ["none"]
+    section: 'Storekeeper_Perf_SOP_2018'
+    warning: "Problem reported: First aid items are needed for this facility. Missing: {msg}"
+    warning_fr: "Problème signalé: besoins en éléments de premier secours. Manquant: {msg}"
+    warning_por: "Problema reportado: necessidade de componentes do kit de primeiros socorros nesta base operacional. Em falta: {msg}"
+  - question: [warehouse_spill_kit]
+    comment: [warehouse_spill_kit_comments]
+    base_path: [safety_reqs_grp, Q17]
+    flag_name: "17. Is there a complete spill kit and a fire extinguisher in the warehouse?"
+    flag_name_fr: "17. Y a-t-il une trousse de déversement complète et un extincteur dans l'entrepôt?"
+    flag_name_por: "17. Existe um kit completo de derramamento e um extintor de incendio no armazem?"
+    warning_type: unchecked
+    ignore: ["none"]
+    section: 'Storekeeper_Perf_SOP_2018'
+    warning: "Problem reported: Storeroom missing: {msg}"
+    warning_fr: "Problème signalé: manquant dans le magasin de stockage: {msg}"
+    warning_por: "Problema reportadoFatas no armazem: {msg}"
+  - question: [nearest_health_facility_known]
+    comment: [nearest_health_facility_known_comments]
+    base_path: [safety_reqs_grp, Q18]
+    flag_name: "18. Does the storekeeper know where the nearest health facility is located?"
+    flag_name_fr: "18. Est-ce que le magasinier sait où se trouve l'éstablissement de santé le plus proche?"
+    flag_name_por: "18. O fiel sabe onde fica o centro de saúde mais próximo?"
+    answer: "no"
+    warning: "Problem reported: Storekeeper does not know location of nearest health facility."
+    warning_fr: "Problème signalé: le magasinier ne sait pas où se trouve la structure de santé la plus proche"
+    warning_por: "Problema reportado: Fiel do armazem nao conhece onde se localiza a unidade sanitaria mais proxima."
+  - question: [antidotes_provided]
+    comment: [antidotes_provided_comments]
+    base_path: [safety_reqs_grp, Q19]
+    flag_name: "19. Were the antidotes for the pesticide in use provided to the nearest health facility?"
+    flag_name_fr: "19. Est-ce que les antidotes pour le pesticide utilisé ont été fournis à l'établissement de santé le plus proche?"
+    flag_name_por: "19. Os antidotos para os pesticidas em uso foram fornecidos ao posto de saude mais proximo?"
+    answer: "no"
+    warning: "Problem reported: Antidotes may not be available in the nearest health facility."
+    warning_fr: "Problème signalé: l'antidote n'est pas disponible au niveau de la strcuture de santé la plus proche"
+    warning_por: "Problema reportado: Antidotos talves nao estejam disponiveis na unidade sanitaria mais proxima."
+  - question: [soap_available]
+    comment: [soap_available_comments]
+    base_path: [store_materials_grp, Q20]
+    flag_name: "20. Are there soap and water basins available for washing hands?"
+    flag_name_fr: "20. Est-ce qu'il y a des bassins, savons et d'eau pour se laver les mains?"
+    flag_name_por: "20. Ha bacias de agua e sabão disponiveis para lavar as maos?"
+    answer: "no"
+    warning: "Problem reported:  Water basins not provided in storeroom for washing hands."
+    warning_fr: "Problème signalé: bassines d'eau non disponibles dans le magasin pour le lavage des mains "
+    warning_por: "Problem reported:  Water basins not provided in storeroom for washing hands."
+  - question: [msds_posted]
+    comment: [msds_posted_comments]
+    base_path: [store_materials_grp, Q21]
+    flag_name: "21. Is the current pesticide Material Safety Data Sheet (MSDS) posted?"
+    flag_name_fr: "21. La ou les fiches de données de sécurité (FDS) du ou des pesticides actuels est-elle affichée?"
+    flag_name_por: "21. A Folha de Dados de Segurança do Material (MSDS) do pesticida actual esta postada?"
+    answer: "no"
+    warning: "Problem reported: Material Safety Data sheet for the current pesticide(s) not posted."
+    warning_fr: "Problem reported: Material Safety Data sheet for the current pesticide(s) not posted."
+    warning_por: "Problema reportado: Ficha de Informacao de  Seguranca de Material para o pescticida(s) em uso nao postado."
+  - question: [thermometer_available]
+    comment: [thermometer_available_comments]
+    base_path: [store_materials_grp, Q22]
+    flag_name: "22. Is there a functional thermometer for monitoring daily temperature in the storage facility?"
+    flag_name_fr: "22.  Est-ce que il y a un thermomètre fonctionnel pour surveiller la température quotidienne dans l'installation de stockage?"
+    flag_name_por: "22. Existe um termómetro em funcionamento para monitorar a temperatura diaria no armazem?"
+    answer: "no"
+    warning: "Problem reported: Thermometer needed in storeroom."
+    warning_fr: "Problème signalé: besoin de thermomètre dans le magasin de stockage "
+    warning_por: "Problema reportado: Necessidade de termometro no armazem."
+  - question: [pesticide_leakage]
+    comment: [pesticide_leakage_comments]
+    base_path: [pesticide_management_grp, Q23]
+    flag_name: "23. Is there any evidence of pesticide leakage?"
+    flag_name_fr: "23. Y a-t-il des signes de fuite de pesticide?"
+    flag_name_por: "23. Ha alguma evidência de fuga de pesticidas?"
+    answer: "yes"
+    warning: "Problem reported: Pesticide leak discovered in storeroom."
+    warning_fr: "Problème signalé: Fuite de pesticide découverte dans l'entrepôt"
+    warning_por: "Problema reportado: Descoberto vazamento de pesticida no armazem."
+  - question: [contaminants_separated]
+    comment: [contaminants_separated_comments]
+    base_path: [pesticide_management_grp, Q24]
+    flag_name: "24. Are the insecticide and contaminated waste stored away from other materials in the store?"
+    flag_name_fr: "24. L'insecticide et les déchets contaminés sont-ils stockés à l'écart des autres matériaux dans le magasin?"
+    flag_name_por: "24. Os insecticidas e residuos contaminados sao colocados longe do outro material que esta no armazem?"
+    answer: "no"
+    warning: "Problem reported: Deficient pesticide and contaminated waste storage procedures."
+    warning_fr: "Problème signalé: Procédures d'entreposage des pesticides et des déchets contaminés déficients"
+    warning_por: "Problema reportado:Prodecidmento deficientede de armazenamento de pesticida e lixo contaminado."
+  - question: [pesticides_labeled]
+    comment: [pesticides_labeled_comments]
+    base_path: [pesticide_management_grp, Q25]
+    flag_name: "25. Are pesticides properly labeled?"
+    flag_name_fr: "25. Les pesticides sont-ils correctement étiquetés?"
+    flag_name_por: "25. Os pesticidas estao devidamente rotulados?"
+    answer: "no"
+    warning: "Problem reported: Deficient pesticide labeling."
+    warning_fr: "Problème signalé: Étiquetage des pesticides déficient."
+    warning_por: "Problema reportado: Deficiente rotulagem de  pesticida."
+  - question: [insecticide_fefo]
+    comment: [insecticide_fefo_comments]
+    base_path: [pesticide_management_grp, Q26]
+    flag_name: "26. Are the insecticides distributed on a 'first expired, first out' (FEFO) system so that the insecticide that expires first is distributed first?"
+    flag_name_fr: "26. Les insecticides sont-ils distribués dans un système «premier expiré, premier sorti» (FEFO) de sorte que l'insecticide qui expire le premier est distribué en premier?"
+    flag_name_por: "26. Os insecticidas sao distribuidos sob o sistema 'primeiro a expirar, primeiro a sair' (FEFO), para distribuir  insecticidas que expiraram por primeiro?"
+    answer: "no"
+    warning: "Problem reported: Not using FEFO inventory system."
+    warning_fr: "Problème signalé: Système d'inventaire FEFO non utilisé "
+    warning_por: "Problema reportado: Nao uso do sistema de PEPS ."
+  - question: [insecticides_expired]
+    comment: [insecticides_expired_comments]
+    base_path: [pesticide_management_grp, Q27]
+    flag_name: "27. Are there any insecticides past their expiration date?"
+    flag_name_fr: "27. Y a-t-il des insecticides après leur date de péremption?"
+    flag_name_por: "27. Ha alguns insecticidas for a do prazo?"
+    answer: "yes"
+    warning: "Problem reported: Expired pesticides in storeroom."
+    warning_fr: "Problème signalé: Pesticides expirés dans le magasin."
+    warning_por: "Problema reportado: Pesticida expirado no armazem."
+  - question: [barrels_empties_labeled]
+    comment: [barrels_empties_labeled_comments]
+    base_path: [pesticide_management_grp, Q28]
+    flag_name: "28. Are barrels or containers for empty sachets and empty bottles and used masks available and clearly labeled?"
+    flag_name_fr: "28. Y a-t-il des fûts ou des contenants pour les sachets vides et les bouteilles vides et les masques usagés disponibles et clairement étiquetés?"
+    flag_name_por: "28. Os bidões ou contentores de saquetas e garrafas vazias mascaras usadas estao disponiveis e claramente rotuladas?"
+    answer: "no"
+    warning: "Problem reported: Deficient storage and/or labeling of hazardous waste."
+    warning_fr: "roblème signalé: Stockage et / ou étiquetage déficient des déchets dangereux"
+    warning_por: "Problema reportado: Deficiente armazenamento/ rotulagem de lixo perigoso."
+  - question: [number_empties_match]
+    comment: [number_empties_match_comments]
+    base_path: [pesticide_management_grp, Q29]
+    flag_name: "29. Does the number of empty sachets/bottles (including those sachets/bottles in the field at this moment) equal what the storekeeper indicates as the quantity of stock issued to date?"
+    flag_name_fr: "29. Le nombre de sachets / bouteilles vides (y compris les sachets / bouteilles sur le terrain en ce moment) est-il égal à ce que le magasinier indique comme quantité de stock délivré à ce jour?"
+    flag_name_por: "29. O numero de saquetas/garrafas vazias (incluindo as que estao no terreno no momento) corresponde ao que o lojista indica como quantidade do stock emitido na data?"
+    answer: "no"
+    warning: "Problem reported: Pesticide inventory does not balance."
+    warning_fr: "Problème signalé: Inventaire des pesticides non conforme "
+    warning_por: "Problema reportado: Inventario de Pesticida nao esta no balanco."
+  - question: [pesticide_stored_high]
+    comment: [pesticide_stored_high_comments]
+    base_path: [pesticide_management_grp, Q30]
+    flag_name: "30. Is the pesticide stock stored no more than 2 m high and off of the ground?"
+    flag_name_fr: "30. Le stock de pesticides n'est-il pas entreposé à plus de 2 m de hauteur et hors du sol?"
+    flag_name_por: "30. O estoque de pesticidas é colocado a uma altura não mais de 2 m do chão?"
+    answer: "no"
+    warning: "Problem reported: Improper pesticide storage: Skids and/or stacking height."
+    warning_fr: "Problème signalé: Stockage inadéquat des pesticides: patins et / ou hauteur d'empilage"
+    warning_por: "Problema reportado:Armazenamento improprio de pesticida: Paletas e/ altura de empilhamento."
+  - question: [excess_accumulated_waste]
+    comment: [excess_accumulated_waste_comments]
+    base_path: [pesticide_management_grp, Q31]
+    flag_name: "31. Is there more than one spray season of accumulated solid waste?"
+    flag_name_fr: "31. Y a-t-il plus d'une saison de pulvérisation de déchets solides accumulés?"
+    flag_name_por: "31. Ha residuos solidos acumulados de mais de uma campanha de pulverização?"
+    answer: "yes"
+    warning: "Problem reported: Surplus pesticide in inventory."
+    warning_fr: "Problème signalé: : Surplus de pesticide dans l'inventaire"
+    warning_por: "Problema reportado: Pesticida excedente no inventario."
+# Form 5 - HO Prep & SOP Perf
+http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
+  - question: [items_removed]
+    comment: [items_removed_comments]
+    base_path: [household_prep_grp, Q1]
+    flag_name: "1. Have all movable items been removed from the structure?"
+    flag_name_fr: "1. Tous les objets mobiles ont-ils été retirés de la structure?"
+    flag_name_por: "1. Todos os bens moveis foram retirados da casa?"
+    answer: "no"
+    warning: "Problem reported: Belongings not removed from structure."
+    warning_fr: "Problème signalé: Les effets personnels ne sont pas retirés de la structure."
+    warning_por: "Problema reportado: Artigos nao removidos da casa."
+  - question: [furniture_covered]
+    comment: [furniture_covered_comments]
+    base_path: [household_prep_grp, Q2]
+    flag_name: "2. Have all non-moveable furniture items been moved to the middle of the room and properly covered with a plastic sheet?"
+    flag_name_fr: "2. Tous les meubles non mobiles ont-ils été déplacés au milieu de la pièce et correctement recouverts d'une feuille de plastique?"
+    flag_name_por: "2. A mobilia que nao pode ser removida foi colocada no centro do quarto  e devidamente coberta com lona plastica?"
+    answer: "no"
+    warning: "Problem reported: Immovable items not moved to the center of the room/items not covered with plastic sheet."
+    warning_fr: "Problème signalé: Les articles immobiliers qui n'ont pas été déplacés vers le centre de la pièce / les articles non recouverts d'une feuille de plastique."
+    warning_por: "Problema reportado: artigos que nao podem ser removidos, nao foram colocados no centro da sala/ items nao cobertos com plastico."
+  - question: [items_hanging]
+    comment: [items_hanging_comments]
+    base_path: [household_prep_grp, Q3]
+    flag_name: "3. Are there any items on the walls or hanging from the ceiling (posters, pictures, shoes, toothbrushes)?"
+    flag_name_fr: "3. Y a-t-il des objets sur les murs ou suspendus au plafond (affiches, photos, chaussures, brosses à dents)?"
+    flag_name_por: "3. Ha alguns artigos nas paredes ou pendurados no teto (cartazes, fotos, sapados, escovas)?"
+    answer: "yes"
+    warning: "Problem reported: Items not removed from the wall or ceiling."
+    warning_fr: "Problème signalé : Articles non retirés du mur ou du plafond"
+    warning_por: "Problema reportado: Items noa removidos da parede ou teto."
+  - question: [food_removed]
+    comment: [food_removed_comments]
+    base_path: [household_prep_grp]
+    flag_name: "4a. Was the food removed before spraying?"
+    flag_name_fr: "4a. La nourriture a-t-elle été enlevée avant la pulvérisation?"
+    flag_name_por: "4a. Os alimentos foram retirados antes da pulverização?"
+    answer: "no"
+    warning: "Problem reported: Rooms containing food were sprayed by operator."
+    warning_fr: "Problème signalé: des pièces contenant des aliments ont été pulvérisés "
+    warning_por: "Problema reportado: Quartos pulverizados pelo roceador contendo comida."
+  - question: [unmovable_people]
+    comment: [unmovable_people_comments]
+    base_path: [household_prep_grp, Q5]
+    flag_name: "5. If there are people (sick, elderly, babies) who cannot be moved in a structure, is this structure being sprayed?"
+    flag_name_fr: "5. Y-a-t-il des personnes (malades, âgées, bébés) qui ne peuvent pas être déplacées dans une structure, cette structure est-elle pulvérisée?"
+    flag_name_por: "5. Se há pessoas (doentes, idosos, bebes) que nao podem ser retirados da casa, essa estrutura esta sendo pulverizada?"
+    answer: "yes"
+    warning: "Problem reported: House sprayed with sick, elderly, or babies in home."
+    warning_fr: "Problème signalé:  Une maison a été aspergée avec des malades, de personnes âgées ou de bébés à la maison."
+    warning_por: "Problema reportado: Casa pulverisada com pessoas doentes, idosos or bebes dentro."
+  - question: [triple_rinse]
+    comment: [triple_rinse_comments]
+    base_path: [insecticide_prep_grp]
+    flag_name: "6a. Does the operator triple-rinse the bottle while preparing the pesticide in the tank?"
+    flag_name_fr: "6a. Est-ce-que l'opérateur rinse trois fois la bouteille pendant la préparation du pesticide dans le réservoir?"
+    flag_name_por: "6a. O roceador faz o tripla enxaguadela da garrafa durante a preparacao do pesticida no tanque?"
+    answer: "no"
+    warning: "Problem reported: Spray operator not observing bottle triple rinse procedure."
+    warning_fr: "Problème signalé : L'opérateur de pulvérisation ne respecte pas la procédure de  triple rinçage de la bouteille."
+    warning_por: "Problema reportado: Roceador nao observou o procedimento de enxaguamento triplo da garrafa."
+  - question: [tank_volume]
+    comment: [tank_volume_comments]
+    base_path: [insecticide_prep_grp, Q7]
+    flag_name: "7. Is the final tank volume, including water and insecticide, observed to be 7.5L?"
+    flag_name_fr: "7. Est-ce-que le volume final du réservoir, y compris l'eau et l'insecticide, atteigne de 7,5 L?"
+    flag_name_por: "7. O volume final do tanque, incluindo a agua e insecticida, observa os 7.5L?"
+    answer: "no"
+    warning: "Problem reported: Tank does not have the correct amount of water and insecticide."
+    warning_fr: "Problème signalé: Le réservoir n'a pas la bonne quantité d'eau et d'insecticide."
+    warning_por: "Problema reportado: A bomba nao tem a quantidade correcta de agua e insecticida."
+  - question: [tank_shaken]
+    comment: [tank_shaken_comments]
+    base_path: [insecticide_prep_grp, Q8]
+    flag_name: "8. Is the tank shaken to mix the contents before pressurizing?"
+    flag_name_fr: "8. Est-ce -que le réservoir est agité pour mélanger le contenu avant de le mettre sous pression?"
+    flag_name_por: "8. O tanque e agitado para misturar o conteudo antes de pressionar?"
+    answer: "no"
+    warning: "Problem reported: Spray operator not properly mixing pesticide before pressurizing tank."
+    warning_fr: "Problem reported: Spray operator not properly mixing pesticide before pressurizing tank."
+    warning_por: "Problema reportado: Roceador nao fez a mistura apropriada de insecticida antes de agitar o tanque."
+  - question: [pump_pressurized]
+    comment: [pump_pressurized_comments]
+    base_path: [insecticide_prep_grp, Q9]
+    flag_name: "9. Is the Hudson pump pressurized to 55 psi, or the Goizper pump pressurized until the safety valve begins releasing pressure and the red marker is visible before spraying?"
+    flag_name_fr: "9. La pompe Hudson est-elle pressurisée à 55 psi, ou la pompe Goizper est-elle sous pression jusqu'à ce que la soupape de sécurité commence à relâcher la pression et que le marqueur rouge soit visible avant la pulvérisation?"
+    flag_name_por: "9. A bomba Hudson e pressurizada a 55 psi, ou a bomba Goizper pressurizada até a válvula de segurança começar a libertar a pressao e o marcador vermelho ficar visivel antes da pulverização?"
+    answer: "no"
+    warning: "Problem reported: Spray operator not correctly pressurizing tank before spraying."
+    warning_fr: "Problème signalé: La pompe n'est pas correctement pressurisée"
+    warning_por: "Problema reportado: roceador não pressurizou correctamente o tanque antes de pulverizar."
+  - question: [sop_full_ppe]
+    comment: [sop_full_ppe_comments]
+    base_path: [spray_observe_grp, Q10]
+    flag_name: "10. Is the spray operator in full PPE?"
+    flag_name_fr: "10. L'opérateur de pulvérisation est-il en EPI complet?"
+    flag_name_por: "10. O roceador esta completamente  equipado do EPI?"
+    warning_type: unchecked
+    ignore: ["none"]
+    section: 'Homeowner_Prep_and_SOP_2018'
+    warning: "Problem reported: Spray operator not wearing full PPE."
+    warning_fr: "Problème signalé: l'opérateur n'a pas porté l'EPI au complet"
+    warning_por: "Problema reportado:  roceador não esta completamente equipado com EPI."
+  - question: [sop_eating_during_spray]
+    comment: [sop_eating_during_spray_comments]
+    base_path: [spray_observe_grp, Q11]
+    flag_name: "11. Is the spray operator observed smoking, eating, or drinking during household preparation or spraying?"
+    flag_name_fr: "11.Est-ce-que l'opérateur de pulvérisation est observé en train de fumer, de manger ou de boire pendant la préparation du ménage ou la pulvérisation?"
+    flag_name_por: "11. O roceador foi visto fumando, comendo ou bebendo durante a preparação do agregado familiar ou durante a pulverização?"
+    answer: "yes"
+    warning_question: [sop_id]
+    comment: [sop_id_comments]
+    warning_question_root: True
+    warning: "Problem reported: Spray operator {msg} drinking, or eating during household preparation or spraying."
+    warning_fr: "Problème signalé: l'Operateur de pulvérisation {msg} est entrain de boire, ou manger pendant la préparation des pièces des bénéficiaires ou la pulverisation"
+    warning_por: "Problema reportado: roceador {msg} bebendo, ou comendo durante a prepração do agregado ou pulverizando."
+  - question: [items_moved]
+    comment: [items_moved_comments]
+    base_path: [spray_observe_grp, Q12]
+    flag_name: "12. Have all immovable items been moved to the center of the room (bed, dresser, etc.)?"
+    flag_name_fr: "12. Est-ce-que tous les biens immobiliers ont été déplacés au centre de la pièce (lit, commode, etc.)?"
+    flag_name_por: "12. Toda a mobilia que não pode ser movida foi colocada no centro dos compartimentos (cama, armarios, etc)?"
+    answer: "no"
+    warning: "Problem reported: Immovable items not moved to the center of the room/covered before spraying"
+    warning_fr: "Problème signalé: les affaires qui ne peuvent être déplacés ne sont  pas déplacés/couvert au centre de la pièce avant la pulvérisation "
+    warning_por: "Problema reportado: Items que não podem ser tirados para fora nao movidos para o centro da sala/ cobertos antes da pulverização"
+  - question: [loose_items_removed]
+    comment: [loose_items_removed_comments]
+    base_path: [spray_observe_grp, Q13]
+    flag_name: "13. Have all loose items (clothes, mosquito nets, posters/pictures on the wall) been taken out of the house?"
+    flag_name_fr: "13. Est-ce-que tous les objets en vrac (vêtements, moustiquaires, affiches / photos sur le mur) ont été retirés de la maison?"
+    flag_name_por: "13. Todos os artigos (roupas, redes mosquiteiras, cartazes, fotos na parede) foram retirados para fora da casa?"
+    answer: "no"
+    warning: "Problem reported: Loose items (clothes, mosquito nets, pictures/posters) not removed from the house before spraying"
+    warning_fr: "Problème signalé: Les objets en vrac (vêtements, moustiquaires, photos / affiches) ne sont pas retirés de la maison avant d'être pulvérisés"
+    warning_por: "Problema reportado: items soltos (roupa, rede mosquiteiras, fotografias/cartazes) não removidos da casa antes da pulverização"
+  - question: [pump_leaks]
+    comment: [pump_leaks_comments]
+    base_path: [spray_observe_grp, Q14]
+    flag_name: "14. Are there any leaks from the pump?"
+    flag_name_fr: "14. Y a-t-il des fuites de la pompe?"
+    flag_name_por: "14. Ha algum escape da bomba?"
+    answer: "yes"
+    warning: "Problem reported: Pump leaking."
+    warning_fr: "Problème signalé : Des fuites proviennent de la pompe"
+    warning_por: "Problema reportado: vazamentos da bomba."
+  - question: [pump_serviced]
+    comment: [pump_serviced_comments]
+    base_path: [spray_observe_grp]
+    flag_name: "14a. Does the operator service the pump before proceeding?"
+    flag_name_fr: "14a. L'opérateur entretient-il la pompe avant de continuer?"
+    flag_name_por: "14a. O roceador  repara a bomba antes de prosseguir?"
+    answer: "no"
+    warning: "Problem reported: Spray operator did not immediately service leaking pump."
+    warning_fr: "Problème signalé: L'opérateur de pulvérisation n'a pas immédiatement réparé la pompe qui fuit."
+    warning_por: "Problema reportado: Roceador não fez a manutenção imdiata da bomba."
+  - question: [nozzle_tip]
+    comment: [nozzle_tip_comments]
+    base_path: [spray_observe_grp, Q15]
+    flag_name: "15. Is the spray operator spraying with the tip of the nozzle 45 cm away from the wall?"
+    flag_name_fr: "15. Est-ce-que l'opérateur de pulvérisation pulvérise l'extrémité de la buse à 45 cm du mur?"
+    flag_name_por: "15. O roceador  esta a pulverizar com o bico a 45cm da parede?"
+    answer: "no"
+    warning: "Problem reported: Spray operator not spraying at the correct distance from the surface."
+    warning_fr: "Problème signalé: L'operateur de pulverisation n'a pas respecté la bonne distance à partir du support  "
+    warning_por: "Problema reportado: Roceador não pulverizou pulverizou a uma distância correcta da superficie."
+  - question: [spray_speed]
+    comment: [spray_speed_comments]
+    base_path: [spray_observe_grp, Q16]
+    flag_name: "16. Is the spray operators maintaining the correct speed of application, i.e., covering 2 meters of vertical wall surface in 5 seconds?"
+    flag_name_fr: "16. Est-ce-que les opérateurs de pulvérisation maintiennent la bonne vitesse d'application, c'est-à-dire qu'ils couvrent 2 mètres de surface de paroi verticale en 5 secondes?"
+    flag_name_por: "16. Os roceadores matem a velocidade correcta de aplicação, isto é, cobrindo 2 metros da superficie vertical da parede em 5 segundos?"
+    answer: "no"
+    warning: "Problem reported: Spray operator not spraying at the correct speed."
+    warning_fr: "Problème signalé : L’opérateur de pulvérisation ne pulvérise pas à la vitesse correcte. "
+    warning_por: "Problema reportado: Roceador não pulverizou com a velocidade de correcta."
+  - question: [swath_overlap]
+    comment: [swath_overlap_comments]
+    base_path: [spray_observe_grp, swath_grp, Q17]
+    flag_name: "17. Is there a 5 cm overlap with each successive swath?"
+    flag_name_fr: "17. Y a-t-il un chevauchement de 5 cm avec chaque bande successive?"
+    flag_name_por: "17. Ha 5cm de sobreposição em cada faixa sucessiva?"
+    answer: "no"
+    warning: "Problem reported: Successive spray swath does not have 5 cm overlap."
+    warning_fr: "Problème signalé : Il n’y a pas de chevauchement de 5 cm d’une couche à l’autre. "
+    warning_por: "Problema reportado: Não ha sobreposição sucessiva de 5 cm."
+  - question: [surfaces_sprayed]
+    comment: [surfaces_sprayed_comments]
+    base_path: [spray_observe_grp, Q18]
+    flag_name: "18. Is the spray operator spraying all the recommended surfaces? (walls, inside of doors, ceiling)"
+    flag_name_fr: "18. Est-ce-que l'opérateur de pulvérisation pulvérise toutes les surfaces recommandées? (murs, intérieur des portes, plafond)"
+    flag_name_por: "18. O roceador pulveriza todas as superficies recomendadas? (paredes, parte interna das portas, teto)"
+    answer: "no"
+    warning: "Problem reported: Spray operator not spraying all the recommended surfaces."
+    warning_fr: "Problème signalé : L’opérateur de pulvérisation ne pulvérise pas toutes les surfaces recommandées"
+    warning_por: "Problema reportado: Roceador não pulverizou as superficies recomendadas."
+  - question: [surfaces_sprayed_incorrect]
+    comment: [surfaces_sprayed_incorrect_comments]
+    base_path: [spray_observe_grp, Q19]
+    flag_name: "19. Is the spray operator spraying floors, metal roofs, the outside of doors, glass, inside of cupboards, wallpaper, food granaries, curtains, latrines, animal pens?"
+    flag_name_fr: "19. Est-ce-que l'opérateur de pulvérisation pulvérise les planchers, les toits en métal, l'extérieur des portes, le verre, l'intérieur des placards, le papier peint, les greniers à nourriture, les rideaux, les latrines et les enclos pour animaux?"
+    flag_name_por: "19. Os roceadores pulverizam o chão, tecto metálico, parte externa das portas, vidros, dentro dos guarda-loicas, cartazes, celeiros, curtinas, latrinas e capoeiras?"
+    answer: "yes"
+    warning: "Problem reported: Spray operator spraying wrong surfaces."
+    warning_fr: "Probleme signalé: l'opérateur de pulvérisation pulvérise les mauvaises surfaces "
+    warning_por: "Problema reportada: Roceador pulverizou superficies erradas."
+  - question: [pump_re_pressurized]
+    comment: [pump_re_pressurized_comments]
+    base_path: [spray_observe_grp, Q20]
+    flag_name: "20. Is the pump re-pressurized if the Hudson tank pressure falls below 35 psi, or the Goizper automatically shuts off?"
+    flag_name_fr: "20. Est-ce-que la pompe est remise sous pression si la pression du réservoir Hudson chute en dessous de 35 psi ou si le Goizper s'éteint automatiquement?"
+    flag_name_por: "20. A bomba é re-pressurizada se a pressão do tanque Hudson cair abaixo de 35 psi, ou o Goizper desligar-se automaticamente?"
+    answer: "no"
+    warning: "Problem reported: Spray operator not re-pressurizing tank as required."
+    warning_fr: "Problème signalé : l'opérateur de pulvérisation n'a pas représsurisé la pompe "
+    warning_por: "Problema reportado: Roceador nao re-pressurizou o tanque como se requere."
+  - question: [items_removed]
+    comment: [items_removed_comments]
+    base_path: [spray_observe_grp, eaves_grp]
+    flag_name: "21a. Were the household items that are normally stored on the porches, roofs and exterior of the walls removed?"
+    flag_name_fr: "21a. Est-ce-que les articles ménagers qui sont normalement entreposés sur les porches, les toits et l'extérieur des murs ont été enlevés?"
+    flag_name_por: "21a. Os artigos da familia normalmente colocados nas varandas, tetos e no exterior das pares foram retirados?"
+    answer: "no"
+    warning: "Problem reported: Household items not removed from area before spraying eaves."
+    warning_fr: "Problème signalé: Les articles ménagers ne sont pas retirés de la zone avant la pulvérisation des avant-toits."
+    warning_por: "Problema reportado: Os pertences do agregado nao foram removidos das abas antes da pulverização."
+  - question: [house_marked]
+    comment: [house_marked_comments]
+    base_path: [spray_observe_grp, Q22]
+    flag_name: "22. Did the spray operator correctly mark the house after they completed spraying?"
+    flag_name_fr: "22. Est-ce-que l'opérateur de pulvérisation a correctement marqué la maison après avoir terminé la pulvérisation?"
+    flag_name_por: "22. O roceador marcou correctamente a casa depois de completar a pulverizacao?"
+    answer: "no"
+    warning: "Problem reported: Spray operator did not mark the house correctly"
+    warning_fr: "Problème signalé: l'opérateur de pulvérisation n'a pas correctement le marquage "
+    warning_por: "Problema reportado: Roceador nao fez a marcação correcta da casa"
+  - question: [resident_informed]
+    comment: [resident_informed_comments]
+    base_path: [sbcc_grp, Q23]
+    flag_name: "23. Was the resident informed in advance about the spray activities?"
+    flag_name_fr: "23. Est-ce-que le résident a été informé à l'avance des activités de pulvérisation?"
+    flag_name_por: "23. O residente foi informado com antecedencia sobre a actividade de pulverização?"
+    answer: "no"
+    warning: "Problem reported: Resident not informed of spray activities."
+    warning_fr: "Problème signalé: les bénificiaires ne sont informés de l'activité de pulvérisation "
+    warning_por: "Problema reportado: O residente nao foi informado sobre as actividades de pulverização."
+  - question: [resident_instructed]
+    comment: [resident_instructed_comments]
+    base_path: [sbcc_grp, Q24]
+    flag_name: "24. Was the resident instructed not to enter for 2 hours, and then open windows and door to air out for 30 minutes before moving back in personal belongings, food items, and animals/sick persons?"
+    flag_name_fr: "24. Le résident a-t-il reçu l'ordre de ne pas entrer pendant deux heures, puis d'ouvrir les fenêtres et la porte pour les aérer pendant 30 minutes avant de retourner dans ses effets personnels, ses aliments et ses animaux / personnes malades?"
+    flag_name_por: "24. Os residentes foram informados que não devem entrar dentro da casa durante 2 horas, e abrirem janelas e portas para arejar durante 3o minutos antes de devolver os bens, alimentos, animais e pessoas doentes?"
+    answer: "no"
+    warning: "Problem reported: Resident not informed of post-spray requirements."
+    warning_fr: "Problème signalé: les bénéficiaires ne sont pas informés de ne pas entrer pendant 2 h avant d'ouvrir portes et fenêtre 30 min pour aérer avant de remettre les effets personnels, les aliments, et les animaux/personnes malades "
+    warning_por: "Problema reportado: Residente nao foi  informado sobre os procedimentos pos pulverização."
+  - question: [resident_instructed_animals]
+    comment: [resident_instructed_animals_comments]
+    base_path: [sbcc_grp, Q25]
+    flag_name: "25. Was the resident informed to keep all animals outside the structure during spraying and for 2.5 hrs. afterward?"
+    flag_name_fr: "25. Est-ce-que le résident a été informé de garder tous les animaux à l'extérieur de la structure pendant la pulvérisation et pendant deux heures et demie? après?"
+    flag_name_por: "25. Os residentes foram informados para manter todos os animais fora da casa no decurso da pulverização, e durante 2h30 minutos apos a casa ser pulverizada?"
+    answer: "no"
+    warning: "Problem reported: Resident not informed of protocol regarding animals."
+    warning_fr: "Problème signalé: les résidents ne sont informés des mesures de sécurité par rapport aux animaux "
+    warning_por: "Problema reportado: Residente não informado sobre o protocolo com os animais."
+  - question: [resident_instructed_insect_removal]
+    comment: [resident_instructed_insect_removal_comments]
+    base_path: [sbcc_grp, Q26]
+    flag_name: "26. Was the resident told to sweep up mosquitoes and other bugs killed by IRS and deposit them in a latrine pit and not to allow children or animals inside until this has been completed?"
+    flag_name_fr: "26. Est-ce-que le résident a reçu l'ordre de balayer les moustiques et autres insectes tués par l'IRS et de les déposer dans une fosse de latrines et de ne pas laisser les enfants ou les animaux à l'intérieur jusqu'à ce que cela soit terminé?"
+    flag_name_por: "26. Os residentes foram informados que devem varrer os mosquitos e outros insectos mortos pela PIDOM e deposita-los numa latrina e nao permitir a entrada das crianças ou dos animais ate terminar esse trabalho?"
+    answer: "no"
+    warning: "Problem reported: Resident not informed of post-spray protocol."
+    warning_fr: "Problème signalé: les résidents ne sont pas informés des mesures du protocole à suivre après la pulvérisation "
+    warning_por: "Problema reportado: Residente não foi  informado sobre o protocolo pós pulverização"
+  - question: [resident_instructed_surfaces]
+    comment: [resident_instructed_surfaces_comments]
+    base_path: [sbcc_grp, Q27]
+    flag_name: "27. Was the resident told not to plaster, paint or clean the sprayed surfaces?"
+    flag_name_fr: "27. Est-ce-que le résident a été dit de ne pas enduire, peindre ou nettoyer les surfaces projetées?"
+    flag_name_por: "27. Os residentes foram informados para não rebocar, pintar ou limpar as superficies pulverizadas?"
+    answer: "no"
+    warning: "Problem reported: Resident not informed of post-spray protocol."
+    warning_fr: "Problème signalé: les résidents ne sont pas informés des mesures du protocole à suivre après la pulvérisation "
+    warning_por: "Problema reportado: Residente nao foi informado sobre o protocolo pós pulverização."
+  - question: [resident_instructed_health]
+    comment: [resident_instructed_health_comments]
+    base_path: [sbcc_grp, Q28]
+    flag_name: "28. Was the resident informed to wash itchy skin, and to go to a health clinic if they don't feel well after their house has been sprayed?"
+    flag_name_por: "28. O residentes foram informados para lavar a pele que faz comichão e dirigir-se ao posto de saúde caso se sintam mal após a pulverização?"
+    answer: "no"
+    warning: "Problem reported: Resident not informed of potential exposure protocol."
+    warning_fr: "Problème signalé: les residents ne sont pas informés du protocole en cas d'exposition"
+    warning_por: "Problema reportado: Residente não foi informado do protocolo de potencial exposição."
+  - question: [sop_data]
+    comment: [sop_data_comments]
+    base_path: [sbcc_grp, Q29]
+    flag_name: "29. Is the spray operator accurately recording data?"
+    flag_name_fr: "29.Est ce-que l'opérateur de pulvérisation enregistre correctement les données?"
+    flag_name_por: "29. Os roceadores estão a registar os dados devidamente?"
+    answer: "no"
+    warning: "Problem reported: Spray operator not reporting data accurately."
+    warning_fr: "Problème signalé: l'opérateur de pulvérisation ne remplit pas correctement les données "
+    warning_por: "Problema reportado: Roceador não registou os dados correctamente."

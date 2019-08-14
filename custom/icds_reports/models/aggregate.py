@@ -12,9 +12,11 @@ from custom.icds_reports.const import (AGG_CCS_RECORD_BP_TABLE,
     AGG_COMP_FEEDING_TABLE, AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE, AGG_INFRASTRUCTURE_TABLE, AWW_INCENTIVE_TABLE,
                                        AGG_LS_AWC_VISIT_TABLE, AGG_LS_VHND_TABLE,
-                                       AGG_LS_BENEFICIARY_TABLE)
+                                       AGG_LS_BENEFICIARY_TABLE, AGG_THR_V2_TABLE)
 from django.db import connections, models, transaction
 
+from custom.icds_reports.models.manager import CitusComparisonManager
+from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
     AggCcsRecordAggregationHelper,
     AggChildHealthAggregationHelper,
@@ -40,7 +42,8 @@ from custom.icds_reports.utils.aggregation_helpers.monolith import (
     AggAwcHelper,
     AggAwcDailyAggregationHelper,
     LocationAggregationHelper,
-    DailyAttendanceAggregationHelper
+    DailyAttendanceAggregationHelper,
+    THRFormV2AggHelper
 )
 
 
@@ -66,9 +69,14 @@ class AggregateMixin(object):
 
     @classmethod
     def aggregate(cls, *args, **kwargs):
-        helper = cls._agg_helper_cls(*args, **kwargs)
+        helper = cls._get_helper(*args, **kwargs)
         with get_cursor(cls) as cursor, maybe_atomic(cls, cls._agg_atomic):
             helper.aggregate(cursor)
+
+    @classmethod
+    def _get_helper(cls, *args, **kwargs):
+        helper_cls = get_helper(cls._agg_helper_cls.helper_key)
+        return helper_cls(*args, **kwargs)
 
 
 class CcsRecordMonthly(models.Model, AggregateMixin):
@@ -171,9 +179,12 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
     date_death = models.DateField(blank=True, null=True)
     person_case_id = models.TextField(blank=True, null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         managed = False
         db_table = 'ccs_record_monthly'
+        unique_together = ('supervisor_id', 'month', 'case_id')
 
     _agg_helper_cls = CcsRecordMonthlyAggregationHelper
     _agg_atomic = True
@@ -199,13 +210,17 @@ class AwcLocation(models.Model, AggregateMixin):
     block_map_location_name = models.TextField(blank=True, null=True)
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
-    aww_name = models.TextField(blank=True, null=True)
-    contact_phone_number = models.TextField(blank=True, null=True)
     state_is_test = models.SmallIntegerField(blank=True, null=True)
     district_is_test = models.SmallIntegerField(blank=True, null=True)
     block_is_test = models.SmallIntegerField(blank=True, null=True)
     supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
+
+    # from commcare-user case
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         managed = False
@@ -214,6 +229,15 @@ class AwcLocation(models.Model, AggregateMixin):
 
     _agg_helper_cls = LocationAggregationHelper
     _agg_atomic = False
+
+
+class AwcLocationLocal(AwcLocation):
+
+    objects = models.Manager()
+
+    class Meta(object):
+        managed = False
+        db_table = 'awc_location_local'
 
 
 class ChildHealthMonthly(models.Model, AggregateMixin):
@@ -297,9 +321,12 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     mother_case_id = models.TextField(blank=True, null=True)
     lunch_count = models.IntegerField(blank=True, null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta:
         managed = False
         db_table = 'child_health_monthly'
+        unique_together = ('supervisor_id', 'case_id', 'month')
 
     _agg_helper_cls = ChildHealthMonthlyAggregationHelper
     _agg_atomic = False
@@ -333,7 +360,9 @@ class AggAwc(models.Model, AggregateMixin):
     awc_num_open = models.IntegerField(null=True)
     awc_not_open_no_data = models.IntegerField(null=True)
     wer_weighed = models.IntegerField(null=True)
+    wer_weighed_0_2 = models.IntegerField(null=True)
     wer_eligible = models.IntegerField(null=True)
+    wer_eligible_0_2 = models.IntegerField(null=True)
     wer_score = models.DecimalField(max_digits=64, decimal_places=16, null=True)
     thr_eligible_child = models.IntegerField(null=True)
     thr_rations_21_plus_distributed_child = models.IntegerField(null=True)
@@ -451,6 +480,9 @@ class AggAwc(models.Model, AggregateMixin):
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
     valid_visits = models.IntegerField(null=True)
     expected_visits = models.IntegerField(null=True)
+    thr_distribution_image_count = models.IntegerField(null=True)
+
+    objects = CitusComparisonManager()
 
     class Meta:
         managed = False
@@ -472,6 +504,8 @@ class AggregateLsAWCVisitForm(models.Model, AggregateMixin):
     supervisor_id = models.TextField()
     state_id = models.TextField()
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         db_table = AGG_LS_AWC_VISIT_TABLE
 
@@ -485,6 +519,8 @@ class AggregateLsVhndForm(models.Model, AggregateMixin):
     supervisor_id = models.TextField()
     state_id = models.TextField()
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         db_table = AGG_LS_VHND_TABLE
 
@@ -497,6 +533,8 @@ class AggregateBeneficiaryForm(models.Model, AggregateMixin):
     month = models.DateField()
     supervisor_id = models.TextField()
     state_id = models.TextField()
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         db_table = AGG_LS_BENEFICIARY_TABLE
@@ -520,10 +558,28 @@ class AggLs(models.Model, AggregateMixin):
     supervisor_id = models.TextField()
     aggregation_level = models.SmallIntegerField()
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         db_table = 'agg_ls'
 
     _agg_helper_cls = AggLsHelper
+    _agg_atomic = False
+
+
+class AggregateTHRForm(models.Model, AggregateMixin):
+    state_id = models.TextField()
+    supervisor_id = models.TextField()
+    awc_id = models.TextField()
+    month = models.DateField()
+    thr_distribution_image_count = models.IntegerField(help_text='Count of Images clicked per awc')
+
+    objects = CitusComparisonManager()
+
+    class Meta(object):
+        db_table = AGG_THR_V2_TABLE
+
+    _agg_helper_cls = THRFormV2AggHelper
     _agg_atomic = False
 
 
@@ -581,6 +637,8 @@ class AggCcsRecord(models.Model, AggregateMixin):
     pregnant_all = models.IntegerField(null=True)
     valid_visits = models.IntegerField(null=True)
     expected_visits = models.IntegerField(null=True)
+
+    objects = CitusComparisonManager()
 
     class Meta:
         managed = False
@@ -663,6 +721,8 @@ class AggChildHealth(models.Model, AggregateMixin):
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
     lunch_count_21_days = models.IntegerField(blank=True, null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta:
         managed = False
         db_table = 'agg_child_health'
@@ -704,6 +764,8 @@ class AggAwcDaily(models.Model, AggregateMixin):
     cases_person_has_aadhaar_v2 = models.IntegerField(null=True)
     cases_person_beneficiary_v2 = models.IntegerField(null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta:
         managed = False
         db_table = 'agg_awc_daily'
@@ -730,10 +792,15 @@ class DailyAttendance(models.Model, AggregateMixin):
     image_name = models.TextField(null=True)
     pse_conducted = models.SmallIntegerField(null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta:
         managed = False
         db_table = 'daily_attendance'
         unique_together = ('supervisor_id', 'doc_id', 'month')  # pkey
+        indexes = [
+            models.Index(fields=['awc_id'], name='idx_daily_attendance_awc_id')
+        ]
 
     _agg_helper_cls = DailyAttendanceAggregationHelper
     _agg_atomic = False
@@ -796,6 +863,8 @@ class AggregateComplementaryFeedingForms(models.Model, AggregateMixin):
         help_text="Hand washing occurred for this case in the latest form"
     )
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         db_table = AGG_COMP_FEEDING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
@@ -839,6 +908,8 @@ class AggregateCcsRecordComplementaryFeedingForms(models.Model, AggregateMixin):
         help_text="number of qualified visits for the incentive report",
         default=0
     )
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_CF_TABLE
@@ -921,6 +992,8 @@ class AggregateChildHealthPostnatalCareForms(models.Model, AggregateMixin):
         help_text="The reason the mother is not able to breastfeed"
     )
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         db_table = AGG_CHILD_HEALTH_PNC_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
@@ -973,6 +1046,8 @@ class AggregateCcsRecordPostnatalCareForms(models.Model, AggregateMixin):
         help_text="number of qualified visits for the incentive report",
         default=0
     )
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_PNC_TABLE
@@ -1046,6 +1121,8 @@ class AggregateCcsRecordTHRForms(models.Model, AggregateMixin):
         help_text="Number of days the mother has been given rations this month"
     )
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         db_table = AGG_CCS_RECORD_THR_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
@@ -1118,6 +1195,8 @@ class AggregateGrowthMonitoringForms(models.Model, AggregateMixin):
     muac_grading_last_recorded = models.DateTimeField(
         null=True, help_text="Time when muac_grading was last recorded"
     )
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         db_table = AGG_GROWTH_MONITORING_TABLE
@@ -1246,6 +1325,8 @@ class AggregateBirthPreparednesForms(models.Model, AggregateMixin):
         help_text="Has ever had /data/bp1/using_ifa='yes'"
     )
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         db_table = AGG_CCS_RECORD_BP_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
@@ -1299,6 +1380,8 @@ class AggregateCcsRecordDeliveryForms(models.Model, AggregateMixin):
         help_text="Where the child is born"
     )
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         db_table = AGG_CCS_RECORD_DELIVERY_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
@@ -1321,6 +1404,8 @@ class AggregateInactiveAWW(models.Model, AggregateMixin):
     state_name = models.TextField(blank=True, null=True)
     first_submission = models.DateField(blank=True, null=True)
     last_submission = models.DateField(blank=True, null=True)
+
+    objects = CitusComparisonManager()
 
     @property
     def days_since_start(self):
@@ -1373,6 +1458,8 @@ class AggregateChildHealthDailyFeedingForms(models.Model, AggregateMixin):
         help_text="Number of days the child had the lunch"
     )
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         db_table = AGG_DAILY_FEEDING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
@@ -1419,6 +1506,8 @@ class AggregateAwcInfrastructureForms(models.Model, AggregateMixin):
     medicine_kits_usable = models.PositiveSmallIntegerField(null=True)
     stadiometer_usable = models.PositiveSmallIntegerField(null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         db_table = AGG_INFRASTRUCTURE_TABLE
         unique_together = ('supervisor_id', 'awc_id', 'month')  # pkey
@@ -1451,6 +1540,12 @@ class AWWIncentiveReport(models.Model, AggregateMixin):
     awc_num_open = models.SmallIntegerField(null=True)
     valid_visits = models.SmallIntegerField(null=True)
     expected_visits = models.DecimalField(null=True, max_digits=64, decimal_places=2)
+    visit_denominator = models.SmallIntegerField(null=True)
+    incentive_eligible = models.NullBooleanField(null=True)
+    awh_eligible = models.NullBooleanField(null=True)
+    is_launched = models.NullBooleanField(null=True)
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         db_table = AWW_INCENTIVE_TABLE

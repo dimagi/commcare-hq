@@ -40,6 +40,7 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet, ALLOWED_EXTENSIONS
@@ -56,7 +57,6 @@ from corehq.apps.hqmedia.tasks import (
     process_bulk_upload_zip,
     build_application_zip,
 )
-from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -308,10 +308,6 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
     urlname = "multimedia_translations_coverage"
     template_name = "hqmedia/translations_coverage.html"
     page_title = ugettext_noop("Translations Coverage")
-
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(MultimediaTranslationsCoverageView, self).dispatch(request, *args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -616,7 +612,7 @@ class ProcessLogoFileUploadView(ProcessImageFileUploadView):
             ProcessLogoFileUploadView, self
         ).process_upload()
         self.app.logo_refs[self.filename] = ref['ref']
-        if self.app.doc_type == 'LinkedApplication':
+        if is_linked_app(self.app):
             self.app.linked_app_logo_refs[self.filename] = ref['ref']
         self.app.save()
         return ref
@@ -721,7 +717,6 @@ def iter_media_files(media_objects):
     errors will not include all error messages until the iterator is exhausted
 
     """
-    from dimagi.utils.logging import notify_exception
     errors = []
 
     def _media_files():
@@ -746,7 +741,7 @@ def iter_app_files(app, include_multimedia_files, include_index_files, build_pro
     index_file_count = 0
     multimedia_file_count = 0
     if include_multimedia_files:
-        media_objects = list(app.get_media_objects(build_profile_id=build_profile_id))
+        media_objects = list(app.get_media_objects(build_profile_id=build_profile_id, remove_unused=True))
         multimedia_file_count = len(media_objects)
         file_iterator, errors = iter_media_files(media_objects)
     if include_index_files:
@@ -795,7 +790,8 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         download.set_task(build_application_zip.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
-            app=self.app,
+            domain=self.app.domain,
+            app_id=self.app.id,
             download_id=download.download_id,
             compress_zip=self.compress_zip,
             filename=self.zip_name,
@@ -891,7 +887,6 @@ class ViewMultimediaFile(View):
 
 def iter_index_files(app, build_profile_id=None, download_targeted_version=False):
     from corehq.apps.app_manager.views.download import download_index_files
-    from dimagi.utils.logging import notify_exception
     skip_files = [
         text_format.format(suffix)
         for text_format in ['profile{}.xml', 'profile{}.ccpr', 'media_profile{}.xml']
@@ -921,7 +916,6 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
             if build_profile_id is not None:
                 name = name.replace(build_profile_id + '/', '')
             if name not in skip_files:
-                # TODO: make RemoteApp.create_all_files not return media files
                 extension = os.path.splitext(name)[1]
                 data = _encode_if_unicode(f) if extension in text_extensions else f
                 yield (_get_name(name), data)

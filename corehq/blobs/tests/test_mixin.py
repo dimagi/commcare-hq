@@ -16,7 +16,7 @@ from corehq.blobs import CODES
 from corehq.blobs.s3db import maybe_not_found
 from corehq.blobs.tests.util import (TemporaryFilesystemBlobDB,
     TemporaryMigratingBlobDB, TemporaryS3BlobDB)
-from corehq.blobs.util import ClosingContextProxy
+from corehq.util.io import ClosingContextProxy
 from corehq.util.test_utils import generate_cases, trap_extra_setup
 from dimagi.ext.couchdbkit import Document
 from mock import patch

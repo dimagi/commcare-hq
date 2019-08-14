@@ -21,22 +21,22 @@
 <!-- /ko -->
 
 <ul class="fa-ul" data-bind="foreach: modules">
-  <li data-bind="visible: isVisible, css: getDiffClass('module') ">
+  <li data-bind="visible: isVisible, css: getDiffClass('module'), popover: getDiffPopover(changes['module'], 'module') ">
     <h4>
       <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
         <i data-bind="attr: { 'class': icon }"></i>
-        <span data-bind="text: $root.translate(name), css: getDiffClass('name')"></span>
+        <span data-bind="text: $root.translate(name), css: getDiffClass('name'), popover: getDiffPopover(changes['name'], 'name')"></span>
       </a>
       <div data-bind="if: $root.readOnly">
         <i data-bind="attr: { 'class': icon }"></i>
-        <span data-bind="text: $root.translate(name), css: getDiffClass('name')"></span>
+        <span data-bind="text: $root.translate(name), css: getDiffClass('name'), popover: getDiffPopover(changes['name'], 'name')"></span>
       </div>
     </h4>
     <!-- ko if: short_comment -->
     <ul class="text-muted fa-ul" data-bind="visible: $root.showComments">
       <li>
         <i class = "fa-li fa text-muted fa-quote-left"></i>
-        <span data-bind="text: short_comment, css: getDiffClass('short_comment')"></span>
+        <span data-bind="text: short_comment, css: getDiffClass('short_comment'), popover: getDiffPopover(changes['short_comment'], 'short_comment')"></span>
       </li>
     </ul>
     <!-- /ko -->
@@ -44,27 +44,27 @@
     <ul class="fa-ul" data-bind="visible: $root.showRelevance">
       <li>
         <i data-bind="attr: {'class': 'fa-li fa text-muted fa-code-fork'}"></i>
-        <span data-bind="text: module_filter, css: getDiffClass('module_filter')"></span>
+        <span data-bind="text: module_filter, css: getDiffClass('module_filter'), popover: getDiffPopover(changes['module_filter'], 'module_filter')"></span>
       </li>
     </ul>
     <!-- /ko -->
     <ul class="fa-ul" data-bind="foreach: forms">
-      <li data-bind="visible: isVisible, css: getDiffClass('form') ">
+      <li data-bind="visible: isVisible, css: getDiffClass('form'), popover: getDiffPopover(changes['form'], 'form') ">
         <h5>
           <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
             <i data-bind="attr: { 'class': icon }"></i>
-            <span data-bind="text: $root.translate(name), css: getDiffClass('name')"></span>
+            <span data-bind="text: $root.translate(name), css: getDiffClass('name'), popover: getDiffPopover(changes['name'], 'name')"></span>
           </a>
           <div data-bind="if: $root.readOnly">
             <i data-bind="attr: { 'class': icon }"></i>
-            <span data-bind="text: $root.translate(name), css: getDiffClass('name')"></span>
+            <span data-bind="text: $root.translate(name), css: getDiffClass('name'), popover: getDiffPopover(changes['name'], 'name')"></span>
           </div>
         </h5>
         <!-- ko if: short_comment -->
         <ul class="fa-ul" data-bind="visible: $root.showComments()">
           <li>
             <i class = "fa-li fa text-muted fa-quote-left"></i>
-            <span data-bind="text: short_comment, css: getDiffClass('short_comment')"></span>
+            <span data-bind="text: short_comment, css: getDiffClass('short_comment'), popover: getDiffPopover(changes['short_comment'], 'short_comment')"></span>
           </li>
         </ul>
         <!-- /ko -->
@@ -72,7 +72,7 @@
         <ul class="fa-ul" data-bind="visible: $root.showRelevance">
           <li>
             <i data-bind="attr: {'class': 'fa-li fa text-muted fa-code-fork'}"></i>
-            <span data-bind="text: form_filter, css: getDiffClass('form_filter')"></span>
+            <span data-bind="text: form_filter, css: getDiffClass('form_filter'), popover: getDiffPopover(changes['form_filter'], 'form_filter')"></span>
           </li>
         </ul>
         <!-- /ko -->
@@ -94,17 +94,17 @@
 </script>
 
 <script type="text/html" id="form-question">
-  <li data-bind="visible: isVisible, css: getDiffClass('question') ">
-    <span data-bind="css: getDiffClass('type')">
-      <i data-bind="attr: { 'class': $root.questionIcon($data), 'title': type }"></i>
+  <li data-bind="visible: isVisible, css: getDiffClass('question'), popover: getDiffPopover(changes['question'], 'question')">
+    <span data-bind="css: getDiffClass('type'), popover: getDiffPopover(changes['type'], 'type')">
+      <i data-bind="attr: { 'class': $root.questionIcon($data) }"></i>
       <!-- ko ifnot: $root.readOnly -->
-      <a data-bind="attr: { 'href': $parent.url + hashtagValue }, css: getDiffClass('label'), text: $root.showIds() ? value :  $root.translateQuestion($data)" target="_blank"></a>
+      <a data-bind="attr: { 'href': $parents[$parents.length - 3].url + hashtagValue }, css: getDiffClass('label'), text: $root.showIds() ? value :  $root.translateQuestion($data), popover: getDiffPopover(changes['label'], 'label')" target="_blank"></a>
       <!-- /ko  -->
       <!-- ko if: $root.readOnly -->
-      <span data-bind="text: $root.showIds() ? value :  $root.translateQuestion($data), css: getDiffClass('label')"></span>
+      <span data-bind="text: $root.showIds() ? value :  $root.translateQuestion($data), css: getDiffClass('label'), popover: getDiffPopover(changes['label'], 'label')"></span>
       <!-- /ko -->
       <!-- ko if: required -->
-      <sup class="text-muted" data-bind="css: getDiffClass('required')">{% trans "required" %}</sup>
+      <sup class="text-muted" data-bind="css: getDiffClass('required'), popover: getDiffPopover(changes['required'], 'required')">{% trans "required" %}</sup>
       <!-- /ko -->
     </span>
     <!-- ko if: children -->
@@ -117,37 +117,37 @@
       <!-- ko if: comment -->
       <li class="text-muted" data-bind="visible: $root.showComments">
         <i class = "fa-li fa text-muted fa-quote-left"></i>
-        <span data-bind="text: comment, css: getDiffClass('comment')"></span>
+        <span data-bind="text: comment, css: getDiffClass('comment'), popover: getDiffPopover(changes['comment'], 'comment')"></span>
       </li>
       <!-- /ko -->
       <!-- ko if: calculate -->
       <li data-bind="visible: $root.showCalculations">
         <i class = "fa-li fa text-muted fa-calculator"></i>
-        <span data-bind="text: calculate, css: getDiffClass('calculate')"></span>
+        <span data-bind="text: calculate, css: getDiffClass('calculate'), popover: getDiffPopover(changes['calculate'], 'calculate')"></span>
       </li>
       <!-- /ko -->
       <!-- ko if: relevant -->
       <li data-bind="visible: $root.showRelevance" >
         <i class = "fa-li fa text-muted fa-code-fork"></i>
-        <span data-bind="text: relevant, css: getDiffClass('relevant')"></span>
+        <span data-bind="text: relevant, css: getDiffClass('relevant'), popover: getDiffPopover(changes['relevant'], 'relevant')"></span>
       </li>
       <!-- /ko -->
       <!-- ko if: constraint -->
       <li data-bind="visible: $root.showConstraints">
         <i class = "fa-li fa text-muted fa-ban"></i>
-        <span data-bind="text: constraint, css: getDiffClass('constraint')"></span>
+        <span data-bind="text: constraint, css: getDiffClass('constraint'), popover: getDiffPopover(changes['constraint'], 'constraint')"></span>
       </li>
       <!-- /ko -->
       <!-- ko if: setvalue -->
       <li data-bind="visible: $root.showDefaultValues">
         <i class = "fa-li fa text-muted fa-home"></i>
-        <span data-bind="text: setvalue, css: getDiffClass('setvalue')"></span>
+        <span data-bind="text: setvalue, css: getDiffClass('setvalue'), popover: getDiffPopover(changes['setvalue'], 'setvalue')"></span>
       </li>
       <!-- /ko -->
       <!-- ko foreach: load_properties -->
       <li data-bind="visible: $root.showCaseProperties">
         <i class = "fa fa-li text-muted fa-briefcase"></i>
-        <span data-bind="css: $parent.getLoadSaveDiffClass('load_properties', $data.case_type, $data.property) ">
+        <span data-bind="css: $parent.getLoadSaveDiffClass('load_properties', $data.case_type, $data.property), popover: $parent.getLoadSavePopover('load_properties', $data.case_type, $data.property)">
           <span class="text-muted" data-bind="text:$data.case_type, css: $parent.getLoadSaveDiffClass('load_properties', $data.case_type, $data.property)"></span> -
           <!-- ko text: $data.property --><!-- /ko -->
         </span>
@@ -164,7 +164,7 @@
           <i class = "fa text-muted fa-arrow-right"></i>
           <i class = "fa text-muted fa-briefcase"></i>
         </span>
-        <span data-bind="css: $parent.getLoadSaveDiffClass('save_properties', $data.case_type, $data.property) ">
+        <span data-bind="css: $parent.getLoadSaveDiffClass('save_properties', $data.case_type, $data.property), popover: $parent.getLoadSavePopover('save_properties', $data.case_type, $data.property)">
           <span class="text-muted" data-bind="text:$data.case_type"></span> -
           <!-- ko text: $data.property --><!-- /ko -->
         </span>
@@ -175,10 +175,10 @@
     <!-- ko if: options.length -->
     <ol data-bind="foreach: options ">
       <li data-bind="visible: $root.showIds">
-        <span data-bind="text: value, css: $parent.getOptionsDiffClass(value)"></span>
+        <span data-bind="text: value, css: $parent.getOptionsDiffClass(value), popover: $parent.getDiffPopover($parent.changes['options'][value], 'options')"></span>
       </li>
       <li data-bind="visible: $root.showLabels">
-        <span data-bind="text: $root.translateQuestion($data), css: $parent.getOptionsDiffClass(value)"></span>
+        <span data-bind="text: $root.translateQuestion($data), css: $parent.getOptionsDiffClass(value), popover: $parent.getDiffPopover($parent.changes['options'][value], 'options')"></span>
       </li>
     </ol>
     <!-- /ko -->

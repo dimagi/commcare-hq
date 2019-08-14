@@ -11,7 +11,7 @@ from corehq.apps.es import aggregations
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.sql_db.config import get_sql_db_aliases_in_use
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import all_known_formlike_doc_types
 
@@ -141,7 +141,7 @@ def _get_couch_doc_counts(couch_db, domain, doc_types):
 
 def _get_sql_forms_by_doc_type(domain, startdate=None, enddate=None):
     counter = Counter()
-    for db_alias in get_sql_db_aliases_in_use():
+    for db_alias in get_db_aliases_for_partitioned_query():
         queryset = XFormInstanceSQL.objects.using(db_alias).filter(domain=domain)
         if startdate is not None:
             queryset = queryset.filter(received_on__gte=startdate)
@@ -159,7 +159,7 @@ def _get_sql_forms_by_doc_type(domain, startdate=None, enddate=None):
 
 def _get_sql_cases_by_doc_type(domain, startdate=None, enddate=None):
     counter = Counter()
-    for db_alias in get_sql_db_aliases_in_use():
+    for db_alias in get_db_aliases_for_partitioned_query():
         queryset = CommCareCaseSQL.objects.using(db_alias).filter(domain=domain)
         if startdate is not None:
             queryset = queryset.filter(server_modified_on__gte=startdate)
@@ -174,7 +174,7 @@ def _get_sql_cases_by_doc_type(domain, startdate=None, enddate=None):
 def get_sql_case_ids(domain, doc_type, startdate, enddate):
     sql_ids = set()
     deleted = doc_type == 'CommCareCase-Deleted'
-    for db_alias in get_sql_db_aliases_in_use():
+    for db_alias in get_db_aliases_for_partitioned_query():
         queryset = CommCareCaseSQL.objects.using(db_alias) \
             .filter(domain=domain, deleted=deleted)
 
@@ -191,7 +191,7 @@ def get_sql_case_ids(domain, doc_type, startdate, enddate):
 def get_sql_form_ids(domain, doc_type, startdate, enddate):
     sql_ids = set()
     state = doc_type_to_state[doc_type]
-    for db_alias in get_sql_db_aliases_in_use():
+    for db_alias in get_db_aliases_for_partitioned_query():
         queryset = XFormInstanceSQL.objects.using(db_alias) \
             .filter(domain=domain, state=state) \
             .exclude(xmlns=DEVICE_LOG_XMLNS)

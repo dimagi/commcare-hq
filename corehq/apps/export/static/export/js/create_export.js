@@ -14,6 +14,7 @@ hqDefine("export/js/create_export", [
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
@@ -28,7 +29,9 @@ hqDefine("export/js/create_export", [
         // This contains flags that distinguish the various pages that use this modal.
         // Note that there is both a page-level model type and an observable model type below, since model type
         // is static on the basic form/case export pages but is a user option on the daily saved & feed pages.
-        assertProperties.assert(options.page, ['is_daily_saved_export', 'is_feed', 'is_deid', 'model_type']);
+        assertProperties.assert(options.page, [
+            'is_daily_saved_export', 'is_feed', 'is_deid', 'model_type', 'is_odata',
+        ]);
         self.pageOptions = options.page;
 
         // Flags for the drilldown form, which is fetched via ajax on page initialization.
@@ -121,8 +124,8 @@ hqDefine("export/js/create_export", [
             if ($formElem.length > 0) {
                 $formElem.select2({
                     data: self._app_types || [],
-                    triggerChange: true,
-                }).select2('val', drilldownDefaults.app_type).trigger('change');
+                    width: '100%',
+                }).val(drilldownDefaults.app_type).trigger('change');
             }
         },
         self._initSelect2 = function (observable, fieldSlug) {
@@ -134,11 +137,8 @@ hqDefine("export/js/create_export", [
                     if ($formElem.length > 0) {
                         $formElem.select2({
                             data: fieldData || [],
-                            triggerChange: true,
-                        }).select2('val', drilldownDefaults[fieldSlug]).trigger('change');
-                        $('#s2id_id_' + fieldSlug)
-                            .find('.select2-choice').addClass('select2-default')
-                            .find('.select2-chosen').text(self._placeholders[fieldSlug]);
+                            width: '100%',
+                        }).val(drilldownDefaults[fieldSlug]).trigger('change');
                     }
                 }
             };
@@ -252,6 +252,7 @@ hqDefine("export/js/create_export", [
                     is_daily_saved_export: self.pageOptions.is_daily_saved_export,
                     is_feed: self.pageOptions.is_feed,
                     is_deid: self.pageOptions.is_deid,
+                    is_odata: self.pageOptions.is_odata,
                     model_type: self.pageOptions.model_type,
                     form_data: JSON.stringify({
                         model_type: self.modelType(),

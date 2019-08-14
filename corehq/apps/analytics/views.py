@@ -11,7 +11,7 @@ from django.views.generic import View
 from django.conf import settings
 
 from corehq.apps.analytics.tasks import (
-    track_clicked_deploy_on_hubspot_v2, track_job_candidate_on_hubspot_v2, HUBSPOT_COOKIE
+    track_clicked_deploy_on_hubspot, track_job_candidate_on_hubspot, HUBSPOT_COOKIE
 )
 from corehq.apps.analytics.utils import get_meta
 
@@ -21,7 +21,7 @@ class HubspotClickDeployView(View):
 
     def post(self, request, *args, **kwargs):
         meta = get_meta(request)
-        track_clicked_deploy_on_hubspot_v2.delay(request.couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta)
+        track_clicked_deploy_on_hubspot.delay(request.couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta)
         return HttpResponse()
 
 
@@ -51,7 +51,7 @@ class GreenhouseCandidateView(View):
             try:
                 user_emails = data["payload"]["application"]["candidate"]["email_addresses"]
                 for user_email in user_emails:
-                    track_job_candidate_on_hubspot_v2.delay(user_email["value"])
+                    track_job_candidate_on_hubspot.delay(user_email["value"])
             except KeyError:
                 pass
 

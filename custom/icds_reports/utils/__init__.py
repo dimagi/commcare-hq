@@ -22,15 +22,18 @@ from django.template.loader import render_to_string, get_template
 from django.conf import settings
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from weasyprint import HTML, CSS
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
-from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.blobs.mixin import safe_id
+from corehq.const import ONE_DAY
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
@@ -42,6 +45,7 @@ from custom.icds_reports.queries import get_test_state_locations_id, get_test_di
 from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField, Max, Min
+from django.db.utils import OperationalError
 import six
 import uuid
 from six.moves import range
@@ -85,19 +89,36 @@ class ASRData(object):
 
 class ICDSData(object):
 
-    def __init__(self, domain, filters, report_id):
+    def __init__(self, domain, filters, report_id, override_agg_column=None):
         report_config = ConfigurableReportDataSource.from_spec(
-            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain), domain)
+            self._get_static_report_configuration_without_owner_transform(report_id, domain, override_agg_column)
         )
         report_config.set_filter_values(filters)
         self.report_config = report_config
 
-    def _get_static_report_configuration_without_owner_transform(self, report_id, domain):
+    def _get_static_report_configuration_without_owner_transform(self, report_id, domain, override_agg_column):
+        report_id = report_id.format(domain=domain)
         static_report_configuration = StaticReportConfiguration.by_id(report_id, domain)
+
+        if override_agg_column and override_agg_column != 'awc_id':
+            static_report_configuration = self._override_agg(static_report_configuration, override_agg_column)
+
+        # this is explicitly after override, otherwise 'report_columns' attrib gets memoized too early
         for report_column in static_report_configuration.report_columns:
             transform = report_column.transform
             if transform.get('type') == 'custom' and transform.get('custom_type') == 'owner_display':
                 report_column.transform = {}
+        return static_report_configuration
+
+    def _override_agg(self, static_report_configuration, override_agg_column):
+        level_order = ['owner_id', 'awc_id', 'supervisor_id', 'block_id', 'district_id', 'state_id']
+        # override aggregation level
+        static_report_configuration.aggregation_columns = [override_agg_column]
+        # remove columns below agg level
+        columns_to_remove = level_order[0:level_order.index(override_agg_column)]
+        for column in static_report_configuration.columns:
+            if column.get('column_id') in columns_to_remove:
+                static_report_configuration.columns.remove(column)
         return static_report_configuration
 
     def data(self):
@@ -108,8 +129,9 @@ class ICDSMixin(object):
     has_sections = False
     posttitle = None
 
-    def __init__(self, config):
+    def __init__(self, config, allow_conditional_agg=False):
         self.config = config
+        self.allow_conditional_agg = allow_conditional_agg
 
     @property
     def subtitle(self):
@@ -163,12 +185,13 @@ class ICDSMixin(object):
             loc_type = selected_location.location_type.name
         else:
             loc_type = None
+        tags = ["location_type:{}".format(loc_type), "report_slug:{}".format(self.slug)]
+        if self.allow_conditional_agg:
+            tags.append("allow_conditional_agg:yes")
         datadog_histogram(
-            "commcare.icds.block_reports.custom_data_time",
+            "commcare.icds.block_reports.custom_data_duration",
             timer.duration,
-            tags="location_type:{}, report_slug:{}".format(
-                loc_type, self.slug
-            )
+            tags=tags
         )
         return to_ret
 
@@ -177,10 +200,11 @@ class ICDSMixin(object):
 
         for config in self.sources['data_source']:
             filters = {}
+            location_type_column = None
             if selected_location:
-                key = selected_location.location_type.name.lower() + '_id'
+                location_type_column = selected_location.location_type.name.lower() + '_id'
                 filters = {
-                    key: [Choice(value=selected_location.location_id, display=selected_location.name)]
+                    location_type_column: [Choice(value=selected_location.location_id, display=selected_location.name)]
                 }
             if 'date_filter_field' in config:
                 filters.update({config['date_filter_field']: self.config['date_span']})
@@ -202,17 +226,20 @@ class ICDSMixin(object):
 
             timer = TimingContext()
             with timer:
-                report_data = ICDSData(domain, filters, config['id']).data()
+                allow_conditional_agg = self.allow_conditional_agg and not config.get('disallow_conditional_agg', False)
+                override_agg_column = location_type_column if allow_conditional_agg else None
+                report_data = ICDSData(domain, filters, config['id'], override_agg_column).data()
             if selected_location:
                 loc_type = selected_location.location_type.name
             else:
                 loc_type = None
+            tags = ["location_type:{}".format(loc_type), "report_slug:{}".format(self.slug), "config:{}".format(config['id'])]
+            if allow_conditional_agg:
+                tags.append("allow_conditional_agg:yes")
             datadog_histogram(
                 "commcare.icds.block_reports.ucr_querytime",
                 timer.duration,
-                tags="config:{}, location_type:{}, report_slug:{}".format(
-                    config['id'], loc_type, self.slug
-                )
+                tags=tags
             )
 
             for column in config['columns']:
@@ -657,25 +684,23 @@ def zip_folder(pdf_files):
     # we need to reset buffer position to the beginning after creating zip, if not read() will return empty string
     # we read this to save file in blobdb
     in_memory.seek(0)
-    icds_file.store_file_in_blobdb(in_memory, expired=60 * 60 * 24)
+    icds_file.store_file_in_blobdb(in_memory, expired=ONE_DAY)
     icds_file.save()
     return zip_hash
 
 
-def create_excel_file(excel_data, data_type, file_format):
-    file_hash = uuid.uuid4().hex
+def create_excel_file(excel_data, data_type, file_format, blob_key=None, timeout=ONE_DAY):
+    key = blob_key or uuid.uuid4().hex
     export_file = BytesIO()
-    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    icds_file, _ = IcdsFile.objects.get_or_create(blob_id=key, data_type=data_type)
     export_from_tables(excel_data, export_file, file_format)
     export_file.seek(0)
-    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.store_file_in_blobdb(export_file, expired=timeout)
     icds_file.save()
-    return file_hash
+    return key
 
 
 def create_pdf_file(pdf_context):
-    from weasyprint import HTML, CSS
-
     pdf_hash = uuid.uuid4().hex
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
     resultFile = BytesIO()
@@ -692,7 +717,7 @@ def create_pdf_file(pdf_context):
     # we read this to save file in blobdb
     resultFile.seek(0)
 
-    icds_file.store_file_in_blobdb(resultFile, expired=60 * 60 * 24)
+    icds_file.store_file_in_blobdb(resultFile, expired=ONE_DAY)
     icds_file.save()
     return pdf_hash
 
@@ -809,13 +834,17 @@ def track_time(func):
     from custom.icds_reports.models import AggregateSQLProfile
 
     def get_async_indicator_time():
-        return AsyncIndicator.objects.exclude(date_queued__isnull=True)\
-            .aggregate(Max('date_created'))['date_created__max'] or datetime.now()
+        try:
+            return AsyncIndicator.objects.exclude(date_queued__isnull=True)\
+                .aggregate(Max('date_created'))['date_created__max'] or datetime.now()
+        except OperationalError:
+            return None
 
     def get_sync_datasource_time():
         return KafkaCheckpoint.objects.filter(checkpoint_id__in=const.UCR_PILLOWS) \
             .exclude(doc_modification_time__isnull=True)\
             .aggregate(Min('doc_modification_time'))['doc_modification_time__min']
+
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -857,11 +886,6 @@ def percent_or_not_entered(x, y):
     return percent(x, y) if y and x is not None else DATA_NOT_ENTERED
 
 
-class ICDSDatabaseColumn(DatabaseColumn):
-    def get_raw_value(self, row):
-        return (self.view.get_value(row) or '') if row else ''
-
-
 def india_now():
     utc_now = datetime.now(pytz.utc)
     india_now = utc_now.astimezone(india_timezone)
@@ -879,7 +903,7 @@ def custom_strftime(format_to_use, date_to_format):
     )
 
 
-def create_aww_performance_excel_file(excel_data, data_type, month, state, district=None, block=None, beta=False):
+def create_aww_performance_excel_file(excel_data, data_type, month, state, district=None, block=None):
     aggregation_level = 3 if block else (2 if district else 1)
     export_info = excel_data[1][1]
     excel_data = [line[aggregation_level:] for line in excel_data[0][1]]
@@ -899,14 +923,9 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     worksheet.title = "AWW Performance Report"
     worksheet.sheet_view.showGridLines = False
     # sheet title
-    if beta:
-        worksheet.merge_cells('B2:{0}2'.format(
-            "K" if aggregation_level == 3 else ("L" if aggregation_level == 2 else "M")
-        ))
-    else:
-        worksheet.merge_cells('B2:{0}2'.format(
-            "J" if aggregation_level == 3 else ("K" if aggregation_level == 2 else "L")
-        ))
+    worksheet.merge_cells('B2:{0}2'.format(
+        "K" if aggregation_level == 3 else ("L" if aggregation_level == 2 else "M")
+    ))
     title_cell = worksheet['B2']
     title_cell.fill = PatternFill("solid", fgColor="4472C4")
     title_cell.value = "AWW Performance Report for the month of {}".format(month)
@@ -914,29 +933,11 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     title_cell.alignment = Alignment(horizontal="center")
 
     # sheet header
-    if beta:
-        header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3", "K3"]
-        if aggregation_level < 3:
-            header_cells.append("L3")
-        if aggregation_level < 2:
-            header_cells.append("M3")
-        date_description_cell_start = "I3" if aggregation_level == 3 else \
-            ("J3" if aggregation_level == 2 else "K3")
-        date_description_cell_finish = "J3" if aggregation_level == 3 else \
-            ("K3" if aggregation_level == 2 else "L3")
-        date_column = "K3" if aggregation_level == 3 else ("L3" if aggregation_level == 2 else "M3")
-
-    else:
-        header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3"]
-        if aggregation_level < 3:
-            header_cells.append("K3")
-        if aggregation_level < 2:
-            header_cells.append("L3")
-        date_description_cell_start = "H3" if aggregation_level == 3 else \
-            ("I3" if aggregation_level == 2 else "J3")
-        date_description_cell_finish = "I3" if aggregation_level == 3 else \
-            ("J3" if aggregation_level == 2 else "K3")
-        date_column = "J3" if aggregation_level == 3 else ("K3" if aggregation_level == 2 else "L3")
+    header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3", "K3"]
+    if aggregation_level < 3:
+        header_cells.append("L3")
+    if aggregation_level < 2:
+        header_cells.append("M3")
 
     for cell in header_cells:
         worksheet[cell].fill = blue_fill
@@ -950,17 +951,6 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     if block:
         worksheet['E3'].value = "Block: {}".format(block)
 
-    worksheet.merge_cells('{0}:{1}'.format(
-        date_description_cell_start,
-        date_description_cell_finish,
-    ))
-    worksheet[date_description_cell_start].value = "Date when downloaded:"
-    worksheet[date_description_cell_start].alignment = Alignment(horizontal="right")
-    utc_now = datetime.now(pytz.utc)
-    now_in_india = utc_now.astimezone(india_timezone)
-    worksheet[date_column].value = custom_strftime('{S} %b %Y', now_in_india)
-    worksheet[date_column].alignment = Alignment(horizontal="right")
-
     # table header
     table_header_position_row = 5
     headers = ["S.No"]
@@ -969,25 +959,16 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     if aggregation_level < 3:
         headers.append("Block")
 
-    if beta:
-        headers.extend([
-            'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number',
-            'Home Visits Conducted', 'Weighing Efficiency', 'AWW Eligible for Incentive',
-            'Number of Days AWC was Open', 'AWH Eligible for Incentive'
-        ])
-        columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
-        if aggregation_level < 3:
-            columns.append('L')
-        if aggregation_level < 2:
-            columns.append('M')
-    else:
-        headers.extend(["Supervisor", "AWC", "AWW Name", "AWW Contact Number", "Home Visits Conducted",
-                        "Number of Days AWC was Open", "Weighing Efficiency", "Eligible for Incentive"])
-        columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-        if aggregation_level < 3:
-            columns.append('K')
-        if aggregation_level < 2:
-            columns.append('L')
+    headers.extend([
+        'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number',
+        'Home Visits Conducted', 'Weighing Efficiency', 'AWW Eligible for Incentive',
+        'Number of Days AWC was Open', 'AWH Eligible for Incentive'
+    ])
+    columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
+    if aggregation_level < 3:
+        columns.append('L')
+    if aggregation_level < 2:
+        columns.append('M')
 
     table_header = {}
     for col, header in zip(columns, headers):
@@ -1024,8 +1005,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     standard_widths = [4, 7, 15]
     standard_widths.extend([15] * (3 - aggregation_level))
     standard_widths.extend([13, 12, 13, 15, 11, 14, 14])
-    if beta:
-        standard_widths.append(14)
+    standard_widths.append(14)
 
     for col, width in zip(widths_columns, standard_widths):
         widths[col] = width
@@ -1062,14 +1042,21 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         worksheet2['B{0}'.format(n)].value = export_info_item[1]
 
     # saving file
-    file_hash = uuid.uuid4().hex
+    key = get_performance_report_blob_key(state, district, block, month, 'xlsx')
     export_file = BytesIO()
-    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    icds_file, _ = IcdsFile.objects.get_or_create(blob_id=key, data_type=data_type)
     workbook.save(export_file)
     export_file.seek(0)
-    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.store_file_in_blobdb(export_file, expired=None)
     icds_file.save()
-    return file_hash
+    return key
+
+
+def get_performance_report_blob_key(state, district, block, month, file_format):
+    key_safe_date = datetime.strptime(month, '%B %Y').strftime('%Y_%m')
+    key = 'performance_report-{}-{}-{}-{}-{}'.format(state, district, block, key_safe_date, file_format)
+    safe_key = key.replace(' ', '_')
+    return safe_id(safe_key)
 
 
 def create_excel_file_in_openpyxl(excel_data, data_type):
@@ -1092,10 +1079,273 @@ def create_excel_file_in_openpyxl(excel_data, data_type):
     icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
     workbook.save(export_file)
     export_file.seek(0)
-    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.store_file_in_blobdb(export_file, expired=ONE_DAY)
     icds_file.save()
     return file_hash
 
+
+def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level):
+    export_info = excel_data[1][1]
+    national = 'National Level' if aggregation_level == 0 else ''
+    state = export_info[1][1] if aggregation_level > 0 else ''
+    district = export_info[2][1] if aggregation_level > 1 else ''
+    block = export_info[3][1] if aggregation_level > 2 else ''
+    supervisor = export_info[3][1] if aggregation_level > 3 else ''
+
+    excel_data = [line[aggregation_level:] for line in excel_data[0][1]]
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    warp_text_alignment = Alignment(wrap_text=True)
+    bold_font = Font(bold=True)
+    blue_fill = PatternFill("solid", fgColor="B3C5E5")
+    grey_fill = PatternFill("solid", fgColor="BFBFBF")
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    # sheet title
+    worksheet.title = "THR Report"
+    worksheet.sheet_view.showGridLines = False
+    amount_of_columns = 11 - aggregation_level
+    last_column = string.ascii_uppercase[amount_of_columns]
+    worksheet.merge_cells('B2:{0}2'.format(last_column))
+    title_cell = worksheet['B2']
+    title_cell.fill = PatternFill("solid", fgColor="4472C4")
+    title_cell.value = "Take Home Ration(THR) Report for the {}".format(month)
+    title_cell.font = Font(size=18, color="FFFFFF")
+    title_cell.alignment = Alignment(horizontal="center")
+
+    columns = [string.ascii_uppercase[i] for i in range(1, amount_of_columns + 1)]
+
+    # sheet header
+    header_cells = ['{0}3'.format(column) for column in columns]
+    for cell in header_cells:
+        worksheet[cell].fill = blue_fill
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+
+    if national:
+        worksheet['B3'].value = national
+        worksheet.merge_cells('B3:C3')
+    else:
+        if state:
+            worksheet['B3'].value = "State: {}".format(state)
+            worksheet.merge_cells('B3:C3')
+        if district:
+            worksheet['D3'].value = "District: {}".format(district)
+        if block:
+            worksheet['E3'].value = "Block: {}".format(block)
+        if supervisor:
+            worksheet['F3'].value = "Sector: {}".format(supervisor)
+
+    date_cell = '{0}3'.format(last_column)
+    date_description_cell = '{0}3'.format(string.ascii_uppercase[amount_of_columns - 1])
+    worksheet[date_description_cell].value = "Date when downloaded:"
+    worksheet[date_description_cell].alignment = Alignment(horizontal="right")
+    utc_now = datetime.now(pytz.utc)
+    now_in_india = utc_now.astimezone(india_timezone)
+    worksheet[date_cell].value = custom_strftime('{S} %b %Y', now_in_india)
+    worksheet[date_cell].alignment = Alignment(horizontal="right")
+
+    # table header
+    table_header_position_row = 5
+    header_data = excel_data[0]
+    headers = ["S.No"]
+    headers.extend(header_data)
+
+    table_header = {}
+    for col, header in zip(columns, headers):
+        table_header[col] = header
+    for column, value in table_header.items():
+        cell = "{}{}".format(column, table_header_position_row)
+        worksheet[cell].fill = grey_fill
+        worksheet[cell].border = thin_border
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+        worksheet[cell].value = value
+
+    # table contents
+    row_position = table_header_position_row + 1
+
+    for enum, row in enumerate(excel_data[1:], start=1):
+        for column_index in range(len(columns)):
+            column = columns[column_index]
+            cell = "{}{}".format(column, row_position)
+            worksheet[cell].border = thin_border
+            if column_index == 0:
+                worksheet[cell].value = enum
+            else:
+                worksheet[cell].value = row[column_index - 1]
+        row_position += 1
+
+    # sheet dimensions
+    title_row = worksheet.row_dimensions[2]
+    title_row.height = 23
+    worksheet.row_dimensions[table_header_position_row].height = 46
+    widths = {}
+    widths_columns = ['A']
+    widths_columns.extend(columns)
+    standard_widths = [4, 7]
+    standard_widths.extend([15] * (4 - aggregation_level))
+    standard_widths.extend([25, 15, 25, 15, 15, 15])
+    for col, width in zip(widths_columns, standard_widths):
+        widths[col] = width
+
+    widths['C'] = max(widths['C'], len(state) * 4 // 3 if state else 0)
+    widths['D'] = 9 + (len(district) * 4 // 3 if district else 0)
+    widths['E'] = 8 + (len(block) * 4 // 3 if district else 0)
+    widths['F'] = 8 + (len(supervisor) * 4 // 3 if district else 0)
+
+    columns = columns[1:]
+    # column widths based on table contents
+    for column_index in range(len(columns)):
+        widths[columns[column_index]] = max(
+            widths[columns[column_index]],
+            max(
+                len(row[column_index].decode('utf-8') if isinstance(row[column_index], bytes)
+                    else six.text_type(row[column_index])
+                    )
+                for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
+        )
+
+    for column, width in widths.items():
+        worksheet.column_dimensions[column].width = width
+
+    # export info
+    worksheet2 = workbook.create_sheet("Export Info")
+    worksheet2.column_dimensions['A'].width = 14
+    for n, export_info_item in enumerate(export_info, start=1):
+        worksheet2['A{0}'.format(n)].value = export_info_item[0]
+        worksheet2['B{0}'.format(n)].value = export_info_item[1]
+
+    # saving file
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=ONE_DAY)
+    icds_file.save()
+    return file_hash
+
+
+def create_child_report_excel_file(excel_data, data_type, month, aggregation_level):
+    export_info = excel_data[1][1]
+
+    primary_headers = ['Children weighed','Height measured for Children', '', 'Severely Underweight Children',
+                       'Moderately Underweight Children','Children with normal weight for age (WfA)',
+                       'Severely wasted Children(SAM)', 'Moderately wasted children(MAM)',
+                       'Children with normal weight for height',
+                       'Severely stunted children', 'Moderately Stunted Children',
+                       'Children with normal height for age',
+                       'Newborn with Low birth weight', 'Children completed immunization prescribed for 1 year',
+                       'Children breastfed at the time of birth','Children exclusively breastfed',
+                       'Children initiated with complementary feeding',
+                       'Children initiated with complementary feeding appropriately',
+                       'Children initiated with complementary feeding with adequate diet diversity',
+                       'Children initiated with complementary feeding with adequate diet quantity',
+                       'Children initiated with complementary feeding with appropriate handwashing before feeding'
+                       ]
+
+    location_padding_columns = ([''] * aggregation_level)
+    primary_headers = location_padding_columns + primary_headers
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Children"
+
+    # Styling initialisation
+    bold_font = Font(size=14, color="FFFFFF")
+    bold_font_black = Font(size=14, color="000000")
+    cell_pattern = PatternFill("solid", fgColor="B3C5E5")
+    cell_pattern_blue = PatternFill("solid", fgColor="4472C4")
+    cell_pattern_red = PatternFill("solid", fgColor="ff0000")
+    cell_pattern_yellow = PatternFill("solid", fgColor="ffff00")
+    text_alignment = Alignment(horizontal="center", vertical='top', wrap_text=True)
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    # Primary Header
+    main_header = worksheet.row_dimensions[1]
+    main_header.height = 40
+    current_column_location = 1
+    for index, primary_header in enumerate(primary_headers):
+        cell_name = get_column_letter(current_column_location)
+        cell = worksheet['{}1'.format(cell_name)]
+        cell.alignment = text_alignment
+
+        cell.value = primary_header
+
+        if primary_header == 'Severely wasted Children(SAM)':
+            cell.fill = cell_pattern_red
+            cell.font = bold_font
+        elif primary_header == 'Moderately wasted children(MAM)':
+            cell.fill = cell_pattern_yellow
+            cell.font = bold_font_black
+        else:
+            cell.fill = cell_pattern_blue
+            cell.font = bold_font
+
+
+        if current_column_location<=aggregation_level or current_column_location == aggregation_level + 7:
+            worksheet.merge_cells('{}1:{}2'.format(get_column_letter(current_column_location),
+                                                   get_column_letter(current_column_location)))
+            current_column_location += 1
+        else:
+            worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
+                                                   get_column_letter(current_column_location + 2)))
+            current_column_location += 3
+
+    # Secondary Header
+    secondary_header = worksheet.row_dimensions[2]
+    secondary_header.height = 80
+    headers = excel_data[0][1][0]
+    bold_font_black = Font(size=14)
+    for index, header in enumerate(headers):
+        location_column = get_column_letter(index + 1)
+        cell = worksheet['{}{}'.format(location_column, 1 if index+1 <= aggregation_level or
+                                                             index == aggregation_level + 6 else 2)]
+        cell.alignment = text_alignment
+        worksheet.column_dimensions[location_column].width = 30
+        cell.value = header
+        if index != aggregation_level + 6 and index + 1 > aggregation_level:
+            cell.fill = cell_pattern
+            cell.font = bold_font_black
+            cell.border = thin_border
+
+    # Fill data
+    for row_index,row in enumerate(excel_data[0][1][1:]):
+        for col_index, col_value in enumerate(row):
+            row_num = row_index + 3
+            column_name = get_column_letter(col_index + 1)
+            cell = worksheet['{}{}'.format(column_name, row_num)]
+            cell.value = col_value
+            cell.border = thin_border
+
+    # Export info
+    worksheet2 = workbook.create_sheet("Export Info")
+    worksheet2.column_dimensions['A'].width = 14
+    for n, export_info_item in enumerate(export_info, start=1):
+        worksheet2['A{0}'.format(n)].value = export_info_item[0]
+        worksheet2['B{0}'.format(n)].value = export_info_item[1]
+
+    #Export to icds file
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=ONE_DAY)
+    icds_file.save()
+
+    return file_hash
 
 def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_level):
     export_info = excel_data[1][1]
@@ -1227,7 +1477,7 @@ def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_
     icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
     workbook.save(export_file)
     export_file.seek(0)
-    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.store_file_in_blobdb(export_file, expired=ONE_DAY)
     icds_file.save()
     return file_hash
 

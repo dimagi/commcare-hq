@@ -1,0 +1,9 @@
+
+        COPY (
+            SELECT t.awc_id,case_id,month,age_in_months,ccs_status,open_in_month,alive_in_month,trimester,num_rations_distributed,thr_eligible,tetanus_complete,delivered_in_month,anc1_received_at_delivery,anc2_received_at_delivery,anc3_received_at_delivery,anc4_received_at_delivery,registration_trimester_at_delivery,using_ifa,ifa_consumed_last_seven_days,anemic_severe,anemic_moderate,anemic_normal,anemic_unknown,extra_meal,resting_during_pregnancy,bp_visited_in_month,pnc_visited_in_month,trimester_2,trimester_3,counsel_immediate_bf,counsel_bp_vid,counsel_preparation,counsel_fp_vid,counsel_immediate_conception,counsel_accessible_postpartum_fp,bp1_complete,bp2_complete,bp3_complete,pnc_complete,postnatal,has_aadhar_id,counsel_fp_methods,pregnant,pregnant_all,lactating,lactating_all,institutional_delivery_in_month,add,anc_in_month,caste,disabled,minority,resident,anc_weight,anc_blood_pressure,bp_sys,bp_dia,anc_hemoglobin,bleeding,swelling,blurred_vision,convulsions,rupture,anemia,eating_extra,resting,immediate_breastfeeding,edd,delivery_nature,is_ebf,breastfed_at_birth,anc_1,anc_2,anc_3,anc_4,tt_1,tt_2,valid_in_month,mobile_number,preg_order,home_visit_date,num_pnc_visits,last_date_thr,num_anc_complete,opened_on,valid_visits,dob,date_death,awc.state_name,awc.district_name,awc.block_name,awc.awc_name,awc.awc_site_code
+            FROM ccs_record_monthly t
+            LEFT JOIN awc_location awc on t.awc_id=awc.doc_id
+            WHERE awc.state_id='st1' AND t.month='2019-01-01 00:00:00'
+        ) TO STDOUT WITH CSV HEADER ENCODING 'UTF-8';
+        
+{}

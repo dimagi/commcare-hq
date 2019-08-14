@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import hashlib
+import itertools
 import logging
 
 from django.utils.translation import ugettext as _
@@ -60,6 +61,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             self.config, get_metadata(self.engine_id), override_table_name=self.override_table_name
         )
 
+    @property
+    def table_exists(self):
+        return self.engine.has_table(self.get_table().name)
+
     @memoized
     def get_sqlalchemy_orm_table(self):
         table = self.get_table()
@@ -90,17 +95,16 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             # only do this if the database contains the citus extension
             return
 
+        from custom.icds_reports.utils.migrations import (
+            create_citus_distributed_table, create_citus_reference_table
+        )
         with self.engine.begin() as connection:
             if config.distribution_type == 'hash':
                 if config.distribution_column not in self.get_table().columns:
                     raise ColumnNotFoundError("Column '{}' not found.".format(config.distribution_column))
-                connection.execute("select create_distributed_table('{}', '{}')".format(
-                    self.get_table().name, config.distribution_column
-                ))
+                create_citus_distributed_table(connection, self.get_table().name, config.distribution_column)
             elif config.distribution_type == 'reference':
-                connection.execute("select create_reference_table('{}')".format(
-                    self.get_table().name
-                ))
+                create_citus_reference_table(connection, self.get_table().name)
             else:
                 raise ValueError("unknown distribution type: %r" % config.distribution_type)
             return True
@@ -121,7 +125,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return orm_table
 
     def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
-        self.log_table_rebuild(initiated_by, source, skip_log)
+        self.log_table_rebuild(initiated_by, source, skip=skip_log)
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
@@ -207,21 +211,73 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             {i.column.database_column_name.decode('utf-8'): i.value for i in row}
             for row in rows
         ]
+        if self.session_helper.is_citus_db:
+            config = self.config.sql_settings.citus_config
+            if config.distribution_type == 'hash':
+                self._by_column_update(formatted_rows)
+                return
         doc_ids = set(row['doc_id'] for row in formatted_rows)
         table = self.get_table()
-        delete = table.delete(table.c.doc_id.in_(doc_ids))
-        # Using session.bulk_insert_mappings below might seem more inline
-        #   with sqlalchemy API, but it results in
-        #   appending an empty row which results in a postgres
-        #   not-null constraint error, which has been hard to debug.
-        # In addition, bulk_insert_mappings is less performant than
-        #   the plain INSERT INTO VALUES statement resulting from below line
-        #   because bulk_insert_mappings is meant for multi-table insertion
-        #   so it has overhead of format conversions and multiple statements
-        insert = table.insert().values(formatted_rows)
+        if self.supports_upsert():
+            queries = [self._upsert_query(table, formatted_rows)]
+        else:
+            delete = table.delete().where(table.c.doc_id.in_(doc_ids))
+            # Using session.bulk_insert_mappings below might seem more inline
+            #   with sqlalchemy API, but it results in
+            #   appending an empty row which results in a postgres
+            #   not-null constraint error, which has been hard to debug.
+            # In addition, bulk_insert_mappings is less performant than
+            #   the plain INSERT INTO VALUES statement resulting from below line
+            #   because bulk_insert_mappings is meant for multi-table insertion
+            #   so it has overhead of format conversions and multiple statements
+            insert = table.insert().values(formatted_rows)
+            queries = [delete, insert]
         with self.session_context() as session:
-            session.execute(delete)
-            session.execute(insert)
+            for query in queries:
+                session.execute(query)
+
+    def _by_column_update(self, rows):
+        config = self.config.sql_settings.citus_config
+        shard_col = config.distribution_column
+        table = self.get_table()
+
+        rows = sorted(rows, key=lambda row: row[shard_col])
+        for shard_value, rows_ in itertools.groupby(rows, key=lambda row: row[shard_col]):
+            formatted_rows = list(rows_)
+            doc_ids = set(row['doc_id'] for row in formatted_rows)
+            if self.supports_upsert():
+                queries = [self._upsert_query(table, formatted_rows)]
+            else:
+                delete = table.delete().where(table.c.get(shard_col) == shard_value)
+                delete = delete.where(table.c.doc_id.in_(doc_ids))
+                insert = table.insert().values(formatted_rows)
+                queries = [delete, insert]
+
+            with self.session_context() as session:
+                for query in queries:
+                    session.execute(query)
+
+    def supports_upsert(self):
+        """Return True if supports UPSERTS else False
+
+        Assumes that neither a distribution column (citus) nor doc_id can change.
+        """
+        if self.session_helper.is_citus_db:
+            # distribution_column and doc_id
+            return len(self.config.pk_columns) == 2
+
+        # doc_id
+        return len(self.config.pk_columns) == 1
+
+    def _upsert_query(self, table, rows):
+        from sqlalchemy.dialects.postgresql import insert
+        upsert = insert(table).values(rows)
+        return upsert.on_conflict_do_update(
+            constraint=table.primary_key,
+            set_={
+                col.name: col for col in upsert.excluded if not col.primary_key
+            }
+        )
 
     def bulk_save(self, docs):
         rows = []
@@ -229,17 +285,34 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             rows.extend(self.get_all_values(doc))
         self.save_rows(rows)
 
-    def bulk_delete(self, doc_ids):
+    def bulk_delete(self, docs):
+        if self.session_helper.is_citus_db:
+            config = self.config.sql_settings.citus_config
+            if config.distribution_type == 'hash':
+                self._citus_bulk_delete(docs, config.distribution_column)
+                return
         table = self.get_table()
+        doc_ids = [doc['_id'] for doc in docs]
         delete = table.delete(table.c.doc_id.in_(doc_ids))
         with self.session_context() as session:
             session.execute(delete)
 
-    def delete(self, doc):
+    def _citus_bulk_delete(self, docs, column):
+        SHARDABLE_DOC_TYPES = ('XFormArchived', 'XFormDuplicate')
         table = self.get_table()
-        delete = table.delete(table.c.doc_id == doc['_id'])
-        with self.session_helper.session_context() as session:
-            session.execute(delete)
+        # todo group by the sharding column and issue bulk_delete
+        for doc in docs:
+            delete = table.delete().where(table.c.doc_id == doc['_id'])
+            if doc.get('doc_type') in SHARDABLE_DOC_TYPES:
+                # todo only get sharding column's value
+                rows = self.get_all_values(doc)
+                if rows.get(column):
+                    delete = delete.where(table.c.get(column) == rows[column])
+            with self.session_context() as session:
+                session.execute(delete)
+
+    def delete(self, doc):
+        self.bulk_delete([doc])
 
     def doc_exists(self, doc):
         with self.session_context() as session:
@@ -289,17 +362,17 @@ class MultiDBSqlAdapter(object):
     def get_distinct_values(self, column, limit):
         return self.main_adapter.get_distinct_values(column, limit)
 
-    def build_table(self):
+    def build_table(self, initiated_by=None, source=None):
         for adapter in self.all_adapters:
-            adapter.build_table()
+            adapter.build_table(initiated_by=initiated_by, source=source)
 
-    def rebuild_table(self):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
         for adapter in self.all_adapters:
-            adapter.rebuild_table()
+            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
 
-    def drop_table(self):
+    def drop_table(self, initiated_by=None, source=None, skip_log=False):
         for adapter in self.all_adapters:
-            adapter.drop_table()
+            adapter.drop_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
 
     @unit_testing_only
     def clear_table(self):
@@ -314,9 +387,9 @@ class MultiDBSqlAdapter(object):
         for adapter in self.all_adapters:
             adapter.bulk_save(docs)
 
-    def bulk_delete(self, doc_ids):
+    def bulk_delete(self, docs):
         for adapter in self.all_adapters:
-            adapter.bulk_delete(doc_ids)
+            adapter.bulk_delete(docs)
 
     def doc_exists(self, doc):
         return any([
@@ -332,7 +405,7 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
         if ex is not None:
             raise ex
 
-        orig_exception = getattr(exception, 'orig')
+        orig_exception = getattr(exception, 'orig', None)
         if orig_exception and isinstance(orig_exception, psycopg2.IntegrityError):
             if orig_exception.pgcode == psycopg2.errorcodes.NOT_NULL_VIOLATION:
                 from corehq.apps.userreports.models import InvalidUCRData

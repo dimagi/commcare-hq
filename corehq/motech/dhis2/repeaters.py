@@ -26,7 +26,7 @@ class Dhis2Repeater(FormRepeater):
         app_label = 'repeaters'
 
     include_app_id_param = False
-    friendly_name = _("Forward to DHIS2")
+    friendly_name = _("Forward Forms to DHIS2 as Anonymous Events")
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
 
     dhis2_config = SchemaProperty(Dhis2Config)
@@ -36,6 +36,9 @@ class Dhis2Repeater(FormRepeater):
             isinstance(other, self.__class__) and
             self.get_id == other.get_id
         )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __hash__(self):
         return hash(self.get_id)
@@ -64,13 +67,28 @@ class Dhis2Repeater(FormRepeater):
         return json.loads(payload)
 
     def send_request(self, repeat_record, payload):
+        """
+        Sends API request and returns response if ``payload`` is a form
+        that is configured to be forwarded to DHIS2.
+
+        If ``payload`` is a form that isn't configured to be forwarded,
+        returns True.
+        """
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
+                requests = Requests(
+                    self.domain,
+                    self.url,
+                    self.username,
+                    self.plaintext_password,
+                    verify=self.verify,
+                )
                 return send_data_to_dhis2(
-                    Requests(self.domain, self.url, self.username, self.plaintext_password, verify=self.verify),
+                    requests,
                     form_config,
                     payload,
                 )
+        return True
 
 
 def create_dhis_repeat_records(sender, xform, **kwargs):

@@ -19,10 +19,10 @@ hqDefine('hqcase/js/explode_cases', [
                 type: 'POST',
                 dataType: 'json',
                 quietMills: 250,
-                data: function (term, page) {
+                data: function (params) {
                     return {
-                        q: term,
-                        page: page,
+                        q: params.term,
+                        page: params.page,
                     };
                 },
                 processResults: function (data, page) {

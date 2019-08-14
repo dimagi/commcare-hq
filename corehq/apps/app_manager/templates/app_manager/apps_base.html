@@ -41,7 +41,6 @@
   {% endcompress %}
 
   {% include 'hqwebapp/includes/atwho.html' %}
-  <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
   <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
   <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
 
@@ -55,7 +54,7 @@
 {% block page_breadcrumbs %}{% endblock %}
 
 {% block content %}{{ block.super }}
-  {% registerurl "default_app" domain %}
+  {% registerurl "dashboard_default" domain %}
   {% include 'app_manager/partials/preview_app.html'%}
 {% endblock %}
 

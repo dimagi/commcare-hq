@@ -15,8 +15,6 @@ from django.conf import settings
 from django_prbac.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _
 
-from dimagi.utils.logging import notify_exception
-
 from corehq import privileges
 from corehq.util.timer import time_method
 from corehq.util import view_utils
@@ -28,6 +26,7 @@ from corehq.apps.app_manager.const import (
     AUTO_SELECT_RAW,
     AUTO_SELECT_USER,
     WORKFLOW_FORM,
+    WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
 )
 from corehq.apps.app_manager.exceptions import (
@@ -93,14 +92,6 @@ class ApplicationBaseValidator(object):
         except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied, SuiteValidationError) as e:
             errors.append({'type': 'error', 'message': six.text_type(e)})
-        except Exception as e:
-            if settings.DEBUG:
-                raise
-
-            # this is much less useful/actionable without a URL
-            # so make sure to include the request
-            notify_exception(view_utils.get_request(), "Unexpected error building app")
-            errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
     @time_method()
@@ -173,7 +164,7 @@ class ApplicationBaseValidator(object):
 
     def _check_password_charset(self):
         errors = []
-        if hasattr(self.app, 'profile'):
+        if self.app.build_spec.supports_j2me() and hasattr(self.app, 'profile'):
             password_format = self.app.profile.get('properties', {}).get('password_format', 'n')
             message = _(
                 'Your app requires {0} passwords but the admin password is not '
@@ -519,7 +510,7 @@ class AdvancedModuleValidator(ModuleBaseValidator):
                 'module': self.get_module_info(),
             })
         if self.module.case_list_form.form_id:
-            forms = self.module.forms
+            forms = self.module.get_forms()
 
             case_tag = None
             loaded_case_types = None
@@ -599,7 +590,7 @@ class AdvancedModuleValidator(ModuleBaseValidator):
                     'module': module_info,
                 }
             if self.module.get_app().commtrack_enabled and not self.module.product_details.short.columns:
-                for form in self.module.forms:
+                for form in self.module.get_forms():
                     if self.module.case_list.show or \
                             any(action.show_product_stock for action in form.actions.load_update_cases):
                         yield {
@@ -755,9 +746,14 @@ class FormBaseValidator(object):
                     self.form.get_app().get_form(form_link.form_id)
                 except FormNotFoundException:
                     errors.append(dict(type='bad form link', **meta))
+        elif self.form.post_form_workflow == WORKFLOW_MODULE:
+            if module.put_in_root:
+                errors.append(dict(type='form link to display only forms', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             if not module.root_module:
                 errors.append(dict(type='form link to missing root', **meta))
+            if module.root_module.put_in_root:
+                errors.append(dict(type='form link to display only forms', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self.form, 'form_filter') and self.form.form_filter:

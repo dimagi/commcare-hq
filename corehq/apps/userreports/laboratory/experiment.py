@@ -1,16 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import json
-import logging
 import traceback
 
-from django.core.serializers.json import DjangoJSONEncoder
 import json_delta
 import laboratory
 
-diff_logger = logging.getLogger('ucr_diff')
-exception_logger = logging.getLogger('ucr_exception')
-timing_logger = logging.getLogger('ucr_timing')
+from corehq.apps.userreports.models import (
+    ReportComparisonDiff,
+    ReportComparisonException,
+    ReportComparisonTiming,
+)
+from corehq.util.json import CommCareJSONEncoder
 
 
 class UCRExperiment(laboratory.Experiment):
@@ -33,37 +34,36 @@ class UCRExperiment(laboratory.Experiment):
         formatted_exception = traceback.format_exception(
             candidate_exc[0], candidate_exc[1], candidate_exc[2]
         )
-        exception_logger.info(
-            "",
-            extra={
-                'domain': self.context['domain'],
-                'report_config_id': self.context['report_config_id'],
-                'new_report_config_id': self.context['new_report_config_id'],
-                'filter_values': self.context['filter_values'],
-                'candidate': formatted_exception,
-            })
+        ReportComparisonException.objects.create(
+            domain=self.context['domain'],
+            control_report_config_id=self.context['report_config_id'],
+            candidate_report_config_id=self.context['new_report_config_id'],
+            filter_values=self.context['filter_values'],
+            exception=formatted_exception,
+        )
 
     def log_diff(self, control_value, candidate_value):
+        # handle serialization of Decimals and dates
+        control_value = json.loads(json.dumps(control_value, cls=CommCareJSONEncoder))
+        candidate_value = json.loads(json.dumps(candidate_value, cls=CommCareJSONEncoder))
+
         diff = json_delta.diff(control_value, candidate_value, verbose=False)
-        diff_logger.info(
-            "",
-            extra={
-                'domain': self.context['domain'],
-                'report_config_id': self.context['report_config_id'],
-                'new_report_config_id': self.context['new_report_config_id'],
-                'filter_values': self.context['filter_values'],
-                'control': json.dumps(control_value, cls=DjangoJSONEncoder),
-                'diff': json.dumps(diff, cls=DjangoJSONEncoder)
-            })
+        ReportComparisonDiff.objects.create(
+            domain=self.context['domain'],
+            control_report_config_id=self.context['report_config_id'],
+            candidate_report_config_id=self.context['new_report_config_id'],
+            filter_values=self.context['filter_values'],
+            control=control_value,
+            candidate=candidate_value,
+            diff=diff,
+        )
 
     def log_timing(self, control, candidate):
-        timing_logger.info(
-            "",
-            extra={
-                'domain': self.context['domain'],
-                'report_config_id': self.context['report_config_id'],
-                'new_report_config_id': self.context['new_report_config_id'],
-                'filter_values': self.context['filter_values'],
-                'control_duration': control.duration,
-                'candidate_duration': candidate.duration
-            })
+        ReportComparisonTiming.objects.create(
+            domain=self.context['domain'],
+            control_report_config_id=self.context['report_config_id'],
+            candidate_report_config_id=self.context['new_report_config_id'],
+            filter_values=self.context['filter_values'],
+            control_duration=control.duration.total_seconds(),
+            candidate_duration=candidate.duration.total_seconds(),
+        )

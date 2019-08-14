@@ -4,14 +4,14 @@ from datetime import datetime
 
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
+from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.messages import lady_supervisor_number_of_vhnds_observed_help_text, \
     lady_supervisor_number_of_beneficiaries_visited_help_text, lady_supervisor_number_of_awcs_visited_help_text
 from custom.icds_reports.models.views import AggLsMonthly
 from custom.icds_reports.utils import get_value, apply_exclude
 
 
-@quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
 def get_lady_supervisor_data(domain, config, show_test=False):
 
     def get_data(date, filters):
@@ -57,7 +57,7 @@ def get_lady_supervisor_data(domain, config, show_test=False):
             ],
             [
                 {
-                    'label': _('Number of VHNDs observed'),
+                    'label': _('Number of VHSNDs observed'),
                     'help_text': lady_supervisor_number_of_vhnds_observed_help_text(),
                     'percent': None,
                     'value': get_value(data, 'vhnd_observed'),

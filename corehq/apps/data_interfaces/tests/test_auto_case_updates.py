@@ -1066,8 +1066,8 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         definition.save()
 
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
-            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.get_case_ids') as case_ids_patch:
-                case_ids_patch.return_value = [case.case_id]
+            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.iter_cases') as iter_cases_patch:
+                iter_cases_patch.return_value = [case]
                 self.assertRuleRunCount(0)
 
                 # Case does not match, nothing to update
@@ -1080,6 +1080,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
                 case = CaseAccessors(self.domain).get_case(case.case_id)
                 self.assertNotIn('result', case.dynamic_case_properties())
 
+                iter_cases_patch.return_value = [case]
                 run_case_update_rules_for_domain(self.domain)
                 self.assertRuleRunCount(2)
                 self.assertLastRuleRun(1, num_updates=1)
@@ -1087,6 +1088,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
                 self.assertEqual(case.get_case_property('result'), 'abc')
 
                 # Case matches but is already in the desired state, no update made
+                iter_cases_patch.return_value = [case]
                 run_case_update_rules_for_domain(self.domain)
                 self.assertRuleRunCount(3)
                 self.assertLastRuleRun(1)

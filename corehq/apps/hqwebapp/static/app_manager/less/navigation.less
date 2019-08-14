@@ -83,6 +83,8 @@ nav.appmanager-content {
   }
 }
 
+@drag-icon-right: 10px;
+
 .appnav-menu > li > .appnav-item a.appnav-title {
   width: @appnav-width - @appnav-trash-width;
   position: relative;
@@ -98,7 +100,7 @@ nav.appmanager-content {
   > .appnav-drag-icon {
     position: absolute;
     top: 0;
-    right: 10px;
+    right: @drag-icon-right;
     text-align: center;
     width: @appnav-trash-width;
     min-height: @appnav-item-height;
@@ -186,33 +188,64 @@ nav.appmanager-content {
   }
 }
 
+@nesting-indent: 10px;
+@t-shaped-line: '\f00a';
+@l-shaped-line: '\f00b';
+
 .appnav-menu-nested {
   > li > .appnav-item > a.appnav-title {
-    padding-left: 10px;
     border-left: 1px solid lighten(@cc-text, 60);
   }
-  > li > .appnav-item > a.appnav-title {
+
+  > li:last-child > .appnav-item > a.appnav-title {
+    border: none;
+    &:before {
+      content: @l-shaped-line;
+      left: -14px;
+    }
+  }
+  > .appnav-primary-icon {
+    margin-left: 2px;
+  }
+}
+
+.appnav-menu-nested > li, .child-modules > li.module  {
+  > .appnav-item > a.appnav-title {
+    padding-left: @nesting-indent;
     position: relative;
 
     &:before {
       font-family: "WorkflowFontRegular";
-      content: '\f00a';
       position: absolute;
+      content: @t-shaped-line;
       left: -15px;
       top: -5px;
       font-size: 4.6rem;
       color: lighten(@cc-text, 60);
     }
   }
-  > li:last-child > .appnav-item > a.appnav-title {
-    border: none;
+}
+
+.child-modules > li.module {
+  // Child module
+  > .appnav-item > a.appnav-title {
+    &:before {
+      content: @l-shaped-line;
+    }
   }
-  > li:last-child > .appnav-item > a.appnav-title:before {
-    content: '\f00b';
-      left: -14px;
-  }
-  > .appnav-primary-icon {
-    margin-left: 2px;
+  // Form in child module
+  > .appnav-menu-nested > li > .appnav-item {
+    > a.appnav-title {
+      margin-left: @nesting-indent;
+      margin-right: -@nesting-indent;
+      width: @appnav-width - @appnav-trash-width - @appnav-secondary-width - @nesting-indent;
+      > .appnav-drag-icon {
+        right: @drag-icon-right;
+      }
+    }
+    > .appnav-settings {
+      margin-left: @nesting-indent;
+    }
   }
 }
 

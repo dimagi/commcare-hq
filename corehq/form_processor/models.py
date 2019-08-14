@@ -33,7 +33,7 @@ from corehq.blobs.exceptions import NotFound, BadName
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import get_content_md5
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
-from corehq.form_processor.exceptions import UnknownActionType
+from corehq.form_processor.exceptions import UnknownActionType, MissingFormXml
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel, RestrictedManager
@@ -553,12 +553,18 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     @memoized
     def get_xml(self):
-        return self.get_attachment('form.xml')
+        try:
+            return self.get_attachment('form.xml')
+        except NotFound:
+            raise MissingFormXml(self.form_id)
 
     def xml_md5(self):
-        return self.get_attachment_meta('form.xml').content_md5()
+        try:
+            return self.get_attachment_meta('form.xml').content_md5()
+        except NotFound:
+            raise MissingFormXml(self.form_id)
 
-    def archive(self, user_id=None):
+    def archive(self, user_id=None, trigger_signals=True):
         # If this archive was initiated by a user, delete all other stubs for this action so that this action
         # isn't overridden
         if self.is_archived:
@@ -570,9 +576,10 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
             FormAccessorSQL.archive_form(self, user_id)
             archive_stub.archive_history_updated()
-            xform_archived.send(sender="form_processor", xform=self)
+            if trigger_signals:
+                xform_archived.send(sender="form_processor", xform=self)
 
-    def unarchive(self, user_id=None):
+    def unarchive(self, user_id=None, trigger_signals=True):
         # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
         # isn't overridden
         if not self.is_archived:
@@ -584,27 +591,31 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         with unfinished_archive(instance=self, user_id=user_id, archive=False) as archive_stub:
             FormAccessorSQL.unarchive_form(self, user_id)
             archive_stub.archive_history_updated()
-            xform_unarchived.send(sender="form_processor", xform=self)
+            if trigger_signals:
+                xform_unarchived.send(sender="form_processor", xform=self)
 
-    def publish_archive_action_to_kafka(self, user_id, archive):
+    def publish_archive_action_to_kafka(self, user_id, archive, trigger_signals=True):
         # Don't update the history, just send to kafka
         from couchforms.models import UnfinishedArchiveStub
         from corehq.form_processor.submission_process_tracker import unfinished_archive
         from corehq.form_processor.change_publishers import publish_form_saved
         # Delete the original stub
         UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
-        with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-            if archive:
-                xform_archived.send(sender="form_processor", xform=self)
-            else:
-                xform_unarchived.send(sender="form_processor", xform=self)
-            publish_form_saved(self)
+        if trigger_signals:
+            with unfinished_archive(instance=self, user_id=user_id, archive=archive):
+                if archive:
+                    xform_archived.send(sender="form_processor", xform=self)
+                else:
+                    xform_unarchived.send(sender="form_processor", xform=self)
+                publish_form_saved(self)
 
     def __str__(self):
         return (
-            "XFormInstance("
+            "{f.doc_type}("
             "form_id='{f.form_id}', "
-            "domain='{f.domain}')"
+            "domain='{f.domain}', "
+            "xmlns='{f.xmlns}', "
+            ")"
         ).format(f=self)
 
     class Meta(object):
@@ -1236,6 +1247,9 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             self.relationship_id == other.relationship_id,
         )
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __hash__(self):
         return hash((self.case_id, self.identifier, self.referenced_id, self.relationship_id))
 
@@ -1495,6 +1509,14 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     def __str__(self):
         return (
+            "{self.form_id}: "
+            "{self.client_date} "
+            "({self.server_date}) "
+            "{self.readable_type}"
+        ).format(self=self)
+
+    def __repr__(self):
+        return (
             "CaseTransaction("
             "case_id='{self.case_id}', "
             "form_id='{self.form_id}', "
@@ -1512,6 +1534,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ('case', 'server_date', 'sync_log_id'),
         ]
+        indexes = [models.Index(['form_id'])]
 
 
 class CaseTransactionDetail(JsonObject):
@@ -1526,6 +1549,8 @@ class CaseTransactionDetail(JsonObject):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    __hash__ = None
 
 
 class RebuildWithReason(CaseTransactionDetail):
@@ -1740,6 +1765,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ["case", "section_id", "entry_id"],
         ]
+        indexes = [models.Index(['form_id'])]
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):

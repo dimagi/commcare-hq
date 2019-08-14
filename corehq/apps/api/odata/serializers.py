@@ -1,69 +1,120 @@
 from __future__ import absolute_import, unicode_literals
+
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
+
 from tastypie.serializers import Serializer
 
-from corehq.apps.api.odata.utils import get_case_type_to_properties
-from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
 
+from corehq.apps.api.odata.views import (
+    ODataCaseMetadataView,
+    ODataFormMetadataView,
+)
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
+from corehq.util.view_utils import absolute_reverse
 
-class ODataCommCareCaseSerializer(Serializer):
-    """
-    A custom serializer that converts case data into an odata-compliant format.
-    Must be paired with ODataCommCareCaseResource
-    # todo: should maybe be generalized into a mixin paired with the resource to support both cases and forms
-    """
+
+class ODataCaseSerializer(Serializer):
+
     def to_json(self, data, options=None):
-        options = options or {}
+        # Convert bundled objects to JSON
+        data['objects'] = [
+            bundle.obj for bundle in data['objects']
+        ]
+
         domain = data.pop('domain', None)
-        if not domain:
-            raise Exception('API requires domain to be set! Did you add it in a custom create_response function?')
-        case_type = data.pop('case_type', None)
-        if not case_type:
-            raise Exception(
-                'API requires case_type to be set! Did you add it in a custom create_response function?'
-            )
+        config_id = data.pop('config_id', None)
         api_path = data.pop('api_path', None)
-        if not api_path:
-            raise Exception(
-                'API requires api_path to be set! Did you add it in a custom create_response function?'
-            )
-        data = self.to_simple(data, options)
-        data['@odata.context'] = '{}#{}'.format(absolute_reverse('odata_meta', args=[domain]), case_type)
+        assert all([domain, config_id, api_path]), [domain, config_id, api_path]
 
-        next_url = data.pop('meta', {}).get('next')
-        if next_url:
-            data['@odata.nextLink'] = '{}{}{}'.format(get_url_base(), api_path, next_url)
-        # move "objects" to "value"
-        data['value'] = data.pop('objects')
+        data['@odata.context'] = '{}#{}'.format(
+            absolute_reverse(ODataCaseMetadataView.urlname, args=[domain, config_id]),
+            'feed'
+        )
 
-        # clean properties
-        def _clean_property_name(name):
-            # for whatever ridiculous reason, at least in Tableau,
-            # when these are nested inside an object they can't have underscores in them
-            return name.replace('_', '')
+        next_link = self.get_next_url(data.pop('meta'), api_path)
+        if next_link:
+            data['@odata.nextLink'] = next_link
 
-        for i, case_json in enumerate(data['value']):
-            case_json['properties'] = {_clean_property_name(k): v for k, v in case_json['properties'].items()}
-
-        case_type_to_properties = get_case_type_to_properties(domain)
-        properties_to_include = [
-            'casename', 'casetype', 'dateopened', 'ownerid', 'backendid'
-        ] + case_type_to_properties.get(case_type, [])
-
-        for value in data['value']:
-            for remove_property in [
-                'id',
-                'indexed_on',
-                'indices',
-                'resource_uri',
-            ]:
-                value.pop(remove_property)
-            properties = value.get('properties')
-            for property_name in list(properties):
-                if property_name not in properties_to_include:
-                    properties.pop(property_name)
+        config = CaseExportInstance.get(config_id)
+        data['value'] = self.serialize_cases_using_config(data.pop('objects'), config)
 
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
+
+    @staticmethod
+    def get_next_url(meta, api_path):
+        next_page = meta['next']
+        if next_page:
+            return '{}{}{}'.format(get_url_base(), api_path, next_page)
+
+    @staticmethod
+    def serialize_cases_using_config(cases, config):
+        table = config.tables[0]
+        return [
+            {
+                col.label: col.get_value(
+                    config.domain,
+                    case_data.get('case_id', None),
+                    case_data,
+                    [],
+                    split_column=config.split_multiselects,
+                    transform_dates=config.transform_dates,
+                )
+                for col in table.selected_columns
+            }
+            for case_data in cases
+        ]
+
+
+class ODataFormSerializer(Serializer):
+
+    def to_json(self, data, options=None):
+        # Convert bundled objects to JSON
+        data['objects'] = [
+            bundle.obj for bundle in data['objects']
+        ]
+
+        domain = data.pop('domain', None)
+        config_id = data.pop('config_id', None)
+        api_path = data.pop('api_path', None)
+        assert all([domain, config_id, api_path]), [domain, config_id, api_path]
+
+        data['@odata.context'] = '{}#{}'.format(
+            absolute_reverse(ODataFormMetadataView.urlname, args=[domain, config_id]),
+            'feed'
+        )
+
+        next_link = self.get_next_url(data.pop('meta'), api_path)
+        if next_link:
+            data['@odata.nextLink'] = next_link
+
+        config = FormExportInstance.get(config_id)
+        data['value'] = self.serialize_forms_using_config(data.pop('objects'), config)
+
+        return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
+
+    @staticmethod
+    def get_next_url(meta, api_path):
+        next_page = meta['next']
+        if next_page:
+            return '{}{}{}'.format(get_url_base(), api_path, next_page)
+
+    @staticmethod
+    def serialize_forms_using_config(forms, config):
+        table = config.tables[0]
+        return [
+            {
+                col.label: col.get_value(
+                    config.domain,
+                    form_data.get('_id', None),
+                    form_data,
+                    [],
+                    split_column=config.split_multiselects,
+                    transform_dates=config.transform_dates,
+                )
+                for col in table.selected_columns
+            }
+            for form_data in forms
+        ]

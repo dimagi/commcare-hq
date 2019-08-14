@@ -35,9 +35,9 @@
   </p>
   <p>
     {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-      <a class="btn btn-default" href="{% url 'app_form_summary_diff' domain latest_build_id app.id %}">
+      <a class="btn btn-default" data-bind="attr: {href: compareUnbuiltChangesUrl}, visible: savedApps().length">
         <i class="fa fa-exchange"></i>
-        {% trans "View Changes" %}
+        {% trans "Version Preview" %}
       </a>
     {% endif %}
     <button class="btn btn-primary" data-bind="
@@ -58,8 +58,8 @@
     <div class="col-md-3 col-md-offset-9">
       <search-box data-apply-bindings="false"
                   params="value: buildComment,
-                                action: function() { goToPage(1); },
-                                placeholder: '{% trans_html_attr "Version or comment" %}'"></search-box>
+                          action: function() { goToPage(1); },
+                          placeholder: '{% trans_html_attr "Version or comment" %}'"></search-box>
     </div>
   </div>
 
@@ -68,8 +68,7 @@
     <span data-bind="visible: buildErrorCode() === 403">
       {% trans "Sorry, you don't have permission to do this action!" %}
     </span>
-    <span data-bind="visible: buildErrorCode() !== 403">
-      {% trans "An error occurred. Reload the page and click Make New Version to try again." %}
+    <span data-bind="visible: buildErrorCode() !== 403, text: errorMessage">
     </span>
   </div>
 
@@ -188,9 +187,15 @@
               "></inline-edit>
         </div>
       </div><!-- .panel-body -->
-      <div class="panel-footer">
+      <div class="panel-footer clearfix">
         {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-          <a class="btn btn-default" data-bind="attr: { href: $parent.reverse('app_form_summary_diff', $parent.previousBuildId($index()), $data.id()) }">
+          <a class="btn btn-default" data-bind="
+                    attr: {href: $parent.reverse(
+                            'app_form_summary_diff',
+                            $parent.previousBuildId($index()),
+                            $data.id())
+                          },
+                    visible: $parent.previousBuildId($index())">
             <i class="fa fa-exchange"></i>
             {% trans "View Changes" %}
           </a>
@@ -222,10 +227,12 @@
 
   <pagination data-apply-bindings="false"
               params="goToPage: goToPage,
-                        perPage: fetchLimit,
-                        slug: 'releases-table',
-                        totalItems: totalItems,
-                        showSpinner: showPaginationSpinner"></pagination>
+                      perPage: fetchLimit,
+                      slug: 'releases-table',
+                      totalItems: totalItems,
+                      onLoad: onPaginationLoad,
+                      showSpinner: showPaginationSpinner"></pagination>
+
   <script type="text/html" id="delete-build-modal-template">
     <div class="modal-dialog">
       <div class="modal-content">

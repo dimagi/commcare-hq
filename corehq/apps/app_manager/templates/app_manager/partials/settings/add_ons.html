@@ -51,12 +51,42 @@
         <div class="panel-body" data-bind="foreach: add_ons">
           <div class="checkbox">
             <label>
-              <input type="checkbox" data-bind="attr: {name: slug, id: 'check-' + slug}, checked: $root.addOns[slug], event: {change: $root.update}" />
+              <input type="checkbox"
+                     data-bind="attr: {
+                                  name: slug,
+                                  id: 'check-' + slug,
+                                },
+                                disable: show_upgrade,
+                                checked: $root.addOns[slug],
+                                event: {change: $root.update}" />
               <span data-bind="text: name, attr: {for: 'check-' + slug}" class="clickable"></span>
               <div class="help-block">
                 <span data-bind="text: description"></span>
                 <a target="_blank" data-bind="if: help_link, attr:{href: help_link}">{% trans "Learn more." %}</a>
               </div>
+              <!-- ko if: show_upgrade -->
+                <div class="well well-sm">
+                  <p>
+                    <i class="fa fa-info-circle"></i>
+                    <span data-bind="text: upgrade_text"></span>
+                    {% include 'hqwebapp/partials/generic_feature_upgrade.html' %}
+                  </p>
+
+                  <!-- ko if: $root.addOns[slug] -->
+                    <p>
+                      {% blocktrans %}
+                        You have previously enabled this feature in your app, but have since lost access
+                        to it.
+                      {% endblocktrans %}
+                      <br />
+                      {% blocktrans %}
+                        Your application will continue to function in places that utilized this feature, but
+                        you will not be able to edit any related functionality until you upgrade.
+                      {% endblocktrans %}
+                    </p>
+                  <!-- /ko -->
+                </div>
+              <!-- /ko -->
             </label>
           </div>
         </div>

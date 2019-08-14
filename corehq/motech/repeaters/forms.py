@@ -228,7 +228,10 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
 
     def get_ordered_crispy_form_fields(self):
         fields = super(OpenmrsRepeaterForm, self).get_ordered_crispy_form_fields()
-        return ['location_id', 'atom_feed_enabled'] + fields
+        return [
+            'location_id',
+            twbscrispy.PrependedText('atom_feed_enabled', ''),
+        ] + fields
 
     def clean(self):
         cleaned_data = super(OpenmrsRepeaterForm, self).clean()
@@ -246,17 +249,6 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
                     'Specify a location so that CommCare can set an owner for cases added via the Atom feed.'
                 ))
         return cleaned_data
-
-
-class Dhis2RepeaterForm(FormRepeaterForm):
-
-    def __init__(self, *args, **kwargs):
-        super(Dhis2RepeaterForm, self).__init__(*args, **kwargs)
-        # self.fields['location_id'].widget = SupplyPointSelectWidget(self.domain, id='id_location_id')
-
-    def get_ordered_crispy_form_fields(self):
-        fields = super(Dhis2RepeaterForm, self).get_ordered_crispy_form_fields()
-        return fields
 
 
 class EmailBulkPayload(forms.Form):

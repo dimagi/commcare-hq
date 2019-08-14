@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import six
 from collections import namedtuple, defaultdict
 from six.moves import zip_longest
 
@@ -616,8 +617,8 @@ class EntriesHelper(object):
                             "Module with ID %s has no product details configuration" % module_id
                         )
                     return target
-                except ModuleNotFoundException as ex:
-                    raise ParentModuleReferenceError(ex.message)
+                except ModuleNotFoundException as e:
+                    raise ParentModuleReferenceError(six.text_type(e))
             else:
                 if case_type == module.case_type:
                     return module

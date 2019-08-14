@@ -13,6 +13,7 @@ from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvi
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
+from corehq.messaging.pillow import CaseMessagingSyncProcessor
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.case_search import get_case_search_processor
 from corehq.pillows.reportcase import get_case_to_report_es_processor
@@ -40,6 +41,12 @@ def transform_case_for_elasticsearch(doc_dict):
 
     if 'backend_id' not in doc_ret:
         doc_ret['backend_id'] = 'couch'
+
+    if settings.CASE_ES_DROP_FORM_FIELDS:
+        # these fields are lazily loaded so replacing or removing them
+        # prevents them from being loaded from the DB
+        doc_ret['actions'] = []
+        doc_ret['xform_ids'] = []
 
     return doc_ret
 
@@ -99,14 +106,14 @@ def get_case_pillow(
     )
     case_search_processor = get_case_search_processor()
 
-    checkpoint_id = "{}-{}-{}".format(
-        pillow_id, CASE_INDEX_INFO.index, case_search_processor.index_info.index)
+    checkpoint_id = "{}-{}-{}-{}".format(
+        pillow_id, CASE_INDEX_INFO.index, case_search_processor.index_info.index, 'messaging-sync')
     checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor
     )
-    processors = [case_to_es_processor, case_search_processor]
+    processors = [case_to_es_processor, case_search_processor, CaseMessagingSyncProcessor()]
     if not settings.ENTERPRISE_MODE:
         processors.append(get_case_to_report_es_processor())
     if not skip_ucr:

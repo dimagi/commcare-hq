@@ -67,7 +67,7 @@ CREATE VIEW child_health_monthly_view AS
         ELSE 4 END AS current_month_wasting_v2_sort,
       child_health_monthly.mother_phone_number
   FROM "public"."awc_location_months" "awc_location_months"
-    LEFT JOIN "public"."child_health_monthly" "child_health_monthly" ON (
+  JOIN "public"."child_health_monthly" "child_health_monthly" ON (
       ("awc_location_months"."month" = "child_health_monthly"."month") AND
       ("awc_location_months"."awc_id" = "child_health_monthly"."awc_id")
   );

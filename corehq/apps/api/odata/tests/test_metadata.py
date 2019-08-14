@@ -1,89 +1,150 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from collections import OrderedDict
+from django.test import TestCase
 
-from django.test import Client, TestCase
-from django.urls import reverse
-
-from mock import patch
-
-from corehq.apps.api.odata.tests.utils import OdataTestMixin
+from corehq.apps.api.odata.views import (
+    ODataCaseMetadataView,
+    ODataFormMetadataView,
+)
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.export.models import (
+    CaseExportInstance,
+    ExportColumn,
+    ExportItem,
+    FormExportInstance,
+    PathNode,
+    TableConfiguration,
+)
 from corehq.util.test_utils import flag_enabled
+
+from .utils import CaseOdataTestMixin, FormOdataTestMixin
 
 PATH_TO_TEST_DATA = ('..', '..', 'api', 'odata', 'tests', 'data')
 
 
-class TestMetadataDocument(TestCase, OdataTestMixin, TestXmlMixin):
+class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
 
-    view_urlname = 'odata_meta'
+    view_urlname = ODataCaseMetadataView.urlname
 
     @classmethod
     def setUpClass(cls):
-        super(TestMetadataDocument, cls).setUpClass()
-        cls.client = Client()
-        cls.domain = Domain(name='test_domain')
-        cls.domain.save()
-        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
+        super(TestCaseMetadataDocument, cls).setUpClass()
+        cls._set_up_class()
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
-        cls.web_user.delete()
-        super(TestMetadataDocument, cls).tearDownClass()
+        cls._teardownclass()
+        super(TestCaseMetadataDocument, cls).tearDownClass()
 
-    def test_no_credentials(self):
-        response = self.client.get(self.view_url)
-        self.assertEqual(response.status_code, 401)
-
-    def test_wrong_password(self):
-        wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
-        response = self._execute_query(wrong_credentials)
-        self.assertEqual(response.status_code, 401)
-
-    def test_wrong_domain(self):
-        other_domain = Domain(name='other_domain')
-        other_domain.save()
-        self.addCleanup(other_domain.delete)
+    def test_missing_feed(self):
         correct_credentials = self._get_correct_credentials()
-        response = self.client.get(
-            reverse(self.view_urlname, kwargs={'domain': other_domain.name}),
-            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-        )
-        self.assertEqual(response.status_code, 403)
-
-    def test_missing_feature_flag(self):
-        correct_credentials = self._get_correct_credentials()
-        response = self._execute_query(correct_credentials)
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
+            response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
-    @flag_enabled('ODATA')
-    def test_no_case_types(self):
+    def test_populated_metadata_document(self):
+        odata_config = CaseExportInstance(
+            _id='my_config_id',
+            domain=self.domain.name,
+            is_odata_config=True,
+            tables=[
+                TableConfiguration(
+                    columns=[
+                        ExportColumn(label='closed', selected=True,
+                                     # this is what exports generate for a base level property
+                                     item=ExportItem(path=[PathNode(name='closed')])),
+                        ExportColumn(label='date_modified', selected=True,
+                                     item=ExportItem(path=[PathNode(name='date_modified')])),
+                        ExportColumn(label='selected_property_1', selected=True),
+                        ExportColumn(label='selected_property_2', selected=True),
+                        ExportColumn(label='unselected_property'),
+                    ],
+                ),
+            ]
+        )
+        odata_config.save()
+        self.addCleanup(odata_config.delete)
+
+        non_odata_config = CaseExportInstance(domain=self.domain.name)
+        non_odata_config.save()
+        self.addCleanup(non_odata_config.delete)
+
+        config_in_other_domain = CaseExportInstance(domain='other_domain', is_odata_config=True)
+        config_in_other_domain.save()
+        self.addCleanup(config_in_other_domain.delete)
+
         correct_credentials = self._get_correct_credentials()
-        with patch('corehq.apps.api.odata.views.get_case_type_to_properties', return_value={}):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/xml')
+        self.assertEqual(response['OData-Version'], '4.0')
         self.assertXmlEqual(
-            response.content,
-            self.get_xml('empty_metadata_document', override_path=PATH_TO_TEST_DATA)
+            self.get_xml(
+                'populated_case_odata_metadata_document_from_config',
+                override_path=PATH_TO_TEST_DATA
+            ),
+            response.content
         )
 
-    @flag_enabled('ODATA')
-    def test_populated_metadata_document(self):
+
+class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
+
+    view_urlname = ODataFormMetadataView.urlname
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestFormMetadataDocument, cls).setUpClass()
+        cls._set_up_class()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._teardownclass()
+        super(TestFormMetadataDocument, cls).tearDownClass()
+
+    def test_missing_feed(self):
         correct_credentials = self._get_correct_credentials()
-        with patch(
-            'corehq.apps.api.odata.views.get_case_type_to_properties',
-            return_value=OrderedDict([
-                ('case_type_with_no_case_properties', []),
-                ('case_type_with_case_properties', ['property_1', 'property_2']),
-            ])
-        ):
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
+            response = self._execute_query(correct_credentials)
+        self.assertEqual(response.status_code, 404)
+
+    def test_populated_metadata_document(self):
+        odata_config = FormExportInstance(
+            _id='my_config_id',
+            domain=self.domain.name,
+            is_odata_config=True,
+            tables=[
+                TableConfiguration(
+                    columns=[
+                        ExportColumn(label='received_on', selected=True,
+                                     item=ExportItem(path=[PathNode(name='received_on')])),
+                        ExportColumn(label='started_time', selected=True,
+                                     item=ExportItem(path=[
+                                         PathNode(name='form'),
+                                         PathNode(name='meta'),
+                                         PathNode(name='timeStart'),
+                                     ])),
+
+                        ExportColumn(label='selected_property_1', selected=True),
+                        ExportColumn(label='selected_property_2', selected=True),
+                        ExportColumn(label='unselected_property'),
+                    ],
+                ),
+            ]
+        )
+        odata_config.save()
+        self.addCleanup(odata_config.delete)
+
+        correct_credentials = self._get_correct_credentials()
+        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/xml')
+        self.assertEqual(response['OData-Version'], '4.0')
         self.assertXmlEqual(
-            response.content,
-            self.get_xml('populated_metadata_document', override_path=PATH_TO_TEST_DATA)
+            self.get_xml(
+                'populated_form_odata_metadata_document_from_config',
+                override_path=PATH_TO_TEST_DATA
+            ),
+            response.content
         )

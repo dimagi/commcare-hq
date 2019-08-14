@@ -121,7 +121,7 @@ class AdapterBulkSaveTest(TestCase):
         self.adapter.bulk_save(docs)
         self.assertEqual(self.adapter.get_query_object().count(), 10)
 
-        self.adapter.bulk_delete([doc['_id'] for doc in docs])
+        self.adapter.bulk_delete(docs)
         self.assertEqual(self.adapter.get_query_object().count(), 0)
 
     def test_save_rows_empty(self):

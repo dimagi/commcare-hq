@@ -131,7 +131,8 @@ def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=Fa
     errors = build_application_zip(
         include_multimedia_files=include_multimedia,
         include_index_files=True,
-        app=app,
+        domain=app.domain,
+        app_id=app.id,
         download_id=download.download_id,
         compress_zip=True,
         filename='{}.ccz'.format(slugify(app.name)),

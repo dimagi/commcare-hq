@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import copy
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
-from corehq.apps.groups.models import Group
+from corehq.apps.groups.dbaccessors import get_group_id_name_map_by_user
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
@@ -52,9 +52,10 @@ def transform_user_for_elasticsearch(doc_dict):
         doc['base_username'] = doc['username'].split("@")[0]
     else:
         doc['base_username'] = doc['username']
-    groups = Group.by_user(doc['_id'], wrap=False, include_names=True)
-    doc['__group_ids'] = [group['group_id'] for group in groups]
-    doc['__group_names'] = [group['name'] for group in groups]
+
+    results = get_group_id_name_map_by_user(doc['_id'])
+    doc['__group_ids'] = [res.id for res in results]
+    doc['__group_names'] = [res.name for res in results]
     doc['user_data_es'] = []
     if 'user_data' in doc:
         for key, value in six.iteritems(doc['user_data']):

@@ -218,10 +218,7 @@ class CaseAlertScheduleInstanceRefresher(ScheduleInstanceRefresher):
                 recipient_type,
                 recipient_id
             )
-
-            if self.action_definition.reset_case_property_name:
-                handle_case_alert_schedule_instance_reset(instance, self.schedule, self.reset_case_property_value)
-
+            self.handle_existing_instance(instance)
             return instance
         else:
             return CaseAlertScheduleInstance.create_for_recipient(

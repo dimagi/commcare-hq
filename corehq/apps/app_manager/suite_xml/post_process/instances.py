@@ -140,12 +140,6 @@ def generic_fixture_instances(domain, instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
-@register_factory('enikshay')
-def enikshay_fixture_instances(domain, instance_name):
-    if instance_name == 'enikshay:calendar' and toggles.CUSTOM_CALENDAR_FIXTURE.enabled(domain):
-        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
-
-
 @register_factory('commcare')
 def commcare_fixture_instances(domain, instance_name):
     if instance_name == 'commcare:reports' and toggles.MOBILE_UCR.enabled(domain):
@@ -190,7 +184,7 @@ def get_all_instances_referenced_in_xpaths(domain, xpaths):
     instances = set()
     unknown_instance_ids = set()
     for xpath in xpaths:
-        instance_names = re.findall(instance_re, xpath)
+        instance_names = re.findall(instance_re, xpath, re.UNICODE)
         for instance_name in instance_names:
             try:
                 scheme, _ = instance_name.split(':', 1)

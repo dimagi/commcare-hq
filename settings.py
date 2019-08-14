@@ -110,9 +110,6 @@ COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.couch.log")
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
-UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
-UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
-UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
@@ -162,6 +159,11 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 ENABLE_DRACONIAN_SECURITY_FEATURES = False
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'corehq.apps.domain.auth.ApiKeyFallbackBackend',
+]
 
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
@@ -260,7 +262,6 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
-    'corehq.apps.calendar_fixture',
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
@@ -340,12 +341,10 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'hsph',
     'pact',
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.hope',
     'custom.ilsgateway',
     'custom.zipline',
     'custom.ewsghana',
@@ -361,7 +360,6 @@ HQ_APPS = (
 
     'custom.icds',
     'custom.icds_reports',
-    'custom.pnlppgi',
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
@@ -447,6 +445,7 @@ MASTER_LIST_EMAIL = 'master-list@example.com'
 REPORT_BUILDER_ADD_ON_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
 CONTACT_EMAIL = 'info@example.com'
+FEEDBACK_EMAIL = 'hq-feedback@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
@@ -455,7 +454,7 @@ EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 ENABLE_SOFT_ASSERT_EMAILS = True
 
 SERVER_ENVIRONMENT = 'localdev'
-ICDS_ENVS = ('icds', 'icds-new')
+ICDS_ENVS = ('icds',)
 UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
@@ -481,7 +480,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.programs.fixtures.program_fixture_generator",
     "corehq.apps.app_manager.fixtures.report_fixture_generator",
     "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
-    "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.locations.fixtures.related_locations_fixture_generator",
@@ -648,6 +646,8 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
+SYNC_CASE_FOR_MESSAGING_ON_SAVE = True
+
 PILLOW_RETRY_QUEUE_ENABLED = False
 
 SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
@@ -704,6 +704,11 @@ GMAPS_API_KEY = "changeme"
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
+
+# Set to True to remove the `actions` and `xform_id` fields from the
+# ES Case index. These fields contribute high load to the shard
+# databases.
+CASE_ES_DROP_FORM_FIELDS = False
 
 # tuple of fully qualified repeater class names that are enabled.
 # Set to None to enable all or empty tuple to disable all.
@@ -912,7 +917,7 @@ try:
     else:
         from localsettings import *
 except ImportError as error:
-    if error.message != 'No module named localsettings':
+    if six.text_type(error) != 'No module named localsettings':
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
@@ -1083,30 +1088,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'ucr_diff': {
-            'level': 'INFO',
-            'class': 'concurrent_log_handler.ConcurrentRotatingFileHandler',
-            'formatter': 'ucr_diff',
-            'filename': UCR_DIFF_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'ucr_exception': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'ucr_exception',
-            'filename': UCR_EXCEPTION_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'ucr_timing': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'ucr_timing',
-            'filename': UCR_TIMING_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
@@ -1209,21 +1190,6 @@ LOGGING = {
             'level': 'INFO',
             'propogate': True,
         },
-        'ucr_timing': {
-            'handlers': ['ucr_timing'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'ucr_diff': {
-            'handlers': ['ucr_diff'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'ucr_exception': {
-            'handlers': ['ucr_exception'],
-            'level': 'INFO',
-            'propagate': True,
-        },
         'boto3': {
             'handlers': ['console'],
             'level': 'WARNING',
@@ -1297,6 +1263,19 @@ if six.PY3:
     APPS_DB = NEW_APPS_DB
 
     META_DB = 'meta'
+
+    _serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
+    for _name in ["default", "redis"]:
+        if _name not in CACHES:  # noqa: F405
+            continue
+        _options = CACHES[_name].setdefault('OPTIONS', {})  # noqa: F405
+        assert _options.get('SERIALIZER', _serializer) == _serializer, (
+            "Refusing to change SERIALIZER. Remove that option from "
+            "localsettings or whereever redis caching is configured. {}"
+            .format(_options)
+        )
+        _options['SERIALIZER'] = _serializer
+    del _name, _options, _serializer
 else:
     NEW_USERS_GROUPS_DB = b'users'
     USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
@@ -1337,7 +1316,6 @@ COUCHDB_APPS = [
     'fluff_filter',
     'hqcase',
     'hqmedia',
-    'hope',
     'case_importer',
     'indicators',
     'locations',
@@ -1365,7 +1343,6 @@ COUCHDB_APPS = [
     'openclinica',
 
     # custom reports
-    'hsph',
     'pact',
     'accounting',
     'succeed',
@@ -1750,6 +1727,11 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
         },
+        {
+            'name': 'case_messaging_sync_pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.messaging.pillow.get_case_messaging_sync_pillow',
+        },
     ],
     'core_ext': [
         {
@@ -1830,6 +1812,8 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_2.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
+    os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'dashboard', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
@@ -1841,6 +1825,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
+    os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
 ]
 
 
@@ -1850,6 +1835,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2019.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'late_pmt.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
@@ -1890,8 +1877,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
-    os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
-    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
@@ -1934,9 +1919,6 @@ COUCH_CACHE_BACKENDS = [
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
-    'hsph',
-    'hsph-dev',
-    'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
     'crs-remind',
     'succeed',
@@ -1953,6 +1935,8 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 ]
 
 CUSTOM_UCR_EXPRESSIONS = [
+    ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
+    ('abt_supervisor_v2', 'custom.abt.reports.expressions.abt_supervisor_v2_expression'),
     ('abt_supervisor_v2019', 'custom.abt.reports.expressions.abt_supervisor_v2019_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
@@ -1961,8 +1945,6 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
-    ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
-    ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -1993,8 +1975,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'hsph-dev': 'hsph',
-    'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
     'pact': 'pact',
 
@@ -2017,7 +1997,6 @@ DOMAIN_MODULE_MAP = {
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
     'care-macf-ghana': 'custom.care_pathways',
-    'pnlppgi': 'custom.pnlppgi',
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
@@ -2110,7 +2089,7 @@ except ImportError:
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
 
-if UNIT_TESTING or DEBUG:
+if UNIT_TESTING or DEBUG or 'ddtrace.contrib.django' not in INSTALLED_APPS:
     try:
         from ddtrace import tracer
         tracer.enabled = False

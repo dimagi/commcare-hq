@@ -1,17 +1,22 @@
+# coding=utf-8
 from __future__ import unicode_literals
 from __future__ import absolute_import
+
 import os
 from datetime import datetime, timedelta
 from io import BytesIO, open
 from os.path import isdir, join
 from shutil import rmtree
 from tempfile import mkdtemp
+
 from django.test import TestCase
+from mock import patch
 
 import corehq.blobs.fsdb as mod
 from corehq.blobs import CODES
 from corehq.blobs.metadata import MetaDB
-from corehq.blobs.tests.util import new_meta
+from corehq.blobs.tasks import delete_expired_blobs
+from corehq.blobs.tests.util import new_meta, temporary_blob_db
 from corehq.util.test_utils import generate_cases, patch_datadog
 
 
@@ -51,10 +56,12 @@ class _BlobDBTests(object):
             timedelta(minutes=60),
         )
 
-    def test_put_and_get_with_unicode_names(self):
-        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+    def test_put_and_get_with_unicode(self):
+        identifier = new_meta(name='Łukasz')
+        meta = self.db.put(BytesIO(b'\xc5\x81ukasz'), meta=identifier)
+        self.assertEqual(identifier, meta)
         with self.db.get(key=meta.key) as fh:
-            self.assertEqual(fh.read(), b"content")
+            self.assertEqual(fh.read(), b'\xc5\x81ukasz')
 
     def test_put_from_get_stream(self):
         old = self.db.put(BytesIO(b"content"), meta=new_meta())
@@ -115,6 +122,31 @@ class _BlobDBTests(object):
         self.db.put(BytesIO(b"bang"), meta=meta)
         with self.db.get(key=meta.key) as fh:
             self.assertEqual(fh.read(), b"bang")
+
+    def test_expire(self):
+        now = datetime.utcnow()
+        meta = self.db.put(
+            BytesIO(b"content"),
+            domain="test",
+            parent_id="test",
+            type_code=CODES.tempfile,
+        )
+        with self.db.get(key=meta.key) as fh:
+            self.assertEqual(fh.read(), b"content")
+        self.db.expire("test", meta.key)
+
+        future_date = now + timedelta(minutes=120)
+        with temporary_blob_db(self.db), \
+                patch('corehq.blobs.tasks._utcnow', return_value=future_date):
+            delete_expired_blobs()
+
+        with self.assertRaises(mod.NotFound):
+            self.db.get(key=meta.key)
+
+    def test_expire_missing_blob(self):
+        self.db.expire("test", "abc")  # should not raise error
+        with self.assertRaises(mod.NotFound):
+            self.db.get(key="abc")
 
 
 @generate_cases([

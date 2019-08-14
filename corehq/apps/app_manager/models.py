@@ -12,7 +12,8 @@ import random
 import re
 import types
 import uuid
-from collections import Counter, defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter, OrderedDict
+
 from copy import deepcopy
 from distutils.version import LooseVersion
 from functools import wraps
@@ -87,10 +88,13 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    get_build_by_version,
 )
 from corehq.apps.app_manager.util import (
     get_latest_app_release_by_location,
     expire_get_latest_app_release_by_location_cache,
+    is_linked_app,
+    is_remote_app,
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -203,8 +207,6 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
 LATEST_APK_VALUE = 'latest'
 LATEST_APP_VALUE = 0
 
-_soft_assert = soft_assert(to="{}@{}.com".format('npellegrino', 'dimagi'), exponential_backoff=True)
-
 
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
@@ -275,6 +277,9 @@ class IndexedSchema(DocumentSchema):
             and (self.id == other.id)
             and (self._parent == other._parent)
         )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     class Getter(object):
 
@@ -726,8 +731,6 @@ class FormSource(object):
             source = app.lazy_fetch_attachment(filename)
             if isinstance(source, bytes):
                 source = source.decode('utf-8')
-            else:
-                _soft_assert(False, type(source))
 
         return source
 
@@ -737,8 +740,6 @@ class FormSource(object):
         filename = "%s.xml" % unique_id
         if isinstance(value, six.text_type):
             value = value.encode('utf-8')
-        else:
-            _soft_assert(False, type(value))
         app.lazy_put_attachment(value, filename)
         form.clear_validation_cache()
         try:
@@ -1130,7 +1131,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(self.get_app().domain, etree.tostring(form.xml))
+                    validate_xform(self.get_app().domain, etree.tostring(form.xml, encoding="unicode"))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -3073,7 +3074,7 @@ class AdvancedModule(ModuleBase):
         if self.case_list.show:
             return True
 
-        for form in self.forms:
+        for form in self.get_forms():
             if any(action.case_type == self.case_type for action in form.actions.load_update_cases):
                 return True
 
@@ -3782,11 +3783,14 @@ class LazyBlobDoc(BlobMixin):
             # it has been fetched already during this request
             content = self._LAZY_ATTACHMENTS_CACHE[name]
         except KeyError:
-            content = cache.get(self.__attachment_cache_key(name))
+            try:
+                content = cache.get(self.__attachment_cache_key(name))
+            except TypeError:
+                # TODO - remove try/except sometime after Python 3 migration is complete
+                return None
             if content is not None:
                 if isinstance(content, six.text_type):
-                    _soft_assert(False, 'cached attachment has type unicode')
-                    content = content.encode('utf-8')
+                    return None
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
         return content
 
@@ -3887,7 +3891,7 @@ class VersionedDoc(LazyBlobDoc):
 
     def save(self, response_json=None, increment_version=None, **params):
         if increment_version is None:
-            increment_version = not self.copy_of and self.doc_type != 'LinkedApplication'
+            increment_version = not self.copy_of and not is_linked_app(self)
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save(**params)
@@ -3972,7 +3976,7 @@ class VersionedDoc(LazyBlobDoc):
 
         # the '_attachments' value is a dict of `name: blob_content`
         # pairs, and is part of the exported (serialized) app interface
-        source['_attachments'] = _attachments
+        source['_attachments'] = {k: v.decode('utf-8') for (k, v) in _attachments.items()}
         source.pop("external_blobs", None)
         source = self.scrub_source(source)
 
@@ -4138,6 +4142,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     use_j2me_endpoint = BooleanProperty(default=False)
 
+    # use commcare_flavor to avoid checking for none
     target_commcare_flavor = StringProperty(
         default='none',
         choices=['none', TARGET_COMMCARE, TARGET_COMMCARE_LTS]
@@ -4221,7 +4226,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return False
 
     @memoized
-    def get_previous_version(self):
+    def get_latest_build(self):
         return self.view('app_manager/applications',
             startkey=[self.domain, self.master_id, {}],
             endkey=[self.domain, self.master_id],
@@ -4240,8 +4245,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self.__class__.wrap(doc) if doc else None
 
     def set_admin_password(self, raw_password):
-        salt = os.urandom(5).encode('hex')
-        self.admin_password = make_password(raw_password, salt=salt)
+        self.admin_password = make_password(raw_password)
 
         if raw_password.isnumeric():
             self.admin_password_charset = 'n'
@@ -4561,6 +4565,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
+        if self.copy_of:
+            cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
 
@@ -4594,6 +4600,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         del self.linked_app_attrs
         del self.uses_master_app_form_ids
 
+    @property
+    def commcare_flavor(self):
+        return None if self.target_commcare_flavor == "none" else self.target_commcare_flavor
+
 
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
@@ -4624,11 +4634,11 @@ class SavedAppBuild(ApplicationBase):
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
             'enable_offline_install': self.enable_offline_install,
-            'include_media': self.doc_type != 'RemoteApp',
+            'include_media': not is_remote_app(self),
             'j2me_enabled': menu_item_label in CommCareBuildConfig.j2me_enabled_config_labels(),
-            'target_commcare_flavor': (
-                self.target_commcare_flavor
-                if toggles.TARGET_COMMCARE_FLAVOR.enabled(self.domain) else 'none'
+            'commcare_flavor': (
+                self.commcare_flavor
+                if toggles.TARGET_COMMCARE_FLAVOR.enabled(self.domain) else None
             ),
         })
         comment_from = data['comment_from']
@@ -4761,32 +4771,33 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
-        previous_version = self.get_previous_version()
-        if previous_version:
-            force_new_version = self.build_profiles != previous_version.build_profiles
-            for form_stuff in self.get_forms(bare=False):
-                filename = 'files/%s' % self.get_form_filename(**form_stuff)
-                form = form_stuff["form"]
-                if not force_new_version:
-                    try:
-                        previous_form = previous_version.get_form(form.unique_id)
-                        # take the previous version's compiled form as-is
-                        # (generation code may have changed since last build)
-                        previous_source = previous_version.fetch_attachment(filename)
-                    except (ResourceNotFound, FormNotFoundException):
-                        form.version = None
-                    else:
-                        previous_hash = _hash(previous_source)
-
-                        # hack - temporarily set my version to the previous version
-                        # so that that's not treated as the diff
-                        previous_form_version = previous_form.get_version()
-                        form.version = previous_form_version
-                        my_hash = _hash(self.fetch_xform(form=form))
-                        if previous_hash != my_hash:
-                            form.version = None
-                else:
+        latest_build = self.get_latest_build()
+        if not latest_build:
+            return
+        force_new_version = self.build_profiles != latest_build.build_profiles
+        for form_stuff in self.get_forms(bare=False):
+            filename = 'files/%s' % self.get_form_filename(**form_stuff)
+            form = form_stuff["form"]
+            if not force_new_version:
+                try:
+                    previous_form = latest_build.get_form(form.unique_id)
+                    # take the previous version's compiled form as-is
+                    # (generation code may have changed since last build)
+                    previous_source = latest_build.fetch_attachment(filename)
+                except (ResourceNotFound, FormNotFoundException):
                     form.version = None
+                else:
+                    previous_hash = _hash(previous_source)
+
+                    # hack - temporarily set my version to the previous version
+                    # so that that's not treated as the diff
+                    previous_form_version = previous_form.get_version()
+                    form.version = previous_form_version
+                    my_hash = _hash(self.fetch_xform(form=form))
+                    if previous_hash != my_hash:
+                        form.version = None
+            else:
+                form.version = None
 
     def set_media_versions(self):
         """
@@ -4796,8 +4807,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
 
         # access to .multimedia_map is slow
-        previous_version = self.get_previous_version()
-        prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
+        latest_build = self.get_latest_build()
+        prev_multimedia_map = latest_build.multimedia_map if latest_build else {}
 
         for path, map_item in six.iteritems(self.multimedia_map):
             prev_map_item = prev_multimedia_map.get(path, None)
@@ -4847,7 +4858,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
 
     @time_method()
     def create_profile(self, is_odk=False, with_media=False,
-                       template='app_manager/profile.xml', build_profile_id=None, target_commcare_flavor=None):
+                       template='app_manager/profile.xml', build_profile_id=None, commcare_flavor=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -4905,7 +4916,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         target_package_id = {
             TARGET_COMMCARE: 'org.commcare.dalvik',
             TARGET_COMMCARE_LTS: 'org.commcare.lts',
-        }.get(target_commcare_flavor)
+        }.get(commcare_flavor)
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -5049,28 +5060,28 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
-        if self.target_commcare_flavor != 'none':
-            files['{}profile-{}.xml'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+        if self.commcare_flavor:
+            files['{}profile-{}.xml'.format(prefix, self.commcare_flavor)] = self.create_profile(
                 is_odk=False,
                 build_profile_id=build_profile_id,
-                target_commcare_flavor=self.target_commcare_flavor,
+                commcare_flavor=self.commcare_flavor,
             )
-            files['{}profile-{}.ccpr'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+            files['{}profile-{}.ccpr'.format(prefix, self.commcare_flavor)] = self.create_profile(
                 is_odk=True,
                 build_profile_id=build_profile_id,
-                target_commcare_flavor=self.target_commcare_flavor,
+                commcare_flavor=self.commcare_flavor,
             )
-            files['{}media_profile-{}.xml'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+            files['{}media_profile-{}.xml'.format(prefix, self.commcare_flavor)] = self.create_profile(
                 is_odk=False,
                 with_media=True,
                 build_profile_id=build_profile_id,
-                target_commcare_flavor=self.target_commcare_flavor,
+                commcare_flavor=self.commcare_flavor,
             )
-            files['{}media_profile-{}.ccpr'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+            files['{}media_profile-{}.ccpr'.format(prefix, self.commcare_flavor)] = self.create_profile(
                 is_odk=True,
                 with_media=True,
                 build_profile_id=build_profile_id,
-                target_commcare_flavor=self.target_commcare_flavor,
+                commcare_flavor=self.commcare_flavor,
             )
 
         practice_user_restore = self.create_practice_user_restore(build_profile_id)
@@ -5152,10 +5163,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         return self.get_module(-1)
 
     def delete_module(self, module_unique_id):
-        try:
-            module = self.get_module_by_unique_id(module_unique_id)
-        except ModuleNotFoundException:
-            return None
+        module = self.get_module_by_unique_id(module_unique_id)
         record = DeleteModuleRecord(
             domain=self.domain,
             app_id=self.id,
@@ -5213,28 +5221,39 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             module.rename_lang(old_lang, new_lang)
         _rename_key(self.translations, old_lang, new_lang)
 
-    def rearrange_modules(self, i, j):
+    def rearrange_modules(self, from_index, to_index):
         modules = self.modules
         try:
-            modules.insert(i, modules.pop(j))
+            if toggles.LEGACY_CHILD_MODULES.enabled(self.domain):
+                modules.insert(to_index, modules.pop(from_index))
+            else:
+                # remove module
+                moving_module = modules.pop(from_index)
+
+                # remove its children
+                children = [m for m in modules if m.root_module_id == moving_module.unique_id]
+                modules = [m for m in modules if m.root_module_id != moving_module.unique_id]
+
+                # add back in module and children
+                modules = modules[:to_index] + [moving_module] + children + modules[to_index:]
         except IndexError:
             raise RearrangeError()
         self.modules = modules
 
-    def rearrange_forms(self, to_module_id, from_module_id, i, j):
+    def rearrange_forms(self, from_module_uid, to_module_uid, from_index, to_index):
         """
         The case type of the two modules conflict, the rearrangement goes through anyway.
         This is intentional.
 
         """
-        to_module = self.get_module(to_module_id)
-        from_module = self.get_module(from_module_id)
+        from_module = self.get_module_by_unique_id(from_module_uid)
+        to_module = self.get_module_by_unique_id(to_module_uid)
         try:
-            from_module.forms[j].pre_move_hook(from_module, to_module)
+            from_module.forms[from_index].pre_move_hook(from_module, to_module)
         except NotImplementedError:
             pass
         try:
-            form = from_module.forms.pop(j)
+            form = from_module.forms.pop(from_index)
             if not isinstance(form, AdvancedForm):
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
@@ -5245,9 +5264,25 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                         form.requires = "none"
                         form.actions.update_case = UpdateCaseAction(
                             condition=FormActionCondition(type='never'))
-            to_module.add_insert_form(from_module, form, index=i, with_source=True)
+            to_module.add_insert_form(from_module, form, index=to_index, with_source=True)
         except IndexError:
             raise RearrangeError()
+
+    def move_child_modules_after_parents(self):
+        # This makes the module ordering compatible with the front-end display
+        modules_by_parent_id = OrderedDict(
+            (m.unique_id, [m]) for m in self.modules if not m.root_module_id
+        )
+        orphaned_modules = []
+        for module in self.modules:
+            if module.root_module_id:
+                if module.root_module_id in modules_by_parent_id:
+                    modules_by_parent_id[module.root_module_id].append(module)
+                else:
+                    orphaned_modules.append(module)
+
+        normal_modules = [m for modules in modules_by_parent_id.values() for m in modules]
+        self.modules = normal_modules + orphaned_modules
 
     def scrub_source(self, source):
         source = update_form_unique_ids(source)
@@ -5277,14 +5312,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         save_xform(to_app, copy_form, form.source.encode('utf-8'))
 
         return copy_form
-
-    @cached_property
-    def has_case_management(self):
-        for module in self.get_modules():
-            for form in module.get_forms():
-                if len(form.active_actions()) > 0:
-                    return True
-        return False
 
     @memoized
     def case_type_exists(self, case_type):
@@ -5337,7 +5364,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             # If there are multiple forms with the same xmlns, then all but one are shadow forms, therefore they
             # all have the same xform.
             return forms[0].wrapped_xform()
-
 
     def get_questions(self, xmlns, langs=None, include_triggers=False, include_groups=False,
                       include_translations=False):
@@ -5548,7 +5574,7 @@ class LinkedApplication(Application):
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
     linked_app_attrs = DictProperty()  # corresponds to app attributes
 
-    SUPPORTED_SETTINGS = ['target_commcare_flavor']
+    SUPPORTED_SETTINGS = ['target_commcare_flavor', 'practice_mobile_worker_id']
 
     # if `uses_master_app_form_ids` is True, the form id might match the master's form id
     # from a bug years ago. These should be fixed when mobile can handle the change
@@ -5577,6 +5603,7 @@ class LinkedApplication(Application):
             raise ActionNotPermitted
 
     def reapply_overrides(self):
+        # Used by app_manager.views.utils.update_linked_app()
         self.translations.update(self.linked_app_translations)
         self.logo_refs.update(self.linked_app_logo_refs)
         for attribute, value in self.linked_app_attrs.items():
@@ -5584,7 +5611,6 @@ class LinkedApplication(Application):
         for key, ref in self.logo_refs.items():
             mm = CommCareMultimedia.get(ref['m_id'])
             self.create_mapping(mm, ref['path'], save=False)
-        self.save()
 
 
 def import_app(app_id_or_source, domain, source_properties=None, request=None):
@@ -5632,7 +5658,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
 
     try:
         if not app.is_remote_app():
-            for path, media in app.get_media_objects():
+            for path, media in app.get_media_objects(remove_unused=True):
                 if domain not in media.valid_domains:
                     media.valid_domains.append(domain)
                     media.save()
@@ -5772,7 +5798,7 @@ class AppReleaseByLocation(models.Model):
     def clean(self):
         if self.active:
             if not self.build.is_released:
-                raise ValidationError({'version': _("Version not released. Please mark it as released to add "
+                raise ValidationError({'version': _("Version {} not released. Please mark it as released to add "
                                                     "restrictions.").format(self.build.version)})
             enabled_release = get_latest_app_release_by_location(self.domain, self.location.location_id,
                                                                  self.app_id)
@@ -5827,14 +5853,95 @@ class AppReleaseByLocation(models.Model):
 class LatestEnabledBuildProfiles(models.Model):
     # ToDo: this would be deprecated after AppReleaseByLocation is released and
     # this model's entries are migrated to the new location specific model
+    domain = models.CharField(max_length=255, null=False, default='')
     app_id = models.CharField(max_length=255)
     build_profile_id = models.CharField(max_length=255)
     version = models.IntegerField()
     build_id = models.CharField(max_length=255)
+    active = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
+        self.expire_cache(self.domain)
+
+    @property
+    def build(self):
+        if not hasattr(self, '_build'):
+            self._build = get_build_by_version(self.domain, self.app_id, self.version)['value']
+        return self._build
+
+    def clean(self):
+        if self.active:
+            if not self.build['is_released']:
+                raise ValidationError({
+                    'version': _("Version {} not released. Can not enable profiles for unreleased versions"
+                                 ).format(self.build['version'])
+                })
+            latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
+                app_id=self.build['copy_of'],
+                build_profile_id=self.build_profile_id
+            )
+            if latest_enabled_build_profile and latest_enabled_build_profile.version > self.version:
+                raise ValidationError({
+                    'version': _("Latest version available for this profile is {}, which is "
+                                 "higher than this version. Disable any higher versions first."
+                                 ).format(latest_enabled_build_profile.version)})
+
+    @classmethod
+    def update_status(cls, build, build_profile_id, active):
+        """
+        create a new object or just set the status of an existing one for an app
+        build and build profile to the status passed
+        :param active: to be set as active, True/False
+        """
+        app_id = build.copy_of
+        build_id = build.get_id
+        version = build.version
+        try:
+            build_profile = LatestEnabledBuildProfiles.objects.get(
+                app_id=app_id,
+                version=version,
+                build_profile_id=build_profile_id,
+                build_id=build_id
+            )
+        except cls.DoesNotExist:
+            build_profile = LatestEnabledBuildProfiles(
+                app_id=app_id,
+                version=version,
+                build_profile_id=build_profile_id,
+                build_id=build_id,
+                domain=build.domain
+            )
+        # assign it to avoid re-fetching during validations
+        build_profile._build = build
+        build_profile.activate() if active else build_profile.deactivate()
+
+    def activate(self):
+        self.active = True
+        self.full_clean()
+        self.save()
+
+    def deactivate(self):
+        self.active = False
+        self.full_clean()
+        self.save()
+
+    @classmethod
+    def for_app_and_profile(cls, app_id, build_profile_id):
+        return cls.objects.filter(
+            app_id=app_id,
+            build_profile_id=build_profile_id,
+            active=True
+        ).order_by('-version').first()
 
     def expire_cache(self, domain):
         get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
         get_latest_enabled_versions_per_profile.clear(self.app_id)
+
+    def to_json(self, app_names):
+        from corehq.apps.app_manager.serializers import LatestEnabledBuildProfileSerializer
+        return LatestEnabledBuildProfileSerializer(self, context={'app_names': app_names}).data
+
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)

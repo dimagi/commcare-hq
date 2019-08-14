@@ -14,13 +14,9 @@ function setup() {
 
     scripts/uninstall-requirements.sh
     if [ "$PYTHON_VERSION" = "py3" ]; then
-        pip install \
-            -r requirements-python3_6/requirements.txt \
-            -r requirements-python3_6/test-requirements.txt
+        pip install -r requirements-python3/test-requirements.txt
     else
-        pip install \
-            -r requirements/requirements.txt \
-            -r requirements/test-requirements.txt
+        pip install -r requirements/test-requirements.txt
     fi
 
     # compile pyc files
@@ -62,6 +58,7 @@ function run_tests() {
 
     now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
+    [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
     delta=$((`date +%s` - $now))
 
     send_timing_metric_to_datadog "tests" $delta

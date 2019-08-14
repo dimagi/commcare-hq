@@ -154,9 +154,17 @@ class FieldNameValidationTest(SimpleTestCase):
         bad_name = "0hello"
         self.assertTrue(is_identifier_invalid(bad_name))
 
-    def test_unicode(self):
+    def test_punctuation(self):
         bad_name = "ﾉｲ丂 ﾑ ｲ尺ﾑｱ! \_(ツ)_/¯"
         self.assertTrue(is_identifier_invalid(bad_name))
+
+    def test_alphanumeric_nonascii(self):
+        good_name = "província"
+        self.assertFalse(is_identifier_invalid(good_name))
+
+    def test_alphanumeric_unicode(self):
+        good_name = "田纳西一二三"
+        self.assertFalse(is_identifier_invalid(good_name))
 
     def test_good(self):
         good_name = "fooxmlbar0123"

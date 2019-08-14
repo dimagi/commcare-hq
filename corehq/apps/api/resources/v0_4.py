@@ -7,8 +7,8 @@ from tastypie.authentication import Authentication
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest
 
-from casexml.apps.case import xform as casexml_xform
-from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
+from casexml.apps.case.xform import get_case_updates
+from corehq.apps.api.es import XFormES, ElasticAPIQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.models import ESXFormInstance, ESCase
 from corehq.apps.api.resources import (
@@ -28,15 +28,14 @@ from corehq.apps.api.util import get_object_or_not_exist, get_obj
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_all_built_app_results
 from corehq.apps.app_manager.models import Application, RemoteApp
-from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users.util import format_username
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.util.view_utils import absolute_reverse
 from couchforms.models import doc_types
-from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 from no_exceptions.exceptions import Http400
 import six
 
@@ -44,7 +43,6 @@ import six
 # so as a hack until this can be remedied, there is a global that
 # can be set to provide a mock.
 MOCK_XFORM_ES = None
-MOCK_CASE_ES = None
 
 xform_doc_types = doc_types()
 
@@ -83,7 +81,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     cases = UseIfRequested(
         ToManyDocumentsField(
             'corehq.apps.api.resources.v0_4.CommCareCaseResource',
-            attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)
+            attribute=lambda xform: _cases_referenced_by_xform(xform)
         )
     )
 
@@ -162,8 +160,20 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'form'
-        ordering = ['received_on', 'server_modified_on']
+        ordering = ['received_on', 'server_modified_on', 'indexed_on']
         serializer = XFormInstanceSerializer(formats=['json'])
+
+
+def _cases_referenced_by_xform(esxform):
+    """Get a list of cases referenced by ESXFormInstance
+
+    Note: this does not load cases referenced in stock transactions
+    because ESXFormInstance does not have access to form XML, which
+    is needed to find stock transactions.
+    """
+    assert esxform.domain, esxform.form_id
+    case_ids = set(cu.id for cu in get_case_updates(esxform))
+    return CaseAccessors(esxform.domain).get_cases(list(case_ids))
 
 
 class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -261,34 +271,10 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         domain = kwargs['domain']
         return self.case_es(domain).get_document(case_id)
 
-    def case_es(self, domain):
-        return MOCK_CASE_ES or CaseES(domain)
-
-    def obj_get_list(self, bundle, domain, **kwargs):
-        request_filters = {k: v for k, v in bundle.request.GET.items()}
-        request_filters.update(kwargs)
-        filters = v0_3.CaseListFilters(request_filters).filters
-
-        # Since tastypie handles the "from" and "size" via slicing, we have to wipe them out here
-        # since ElasticCaseQuery adds them. I believe other APIs depend on the behavior of ElasticCaseQuery
-        # hence I am not modifying that
-        query = ElasticCaseQuery(domain, filters).get_query()
-        if 'from' in query:
-            del query['from']
-        if 'size' in query:
-            del query['size']
-
-        # Note that CaseES is used only as an ES client, for `run_query` against the proper index
-        return ElasticAPIQuerySet(
-            payload=query,
-            model=ESCase,
-            es_client=self.case_es(domain)
-        ).order_by('server_modified_on')
-
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 1000
         serializer = CommCareCaseSerializer()
-        ordering = ['server_date_modified', 'date_modified']
+        ordering = ['server_date_modified', 'date_modified', 'indexed_on']
         object_class = ESCase
 
 
@@ -473,61 +459,3 @@ class ApplicationResource(BaseApplicationResource):
             app_data.update(bundle.obj._doc)
             app_data.update(bundle.data)
             return app_data
-
-
-class HOPECaseResource(CommCareCaseResource):
-    """
-    Custom API endpoint for custom case wrapper
-    """
-    events_attributes = fields.ListField()
-    other_properties = fields.DictField()
-
-    def dehydrate_events_attributes(self, bundle):
-        return bundle.obj.events_attributes
-
-    def dehydrate_other_properties(self, bundle):
-        return bundle.obj.other_properties
-
-    def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(HOPECase, kwargs['pk'], kwargs['domain'],
-                                       additional_doc_types=['CommCareCase'])
-
-    def obj_get_list(self, bundle, domain, **kwargs):
-        """
-        Overridden to wrap the case JSON from ElasticSearch with the custom.hope.case.HOPECase class
-        """
-        filters = v0_3.CaseListFilters(bundle.request.GET).filters
-
-        # Since tastypie handles the "from" and "size" via slicing, we have to wipe them out here
-        # since ElasticCaseQuery adds them. I believe other APIs depend on the behavior of ElasticCaseQuery
-        # hence I am not modifying that
-        query = ElasticCaseQuery(domain, filters).get_query()
-        if 'from' in query:
-            del query['from']
-        if 'size' in query:
-            del query['size']
-
-        # Note that CaseES is used only as an ES client, for `run_query` against the proper index
-        return ElasticAPIQuerySet(
-            payload=query,
-            model=HOPECase,
-            es_client=self.case_es(domain),
-        ).order_by('server_modified_on')
-
-    def alter_list_data_to_serialize(self, request, data):
-
-        # rename 'properties' field to 'case_properties'
-        for bundle in data['objects']:
-            bundle.data['case_properties'] = bundle.data['properties']
-            del bundle.data['properties']
-
-        mother_lists = [x for x in data['objects'] if x.obj.type == CC_BIHAR_PREGNANCY]
-        child_lists = [x for x in data['objects'] if x.obj.type == CC_BIHAR_NEWBORN]
-
-        return {'objects': {
-            'mother_lists': mother_lists,
-            'child_lists': child_lists
-        }, 'meta': data['meta']}
-
-    class Meta(CommCareCaseResource.Meta):
-        resource_name = 'hope-case'

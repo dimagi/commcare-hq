@@ -16,6 +16,7 @@ from django.views.decorators.http import require_http_methods
 from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import make_form_readonly
+from corehq.apps.reports.filters.controllers import EmwfOptionsController
 from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -27,7 +28,7 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_select2_v4
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
@@ -184,7 +185,6 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     @use_jquery_ui
-    @use_select2_v4
     @method_decorator(check_pending_locations_import())
     @method_decorator(require_can_edit_or_view_locations)
     def dispatch(self, request, *args, **kwargs):
@@ -225,12 +225,21 @@ class LocationsListView(BaseLocationView):
             return [to_json(user.get_sql_location(self.domain))]
 
 
-class LocationsSearchView(EmwfOptionsView):
+class LocationOptionsController(EmwfOptionsController):
+
     @property
     def data_sources(self):
         return [
             (self.get_locations_size, self.get_locations),
         ]
+
+
+class LocationsSearchView(EmwfOptionsView):
+
+    @property
+    @memoized
+    def options_controller(self):
+        return LocationOptionsController(self.request, self.domain, self.search)
 
 
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
@@ -246,10 +255,6 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 
-    @property
-    def show_index_in_fixture(self):
-        return toggles.INDEX_LOCATION_DATA.enabled(self.domain)
-
 
 class LocationTypesView(BaseDomainView):
     urlname = 'location_types'
@@ -262,7 +267,6 @@ class LocationTypesView(BaseDomainView):
         return reverse(LocationsListView.urlname, args=[self.domain])
 
     @use_jquery_ui
-    @use_select2_v4
     @method_decorator(can_edit_location_types)
     @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import())
@@ -285,7 +289,6 @@ class LocationTypesView(BaseDomainView):
             'administrative': loc_type.administrative,
             'shares_cases': loc_type.shares_cases,
             'view_descendants': loc_type.view_descendants,
-            'has_user': loc_type.has_user,
             'code': loc_type.code,
             'expand_from': loc_type.expand_from.pk if loc_type.expand_from else None,
             'expand_from_root': loc_type.expand_from_root,
@@ -305,7 +308,7 @@ class LocationTypesView(BaseDomainView):
                 soft_assert_type_text(pk)
             return isinstance(pk, six.string_types) and pk.startswith("fake-pk-")
 
-        def mk_loctype(name, parent_type, administrative, has_user,
+        def mk_loctype(name, parent_type, administrative,
                        shares_cases, view_descendants, pk, code, **kwargs):
             parent = sql_loc_types[parent_type] if parent_type else None
 
@@ -323,7 +326,6 @@ class LocationTypesView(BaseDomainView):
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
             loc_type.code = unicode_slug(code)
-            loc_type.has_user = has_user
             sql_loc_types[pk] = loc_type
             loc_type.save()
 
@@ -536,11 +538,6 @@ class BaseEditLocationView(BaseLocationView):
             is_new=self.creates_new_location,
         )
 
-    def _get_loc_types_with_users(self):
-        return list(LocationType.objects
-                    .filter(domain=self.domain, has_user=True)
-                    .values_list('name', flat=True))
-
     def form_valid(self):
         messages.success(self.request, _('Location saved!'))
         return HttpResponseRedirect(
@@ -582,7 +579,6 @@ class BaseEditLocationView(BaseLocationView):
                                         user=self.request.couch_user),
             'form_tab': self.form_tab,
             'creates_new_location': self.creates_new_location,
-            'loc_types_with_users': self._get_loc_types_with_users(),
         }
 
 
@@ -592,7 +588,6 @@ class NewLocationView(BaseEditLocationView):
     page_title = ugettext_noop("New Location")
 
     @use_multiselect
-    @use_select2_v4
     @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
@@ -671,7 +666,6 @@ class EditLocationView(BaseEditLocationView):
     creates_new_location = False
 
     @use_multiselect
-    @use_select2_v4
     @method_decorator(check_pending_locations_import(redirect=True))
     @method_decorator(can_edit_or_view_location)
     def dispatch(self, request, *args, **kwargs):

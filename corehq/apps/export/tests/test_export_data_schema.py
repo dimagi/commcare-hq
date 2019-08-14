@@ -1015,7 +1015,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         # One for case, one for case history
         self.assertEqual(len(schema.group_schemas), 2)
         self.assertEqual(len(schema.group_schemas[0].items), 2)
-        self.assertEqual(len(schema.group_schemas[1].items), 8)
+        self.assertEqual(len(schema.group_schemas[1].items), len(KNOWN_CASE_PROPERTIES) + 2)
 
         # After the first schema has been saved let's add a second app to process
         second_build = Application.wrap(self.get_json('basic_case_application'))
@@ -1039,7 +1039,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         # One for case, one for case history
         self.assertEqual(len(new_schema.group_schemas), 2)
         self.assertEqual(len(schema.group_schemas[0].items), 2)
-        self.assertEqual(len(schema.group_schemas[1].items), 8)
+        self.assertEqual(len(schema.group_schemas[1].items), len(KNOWN_CASE_PROPERTIES) + 2)
 
     def test_build_with_inferred_schema(self):
         app = self.current_app

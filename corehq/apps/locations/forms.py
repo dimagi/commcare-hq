@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
 
+import six
 from crispy_forms.layout import Submit
 from django import forms
 from django.db.models import Q
@@ -14,7 +15,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 
-from corehq.apps.hqwebapp.widgets import Select2AjaxV4
+from corehq.apps.hqwebapp.widgets import Select2Ajax
 from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
 
@@ -24,7 +25,6 @@ from corehq.apps.custom_data_fields.edit_entity import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
-from corehq.apps.locations.tasks import make_location_user
 from corehq.apps.users.forms import NewMobileWorkerForm, generate_strong_password
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
@@ -50,7 +50,7 @@ class LocationSelectWidget(forms.Widget):
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):
-        location_ids = value or []
+        location_ids = to_list(value) if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
         initial_data = [{
@@ -323,25 +323,7 @@ class LocationForm(forms.Form):
     def _sync_location_user(self):
         if not self.location.location_id:
             return
-        if self.location.location_type.has_user and not self.location.user_id:
-            # make sure there's a location user
-            res = list(UserES()
-                       .domain(self.domain)
-                       .show_inactive()
-                       .term('user_location_id', self.location.location_id)
-                       .values_list('_id', flat=True))
-            user_id = res[0] if res else None
-            if user_id:
-                user = CommCareUser.get(user_id)
-            else:
-                user = make_location_user(self.location)
-            user.is_active = True
-            user.user_location_id = self.location.location_id
-            user.set_location(self.location, commit=False)
-            user.save()
-            self.location.user_id = user._id
-            self.location.save()
-        elif self.location.user_id and not self.location.location_type.has_user:
+        if self.location.user_id:
             # archive the location user
             user = CommCareUser.get_by_user_id(self.location.user_id, self.domain)
             if user:
@@ -393,8 +375,6 @@ class LocationFormSet(object):
     """Ties together the forms for location, location data, user, and user data."""
     _location_form_class = LocationForm
     _location_data_editor = CustomDataEditor
-    _user_form_class = LocationUserForm
-    _user_data_editor = CustomDataEditor
 
     def __init__(self, location, request_user, is_new, bound_data=None, *args, **kwargs):
         self.location = location
@@ -403,50 +383,26 @@ class LocationFormSet(object):
         self.request_user = request_user
         self.location_form = self._location_form_class(location, bound_data, is_new=is_new)
         self.custom_location_data = self._get_custom_location_data(bound_data, is_new)
-
-        if self.include_user_forms:
-            self.user_form = self._get_user_form(bound_data)
-            self.custom_user_data = self._get_custom_user_data(bound_data)
-            self.forms = [self.location_form, self.custom_location_data,
-                          self.user_form, self.custom_user_data]
-        else:
-            self.forms = [self.location_form, self.custom_location_data]
-
-    @property
-    @memoized
-    def include_user_forms(self):
-        if not self.is_new:
-            return False
-
-        possible_types = LocationForm.get_allowed_types(self.domain, self.location.parent)
-        if any(lt.has_user for lt in possible_types):
-            if not self.location_form.is_bound:
-                # The form hasn't yet been submitted, so we don't know which type
-                return True
-            else:
-                self.location_form.is_valid()
-                if 'location_type_object' in self.location_form.cleaned_data:
-                    return self.location_form.cleaned_data['location_type_object'].has_user
-        return False
+        self.forms = [self.location_form, self.custom_location_data]
 
     @memoized
     def is_valid(self):
         return all(form.is_valid() for form in self.forms)
 
+    @property
+    @memoized
+    def errors(self):
+        errors = {}
+        for form in self.forms:
+            errors.update(form.errors)
+        return errors
+
     def save(self):
         if not self.is_valid():
             raise ValueError('Form is not valid')
 
-        if self.include_user_forms:
-            self.user.save()
-            self.location_form.location.user_id = self.user._id
-            location_data = self.custom_location_data.get_data_to_save()
-            location = self.location_form.save(metadata=location_data)
-            self.user.user_location_id = location.location_id
-            self.user.set_location(location)
-        else:
-            location_data = self.custom_location_data.get_data_to_save()
-            location = self.location_form.save(metadata=location_data)
+        location_data = self.custom_location_data.get_data_to_save()
+        self.location_form.save(metadata=location_data)
 
     @property
     @memoized
@@ -454,7 +410,7 @@ class LocationFormSet(object):
         user_data = (self.custom_user_data.get_data_to_save()
                      if self.custom_user_data.is_valid() else {})
         username = self.user_form.cleaned_data.get('username', "")
-        password = self.user_form.cleaned_data.get('password', "")
+        password = self.user_form.cleaned_data.get('new_password', "")
         first_name = self.user_form.cleaned_data.get('first_name', "")
         last_name = self.user_form.cleaned_data.get('last_name', "")
 
@@ -490,57 +446,12 @@ class LocationFormSet(object):
         custom_data.form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
         return custom_data
 
-    def _get_user_form(self, bound_data):
-        domain_obj = Domain.get_by_name(self.domain)
-        form = self._user_form_class(
-            project=domain_obj,
-            data=bound_data,
-            request_user=self.request_user,
-            prefix='location_user',
-        )
-
-        if domain_obj.strong_mobile_passwords:
-            initial_password = generate_strong_password()
-            pw_field = crispy.Field(
-                'password',
-                value=initial_password,
-            )
-        else:
-            pw_field = 'password'
-
-        form.fields['username'].help_text = None
-        form.fields['location_id'].required = False  # This field isn't displayed
-        form.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
-        form.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Location User"),
-                'username',
-                'first_name',
-                'last_name',
-                pw_field,
-            )
-        )
-        return form
-
-    def _get_custom_user_data(self, bound_data):
-        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-        user_data = self._user_data_editor(
-            field_view=UserFieldsView,
-            domain=self.domain,
-            post_dict=bound_data,
-            required_only=True,
-            # Set a different prefix so it's not confused with custom location data
-            prefix='user_data',
-        )
-        return user_data
-
 
 class UsersAtLocationForm(forms.Form):
     selected_ids = forms.Field(
         label=ugettext_lazy("Workers at Location"),
         required=False,
-        widget=Select2AjaxV4(multiple=True),
+        widget=Select2Ajax(multiple=True),
     )
 
     def __init__(self, domain_object, location, *args, **kwargs):
@@ -717,3 +628,19 @@ class RelatedLocationForm(forms.Form):
                 if name.startswith('relation_distance_')
             }
         )
+
+
+def to_list(value):
+    """
+    Returns ``value`` as a list if it is iterable and not a string,
+    otherwise returns ``value`` in a list.
+
+    >>> to_list(('foo', 'bar', 'baz')) == ['foo', 'bar', 'baz']
+    True
+    >>> to_list('foo bar baz') == ['foo bar baz']
+    True
+
+    """
+    if hasattr(value, '__iter__') and not isinstance(value, six.string_types):
+        return list(value)
+    return [value]

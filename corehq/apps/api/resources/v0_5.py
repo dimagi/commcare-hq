@@ -24,15 +24,19 @@ from tastypie.utils import dict_strip_unicode_keys
 from casexml.apps.stock.models import StockTransaction
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer
+from corehq.apps.api.odata.serializers import ODataCaseSerializer, ODataFormSerializer
+from corehq.apps.api.odata.utils import record_feed_access_in_datadog
 from corehq.apps.api.odata.views import add_odata_headers
-from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication, \
+    ODataAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
+from corehq.apps.export.esaccessors import get_case_export_base_query, get_form_export_base_query
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.sms.util import strip_plus
@@ -45,8 +49,10 @@ from corehq.apps.userreports.reports.view import query_dict_to_dict, \
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_id_username_pairs_by_domain
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
 from corehq.apps.users.util import raw_username
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
+from corehq.util.timer import TimingContext
 from phonelog.models import DeviceReportEntry
 from . import HqBaseResource, DomainSpecificResourceMixin
 from . import v0_1, v0_4, CouchResourceMixin
@@ -393,9 +399,9 @@ class GroupResource(v0_4.GroupResource):
             try:
 
                 self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
-            except AssertionError as ex:
+            except AssertionError as e:
                 status = http.HttpBadRequest
-                bundle.data['_id'] = ex.message
+                bundle.data['_id'] = six.text_type(e)
             bundles_seen.append(bundle)
 
         to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
@@ -419,8 +425,8 @@ class GroupResource(v0_4.GroupResource):
                 updated_bundle = self.full_dehydrate(updated_bundle)
                 updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
                 return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
-        except AssertionError as ex:
-            bundle.data['error_message'] = ex.message
+        except AssertionError as e:
+            bundle.data['error_message'] = six.text_type(e)
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
 
     def _update(self, bundle):
@@ -896,40 +902,105 @@ class DomainUsernames(Resource):
         return results
 
 
-ODATA_CASE_RESOURCE_NAME = 'Cases'
+class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
-
-class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
-
-    case_type = None
+    config_id = None
 
     def dispatch(self, request_type, request, **kwargs):
-        if not toggles.ODATA.enabled_for_request(request):
+        if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
             raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
-        self.case_type = kwargs['case_type']
-        return super(ODataCommCareCaseResource, self).dispatch(request_type, request, **kwargs)
-
-    def determine_format(self, request):
-        # json only
-        return 'application/json'
+        self.config_id = kwargs['config_id']
+        with TimingContext() as timer:
+            response = super(ODataCaseResource, self).dispatch(request_type, request, **kwargs)
+        record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
+        return response
 
     def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
-        # populate the domain which is required by the serializer
         data['domain'] = request.domain
-        data['case_type'] = self.case_type
+        data['config_id'] = self.config_id
         data['api_path'] = request.path
-        response = super(ODataCommCareCaseResource, self).create_response(request, data, response_class,
-                                                                          **response_kwargs)
-        # adds required odata headers to the returned response
+        response = super(ODataCaseResource, self).create_response(
+            request, data, response_class, **response_kwargs)
         return add_odata_headers(response)
 
+    def obj_get_list(self, bundle, domain, **kwargs):
+        config = get_document_or_404(CaseExportInstance, domain, self.config_id)
+        query = get_case_export_base_query(domain, config.case_type)
+        for filter in config.get_filters():
+            query = query.filter(filter.to_es_filter())
+        return query
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        # Not sure why this is required but the feed 500s without it
+        return {
+            'pk': get_obj(bundle_or_obj)['_id']
+        }
+
     class Meta(v0_4.CommCareCaseResource.Meta):
-        resource_name = 'odata/{}'.format(ODATA_CASE_RESOURCE_NAME)
-        serializer = ODataCommCareCaseSerializer()
-        max_limit = 10000  # This is for experimental purposes only.  TODO: set to a better value soon after testing
+        authentication = ODataAuthentication(Permissions.edit_data)
+        resource_name = 'odata/cases'
+        serializer = ODataCaseSerializer()
+        limit = 2000
+        max_limit = 10000
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<case_type>[\w\d_.-]+)/$" % self._meta.resource_name,
+            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)/feed" % self._meta.resource_name,
                 self.wrap_view('dispatch_list'))
         ]
+
+    def determine_format(self, request):
+        # Results should be sent as JSON
+        return 'application/json'
+
+
+class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
+
+    config_id = None
+
+    def dispatch(self, request_type, request, **kwargs):
+        if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
+            raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
+        self.config_id = kwargs['config_id']
+        with TimingContext() as timer:
+            response = super(ODataFormResource, self).dispatch(request_type, request, **kwargs)
+        record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
+        return response
+
+    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
+        data['domain'] = request.domain
+        data['config_id'] = self.config_id
+        data['api_path'] = request.path
+        response = super(ODataFormResource, self).create_response(
+            request, data, response_class, **response_kwargs)
+        return add_odata_headers(response)
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        config = get_document_or_404(FormExportInstance, domain, self.config_id)
+        query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=True)
+        for filter in config.get_filters():
+            query = query.filter(filter.to_es_filter())
+        return query
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        # Not sure why this is required but the feed 500s without it
+        return {
+            'pk': get_obj(bundle_or_obj)['_id']
+        }
+
+    class Meta(v0_4.XFormInstanceResource.Meta):
+        authentication = ODataAuthentication(Permissions.edit_data)
+        resource_name = 'odata/forms'
+        serializer = ODataFormSerializer()
+        limit = 2000
+        max_limit = 10000
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)/feed" % self._meta.resource_name,
+                self.wrap_view('dispatch_list'))
+        ]
+
+    def determine_format(self, request):
+        # Results should be sent as JSON
+        return 'application/json'

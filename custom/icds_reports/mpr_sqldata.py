@@ -43,8 +43,9 @@ class MPRSectors(object):
     subtitle = []
     posttitle = None
 
-    def __init__(self, config):
+    def __init__(self, config, allow_conditional_agg=False):
         self.config = config
+        self.allow_conditional_agg = allow_conditional_agg
 
     @property
     def headers(self):
@@ -289,8 +290,8 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
     title = '4. Delivery of Supplementary Nutrition and Pre-School Education (PSE)'
     slug = 'supplementary_nutrition'
 
-    def __init__(self, config):
-        super(MPRSupplementaryNutrition, self).__init__(config)
+    def __init__(self, config, allow_conditional_agg=False):
+        super(MPRSupplementaryNutrition, self).__init__(config, allow_conditional_agg)
         self.awc_open_count = 0
 
     @property
@@ -1637,7 +1638,7 @@ class MPRImmunizationCoverage(ICDSMixin, MPRData):
             data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
             children_completing = data.get('open_child_count', 0)
             vaccination = data.get('open_child_1yr_immun_complete', 1)
-            immunization = "%.1f%%" % ((children_completing / float(vaccination or 1)) * 100)
+            immunization = "%.1f%%" % ((vaccination / float(children_completing or 1)) * 100)
             return [
                 ['(I)', 'Children Completing 12 months during the month:', children_completing],
                 ['(II)', 'Of this, number of children who have received all vaccinations:', vaccination],
@@ -1647,7 +1648,7 @@ class MPRImmunizationCoverage(ICDSMixin, MPRData):
 
 class MPRVhnd(ICDSMixin, MPRData):
 
-    title = '10. Village Health and Nutrition Day (VHND) activity summary'
+    title = '10. Village Health Sanitation and Nutrition Day (VHSND) activity summary'
     slug = 'vhnd'
 
     @property
@@ -1668,7 +1669,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 for idx, cell in enumerate(row):
                     if isinstance(cell, dict):
                         num = data.get(cell['column'], 0)
-                        row_data.append("%.1f%%" % cell['func'](num, float(self.awc_number or 1)))
+                        row_data.append("%.1f%%" % cell['func'](num, self.awc_number))
                     else:
                         row_data.append(data.get(cell, cell if not cell or idx == 0 else 0))
                 rows.append(row_data)
@@ -1678,47 +1679,47 @@ class MPRVhnd(ICDSMixin, MPRData):
     def row_config(self):
         return (
             (
-                'a) Was VHND conducted on planned date?',
+                'a) Was VHSND conducted on planned date?',
                 'done_when_planned',
                 {
                     'column': 'done_when_planned',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
             (
-                'b) AWW present during VHND?',
+                'b) AWW present during VHSND?',
                 'aww_present',
                 {
                     'column': 'aww_present',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
             (
-                'c) ICDS Supervisor present during VHDN?',
+                'c) ICDS Supervisor present during VHSND?',
                 'icds_sup',
                 {
                     'column': 'icds_sup',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
             (
-                'd) ASHA present during VHND?',
+                'd) ASHA present during VHSND?',
                 'asha_present',
                 {
                     'column': 'asha_present',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
             (
-                'e) ANM / MPW present during VHDN?',
+                'e) ANM / MPW present during VHSND?',
                 'anm_mpw',
                 {
                     'column': 'anm_mpw',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
@@ -1727,7 +1728,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'health_edu_org',
                 {
                     'column': 'health_edu_org',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
@@ -1736,7 +1737,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'display_tools',
                 {
                     'column': 'display_tools',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
@@ -1745,7 +1746,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'thr_distr',
                 {
                     'column': 'thr_distr',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
@@ -1754,7 +1755,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'child_immu',
                 {
                     'column': 'child_immu',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
@@ -1763,7 +1764,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'vit_a_given',
                 {
                     'column': 'vit_a_given',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
@@ -1772,7 +1773,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'anc_today',
                 {
                     'column': 'anc_today',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
@@ -1781,12 +1782,12 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'local_leader',
                 {
                     'column': 'local_leader',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
             (
-                'm) Was a due list prepared before the VHND for:',
+                'm) Was a due list prepared before the VHSND for:',
                 '',
                 ''
             ),
@@ -1795,7 +1796,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'due_list_prep_immunization',
                 {
                     'column': 'due_list_prep_immunization',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
@@ -1804,7 +1805,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'due_list_prep_vita_a',
                 {
                     'column': 'due_list_prep_vita_a',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             ),
@@ -1813,7 +1814,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 'due_list_prep_antenatal_checkup',
                 {
                     'column': 'due_list_prep_antenatal_checkup',
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number'
                 }
             )
@@ -2270,7 +2271,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                         num = 0
                         for c in cell['columns']:
                             num += data.get(c, 0)
-                        row_data.append("%.1f%%" % cell['func'](num, float(self.awc_number or 1)))
+                        row_data.append("%.1f%%" % cell['func'](num, self.awc_number))
                     else:
                         row_data.append(data.get(cell, cell if not cell or idx == 0 else 0))
                 rows.append(row_data)
@@ -2289,7 +2290,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_icds_sup',
                 {
                     'columns': ('visitor_icds_sup',),
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number',
                 }
             ),
@@ -2298,7 +2299,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_anm',
                 {
                     'columns': ('visitor_anm',),
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number',
                 }
             ),
@@ -2307,7 +2308,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_health_sup',
                 {
                     'columns': ('visitor_health_sup',),
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number',
                 }
             ),
@@ -2316,7 +2317,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_cdpo',
                 {
                     'columns': ('visitor_cdpo',),
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number',
                 }
             ),
@@ -2325,7 +2326,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_med_officer',
                 {
                     'columns': ('visitor_med_officer',),
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number',
                 }
             ),
@@ -2334,7 +2335,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_dpo',
                 {
                     'columns': ('visitor_dpo',),
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number',
                 }
             ),
@@ -2343,7 +2344,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_officer_state',
                 {
                     'columns': ('visitor_officer_state',),
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number',
                 }
             ),
@@ -2352,8 +2353,12 @@ class MPRMonitoring(ICDSMixin, MPRData):
                 'visitor_officer_central',
                 {
                     'columns': ('visitor_officer_central',),
-                    'func': truediv,
+                    'func': _get_percent,
                     'second_value': 'location_number',
                 }
             )
         )
+
+
+def _get_percent(a, b):
+    return (a / (b or 1)) * 100
