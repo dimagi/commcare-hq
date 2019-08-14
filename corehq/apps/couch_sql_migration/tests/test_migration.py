@@ -131,10 +131,11 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             domain = self.domain_name
         self.assert_backend("couch", domain)
         options.setdefault("no_input", True)
+        options.setdefault("diff_process", False)
         call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
 
-    def _do_migration_and_assert_flags(self, domain):
-        self._do_migration(domain)
+    def _do_migration_and_assert_flags(self, domain, **options):
+        self._do_migration(domain, **options)
         self.assert_backend("sql", domain)
 
     def _compare_diffs(self, expected_diffs=None, missing=None):
@@ -813,7 +814,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_form_with_missing_xml(self):
         create_form_with_missing_xml(self.domain_name)
-        self._do_migration_and_assert_flags(self.domain_name)
+        self._do_migration_and_assert_flags(self.domain_name, diff_process=True)
 
         # This may change in the future: it may be possible to rebuild the
         # XML using parsed form JSON from couch.

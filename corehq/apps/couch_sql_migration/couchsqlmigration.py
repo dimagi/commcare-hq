@@ -23,7 +23,7 @@ from django.db.utils import IntegrityError
 from gevent.pool import Pool
 
 from corehq.apps.couch_sql_migration.asyncforms import AsyncFormProcessor
-from corehq.apps.couch_sql_migration.casediff import CaseDiffProcess
+from corehq.apps.couch_sql_migration.casediff import CaseDiffProcess, CaseDiffQueue
 from corehq.apps.couch_sql_migration.diff import filter_form_diffs
 from corehq.apps.couch_sql_migration.statedb import init_state_db
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
@@ -111,6 +111,7 @@ class CouchSqlDomainMigrator(object):
         state_dir,
         with_progress=True,
         live_migrate=False,
+        diff_process=True,
     ):
         self._check_for_migration_restrictions(domain)
         self.domain = domain
@@ -118,7 +119,8 @@ class CouchSqlDomainMigrator(object):
         self.live_migrate = live_migrate
         self.live_stopper = LiveStopper(live_migrate)
         self.statedb = init_state_db(domain, state_dir)
-        self.case_diff_queue = CaseDiffProcess(self.statedb)
+        diff_queue = CaseDiffProcess if diff_process else CaseDiffQueue
+        self.case_diff_queue = diff_queue(self.statedb)
         # exit immediately on uncaught greenlet error
         gevent.get_hub().SYSTEM_ERROR = BaseException
 
@@ -327,7 +329,7 @@ class CouchSqlDomainMigrator(object):
             prefix = "{} ({})".format(progress_name, ', '.join(doc_types))
             return with_progress_bar(iterable, doc_count, prefix=prefix, oneline=False)
         else:
-            log.info("{} ({})".format(doc_count, ', '.join(doc_types)))
+            log.info("{} {} ({})".format(progress_name, doc_count, ', '.join(doc_types)))
             return iterable
 
     def _log_processed_docs_count(self, tags, throttled=False):

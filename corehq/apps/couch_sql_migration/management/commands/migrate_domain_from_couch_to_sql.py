@@ -97,12 +97,19 @@ class Command(BaseCommand):
                 a normal (non-live) migration, which will commit the
                 result if all goes well.
             ''')
+        parser.add_argument('--no-diff-process',
+            dest='diff_process', action='store_false', default=True,
+            help='''
+                Migrate forms and diff cases in the same process. The
+                case diff queue will run in a separate process if this
+                option is not specified.
+            ''')
 
     def handle(self, domain, action, **options):
         if should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
-        for opt in ["no_input", "verbose", "state_dir", "live_migrate"]:
+        for opt in ["no_input", "verbose", "state_dir", "live_migrate", "diff_process"]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
@@ -122,6 +129,7 @@ class Command(BaseCommand):
             self.state_dir,
             with_progress=not self.no_input,
             live_migrate=self.live_migrate,
+            diff_process=self.diff_process,
         )
 
         if self.live_migrate:
