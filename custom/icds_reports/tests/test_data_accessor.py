@@ -4,7 +4,8 @@ from __future__ import unicode_literals
 from django.test import TestCase
 import mock
 
-from custom.icds_reports.utils.data_accessor import get_program_summary_data_with_retrying
+from custom.icds_reports.utils.data_accessor import get_program_summary_data_with_retrying,\
+    get_awc_covered_data_with_retrying
 
 
 class DataAccessorTest(TestCase):
@@ -50,6 +51,47 @@ class DataAccessorTest(TestCase):
             ]
         },
     ]
+
+    defected_chart_data = {
+        'all_locations': [
+            {u'loc_name': u'st2', u'value': 0.0},
+            {u'loc_name': u'st1', u'value': 0.0},
+            {u'loc_name': u'st7', u'value': 0.0},
+            {u'loc_name': u'st3', u'value': 0.0},
+            {u'loc_name': u'st4', u'value': 0.0},
+            {u'loc_name': u'st5', u'value': 0.0},
+            {u'loc_name': u'st6', u'value': 0.0}],
+    }
+
+    valid_chart_data = {
+        'all_locations': [
+            {u'loc_name': u'st2', u'value': 0.0},
+            {u'loc_name': u'st1', u'value': 16.0},
+            {u'loc_name': u'st7', u'value': 0.0},
+            {u'loc_name': u'st3', u'value': 21.0},
+            {u'loc_name': u'st4', u'value': 0.0},
+            {u'loc_name': u'st5', u'value': 10.0},
+            {u'loc_name': u'st6', u'value': 0.0}],
+    }
+
+    defected_map_data = {
+        u'data': {
+            u'st4': {u'districts': 0, u'blocks': 0, u'awcs': 0, u'original_name': [u'st4'],
+                     u'states': 0, u'supervisors': 0, u'fillKey': u'Not launched'},
+            u'st5': {u'districts': 0, u'blocks': 0, u'awcs': 0, u'original_name': [u'st5'],
+                     u'states': 0, u'supervisors': 0, u'fillKey': u'Not launched'},
+            u'st6': {u'districts': 0, u'blocks': 0, u'awcs': 0, u'original_name': [u'st6'],
+                     u'states': 0, u'supervisors': 0, u'fillKey': u'Not launched'},
+            u'st7': {u'districts': 0, u'blocks': 0, u'awcs': 0, u'original_name': [u'st7'],
+                     u'states': 0, u'supervisors': 0, u'fillKey': u'Launched'},
+            u'st1': {u'districts': 0, u'blocks': 0, u'awcs': 0, u'original_name': [u'st1'],
+                     u'states': 0, u'supervisors': 0, u'fillKey': u'Launched'},
+            u'st2': {u'districts': 0, u'blocks': 0, u'awcs': 0, u'original_name': [u'st2'],
+                     u'states': 0, u'supervisors': 0, u'fillKey': u'Launched'},
+            u'st3': {u'districts': 0, u'blocks': 0, u'awcs': 0, u'original_name': [u'st3'],
+                     u'states': 0, u'supervisors': 0, u'fillKey': u'Not launched'}
+        },
+        u'slug': u'awc_covered'}
 
     domain = 'icds-cas'
     config = {
@@ -106,3 +148,39 @@ class DataAccessorTest(TestCase):
                 step, self.domain, self.config, self.now, False, True
             )
             self.assertEqual(get_awc_infrastructure.call_count, 2)
+
+    def test_retrying_data_for_awc_covered_chart(self):
+        step = 'chart'
+        with mock.patch(
+            "custom.icds_reports.utils.data_accessor.get_awcs_covered_data_chart",
+            return_value=self.defected_chart_data,
+            autospec=True
+        ) as get_awcs_covered_data_chart:
+            get_awc_covered_data_with_retrying(
+                step, self.domain, self.config, self.now, False, True
+            )
+            self.assertEqual(get_awcs_covered_data_chart.call_count, 3)
+
+    def test_data_for_awc_covered_chart(self):
+        step = 'chart'
+        with mock.patch(
+            "custom.icds_reports.utils.data_accessor.get_awcs_covered_data_chart",
+            return_value=self.valid_chart_data,
+            autospec=True
+        ) as get_awcs_covered_data_chart:
+            get_awc_covered_data_with_retrying(
+                step, self.domain, self.config, self.now, False, True
+            )
+            self.assertEqual(get_awcs_covered_data_chart.call_count, 1)
+
+    def test_retrying_data_for_awc_covered_map(self):
+        step = 'map'
+        with mock.patch(
+            "custom.icds_reports.utils.data_accessor.get_awcs_covered_data_map",
+            return_value=self.defected_map_data,
+            autospec=True
+        ) as get_awcs_covered_data_map:
+            get_awc_covered_data_with_retrying(
+                step, self.domain, self.config, self.now, False, True
+            )
+            self.assertEqual(get_awcs_covered_data_map.call_count, 3)
