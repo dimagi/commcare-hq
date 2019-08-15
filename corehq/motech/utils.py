@@ -38,7 +38,7 @@ def b64_aes_encrypt(message):
 
     >>> settings.SECRET_KEY = 'xyzzy'
     >>> encrypted = b64_aes_encrypt('Around you is a forest.')
-    >>> encrypted == b'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I='
+    >>> encrypted == 'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I='
     True
 
     """
@@ -49,7 +49,8 @@ def b64_aes_encrypt(message):
     message_bytes = message if isinstance(message, bytes) else message.encode('utf8')
     plaintext = pad(message_bytes, AES_BLOCK_SIZE)
     ciphertext = aes.encrypt(plaintext)
-    return b64encode(ciphertext)
+    b64bytestring = b64encode(ciphertext)
+    return str(b64bytestring)
 
 
 def b64_aes_decrypt(message):
@@ -59,8 +60,8 @@ def b64_aes_decrypt(message):
     Uses Django SECRET_KEY as AES key.
 
     >>> settings.SECRET_KEY = 'xyzzy'
-    >>> decrypted = b64_aes_decrypt(b'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I=')
-    >>> decrypted == b'Around you is a forest.'
+    >>> decrypted = b64_aes_decrypt('Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I=')
+    >>> decrypted == 'Around you is a forest.'
     True
 
     """
@@ -69,8 +70,9 @@ def b64_aes_decrypt(message):
     aes = AES.new(secret, AES.MODE_ECB)
 
     ciphertext = b64decode(message)
-    plaintext = aes.decrypt(ciphertext)
-    return plaintext.rstrip(PAD_CHAR)
+    padded_plaintext = aes.decrypt(ciphertext)
+    plaintext = padded_plaintext.rstrip(PAD_CHAR)
+    return str(plaintext)
 
 
 def pformat_json(data):
