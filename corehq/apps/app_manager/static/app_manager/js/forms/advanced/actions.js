@@ -192,6 +192,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 actionType: 'load',
             };
             ko.mapping.fromJS(data, loadUpdateAction.mapping(self), self);
+            self.hasPrivilege = true;
 
             // for compatibility with common templates
             // template: case-config:condition
@@ -478,6 +479,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 actionType: 'open',
             };
             ko.mapping.fromJS(data, openCaseAction.mapping(self), self);
+            self.hasPrivilege = true;
 
             // for compatibility with common templates
             // template: case-config:condition
