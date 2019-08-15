@@ -4,8 +4,6 @@
    "multimedia_map": {
        "jr://file/commcare/logo/data/hq_logo_android_login.png": {
            "doc_type": "HQMediaMapItem",
-           "output_size": {
-           },
            "version": 7,
            "multimedia_id": "c9ef81db4836c4eb5037ac4925193db7",
            "media_type": "CommCareImage",
@@ -13,8 +11,6 @@
        },
        "jr://file/commcare/logo/data/hq_logo_android_home.png": {
            "doc_type": "HQMediaMapItem",
-           "output_size": {
-           },
            "version": 7,
            "multimedia_id": "c9ef81db4836c4eb5037ac4925193db7",
            "media_type": "CommCareImage",
