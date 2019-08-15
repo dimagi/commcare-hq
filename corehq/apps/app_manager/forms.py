@@ -33,8 +33,9 @@ class CopyApplicationForm(forms.Form):
     )
     build_id = forms.CharField(
         required=False,
-        label=_('Copy from built version'),
-        widget=forms.Select(choices=[], attrs={"class": "app-manager-version-dropdown"}))
+        label=_('Copy version'),
+        widget=forms.Select(choices=[], attrs={"class": "app-manager-version-dropdown",
+                                               "placeholder": _("Current")}))
 
     # Toggles to enable when copying the app
     toggles = forms.CharField(required=False, widget=forms.HiddenInput, max_length=5000)
