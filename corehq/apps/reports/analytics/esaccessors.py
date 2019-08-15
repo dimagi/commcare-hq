@@ -576,7 +576,11 @@ def get_username_in_last_form_user_id_submitted(domain, user_id):
 
 
 def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None):
-    return LedgerAccessors(domain).get_ledger_values_for_cases(case_ids, section_id, entry_ids)
+    if isinstance(case_ids, (list, tuple, set)):
+        case_ids_list = list(case_ids)
+    else:
+        case_ids_list = [case_ids]
+    return LedgerAccessors(domain).get_ledger_values_for_cases(case_ids_list, section_id, entry_ids)
 
 
 def products_with_ledgers(domain, case_ids, section_id, entry_ids=None):
