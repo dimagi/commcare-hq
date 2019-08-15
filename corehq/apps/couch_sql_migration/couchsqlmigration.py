@@ -148,7 +148,7 @@ class CouchSqlDomainMigrator(object):
     def _process_main_forms(self):
         """process main forms (including cases and ledgers)"""
         with AsyncFormProcessor(self.statedb, self._migrate_form) as pool:
-            changes = self._get_resumable_iterator(['XFormInstance'], 'main_forms')
+            changes = self._get_resumable_iterator(['XFormInstance'])
             for change in self._with_progress(['XFormInstance'], changes):
                 pool.process_xform(change.get_document())
 
@@ -226,8 +226,9 @@ class CouchSqlDomainMigrator(object):
             couch_form_json['doc_type'] = 'XFormError'
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
 
-        changes = self._get_resumable_iterator(UNPROCESSED_DOC_TYPES, 'unprocessed_forms')
-        for change in self._with_progress(UNPROCESSED_DOC_TYPES, changes):
+        doc_types = sorted(UNPROCESSED_DOC_TYPES)
+        changes = self._get_resumable_iterator(doc_types)
+        for change in self._with_progress(doc_types, changes):
             couch_form_json = change.get_document()
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
 
@@ -249,7 +250,7 @@ class CouchSqlDomainMigrator(object):
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
         pool = Pool(10)
-        changes = self._get_resumable_iterator(doc_types, 'unprocessed_cases')
+        changes = self._get_resumable_iterator(doc_types)
         for change in self._with_progress(doc_types, changes):
             pool.spawn(self._copy_unprocessed_case, change)
 
@@ -353,16 +354,19 @@ class CouchSqlDomainMigrator(object):
     def _log_unprocessed_cases_processed_count(self, throttled=False):
         self._log_processed_docs_count(['type:unprocessed_cases'], throttled)
 
-    def _get_resumable_iterator(self, doc_types, slug):
+    def _get_resumable_iterator(self, doc_types):
         # resumable iteration state is associated with statedb.unique_id,
         # so it will be reset (orphaned in couch) if that changes
-        key = "%s.%s.%s" % (self.domain, slug, self.statedb.unique_id)
-        return _iter_changes(
-            self.domain,
-            doc_types,
-            resumable_key=key,
-            should_stop=self.live_stopper.get_stopper(),
-        )
+        migration_id = self.statedb.unique_id
+        for doc_type in doc_types:
+            key = "%s.%s.%s" % (self.domain, doc_type, migration_id)
+            for change in _iter_changes(
+                self.domain,
+                [doc_type],
+                resumable_key=key,
+                should_stop=self.live_stopper.get_stopper(),
+            ):
+                yield change
 
     def _send_timings(self, timing_context):
         metric_name_template = "commcare.%s.count"

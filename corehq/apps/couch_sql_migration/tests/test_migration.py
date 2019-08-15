@@ -295,40 +295,20 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._compare_diffs([])
 
     def test_error_form_migration(self):
-        submit_form_locally(
-            """<data xmlns="example.com/foo">
-                <meta>
-                    <instanceID>abc-easy-as-123</instanceID>
-                </meta>
-            <case case_id="" xmlns="http://commcarehq.org/case/transaction/v2">
-                <update><foo>bar</foo></update>
-            </case>
-            </data>""",
-            self.domain_name,
-        )
-        self.assertEqual(1, len(self._get_form_ids('XFormError')))
+        submit_form_locally(ERROR_FORM, self.domain_name)
+        self.assertEqual(self._get_form_ids('XFormError'), {"im-a-bad-form"})
         self._do_migration_and_assert_flags(self.domain_name)
-        self.assertEqual(1, len(self._get_form_ids('XFormError')))
+        self.assertEqual(self._get_form_ids('XFormError'), {"im-a-bad-form"})
         self._compare_diffs([])
 
     def test_error_with_normal_doc_type_migration(self):
-        submit_form_locally(
-            """<data xmlns="example.com/foo">
-                <meta>
-                    <instanceID>im-a-bad-form</instanceID>
-                </meta>
-            <case case_id="" xmlns="http://commcarehq.org/case/transaction/v2">
-                <update><foo>bar</foo></update>
-            </case>
-            </data>""",
-            self.domain_name,
-        )
+        submit_form_locally(ERROR_FORM, self.domain_name)
         form = FormAccessors(self.domain_name).get_form('im-a-bad-form')
         form_json = form.to_json()
         form_json['doc_type'] = 'XFormInstance'
         XFormInstance.wrap(form_json).save()
         self._do_migration_and_assert_flags(self.domain_name)
-        self.assertEqual(1, len(self._get_form_ids('XFormError')))
+        self.assertEqual(self._get_form_ids('XFormError'), {'im-a-bad-form'})
         self._compare_diffs([])
 
     def test_duplicate_form_migration(self):
@@ -736,6 +716,25 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3", "test-4", "test-5"})
         self.assertEqual(self._get_case_ids(), {"test-case"})
+
+    def test_migrate_archived_form_after_live_migration_of_error_forms(self):
+        # The theory of this test is that XFormArchived comes earlier in
+        # the "unprocessed_forms" iteration than XFormError. It ensures
+        # that an archived form added after an error form that was not
+        # processed by the previous live migration will be migrated.
+        self.submit_form(ERROR_FORM)
+        self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids('XFormError'), set())
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.assert_backend("couch")
+        self.submit_form(make_test_form("archived")).archive(trigger_signals=False)
+
+        self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([])
+        self.assertEqual(self._get_form_ids("XFormError"), {"im-a-bad-form"})
+        self.assertEqual(self._get_form_ids("XFormArchived"), {"archived"})
 
     def test_edit_form_after_live_migration(self):
         now = datetime.utcnow()
@@ -1187,3 +1186,13 @@ LIST_ORDER_FORMS = ["""
     </case>
 </system>
 """]
+
+
+ERROR_FORM = """<data xmlns="example.com/foo">
+    <meta>
+        <instanceID>im-a-bad-form</instanceID>
+    </meta>
+<case case_id="" xmlns="http://commcarehq.org/case/transaction/v2">
+    <update><foo>bar</foo></update>
+</case>
+</data>"""
