@@ -6,28 +6,13 @@ from base64 import b64decode, b64encode
 
 import six
 from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
 from django.conf import settings
 
 from corehq.util.python_compatibility import soft_assert_type_text
 
 AES_BLOCK_SIZE = 16
 AES_KEY_MAX_LEN = 32  # AES key must be either 16, 24, or 32 bytes long
-PAD_CHAR = b' '
-
-
-def pad(bytestring, block_size, char=PAD_CHAR):
-    """
-    Pad `bytestring` to a multiple of `block_size` in length by appending
-    `char`. `char` defaults to space.
-
-    >>> padded = pad(b'xyzzy', 8, b'*')
-    >>> padded == b'xyzzy***'
-    True
-
-    """
-    assert isinstance(bytestring, bytes)
-    padding = ((block_size - len(bytestring)) % block_size) * char
-    return bytestring + padding
 
 
 def b64_aes_encrypt(message):
@@ -77,7 +62,7 @@ def b64_aes_decrypt(message):
 
     ciphertext_bytes = b64decode(message)
     padded_plaintext_bytes = aes.decrypt(ciphertext_bytes)
-    plaintext_bytes = padded_plaintext_bytes.rstrip(PAD_CHAR)
+    plaintext_bytes = unpad(padded_plaintext_bytes, AES_BLOCK_SIZE)
     return plaintext_bytes.decode('utf8')
 
 
