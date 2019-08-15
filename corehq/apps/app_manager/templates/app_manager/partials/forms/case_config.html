@@ -1,30 +1,19 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<script type="text/html"
-        id="remove-subcase-modal-template">
+<script type="text/html" id="remove-subcase-modal-template">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <a href="#" class="close" data-dismiss="modal">×</a>
-        <h4 class="modal-title">
-          {% trans "Remove Child Case?" %}
-        </h4>
+        <h4 class="modal-title">{% trans "Remove Child Case?" %}</h4>
       </div>
       <div class="modal-body">
-        <p>
-          {% trans "Are you sure you want to remove this Child Case?" %}
-        </p>
+        <p>{% trans "Are you sure you want to remove this Child Case?" %}</p>
       </div>
       <div class="modal-footer">
-        <a href="#" class="btn btn-default"
-           data-dismiss="modal">
-          {% trans "Cancel" %}
-        </a>
-        <a class="btn btn-danger"
-           href="#"
-           data-bind="click: $parent.removeSubCase"
-           data-dismiss="modal">
+        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+        <a class="btn btn-danger" href="#" data-bind="click: $parent.removeSubCase" data-dismiss="modal">
           {% trans "Remove Child Case" %}
         </a>
       </div>
@@ -32,12 +21,9 @@
   </div>
 </script>
 
-<script type="text/html"
-        id="case-config:case-transaction">
-
+<script type="text/html" id="case-config:case-transaction">
   {% if add_ons.conditional_form_actions %}
-    <div class="panel panel-appmanager"
-         data-bind="visible: allow.condition()">
+    <div class="panel panel-appmanager" data-bind="visible: allow.condition()">
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">
           {% trans "Open Case Condition" %}
@@ -45,23 +31,20 @@
       </div>
       <div class="panel-body">
         <div data-bind="template: {
-                          name: 'case-config:condition',
-                          data: {condition: condition, config: $data}
-                        }"></div>
+                                name: 'case-config:condition',
+                                data: {condition: condition, config: $data}
+                            }"></div>
       </div>
     </div>
   {% endif %}
-
   <div data-bind="if: allow.case_preload()">
     <div class="panel panel-appmanager case-properties wide-select2s"
          data-bind="template: 'case-config:case-transaction:case-properties'"></div>
   </div>
-
   <div data-bind="if: !allow.case_preload()">
     <div class="panel panel-appmanager"
          data-bind="template: 'case-config:case-transaction:case-properties'"></div>
   </div>
-
   <div class="panel panel-appmanager">
     <div class="panel-heading">
       <h4 class="panel-title panel-title-nolink">
@@ -70,30 +53,24 @@
     </div>
     <div class="panel-body">
       <label>
-        <input type="checkbox"
-               data-bind="checked: close_case,
-                          disable: !hasPrivilege"/>
+        <input type="checkbox" data-bind="checked: close_case"/>
         {% trans "Close this case when the form is complete" %}
       </label>
       {% if add_ons.conditional_form_actions %}
         <div data-bind="template: {
-                          name: 'case-config:condition',
-                          data: {
-                            condition: $data.close_condition,
-                            config: $data
-                          },
-                          if: $data.close_condition
-                        }"></div>
+                name: 'case-config:condition',
+                data: {condition: $data.close_condition, config: $data},
+                if: $data.close_condition
+            }"></div>
       {% endif %}
     </div>
   </div>
-
 </script>
 
 <div id="case-config-ko">
 
-  <div class="refresh-form-questions-container"
-       data-bind="template: 'case-config:refresh-form-questions'"></div>
+
+  <div class="refresh-form-questions-container" data-bind="template: 'case-config:refresh-form-questions'"></div>
   <div data-bind="saveButton: saveButton"></div>
 
   <div data-bind="with: caseConfigViewModel">
@@ -109,13 +86,13 @@
           <p class="lead">
             {% blocktrans %}
               <span data-bind="visible: showLeadRegistration">
-                This is a <strong><i class="fcc fcc-app-createform"></i> Registration</strong> form.
-                Use the Registration form to add new cases to your <strong><i class="fa fa-bars"></i> Case List</strong>.
-              </span>
+                            This is a <strong><i class="fcc fcc-app-createform"></i> Registration</strong> form.
+                            Use the Registration form to add new cases to your <strong><i class="fa fa-bars"></i> Case List</strong>.
+                        </span>
               <span data-bind="visible: showLeadFollowup">
-                This is a <strong><i class="fcc fcc-app-updateform"></i> Followup</strong> form.
-                Use Followup forms to update cases in your <strong><i class="fa fa-bars"></i> Case List</strong>.
-              </span>
+                            This is a <strong><i class="fcc fcc-app-updateform"></i> Followup</strong> form.
+                            Use Followup forms to update cases in your <strong><i class="fa fa-bars"></i> Case List</strong>.
+                        </span>
               <br />
               <span><strong>Cases</strong> give you a way to track patients, farms, and other entities over time.</span>
             {% endblocktrans %}
@@ -123,40 +100,22 @@
 
           {% trans "Registration: This form opens a new case" as registers_case %}
           {% trans "Followup: This form loads a case and may then update or close it" as updates_case %}
-          <select class="form-control"
-                  id="case-action-select"
-                  data-bind="optstr: [
-                               {
-                                 value: 'open',
-                                 label: '{{ registers_case|escapejs }}'
-                               },
-                               {
-                                 value: 'update',
-                                 label: '{{ updates_case|escapejs }}'
-                               }
-                             ],
-                             value: actionType,
-                             event: {
-                               change: function() {
-                                 hqImport('analytix/js/google').track.event('Case Management', 'Form Level', 'Case Action');
-                               }
-                             }"></select>
+          <select class="form-control" id="case-action-select" data-bind="
+                        optstr: [{value: 'open', label: '{{ registers_case|escapejs }}'},
+                                 {value: 'update', label: '{{ updates_case|escapejs }}'}],
+                        value: actionType,
+                        event: { change: function() { hqImport('analytix/js/google').track.event('Case Management', 'Form Level', 'Case Action'); } }
+                    "></select>
         </div>
       </div>
     </div>
 
     {% if form.source %}
       <!--ko if: actionType() === 'update' -->
-      <div data-bind="template: {
-                        name: 'case-config:case-transaction',
-                        data: case_transaction
-                      }"></div>
+      <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}"></div>
       <!--/ko-->
       <!--ko if: actionType() === 'open' -->
-      <div data-bind="template: {
-                        name: 'case-config:case-transaction',
-                        data: case_transaction
-                      }"></div>
+      <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}"></div>
       <!--/ko-->
       {% if add_ons.subcases %}
         <!--ko if: actionType() !== 'none'-->
@@ -173,22 +132,6 @@
           {% endblocktrans %}
         </p>
 
-        {% if not add_ons_privileges.subcases %}
-          <div class="well well-sm">
-            <p>
-              <i class="fa fa-info-circle"></i>
-              {% blocktrans %}
-                <strong>Child Cases</strong> are not available in your subscription.
-                This feature is only available on our <strong>Pro</strong> plan or higher.
-                This configuration will remain un-editable until you upgrade.
-              {% endblocktrans %}
-            </p>
-            <p>
-              {% include 'hqwebapp/partials/generic_feature_upgrade.html' %}
-            </p>
-          </div>
-        {% endif %}
-
         <div data-bind="foreach: subcases">
           <div class="panel panel-appmanager panel-case-actions">
             <div class="panel-heading">
@@ -199,13 +142,11 @@
               </h4>
             </div>
             <div class="panel-case-actions-actions">
-              {% if add_ons_privileges.subcases %}
-                <a href="#"
-                   class="case-action-remove btn btn-purple"
-                   data-bind="openModal: 'remove-subcase-modal-template'">
-                  <i class="fa fa-trash"></i>
-                </a>
-              {% endif %}
+              <a href="#"
+                 class="case-action-remove btn btn-purple"
+                 data-bind="openModal: 'remove-subcase-modal-template'">
+                <i class="fa fa-trash"></i>
+              </a>
             </div>
             <div class="panel-body">
               <div class="panel panel-appmanager">
@@ -218,39 +159,29 @@
                   {% trans "This Form opens a Child Case in the Case List" %}&nbsp;
                   <span class="form-group"
                         data-bind="css: {'has-warning': !case_type()}">
-                    <select class="form-control"
-                            {% if not add_ons_privileges.subcases %}disabled="disabled"{% endif %}
-                            data-bind="options: $parent.caseTypes,
-                                       optionsText: $parent.getCaseTypeLabel,
-                                       value: case_type,
-                                       optionsCaption: 'Choose a Module...'"></select>
-                    <span class="help-block" data-bind="visible: !case_type()">
-                      {% trans "Required" %}
-                    </span>
+                                        <select class="form-control" data-bind="
+                                            options: $parent.caseTypes,
+                                            optionsText: $parent.getCaseTypeLabel,
+                                            value: case_type,
+                                            optionsCaption: 'Choose a Module...'
+                                        "></select>
+                                        <span class="help-block" data-bind="visible: !case_type()">{% trans "Required" %}</span>
                     {% if show_custom_ref %}
-                      <label>
-                        {% trans "Override reference id: " %}
-                      </label>
-                      <input type="text"
-                             {% if not add_ons_privileges.subcases %}disabled="disabled"{% endif %}
-                             class="form-control"
-                             data-bind="value: reference_id"/>
+                      <label>{% trans "Override reference id: " %}</label>
+                      <input type="text" class="form-control" data-bind="value: reference_id"/>
                     {% endif %}
-                  </span>
+                                    </span>
                 </div>
               </div>
               <div data-bind="template: 'case-config:case-transaction'"></div>
             </div>
           </div>
         </div>
-        {% if add_ons_privileges.subcases %}
-          <a href="#"
-             class="btn btn-default"
-             data-bind="click: addSubCase">
-            <i class="fa fa-plus"></i>
-            {% trans "Add a Child Case to open a case for a different Case List..." %}
-          </a>
-        {% endif %}
+
+        <a href="#" class="btn btn-default" data-bind="click: addSubCase">
+          <i class="fa fa-plus"></i>
+          {% trans "Add a Child Case to open a case for a different Case List..." %}
+        </a>
         <!--/ko-->
       {% endif %}
     {% endif %}
