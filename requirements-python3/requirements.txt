@@ -92,10 +92,8 @@ lxml==4.3.3
 mako==1.0.9               # via alembic
 markdown==2.2.1
 markupsafe==1.1.1         # via jinja2, mako
-mock==2.0.0
 msgpack-python==0.5.6     # via ddtrace
 openpyxl==2.6.2
-pbr==5.2.0                # via mock
 pdfrw==0.4                # via weasyprint
 phonenumberslite==8.10.10
 pillow==6.0.0

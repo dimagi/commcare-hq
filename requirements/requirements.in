@@ -26,7 +26,6 @@ lxml~=4.3.0
 kafka-python==1.4.4
 kombu==4.2.2.post1
 billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
-mock==2.0.0
 Pillow~=6.0
 phonenumberslite~=8.8
 psycopg2~=2.7.7
