@@ -42,15 +42,18 @@ def b64_aes_encrypt(message):
     True
 
     """
-    key = settings.SECRET_KEY if isinstance(settings.SECRET_KEY, bytes) else settings.SECRET_KEY.encode('ascii')
-    secret = pad(key, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
-    aes = AES.new(secret, AES.MODE_ECB)
+    if isinstance(settings.SECRET_KEY, bytes):
+        secret_key_bytes = settings.SECRET_KEY
+    else:
+        secret_key_bytes = settings.SECRET_KEY.encode('ascii')
+    aes_key = pad(secret_key_bytes, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
+    aes = AES.new(aes_key, AES.MODE_ECB)
 
     message_bytes = message if isinstance(message, bytes) else message.encode('utf8')
-    plaintext = pad(message_bytes, AES_BLOCK_SIZE)
-    ciphertext = aes.encrypt(plaintext)
-    b64bytestring = b64encode(ciphertext)
-    return str(b64bytestring)
+    plaintext_bytes = pad(message_bytes, AES_BLOCK_SIZE)
+    ciphertext_bytes = aes.encrypt(plaintext_bytes)
+    b64ciphertext_bytes = b64encode(ciphertext_bytes)
+    return b64ciphertext_bytes.decode('ascii')
 
 
 def b64_aes_decrypt(message):
@@ -65,14 +68,17 @@ def b64_aes_decrypt(message):
     True
 
     """
-    key = settings.SECRET_KEY if isinstance(settings.SECRET_KEY, bytes) else settings.SECRET_KEY.encode('ascii')
-    secret = pad(key, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
-    aes = AES.new(secret, AES.MODE_ECB)
+    if isinstance(settings.SECRET_KEY, bytes):
+        secret_key_bytes = settings.SECRET_KEY
+    else:
+        secret_key_bytes = settings.SECRET_KEY.encode('ascii')
+    aes_key = pad(secret_key_bytes, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
+    aes = AES.new(aes_key, AES.MODE_ECB)
 
-    ciphertext = b64decode(message)
-    padded_plaintext = aes.decrypt(ciphertext)
-    plaintext = padded_plaintext.rstrip(PAD_CHAR)
-    return str(plaintext)
+    ciphertext_bytes = b64decode(message)
+    padded_plaintext_bytes = aes.decrypt(ciphertext_bytes)
+    plaintext_bytes = padded_plaintext_bytes.rstrip(PAD_CHAR)
+    return plaintext_bytes.decode('utf8')
 
 
 def pformat_json(data):
