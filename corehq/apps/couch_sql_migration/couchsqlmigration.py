@@ -267,15 +267,16 @@ class CouchSqlDomainMigrator(object):
         except IndexError:
             first_action = CommCareCaseAction()
 
+        opened_on = couch_case.opened_on or first_action.date
         sql_case = CommCareCaseSQL(
             case_id=couch_case.case_id,
             domain=self.domain,
             type=couch_case.type or '',
             name=couch_case.name,
             owner_id=couch_case.owner_id or couch_case.user_id or '',
-            opened_on=couch_case.opened_on or first_action.date,
+            opened_on=opened_on,
             opened_by=couch_case.opened_by or first_action.user_id,
-            modified_on=couch_case.modified_on,
+            modified_on=couch_case.modified_on or opened_on,
             modified_by=couch_case.modified_by or couch_case.user_id or '',
             server_modified_on=couch_case.server_modified_on,
             closed=couch_case.closed,

@@ -162,8 +162,11 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             .get_all_form_ids_in_domain(doc_type=doc_type)
         )
 
-    def _get_case_ids(self):
-        return set(CaseAccessors(domain=self.domain_name).get_case_ids_in_domain())
+    def _get_case_ids(self, doc_type=None):
+        if doc_type is None:
+            return set(CaseAccessors(domain=self.domain_name).get_case_ids_in_domain())
+        db = XFormInstance.get_db()
+        return set(get_doc_ids_in_domain_by_type(self.domain_name, doc_type, db))
 
     def _get_case(self, case_id):
         return CaseAccessors(domain=self.domain_name).get_case(case_id)
@@ -186,6 +189,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             form.received_on = received_on
             form.save()
         log.debug("form %s received on %s", form.form_id, form.received_on)
+        return form
 
     @contextmanager
     def patch_migration_chunk_size(self, chunk_size):
@@ -280,6 +284,14 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(1, len(self._get_form_ids('XFormArchived')))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(self._get_form_ids('XFormArchived')))
+        self._compare_diffs([])
+
+    def test_archived_form_with_case_migration(self):
+        self.submit_form(make_test_form("archived")).archive()
+        self.assertEqual(self._get_form_ids('XFormArchived'), {'archived'})
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(self._get_form_ids('XFormArchived'), {'archived'})
+        self.assertEqual(self._get_case_ids('CommCareCase-Deleted'), {'test-case'})
         self._compare_diffs([])
 
     def test_error_form_migration(self):
