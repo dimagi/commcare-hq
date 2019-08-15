@@ -44,7 +44,11 @@ The **version** is the app version where the multimedia was added or most recent
 
 CommCare (on mobile) uses the version to determine when to re-download an updated multimedia file.  The version will always be an app version. This correspondence isn't necessary; all the phone checks is if the current version is greater than the version already on the phone - if so, the phone will re-download the multimedia. This logic is based on the logic used to download updated forms.
 
-TODO
+The version is updated (set to the latest app version) in the following situations:
+- Multimedia is added to the app.
+- The content of multimedia is changed, by using the "Replace" button in the uploader. This also causes the multimedia id to change.
+- The path alone is changed using the "Manage Multimedia Paths" bulk uploader. This does not change the unique id, even though the path changes.
+- The path and content are changed together in the UI. This also replaces the multimedia id and re-generates the unique id.
 
 
 ### media_suite.xml
