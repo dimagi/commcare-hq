@@ -25,9 +25,8 @@ class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, Repo
         self._provider = to_function(provider_string, failhard=True)(self)
 
     @property
-    def columns(self):
-        db_columns = [c for conf in self.column_configs for c in conf.columns]
-        return db_columns
+    def _db_columns(self):
+        return [c for conf in self.column_configs for c in conf.columns]
 
     @memoized
     @method_decorator(catch_and_raise_exceptions)
