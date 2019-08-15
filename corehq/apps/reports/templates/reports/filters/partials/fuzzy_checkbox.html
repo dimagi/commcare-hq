@@ -1,6 +1,6 @@
 {% load i18n %}
 {% trans "This project looks like it has some submissions we don't recognize.  Don't worry this can usually be fixed." %}
-Please contact <a href="mailto:{{ support_email }}">CommCare Support</a>.
+Please contact <a href="mailto:{{ SUPPORT_EMAIL }}">CommCare Support</a>.
 <div class="checkbox">
     <label>
         <input type="checkbox" name="{{ hide_fuzzy.slug }}" value="yes" {% if hide_fuzzy.checked %}checked{% endif %} /> {% trans 'Hide Fuzzy Submissions' %}

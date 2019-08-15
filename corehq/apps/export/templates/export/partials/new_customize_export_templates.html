@@ -3,7 +3,7 @@
 
 <!-- Template for a Table (i.e. sheet) in the Export page -->
 <script type="text/html" id="ko-table-configuration-template">
-  <div {% if export_instance.is_odata_config %}data-bind="visible: $index() == 0"{% endif %}>
+  <div>
     <legend data-bind="visible: table.isVisible(),
                        visible: table.label() !== 'Case History'">
       <span>

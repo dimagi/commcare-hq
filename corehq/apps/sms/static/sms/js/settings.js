@@ -4,6 +4,7 @@ hqDefine("sms/js/settings", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/select2_handler',
     'hqwebapp/js/components.ko',    // select toggle widget
+    'bootstrap-timepicker/js/bootstrap-timepicker',
 ], function(
     $,
     ko,

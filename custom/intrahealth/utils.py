@@ -311,7 +311,7 @@ class MultiReport(CustomProjectReport, YeksiNaaMixin, ProjectReportParametersMix
     title = ''
     report_template_path = "yeksi_naa/multi_report.html"
     flush_layout = True
-    export_format_override = 'csv'
+    export_format_override = None
 
     @cached_property
     def rendered_report_title(self):

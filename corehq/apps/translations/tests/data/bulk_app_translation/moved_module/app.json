@@ -67,8 +67,6 @@
   "multimedia_map": {
     "jr:\/\/file\/commcare\/image\/data\/What_does_this_look_like.png": {
       "doc_type": "HQMediaMapItem",
-      "output_size": {
-      },
       "version": null,
       "multimedia_id": "bdee5d5d5619bd3704a2ac4fa8c7be4c",
       "media_type": "CommCareImage",
@@ -76,8 +74,6 @@
     },
     "jr:\/\/file\/commcare\/image\/module0_form0.png": {
       "doc_type": "HQMediaMapItem",
-      "output_size": {
-      },
       "version": null,
       "multimedia_id": "bdee5d5d5619bd3704a2ac4fa84a6cd8",
       "media_type": "CommCareImage",
@@ -85,8 +81,6 @@
     },
     "jr:\/\/file\/commcare\/image\/module0.png": {
       "doc_type": "HQMediaMapItem",
-      "output_size": {
-      },
       "version": null,
       "multimedia_id": "bdee5d5d5619bd3704a2ac4fa84a6cd8",
       "media_type": "CommCareImage",

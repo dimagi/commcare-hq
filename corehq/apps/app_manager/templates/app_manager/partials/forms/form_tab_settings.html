@@ -63,11 +63,7 @@
             <div class="alert alert-info">{% trans 'Form filtering is disabled for this form' %}</div>
           {% endif %}
 
-          {% if allow_form_workflow %}
-            {% include "app_manager/partials/forms/form_workflow.html" %}
-          {% else %}
-            <div class="alert alert-info">{% trans 'Form workflows are disabled for this form' %}</div>
-          {% endif %}
+          {% include "app_manager/partials/forms/form_workflow.html" %}
         </div>
       </div>
 

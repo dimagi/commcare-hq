@@ -905,11 +905,13 @@ class DomainUsernames(Resource):
 class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     config_id = None
+    table_id = None
 
     def dispatch(self, request_type, request, **kwargs):
         if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
             raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
         self.config_id = kwargs['config_id']
+        self.table_id = int(kwargs.get('table_id', 0))
         with TimingContext() as timer:
             response = super(ODataCaseResource, self).dispatch(request_type, request, **kwargs)
         record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
@@ -919,6 +921,7 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         data['domain'] = request.domain
         data['config_id'] = self.config_id
         data['api_path'] = request.path
+        data['table_id'] = self.table_id
         response = super(ODataCaseResource, self).create_response(
             request, data, response_class, **response_kwargs)
         return add_odata_headers(response)
@@ -945,8 +948,10 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)/feed" % self._meta.resource_name,
-                self.wrap_view('dispatch_list'))
+            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
+                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
+                self._meta.resource_name), self.wrap_view('dispatch_list')),
         ]
 
     def determine_format(self, request):
@@ -957,11 +962,13 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
 
     config_id = None
+    table_id = None
 
     def dispatch(self, request_type, request, **kwargs):
         if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
             raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
         self.config_id = kwargs['config_id']
+        self.table_id = int(kwargs.get('table_id', 0))
         with TimingContext() as timer:
             response = super(ODataFormResource, self).dispatch(request_type, request, **kwargs)
         record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
@@ -971,6 +978,7 @@ class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
         data['domain'] = request.domain
         data['config_id'] = self.config_id
         data['api_path'] = request.path
+        data['table_id'] = self.table_id
         response = super(ODataFormResource, self).create_response(
             request, data, response_class, **response_kwargs)
         return add_odata_headers(response)
@@ -997,8 +1005,10 @@ class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)/feed" % self._meta.resource_name,
-                self.wrap_view('dispatch_list'))
+            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
+                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
+                self._meta.resource_name), self.wrap_view('dispatch_list')),
         ]
 
     def determine_format(self, request):
