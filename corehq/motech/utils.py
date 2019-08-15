@@ -23,7 +23,7 @@ def b64_aes_encrypt(message):
 
     >>> settings.SECRET_KEY = 'xyzzy'
     >>> encrypted = b64_aes_encrypt('Around you is a forest.')
-    >>> encrypted == 'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I='
+    >>> encrypted == 'vhi5JRIioaX6x3zJYPO6x4Y7NxWZ5Nktdhd9ToUh1zM='
     True
 
     """
@@ -48,7 +48,7 @@ def b64_aes_decrypt(message):
     Uses Django SECRET_KEY as AES key.
 
     >>> settings.SECRET_KEY = 'xyzzy'
-    >>> decrypted = b64_aes_decrypt('Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I=')
+    >>> decrypted = b64_aes_decrypt('vhi5JRIioaX6x3zJYPO6x4Y7NxWZ5Nktdhd9ToUh1zM=')
     >>> decrypted == 'Around you is a forest.'
     True
 
