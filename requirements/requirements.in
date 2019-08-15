@@ -28,7 +28,6 @@ kombu==4.2.2.post1
 billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
 mock==2.0.0
 Pillow~=6.0
-pip-tools>=4.0.0
 phonenumberslite~=8.8
 psycopg2~=2.7.7
 psycogreen~=1.0

@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS "tmp_awc_location"
+DROP TABLE IF EXISTS "tmp_awc_location_local"
 {}
-CREATE TABLE "tmp_awc_location" (LIKE "awc_location" INCLUDING INDEXES)
+CREATE TABLE "tmp_awc_location_local" (LIKE "awc_location_local" INCLUDING INDEXES)
 {}

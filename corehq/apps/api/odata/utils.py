@@ -10,7 +10,7 @@ from corehq.util.datadog.utils import bucket_value
 FieldMetadata = namedtuple('FieldMetadata', ['name', 'odata_type'])
 
 
-def get_case_odata_fields_from_config(case_export_config):
+def get_case_odata_fields_from_config(case_export_config, table_id):
     # todo: this should eventually be handled by the data dictionary but we don't do a good
     # job of mapping that in exports today so we don't have datatype information handy.
     SPECIAL_TYPES = {
@@ -20,26 +20,33 @@ def get_case_odata_fields_from_config(case_export_config):
         'server_modified_on': 'Edm.DateTimeOffset',
         'opened_on': 'Edm.DateTimeOffset',
     }
-    return _get_odata_fields_from_columns(case_export_config, SPECIAL_TYPES)
+    return _get_odata_fields_from_columns(case_export_config, SPECIAL_TYPES, table_id)
 
 
-def get_form_odata_fields_from_config(form_export_config):
+def get_form_odata_fields_from_config(form_export_config, table_id):
     SPECIAL_TYPES = {
         'received_on': 'Edm.DateTimeOffset',
         'form.meta.timeStart': 'Edm.DateTimeOffset',
         'form.meta.timeEnd': 'Edm.DateTimeOffset',
     }
-    return _get_odata_fields_from_columns(form_export_config, SPECIAL_TYPES)
+    return _get_odata_fields_from_columns(form_export_config, SPECIAL_TYPES, table_id)
 
 
-def _get_odata_fields_from_columns(export_config, special_types):
+def _get_odata_fields_from_columns(export_config, special_types, table_id):
     def _get_dot_path(export_column):
         if export_column and export_column.item and export_column.item.path:
             return '.'.join(subpath.name for subpath in export_column.item.path)
         return None
 
+    if table_id + 1 > len(export_config.tables):
+        return []
+
+    table = export_config.tables[table_id]
+    if not table.selected:
+        return []
+
     return [FieldMetadata(column.label, special_types.get(_get_dot_path(column), 'Edm.String'))
-            for column in export_config.tables[0].selected_columns]
+            for column in table.selected_columns]
 
 
 def record_feed_access_in_datadog(request, config_id, duration, response):

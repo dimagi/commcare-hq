@@ -3,6 +3,6 @@
 {% url 'domain_subscription_view' domain as sub_url %}
 {% blocktrans %}
   <a href="{{ sub_url }}">Click here</a> to upgrade or reach
-  out to us at <a href="mailto:sales@dimagi.com">sales@dimagi.com</a>
+  out to us at <a href="mailto:{{ SALES_EMAIL }}">{{ SALES_EMAIL }}</a>
   to learn more!
 {% endblocktrans %}
