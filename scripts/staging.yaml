@@ -60,10 +60,7 @@ branches:
   - jls/resource-versions # Jenny July 24
   - jls/more-eof-nav # Jenny Aug 13
   #- jls/add-js-to-sentry # Jenny Aug 7
-  - jls/move-progenitor-app-id+jls/linked-app-multiple-masters+jls/copy-app-version
   - es/linked-app-migration  # ES Aug 6th
-  - jls/linked-app-multiple-masters+jls/copy-app-version
   - jls/linked-app-multiple-masters # Jenny June 18
-  - jls/copy-app-version # Jenny Aug 2
   - rn_fix_case_reassign_option_list #Negi Aug 14
 submodules: {}
