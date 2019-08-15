@@ -108,22 +108,6 @@
                                         </span>
                 {% endif %}
               </th>
-              {% if show_index_in_fixture %}
-                <th class="col-sm-1">
-                  {% trans "Index in Restore" %}
-                  <span class="hq-help-template"
-                        data-title="{% trans "Index in Restore" %}"
-                        data-content="{% blocktrans %}
-                                            Check this box to indicate that mobile should index this
-                                            field for faster filtering with large sets of locations.
-                                            To use this optimization, you'll need to reference the
-                                            field as a top-level attribute prefixed with 'data_'.
-                                            For example, reference a field called 'is_test' like:
-                                            instance('locations')/locations/location[data_is_test='1']
-                                          {% endblocktrans %}">
-                                    </span>
-                </th>
-              {% endif %}
               <th class="col-sm-1">{% trans "Delete" %}</th>
             </tr>
             </thead>
@@ -205,11 +189,6 @@
                                         </span>
                 {% endif %}
               </td>
-              {% if show_index_in_fixture %}
-                <td>
-                  <input type="checkbox" data-bind="checked: index_in_fixture"/>
-                </td>
-              {% endif %}
               <td>
                 <a type="button"
                    class="btn btn-danger"

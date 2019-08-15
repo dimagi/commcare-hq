@@ -49,6 +49,7 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
             is_odata_config=True,
             tables=[
                 TableConfiguration(
+                    selected=True,
                     columns=[
                         ExportColumn(label='closed', selected=True,
                                      # this is what exports generate for a base level property
@@ -115,6 +116,7 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
             is_odata_config=True,
             tables=[
                 TableConfiguration(
+                    selected=True,
                     columns=[
                         ExportColumn(label='received_on', selected=True,
                                      item=ExportItem(path=[PathNode(name='received_on')])),

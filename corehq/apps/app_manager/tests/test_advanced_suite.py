@@ -180,24 +180,6 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                                    './entry[2]/session')
         self.assertXmlPartialEqual(self.get_xml('load_case_from_fixture_instance'), suite, './entry[2]/instance')
 
-    @flag_enabled('CUSTOM_CALENDAR_FIXTURE')
-    def test_advanced_suite_load_case_from_fixture_with_custom_fixture(self):
-        app = Application.wrap(self.get_json('suite-advanced'))
-        app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
-            case_tag="adherence",
-            case_type="clinic",
-            load_case_from_fixture=LoadCaseFromFixture(
-                fixture_nodeset="instance('enikshay:calendar')/calendar/year/month/day[@date > 735992 and @date < 736000]",
-                fixture_tag="selected_date",
-                fixture_variable="./@date",
-                case_property="adherence_event_date",
-                auto_select=True,
-            )
-        ))
-        suite = app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('load_case_from_custom_fixture_session'), suite, './entry[2]/session')
-        self.assertXmlPartialEqual(self.get_xml('load_case_from_custom_fixture_instance'), suite, './entry[2]/instance')
-
     @flag_enabled('MOBILE_UCR')
     def test_advanced_suite_load_case_from_fixture_with_report_fixture(self):
         app = Application.wrap(self.get_json('suite-advanced'))

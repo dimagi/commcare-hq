@@ -48,6 +48,9 @@ class TestProcessor(PillowProcessor):
     def process_change(self, change):
         self.changes_seen.append(change)
 
+    def reset(self):
+        self.changes_seen = []
+
 
 class ChunkedCountProcessor(BulkPillowProcessor):
 

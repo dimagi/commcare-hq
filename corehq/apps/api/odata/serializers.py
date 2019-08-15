@@ -16,7 +16,13 @@ from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.util.view_utils import absolute_reverse
 
 
-class ODataCaseSerializer(Serializer):
+class ODataBaseSerializer(Serializer):
+
+    metadata_url = None
+    table_metadata_url = None
+
+    def get_config(self, config_id):
+        raise NotImplementedError("implement get_config")
 
     def to_json(self, data, options=None):
         # Convert bundled objects to JSON
@@ -27,10 +33,18 @@ class ODataCaseSerializer(Serializer):
         domain = data.pop('domain', None)
         config_id = data.pop('config_id', None)
         api_path = data.pop('api_path', None)
+        table_id = data.pop('table_id', None)
+
         assert all([domain, config_id, api_path]), [domain, config_id, api_path]
 
+        context_urlname = self.metadata_url
+        context_url_args = [domain, config_id]
+        if table_id > 0:
+            context_urlname = self.table_metadata_url
+            context_url_args.append(table_id)
+
         data['@odata.context'] = '{}#{}'.format(
-            absolute_reverse(ODataCaseMetadataView.urlname, args=[domain, config_id]),
+            absolute_reverse(context_urlname, args=context_url_args),
             'feed'
         )
 
@@ -38,9 +52,12 @@ class ODataCaseSerializer(Serializer):
         if next_link:
             data['@odata.nextLink'] = next_link
 
-        config = CaseExportInstance.get(config_id)
-        data['value'] = self.serialize_cases_using_config(data.pop('objects'), config)
-
+        config = self.get_config(config_id)
+        data['value'] = self.serialize_documents_using_config(
+            data.pop('objects'),
+            config,
+            table_id
+        )
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
 
     @staticmethod
@@ -50,71 +67,40 @@ class ODataCaseSerializer(Serializer):
             return '{}{}{}'.format(get_url_base(), api_path, next_page)
 
     @staticmethod
-    def serialize_cases_using_config(cases, config):
-        table = config.tables[0]
-        return [
-            {
-                col.label: col.get_value(
-                    config.domain,
-                    case_data.get('case_id', None),
-                    case_data,
-                    [],
-                    split_column=config.split_multiselects,
-                    transform_dates=config.transform_dates,
-                )
-                for col in table.selected_columns
-            }
-            for case_data in cases
-        ]
+    def serialize_documents_using_config(documents, config, table_id):
+        if table_id + 1 > len(config.tables):
+            return []
+
+        table = config.tables[table_id]
+        if not table.selected:
+            return []
+
+        data = []
+        for row_number, document in enumerate(documents):
+            rows = table.get_rows(
+                document,
+                row_number,
+                split_columns=config.split_multiselects,
+                transform_dates=config.transform_dates,
+                as_json=True,
+            )
+            data.extend(rows)
+        return data
 
 
-class ODataFormSerializer(Serializer):
+class ODataCaseSerializer(ODataBaseSerializer):
 
-    def to_json(self, data, options=None):
-        # Convert bundled objects to JSON
-        data['objects'] = [
-            bundle.obj for bundle in data['objects']
-        ]
+    metadata_url = ODataCaseMetadataView.urlname
+    table_metadata_url = ODataCaseMetadataView.table_urlname
 
-        domain = data.pop('domain', None)
-        config_id = data.pop('config_id', None)
-        api_path = data.pop('api_path', None)
-        assert all([domain, config_id, api_path]), [domain, config_id, api_path]
+    def get_config(self, config_id):
+        return CaseExportInstance.get(config_id)
 
-        data['@odata.context'] = '{}#{}'.format(
-            absolute_reverse(ODataFormMetadataView.urlname, args=[domain, config_id]),
-            'feed'
-        )
 
-        next_link = self.get_next_url(data.pop('meta'), api_path)
-        if next_link:
-            data['@odata.nextLink'] = next_link
+class ODataFormSerializer(ODataBaseSerializer):
 
-        config = FormExportInstance.get(config_id)
-        data['value'] = self.serialize_forms_using_config(data.pop('objects'), config)
+    metadata_url = ODataFormMetadataView.urlname
+    table_metadata_url = ODataFormMetadataView.table_urlname
 
-        return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
-
-    @staticmethod
-    def get_next_url(meta, api_path):
-        next_page = meta['next']
-        if next_page:
-            return '{}{}{}'.format(get_url_base(), api_path, next_page)
-
-    @staticmethod
-    def serialize_forms_using_config(forms, config):
-        table = config.tables[0]
-        return [
-            {
-                col.label: col.get_value(
-                    config.domain,
-                    form_data.get('_id', None),
-                    form_data,
-                    [],
-                    split_column=config.split_multiselects,
-                    transform_dates=config.transform_dates,
-                )
-                for col in table.selected_columns
-            }
-            for form_data in forms
-        ]
+    def get_config(self, config_id):
+        return FormExportInstance.get(config_id)

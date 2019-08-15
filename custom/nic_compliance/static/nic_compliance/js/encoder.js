@@ -46,17 +46,19 @@ hqDefine('nic_compliance/js/encoder', function () {
             _.each(ids, function (id) {
                 var $field = $('#' + id),
                     $form = $field.closest("form"),
+                    fieldType,
                     unencodedValue;
                 $form.submit(function () {
                     var passwordEncoder = HexParser();
                     unencodedValue = $field.val();
-                    $field.attr("disabled", true);
+                    fieldType = $field.attr("type");
+                    $field.attr("type", "password");
                     $field.val(passwordEncoder.encode(unencodedValue));
                 });
                 $(document).on("ajaxComplete", function (e, xhr, options) {
                     if ($form.attr("action").endsWith(options.url)) {
+                        $field.attr("type", fieldType);
                         $field.val(unencodedValue);
-                        $field.attr("disabled", false);
                     }
                 });
             });

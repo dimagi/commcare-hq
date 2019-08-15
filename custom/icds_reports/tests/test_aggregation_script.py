@@ -12,15 +12,21 @@ import sqlalchemy
 from freezegun import freeze_time
 from six.moves import zip
 
+from custom.icds_reports.exceptions import LocationRemovedException
+from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.tests.util import setup_locations_and_types
 from corehq.sql_db.connections import connection_manager
 from custom.icds_reports.models.aggregate import (
     AggregateInactiveAWW,
+    AwcLocation,
     get_cursor,
+    maybe_atomic,
 )
 from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
 from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
     InactiveAwwsAggregationHelper,
+    LocationAggregationHelper,
 )
 
 
@@ -505,3 +511,77 @@ class InactiveAWWsTest(TestCase):
         record = AggregateInactiveAWW.objects.filter(awc_id='a10').first()
         self.assertEquals(date(2017, 4, 5), record.first_submission)
         self.assertEquals(date(2017, 5, 5), record.last_submission)
+
+
+@override_settings(SERVER_ENVIRONMENT='icds')
+class LocationAggregationTest(TestCase):
+    domain_name = 'icds-cas'
+
+    @classmethod
+    def setUpClass(cls):
+        super(LocationAggregationTest, cls).setUpClass()
+
+        # save locations that are setup in module so we can add them back later
+        cls.all_locations = list(SQLLocation.objects.filter(domain=cls.domain_name).all())
+        cls.all_location_types = list(LocationType.objects.filter(domain=cls.domain_name).all())
+        SQLLocation.objects.filter(domain=cls.domain_name).delete()
+        LocationType.objects.filter(domain=cls.domain_name).delete()
+
+        setup_locations_and_types(
+            cls.domain_name,
+            ['state', 'district', 'block', 'supervisor', 'awc'],
+            [],
+            [
+                ('State1', [
+                    ('District1', [
+                        ('Block1', [
+                            ('Supervisor1', [
+                                ('Awc1', []),
+                                ('Awc2', []),
+                            ]),
+                            ('Supervisor2', [
+                                ('Awc3', []),
+                            ]),
+                        ]),
+                        ('Block2', []),
+                    ]),
+                ])
+            ]
+        )
+
+        cls.helper = LocationAggregationHelper()
+
+    @classmethod
+    def tearDownClass(cls):
+        SQLLocation.objects.filter(domain=cls.domain_name).delete()
+        LocationType.objects.filter(domain=cls.domain_name).delete()
+        LocationType.objects.bulk_create(cls.all_location_types)
+        SQLLocation.objects.bulk_create(cls.all_locations)
+        super(LocationAggregationTest, cls).tearDownClass()
+
+    def test_number_rows_csv(self):
+        csv = self.helper.generate_csv()
+        self.assertEqual(len(csv.readlines()), 4)
+
+    def test_agg(self):
+        # This is copied over in the module
+        self.assertEqual(AwcLocation.objects.count(), 92)
+
+        with maybe_atomic(AwcLocation):
+            # if we ran the aggregation now, we'd have 55 fewer locations
+            with self.assertRaisesRegex(LocationRemovedException, '55'):
+                with get_cursor(AwcLocation) as cursor:
+                    self.helper.aggregate(cursor)
+
+            try:
+                with maybe_atomic(AwcLocation):
+                    # run agg again without any locations in awc_location
+                    with get_cursor(AwcLocation) as cursor:
+                        cursor.execute("DELETE FROM awc_location")
+                        self.helper.aggregate(cursor)
+
+                    self.assertEqual(AwcLocation.objects.count(), 8)
+                    raise Exception("Don't allow this to be commited")
+            except Exception as e:
+                if 'allow this' not in str(e):
+                    raise
