@@ -1,10 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+# encoding: utf-8
+from __future__ import absolute_import, unicode_literals
+
 import doctest
-import six
+
 from django.test import SimpleTestCase
+
+import six
+
 import corehq.motech.utils
-from corehq.motech.utils import pad, pformat_json
+from corehq.motech.utils import (
+    b64_aes_decrypt,
+    b64_aes_encrypt,
+    pad,
+    pformat_json,
+)
 
 
 class PadTests(SimpleTestCase):
@@ -54,6 +63,26 @@ class PFormatJSONTests(SimpleTestCase):
             pformat_json(None),
             ''
         )
+
+
+class EncryptionTests(SimpleTestCase):
+
+    def assert_message_equals_plaintext(self, message):
+        assert isinstance(message, six.text_type)
+        ciphertext = b64_aes_encrypt(message)
+        plaintext = b64_aes_decrypt(ciphertext)
+        self.assertEqual(plaintext, message)
+        self.assertIsInstance(ciphertext, six.text_type)
+        self.assertIsInstance(plaintext, six.text_type)
+
+    def test_encrypt_decrypt_ascii(self):
+        message = 'Around you is a forest.'
+        self.assert_message_equals_plaintext(message)
+
+    def test_encrypt_decrypt_utf8(self):
+        message = 'आपके आसपास एक जंगल है'
+        self.assert_message_equals_plaintext(message)
+
 
 class DocTests(SimpleTestCase):
 
