@@ -4621,6 +4621,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     add_ons = DictProperty()
     smart_lang_display = BooleanProperty()  # null means none set so don't default to false/true
 
+    family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
+
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
 
@@ -5565,8 +5567,9 @@ class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
-    # This is the id of the master application
-    master = StringProperty()
+    master = StringProperty()  # Legacy, should be removed once all linked apps support multiple masters
+    upstream_app_id = StringProperty()  # ID of the app that was most recently pulled
+    upstream_version = IntegerProperty()  # Version of the app that was most recently pulled
 
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
@@ -5616,12 +5619,13 @@ class LinkedApplication(Application):
 def import_app(app_id_or_source, domain, source_properties=None, request=None):
     if isinstance(app_id_or_source, six.string_types):
         soft_assert_type_text(app_id_or_source)
-        app_id = app_id_or_source
-        source = get_app(None, app_id)
+        app_family_id = app_id_or_source
+        source = get_app(None, app_family_id)
         source_domain = source['domain']
         source = source.export_json(dump_json=False)
         report_map = get_static_report_mapping(source_domain, domain)
     else:
+        app_family_id = app_id_or_source.get('_id', None)
         cls = get_correct_app_class(app_id_or_source)
         # Don't modify original app source
         app = cls.wrap(deepcopy(app_id_or_source))
@@ -5643,6 +5647,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     app = cls.from_source(source, domain)
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+    app.family_id = app_family_id
 
     if report_map:
         for module in app.get_report_modules():
