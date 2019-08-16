@@ -270,7 +270,6 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
 class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_odata_case_feed'
     page_title = ugettext_lazy("Create OData Case Feed")
-    allow_deid = False
 
     def create_new_export_instance(self, schema):
         export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(schema)
@@ -282,7 +281,6 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
 class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_odata_form_feed'
     page_title = ugettext_lazy("Create OData Form Feed")
-    allow_deid = False
 
     def create_new_export_instance(self, schema):
         export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(schema)
