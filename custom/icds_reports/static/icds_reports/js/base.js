@@ -4,7 +4,7 @@ hqDefine("icds_reports/js/base", function () {
             e.stopPropagation();
             var applyBtn = $('#apply-filters');
             var mprLocationInfo = $('#mpr-banner-info');
-            var isMprReport = mprLocationInfo.length == 1;
+            var isMprReport = mprLocationInfo.length === 1;
 
             if (isMprReport) {
                 var isSectorOrAWCSelected = $('select.form-control').length >= 4;
@@ -18,7 +18,7 @@ hqDefine("icds_reports/js/base", function () {
                 }, 0);
             } else {
                 var state = $('select.form-control')[0].selectedIndex;
-                if (state == 0) {
+                if (state === 0) {
                     applyBtn.disableButtonNoSpinner();
                 } else {
                     applyBtn.enableButton();
