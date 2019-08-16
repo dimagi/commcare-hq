@@ -38,7 +38,6 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
-from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
@@ -46,11 +45,7 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.es.groups import GroupES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
-from corehq.apps.groups.models import Group
-from corehq.apps.hqadmin.reporting.exceptions import (
-    HistoTypeNotFoundException,
-    IntervalNotFoundException,
-)
+from corehq.apps.hqadmin.reporting.exceptions import IntervalNotFoundException
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.models import SQLMobileBackend
@@ -134,23 +129,6 @@ def intervals(interval, start_date, end_date):
         )
         ending_date = closing_date if closing_date < end_date else end_date
         yield (starting_date, ending_date)
-
-
-def get_project_spaces(facets=None):
-    """
-    Returns a list of names of project spaces that satisfy the facets
-    """
-    real_domain_query = (
-        DomainES()
-        .fields(["name"])
-        .size(DOMAIN_COUNT_UPPER_BOUND)
-    )
-    if facets:
-        real_domain_query = add_params_to_query(real_domain_query, facets)
-    domain_names = [hit['name'] for hit in real_domain_query.run().hits]
-    if 'search' in facets:
-        return list(set(domain_names) & set(facets['search']))
-    return domain_names
 
 
 def get_mobile_users(domains):
@@ -1041,41 +1019,3 @@ def get_location_type_data(domains, datespan, interval,
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
-
-
-HISTO_TYPE_TO_FUNC = {
-    "active_cases": get_active_cases_stats,
-    "active_countries": get_active_countries_stats_data,
-    "active_dimagi_gateways": get_active_dimagi_owned_gateway_projects,
-    "active_domains": get_active_domain_stats_data,
-    "active_mobile_users": get_active_users_data,
-    "active_supply_points": get_active_supply_points_data,
-    "cases": get_case_stats,
-    "commtrack_forms": commtrack_form_submissions,
-    "countries": get_countries_stats_data,
-    "domains": get_domain_stats_data,
-    "forms": get_form_stats,
-    "location_types": get_location_type_data,
-    "mobile_clients": get_total_clients_data,
-    "mobile_workers": get_mobile_workers_data,
-    "real_sms_messages": get_real_sms_messages_data,
-    "sms_domains": get_commconnect_domain_stats_data,
-    "sms_only_domains": get_sms_only_domain_stats_data,
-    "stock_transactions": get_stock_transaction_stats_data,
-    "subscriptions": get_all_subscriptions_stats_data,
-    "total_products": get_products_stats_data,
-    "unique_locations": get_unique_locations_data,
-    "users": get_user_stats,
-    "users_all": get_users_all_stats,
-}
-
-
-def get_stats_data(histo_type, domain_params, datespan, interval, **kwargs):
-    if histo_type in HISTO_TYPE_TO_FUNC:
-        return HISTO_TYPE_TO_FUNC[histo_type](
-            domain_params,
-            datespan,
-            interval,
-            **kwargs
-        )
-    raise HistoTypeNotFoundException(histo_type)
