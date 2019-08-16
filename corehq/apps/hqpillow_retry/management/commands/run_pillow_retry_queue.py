@@ -13,15 +13,17 @@ from django import db
 class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
     help = "Runs the Pillow Retry Queue"
 
+    def get_fetching_interval(self):
+        return 0
+
     def get_queue_name(self):
         return "pillow-queue"
 
     def get_enqueuing_timeout(self):
         return PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT
 
-    @staticmethod
-    def _get_items(utcnow):
-        errors = PillowError.get_errors_to_process(utcnow=utcnow, limit=1000)
+    def _get_items(self, utcnow):
+        errors = PillowError.get_errors_to_process(utcnow=utcnow, limit=10000)
         return [QueueItem(id=e.id, key=e.date_next_attempt, object=e) for e in errors]
 
     def get_items_to_be_processed(self, utcnow):
