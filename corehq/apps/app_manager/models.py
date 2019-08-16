@@ -4117,6 +4117,15 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         ).first()
 
     @memoized
+    def _get_version_comparison_build(self):
+        '''
+        Returns an earlier build to be used for comparing forms and multimedia
+        when making a new build and setting the versions of those items.
+        For normal applications, this is just the previous build.
+        '''
+        return self.get_latest_build()
+
+    @memoized
     def get_latest_saved(self):
         """
         This looks really similar to get_latest_app, not sure why tim added
@@ -4741,7 +4750,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
-        latest_build = self.get_latest_build()
+        latest_build = self._get_version_comparison_build()
         if not latest_build:
             return
         force_new_version = self.build_profiles != latest_build.build_profiles
@@ -4777,8 +4786,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
 
         # access to .multimedia_map is slow
-        latest_build = self.get_latest_build()
-        prev_multimedia_map = latest_build.multimedia_map if latest_build else {}
+        previous_version = self._get_version_comparison_build()
+        prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
         for path, map_item in six.iteritems(self.multimedia_map):
             prev_map_item = prev_multimedia_map.get(path, None)
@@ -5590,7 +5599,7 @@ class LinkedApplication(Application):
     @memoized
     def get_master_app_briefs(self):
         if self.domain_link:
-            return get_master_app_briefs(self.domain_link)
+            return get_master_app_briefs(self.domain_link, self.family_id)
         return []
 
     @property
@@ -5605,19 +5614,30 @@ class LinkedApplication(Application):
 
     def get_latest_master_releases_versions(self):
         if self.domain_link:
-            return get_latest_master_releases_versions(self.domain_link)
+            versions = get_latest_master_releases_versions(self.domain_link)
+            # Use self.get_master_app_briefs to limit return value by family_id
+            master_ids = [b.id for b in self.get_master_app_briefs()]
+            return {key: value for key, value in versions.items() if key in master_ids}
         return {}
 
     @memoized
-    def get_previous_version(self, master_app_id=None):
-        if master_app_id is None:
-            master_app_id = self.upstream_app_id
-        build_ids = get_build_ids(self.domain, self.master_id)
+    def get_latest_build_from_upstream(self, upstream_app_id):
+        build_ids = get_build_ids(self.domain, upstream_app_id)
         for build_id in build_ids:
             build_doc = Application.get_db().get(build_id)
-            if build_doc.get('upstream_app_id', build_doc['master']) == master_app_id:
+            if build_doc.get('upstream_app_id', build_doc['master']) == upstream_app_id:
                 return self.wrap(build_doc)
         return None
+
+    @memoized
+    def _get_version_comparison_build(self):
+        previous_version = super(LinkedApplication, self)._get_version_comparison_build()
+        if not previous_version:
+            # If there's no previous version, check for a previous version in the same family.
+            # This allows projects using multiple masters to copy a master app and start pulling
+            # from that copy without resetting the form and multimedia versions.
+            previous_version = self.get_latest_build_from_upstream(self.family_id)
+        return previous_version
 
     def reapply_overrides(self):
         # Used by app_manager.views.utils.update_linked_app()
@@ -5637,7 +5657,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     else:
         source_app = wrap_app(app_id_or_source)
     source_domain = source_app.domain
-    app_family_id = source_app.get_id
+    family_id = source_app.get_id
     source = source_app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']
@@ -5656,7 +5676,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     app.convert_build_to_app()
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
-    app.family_id = app_family_id
+    app.family_id = family_id
 
     report_map = get_static_report_mapping(source_domain, domain)
     if report_map:

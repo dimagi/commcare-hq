@@ -14,6 +14,7 @@ from corehq.apps.app_manager.models import (
     LinkedApplication,
     ReportAppConfig,
     ReportModule,
+    import_app,
 )
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
@@ -216,6 +217,43 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(_get_form_ids_by_xmlns(linked_master1_build4)[xmlns],
                          _get_form_ids_by_xmlns(linked_master2_build2)[xmlns])
 
+    def test_multi_master_copy_master(self):
+        '''
+        This tests that when a master app A is copied to A' and the linked app is pulled from A',
+        the linked app's form unique ids remain consistent, and form and multimedia versions
+        do NOT increment just because of the copy.
+        '''
+
+        # Add single module and form, with image, to master, and pull linked app.
+        master1_module = self.master1.add_module(Module.new_module('Module for master', None))
+        master1_module.new_form('Form for master', 'en', get_blank_form_xml('Form for master'))
+        image_path = 'jr://file/commcare/photo.jpg'
+        self.master1.create_mapping(CommCareImage(_id='123'), image_path)
+        self.master1.get_module(0).set_icon('en', image_path)
+        self._make_master1_build()
+        self.linked_app.family_id = self.master1.get_id
+        self.linked_app.save()
+        self._pull_linked_app(self.master1.get_id)
+        build1 = self._make_linked_build()
+
+        # Make a copy of master and pull it.
+        master_copy = import_app(self.master1.get_id, self.master1.domain)
+        self._make_build(app=master_copy)
+        self._pull_linked_app(master_copy.get_id)
+        build2 = self._make_linked_build()
+
+        # Verify form XMLNS, form unique id, form version, and multimedia version all match.
+        form1 = build1.get_module(0).get_form(0)
+        form2 = build2.get_module(0).get_form(0)
+        self.assertEqual(form1.xmlns, form2.xmlns)
+        self.assertEqual(form1.unique_id, form2.unique_id)
+        self.assertNotEqual(build1.version, build2.version)
+        self.assertEqual(form1.get_version(), form2.get_version())
+        map_item1 = build1.multimedia_map[image_path]
+        map_item2 = build2.multimedia_map[image_path]
+        self.assertEqual(map_item1.unique_id, map_item2.unique_id)
+        self.assertEqual(map_item1.version, map_item2.version)
+
     def test_get_latest_master_release(self):
         master_id = self.master1.get_id
 
@@ -271,6 +309,33 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self._pull_linked_app(self.master2.get_id)
         self.assertEqual(self.linked_app.upstream_app_id, self.master2.get_id)
         self.assertEqual(self.linked_app.upstream_version, original_master2_version + 3)
+
+    def test_get_latest_build_from_upstream(self):
+        # Make build of master1, pull linked app, and make linked app build
+        self._make_master1_build()
+        update_linked_app(self.linked_app, self.master1.get_id, 'test_incremental_versioning')
+        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        linked_build1 = self._make_linked_build()
+
+        # Make several builds of master2, each also pulled to linked app and built there
+        self._make_master2_build()
+        self._make_master2_build()
+        update_linked_app(self.linked_app, self.master2.get_id, 'test_incremental_versioning')
+        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        linked_build2 = self._make_linked_build()
+        self._make_master2_build()
+        self._make_master2_build()
+        update_linked_app(self.linked_app, self.master2.get_id, 'test_incremental_versioning')
+        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        linked_build3 = self._make_linked_build()
+
+        previous_master2_version = linked_build3.get_latest_build_from_upstream(self.master2.get_id)
+        self.assertEqual(previous_master2_version.upstream_app_id, self.master2.get_id)
+        self.assertEqual(previous_master2_version.get_id, linked_build2.get_id)
+
+        previous_master1_version = linked_build3.get_latest_build_from_upstream(self.master1.get_id)
+        self.assertEqual(previous_master1_version.upstream_app_id, self.master1.get_id)
+        self.assertEqual(previous_master1_version.get_id, linked_build1.get_id)
 
     def test_get_latest_master_release_not_permitted(self):
         release = self._make_master1_build(True)
