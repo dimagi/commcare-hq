@@ -41,7 +41,7 @@ def b64_aes_encrypt(message):
 
     >>> settings.SECRET_KEY = 'xyzzy'
     >>> encrypted = b64_aes_encrypt('Around you is a forest.')
-    >>> encrypted == 'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I='
+    >>> encrypted == 'Vh2Tmlnr5+out2PQDefkudZ2frfze5onsAlUGTLv3Oc='
     True
 
     """
@@ -50,10 +50,12 @@ def b64_aes_encrypt(message):
     else:
         secret_key_bytes = settings.SECRET_KEY.encode('ascii')
     aes_key = simple_pad(secret_key_bytes, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
+    # We never need to unpad the key, so simple_pad() is fine (and
+    # allows us to decrypt old values).
     aes = AES.new(aes_key, AES.MODE_ECB)
 
     message_bytes = message if isinstance(message, bytes) else message.encode('utf8')
-    plaintext_bytes = simple_pad(message_bytes, AES_BLOCK_SIZE)
+    plaintext_bytes = crypto_pad(message_bytes, AES_BLOCK_SIZE, style='iso7816')
     ciphertext_bytes = aes.encrypt(plaintext_bytes)
     b64ciphertext_bytes = b64encode(ciphertext_bytes)
     return b64ciphertext_bytes.decode('ascii')
