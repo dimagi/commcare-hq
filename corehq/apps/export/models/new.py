@@ -525,9 +525,9 @@ class TableConfiguration(DocumentSchema):
                     if isinstance(val, list):
                         headers = col.get_headers(split_column=split_columns)
                         for subval_ind, subval in enumerate(val):
-                            row_data[headers[subval_ind]] = subval
+                            row_data[headers[subval_ind]] = "{}".format(subval)
                     else:
-                        row_data[col.label] = val
+                        row_data[col.label] = "{}".format(val)
                 elif isinstance(val, list):
                     row_data.extend(val)
                 else:
