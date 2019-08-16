@@ -522,12 +522,11 @@ class TableConfiguration(DocumentSchema):
                     transform_dates=transform_dates,
                 )
                 if as_json:
-                    if isinstance(val, list):
-                        headers = col.get_headers(split_column=split_columns)
-                        for subval_ind, subval in enumerate(val):
-                            row_data[headers[subval_ind]] = "{}".format(subval)
-                    else:
-                        row_data[col.label] = "{}".format(val)
+                    for ind, header in enumerate(col.get_headers(split_column=split_columns)):
+                        if isinstance(val, list):
+                            row_data[header] = "{}".format(val[ind])
+                        else:
+                            row_data[header] = "{}".format(val)
                 elif isinstance(val, list):
                     row_data.extend(val)
                 else:
