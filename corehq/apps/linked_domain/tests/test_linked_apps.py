@@ -44,10 +44,10 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
             ReportAppConfig(report_id='master_report_id', header={'en': 'CommBugz'}),
         ]
 
-        cls.plain_master_app = Application.new_app(cls.domain, "Master Application")
+        cls.master1 = Application.new_app(cls.domain, "Master Application")
         cls.linked_domain = 'domain-2'
-        cls.plain_master_app.linked_whitelist = [cls.linked_domain]
-        cls.plain_master_app.save()
+        cls.master1.linked_whitelist = [cls.linked_domain]
+        cls.master1.save()
 
         cls.linked_app = LinkedApplication.new_app(cls.linked_domain, "Linked Application")
         cls.linked_app.save()
@@ -57,7 +57,7 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
     @classmethod
     def tearDownClass(cls):
         cls.linked_app.delete()
-        cls.plain_master_app.delete()
+        cls.master1.delete()
         cls.domain_link.delete()
         super(BaseLinkedAppsTest, cls).tearDownClass()
 
@@ -78,7 +78,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(linked_app.modules[0].report_configs[0].report_id, 'mapped_id')
 
     def test_overwrite_app_maintain_ids(self):
-        module = self.plain_master_app.add_module(Module.new_module('M1', None))
+        module = self.master1.add_module(Module.new_module('M1', None))
         module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
 
         module = self.linked_app.add_module(Module.new_module('M1', None))
@@ -86,25 +86,25 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         id_map_before = _get_form_ids_by_xmlns(self.linked_app)
 
-        overwrite_app(self.linked_app, self.plain_master_app, {})
+        overwrite_app(self.linked_app, self.master1, {})
         self.assertEqual(
             id_map_before,
             _get_form_ids_by_xmlns(LinkedApplication.get(self.linked_app._id))
         )
 
     def test_get_master_version(self):
-        self.linked_app.master = self.plain_master_app.get_id
+        self.linked_app.master = self.master1.get_id
 
         self.assertIsNone(self.linked_app.get_master_version())
 
-        copy = self.plain_master_app.make_build()
+        copy = self.master1.make_build()
         copy.save()
         self.addCleanup(copy.delete)
 
         self.assertIsNone(self.linked_app.get_master_version())
 
-        self.plain_master_app.save()  # increment version number
-        copy1 = self.plain_master_app.make_build()
+        self.master1.save()  # increment version number
+        copy1 = self.master1.make_build()
         copy1.is_released = True
         copy1.save()
         self.addCleanup(copy1.delete)
@@ -112,18 +112,18 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(copy1.version, self.linked_app.get_master_version())
 
     def test_get_latest_master_release(self):
-        self.linked_app.master = self.plain_master_app.get_id
+        self.linked_app.master = self.master1.get_id
 
         self.assertIsNone(self.linked_app.get_latest_master_release())
 
-        copy = self.plain_master_app.make_build()
+        copy = self.master1.make_build()
         copy.save()
         self.addCleanup(copy.delete)
 
         self.assertIsNone(self.linked_app.get_latest_master_release())
 
-        self.plain_master_app.save()  # increment version number
-        copy1 = self.plain_master_app.make_build()
+        self.master1.save()  # increment version number
+        copy1 = self.master1.make_build()
         copy1.is_released = True
         copy1.save()
         self.addCleanup(copy1.delete)
@@ -133,9 +133,9 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(copy1._rev, latest_master_release._rev)
 
     def test_get_latest_master_release_not_permitted(self):
-        self.linked_app.master = self.plain_master_app.get_id
+        self.linked_app.master = self.master1.get_id
 
-        release = self.plain_master_app.make_build()
+        release = self.master1.make_build()
         release.is_released = True
         release.save()
         self.addCleanup(release.delete)
@@ -160,14 +160,14 @@ class TestLinkedApps(BaseLinkedAppsTest):
     def test_override_translations(self):
         translations = {'en': {'updates.check.begin': 'update?'}}
 
-        self.linked_app.master = self.plain_master_app.get_id
+        self.linked_app.master = self.master1.get_id
 
-        copy = self.plain_master_app.make_build()
+        copy = self.master1.make_build()
         copy.save()
         self.addCleanup(copy.delete)
 
-        self.plain_master_app.save()  # increment version number
-        copy1 = self.plain_master_app.make_build()
+        self.master1.save()  # increment version number
+        copy1 = self.master1.make_build()
         copy1.is_released = True
         copy1.save()
         self.addCleanup(copy1.delete)
@@ -180,14 +180,14 @@ class TestLinkedApps(BaseLinkedAppsTest):
         # fetch after update to get the new version
         self.linked_app = LinkedApplication.get(self.linked_app._id)
 
-        self.assertEqual(self.plain_master_app.translations, {})
+        self.assertEqual(self.master1.translations, {})
         self.assertEqual(self.linked_app.linked_app_translations, translations)
         self.assertEqual(self.linked_app.translations, translations)
 
     @patch('corehq.apps.app_manager.models.get_and_assert_practice_user_in_domain', lambda x, y: None)
     def test_overrides(self):
-        self.plain_master_app.practice_mobile_worker_id = "123456"
-        self.plain_master_app.save()
+        self.master1.practice_mobile_worker_id = "123456"
+        self.master1.save()
         image_data = _get_image_data()
         image = CommCareImage.get_by_data(image_data)
         image.attach_data(image_data, original_filename='logo.png')
@@ -211,14 +211,14 @@ class TestLinkedApps(BaseLinkedAppsTest):
             },
         }
 
-        self.linked_app.master = self.plain_master_app.get_id
+        self.linked_app.master = self.master1.get_id
 
-        copy = self.plain_master_app.make_build()
+        copy = self.master1.make_build()
         copy.save()
         self.addCleanup(copy.delete)
 
-        self.plain_master_app.save()  # increment version number
-        copy1 = self.plain_master_app.make_build()
+        self.master1.save()  # increment version number
+        copy1 = self.master1.make_build()
         copy1.is_released = True
         copy1.save()
         self.addCleanup(copy1.delete)
@@ -238,14 +238,14 @@ class TestLinkedApps(BaseLinkedAppsTest):
         # fetch after update to get the new version
         self.linked_app = LinkedApplication.get(self.linked_app._id)
 
-        self.assertEqual(self.plain_master_app.logo_refs, {})
+        self.assertEqual(self.master1.logo_refs, {})
         self.assertEqual(self.linked_app.linked_app_logo_refs, logo_refs)
         self.assertEqual(self.linked_app.logo_refs, logo_refs)
         self.assertEqual(self.linked_app.commcare_flavor, 'commcare_lts')
         self.assertEqual(self.linked_app.linked_app_attrs, {
             'target_commcare_flavor': 'commcare_lts',
         })
-        self.assertEqual(self.plain_master_app.practice_mobile_worker_id, '123456')
+        self.assertEqual(self.master1.practice_mobile_worker_id, '123456')
         self.assertEqual(self.linked_app.practice_mobile_worker_id, 'abc123456def')
         # cleanup the linked app properties
         self.linked_app.linked_app_logo_refs = {}
@@ -292,7 +292,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         image_data = _get_image_data()
         cls.image = CommCareImage.get_by_data(image_data)
         cls.image.attach_data(image_data, original_filename='logo.png')
-        cls.image.add_domain(cls.plain_master_app.domain)
+        cls.image.add_domain(cls.master1.domain)
 
     @classmethod
     def tearDownClass(cls):
