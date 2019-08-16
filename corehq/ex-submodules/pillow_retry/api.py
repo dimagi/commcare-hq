@@ -37,15 +37,15 @@ def process_pillow_retry(error_doc):
     delete_all_for_doc = False
     try:
         change_metadata = change.metadata
-        if change_metadata:
-            document_store = get_document_store(
-                data_source_type=change_metadata.data_source_type,
-                data_source_name=change_metadata.data_source_name,
-                domain=change_metadata.domain,
-                load_source="pillow_retry",
-            )
-            change.document_store = document_store
         if isinstance(pillow.get_change_feed(), CouchChangeFeed):
+            if change_metadata:
+                document_store = get_document_store(
+                    data_source_type=change_metadata.data_source_type,
+                    data_source_name=change_metadata.data_source_name,
+                    domain=change_metadata.domain,
+                    load_source="pillow_retry",
+                )
+                change.document_store = document_store
             pillow.process_change(change)
         else:
             if change_metadata.data_source_type in ('couch', 'sql'):
