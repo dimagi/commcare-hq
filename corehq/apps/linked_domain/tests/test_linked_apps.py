@@ -164,7 +164,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         self.linked_app.master = self.master1.get_id
 
-        self._make_master1_build()
+        self._make_master1_build(True)
+        self._make_master1_build(True)
 
         self.linked_app.linked_app_translations = translations
         self.linked_app.save()
