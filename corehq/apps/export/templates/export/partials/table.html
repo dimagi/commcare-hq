@@ -297,26 +297,26 @@
               <i class="fa fa-cloud-download"></i>
               {% trans "Download" %}
             </a>
-
-            <div class="input-group"
-                 data-bind="visible: isFeed">
-              <!-- ko with: feedUrl -->
-              <span data-bind="css: {
-                                 'input-group-btn': showLink
-                               },
-                               click: copyLinkRequested">
-                <a class="btn btn-default btn-sm">
-                  <i class="fa fa-clipboard"></i>
-                  {% trans "Copy Dashboard Feed Link" %}
-                </a>
-              </span>
-              <input data-bind="visible: showLink,
-                                value: url"
-                     type="text"
-                     class="form-control input-sm"
-                     readonly />
-              <!-- /ko -->
-            </div>
+            <!-- ko if: isFeed -->
+              <div class="input-group">
+                <!-- ko with: feedUrl -->
+                <span data-bind="css: {
+                                   'input-group-btn': showLink
+                                 },
+                                 click: copyLinkRequested">
+                  <a class="btn btn-default btn-sm">
+                    <i class="fa fa-clipboard"></i>
+                    {% trans "Copy Dashboard Feed Link" %}
+                  </a>
+                </span>
+                <input data-bind="visible: showLink,
+                                  value: url"
+                       type="text"
+                       class="form-control input-sm"
+                       readonly />
+                <!-- /ko -->
+              </div>
+            <!-- /ko -->
           </div>
 
           <div data-bind="if: isLocationSafeForUser">
