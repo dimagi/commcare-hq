@@ -333,10 +333,6 @@ SMS_ADMIN_INTERFACES = (
 )
 
 
-BASIC_REPORTS = (
-    (_('Project Stats'), ()),
-)
-
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
         UserListReport,
