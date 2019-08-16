@@ -75,6 +75,17 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
 
 
 class TestLinkedApps(BaseLinkedAppsTest):
+    def _make_master1_build(self, release=True):
+        return self._make_build(app=self.master1, release=release)
+
+    def _make_build(self, app, release):
+        app.save()  # increment version number
+        copy = app.make_build()
+        copy.is_released = release
+        copy.save()
+        self.addCleanup(copy.delete)
+        return copy
+
     def test_missing_ucrs(self):
         with self.assertRaises(AppEditingError):
             overwrite_app(self.linked_app, self.master_app_with_report_modules, {})
@@ -104,19 +115,10 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.linked_app.master = self.master1.get_id
 
         self.assertIsNone(self.linked_app.get_master_version())
-
-        copy = self.master1.make_build()
-        copy.save()
-        self.addCleanup(copy.delete)
-
+        self._make_master1_build(release=False)
         self.assertIsNone(self.linked_app.get_master_version())
 
-        self.master1.save()  # increment version number
-        copy1 = self.master1.make_build()
-        copy1.is_released = True
-        copy1.save()
-        self.addCleanup(copy1.delete)
-
+        copy1 = self._make_master1_build()
         self.assertEqual(copy1.version, self.linked_app.get_master_version())
 
     def test_get_latest_master_release(self):
@@ -124,18 +126,10 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         self.assertIsNone(self.linked_app.get_latest_master_release())
 
-        copy = self.master1.make_build()
-        copy.save()
-        self.addCleanup(copy.delete)
-
+        self._make_master1_build(release=False)
         self.assertIsNone(self.linked_app.get_latest_master_release())
 
-        self.master1.save()  # increment version number
-        copy1 = self.master1.make_build()
-        copy1.is_released = True
-        copy1.save()
-        self.addCleanup(copy1.delete)
-
+        copy1 = self._make_master1_build()
         latest_master_release = self.linked_app.get_latest_master_release()
         self.assertEqual(copy1.get_id, latest_master_release.get_id)
         self.assertEqual(copy1._rev, latest_master_release._rev)
@@ -143,11 +137,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
     def test_get_latest_master_release_not_permitted(self):
         self.linked_app.master = self.master1.get_id
 
-        release = self.master1.make_build()
-        release.is_released = True
-        release.save()
-        self.addCleanup(release.delete)
-
+        release = self._make_master1_build()
         latest_master_release = self.linked_app.get_latest_master_release()
         self.assertEqual(release.get_id, latest_master_release.get_id)
 
@@ -170,15 +160,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         self.linked_app.master = self.master1.get_id
 
-        copy = self.master1.make_build()
-        copy.save()
-        self.addCleanup(copy.delete)
-
-        self.master1.save()  # increment version number
-        copy1 = self.master1.make_build()
-        copy1.is_released = True
-        copy1.save()
-        self.addCleanup(copy1.delete)
+        self._make_master1_build()
 
         self.linked_app.linked_app_translations = translations
         self.linked_app.save()
@@ -221,15 +203,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         self.linked_app.master = self.master1.get_id
 
-        copy = self.master1.make_build()
-        copy.save()
-        self.addCleanup(copy.delete)
-
-        self.master1.save()  # increment version number
-        copy1 = self.master1.make_build()
-        copy1.is_released = True
-        copy1.save()
-        self.addCleanup(copy1.delete)
+        self._make_master1_build()
+        self._make_master1_build()
 
         self.linked_app.version = 1
 
@@ -273,16 +248,11 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.addCleanup(linked_app.delete)
 
         master_app.add_module(Module.new_module('M1', None))
-        copy1 = master_app.make_build()
-        copy1.save()
-        self.addCleanup(copy1.delete)
+        copy1 = self._make_master1_build()
 
         master_app.add_module(Module.new_module('M2', None))
         master_app.save()  # increment version number
-        copy2 = master_app.make_build()
-        copy2.is_released = True
-        copy2.save()
-        self.addCleanup(copy2.delete)
+        self._make_master1_build()
 
         update_linked_app(linked_app, 'test_update_from_specific_build', master_build=copy1)
         # fetch after update to get the new version
