@@ -5,7 +5,7 @@ import logging
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.analytics.couchaccessors import get_ledger_values_for_case_as_of
-from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values, get_aggregated_ledger_values
+from corehq.apps.reports.analytics.dbaccessors import get_wrapped_ledger_values, get_aggregated_ledger_values
 
 from dimagi.utils.couch.database import iter_docs
 from memoized import memoized

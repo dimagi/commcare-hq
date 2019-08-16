@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.analytics.esaccessors import (
+from corehq.apps.reports.analytics.dbaccessors import (
     get_wrapped_ledger_values,
     products_with_ledgers,
 )

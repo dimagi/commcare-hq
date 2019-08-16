@@ -31,6 +31,7 @@ from casexml.apps.case.const import CASE_ACTION_CREATE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.pillows.case import transform_case_for_elasticsearch
+from corehq.apps.reports.analytics.dbaccessors import get_aggregated_ledger_values
 from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
     get_completed_counts_by_user,
@@ -53,7 +54,6 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_username_in_last_form_user_id_submitted,
     get_form_ids_having_multimedia,
     scroll_case_names,
-    get_aggregated_ledger_values,
     get_case_types_for_domain_es,
 )
 from corehq.apps.es.aggregations import MISSING_KEY

@@ -32,7 +32,6 @@ from corehq.apps.es.cases import (
     case_type as case_type_filter,
 )
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
-from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.elastic import ES_DEFAULT_INSTANCE, ES_EXPORT_INSTANCE
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_datetime
@@ -573,34 +572,6 @@ def get_username_in_last_form_user_id_submitted(domain, user_id):
     user_submissions = submissions.get(user_id, None)
     if user_submissions:
         return user_submissions[0]['form']['meta'].get('username', None)
-
-
-def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None):
-    if isinstance(case_ids, (list, tuple, set)):
-        case_ids_list = list(case_ids)
-    else:
-        case_ids_list = [case_ids]
-    return LedgerAccessors(domain).get_ledger_values_for_cases(case_ids_list, section_id, entry_ids)
-
-
-def products_with_ledgers(domain, case_ids, section_id, entry_ids=None):
-    return {
-        ledger.entry_id
-        for ledger in get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids)
-    }
-
-
-def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
-    ledgers = get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids)
-    ret = defaultdict(lambda: 0)
-    for ledger in ledgers:
-        ret[ledger.entry_id] += ledger.balance
-
-    row_class = namedtuple('AggregateLedgerValue', ['entry_id', 'balance'])
-    return [
-        row_class(entry_id, balance)
-        for entry_id, balance in ret.items()
-    ]
 
 
 def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
