@@ -11,7 +11,7 @@ from corehq.apps.app_manager.const import (
     WORKFLOW_ROOT,
     WORKFLOW_PARENT_MODULE,
 )
-from corehq.apps.app_manager.models import FormDatum, FormLink
+from corehq.apps.app_manager.models import Application, FormDatum, FormLink
 from corehq.apps.app_manager.suite_xml.post_process.workflow import _replace_session_references_in_stack, CommandId
 from corehq.apps.app_manager.suite_xml.xml_models import StackDatum
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -385,6 +385,10 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
     def test_form_workflow_root(self):
         app = self._build_workflow_app(WORKFLOW_ROOT)
         self.assertXmlPartialEqual(self.get_xml('suite-workflow-root'), app.create_suite(), "./entry")
+
+    def test_form_workflow_previous_advanced_app(self):
+        app = Application.wrap(self.get_json('advanced_app'))
+        self.assertXmlPartialEqual(self.get_xml('advanced-app'), app.create_suite(), "./entry")
 
 
 class TestReplaceSessionRefs(SimpleTestCase):
