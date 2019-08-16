@@ -36950,11 +36950,11 @@ msgid "CAS Data Exports"
 msgstr ""
 
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:173
-msgid "MPR"
+msgid "MPR Block Report"
 msgstr ""
 
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:179
-msgid "ASR"
+msgid "ASR Block Report"
 msgstr ""
 
 #: custom/ilsgateway/filters.py:21

@@ -38485,12 +38485,12 @@ msgstr "Manejo de Casos"
 
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:173
 #, fuzzy
-msgid "MPR"
+msgid "MPR Block Report"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:179
 #, fuzzy
-msgid "ASR"
+msgid "ASR Block Report"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: custom/ilsgateway/filters.py:21
