@@ -10,7 +10,11 @@ from mock import patch
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import (
     Application,
-    ReportModule, ReportAppConfig, Module, LinkedApplication)
+    Module,
+    LinkedApplication,
+    ReportAppConfig,
+    ReportModule,
+)
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
@@ -19,7 +23,11 @@ from corehq.apps.linked_domain.remote_accessors import (
     fetch_remote_media,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.views.utils import overwrite_app, _get_form_ids_by_xmlns, update_linked_app
+from corehq.apps.app_manager.views.utils import (
+    _get_form_ids_by_xmlns,
+    overwrite_app,
+    update_linked_app,
+)
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
 from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
