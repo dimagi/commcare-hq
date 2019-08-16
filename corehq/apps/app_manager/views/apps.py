@@ -447,11 +447,7 @@ def copy_app(request, domain):
 
             return _create_linked_app(request, from_app, to_domain, data['name'])
         else:
-            # Copy application
-            from_app = Application.get(data['build_id'] or app_id)
-            from_app.convert_build_to_app()
-            app_source = from_app.export_json(dump_json=False)
-            return _copy_app_helper(request, app_source, to_domain, data['name'])
+            return _copy_app_helper(request, data['build_id'] or app_id, to_domain, data['name'])
 
     # having login_and_domain_required validates that the user
     # has access to the domain we're copying the app to
@@ -473,9 +469,9 @@ def _create_linked_app(request, master_build, link_domain, link_app_name):
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
 
 
-def _copy_app_helper(request, from_app_source, to_domain, to_app_name):
+def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
     extra_properties = {'name': to_app_name}
-    app_copy = import_app_util(from_app_source, to_domain, extra_properties, request)
+    app_copy = import_app_util(from_app_id, to_domain, extra_properties, request)
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
