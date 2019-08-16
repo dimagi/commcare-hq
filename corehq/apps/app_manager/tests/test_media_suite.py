@@ -154,7 +154,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite_hin'), suites['hin'])
         self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite_all'), suites['all'])
 
-    @patch('corehq.apps.app_manager.models.ApplicationBase.get_latest_build')
+    @patch('corehq.apps.app_manager.models.ApplicationBase._get_version_comparison_build')
     def test_update_image_id(self, get_latest_build):
         """
         When an image is updated, change only version number, not resource id
