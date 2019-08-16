@@ -167,7 +167,7 @@ def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
         'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
-        'custom_base_url'
+        'custom_base_url', 'family_id',
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
@@ -177,6 +177,8 @@ def overwrite_app(app, master_build, report_map=None):
         if key not in excluded_fields:
             app_json[key] = value
     app_json['version'] = master_json['version']
+    app_json['upstream_version'] = master_json['version']
+    app_json['upstream_app_id'] = master_json['copy_of']
     wrapped_app = wrap_app(app_json)
     for module in wrapped_app.get_report_modules():
         if report_map is None:
