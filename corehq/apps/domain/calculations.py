@@ -6,7 +6,6 @@ from django.utils.translation import ugettext as _
 
 from dateutil.relativedelta import relativedelta
 
-from corehq.util.quickcache import quickcache
 from couchforms.analytics import (
     domain_has_submission_in_last_30_days,
     get_first_form_submission_received,
@@ -16,6 +15,7 @@ from couchforms.analytics import (
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
+from corehq.apps.data_analytics.esaccessors import get_mobile_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
@@ -26,12 +26,11 @@ from corehq.apps.export.dbaccessors import (
 )
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.groups.models import Group
-from corehq.apps.hqadmin.reporting.reports import get_mobile_users
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import LocationType
-from corehq.apps.sms.models import SQLMobileBackend, INCOMING, OUTGOING
+from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
 from corehq.apps.userreports.util import (
     number_of_report_builder_reports,
     number_of_ucr_reports,
@@ -42,10 +41,11 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 )
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.elastic import ADD_TO_ES_FILTER, es_query
+from corehq.elastic import es_query
 from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq.motech.repeaters.models import Repeater
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.quickcache import quickcache
 
 
 def num_web_users(domain, *args):
