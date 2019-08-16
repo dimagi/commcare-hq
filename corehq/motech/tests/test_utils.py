@@ -2,13 +2,18 @@
 from __future__ import absolute_import, unicode_literals
 
 import doctest
+from base64 import b64encode
 
-from django.test import SimpleTestCase
+from Crypto.Cipher import AES
+from django.conf import settings
+from django.test import SimpleTestCase, override_settings
 
 import six
 
 import corehq.motech.utils
 from corehq.motech.utils import (
+    AES_BLOCK_SIZE,
+    AES_KEY_MAX_LEN,
     b64_aes_decrypt,
     b64_aes_encrypt,
     simple_pad,
@@ -16,7 +21,7 @@ from corehq.motech.utils import (
 )
 
 
-class PadTests(SimpleTestCase):
+class SimplePadTests(SimpleTestCase):
 
     def test_assertion(self):
         with self.assertRaises(AssertionError):
@@ -32,6 +37,58 @@ class PadTests(SimpleTestCase):
         """
         padded = simple_pad(b'xy\xc5\xba\xc5\xbay', 8, b'*')
         self.assertEqual(padded, b'xy\xc5\xba\xc5\xbay*')
+
+
+@override_settings(SECRET_KEY='xyzzy')
+class DecryptTests(SimpleTestCase):
+
+    def test_crypto_padded(self):
+        ciphertext_using_crypto_padding = 'Vh2Tmlnr5+out2PQDefkudZ2frfze5onsAlUGTLv3Oc='
+        plaintext = b64_aes_decrypt(ciphertext_using_crypto_padding)
+        self.assertEqual(plaintext, 'Around you is a forest.')
+
+    def test_simple_padded(self):
+        """
+        Make sure we can decrypt old passwords
+        """
+        ciphertext_using_simple_padding = 'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I='
+        plaintext = b64_aes_decrypt(ciphertext_using_simple_padding)
+        self.assertEqual(plaintext, 'Around you is a forest.')
+
+    def test_known_bad_0x80(self):
+        password = 'a' * 14 + 'À'
+        assert len(password.encode('utf-8')) == AES_BLOCK_SIZE
+        ciphertext = self._encrypt_with_simple_padding(password)
+        with self.assertRaises(UnicodeDecodeError):
+            b64_aes_decrypt(ciphertext)
+
+    def test_known_bad_0x00(self):
+        password = 'a' + 15 * '\x00'
+        assert len(password.encode('utf-8')) == AES_BLOCK_SIZE
+        ciphertext = self._encrypt_with_simple_padding(password)
+        with self.assertRaisesRegexp(ValueError, 'Padding is incorrect.'):
+            b64_aes_decrypt(ciphertext)
+
+    def test_known_bad_0x80_0x00(self):
+        password = 'aÀ' + 13 * '\x00'
+        assert len(password.encode('utf-8')) == AES_BLOCK_SIZE
+        ciphertext = self._encrypt_with_simple_padding(password)
+        with self.assertRaises(UnicodeDecodeError):
+            b64_aes_decrypt(ciphertext)
+
+    def _encrypt_with_simple_padding(self, message):
+        """
+        Encrypts passwords the way we used to
+        """
+        secret_key_bytes = settings.SECRET_KEY.encode('ascii')
+        aes_key = simple_pad(secret_key_bytes, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
+        aes = AES.new(aes_key, AES.MODE_ECB)
+
+        message_bytes = message.encode('utf8')
+        plaintext_bytes = simple_pad(message_bytes, AES_BLOCK_SIZE)  # <-- this
+        ciphertext_bytes = aes.encrypt(plaintext_bytes)
+        b64ciphertext_bytes = b64encode(ciphertext_bytes)
+        return b64ciphertext_bytes.decode('ascii')
 
 
 class PFormatJSONTests(SimpleTestCase):
