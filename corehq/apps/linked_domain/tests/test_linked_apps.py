@@ -86,6 +86,10 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.addCleanup(copy.delete)
         return copy
 
+    def _pull_linked_app(self):
+        update_linked_app(self.linked_app, 'TestLinkedApps user')
+        self.linked_app = LinkedApplication.get(self.linked_app._id)
+
     def test_missing_ucrs(self):
         with self.assertRaises(AppEditingError):
             overwrite_app(self.linked_app, self.master_app_with_report_modules, {})
@@ -166,8 +170,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.linked_app.save()
         self.assertEqual(self.linked_app.translations, {})
 
-        update_linked_app(self.linked_app, 'test_override_translations')
-        # fetch after update to get the new version
+        self._pull_linked_app()
         self.linked_app = LinkedApplication.get(self.linked_app._id)
 
         self.assertEqual(self.master1.translations, {})
@@ -217,10 +220,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.linked_app.practice_mobile_worker_id = 'abc123456def'
         self.assertEqual(self.linked_app.logo_refs, {})
 
-        update_linked_app(self.linked_app, 'test_override_logos')
-        # fetch after update to get the new version
-        self.linked_app = LinkedApplication.get(self.linked_app._id)
-
+        self._pull_linked_app()
         self.assertEqual(self.master1.logo_refs, {})
         self.assertEqual(self.linked_app.linked_app_logo_refs, logo_refs)
         self.assertEqual(self.linked_app.logo_refs, logo_refs)
@@ -255,7 +255,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self._make_master1_build()
 
         update_linked_app(linked_app, 'test_update_from_specific_build', master_build=copy1)
-        # fetch after update to get the new version
         linked_app = LinkedApplication.get(linked_app._id)
 
         self.assertEqual(len(linked_app.modules), 1)
