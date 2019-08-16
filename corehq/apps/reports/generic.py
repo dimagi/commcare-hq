@@ -1192,7 +1192,22 @@ class PaginatedReportMixin(object):
         return res
 
 
-class ElasticTabularReport(GenericTabularReport, PaginatedReportMixin):
+class GetParamsMixin(object):
+
+    @property
+    def shared_pagination_GET_params(self):
+        """
+        Override the params and applies all the params of the originating view to the GET
+        so as to get sorting working correctly with the context of the GET params
+        """
+        ret = super(GetParamsMixin, self).shared_pagination_GET_params
+        for k, v in self.request.GET.lists():
+            ret.append(dict(name=k, value=v))
+        return ret
+
+
+class ElasticProjectInspectionReport(GetParamsMixin, ProjectInspectionReportParamsMixin,
+                                     PaginatedReportMixin, GenericTabularReport):
     """
     Tabular report that provides framework for doing elasticsearch backed tabular reports.
 
@@ -1218,21 +1233,3 @@ class ElasticTabularReport(GenericTabularReport, PaginatedReportMixin):
             return res['hits'].get('total', 0)
         else:
             return 0
-
-
-class GetParamsMixin(object):
-
-    @property
-    def shared_pagination_GET_params(self):
-        """
-        Override the params and applies all the params of the originating view to the GET
-        so as to get sorting working correctly with the context of the GET params
-        """
-        ret = super(GetParamsMixin, self).shared_pagination_GET_params
-        for k, v in self.request.GET.lists():
-            ret.append(dict(name=k, value=v))
-        return ret
-
-
-class ElasticProjectInspectionReport(GetParamsMixin, ProjectInspectionReportParamsMixin, ElasticTabularReport):
-    pass
