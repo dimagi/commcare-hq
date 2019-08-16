@@ -5,7 +5,6 @@ from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import (
     AdminPhoneNumberReport,
-    AdminUserReport,
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
@@ -341,7 +340,6 @@ BASIC_REPORTS = (
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
         UserListReport,
-        AdminUserReport,
         PillowErrorsReport,
         DeviceLogSoftAssertReport,
         AdminPhoneNumberReport,
