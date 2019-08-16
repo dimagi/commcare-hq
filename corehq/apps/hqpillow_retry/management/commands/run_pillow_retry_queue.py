@@ -24,15 +24,14 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
         errors = PillowError.get_errors_to_process(utcnow=utcnow, limit=1000)
         return [QueueItem(id=e.id, key=e.date_next_attempt, object=e) for e in errors]
 
-    @classmethod
-    def get_items_to_be_processed(cls, utcnow):
+    def get_items_to_be_processed(self, utcnow):
         # We're just querying for ids here, so no need to limit
         utcnow = utcnow.replace(tzinfo=pytz.UTC)
         try:
-            return cls._get_items(utcnow)
+            return self._get_items(utcnow)
         except InterfaceError:
             db.connection.close()
-            return cls._get_items(utcnow)
+            return self._get_items(utcnow)
 
     def use_queue(self):
         return settings.PILLOW_RETRY_QUEUE_ENABLED
