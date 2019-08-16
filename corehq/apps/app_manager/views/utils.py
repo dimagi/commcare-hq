@@ -179,7 +179,7 @@ def overwrite_app(app, master_build, report_map=None):
     form_ids_by_xmlns = {}
     master_app_briefs = app.get_master_app_briefs()
     for brief in master_app_briefs:
-        previous_app = app.get_previous_version(master_app_id=brief.master_id)
+        previous_app = app.get_latest_build_from_upstream(brief.master_id)
         if previous_app:
             form_ids_by_xmlns.update(_get_form_ids_by_xmlns(previous_app))
     # Add in any forms from the current linked app, before the source is overwritten.
@@ -359,7 +359,7 @@ def update_linked_app(app, master_app_id_or_build, user_id):
         master_build = master_app_id_or_build
     master_app_id = master_app_id_or_build.master_id
 
-    previous = app.get_previous_version(master_app_id)
+    previous = app.get_latest_build_from_upstream(master_app_id)
     if previous is None or master_build.version > previous.upstream_version:
         old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
         report_map = get_static_report_mapping(master_build.domain, app['domain'])

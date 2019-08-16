@@ -16,6 +16,7 @@ from corehq.apps.app_manager.models import Application, DetailColumn, import_app
 from corehq.apps.app_manager.tasks import autogenerate_build, prune_auto_generated_builds
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds, TestXmlMixin
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.apps import load_app_from_slug
 from corehq.apps.builds.models import BuildSpec
@@ -163,10 +164,12 @@ class AppManagerTest(TestCase, TestXmlMixin):
                 old_config_ids = {config.uuid for config in old_module.report_configs}
                 new_config_ids = {config.uuid for config in new_module.report_configs}
                 self.assertEqual(old_config_ids.intersection(new_config_ids), set())
+        return new_app
 
     def testImportApp_from_id(self):
         self.assertTrue(self.app.blobs)
-        self._test_import_app(self.app.id)
+        imported_app = self._test_import_app(self.app.id)
+        self.assertEqual(imported_app.family_id, self.app.id)
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     @patch('corehq.apps.app_manager.models.ReportAppConfig.report')
