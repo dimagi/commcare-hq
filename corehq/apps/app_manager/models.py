@@ -4116,6 +4116,15 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         ).first()
 
     @memoized
+    def _get_version_comparison_build(self):
+        '''
+        Returns an earlier build to be used for comparing forms and multimedia
+        when making a new build and setting the versions of those items.
+        For normal applications, this is just the previous build.
+        '''
+        return self.get_latest_build()
+
+    @memoized
     def get_latest_saved(self):
         """
         This looks really similar to get_latest_app, not sure why tim added
@@ -4617,6 +4626,9 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     add_ons = DictProperty()
     smart_lang_display = BooleanProperty()  # null means none set so don't default to false/true
 
+    # If this app was created by copying another, this points to that app
+    family_id = StringProperty()
+
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
 
@@ -4738,7 +4750,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
-        latest_build = self.get_latest_build()
+        latest_build = self._get_version_comparison_build()
         if not latest_build:
             return
         force_new_version = self.build_profiles != latest_build.build_profiles
@@ -4774,8 +4786,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
 
         # access to .multimedia_map is slow
-        latest_build = self.get_latest_build()
-        prev_multimedia_map = latest_build.multimedia_map if latest_build else {}
+        previous_version = self._get_version_comparison_build()
+        prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
         for path, map_item in six.iteritems(self.multimedia_map):
             prev_map_item = prev_multimedia_map.get(path, None)
@@ -5587,7 +5599,7 @@ class LinkedApplication(Application):
     @memoized
     def get_master_app_briefs(self):
         if self.domain_link:
-            return get_master_app_briefs(self.domain_link)
+            return get_master_app_briefs(self.domain_link, self.family_id)
         return []
 
     @property
@@ -5602,19 +5614,30 @@ class LinkedApplication(Application):
 
     def get_latest_master_releases_versions(self):
         if self.domain_link:
-            return get_latest_master_releases_versions(self.domain_link)
+            versions = get_latest_master_releases_versions(self.domain_link)
+            # Use self.get_master_app_briefs to limit return value by family_id
+            master_ids = [b.id for b in self.get_master_app_briefs()]
+            return {key: value for key, value in versions.items() if key in master_ids}
         return {}
 
     @memoized
-    def get_previous_version(self, master_app_id=None):
-        if master_app_id is None:
-            master_app_id = self.upstream_app_id
+    def get_latest_build_from_upstream(self, upstream_app_id):
         build_ids = get_build_ids(self.domain, self.master_id)
         for build_id in build_ids:
             build_doc = Application.get_db().get(build_id)
-            if build_doc.get('upstream_app_id', build_doc['master']) == master_app_id:
+            if build_doc.get('upstream_app_id', build_doc['master']) == upstream_app_id:
                 return self.wrap(build_doc)
         return None
+
+    @memoized
+    def _get_version_comparison_build(self):
+        previous_version = super(LinkedApplication, self)._get_version_comparison_build()
+        if not previous_version:
+            # If there's no previous version, check for a previous version in the same family.
+            # This allows projects using multiple masters to copy a master app and start pulling
+            # from that copy without resetting the form and multimedia versions.
+            previous_version = self.get_latest_build_from_upstream(self.family_id)
+        return previous_version
 
     @classmethod
     def wrap(cls, data):
@@ -5624,6 +5647,8 @@ class LinkedApplication(Application):
             data['upstream_version'] = data['version']
         if 'upstream_app_id' not in data:
             data['upstream_app_id'] = data.get('master', None)
+        if 'family_id' not in data:
+            data['family_id'] = data.get('master', None)
 
         return super(LinkedApplication, cls).wrap(data)
 
@@ -5641,14 +5666,15 @@ class LinkedApplication(Application):
 def import_app(app_id_or_source, domain, source_properties=None, request=None):
     if isinstance(app_id_or_source, six.string_types):
         soft_assert_type_text(app_id_or_source)
-        app_id = app_id_or_source
-        source = get_app(None, app_id)
+        family_id = app_id_or_source
+        source = get_app(None, family_id)
         source_domain = source['domain']
         source = source.export_json(dump_json=False)
         report_map = get_static_report_mapping(source_domain, domain)
     else:
         cls = get_correct_app_class(app_id_or_source)
         # Don't modify original app source
+        family_id = app_id_or_source.get('_id', None)
         app = cls.wrap(deepcopy(app_id_or_source))
         source = app.export_json(dump_json=False)
         report_map = {}
@@ -5668,6 +5694,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     app = cls.from_source(source, domain)
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+    app.family_id = family_id
 
     if report_map:
         for module in app.get_report_modules():

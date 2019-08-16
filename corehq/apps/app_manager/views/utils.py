@@ -167,7 +167,7 @@ def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
         'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
-        'custom_base_url'
+        'custom_base_url', 'family_id'
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
@@ -179,7 +179,7 @@ def overwrite_app(app, master_build, report_map=None):
     form_ids_by_xmlns = {}
     master_app_briefs = app.get_master_app_briefs()
     for brief in master_app_briefs:
-        previous_app = app.get_previous_version(master_app_id=brief.master_id)
+        previous_app = app.get_latest_build_from_upstream(brief.master_id)
         if previous_app:
             form_ids_by_xmlns.update(_get_form_ids_by_xmlns(previous_app))
     # Add in any forms from the current linked app, before the source is overwritten.
@@ -366,7 +366,7 @@ def update_linked_app(app, master_app_id, user_id, master_build=None):
                 'Unable to pull latest master from remote CommCare HQ. Please try again later.'
             ))
 
-    previous = app.get_previous_version(master_app_id)
+    previous = app.get_latest_build_from_upstream(master_app_id)
     if previous is None or master_build.version > previous.upstream_version:
         old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
         report_map = get_static_report_mapping(master_build.domain, app['domain'])

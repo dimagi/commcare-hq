@@ -15,11 +15,14 @@ from corehq.apps.linked_domain.remote_accessors import (
 )
 
 
-def get_master_app_briefs(domain_link):
+def get_master_app_briefs(domain_link, family_id):
     if domain_link.is_remote:
         apps = get_brief_apps(domain_link.master_domain, domain_link.remote_details)
     else:
         apps = get_brief_apps_in_domain(domain_link.master_domain, include_remote=False)
+
+    apps = [app for app in apps if family_id in [app._id, app.family_id]]
+
     # Ignore deleted, linked and remote apps
     return [app for app in apps if app.doc_type == 'Application']
 
@@ -53,6 +56,7 @@ def link_app(linked_app, master_domain, master_id, remote_details=None):
     DomainLink.link_domains(linked_app.domain, master_domain, remote_details)
 
     linked_app.master = master_id
+    linked_app.family_id = master_id
     linked_app.doc_type = 'LinkedApplication'
     linked_app.save()
     return linked_app
