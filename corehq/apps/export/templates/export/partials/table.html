@@ -297,7 +297,7 @@
               <i class="fa fa-cloud-download"></i>
               {% trans "Download" %}
             </a>
-
+            <!-- ko if : isFeed -->
             <div class="input-group"
                  data-bind="visible: isFeed">
               <!-- ko with: feedUrl -->
@@ -317,6 +317,7 @@
                      readonly />
               <!-- /ko -->
             </div>
+            <!-- /ko -->
           </div>
 
           <div data-bind="if: isLocationSafeForUser">
