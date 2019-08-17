@@ -60,13 +60,19 @@ class NestableTimer(object):
             return None
 
     def to_dict(self):
-        return {
+        timer_dict = {
             'name': self.name,
             'duration': self.duration,
             'percent_total': self.percent_of_total,
             'percent_parent': self.percent_of_parent,
             'subs': [sub.to_dict() for sub in self.subs]
         }
+        if not self.duration:
+            timer_dict.update({
+                'beginning': self.beginning,
+                'end': self.end
+            })
+        return timer_dict
 
     def to_list(self, exclude_root=False):
         root = [] if exclude_root else [self]
