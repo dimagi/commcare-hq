@@ -64,7 +64,6 @@ from corehq.sql_db.util import (
 )
 from corehq.util.datadog.utils import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
-from corehq.util.soft_assert import soft_assert
 from dimagi.utils.chunked import chunked
 
 doc_type_to_state = {
@@ -524,20 +523,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         return deleted_count
 
     @staticmethod
-    def archive_form(form, user_id):
-        from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, user_id, archive=True)
-        form.state = XFormInstanceSQL.ARCHIVED
-        publish_form_saved(form)
-
-    @staticmethod
-    def unarchive_form(form, user_id):
-        from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, user_id, archive=False)
-        form.state = XFormInstanceSQL.NORMAL
-        publish_form_saved(form)
-
-    @staticmethod
     def soft_undelete_forms(domain, form_ids):
         from corehq.form_processor.change_publishers import publish_form_saved
 
@@ -590,7 +575,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     @transaction.atomic
-    def _archive_unarchive_form(form, user_id, archive):
+    def set_archived_state(form, archive, user_id):
         from casexml.apps.case.xform import get_case_ids_from_form
         form_id = form.form_id
         case_ids = list(get_case_ids_from_form(form))
@@ -598,6 +583,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
                            [case_ids, form_id, archive])
+        form.state = XFormInstanceSQL.ARCHIVED if archive else XFormInstanceSQL.NORMAL
 
     @staticmethod
     @transaction.atomic

@@ -291,7 +291,7 @@ def reprocess_archive_stubs():
                 xform.unarchive(user_id=stub.user_id)
         # If the history was updated the first time around, just send the update to kafka
         else:
-            xform.publish_archive_action_to_kafka(user_id=stub.user_id, archive=stub.archive)
+            FormAccessors.publish_archive_action_to_kafka(xform, stub.user_id, stub.archive)
 
 
 @periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
