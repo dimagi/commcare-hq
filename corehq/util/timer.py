@@ -47,11 +47,17 @@ class NestableTimer(object):
 
     @property
     def percent_of_total(self):
-        return (self.duration / self.root.duration * 100) if self.duration and self.root else None
+        if self.duration and self.root and self.root.duration:
+            return self.duration / self.root.duration * 100
+        else:
+            return None
 
     @property
     def percent_of_parent(self):
-        return (self.duration / self.parent.duration * 100) if self.parent else None
+        if self.duration and self.parent and self.parent.duration:
+            return self.duration / self.parent.duration * 100
+        else:
+            return None
 
     def to_dict(self):
         return {
