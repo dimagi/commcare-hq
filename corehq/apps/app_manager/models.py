@@ -86,6 +86,7 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
+    get_build_ids,
     get_latest_build_doc,
     get_latest_released_app_doc,
     get_build_by_version,
@@ -167,7 +168,7 @@ from corehq.apps.hqmedia.models import (
 from corehq.apps.integration.models import ApplicationIntegrationMixin
 from corehq.apps.linked_domain.applications import (
     get_latest_master_app_release,
-    get_master_app_version,
+    get_master_app_briefs,
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.reports.daterange import (
@@ -5590,20 +5591,26 @@ class LinkedApplication(Application):
             return get_master_app_briefs(self.domain_link)
         return []
 
-    def get_master_version(self):
-        if self.domain_link:
-            return get_master_app_version(self.domain_link, self.master)
-
     @property
     def master_is_remote(self):
         if self.domain_link:
             return self.domain_link.is_remote
 
-    def get_latest_master_release(self):
+    def get_latest_master_release(self, master_app_id):
         if self.domain_link:
-            return get_latest_master_app_release(self.domain_link, self.master)
-        else:
-            raise ActionNotPermitted
+            return get_latest_master_app_release(self.domain_link, master_app_id)
+        raise ActionNotPermitted
+
+    @memoized
+    def get_previous_version(self, master_app_id=None):
+        if master_app_id is None:
+            master_app_id = self.upstream_app_id
+        build_ids = get_build_ids(self.domain, self.master_id)
+        for build_id in build_ids:
+            build_doc = Application.get_db().get(build_id)
+            if build_doc.get('upstream_app_id', build_doc['master']) == master_app_id:
+                return self.wrap(build_doc)
+        return None
 
     def reapply_overrides(self):
         # Used by app_manager.views.utils.update_linked_app()
