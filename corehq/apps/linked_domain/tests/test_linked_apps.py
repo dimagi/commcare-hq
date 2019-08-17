@@ -94,8 +94,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.addCleanup(copy.delete)
         return copy
 
-    def _pull_linked_app(self):
-        update_linked_app(self.linked_app, 'TestLinkedApps user')
+    def _pull_linked_app(self, upstream_app_id):
+        update_linked_app(self.linked_app, upstream_app_id, 'TestLinkedApps user')
         self.linked_app = LinkedApplication.get(self.linked_app._id)
 
     def test_missing_ucrs(self):
@@ -123,29 +123,26 @@ class TestLinkedApps(BaseLinkedAppsTest):
             _get_form_ids_by_xmlns(LinkedApplication.get(self.linked_app._id))
         )
 
-    def test_get_master_version(self):
-        self.linked_app.master = self.master1.get_id
-
-        self.assertIsNone(self.linked_app.get_master_version())
-        self._make_master1_build(False)
-        self.assertIsNone(self.linked_app.get_master_version())
-
-        copy1 = self._make_master1_build(True)
-        self.assertEqual(copy1.version, self.linked_app.get_master_version())
-
     def test_get_latest_master_release(self):
         master_id = self.master1.get_id
 
-        self.assertIsNone(self.linked_app.get_latest_master_release())
+        self.assertIsNone(self.linked_app.get_latest_master_release(self.linked_app.master))
 
         self._make_master1_build(False)
+        self.assertIsNone(self.linked_app.get_latest_master_release(master_id))
 
-        self.assertIsNone(self.linked_app.get_latest_master_release())
+        self._make_master1_build(True)
+        master1_copy2 = self._make_master1_build(True)
 
-        copy1 = self._make_master1_build(True)
-        latest_master_release = self.linked_app.get_latest_master_release()
-        self.assertEqual(copy1.get_id, latest_master_release.get_id)
-        self.assertEqual(copy1._rev, latest_master_release._rev)
+        latest_master_release = self.linked_app.get_latest_master_release(master_id)
+        self.assertEqual(master1_copy2.get_id, latest_master_release.get_id)
+        self.assertEqual(master1_copy2._rev, latest_master_release._rev)
+
+        master2_copy1 = self._make_master2_build()
+        latest_master1_release = self.linked_app.get_latest_master_release(master_id)
+        latest_master2_release = self.linked_app.get_latest_master_release(self.master2.get_id)
+        self.assertEqual(master1_copy2.get_id, latest_master1_release.get_id)
+        self.assertEqual(master2_copy1.get_id, latest_master2_release.get_id)
 
     def test_incremental_versioning(self):
         original_master_version = self.master1.version or 0
@@ -157,10 +154,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self._make_master1_build(True)
         current_master = self._make_master1_build(True)
 
-        # Pull linked app and refresh from database
-        update_linked_app(self.linked_app, 'test_incremental_versioning')
-        self.linked_app = LinkedApplication.get(self.linked_app._id)
-
+        self._pull_linked_app(self.master1.get_id)
         self.assertEqual(current_master.version, original_master_version + 4)
         self.assertEqual(self.linked_app.version, original_linked_version + 1)
 
@@ -177,21 +171,17 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self._make_master2_build(True)
         self._make_master2_build(True)
 
-        # Pull linked app from first master and refresh from database
-        update_linked_app(self.linked_app, self.master1.get_id, 'test_incremental_versioning')
-        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        self._pull_linked_app(self.master1.get_id)
         self.assertEqual(self.linked_app.upstream_app_id, self.master1.get_id)
         self.assertEqual(self.linked_app.upstream_version, original_master1_version + 4)
 
-        # Pull linked app from other master and refresh from database
-        update_linked_app(self.linked_app, self.master2.get_id, 'test_incremental_versioning')
-        self.linked_app = LinkedApplication.get(self.linked_app._id)
+        self._pull_linked_app(self.master2.get_id)
         self.assertEqual(self.linked_app.upstream_app_id, self.master2.get_id)
         self.assertEqual(self.linked_app.upstream_version, original_master2_version + 3)
 
     def test_get_latest_master_release_not_permitted(self):
         release = self._make_master1_build(True)
-        latest_master_release = self.linked_app.get_latest_master_release()
+        latest_master_release = self.linked_app.get_latest_master_release(self.linked_app.master)
         self.assertEqual(release.get_id, latest_master_release.get_id)
 
         self.domain_link.linked_domain = 'other'
@@ -206,7 +196,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         with self.assertRaises(ActionNotPermitted):
             # re-fetch to bust memoize cache
-            LinkedApplication.get(self.linked_app._id).get_latest_master_release()
+            LinkedApplication.get(self.linked_app._id).get_latest_master_release(self.linked_app.master)
 
     def test_override_translations(self):
         translations = {'en': {'updates.check.begin': 'update?'}}
@@ -218,9 +208,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.linked_app.save()
         self.assertEqual(self.linked_app.translations, {})
 
-        self._pull_linked_app()
+        self._pull_linked_app(self.master1.get_id)
         self.linked_app = LinkedApplication.get(self.linked_app._id)
-
         self.assertEqual(self.master1.translations, {})
         self.assertEqual(self.linked_app.linked_app_translations, translations)
         self.assertEqual(self.linked_app.translations, translations)
@@ -266,7 +255,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.linked_app.practice_mobile_worker_id = 'abc123456def'
         self.assertEqual(self.linked_app.logo_refs, {})
 
-        self._pull_linked_app()
+        self._pull_linked_app(self.master1.get_id)
         self.assertEqual(self.master1.logo_refs, {})
         self.assertEqual(self.linked_app.linked_app_logo_refs, logo_refs)
         self.assertEqual(self.linked_app.logo_refs, logo_refs)
@@ -300,7 +289,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         master_app.save()  # increment version number
         self._make_master1_build(True)
 
-        update_linked_app(linked_app, 'test_update_from_specific_build', master_build=copy1)
+        update_linked_app(linked_app, copy1, 'test_update_from_specific_build')
         linked_app = LinkedApplication.get(linked_app._id)
 
         self.assertEqual(len(linked_app.modules), 1)
