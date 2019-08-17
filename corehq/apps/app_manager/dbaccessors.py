@@ -333,6 +333,23 @@ def get_build_ids(domain, app_id):
     return [result['id'] for result in results]
 
 
+# TODO: write test, rename this and above function
+def get_built_app_ids_for_app_id_descending(domain, app_id):
+    """
+    Returns all the built apps for an application id, in descending order.
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain, app_id, {}],
+        endkey=[domain, app_id],
+        descending=True,
+        reduce=False,
+        include_docs=False,
+    ).all()
+    return [result['id'] for result in results]
+
+
 def get_built_app_ids_with_submissions_for_app_id(domain, app_id, version=None):
     """
     Returns all the built apps for an application id that have submissions.
