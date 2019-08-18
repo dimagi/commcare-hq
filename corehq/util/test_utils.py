@@ -106,7 +106,7 @@ class TestFileMixin(object):
 
     @classmethod
     def get_json(cls, name, override_path=None):
-        return json.loads(cls.get_file(name, '.json', override_path))
+        return json.loads(cls.get_file(name, '.json', override_path).encode('utf-8'))
 
     @classmethod
     def get_xml(cls, name, override_path=None):
