@@ -12,7 +12,6 @@ from datetime import date, datetime, timedelta
 from io import BytesIO, open
 
 from django.conf import settings
-from django.core.cache import cache
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 
@@ -105,6 +104,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateTHRForm
 )
 from custom.icds_reports.models.helper import IcdsFile
+from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.reports.disha import build_dumps_for_month
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.issnip_monthly_register import (
@@ -1282,14 +1282,9 @@ def setup_aggregation(agg_date):
             _create_aggregate_functions(cursor)
 
         _update_aggregate_locations_tables()
-    state_ids = list(SQLLocation.objects
-                     .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
-                     .values_list('location_id', flat=True))
-    cache.set('agg_state_ids_{}'.format(agg_date), state_ids, ONE_DAY * 2)
 
 
-def _child_health_monthly_aggregation(day):
-    state_ids = cache.get('agg_state_ids_{}'.format(date))
+def _child_health_monthly_aggregation(day, state_ids):
     helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
 
     with get_cursor(ChildHealthMonthly) as cursor:
