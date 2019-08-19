@@ -74,16 +74,10 @@ def _process_couch_change(pillow, change):
 
 def _process_kafka_change(producer, change):
     change_metadata = change.metadata
-    if change_metadata.data_source_type in ('couch', 'sql'):
-        data_source_type = change_metadata.data_source_type
-    else:
-        # legacy metadata will have other values for non-sql
-        # can remove this once all legacy errors have been processed
-        data_source_type = 'sql'
     producer.send_change(
         get_topic_for_doc_type(
             change_metadata.document_type,
-            data_source_type
+            change_metadata.data_source_type
         ),
         change_metadata
     )
