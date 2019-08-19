@@ -5088,7 +5088,7 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
         return clean_data
 
 
-class ValuationOfPNAStockPerProductV2Data(SqlData):
+class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource):
     slug = 'valeur_des_stocks_pna_disponible_chaque_produit'
     comment = 'Valeur des stocks PNA disponible (chaque produit)'
     title = 'Valeur des stocks PNA disponible (chaque produit)'
@@ -5100,21 +5100,26 @@ class ValuationOfPNAStockPerProductV2Data(SqlData):
         self.config = config
 
     @property
-    def table_name(self):
-        return get_table_name(self.config['domain'], "")
-
-    @property
     def group_by(self):
-        return ['real_date_repeat', self.loc_name, self.loc_id, 'product_id', 'product_name']
+        return [
+            'real_date_repeat', 'product_id', 'product_name', 'select_programs',
+            'region_id', 'region_name', 'district_id',
+            'district_name', 'pps_id', 'pps_name',
+        ]
 
     @property
     def columns(self):
         columns = [
-            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-            DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
+            DatabaseColumn('Region ID', SimpleColumn('region_id')),
+            DatabaseColumn('Region Name', SimpleColumn('region_name')),
+            DatabaseColumn('District ID', SimpleColumn('district_id')),
+            DatabaseColumn('District Name', SimpleColumn('district_name')),
+            DatabaseColumn('PPS ID', SimpleColumn('pps_id')),
+            DatabaseColumn('PPS Name', SimpleColumn('pps_name')),
             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
             DatabaseColumn("Product ID", SimpleColumn('product_id')),
-            DatabaseColumn("Program name", SimpleColumn('program_name')),
+            DatabaseColumn("Product Name", SimpleColumn('product_name')),
+            DatabaseColumn("Programs", SimpleColumn('select_programs')),
             DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation')),
         ]
         return columns
@@ -5150,19 +5155,114 @@ class ValuationOfPNAStockPerProductV2Data(SqlData):
         return "{}_name".format(self.loc_type)
 
     @property
+    def desired_location(self):
+        if self.config['selected_location']:
+            return self.config['selected_location']
+        return None
+
+    @property
     def filters(self):
         filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
-        if self.config['selected_location']:
-            filters.append(EQ(self.loc_id, 'selected_location'))
         if self.config['product_product']:
             filters.append(EQ('product_id', 'product_product'))
         elif self.config['product_program']:
-            filters.append(EQ('program_id', 'product_program'))
+            filters.append(EQ('select_programs', 'product_program'))
         return filters
 
     @property
     def rows(self):
-        return []
+        all_wanted_rows = []
+        rows = self.get_data()
+
+        if self.desired_location:
+            for row in rows:
+                if self.desired_location in row.values():
+                    all_wanted_rows.append(row)
+        else:
+            all_wanted_rows = rows
+
+        def clean_rows(data_to_clean):
+            pnas = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
+
+            pnas_list = []
+            pnas_list_to_return = []
+            added_locations = []
+            added_programs = []
+            added_products_for_locations = {}
+
+            for pna in pnas:
+                location_name = pna['{}'.format(self.loc_name)]
+                location_id = pna['{}'.format(self.loc_id)]
+                product_name = pna['product_name']
+                product_id = pna['product_id']
+                program_id = pna['select_programs']
+                final_pna_stock_valuation = pna['final_pna_stock_valuation']
+                if not final_pna_stock_valuation:
+                    final_pna_stock_valuation = 0
+                else:
+                    final_pna_stock_valuation = final_pna_stock_valuation['sort_key']
+                data_dict = {
+                    'location_name': location_name,
+                    'location_id': location_id,
+                    'program_id': program_id,
+                    'products': []
+                }
+                if location_id in added_locations and program_id in added_programs:
+                    amount_of_stocks = len(pnas_list)
+
+                    location_position = 0
+                    for r in range(0, amount_of_stocks):
+                        current_location = pnas_list[r]['location_id']
+                        if current_location == location_id:
+                            location_position = r
+                            break
+
+                    added_products_for_location = [x['product_id'] for x in added_products_for_locations[location_id]]
+                    products_for_location = added_products_for_locations[location_id]
+                    if product_id not in added_products_for_location:
+                        product_data = {
+                            'product_name': product_name,
+                            'product_id': product_id,
+                            'final_pna_stock_valuation': 0,
+                        }
+                        added_products_for_locations[location_id].append(product_data)
+                        pnas_list[location_position]['products'].append(product_data)
+
+                    amount_of_products_for_location = len(added_products_for_locations[location_id])
+                    product_position = 0
+                    for s in range(0, amount_of_products_for_location):
+                        current_product = products_for_location[s]['product_id']
+                        if current_product == product_id:
+                            product_position = s
+                            break
+                    overall_position = pnas_list[location_position]['products'][product_position]
+                    overall_position['final_pna_stock_valuation'] += final_pna_stock_valuation
+                else:
+                    if location_id not in added_locations:
+                        added_locations.append(location_id)
+                    if program_id not in added_programs:
+                        added_programs.append(program_id)
+                    product_data = {
+                        'product_name': product_name,
+                        'product_id': product_id,
+                        'final_pna_stock_valuation': 0,
+                    }
+                    product_data['final_pna_stock_valuation'] += final_pna_stock_valuation
+                    data_dict['products'].append(product_data)
+                    pnas_list.append(data_dict)
+                    added_products_for_locations[location_id] = [product_data]
+
+            pnas_list = sorted(pnas_list, key=lambda x: x['location_id'])
+
+            for pna in pnas_list:
+                if pna not in pnas_list_to_return:
+                    pnas_list_to_return.append(pna)
+
+            return pnas_list_to_return
+
+        clean_data = clean_rows(all_wanted_rows)
+
+        return clean_data
 
 
 class RecapPassageOneData(SqlData):
