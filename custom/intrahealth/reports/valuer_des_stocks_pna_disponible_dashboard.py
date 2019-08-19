@@ -67,7 +67,6 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
 
     @property
     def headers(self):
-        # TODO: needs further implementation
         return DataTablesHeader(
             DataTablesColumn(self.selected_location_type),
             DataTablesColumn(
@@ -97,7 +96,6 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
         return context
 
     def calculate_rows(self):
-        # TODO: needs further implementation
         rows = ValuationOfPNAStockPerProductV2Data(config=self.config).rows
         return rows
 

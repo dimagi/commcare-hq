@@ -68,13 +68,6 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
     @property
     def headers(self):
         return LossRatePerProductData2(config=self.config).headers
-        # TODO: needs further implementation
-        # return DataTablesHeader(
-        #     DataTablesColumn(self.selected_location_type),
-        #     DataTablesColumn(
-        #         'Consommation de la gamme par produit et par Region'
-        #     ),
-        # )
 
     def get_report_context(self):
         if self.needs_filters:
@@ -98,7 +91,6 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
         return context
 
     def calculate_rows(self):
-        # TODO: needs further implementation
         rows = LossRatePerProductData2(config=self.config).rows
         return rows
 

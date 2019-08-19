@@ -67,13 +67,6 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
     @property
     def headers(self):
         return ExpirationRatePerProductData2(config=self.config).headers
-        # TODO: needs further implementation
-        # return DataTablesHeader(
-        #     DataTablesColumn(self.selected_location_type),
-        #     DataTablesColumn(
-        #         'Produites'
-        #     ),
-        # )
 
     def get_report_context(self):
         if self.needs_filters:
@@ -97,7 +90,6 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
         return context
 
     def calculate_rows(self):
-        # TODO: needs further implementation
         rows = ExpirationRatePerProductData2(config=self.config).rows
         return rows
 
@@ -149,5 +141,5 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
         config['product_program'] = self.request.GET.get('product_program')
         config['product_product'] = self.request.GET.get('product_product')
         config['selected_location'] = self.request.GET.get('location_id')
-        config['products'] = ['product1', 'product2', 'product3'] # TODO: self.request.GET.get('products')
+        config['products'] = ['product1', 'product2', 'product3']
         return config

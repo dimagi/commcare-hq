@@ -4113,77 +4113,6 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
         return clean_data
 
 
-class EffectiveDeLivraisonDataSource(SqlData):
-    pass
-    # slug = 'effective_de_livraison'
-    # title = 'effective_de_livraison'
-    #
-    # def __init__(self, config):
-    #     super(EffectiveDeLivraisonDataSource, self).__init__()
-    #     self.config = config
-    #
-    # @property
-    # def table_name(self):
-    #     return get_table_name(self.config['domain'], "date_effective_de_livraison")
-    #
-    # @cached_property
-    # def selected_location(self):
-    #     if self.config['selected_location']:
-    #         return SQLLocation.objects.get(location_id=self.config['selected_location'])
-    #     else:
-    #         return None
-    #
-    # @cached_property
-    # def selected_location_type(self):
-    #     if not self.selected_location:
-    #         return 'national'
-    #     return self.selected_location.location_type.code
-    #
-    # @cached_property
-    # def loc_type(self):
-    #     if self.selected_location_type == 'national':
-    #         return 'region'
-    #     elif self.selected_location_type == 'region':
-    #         return 'district'
-    #     else:
-    #         return 'pps'
-    #
-    # @cached_property
-    # def loc_id(self):
-    #     return "{}_id".format(self.loc_type)
-    #
-    # @cached_property
-    # def loc_name(self):
-    #     return "{}_name".format(self.loc_type)
-    #
-    # @property
-    # def filters(self):
-    #     filters = []
-    #     if self.config['selected_location']:
-    #         filters.append(EQ(self.loc_id, 'selected_location'))
-    #     return filters
-    #
-    # @property
-    # def group_by(self):
-    #     group_by = [self.loc_name, self.loc_id]
-    #     return group_by
-    #
-    # @property
-    # def columns(self):
-    #     columns = [
-    #         DatabaseColumn(self.loc_name, SimpleColumn(self.loc_name)),
-    #         DatabaseColumn(self.loc_id, SimpleColumn(self.loc_id)),
-    #         DatabaseColumn("nb_pps_visites", SimpleColumn('nb_pps_visites')),
-    #     ]
-    #     return columns
-    #
-    # @property
-    # def rows(self):
-    #     # TODO: we need only the latest value of nb_pps_visites from selected daterange
-    #     return []
-    # return self.get_data()
-
-
 class TauxDeRuptureRateData(SqlData):
     slug = 'taux_de_rupture_par_pps'
     comment = 'Nombre de produits en rupture sur le nombre total de produits du PPS'
@@ -4726,7 +4655,6 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
                 for i in range(len(self.products)):
                     data[record[self.loc_id]].append(defaultdict(int))
                 loc_names[record[self.loc_id]] = record[self.loc_name]
-            # TODO: summary of products loss and stock
             product = self.products.index(record['product_name'])
             if self.denominator_exists(record['final_pna_stock']):
                 if record['loss_amt']:
@@ -4905,7 +4833,6 @@ class ExpirationRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
                 for i in range(len(self.products)):
                     data[record[self.loc_id]].append(defaultdict(int))
                 loc_names[record[self.loc_id]] = record[self.loc_name]
-            # TODO: summary of products loss and stock
             product = self.products.index(record['product_name'])
             if self.denominator_exists(record['final_pna_stock_valuation']):
                 if record['expired_pna_valuation']:
@@ -4917,9 +4844,6 @@ class ExpirationRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
 
     @property
     def rows(self):
-        # TODO: ADD NORMAL DATA INSTEAD OF EMPTYLITS
-        # Warning: Mocked records, need check if works
-
         records = [
             {'region_id': 'region_id1',
              'region_name': 'region_name1',
@@ -4963,7 +4887,7 @@ class ExpirationRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
              'final_pna_stock_valuation': {'html': 45},
              'real_date_repeat': datetime.strptime('Jul 5, 2019', "%b %d, %Y").date(),
              'product_name': 'product4'},
-        ]  # self.get_data()
+        ]
         loc_names, data = self.get_expiration_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_expiration_rate_to_rows(loc_names, data)
@@ -5058,7 +4982,6 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
 
     @property
     def rows(self):
-        # records = self.get_data()
         rows = [
             {
                 'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
@@ -5128,7 +5051,6 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
 
 
 class ValuationOfPNAStockPerProductV2Data(SqlData):
-    # TODO: Utilize the same calculations as in the existing table within ‘tableau de bord 3’
     slug = 'valeur_des_stocks_pna_disponible_chaque_produit'
     comment = 'Valeur des stocks PNA disponible (chaque produit)'
     title = 'Valeur des stocks PNA disponible (chaque produit)'
@@ -5141,7 +5063,6 @@ class ValuationOfPNAStockPerProductV2Data(SqlData):
 
     @property
     def table_name(self):
-        # TODO: we don't know if we need to create data source or use existing one
         return get_table_name(self.config['domain'], "")
 
     @property
@@ -5203,9 +5124,7 @@ class ValuationOfPNAStockPerProductV2Data(SqlData):
 
     @property
     def rows(self):
-        # TODO: we don't know in which format data will be displaied
         return []
-    # return self.get_data()
 
 
 class RecapPassageOneData(SqlData):

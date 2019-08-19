@@ -64,8 +64,6 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
 
     @property
     def aggregated_headers(self):
-        # TODO: needs further implementation
-
         headers = RecapPassageOneData(config=self.config).headers.header
         return DataTablesHeader(
             *(headers[:2])
@@ -77,8 +75,6 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
         return choosen_product or None
 
     def aggregated_rows(self):
-        # TODO: needs further implementation
-
         headers = RecapPassageOneData(config=self.config).headers.header
         return DataTablesHeader(
             DataTablesColumn('uno'),
