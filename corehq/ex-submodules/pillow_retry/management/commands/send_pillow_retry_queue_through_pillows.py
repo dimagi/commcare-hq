@@ -52,7 +52,7 @@ class Command(BaseCommand):
                     error.change_object.metadata.data_source_name,
                     error.change_object.metadata
                 )
-            self.producer.flush()
+        self.producer.flush()
 
         self._delete_errors(errors)
         self.count += 1000
