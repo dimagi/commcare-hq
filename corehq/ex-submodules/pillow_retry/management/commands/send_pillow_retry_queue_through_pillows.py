@@ -8,7 +8,7 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 from gevent.pool import Pool
 
-from corehq.apps.change_feed.producer import producer
+from corehq.apps.change_feed.producer import ChangeProducer
 from pillow_retry.models import PillowError
 
 
@@ -21,6 +21,7 @@ class Command(BaseCommand):
         self.pillow = pillow
         self.count = 0
         self.start = time.time()
+        self.producer = ChangeProducer(auto_flush=False)
 
         for errors in self.get_next_errors():
             self.pool.spawn(self._process_errors, errors)
@@ -47,10 +48,11 @@ class Command(BaseCommand):
     def _process_errors(self, errors):
         for error in errors:
             if error.change_object.metadata:
-                producer.send_change(
+                self.producer.send_change(
                     error.change_object.metadata.data_source_name,
                     error.change_object.metadata
                 )
+            self.producer.flush()
 
         self._delete_errors(errors)
         self.count += 1000
