@@ -7,12 +7,16 @@ from django.conf import settings
 from psycopg2._psycopg import InterfaceError
 import pytz
 
+from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.sql_db.util import handle_connection_failure
 from hqscripts.generic_queue import GenericEnqueuingOperation, QueueItem
 from pillow_retry.const import PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT
 from pillow_retry.models import PillowError
 from pillow_retry.api import process_pillow_retry
 from django import db
+
+
+producer = ChangeProducer(auto_flush=False)
 
 
 class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
@@ -33,7 +37,8 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
         utcnow = datetime.utcnow()
         items = self.get_items_to_be_processed(utcnow)
         for item in items:
-            process_pillow_retry(item.object)
+            process_pillow_retry(item.object, producer=producer)
+        producer.flush()
 
     def get_items_to_be_processed(self, utcnow):
         # We're just querying for ids here, so no need to limit

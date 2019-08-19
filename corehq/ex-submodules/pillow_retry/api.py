@@ -6,7 +6,7 @@ import sys
 from memoized import memoized
 
 from corehq.apps.change_feed.data_sources import get_document_store
-from corehq.apps.change_feed.producer import producer
+from corehq.apps.change_feed.producer import producer as kafka_producer
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from dimagi.utils.logging import notify_error
 from pillow_retry import const
@@ -21,7 +21,8 @@ def _get_pillow(pillow_name_or_class):
     return get_pillow_by_name(pillow_name_or_class)
 
 
-def process_pillow_retry(error_doc):
+def process_pillow_retry(error_doc, producer=None):
+    producer = producer or kafka_producer
     pillow_name_or_class = error_doc.pillow
     try:
         pillow = _get_pillow(pillow_name_or_class)
