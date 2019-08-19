@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 import sys
 
+from memoized import memoized
+
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
@@ -14,10 +16,15 @@ from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.utils import get_pillow_by_name
 
 
+@memoized
+def _get_pillow(pillow_name_or_class):
+    return get_pillow_by_name(pillow_name_or_class)
+
+
 def process_pillow_retry(error_doc):
     pillow_name_or_class = error_doc.pillow
     try:
-        pillow = get_pillow_by_name(pillow_name_or_class)
+        pillow = _get_pillow(pillow_name_or_class)
     except PillowNotFoundError:
         pillow = None
 
@@ -37,15 +44,15 @@ def process_pillow_retry(error_doc):
     delete_all_for_doc = False
     try:
         change_metadata = change.metadata
-        if change_metadata:
-            document_store = get_document_store(
-                data_source_type=change_metadata.data_source_type,
-                data_source_name=change_metadata.data_source_name,
-                domain=change_metadata.domain,
-                load_source="pillow_retry",
-            )
-            change.document_store = document_store
         if isinstance(pillow.get_change_feed(), CouchChangeFeed):
+            if change_metadata:
+                document_store = get_document_store(
+                    data_source_type=change_metadata.data_source_type,
+                    data_source_name=change_metadata.data_source_name,
+                    domain=change_metadata.domain,
+                    load_source="pillow_retry",
+                )
+                change.document_store = document_store
             pillow.process_change(change)
         else:
             if change_metadata.data_source_type in ('couch', 'sql'):

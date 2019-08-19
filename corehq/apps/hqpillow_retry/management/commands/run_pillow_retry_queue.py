@@ -12,6 +12,10 @@ from django import db
 
 class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
     help = "Runs the Pillow Retry Queue"
+    _errors_in_queue = False
+
+    def get_fetching_interval(self):
+        return 0 if self._errors_in_queue else 10
 
     def get_queue_name(self):
         return "pillow-queue"
@@ -19,20 +23,20 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
     def get_enqueuing_timeout(self):
         return PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT
 
-    @staticmethod
-    def _get_items(utcnow):
-        errors = PillowError.get_errors_to_process(utcnow=utcnow, limit=1000)
-        return [QueueItem(id=e.id, key=e.date_next_attempt, object=e) for e in errors]
+    def _get_items(self, utcnow):
+        errors = PillowError.get_errors_to_process(utcnow=utcnow, limit=10000)
+        items = [QueueItem(id=e.id, key=e.date_next_attempt, object=e) for e in errors]
+        self._errors_in_queue = bool(items)
+        return items
 
-    @classmethod
-    def get_items_to_be_processed(cls, utcnow):
+    def get_items_to_be_processed(self, utcnow):
         # We're just querying for ids here, so no need to limit
         utcnow = utcnow.replace(tzinfo=pytz.UTC)
         try:
-            return cls._get_items(utcnow)
+            return self._get_items(utcnow)
         except InterfaceError:
             db.connection.close()
-            return cls._get_items(utcnow)
+            return self._get_items(utcnow)
 
     def use_queue(self):
         return settings.PILLOW_RETRY_QUEUE_ENABLED
