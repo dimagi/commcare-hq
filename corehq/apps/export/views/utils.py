@@ -369,11 +369,6 @@ def can_view_case_exports(couch_user, domain):
     return ExportsPermissionsManager('case', domain, couch_user).has_form_export_permissions
 
 
-def remove_row_number_from_export_columns(export_instance):
-    for table in export_instance.tables:
-        table.columns = [column for column in table.columns if not isinstance(column, RowNumberColumn)]
-
-
 def clean_odata_columns(export_instance):
     for table in export_instance.tables:
         for column in table.columns:

@@ -27,6 +27,7 @@ import six
 COMMANDE_COMBINED = 'commande_combined'
 LIVRAISON_COMBINED = 'livraison_combined'
 OPERATEUR_COMBINED = 'operateur_combined'
+OPERATEUR_COMBINED2 = 'operateur_combined2'
 RAPTURE_COMBINED = 'rapture_combined'
 RECOUVREMENT_COMBINED = 'recouvrement_combined'
 YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR = 'yeksi_naa_reports_visite_de_l_operateur'
@@ -311,7 +312,7 @@ class MultiReport(CustomProjectReport, YeksiNaaMixin, ProjectReportParametersMix
     title = ''
     report_template_path = "yeksi_naa/multi_report.html"
     flush_layout = True
-    export_format_override = 'csv'
+    export_format_override = None
 
     @cached_property
     def rendered_report_title(self):

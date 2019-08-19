@@ -106,7 +106,7 @@ from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months, \
     get_datatables_ordering_info
 from custom.icds_reports.utils.data_accessor import get_program_summary_data,\
-    get_program_summary_data_with_retrying
+    get_program_summary_data_with_retrying, get_awc_covered_data_with_retrying
 from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
@@ -1206,19 +1206,7 @@ class AWCsCoveredView(BaseReportView):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = {}
-        if step == "map":
-            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_awcs_covered_sector_data(domain, config, loc_level, location, include_test)
-            else:
-                data = get_awcs_covered_data_map(domain, config.copy(), loc_level, include_test)
-                if loc_level == LocationTypes.BLOCK:
-                    sector = get_awcs_covered_sector_data(
-                        domain, config, loc_level, location, include_test
-                    )
-                    data.update(sector)
-        elif step == "chart":
-            data = get_awcs_covered_data_chart(domain, config, loc_level, include_test)
+        data = get_awc_covered_data_with_retrying(step, domain, config, loc_level, location, include_test)
 
         return JsonResponse(data={
             'report_data': data,

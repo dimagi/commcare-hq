@@ -23,7 +23,7 @@ class CaseRules(object):
     by_case_type = attr.ib()
 
     def expired(self):
-        return (datetime.utcnow() - self.date_loaded) > 30 * 60
+        return (datetime.utcnow() - self.date_loaded).total_seconds() > 30 * 60
 
 
 class CaseMessagingSyncProcessor(BulkPillowProcessor):

@@ -1,16 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import numbers
 
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
 
 from memoized import memoized
-
-from sqlagg.columns import SimpleColumn
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
 from corehq.apps.userreports.exceptions import InvalidQueryColumn
 from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
@@ -61,16 +59,9 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         return []
 
     @property
-    def columns(self):
+    def _db_columns(self):
         # This explicitly only includes columns that resolve to database queries.
-        # The name is a bit confusing but is hard to change due to its dependency in SqlData
-        db_columns = [c for c in self.inner_columns if not isinstance(c, CalculatedColumn)]
-        fields = {c.slug for c in db_columns}
-
-        return db_columns + [
-            DatabaseColumn('', SimpleColumn(field))
-            for field in self._defer_fields
-            if field not in fields]
+        return [c for c in self.inner_columns if not isinstance(c, CalculatedColumn)]
 
     @memoized
     @method_decorator(catch_and_raise_exceptions)

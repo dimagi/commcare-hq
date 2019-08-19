@@ -22,7 +22,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
     helper_key = 'location'
     base_tablename = 'awc_location'
     local_tablename = 'awc_location_local'
-    temporary_tablename = 'tmp_awc_location'
+    temporary_tablename = 'tmp_awc_location_local'
 
     ucr_aww_table = AWW_USER_TABLE_ID
 
@@ -102,8 +102,8 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         self.assert_no_awc_missing_from_new_table(cursor)
 
         cursor.execute(self.delete_old_locations())
-        cursor.execute(self.move_data_to_real_table())
-        cursor.execute(self.create_local_table())
+        cursor.execute(self.move_data_to_local_table())
+        cursor.execute(self.create_distributed_table())
 
     @property
     def ucr_aww_tablename(self):
@@ -112,7 +112,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         return get_table_name(self.domain, config.table_id)
 
     def delete_old_locations(self):
-        return "DELETE FROM \"{tablename}\"".format(tablename=self.base_tablename)
+        return "DELETE FROM \"{local_tablename}\"".format(local_tablename=self.local_tablename)
 
     def aggregate_to_temporary_table(self, cursor, csv_file):
         columns = csv_file.readline().split('\t')
@@ -123,8 +123,8 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
 
     def create_temporary_table_query(self):
-        return "CREATE TABLE \"{temporary_tablename}\" (LIKE \"{tablename}\" INCLUDING INDEXES)".format(
-            tablename=self.base_tablename,
+        return "CREATE TABLE \"{temporary_tablename}\" (LIKE \"{local_tablename}\" INCLUDING INDEXES)".format(
+            local_tablename=self.local_tablename,
             temporary_tablename=self.temporary_tablename,
         )
 
@@ -132,14 +132,14 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         cursor.execute(
             """
             SELECT count(*)
-            FROM "{tablename}"
+            FROM "{local_tablename}"
             WHERE aggregation_level = 5 AND doc_id NOT IN (
                 SELECT doc_id
                 FROM "{temporary_tablename}"
                 WHERE aggregation_level = 5
             )
             """.format(
-                tablename=self.base_tablename,
+                local_tablename=self.local_tablename,
                 temporary_tablename=self.temporary_tablename,
             )
         )
@@ -147,7 +147,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         if num_locations_missing:
             raise LocationRemovedException(str(num_locations_missing))
 
-    def move_data_to_real_table(self):
+    def move_data_to_local_table(self):
         columns = (
             ('doc_id', 'doc_id'),
             ('awc_name', 'awc_name'),
@@ -178,7 +178,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         )
 
         return """
-            INSERT INTO "{tablename}" (
+            INSERT INTO "{local_tablename}" (
               {columns}
             ) (
               SELECT
@@ -186,7 +186,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
               FROM "{temporary_tablename}"
             )
         """.format(
-            tablename=self.base_tablename,
+            local_tablename=self.local_tablename,
             temporary_tablename=self.temporary_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
@@ -290,15 +290,12 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             group_by=", ".join(group_by)
         )
 
-    def create_local_table(self):
+    def create_distributed_table(self):
         return """
-        DELETE FROM "{local_tablename}";
-        CREATE TEMPORARY TABLE "{tmp_local_tablename}" AS SELECT * FROM "{tablename}";
-        INSERT INTO "{local_tablename}" SELECT * FROM "{tmp_local_tablename}";
-        DROP TABLE "{tmp_local_tablename}";
+        DELETE FROM "{tablename}";
+        INSERT INTO "{tablename}" SELECT * FROM "{local_tablename}";
         """.format(
             tablename=self.base_tablename,
-            tmp_local_tablename='tmp_awc_local',
             local_tablename=self.local_tablename
         )
 

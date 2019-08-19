@@ -1574,7 +1574,7 @@ class Subscription(models.Model):
                 DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
             'base_url': get_site_domain(),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
-            'sales_email': settings.REPORT_BUILDER_ADD_ON_EMAIL
+            'sales_email': settings.SALES_EMAIL,
         }
 
         if self.account.is_customer_billing_account:

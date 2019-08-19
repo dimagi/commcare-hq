@@ -4,7 +4,7 @@ from corehq.util.elastic import es_index
 from corehq.pillows.mappings.utils import mapping_from_json
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-APP_INDEX = es_index("hqapps_2019-01-23")
+APP_INDEX = es_index("hqapps_2019-08-14")
 APP_MAPPING = mapping_from_json('app_mapping.json')
 APP_ES_ALIAS = "hqapps"
 APP_ES_TYPE = "app"
