@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import logging
 from datetime import datetime
 from django.db.models import Min
 
@@ -13,6 +14,7 @@ from casexml.apps.phone.models import SyncLogSQL
 from corehq.form_processor.backends.sql.dbaccessors import get_cursor
 from dimagi.utils.logging import notify_exception
 
+log = logging.getLogger(__name__)
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
 ASYNC_RESTORE_SENT = "SENT"
@@ -48,6 +50,7 @@ def get_async_restore_payload(restore_config, domain=None, username=None):
     """
     try:
         repr(restore_config)
+        log.info('RestoreConfig after get_async_restore_payload task is created: %r', restore_config)
     except Exception as e:
         notify_exception(
             None,
