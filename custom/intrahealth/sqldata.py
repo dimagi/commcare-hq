@@ -2515,10 +2515,7 @@ class ProductData(ProductsDataSource):
     @property
     def rows(self):
         records = self.get_data()
-        rows = []
-        for record in records:
-            rows.append([record['product_id'], record['product_name']])
-        return sorted(rows, key=lambda x: x[0])
+        return records
 
 
 class ProductsInProgramData(ProgramsDataSource):
@@ -2612,8 +2609,11 @@ class ProductsInProgramWithNameData(ProgramsDataSource):
             program_name = program_data['name']
             if program_name == 'PLANNIFICATION FAMILIALE':
                 program_name = 'PLANIFICATION FAMILIALE'
-            rows.append([program_id, program_name, program_data['product_ids']])
-        rows = sorted(rows, key=lambda x: x[0])
+            rows.append({
+                'program_id': program_id,
+                'program_name': program_name,
+                'product_ids': program_data['product_ids'],
+            })
         return rows
 
 

@@ -117,8 +117,6 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
         return SatisfactionRateAfterDeliveryPerProductData(config=self.config).rows
 
     def calculate_rows(self):
-        for x in self.clean_rows:
-            print(x)
 
         def data_to_rows(quantities_list):
             quantities_to_return = []
@@ -233,9 +231,6 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
         chart = MultiBarChart(None, Axis('Location'), Axis('Percent', format='.2f'))
         chart.height = 400
         chart.marginBottom = 100
-
-        for xd in self.clean_rows:
-            print(xd)
 
         def data_to_chart(quantities_list):
             quantities_to_return = []

@@ -187,38 +187,42 @@ class ProgramsAndProductsFilter(BaseDrilldownOptionFilter):
     @property
     def drilldown_map(self):
         rows = []
-        data = ProductsInProgramWithNameData(config={'domain': self.domain}).rows
+        all_data = ProductsInProgramWithNameData(config={'domain': self.domain}).rows
         all_products_data = ProductData(config={'domain': self.domain}).rows
-        products = {}
 
-        for product in all_products_data:
-            product_id, product_name = product[0], product[1]
-            products[product_id] = product_name
+        all_data = sorted(all_data, key=lambda x: x['program_name'])
+        all_products_data = sorted(all_products_data, key=lambda x: x['product_name'])
 
-        data.sort(key=lambda x: x[1])
-        for data_row in data:
-            program_id = data_row[0]
-            program_name = data_row[1]
-            product_ids = data_row[2]
+        for data in all_data:
+            program_name = data['program_name']
+            program_id = data['program_id']
+            product_ids = data['product_ids']
             length = len(product_ids)
             index = 0
             while index < length:
                 product_id = product_ids[index]
-                if product_id not in products.keys():
+                if product_id not in product_ids:
                     product_ids.pop(index)
                     index -= 1
                     length -= 1
                 index += 1
 
-            products_list = [
-                [x, products[x]] for x in product_ids
-            ]
-            products_list.sort(key=lambda x: x[1])
+            products_list = []
+            for product_data in all_products_data:
+                product_id = product_data['product_id']
+                product_name = product_data['product_name']
+                if product_id in product_ids:
+                    products_list.append({
+                        'product_id': product_id,
+                        'product_name': product_name,
+                    })
+
             rows.append({
                 'val': program_id,
                 'text': program_name,
                 'next': [
-                    {'val': p[0], 'text': p[1]} for p in products_list if program_name if p[1] is not None
+                    {'val': p['product_id'], 'text': p['product_name']} \
+                    for p in products_list if program_name if p['product_name'] is not None
                 ]
             })
         return rows
