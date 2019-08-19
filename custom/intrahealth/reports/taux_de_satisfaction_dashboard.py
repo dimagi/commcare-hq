@@ -66,23 +66,26 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
             return 'Region'
 
     @property
+    def products(self):
+        products_names = []
+
+        for row in self.clean_rows:
+            for product_info in row['products']:
+                product_name = product_info['product_name']
+                if product_name not in products_names:
+                    products_names.append(product_name)
+
+        products_names = sorted(products_names)
+
+        return products_names
+
+    @property
     def headers(self):
-        def get_products():
-            products_names = []
-
-            for row in self.clean_rows:
-                for product_info in row['products']:
-                    product_name = product_info['product_name']
-                    if product_name not in products_names:
-                        products_names.append(product_name)
-
-            return products_names
-
         headers = DataTablesHeader(
             DataTablesColumn(self.selected_location_type),
         )
 
-        products = get_products()
+        products = self.products
         for product in products:
             headers.add_column(DataTablesColumn(product))
 
@@ -111,117 +114,115 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
 
     @property
     def clean_rows(self):
-        quantities = SatisfactionRateAfterDeliveryPerProductData(config=self.config).rows
-        loc_type = self.selected_location_type.lower()
-        quantities_list = []
-
-        for quantity in quantities:
-            data_dict = {
-                'location_name': quantity['{}_name'.format(loc_type)],
-                'location_id': quantity['{}_id'.format(loc_type)],
-                'products': [],
-            }
-            product_name = quantity['product_name']
-            product_id = quantity['product_id']
-            amt_delivered_convenience = quantity['amt_delivered_convenience']
-            ideal_topup = quantity['ideal_topup']
-
-            length = len(quantities_list)
-            if not quantities_list:
-                product_dict = {
-                    'product_name': product_name,
-                    'product_id': product_id,
-                    'amt_delivered_convenience': amt_delivered_convenience,
-                    'ideal_topup': ideal_topup,
-                }
-                data_dict['products'].append(product_dict)
-                quantities_list.append(data_dict)
-            else:
-                for r in range(0, length):
-                    location_id = quantities_list[r]['location_id']
-                    if quantity['{}_id'.format(loc_type)] == location_id:
-                        if not quantities_list[r]['products']:
-                            product_dict = {
-                                'product_name': product_name,
-                                'product_id': product_id,
-                                'amt_delivered_convenience': amt_delivered_convenience,
-                                'ideal_topup': ideal_topup,
-                            }
-                            quantities_list[r]['products'].append(product_dict)
-                        else:
-                            products = quantities_list[r]['products']
-                            amount_of_products = len(products)
-                            for s in range(0, amount_of_products):
-                                product = products[s]
-                                if product['product_id'] == product_id:
-                                    product['amt_delivered_convenience'] += amt_delivered_convenience
-                                    product['ideal_topup'] += ideal_topup
-                                    break
-                                elif product['product_id'] != product_id and s == amount_of_products - 1:
-                                    product_dict = {
-                                        'product_name': product_name,
-                                        'product_id': product_id,
-                                        'amt_delivered_convenience': amt_delivered_convenience,
-                                        'ideal_topup': ideal_topup,
-                                    }
-                                    quantities_list[r]['products'].append(product_dict)
-                    elif quantity['{}_id'.format(loc_type)] != location_id and r == length - 1:
-                        product_dict = {
-                            'product_name': product_name,
-                            'product_id': product_id,
-                            'amt_delivered_convenience': amt_delivered_convenience,
-                            'ideal_topup': ideal_topup,
-                        }
-                        data_dict['products'].append(product_dict)
-                        quantities_list.append(data_dict)
-
-        return quantities_list
+        return SatisfactionRateAfterDeliveryPerProductData(config=self.config).rows
 
     def calculate_rows(self):
+        for x in self.clean_rows:
+            print(x)
 
         def data_to_rows(quantities_list):
             quantities_to_return = []
-            product_names = []
-            product_ids = []
-            for quantity in quantities_list:
-                for product in quantity['products']:
-                    product_name = product['product_name']
-                    product_id = product['product_id']
-                    if product_id not in product_ids:
-                        product_ids.append(product_id)
-                        product_names.append(product_name)
+            added_locations = []
+            locations_with_products = {}
+            all_products = self.products
 
             for quantity in quantities_list:
-                products_list = []
+                location_id = quantity['location_id']
                 location_name = quantity['location_name']
-                for product in quantity['products']:
-                    products_list.append(product)
-                products_names_from_list = [x['product_name'] for x in quantity['products']]
-                for product_name in product_names:
-                    if product_name not in products_names_from_list:
-                        products_list.append({
+                products = sorted(quantity['products'], key=lambda x: x['product_name'])
+                if location_id in added_locations:
+                    length = len(locations_with_products[location_name])
+                    for r in range(0, length):
+                        product_for_location = locations_with_products[location_name][r]
+                        for product in products:
+                            if product_for_location['product_id'] == product['product_id']:
+                                amt_delivered_convenience = product['amt_delivered_convenience']
+                                ideal_topup = product['ideal_topup']
+                                locations_with_products[location_name][r]['amt_delivered_convenience'] += amt_delivered_convenience
+                                locations_with_products[location_name][r]['ideal_topup'] += ideal_topup
+                else:
+                    added_locations.append(location_id)
+                    locations_with_products[location_name] = []
+                    unique_products_for_location = []
+                    products_to_add = []
+                    for product in products:
+                        product_name = product['product_name']
+                        if product_name not in unique_products_for_location and product_name in all_products:
+                            unique_products_for_location.append(product_name)
+                            products_to_add.append(product)
+                        else:
+                            index = unique_products_for_location.index(product_name)
+                            amt_delivered_convenience = product['amt_delivered_convenience']
+                            ideal_topup = product['ideal_topup']
+                            products_to_add[index]['amt_delivered_convenience'] += amt_delivered_convenience
+                            products_to_add[index]['ideal_topup'] += ideal_topup
+
+                    for product in products_to_add:
+                        locations_with_products[location_name].append(product)
+
+            for location, products in locations_with_products.items():
+                products_names = [x['product_name'] for x in products]
+                for product_name in all_products:
+                    if product_name not in products_names:
+                        locations_with_products[location].append({
+                            'product_id': None,
                             'product_name': product_name,
                             'amt_delivered_convenience': 0,
                             'ideal_topup': 0,
                         })
+
+            for location, products in locations_with_products.items():
                 quantities_to_return.append([
-                    location_name,
+                    location,
                 ])
-                products_list = sorted(products_list, key=lambda x: x['product_name'])
+                products_list = sorted(products, key=lambda x: x['product_name'])
                 for product_info in products_list:
                     amt_delivered_convenience = product_info['amt_delivered_convenience']
                     ideal_topup = product_info['ideal_topup']
-                    percent_formatted = 'pas de données'
-                    percent = (amt_delivered_convenience / float(ideal_topup)) * 100 \
-                        if ideal_topup > 0 else percent_formatted
-                    if percent is not 'pas de données':
-                        percent_formatted = '{:.2f} %'.format(percent)
+                    percent = (amt_delivered_convenience / float(ideal_topup) * 100) \
+                        if ideal_topup != 0 else 'pas de données'
+                    if percent != 'pas de données':
+                        percent = '{:.2f} %'.format(percent)
                     quantities_to_return[-1].append({
-                        'html': '{}'.format(percent_formatted),
-                        'sort_key': percent_formatted
+                        'html': '{}'.format(percent),
+                        'sort_key': percent
                     })
 
+            total_row = calculate_total_row(locations_with_products)
+            quantities_to_return.append(total_row)
+
             return quantities_to_return
+
+        def calculate_total_row(locations_with_products):
+            total_row_to_return = ['<b>NATIONAL</b>']
+            data_for_total_row = []
+
+            for location, products in locations_with_products.items():
+                products_list = sorted(products, key=lambda x: x['product_name'])
+                if not data_for_total_row:
+                    for product_info in products_list:
+                        amt_delivered_convenience = product_info['amt_delivered_convenience']
+                        ideal_topup = product_info['ideal_topup']
+                        data_for_total_row.append([amt_delivered_convenience, ideal_topup])
+                else:
+                    for r in range(0, len(products_list)):
+                        product_info = products_list[r]
+                        amt_delivered_convenience = product_info['amt_delivered_convenience']
+                        ideal_topup = product_info['ideal_topup']
+                        data_for_total_row[r][0] += amt_delivered_convenience
+                        data_for_total_row[r][1] += ideal_topup
+
+            for data in data_for_total_row:
+                amt_delivered_convenience = data[0]
+                ideal_topup = data[1]
+                percent = (amt_delivered_convenience / float(ideal_topup) * 100) \
+                    if ideal_topup != 0 else 0
+                total_row_to_return.append({
+                    'html': '<b>{:.2f} %</b>'.format(percent),
+                    'sort_key': percent,
+                })
+
+            return total_row_to_return
 
         rows = data_to_rows(self.clean_rows)
 
@@ -229,58 +230,68 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
 
     @property
     def charts(self):
-        chart = PieChart('Taux de Satisfaction des produits au niveau national',
-                         'produits proposes sur produits livres', [])
+        chart = MultiBarChart(None, Axis('Location'), Axis('Percent', format='.2f'))
+        chart.height = 400
+        chart.marginBottom = 100
+
+        for xd in self.clean_rows:
+            print(xd)
 
         def data_to_chart(quantities_list):
-            products_names_list = []
-            products_occurences = {}
-            products_data = {}
-            product_names = []
+            quantities_to_return = []
+            products_data = []
+            added_products = []
 
             for quantity in quantities_list:
-                products_list = []
-                for product in quantity['products']:
-                    products_list.append(product)
-                    if product['product_name'] not in product_names:
-                        product_names.append(product['product_name'])
-                products_names_from_list = [x['product_name'] for x in quantity['products']]
-                for product_name in product_names:
-                    if product_name not in products_names_from_list:
-                        products_list.append({
-                            'product_name': product_name,
-                            'amt_delivered_convenience': 0,
-                            'ideal_topup': 0,
-                        })
-
-                for product in products_list:
+                sorted_quantity = sorted(quantity['products'], key=lambda x: x['product_name'])
+                for product in sorted_quantity:
+                    product_id = product['product_id']
                     product_name = product['product_name']
                     amt_delivered_convenience = product['amt_delivered_convenience']
                     ideal_topup = product['ideal_topup']
-                    if product_name not in products_names_list:
-                        products_names_list.append(product_name)
-                        products_occurences[product_name] = 1
-                        products_data[product_name] = [amt_delivered_convenience, ideal_topup]
+                    if product_id not in added_products:
+                        added_products.append(product_id)
+                        product_dict = {
+                            'product_id': product_id,
+                            'product_name': product_name,
+                            'amt_delivered_convenience': amt_delivered_convenience,
+                            'ideal_topup': ideal_topup,
+                        }
+                        products_data.append(product_dict)
                     else:
-                        products_occurences[product_name] += 1
-                        products_data[product_name][0] += amt_delivered_convenience
-                        products_data[product_name][1] += ideal_topup
+                        for product_data in products_data:
+                            if product_data['product_id'] == product_id:
+                                product_data['amt_delivered_convenience'] += amt_delivered_convenience
+                                product_data['ideal_topup'] += ideal_topup
 
-            chart_pertencts = []
-            for product in product_names:
-                amt_delivered_convenience = products_data[product][0]
-                ideal_topup = products_data[product][1]
-                product_occurences = products_occurences[product]
-                percent = ((amt_delivered_convenience / float(ideal_topup)) * 100) / product_occurences
-                chart_pertencts.append([product, percent])
+            products = sorted(products_data, key=lambda x: x['product_name'])
+            for product in products:
+                product_name = product['product_name']
+                amt_delivered_convenience = product['amt_delivered_convenience']
+                ideal_topup = product['ideal_topup']
+                percent = (amt_delivered_convenience / float(ideal_topup) * 100) \
+                    if ideal_topup != 0 else 0
+                quantities_to_return.append([
+                    product_name,
+                    {
+                        'html': '{:.2f} %'.format(percent),
+                        'sort_key': percent
+                    }
+                ])
 
-            return chart_pertencts
+            return quantities_to_return
 
         def get_data_for_graph():
-            chart_percents = data_to_chart(self.clean_rows)
+            com = []
+            rows = data_to_chart(self.clean_rows)
+            for row in rows:
+                com.append({"x": row[0], "y": row[1]['sort_key']})
 
             return [
-                {'label': x[0], 'value': x[1]} for x in chart_percents
+                {
+                    "key": 'Taux de Satisfaction des produits au niveau national',
+                    'values': com
+                },
             ]
 
         chart.data = get_data_for_graph()
