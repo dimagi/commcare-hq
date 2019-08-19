@@ -404,57 +404,50 @@ def copy_app(request, domain):
 
         linked = data.get('linked')
         if linked:
-            # Create a new linked application
-            # Linked apps can only be created from released versions
-            error = None
-            if from_domain == to_domain:
-                error = _("You may not create a linked app in the same domain as its master app.")
-            elif data['build_id']:
-                from_app = Application.get(data['build_id'])
-                if not from_app.is_released:
-                    error = _("Make sure the version you are copying from is released.")
-            else:
-                from_app = get_latest_released_app(from_domain, app_id)
-                if not from_app:
-                    error = _("Unable to get latest released version of your app."
-                              " Make sure you have at least one released build.")
-
-            if error:
-                messages.error(request, _("Creating linked app failed. {}").format(error))
-                return HttpResponseRedirect(reverse_util('app_settings', params={},
-                                                         args=[from_domain, app_id]))
-
-            return _create_linked_app(request, from_app, to_domain, data['name'])
+            return _create_linked_app(request, app_id, data['build_id'], from_domain, to_domain, data['name'])
         else:
-            # Copy application
-            from_app = Application.get(data['build_id'] or app_id)
-            from_app.convert_build_to_app()
-            app_source = from_app.export_json(dump_json=False)
-            return _copy_app_helper(request, app_source, to_domain, data['name'])
+            return _copy_app_helper(request, data['build_id'] or app_id, to_domain, data['name'])
 
     # having login_and_domain_required validates that the user
     # has access to the domain we're copying the app to
     return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
 
 
-def _create_linked_app(request, master_build, link_domain, link_app_name):
-    master_domain = master_build.domain
-    linked_app = create_linked_app(master_domain, master_build.master_id, link_domain, link_app_name)
+def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_app_name):
+    # Linked apps can only be created from released versions
+    error = None
+    if from_domain == to_domain:
+        error = _("You may not create a linked app in the same domain as its master app.")
+    elif build_id:
+        from_app = Application.get(build_id)
+        if not from_app.is_released:
+            error = _("Make sure the version you are copying from is released.")
+    else:
+        from_app = get_latest_released_app(from_domain, app_id)
+        if not from_app:
+            error = _("Unable to get latest released version of your app."
+                      " Make sure you have at least one released build.")
+
+    if error:
+        messages.error(request, _("Creating linked app failed. {}").format(error))
+        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[from_domain, app_id]))
+
+    linked_app = create_linked_app(from_domain, from_app.master_id, to_domain, link_app_name)
     try:
-        update_linked_app(linked_app, request.couch_user.get_id, master_build=master_build)
+        update_linked_app(linked_app, request.couch_user.get_id, master_build=from_app)
     except AppLinkError as e:
         linked_app.delete()
         messages.error(request, str(e))
         return HttpResponseRedirect(reverse_util('app_settings', params={},
-                                                 args=[master_domain, master_build.master_id]))
+                                                 args=[from_domain, from_app.master_id]))
 
     messages.success(request, _('Application successfully copied and linked.'))
-    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
+    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[to_domain, linked_app.get_id]))
 
 
-def _copy_app_helper(request, from_app_source, to_domain, to_app_name):
+def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
     extra_properties = {'name': to_app_name}
-    app_copy = import_app_util(from_app_source, to_domain, extra_properties, request)
+    app_copy = import_app_util(from_app_id, to_domain, extra_properties, request)
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
