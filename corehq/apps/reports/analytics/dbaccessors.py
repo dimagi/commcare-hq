@@ -10,7 +10,7 @@ def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None):
         case_ids_list = list(case_ids)
     else:
         case_ids_list = [case_ids]
-    return LedgerAccessors(domain).get_ledger_values_for_cases(case_ids_list, section_id, entry_ids)
+    return LedgerAccessors(domain).get_ledger_values_for_cases(case_ids_list, [section_id], entry_ids)
 
 
 def products_with_ledgers(domain, case_ids, section_id, entry_ids=None):

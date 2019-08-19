@@ -111,7 +111,7 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
             case_id_map[(section_id, entry_id)].append(case_id)
         for section_entry, case_ids in six.iteritems(case_id_map):
             section_id, entry_id = section_entry
-            results = self.ledger_accessors.get_ledger_values_for_cases(case_ids, section_id, entry_id)
+            results = self.ledger_accessors.get_ledger_values_for_cases(case_ids, [section_id], [entry_id])
             for ledger_value in results:
                 yield ledger_value.to_json()
 

@@ -66,7 +66,7 @@ def get_tasks_case_immunization_ledger_values(tasks_case):
     if tasks_case.type != 'tasks':
         raise ValueError("Expected 'tasks' case")
 
-    return LedgerAccessorSQL.get_ledger_values_for_cases([tasks_case.case_id], section_id='immuns')
+    return LedgerAccessorSQL.get_ledger_values_for_cases([tasks_case.case_id], section_id=['immuns'])
 
 
 def get_immunization_date(ledger_value):

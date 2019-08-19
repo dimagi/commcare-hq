@@ -334,18 +334,20 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
         return get_current_ledger_state(case_ids, ensure_form_id=ensure_form_id)
 
     @staticmethod
-    def get_ledger_values_for_cases(case_ids, section_id=None, entry_id=None, date_start=None, date_end=None):
+    def get_ledger_values_for_cases(case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
         from corehq.apps.commtrack.models import StockState
 
         assert isinstance(case_ids, list)
+        assert isinstance(section_ids, list)
+        assert isinstance(entry_ids, list)
         if not case_ids:
             return []
 
         filters = {'case_id__in': case_ids}
-        if section_id:
-            filters['section_id'] = section_id
-        if entry_id:
-            filters['product_id'] = entry_id
+        if section_ids:
+            filters['section_id__in'] = section_ids
+        if entry_ids:
+            filters['product_id__in'] = entry_ids
         if date_start:
             filters['last_modifed__gte'] = date_start
         if date_end:
