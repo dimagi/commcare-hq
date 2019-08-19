@@ -32,7 +32,7 @@ class Command(BaseCommand):
             pillow_errors = (
                 PillowError.objects
                 .filter(pillow=self.pillow)
-                .order_by('date_created')
+                .order_by('date_next_attempt')
             )[:1000]
 
             num_retrieved = len(pillow_errors)
