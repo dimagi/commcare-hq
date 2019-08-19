@@ -269,7 +269,7 @@ def _expose_download_link(fpath, filename, compress_zip, download_id):
 
 def find_missing_locale_ids_in_ccz(file_cache):
     errors = [
-        _("Could not find {file_path} in CCZ").format(file_path)
+        _("Could not find {file_path} in CCZ").format(file_path=file_path)
         for file_path in ('default/app_strings.txt', 'suite.xml') if file_path not in file_cache]
     if errors:
         return errors
