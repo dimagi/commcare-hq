@@ -78,7 +78,8 @@
     "topojson": "^3.0.0",
     "r.js": "^2.3.5",
     "jquery-memoized-ajax": "^0.5.0",
-    "autotrack": "^2.4.1"
+    "autotrack": "^2.4.1",
+    "raven-js": "^3.27.2"
   },
   "devDependencies": {
     "chai": "3.3.0",
