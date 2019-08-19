@@ -6,7 +6,7 @@ import sys
 from memoized import memoized
 
 from corehq.apps.change_feed.data_sources import get_document_store
-from corehq.apps.change_feed.producer import producer
+from corehq.apps.change_feed.producer import producer as kafka_producer
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from dimagi.utils.logging import notify_error
 from pillow_retry import const
@@ -21,7 +21,8 @@ def _get_pillow(pillow_name_or_class):
     return get_pillow_by_name(pillow_name_or_class)
 
 
-def process_pillow_retry(error_doc):
+def process_pillow_retry(error_doc, producer=None):
+    producer = producer or kafka_producer
     pillow_name_or_class = error_doc.pillow
     try:
         pillow = _get_pillow(pillow_name_or_class)
@@ -40,41 +41,39 @@ def process_pillow_retry(error_doc):
         finally:
             return
 
-    change = error_doc.change_object
-    delete_all_for_doc = False
     try:
-        change_metadata = change.metadata
         if isinstance(pillow.get_change_feed(), CouchChangeFeed):
-            if change_metadata:
-                document_store = get_document_store(
-                    data_source_type=change_metadata.data_source_type,
-                    data_source_name=change_metadata.data_source_name,
-                    domain=change_metadata.domain,
-                    load_source="pillow_retry",
-                )
-                change.document_store = document_store
-            pillow.process_change(change)
+            _process_couch_change(pillow, error_doc)
         else:
-            if change_metadata.data_source_type in ('couch', 'sql'):
-                data_source_type = change_metadata.data_source_type
-            else:
-                # legacy metadata will have other values for non-sql
-                # can remove this once all legacy errors have been processed
-                data_source_type = 'sql'
-            producer.send_change(
-                get_topic_for_doc_type(
-                    change_metadata.document_type,
-                    data_source_type
-                ),
-                change_metadata
-            )
-            delete_all_for_doc = True
+            _process_kafka_change(producer, error_doc)
     except Exception:
         ex_type, ex_value, ex_tb = sys.exc_info()
         error_doc.add_attempt(ex_value, ex_tb)
         error_doc.save()
-    else:
-        if delete_all_for_doc:
-            PillowError.objects.filter(doc_id=error_doc.doc_id).delete()
-        else:
-            error_doc.delete()
+
+
+def _process_couch_change(pillow, error):
+    change = error.change_object
+    change_metadata = change.metadata
+    if change_metadata:
+        document_store = get_document_store(
+            data_source_type=change_metadata.data_source_type,
+            data_source_name=change_metadata.data_source_name,
+            domain=change_metadata.domain,
+            load_source="pillow_retry",
+        )
+        change.document_store = document_store
+    pillow.process_change(change)
+    error.delete()
+
+
+def _process_kafka_change(producer, error):
+    change_metadata = error.change_object.metadata
+    producer.send_change(
+        get_topic_for_doc_type(
+            change_metadata.document_type,
+            change_metadata.data_source_type
+        ),
+        change_metadata
+    )
+    PillowError.objects.filter(doc_id=error.doc_id).delete()
