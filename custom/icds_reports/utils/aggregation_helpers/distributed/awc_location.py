@@ -174,7 +174,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             FROM "{local_tablename}"
             WHERE aggregation_level = 5 AND doc_id IN %s
             """.format(
-                tablename=self.local_tablename,
+                local_tablename=self.local_tablename,
             ), changed_awc_ids
         )
         old_definitions = cursor.fetchall()
@@ -184,7 +184,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             FROM "{temporary_tablename}"
             WHERE aggregation_level = 5 AND doc_id IN %s
             """.format(
-                tablename=self.temporary_tablename,
+                temporary_tablename=self.temporary_tablename,
             ), changed_awc_ids
         )
         new_definitions = cursor.fetchall()
