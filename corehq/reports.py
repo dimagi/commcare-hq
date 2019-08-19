@@ -7,15 +7,9 @@ from corehq import privileges
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import (
-    AdminDomainStatsReport,
-    AdminAppReport,
     AdminPhoneNumberReport,
     AdminUserReport,
-    RealProjectSpacesReport,
-    CommConnectProjectSpacesReport,
-    CommTrackProjectSpacesReport,
     DeviceLogSoftAssertReport,
-    CommCareVersionReport,
     UserAuditReport)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
@@ -349,15 +343,9 @@ BASIC_REPORTS = (
 
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
-        AdminDomainStatsReport,
         AdminUserReport,
-        AdminAppReport,
         PillowErrorsReport,
-        RealProjectSpacesReport,
-        CommConnectProjectSpacesReport,
-        CommTrackProjectSpacesReport,
         DeviceLogSoftAssertReport,
-        CommCareVersionReport,
         AdminPhoneNumberReport,
         UserAuditReport,
     )),

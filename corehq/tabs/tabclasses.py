@@ -24,9 +24,7 @@ from corehq.apps.domain.views.releases import (
     ManageReleasesByLocation,
     ManageReleasesByAppProfile,
 )
-from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
-    CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
-    DeviceLogSoftAssertReport, UserAuditReport
+from corehq.apps.hqadmin.reports import DeviceLogSoftAssertReport, UserAuditReport
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.linked_domain.dbaccessors import is_linked_domain
@@ -2052,20 +2050,14 @@ class AdminTab(UITab):
             ] + admin_operations
         sections = [
             (_('Administrative Reports'), [
-                {'title': _('Project Space List'),
-                 'url': reverse('admin_report_dispatcher', args=('domains',))},
                 {'title': _('Submission Map'),
                  'url': reverse('dimagisphere')},
                 {'title': _('User List'),
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
-                {'title': _('Application List'),
-                 'url': reverse('admin_report_dispatcher', args=('app_list',))},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('Download Global Impact Report'),
                  'url': reverse('download_gir')},
-                {'title': _('CommCare Version'),
-                 'url': reverse('admin_report_dispatcher', args=('commcare_version', ))},
                 {'title': _('Admin Phone Number Report'),
                  'url': reverse('admin_report_dispatcher', args=('phone_number_report',))},
             ]),
@@ -2085,13 +2077,7 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [
-                RealProjectSpacesReport,
-                CommConnectProjectSpacesReport,
-                CommTrackProjectSpacesReport,
-                DeviceLogSoftAssertReport,
-                UserAuditReport,
-            ]
+            } for report in [DeviceLogSoftAssertReport, UserAuditReport]
         ]))
         return sections
 
