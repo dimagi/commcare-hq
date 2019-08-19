@@ -13,7 +13,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter, DateRangeFilter
-from custom.intrahealth.sqldata import VisiteDeLOperateurPerProductV2DataSource, EffectiveDeLivraisonDataSource
+from custom.intrahealth.sqldata import VisiteDeLOperateurPerProductV2DataSource
 from dimagi.utils.dates import force_to_date
 
 
@@ -139,7 +139,28 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
             return stocks_to_return
 
+        def calculate_total_row(s):
+            total_row_to_return = ['<b>NATIONAL</b>']
+            all_ppses = 0
+            in_ppses = 0
+
+            for stock in s:
+                products = stock['products']
+                for product in products:
+                    all_ppses += product['all_ppses']
+                    in_ppses += product['in_ppses']
+
+            percent = (in_ppses / float(all_ppses)) * 100 if all_ppses is not 0 else 0
+            total_row_to_return.append({
+                'html': '<b>{:.2f} %</b>'.format(percent),
+                'sort_key': percent,
+            })
+
+            return total_row_to_return
+
         rows = to_report_row(self.clean_rows)
+        total_row = calculate_total_row(self.clean_rows)
+        rows.append(total_row)
         return rows
 
     @property
@@ -151,6 +172,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         def get_data_for_graph():
             com = []
             rows = self.calculate_rows()
+            rows.pop()
             for row in rows:
                 com.append({"x": row[0], "y": row[1]['sort_key']})
 
