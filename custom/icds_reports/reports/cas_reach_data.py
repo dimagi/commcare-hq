@@ -11,7 +11,7 @@ from custom.icds_reports.models import AggAwcMonthly, AggAwcDailyView
 from custom.icds_reports.utils import get_value, percent_increase, apply_exclude, get_color_with_green_positive
 
 
-def get_cas_reach_data(domain, now_date, config, show_test=False):
+def get_cas_reach_data(domain, now_date, config, show_test=False, pre_release_features=False):
     now_date = datetime(*now_date)
 
     def get_data_for_awc_monthly(month, filters):
@@ -34,13 +34,23 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
         return queryset
 
     def get_data_for_daily_usage(date, filters):
-        queryset = AggAwcDailyView.objects.filter(
-            date=date, **filters
-        ).values(
-            'aggregation_level'
-        ).annotate(
-            daily_attendance=Sum('daily_attendance_open')
-        )
+        if pre_release_features:
+            queryset = AggAwcDailyView.objects.filter(
+                date=date, **filters
+            ).values(
+                'aggregation_level'
+            ).annotate(
+                daily_attendance=Sum('daily_attendance_open')
+            )
+        else:
+            queryset = AggAwcDailyView.objects.filter(
+                date=date, **filters
+            ).values(
+                'aggregation_level'
+            ).annotate(
+                awcs=Sum('num_launched_awcs'),
+                daily_attendance=Sum('daily_attendance_open')
+            )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
@@ -73,7 +83,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             'color': get_color_with_green_positive(daily_attendance_percent),
             'percent': daily_attendance_percent,
             'value': get_value(daily_yesterday, 'daily_attendance'),
-            'all': get_value(awc_this_month_data, 'awcs'),
+            'all':  get_value(awc_this_month_data if pre_release_features else daily_yesterday, 'awcs'),
             'format': 'div',
             'frequency': 'day',
             'redirect': 'icds_cas_reach/awc_daily_status',
