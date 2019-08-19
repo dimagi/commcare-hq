@@ -420,12 +420,25 @@ class TestReportConfigInstances(TestCase, TestXmlMixin):
 
     def test_autogenerate_instance_declaration(self):
         app = self._make_app("Untitled Application")
-        report_app_config = self._add_report(app, "my_report")
+        report_app_config = self._make_report_app_config("my_report")
+        module = self._add_report_module(app, report_app_config)
         form = self._add_form_with_report_reference(app, report_app_config)
 
         expected_declaration = ("""<instance id="commcare-reports:{}" src="jr://fixture/commcare-reports:{}"/>"""
                                 .format(report_app_config.report_slug, report_app_config.uuid))
         self.assertIn(expected_declaration, self._render_form(app, form))
+
+    def test_disallow_duplicate_slugs(self):
+        app = self._make_app("Untitled Application")
+
+        report_app_config1 = self._make_report_app_config("duplicate")
+        module1 = self._add_report_module(app, report_app_config1)
+
+        report_app_config2 = self._make_report_app_config("duplicate")
+        module2 = self._add_report_module(app, report_app_config2)
+
+        errors = module2.validate_for_build()
+        self.assertEqual('report config id duplicated', errors[0]['type'])
 
     def _make_app(self, app_name):
         app = Application.new_app(self.domain, app_name)
@@ -434,7 +447,7 @@ class TestReportConfigInstances(TestCase, TestXmlMixin):
         self.addCleanup(app.delete)
         return app
 
-    def _add_report(self, app, report_slug):
+    def _make_report_app_config(self, report_slug):
         report = get_sample_report_config()
         report.domain = self.domain
         report.save()
@@ -444,11 +457,13 @@ class TestReportConfigInstances(TestCase, TestXmlMixin):
             report_slug=report_slug,
         )
         report_app_config._report = report
+        return report_app_config
 
+    def _add_report_module(self, app, report_app_config):
         report_module = app.add_module(ReportModule.new_module('Reports', None))
         report_module.report_configs = [report_app_config]
         app.save()
-        return report_app_config
+        return report_module
 
     def _add_form_with_report_reference(self, app, report_app_config):
         other_module = app.add_module(Module.new_module('m0', None))
