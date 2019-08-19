@@ -458,20 +458,17 @@ def is_valid_mobile_select_filter_type(ui_filter):
     return isinstance(ui_filter, DynamicChoiceListFilter) or isinstance(ui_filter, ChoiceListFilter)
 
 
-@quickcache(['domain'])
-def get_uuids_by_instance_id(domain):
+def get_uuids_by_instance_id(app):
     """
     map ReportAppConfig.uuids list to user-defined ReportAppConfig.instance_ids
 
     This is per-domain, since registering instances (like
     commcare_reports_fixture_instances) is per-domain
     """
-    apps = get_apps_in_domain(domain)
     config_ids = defaultdict(list)
-    for app in apps:
-        if app.mobile_ucr_restore_version in (MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2):
-            for module in app.modules:
-                if module.module_type == 'report':
-                    for report_config in module.report_configs:
-                        config_ids[report_config.instance_id].append(report_config.uuid)
+    if app.mobile_ucr_restore_version in (MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2):
+        for module in app.modules:
+            if module.module_type == 'report':
+                for report_config in module.report_configs:
+                    config_ids[report_config.instance_id].append(report_config.uuid)
     return config_ids

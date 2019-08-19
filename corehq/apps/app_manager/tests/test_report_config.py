@@ -27,7 +27,6 @@ from corehq.apps.app_manager.models import (
     _filter_by_user_id,
     _get_auto_filter_function,
 )
-from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
 from corehq.apps.app_manager.tests.mocks.mobile_ucr import (
     mock_report_configuration_get,
     mock_report_configurations,
@@ -415,9 +414,6 @@ class TestReportConfigInstances(TestCase, TestXmlMixin):
     file_path = ('data',)
     domain = 'test_report_config_instances'
 
-    def tearDown(self):
-        get_uuids_by_instance_id.clear(self.domain)
-
     def test_autogenerate_instance_declaration(self):
         app = self._make_app("Untitled Application")
         report_app_config = self._make_report_app_config("my_report")
@@ -439,6 +435,18 @@ class TestReportConfigInstances(TestCase, TestXmlMixin):
 
         errors = module2.validate_for_build()
         self.assertEqual('report config id duplicated', errors[0]['type'])
+
+    def test_allow_duplicates_on_different_apps(self):
+        app1 = self._make_app("Untitled Application")
+        report_app_config1 = self._make_report_app_config("duplicate")
+        module1 = self._add_report_module(app1, report_app_config1)
+
+        app2 = self._make_app("Untitled Application")
+        report_app_config2 = self._make_report_app_config("duplicate")
+        module2 = self._add_report_module(app2, report_app_config2)
+
+        errors = module2.validate_for_build()
+        self.assertEqual([], errors)
 
     def _make_app(self, app_name):
         app = Application.new_app(self.domain, app_name)
