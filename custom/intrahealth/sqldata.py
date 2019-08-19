@@ -4952,10 +4952,14 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
         return "{}_name".format(self.loc_type)
 
     @property
+    def desired_location(self):
+        if self.config['selected_location']:
+            return self.config['selected_location']
+        return None
+
+    @property
     def filters(self):
         filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
-        if self.config['selected_location']:
-            filters.append(EQ(self.loc_id, 'selected_location'))
         if self.config['product_product']:
             filters.append(EQ('product_id', 'product_product'))
         elif self.config['product_program']:
@@ -4964,14 +4968,22 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
 
     @property
     def group_by(self):
-        return ['real_date_repeat', 'product_id', 'product_name', self.loc_id, self.loc_name, 'select_programs']
+        return [
+            'real_date_repeat', 'product_id', 'product_name', 'select_programs',
+            'region_id', 'region_name', 'district_id',
+            'district_name', 'pps_id', 'pps_name',
+        ]
 
     @property
     def columns(self):
         columns = [
             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
-            DatabaseColumn("Location ID", SimpleColumn(self.loc_id)),
-            DatabaseColumn("Location Name", SimpleColumn(self.loc_name)),
+            DatabaseColumn('Region ID', SimpleColumn('region_id')),
+            DatabaseColumn('Region Name', SimpleColumn('region_name')),
+            DatabaseColumn('District ID', SimpleColumn('district_id')),
+            DatabaseColumn('District Name', SimpleColumn('district_name')),
+            DatabaseColumn('PPS ID', SimpleColumn('pps_id')),
+            DatabaseColumn('PPS Name', SimpleColumn('pps_name')),
             DatabaseColumn("Product ID", SimpleColumn('product_id')),
             DatabaseColumn("Product Name", SimpleColumn('product_name')),
             DatabaseColumn("Programs", SimpleColumn('select_programs')),
@@ -4982,72 +4994,98 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
 
     @property
     def rows(self):
-        rows = [
-            {
-                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
-                'pps_name': 'PPS 1.1.1', 'pps_id': 1, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'real_date': date(2019, 6, 2),
-                'amt_delivered_convenience': 230, 'ideal_topup': 634
-            },
-            {
-                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
-                'pps_name': 'PPS 1.1.2', 'pps_id': 2, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 2', 'product_id': 2, 'real_date': date(2019, 6, 1),
-                'amt_delivered_convenience': 374, 'ideal_topup': 846
-            },
-            {
-                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.1', 'district_id': 1,
-                'pps_name': 'PPS 1.1.3', 'pps_id': 3, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 3', 'product_id': 3, 'real_date': date(2019, 6, 9),
-                'amt_delivered_convenience': 365, 'ideal_topup': 543
-            },
-            {
-                'region_name': 'Region 1', 'region_id': 1, 'district_name': 'District 1.2', 'district_id': 4,
-                'pps_name': 'PPS 1.2.1', 'pps_id': 10, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 2', 'product_id': 2, 'real_date': date(2019, 6, 8),
-                'amt_delivered_convenience': 634, 'ideal_topup': 74
-            },
+        all_wanted_rows = []
+        rows = self.get_data()
 
-            {
-                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
-                'pps_name': 'PPS 2.1.1', 'pps_id': 4, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'real_date': date(2019, 6, 7),
-                'amt_delivered_convenience': 35, 'ideal_topup': 543
-            },
-            {
-                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
-                'pps_name': 'PPS 2.1.2', 'pps_id': 5, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 1', 'product_id': 1, 'real_date': date(2019, 6, 6),
-                'amt_delivered_convenience': 345, 'ideal_topup': 256
-            },
-            {
-                'region_name': 'Region 2', 'region_id': 2, 'district_name': 'District 2.1', 'district_id': 2,
-                'pps_name': 'PPS 2.1.3', 'pps_id': 6, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 3', 'product_id': 3, 'real_date': date(2019, 6, 13),
-                'amt_delivered_convenience': 25, 'ideal_topup': 356
-            },
+        if self.desired_location:
+            for row in rows:
+                if self.desired_location in row.values():
+                    all_wanted_rows.append(row)
+        else:
+            all_wanted_rows = rows
 
-            {
-                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
-                'pps_name': 'PPS 3.1.1', 'pps_id': 7, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 2', 'product_id': 2, 'real_date': date(2019, 6, 12),
-                'amt_delivered_convenience': 62, 'ideal_topup': 63
-            },
-            {
-                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
-                'pps_name': 'PPS 3.1.2', 'pps_id': 8, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 2', 'product_id': 2, 'real_date': date(2019, 6, 11),
-                'amt_delivered_convenience': 745, 'ideal_topup': 232
-            },
-            {
-                'region_name': 'Region 3', 'region_id': 3, 'district_name': 'District 3.1', 'district_id': 3,
-                'pps_name': 'PPS 3.1.3', 'pps_id': 9, 'program_name': 'Program 1', 'program_id': 1,
-                'product_name': 'Product 3', 'product_id': 3, 'real_date': date(2019, 6, 10),
-                'amt_delivered_convenience': 47, 'ideal_topup': 457
-            },
-        ]
+        def clean_rows(data_to_clean):
+            quantities = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
+            quantities_list = []
+            quantities_to_return = []
+            added_locations = []
+            added_programs = []
+            added_products_for_locations = {}
 
-        return rows
+            for quantity in quantities:
+                location_id = quantity['{}'.format(self.loc_id)]
+                location_name = quantity['{}'.format(self.loc_name)]
+                product_name = quantity['product_name']
+                product_id = quantity['product_id']
+                program_id = quantity['select_programs']
+                amt_delivered_convenience = quantity['amt_delivered_convenience']['sort_key']
+                ideal_topup = quantity['ideal_topup']['sort_key']
+                data_dict = {
+                    'location_name': location_name,
+                    'location_id': location_id,
+                    'program_id': program_id,
+                    'products': []
+                }
+                if location_id in added_locations and program_id in added_programs:
+                    amount_of_stocks = len(quantities_list)
+
+                    location_position = 0
+                    for r in range(0, amount_of_stocks):
+                        current_location = quantities_list[r]['location_id']
+                        if current_location == location_id:
+                            location_position = r
+                            break
+
+                    added_products_for_location = [x['product_id'] for x in added_products_for_locations[location_id]]
+                    products_for_location = added_products_for_locations[location_id]
+                    if product_id not in added_products_for_location:
+                        product_data = {
+                            'product_name': product_name,
+                            'product_id': product_id,
+                            'amt_delivered_convenience': 0,
+                            'ideal_topup': 0,
+                        }
+                        added_products_for_locations[location_id].append(product_data)
+                        quantities_list[location_position]['products'].append(product_data)
+
+                    amount_of_products_for_location = len(added_products_for_locations[location_id])
+                    product_position = 0
+                    for s in range(0, amount_of_products_for_location):
+                        current_product = products_for_location[s]['product_id']
+                        if current_product == product_id:
+                            product_position = s
+                            break
+                    overall_position = quantities_list[location_position]['products'][product_position]
+                    overall_position['amt_delivered_convenience'] += amt_delivered_convenience
+                    overall_position['ideal_topup'] += ideal_topup
+                else:
+                    if location_id not in added_locations:
+                        added_locations.append(location_id)
+                    if program_id not in added_programs:
+                        added_programs.append(program_id)
+                    product_data = {
+                        'product_name': product_name,
+                        'product_id': product_id,
+                        'amt_delivered_convenience': 0,
+                        'ideal_topup': 0,
+                    }
+                    product_data['amt_delivered_convenience'] += amt_delivered_convenience
+                    product_data['ideal_topup'] += ideal_topup
+                    data_dict['products'].append(product_data)
+                    quantities_list.append(data_dict)
+                    added_products_for_locations[location_id] = [product_data]
+
+            quantities_list = sorted(quantities_list, key=lambda x: x['location_id'])
+
+            for quantity in quantities_list:
+                if quantity not in quantities_to_return:
+                    quantities_to_return.append(quantity)
+
+            return quantities_to_return
+
+        clean_data = clean_rows(all_wanted_rows)
+
+        return clean_data
 
 
 class ValuationOfPNAStockPerProductV2Data(SqlData):
