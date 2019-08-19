@@ -175,7 +175,35 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
                         'sort_key': consumption
                     })
 
+            total_row = calculate_total_row(locations_with_products)
+            consumptions_to_return.append(total_row)
+
             return consumptions_to_return
+
+        def calculate_total_row(locations_with_products):
+            total_row_to_return = ['<b>NATIONAL</b>']
+            data_for_total_row = []
+
+            for location, products in locations_with_products.items():
+                products_list = sorted(products, key=lambda x: x['product_name'])
+                if not data_for_total_row:
+                    for product_info in products_list:
+                        actual_consumption = product_info['actual_consumption']
+                        data_for_total_row.append(actual_consumption)
+                else:
+                    for r in range(0, len(products_list)):
+                        product_info = products_list[r]
+                        actual_consumption = product_info['actual_consumption']
+                        data_for_total_row[r] += actual_consumption
+
+            for data in data_for_total_row:
+                actual_consumption = data
+                total_row_to_return.append({
+                    'html': '<b>{}</b>'.format(actual_consumption),
+                    'sort_key': actual_consumption,
+                })
+
+            return total_row_to_return
 
         rows = data_to_rows(self.clean_rows)
 
