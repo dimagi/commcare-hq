@@ -20,7 +20,7 @@ from dimagi.utils.dates import force_to_date
 class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     name = "Taux De Rupture"
     slug = 'taux_de_rupture_report'
-    comment = 'Indicateur logistique: Taux de rupture par produit et par Region'
+    comment = 'Indicateur logistique: Taux de rupture par produit'
     default_rows = 10
 
     report_template_path = 'yeksi_naa/tabular_report.html'
@@ -183,10 +183,44 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                         percent = '{:.2f} %'.format(percent)
                     stocks_to_return[-1].append({
                         'html': '{}'.format(percent),
-                        'sort_key': percent
+                        'sort_key': percent,
                     })
 
+            total_row = calculate_total_row(locations_with_products)
+            stocks_to_return.append(total_row)
+
             return stocks_to_return
+
+        def calculate_total_row(locations_with_products):
+            total_row_to_return = ['<b>NATIONAL</b>']
+            data_for_total_row = []
+
+            for location, products in locations_with_products.items():
+                products_list = sorted(products, key=lambda x: x['product_name'])
+                if not data_for_total_row:
+                    for product_info in products_list:
+                        out_in_ppses = product_info['out_in_ppses']
+                        all_ppses = product_info['all_ppses']
+                        data_for_total_row.append([out_in_ppses, all_ppses])
+                else:
+                    for r in range(0, len(products_list)):
+                        product_info = products_list[r]
+                        out_in_ppses = product_info['out_in_ppses']
+                        all_ppses = product_info['all_ppses']
+                        data_for_total_row[r][0] += out_in_ppses
+                        data_for_total_row[r][1] += all_ppses
+
+            for data in data_for_total_row:
+                out_in_ppses = data[0]
+                all_ppses = data[1]
+                percent = (out_in_ppses / float(all_ppses) * 100) \
+                    if all_ppses != 0 else 0
+                total_row_to_return.append({
+                    'html': '<b>{:.2f} %</b>'.format(percent),
+                    'sort_key': percent,
+                })
+
+            return total_row_to_return
 
         rows = data_to_rows(self.clean_rows)
 
@@ -224,7 +258,8 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                                 product_data['out_in_ppses'] += out_in_ppses
                                 product_data['all_ppses'] += all_ppses
 
-            for product in products_data:
+            products = sorted(products_data, key=lambda x: x['product_name'])
+            for product in products:
                 product_name = product['product_name']
                 out_in_ppses = product['out_in_ppses']
                 all_ppses = product['all_ppses']
