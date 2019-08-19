@@ -40,26 +40,19 @@ def process_pillow_retry(error_doc):
         finally:
             return
 
-    change = error_doc.change_object
-    delete_all_for_doc = False
     try:
         if isinstance(pillow.get_change_feed(), CouchChangeFeed):
-            _process_couch_change(pillow, change)
+            _process_couch_change(pillow, error_doc)
         else:
-            _process_kafka_change(producer, change)
-            delete_all_for_doc = True
+            _process_kafka_change(producer, error_doc)
     except Exception:
         ex_type, ex_value, ex_tb = sys.exc_info()
         error_doc.add_attempt(ex_value, ex_tb)
         error_doc.save()
-    else:
-        if delete_all_for_doc:
-            PillowError.objects.filter(doc_id=error_doc.doc_id).delete()
-        else:
-            error_doc.delete()
 
 
-def _process_couch_change(pillow, change):
+def _process_couch_change(pillow, error):
+    change = error.change_object
     change_metadata = change.metadata
     if change_metadata:
         document_store = get_document_store(
@@ -70,10 +63,11 @@ def _process_couch_change(pillow, change):
         )
         change.document_store = document_store
     pillow.process_change(change)
+    error.delete()
 
 
-def _process_kafka_change(producer, change):
-    change_metadata = change.metadata
+def _process_kafka_change(producer, error):
+    change_metadata = error.change_object.metadata
     producer.send_change(
         get_topic_for_doc_type(
             change_metadata.document_type,
@@ -81,3 +75,4 @@ def _process_kafka_change(producer, change):
         ),
         change_metadata
     )
+    PillowError.objects.filter(doc_id=error.doc_id).delete()
