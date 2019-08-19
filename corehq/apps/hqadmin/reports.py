@@ -582,15 +582,6 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
 
     @property
     def template_context(self):
-        msg = """
-        WARNING! This page will soon be deleted. As part of an effort to
-        upgrade elasticsearch, we are removing several admin reports which rely
-        on deprecated functionality. This page will be removed on August 16th.
-        Comparable reports are available in salesforce. If you rely on this
-        report, please contact product@dimagi.com to discuss as soon as
-        possible.
-        """
-        messages.add_message(self.request, messages.ERROR, msg)
         ctxt = super(AdminFacetedReport, self).template_context
 
         self.run_query(0)
