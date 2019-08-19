@@ -63,4 +63,5 @@ branches:
   - jls/linked-app-multiple-masters-rebased # Jenny Aug 17
   - rn_fix_case_reassign_option_list #Negi Aug 14
   - bmb/bi-schema-updates  # Biyeun Aug 16
+  - es/admin-reports  # Ethan Aug 19
 submodules: {}
