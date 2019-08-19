@@ -59,7 +59,7 @@ branches:
   - revert-24882-jls/compress-mobile-workers-js # Jenny July 24 
   - jls/resource-versions # Jenny July 24
   - jls/more-eof-nav # Jenny Aug 13
-  - jls/add-js-to-sentry # Jenny Aug 7
+  #- jls/add-js-to-sentry # Jenny Aug 7
   - jls/linked-app-multiple-masters-rebased # Jenny Aug 17
   - rn_fix_case_reassign_option_list #Negi Aug 14
   - bmb/bi-schema-updates  # Biyeun Aug 16
