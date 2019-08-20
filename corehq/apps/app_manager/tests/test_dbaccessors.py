@@ -7,8 +7,8 @@ from corehq.apps.app_manager.dbaccessors import (
     get_all_app_ids,
     get_all_built_app_ids_and_versions,
     get_app,
-    get_app_ids_in_domain,
     get_apps_by_id,
+    get_app_ids_in_domain,
     get_apps_in_domain,
     get_brief_app,
     get_brief_apps_in_domain,
@@ -22,6 +22,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_app_ids_and_versions,
     get_latest_released_app_doc,
     get_latest_released_app_version,
+    get_latest_released_app_versions_by_app_id,
 )
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
 from corehq.apps.domain.models import Domain
@@ -281,3 +282,9 @@ class TestAppGetters(TestCase):
     def test_get_latest_released_app_version(self):
         version = get_latest_released_app_version(self.domain, self.app_id)
         self.assertEqual(version, 2)
+
+    def test_get_latest_released_app_versions_by_app_id(self):
+        versions = get_latest_released_app_versions_by_app_id(self.domain)
+        self.assertEqual(versions, {
+            self.app_id: 2,
+        })
