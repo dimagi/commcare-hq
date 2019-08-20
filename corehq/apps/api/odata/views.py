@@ -59,6 +59,7 @@ class ODataCaseMetadataView(View):
         config = get_document_or_404(CaseExportInstance, domain, config_id)
         metadata = render_to_string('api/case_odata_metadata.xml', {
             'fields': get_case_odata_fields_from_config(config, table_id),
+            'primary_feed': table_id == 0,
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
@@ -98,6 +99,7 @@ class ODataFormMetadataView(View):
         config = get_document_or_404(FormExportInstance, domain, config_id)
         metadata = render_to_string('api/form_odata_metadata.xml', {
             'fields': get_form_odata_fields_from_config(config, table_id),
+            'primary_feed': table_id == 0,
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
