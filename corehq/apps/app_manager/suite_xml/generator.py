@@ -129,10 +129,6 @@ class MediaSuiteGenerator(object):
             install_path = '../../{}'.format(path)
             local_path = './{}/{}'.format(path, name)
 
-            if not getattr(m, 'unique_id', None):
-                # lazy migration for adding unique_id to map_item
-                m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
-
             descriptor = None
             if self.app.build_version and self.app.build_version >= LooseVersion('2.9'):
                 type_mapping = {"CommCareImage": "Image",
@@ -145,9 +141,9 @@ class MediaSuiteGenerator(object):
                 )
 
             yield MediaResource(
-                id=id_strings.media_resource(m.unique_id, name),
+                id=id_strings.media_resource(m.unique_id or m.multimedia_id, name),
                 path=install_path,
-                version=m.version,
+                version=m.version or 1,
                 descriptor=descriptor,
                 local=(local_path
                        if self.app.enable_local_resource
@@ -155,5 +151,5 @@ class MediaSuiteGenerator(object):
                 remote=self.app.url_base + reverse(
                     'hqmedia_download',
                     args=[m.media_type, m.multimedia_id]
-                ) + six.moves.urllib.parse.quote(name.encode('utf-8')) if name else name
+                ) #+ six.moves.urllib.parse.quote(name.encode('utf-8')) if name else name
             )

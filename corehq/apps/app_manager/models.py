@@ -4776,7 +4776,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         latest_build = self.get_latest_build()
         prev_multimedia_map = latest_build.multimedia_map if latest_build else {}
 
-        for path, map_item in six.iteritems(self.multimedia_map):
+        for path, map_item in six.iteritems(self.multimedia_map):   # jls iterates based on path...what if you do something like swap two files?
             prev_map_item = prev_multimedia_map.get(path, None)
             if prev_map_item and prev_map_item.unique_id:
                 # Re-use the id so CommCare knows it's the same resource
@@ -4785,7 +4785,9 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                     and prev_map_item.multimedia_id == map_item.multimedia_id):
                 map_item.version = prev_map_item.version
             else:
-                map_item.version = self.version
+                #map_item.version = self.version
+                map_item.unique_id = None
+                map_item.version = 1
 
     def ensure_module_unique_ids(self, should_save=False):
         """

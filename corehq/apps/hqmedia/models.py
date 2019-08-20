@@ -448,15 +448,11 @@ class HQMediaMapItem(DocumentSchema):
     multimedia_id = StringProperty()
     media_type = StringProperty()
     version = IntegerProperty()
-    unique_id = StringProperty()
+    unique_id = StringProperty()  # Legacy only
 
     @property
     def url(self):
         return reverse("hqmedia_download", args=[self.media_type, self.multimedia_id]) if self.multimedia_id else ""
-
-    @classmethod
-    def gen_unique_id(cls, m_id, path):
-        return hashlib.md5(b"%s: %s" % (path.encode('utf-8'), m_id.encode('utf-8'))).hexdigest()
 
 
 class ApplicationMediaReference(object):
@@ -895,7 +891,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
         form_path = form_path.strip()
         map_item = HQMediaMapItem()
         map_item.multimedia_id = multimedia._id
-        map_item.unique_id = HQMediaMapItem.gen_unique_id(map_item.multimedia_id, form_path)
         map_item.media_type = multimedia.doc_type
         self.multimedia_map[form_path] = map_item
 
