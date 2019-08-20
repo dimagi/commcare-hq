@@ -5513,45 +5513,6 @@ class RecapPassageTwoData(RecapPassageOneData):
         else:
             return None
 
-    # def latest_visit_docs_ids(self):
-    #     visits = LatestVisitData(config=self.config).rows
-    #     pps_docs = dict()
-    #     x = ""
-    #     for visit in visits:
-    #         if visit.get('pps_id', '1234') == x:
-    #             print(" NO TEN TUTAJ ZIOMEK ZMIENIA: \n{}".format(visit))
-    #             print(" DATA: {}".format(visit['real_date']))
-    #
-    #         if '33b43195-0c1e-4597-973c-c144b02ba568' == visit['doc_id']:
-    #             x = visit['pps_id']
-    #             print("WE GOT HIM!!!!!!!!! {} ".format(visit['pps_id']))
-    #             print(" DATA: {}".format(visit['real_date']))
-    #
-    #         pps_id = visit['pps_id']
-    #         next_visit_date = visit['real_date']
-    #         current_latest_visit = pps_docs.get(pps_id, None)
-    #
-    #         if not current_latest_visit or \
-    #         current_latest_visit['real_date'] < next_visit_date:
-    #                 pps_docs[pps_id] = visit
-    #         elif '33b43195-0c1e-4597-973c-c144b02ba568' == visit['doc_id']:
-    #             print('ALE NIE DODAJE BO PAN {} MA DATE {} i doc_id {}'.format(current_latest_visit['pps_id'],
-    #                                                                current_latest_visit['real_date'],
-    #                                                                            current_latest_visit['doc_id']))
-    #
-    #     self.latest_pps_doc_ids = [latest['doc_id'] for latest in pps_docs.values()]
-    #     if '33b43195-0c1e-4597-973c-c144b02ba568' in self.latest_pps_doc_ids:
-    #         print("AND HE IS STILL HERE")
-    #     print(self.latest_pps_doc_ids)
-    #     return self.latest_pps_doc_ids
-
-    # def is_latest_visit(self, visit_data):
-    #     pps_id = visit_data['pps_id']
-    #     doc_id = self.latest_pps_doc_ids[pps_id] # or self.latest_visit_docs_ids()
-    #     if visit_data['doc_id'] != doc_id:
-    #         return False
-    #     else:
-    #         return True
 
     def only_latest_visit_data(self, rows):
         pps_data = {}
@@ -5569,10 +5530,7 @@ class RecapPassageTwoData(RecapPassageOneData):
             sorted_visits_info = sorted(data, key=lambda k: k['real_date_repeat'], reverse=True)
             latest_date = sorted_visits_info[0]['real_date_repeat']
             latest_doc_for_pps = sorted_visits_info[0]['doc_id']
-            print('PPS: {}'.format(sorted_visits_info[0]['pps_name']))
-            for n, visit in enumerate(sorted_visits_info):
-                print("{}. Data: {}".format(n, visit['real_date_repeat']))
-            print('-----')
+
             for visit in sorted_visits_info:
                 if visit['real_date_repeat'] != latest_date:
                     break
@@ -5583,10 +5541,6 @@ class RecapPassageTwoData(RecapPassageOneData):
             if row['doc_id'] == relevant_doc_ids[row['pps_id']]:
                 relevant.append(row)
 
-        print("All: {}".format(len(rows)))
-        for r in relevant:
-            print('ID: {}, PPS: {}, Data: {}'.format(r['doc_id'], r['pps_name'], r['real_date_repeat']))
-        print("RELEVALE: {}".format(len(relevant)))
         return relevant
 
     @property
@@ -5712,8 +5666,6 @@ class RecapPassageTwoTables(RecapPassageTwoData):
     def billed_consumption_context(self):
         context = self.create_table_context('billed_consumption', 'Consommations Facturables')
 
-        for r in context['rows']:
-            print('Billed: {}'.format(r[0]))
         return context
 
     @property
