@@ -218,7 +218,7 @@
         </fieldset>
       {% endif %}
 
-      {% if allow_deid %}
+      {% if allow_deid and not export_instance.is_odata_config %}
         <fieldset>
           <legend>
             {% trans "Privacy Settings" %}
