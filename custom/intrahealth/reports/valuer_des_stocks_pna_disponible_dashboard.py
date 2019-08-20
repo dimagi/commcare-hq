@@ -89,6 +89,8 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
         for product in products:
             headers.add_column(DataTablesColumn(product))
 
+        headers.add_column(DataTablesColumn('NATIONAL'))
+
         return headers
 
     @property
@@ -180,11 +182,29 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
 
             total_row = calculate_total_row(locations_with_products)
             pnas_to_return.append(total_row)
+            pnas_to_return = add_total_column(locations_with_products, pnas_to_return)
+
+            return pnas_to_return
+
+        def add_total_column(locations_with_products, pnas_to_return):
+            length = len(pnas_to_return)
+            for location, products in locations_with_products.items():
+                locations_final_pna_stock_valuation = 0
+                for product in products:
+                    locations_final_pna_stock_valuation += product['final_pna_stock_valuation']
+                for r in range(0, length):
+                    current_location = pnas_to_return[r][0]
+                    if current_location == location:
+                        pnas_to_return[r].append({
+                                'html': '<b>{}</b>'.format(locations_final_pna_stock_valuation),
+                                'sort_key': locations_final_pna_stock_valuation
+                            })
 
             return pnas_to_return
 
         def calculate_total_row(locations_with_products):
             total_row_to_return = ['<b>NATIONAL</b>']
+            locations_with_products['<b>NATIONAL</b>'] = []
             data_for_total_row = []
 
             for location, products in locations_with_products.items():
@@ -192,15 +212,21 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
                 if not data_for_total_row:
                     for product_info in products_list:
                         final_pna_stock_valuation = product_info['final_pna_stock_valuation']
-                        data_for_total_row.append(final_pna_stock_valuation)
+                        product_name = product_info['product_name']
+                        data_for_total_row.append([final_pna_stock_valuation, product_name])
                 else:
                     for r in range(0, len(products_list)):
                         product_info = products_list[r]
                         final_pna_stock_valuation = product_info['final_pna_stock_valuation']
-                        data_for_total_row[r] += final_pna_stock_valuation
+                        data_for_total_row[r][0] += final_pna_stock_valuation
 
             for data in data_for_total_row:
-                final_pna_stock_valuation = data
+                final_pna_stock_valuation = data[0]
+                product_name = data[1]
+                locations_with_products['<b>NATIONAL</b>'].append({
+                    'final_pna_stock_valuation': final_pna_stock_valuation,
+                    'product_name': product_name,
+                })
                 total_row_to_return.append({
                     'html': '<b>{}</b>'.format(final_pna_stock_valuation),
                     'sort_key': final_pna_stock_valuation,

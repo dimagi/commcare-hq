@@ -89,6 +89,8 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
         for product in products:
             headers.add_column(DataTablesColumn(product))
 
+        headers.add_column(DataTablesColumn('NATIONAL'))
+
         return headers
 
     def get_report_context(self):
@@ -136,7 +138,8 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                             if product_for_location['product_id'] == product['product_id']:
                                 amt_delivered_convenience = product['amt_delivered_convenience']
                                 ideal_topup = product['ideal_topup']
-                                locations_with_products[location_name][r]['amt_delivered_convenience'] += amt_delivered_convenience
+                                locations_with_products[location_name][r][
+                                    'amt_delivered_convenience'] += amt_delivered_convenience
                                 locations_with_products[location_name][r]['ideal_topup'] += ideal_topup
                 else:
                     added_locations.append(location_id)
@@ -188,11 +191,33 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
 
             total_row = calculate_total_row(locations_with_products)
             quantities_to_return.append(total_row)
+            quantities_to_return = add_total_column(locations_with_products, quantities_to_return)
+
+            return quantities_to_return
+
+        def add_total_column(locations_with_products, quantities_to_return):
+            length = len(quantities_to_return)
+            for location, products in locations_with_products.items():
+                locations_amt_delivered_convenience = 0
+                locations_ideal_topup = 0
+                for product in products:
+                    locations_amt_delivered_convenience += product['amt_delivered_convenience']
+                    locations_ideal_topup += product['ideal_topup']
+                locations_percent = (locations_amt_delivered_convenience / float(locations_ideal_topup) * 100) \
+                    if locations_ideal_topup != 0 else 0
+                for r in range(0, length):
+                    current_location = quantities_to_return[r][0]
+                    if current_location == location:
+                        quantities_to_return[r].append({
+                                'html': '<b>{:.2f} %</b>'.format(locations_percent),
+                                'sort_key': locations_percent
+                            })
 
             return quantities_to_return
 
         def calculate_total_row(locations_with_products):
             total_row_to_return = ['<b>NATIONAL</b>']
+            locations_with_products['<b>NATIONAL</b>'] = []
             data_for_total_row = []
 
             for location, products in locations_with_products.items():
@@ -201,7 +226,8 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                     for product_info in products_list:
                         amt_delivered_convenience = product_info['amt_delivered_convenience']
                         ideal_topup = product_info['ideal_topup']
-                        data_for_total_row.append([amt_delivered_convenience, ideal_topup])
+                        product_name = product_info['product_name']
+                        data_for_total_row.append([amt_delivered_convenience, ideal_topup, product_name])
                 else:
                     for r in range(0, len(products_list)):
                         product_info = products_list[r]
@@ -213,6 +239,12 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
             for data in data_for_total_row:
                 amt_delivered_convenience = data[0]
                 ideal_topup = data[1]
+                product_name = data[2]
+                locations_with_products['<b>NATIONAL</b>'].append({
+                    'amt_delivered_convenience': amt_delivered_convenience,
+                    'ideal_topup': ideal_topup,
+                    'product_name': product_name,
+                })
                 percent = (amt_delivered_convenience / float(ideal_topup) * 100) \
                     if ideal_topup != 0 else 0
                 total_row_to_return.append({
