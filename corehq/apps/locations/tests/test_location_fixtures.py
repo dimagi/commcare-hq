@@ -316,55 +316,6 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-class TestIndexedLocationsFixture(LocationHierarchyTestCase, FixtureHasLocationsMixin):
-    domain = "indexed_location_fixtures"
-    location_type_names = ['state', 'county', 'city']
-    location_structure = TEST_LOCATION_STRUCTURE
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestIndexedLocationsFixture, cls).setUpClass()
-        cls.user = create_restore_user(cls.domain, 'user', '123')
-        cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
-        cls.loc_fields.fields = [
-            CustomDataField(slug='is_test', index_in_fixture=True),
-            CustomDataField(slug='favorite_color'),
-        ]
-        cls.loc_fields.save()
-        cls.field_slugs = [f.slug for f in cls.loc_fields.fields]
-        for location in cls.locations.values():
-            location.metadata = {
-                'is_test': 'no',
-                'favorite_color': 'blue',
-            }
-            location.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user._couch_user.delete()
-        super(TestIndexedLocationsFixture, cls).tearDownClass()
-
-    def test_index_location_fixtures(self):
-        self.user._couch_user.set_location(self.locations['Massachusetts'])
-        expected_result = self._assemble_expected_fixture(
-            'index_location_fixtures',
-            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'Middlesex', 'Cambridge', 'Somerville'],
-        )
-        fixture_nodes = call_fixture_generator(flat_location_fixture_generator, self.user)
-        self.assertEqual(len(fixture_nodes), 2)  # fixture schema, then fixture
-
-        # check the fixture like usual
-        fixture = extract_xml_partial(ElementTree.tostring(fixture_nodes[1]), '.')
-        expected_fixture = extract_xml_partial(expected_result, './fixture')
-        self.assertXmlEqual(expected_fixture, fixture)
-
-        # check the schema
-        schema = extract_xml_partial(ElementTree.tostring(fixture_nodes[0]), '.')
-        expected_schema = extract_xml_partial(expected_result, './schema')
-        self.assertXmlEqual(expected_schema, schema)
-
-
-@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
 class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
     def setUp(self):
         super(ForkedHierarchiesTest, self).setUp()

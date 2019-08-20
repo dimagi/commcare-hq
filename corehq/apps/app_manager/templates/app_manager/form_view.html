@@ -166,13 +166,16 @@
   {% initial_page_data 'allow_form_workflow' allow_form_workflow %}
   {% initial_page_data 'form_links' form.form_links %}
   {% initial_page_data 'linkable_forms' linkable_forms %}
-  {% initial_page_data 'module_name' module.name|trans:langs %}
-  {% if module.root_module_id %}
+  {% if not module.put_in_root %}
+    {% initial_page_data 'module_name' module.name|trans:langs %}
+  {% endif %}
+  {% if module.root_module_id and not module.root_module.put_in_root %}
     {% initial_page_data 'root_module_name' module.root_module.name|trans:langs %}
   {% endif %}
   {% initial_page_data 'post_form_workflow' form.post_form_workflow %}
   {% initial_page_data 'post_form_workflow_fallback' form.post_form_workflow_fallback %}
   {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
+  {% initial_page_data 'add_ons_privileges' add_ons_privileges %}
   {% registerurl "get_form_datums" domain app.id %}
 
   <div class="tabbable appmanager-tabs-container">

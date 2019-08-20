@@ -36,20 +36,22 @@ class THRFormV2AggDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         return """
-        INSERT INTO "{tablename}" (
-        state_id, supervisor_id, awc_id, thr_distribution_image_count, month
-        ) (
+        DROP TABLE IF EXISTS "temp_thr";
+        CREATE TEMPORARY TABLE "temp_thr" AS
             SELECT
                 state_id,
                 supervisor_id,
                 awc_id,
-                COUNT(*) FILTER (WHERE photo_thr_packets_distributed is not null) as thr_distribution_image_count,
+                COUNT(*) FILTER (WHERE NULLIF(photo_thr_packets_distributed,'') is not null) as thr_distribution_image_count,
                 %(start_date)s::DATE AS month
                 FROM "{ucr_tablename}"
                 WHERE submitted_on >= %(start_date)s AND submitted_on < %(end_date)s
                     AND state_id=%(state_id)s
-                GROUP BY state_id, supervisor_id, awc_id
+                GROUP BY state_id, supervisor_id, awc_id;
+        INSERT INTO "{tablename}" (
+            state_id, supervisor_id, awc_id, thr_distribution_image_count, month
         )
+        SELECT * from "temp_thr";
         """.format(
             ucr_tablename=self.ucr_tablename,
             tablename=self.tablename

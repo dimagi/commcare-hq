@@ -108,8 +108,8 @@
             <!-- /ko -->
             <li role="presentation" class="nav-divider"></li>
             <!-- ko foreach: items -->
-            <li role="presentation">
-              <div class="appnav-item" data-bind="click: $root.select, css: { active: isSelected }">
+            <li role="presentation" data-bind="visible: isVisibleInMenu">
+              <div class="appnav-item" data-bind="click: $root.select,css: { active: isSelected }">
                 <a class="appnav-link-full">
                   <i data-bind="attr: { 'class': $data.icon }"></i>
                   <span data-bind="text: name"></span>
@@ -117,7 +117,7 @@
                 </a>
               </div>
               <!-- ko foreach: subitems -->
-              <ul class="appnav-menu appnav-menu-nested">
+              <ul class="appnav-menu appnav-menu-nested" data-bind="visible: isVisibleInMenu">
                 <li>
                   <div class="appnav-item" data-bind="click: $root.select, css: { active: isSelected }">
                     <a class="appnav-link-full">

@@ -40,35 +40,46 @@ MODULE_ATTRIBUTES = (
 )
 
 
+class _Change(JsonObject):
+    action = StringProperty(choices=DIFF_STATES)
+    old_value = StringProperty()
+    new_value = StringProperty()
+
+
+class _TranslationChange(_Change):
+    old_value = DictProperty()
+    new_value = DictProperty()
+
+
 class _QuestionDiff(JsonObject):
-    question = StringProperty(choices=(ADDED, REMOVED))
-    label = StringProperty(choices=DIFF_STATES)
-    type = StringProperty(choices=DIFF_STATES)
-    value = StringProperty(choices=DIFF_STATES)
-    calculate = StringProperty(choices=DIFF_STATES)
-    relevant = StringProperty(choices=DIFF_STATES)
-    required = StringProperty(choices=DIFF_STATES)
-    comment = StringProperty(choices=DIFF_STATES)
-    setvalue = StringProperty(choices=DIFF_STATES)
-    constraint = StringProperty(choices=DIFF_STATES)
-    options = DictProperty()    # {option: state}
-    load_properties = DictProperty()  # {case_type: {property: state}}
-    save_properties = DictProperty()  # {case_type: {property: state}}
+    question = ObjectProperty(_Change)
+    label = ObjectProperty(_Change)
+    type = ObjectProperty(_Change)
+    value = ObjectProperty(_Change)
+    calculate = ObjectProperty(_Change)
+    relevant = ObjectProperty(_Change)
+    required = ObjectProperty(_Change)
+    comment = ObjectProperty(_Change)
+    setvalue = ObjectProperty(_Change)
+    constraint = ObjectProperty(_Change)
+    options = DictProperty()    # {option: _Change}
+    load_properties = DictProperty()  # {case_type: {property: _Change}}
+    save_properties = DictProperty()  # {case_type: {property: _Change}}
 
 
 class _FormDiff(JsonObject):
-    form = StringProperty(choices=(ADDED, REMOVED))
-    name = StringProperty(choices=DIFF_STATES)
-    short_comment = StringProperty(choices=DIFF_STATES)
-    form_filter = StringProperty(choices=DIFF_STATES)
+    form = ObjectProperty(_Change)
+    name = ObjectProperty(_Change)
+    short_comment = ObjectProperty(_Change)
+    form_filter = ObjectProperty(_Change)
     contains_changes = BooleanProperty(default=False)
 
 
 class _ModuleDiff(JsonObject):
-    module = StringProperty(choices=(ADDED, REMOVED))
-    name = StringProperty(choices=DIFF_STATES)
-    short_comment = StringProperty(choices=DIFF_STATES)
-    module_filter = StringProperty(choices=DIFF_STATES)
+    module = ObjectProperty(_Change)
+    name = ObjectProperty(_Change)
+    short_comment = ObjectProperty(_Change)
+    module_filter = ObjectProperty(_Change)
     contains_changes = BooleanProperty(default=False)
 
 
@@ -297,20 +308,21 @@ class _AppDiffGenerator(object):
                 self._mark_item_added(second_module, 'module')
 
     def _mark_attribute(self, first_item, second_item, attribute):
-        is_translatable_property = (isinstance(first_item[attribute], dict)
-                                    and isinstance(second_item[attribute], dict))
-        translation_changed = (is_translatable_property
+        translation_changed = (self._is_translatable_property(first_item[attribute], second_item[attribute])
                                and set(second_item[attribute].items()) - set(first_item[attribute].items()))
         attribute_changed = first_item[attribute] != second_item[attribute]
         attribute_added = second_item[attribute] and not first_item[attribute]
         attribute_removed = first_item[attribute] and not second_item[attribute]
         if attribute_changed or translation_changed:
-            self._mark_item_changed(first_item, attribute)
-            self._mark_item_changed(second_item, attribute)
+            self._mark_item_changed(first_item, second_item, attribute)
         if attribute_added:
             self._mark_item_added(second_item, attribute)
         if attribute_removed:
             self._mark_item_removed(first_item, attribute)
+
+    @staticmethod
+    def _is_translatable_property(first_property, second_property):
+        return (isinstance(first_property, dict) and isinstance(second_property, dict))
 
     def _mark_forms(self, second_forms):
         for second_form in second_forms:
@@ -357,14 +369,20 @@ class _AppDiffGenerator(object):
         ]
 
         for removed_option in removed_options:
-            first_question.changes['options'][removed_option] = REMOVED
+            first_question.changes['options'][removed_option] = _Change(type=REMOVED).to_json()
 
         for added_option in added_options:
-            second_question.changes['options'][added_option] = ADDED
+            second_question.changes['options'][added_option] = _Change(type=ADDED).to_json()
 
         for changed_option in changed_options:
-            first_question.changes['options'][changed_option] = CHANGED
-            second_question.changes['options'][changed_option] = CHANGED
+            first_question.changes['options'][changed_option] = _Change(
+                type=CHANGED,
+                old_value=first_options_by_value[changed_option]
+            ).to_json()
+            second_question.changes['options'][changed_option] = _Change(
+                type=CHANGED,
+                new_value=second_options_by_value[changed_option]
+            ).to_json()
 
         if removed_options or added_options or changed_options:
             self._set_contains_changes(first_question)
@@ -377,9 +395,13 @@ class _AppDiffGenerator(object):
         added_properties = second_props - first_props
 
         for removed_property in removed_properties:
-            first_question.changes[attribute][removed_property[0]] = {removed_property[1]: REMOVED}
+            first_question.changes[attribute][removed_property[0]] = {
+                removed_property[1]: _Change(type=REMOVED).to_json()
+            }
         for added_property in added_properties:
-            second_question.changes[attribute][added_property[0]] = {added_property[1]: ADDED}
+            second_question.changes[attribute][added_property[0]] = {
+                added_property[1]: _Change(type=ADDED).to_json()
+            }
 
         if removed_properties or added_properties:
             self._set_contains_changes(first_question)
@@ -387,15 +409,30 @@ class _AppDiffGenerator(object):
 
     def _mark_item_removed(self, item, key):
         self._set_contains_changes(item)
-        item.changes[key] = REMOVED
+        try:
+            old_value = item[key]
+        except KeyError:
+            old_value = None
+        item.changes[key] = _Change(type=REMOVED, old_value=old_value)
 
     def _mark_item_added(self, item, key):
         self._set_contains_changes(item)
-        item.changes[key] = ADDED
+        try:
+            new_value = item[key]
+        except KeyError:
+            new_value = None
+        item.changes[key] = _Change(type=ADDED, new_value=new_value)
 
-    def _mark_item_changed(self, item, key):
-        self._set_contains_changes(item)
-        item.changes[key] = CHANGED
+    def _mark_item_changed(self, first_item, second_item, key):
+        self._set_contains_changes(first_item)
+        self._set_contains_changes(second_item)
+        if self._is_translatable_property(first_item[key], second_item[key]):
+            change_class = _TranslationChange
+        else:
+            change_class = _Change
+        change = change_class(type=CHANGED, old_value=first_item[key], new_value=second_item[key])
+        first_item.changes[key] = change
+        second_item.changes[key] = change
 
     def _set_contains_changes(self, item):
         """For forms and modules, set contains_changes to True

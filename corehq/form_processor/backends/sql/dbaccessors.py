@@ -58,9 +58,12 @@ from corehq.form_processor.utils.sql import (
     fetchone_as_namedtuple,
     fetchall_as_namedtuple
 )
-from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
+from corehq.sql_db.config import partition_config
 from corehq.sql_db.routers import db_for_read_write, get_cursor
-from corehq.sql_db.util import split_list_by_db_partition
+from corehq.sql_db.util import (
+    split_list_by_db_partition,
+    get_db_aliases_for_partitioned_query,
+)
 from corehq.util.datadog.utils import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.soft_assert import soft_assert
@@ -220,7 +223,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
     @property
     def sql_db_aliases(self):
-        all_db_aliases = get_sql_db_aliases_in_use() if self.is_sharded() \
+        all_db_aliases = get_db_aliases_for_partitioned_query() if self.is_sharded() \
             else [db_for_read_write(self.model_class)]
         if self.limit_db_aliases:
             db_aliases = list(set(all_db_aliases) & set(self.limit_db_aliases))
@@ -408,19 +411,20 @@ class FormAccessorSQL(AbstractFormAccessor):
             XFormInstanceSQL,
             Q(last_modified__gt=start_datetime, last_modified__lte=end_datetime),
             annotate=annotate,
+            load_source='forms_by_last_modified'
         )
 
     @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):
-        from corehq.sql_db.util import run_query_across_partitioned_databases
+        from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
         q_expr = Q(domain=domain) & Q(state=XFormInstanceSQL.NORMAL)
         if xmlns:
             q_expr &= Q(xmlns=xmlns)
 
-        for form_id in run_query_across_partitioned_databases(
-                XFormInstanceSQL, q_expr, values=['form_id']):
-            yield form_id
+        for form_id in paginate_query_across_partitioned_databases(
+                XFormInstanceSQL, q_expr, values=['form_id'], load_source='formids_by_xmlns'):
+            yield form_id[0]
 
     @staticmethod
     def get_with_attachments(form_id):
@@ -1095,7 +1099,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return []
 
         extension_case_ids = set()
-        for db_name in get_sql_db_aliases_in_use():
+        for db_name in get_db_aliases_for_partitioned_query():
             query = CommCareCaseIndexSQL.objects.using(db_name).filter(
                 domain=domain,
                 relationship_id=CommCareCaseIndexSQL.EXTENSION,

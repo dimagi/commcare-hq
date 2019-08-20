@@ -1028,7 +1028,6 @@ class SelectPlanView(DomainAccountingSettings):
             'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
                                            if self.current_subscription is not None else False),
             'next_subscription_edition': self.next_subscription_edition,
-            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL
         }
 
 

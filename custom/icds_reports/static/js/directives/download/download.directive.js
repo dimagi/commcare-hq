@@ -123,7 +123,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 7, name: 'ICDS-CAS Monthly Register'},
         {id: 8, name: 'AWW Performance Report'},
         {id: 9, name: 'LS Performance Report'},
+        {id: 10, name: 'Take Home Ration (THR)'}
     ];
+
 
     var ALL_OPTION = {
         name: 'All',
@@ -346,6 +348,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             var offset = date.getDate() < 15 ? 2 : 1;
             latest.setMonth(date.getMonth() - offset);
         }
+
         if (year.id > latest.getFullYear()) {
             vm.years =  _.filter(vm.yearsCopy, function (y) {
                 return y.id <= latest.getFullYear();
@@ -357,7 +360,19 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                 return y.id <= latest.getFullYear();
             });
         }
-        if (year.id === latest.getFullYear()) {
+
+        if (year.id === 2019 && vm.isTakeHomeRationReportSelected()) {
+            var currentMonth = latest.getMonth() + 1;
+            var currentYear = latest.getFullYear();
+            vm.months = _.filter(vm.monthsCopy, function (month) {
+                if (currentYear === 2019) {
+                    return month.id >= 7 && month.id <= currentMonth;
+                } else {
+                    return month.id >= 7;
+                }
+            });
+            vm.selectedMonth = vm.selectedMonth >= 7 ? vm.selectedMonth : 7;
+        } else if (year.id === latest.getFullYear()) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id <= latest.getMonth() + 1;
             });
@@ -389,6 +404,16 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else {
+            if (vm.isTakeHomeRationReportSelected()) {
+                var currentYear  = new Date().getFullYear();
+                vm.selectedYear = vm.selectedYear >= 2019 ? vm.selectedYear : currentYear;
+                vm.years = _.filter(vm.yearsCopy, function (y) {
+                    return y.id >= 2019;
+                });
+                resetLevelsBelow(3);
+            } else {
+                vm.years = vm.yearsCopy;
+            }
             vm.onSelectYear({'id': vm.selectedYear});
             vm.selectedFormat = 'xlsx';
         }
@@ -470,7 +495,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.isVisible = function(level) {
         return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all') &&
-            !(vm.isIncentiveReportSelected() && level > 2) && !(vm.isLadySupervisorSelected() && level > 2);
+            !(vm.isIncentiveReportSelected() && level > 2) && !(vm.isLadySupervisorSelected() && level > 2) &&
+            !(vm.isTakeHomeRationReportSelected() && level > 3);
     };
 
     vm.selectedFilterOptions = function() {
@@ -493,6 +519,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.isLadySupervisorSelected = function () {
         return vm.selectedIndicator === 9;
+    };
+
+    vm.isTakeHomeRationReportSelected = function () {
+        return vm.selectedIndicator === 10;
     };
 
     vm.isSupervisorOrBelowSelected = function () {

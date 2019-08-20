@@ -66,16 +66,3 @@ class FixtureGenerator(object):
 
 
 generator = FixtureGenerator()
-
-
-def _get_restore_state(restore_user):
-    from casexml.apps.phone.restore import RestoreState
-    from casexml.apps.phone.restore import RestoreParams
-    params = RestoreParams(version=V2)
-    return RestoreState(
-        restore_user.project,
-        restore_user,
-        params,
-        is_async=False,
-        overwrite_cache=False
-    )

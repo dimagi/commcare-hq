@@ -5,6 +5,7 @@ import logging
 
 import requests
 
+from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.models import RequestLog
 from corehq.motech.utils import pformat_json
 
@@ -73,6 +74,7 @@ class Requests(object):
         raise_for_status = kwargs.pop('raise_for_status', False)
         if not self.verify:
             kwargs['verify'] = False
+        kwargs.setdefault('timeout', REQUEST_TIMEOUT)
         try:
             if self._session:
                 response = self._session.request(method, *args, **kwargs)

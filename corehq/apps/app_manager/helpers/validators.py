@@ -26,6 +26,7 @@ from corehq.apps.app_manager.const import (
     AUTO_SELECT_RAW,
     AUTO_SELECT_USER,
     WORKFLOW_FORM,
+    WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
 )
 from corehq.apps.app_manager.exceptions import (
@@ -163,7 +164,7 @@ class ApplicationBaseValidator(object):
 
     def _check_password_charset(self):
         errors = []
-        if hasattr(self.app, 'profile'):
+        if self.app.build_spec.supports_j2me() and hasattr(self.app, 'profile'):
             password_format = self.app.profile.get('properties', {}).get('password_format', 'n')
             message = _(
                 'Your app requires {0} passwords but the admin password is not '
@@ -745,9 +746,14 @@ class FormBaseValidator(object):
                     self.form.get_app().get_form(form_link.form_id)
                 except FormNotFoundException:
                     errors.append(dict(type='bad form link', **meta))
+        elif self.form.post_form_workflow == WORKFLOW_MODULE:
+            if module.put_in_root:
+                errors.append(dict(type='form link to display only forms', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             if not module.root_module:
                 errors.append(dict(type='form link to missing root', **meta))
+            if module.root_module.put_in_root:
+                errors.append(dict(type='form link to display only forms', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self.form, 'form_filter') and self.form.form_filter:

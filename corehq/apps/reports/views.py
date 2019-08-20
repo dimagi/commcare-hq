@@ -80,14 +80,12 @@ from corehq.form_processor.models import UserRequestedRebuild
 from couchexport.export import Format, export_from_tables
 from couchexport.shortcuts import export_response
 
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from memoized import memoized
-from dimagi.utils.parsing import json_format_datetime, string_to_datetime, json_format_date
+from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
-from soil import DownloadBase
 
 from corehq import privileges, toggles
 from corehq.apps.analytics.tasks import track_workflow
@@ -102,6 +100,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
+from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.export.models import CaseExportDataSchema
 from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.reports.exceptions import EditFormValidationError
@@ -136,9 +135,6 @@ from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 
 from .standard import inspect, ProjectReport
 from .standard.cases.basic import CaseListReport
-from .tasks import (
-    build_form_multimedia_zip,
-)
 from corehq.apps.saved_reports.tasks import send_delayed_report, send_email_report
 from corehq.form_processor.utils.xform import resave_form
 from corehq.apps.hqcase.utils import resave_case
@@ -1210,16 +1206,12 @@ def case_property_names(request, domain, case_id):
         item.path[-1].name for item in property_schema.items
         if not is_occurrence_deleted(item.last_occurrences, last_app_ids) and '/' not in item.path[-1].name
     }
-
+    all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES)
     # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
     if case.external_id:
         all_property_names.add('external_id')
 
-    all_property_names = all_property_names.difference({'name', 'case_name', 'type', 'case_type'})
-    all_property_names = list(all_property_names)
-    all_property_names.sort()
-
-    return json_response(all_property_names)
+    return json_response(sorted(all_property_names))
 
 
 @location_safe
@@ -1968,8 +1960,15 @@ def unarchive_form(request, domain, instance_id):
 def _get_data_cleaning_updates(request, old_properties):
     updates = {}
     properties = json.loads(request.POST.get('properties'))
+
+    def _get_value(val_or_dict):
+        if isinstance(val_or_dict, dict):
+            return val_or_dict.get('value')
+        else:
+            return val_or_dict
+
     for prop, value in six.iteritems(properties):
-        if prop not in old_properties or old_properties[prop] != value:
+        if prop not in old_properties or _get_value(old_properties[prop]) != value:
             updates[prop] = value
     return updates
 
@@ -2077,29 +2076,6 @@ def export_report(request, domain, export_hash, format):
             return HttpResponseNotFound(_("We don't support this format"))
 
 
-@login_or_digest
-@require_form_view_permission
-@require_GET
-def form_multimedia_export(request, domain):
-    task_kwargs = {'domain': domain}
-    try:
-        task_kwargs['xmlns'] = request.GET["xmlns"]
-        task_kwargs['startdate'] = request.GET["startdate"]
-        task_kwargs['enddate'] = request.GET["enddate"]
-        task_kwargs['enddate'] = json_format_date(string_to_datetime(task_kwargs['enddate']) + timedelta(days=1))
-        task_kwargs['app_id'] = request.GET.get("app_id", None)
-        task_kwargs['export_id'] = request.GET.get("export_id", None)
-        task_kwargs['zip_name'] = request.GET.get("name", None)
-    except (KeyError, ValueError):
-        return HttpResponseBadRequest()
-
-    download = DownloadBase()
-    task_kwargs['download_id'] = download.download_id
-    download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
-
-    return download.get_start_response()
-
-
 @require_permission(Permissions.view_report, 'corehq.apps.reports.standard.project_health.ProjectHealthDashboard')
 def project_health_user_details(request, domain, user_id):
     # todo: move to project_health.py? goes with project health dashboard.
@@ -2111,6 +2087,6 @@ def project_health_user_details(request, domain, user_id):
     return render(request, 'reports/project_health/user_details.html', {
         'domain': domain,
         'user': user,
-        'groups': ', '.join(g.name for g in Group.by_user(user)),
+        'groups': ', '.join(g.name for g in Group.by_user_id(user_id)),
         'submission_by_form_link': submission_by_form_link,
     })

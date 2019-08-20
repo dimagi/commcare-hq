@@ -17,6 +17,7 @@ from django.views.decorators.http import require_GET, require_POST
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from couchexport.models import Format
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
@@ -26,7 +27,7 @@ from dimagi.utils.web import json_response
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.api.resources.v0_5 import ODataCaseResource
+from corehq.apps.api.resources.v0_5 import ODataCaseResource, ODataFormResource
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import Domain
@@ -46,7 +47,7 @@ from corehq.apps.export.forms import (
     CreateExportTagForm,
     DashboardFeedFilterForm,
 )
-from corehq.apps.export.models import FormExportInstance
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.export.tasks import (
     get_saved_export_task_status,
     rebuild_saved_export,
@@ -223,16 +224,34 @@ class ExportListHelper(object):
             'addedToBulk': False,
             'emailedExport': self._get_daily_saved_export_metadata(export),
             'odataUrl': self._get_odata_url(export),
+            'secondaryOdataUrls': self._get_secondary_odata_urls(export),
         }
 
+    def _get_secondary_odata_urls(self, export):
+        urls = []
+        for table_id, table in enumerate(export.tables):
+            if table.selected and table_id > 0:
+                urls.append({
+                    "label": table.label,
+                    "url": self._fmt_odata_url(
+                        export,
+                        export.get_id + "/{}".format(table_id)
+                    ),
+                })
+        return urls
+
     def _get_odata_url(self, export):
+        return self._fmt_odata_url(export, export.get_id)
+
+    def _fmt_odata_url(self, export, pk):
+        resource_class = ODataCaseResource if isinstance(export, CaseExportInstance) else ODataFormResource
         return absolute_reverse(
             'api_dispatch_detail',
             kwargs={
                 'domain': export.domain,
                 'api_name': 'v0.5',
-                'resource_name': ODataCaseResource._meta.resource_name,
-                'pk': export.get_id,
+                'resource_name': resource_class._meta.resource_name,
+                'pk': pk + '/feed',
             }
         )[:-1]  # Remove trailing forward slash for compatibility with BI tools
 
@@ -604,7 +623,7 @@ def commit_filters(request, domain):
         raise Http404
     if export.export_format == "html" and not domain_has_privilege(domain, EXCEL_DASHBOARD):
         raise Http404
-    if export.is_odata_config and not toggles.ODATA.enabled_for_request(request):
+    if export.is_odata_config and not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
         raise Http404
     if not export.filters.is_location_safe_for_user(request):
         return location_restricted_response(request)
@@ -867,7 +886,7 @@ class ODataFeedListHelper(ExportListHelper):
 
     @property
     def create_export_form_title(self):
-        return ""
+        return _("Select a model to export to a feed")
 
     def _should_appear_in_list(self, export):
         return export['is_odata_config']
@@ -895,13 +914,19 @@ class ODataFeedListHelper(ExportListHelper):
         return DownloadNewCaseExportView
 
 
-@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     urlname = 'list_odata_feeds'
-    page_title = ugettext_lazy("Power BI/Tableau Integration")
+    page_title = ugettext_lazy("PowerBi/Tableau Integration (Preview)")
     lead_text = ugettext_lazy('''
         Use OData feeds to integrate your CommCare data with Power BI or Tableau.
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Integration+with+PowerBi+and+Tableau">
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Integration+with+PowerBi+and+Tableau"
+           target="_blank">
+            Learn more.
+        </a><br />
+        This is a Feature Preview.
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Feature+Previews"
+           target="_blank">
             Learn more.
         </a>
     ''')

@@ -5,7 +5,7 @@ hqDefine("app_manager/js/apps_base", function () {
             keyboard: false,
             show: true,
         }).on('hide.bs.modal', function () {
-            window.location = hqImport('hqwebapp/js/initial_page_data').reverse('default_app');
+            window.location = hqImport('hqwebapp/js/initial_page_data').reverse('dashboard_default');
         });
         var previewApp = hqImport('app_manager/js/preview_app');
         previewApp.initPreviewWindow();

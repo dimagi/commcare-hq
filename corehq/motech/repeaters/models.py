@@ -320,7 +320,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         if isinstance(result, Exception):
             attempt = repeat_record.handle_exception(result)
             self.generator.handle_exception(result, repeat_record)
-        elif 200 <= result.status_code < 300:
+        elif _is_response(result) and 200 <= result.status_code < 300 or result is True:
             attempt = repeat_record.handle_success(result)
             self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:
@@ -722,23 +722,35 @@ class RepeatRecord(Document):
 
     @staticmethod
     def _format_response(response):
+        if not _is_response(response):
+            return None
+        response_body = getattr(response, "text", "")
         return '{}: {}.\n{}'.format(
-            response.status_code, response.reason, getattr(response, 'content', None))
+            response.status_code, response.reason, response_body)
 
     def handle_success(self, response):
-        """Do something with the response if the repeater succeeds
+        """
+        Log success in Datadog and return a success RepeatRecordAttempt.
+
+        ``response`` can be a Requests response instance, or True if the
+        payload did not result in an API call.
         """
         now = datetime.utcnow()
-        log_repeater_success_in_datadog(
-            self.domain,
-            response.status_code if response else None,
-            self.repeater_type
-        )
+        if _is_response(response):
+            # ^^^ Don't bother logging success in Datadog if the payload
+            # did not need to be sent. (This can happen with DHIS2 if
+            # the form that triggered the forwarder doesn't contain data
+            # for a DHIS2 Event.)
+            log_repeater_success_in_datadog(
+                self.domain,
+                response.status_code,
+                self.repeater_type
+            )
         return RepeatRecordAttempt(
             cancelled=False,
             datetime=now,
             failure_reason=None,
-            success_response=self._format_response(response) if response else None,
+            success_response=self._format_response(response),
             next_check=None,
             succeeded=True,
             info=self.get_attempt_info(),
@@ -809,6 +821,14 @@ class RepeatRecord(Document):
         self.failure_reason = ''
         self.overall_tries = 0
         self.next_check = datetime.utcnow()
+
+
+def _is_response(duck):
+    """
+    Returns True if ``duck`` has the attributes of a Requests response
+    instance that this module uses, otherwise False.
+    """
+    return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
 
 
 # import signals

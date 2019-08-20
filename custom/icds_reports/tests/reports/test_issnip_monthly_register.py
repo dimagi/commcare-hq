@@ -10,7 +10,7 @@ from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyRep
 import mock
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestInstitutionalDeliveriesSector(TestCase):
 
     def test_agg_awc_monthly_data(self):

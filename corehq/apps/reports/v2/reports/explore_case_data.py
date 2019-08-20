@@ -35,6 +35,10 @@ from corehq.apps.reports.v2.models import (
     ReportFilterData,
 )
 from corehq.apps.es import CaseSearchES, cases as case_es
+from corehq.feature_previews import (
+    EXPLORE_CASE_DATA_PREVIEW,
+    is_eligible_for_ecd_preview,
+)
 
 
 class ExploreCaseDataReport(BaseReport):
@@ -73,8 +77,14 @@ class ExploreCaseDataReport(BaseReport):
     ]
 
     @property
+    def can_view_ecd_preview(self):
+        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self.request) and
+                is_eligible_for_ecd_preview(self.request))
+
+    @property
     def has_permission(self):
-        return (toggles.EXPLORE_CASE_DATA.enabled_for_request(self.request)
+        return ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self.request)
+                 or self.can_view_ecd_preview)
                 and self.request.couch_user.can_edit_data())
 
     @property
