@@ -34,7 +34,7 @@ class DataSourceValidationTest(SimpleTestCase):
 
         sample_doc['is_starred'] = 'what is a star?'
 
-        with self.assertRaisesRegexp(ValidationError, "is_starred has unexpected value"):
+        with self.assertRaisesRegex(ValidationError, "is_starred has unexpected value"):
             self.config.validate_document(sample_doc)
 
     def test_multiple_validations(self):

@@ -104,24 +104,6 @@
                                           {% endblocktrans %}">
                                     </span>
               </th>
-              {% if request|toggle_enabled:'LOCATION_USERS' %}
-                <th data-bind="visible: advanced_mode">
-                  {% trans "Has Location User" %}
-                </th>
-              {% endif %}
-              {% if commtrack_enabled %}
-                <th>
-                  {% trans "Tracks Stock" %}
-                  <span class="hq-help-template"
-                        data-title="{% trans "Tracks Stock" %}"
-                        data-content="{% blocktrans %}
-                                              Does this location keep inventory and track stock?
-                                              Note that changing this property will update all
-                                              locations of this level accordingly.
-                                          {% endblocktrans %}">
-                                    </span>
-                </th>
-              {% endif %}
               <th>
                 {% trans "Owns Cases" %}
                 <span class="hq-help-template"
@@ -216,11 +198,6 @@
                                                    optionsCaption: '\u2013{%trans 'all' %}\u2013'">
                 </select>
               </td>
-              {% if request|toggle_enabled:'LOCATION_USERS' %}
-                <td data-bind="visible: $parent.advanced_mode">
-                  <input data-bind="checked: has_user" type="checkbox" />
-                </td>
-              {% endif %}
               {% if commtrack_enabled %}
                 <td>
                   <input data-bind="checked: tracks_stock" type="checkbox" />

@@ -148,5 +148,5 @@ class DateSpanValidationTests(SimpleTestCase):
                          "You are limited to a span of 90 days, but this date range spans 181 days")
 
     def test_negative_max_days(self):
-        with self.assertRaisesRegexp(ValueError, 'max_days cannot be less than 0'):
+        with self.assertRaisesRegex(ValueError, 'max_days cannot be less than 0'):
             DateSpan(datetime(2015, 1, 1), datetime(2015, 4, 1), max_days=-1)

@@ -12,6 +12,7 @@
 {% initial_page_data 'appVersionOnlyShowReleased' True %}
 {% registerurl "paginate_releases" domain '---' %}
 {% registerurl "remove_hosted_ccz" domain '---' %}
+{% registerurl "recreate_hosted_ccz" domain '---' %}
 {% registerurl "hosted_ccz" domain '---' %}
 <div class="container" id="manage-ccz-hostings">
   <div class="row">
@@ -39,31 +40,37 @@
               <th class="col-sm-2">
                 {% trans 'Link' %}
               </th>
+              <th>
+                {% trans 'Status' %}
+              </th>
               <th class="col-sm-2">
                 {% trans 'Application' %}
               </th>
-              <th class="col-sm-1">
+              <th>
                 {% trans 'Profile' %}
               </th>
-              <th class="col-sm-1">
+              <th>
                 {% trans 'Version' %}
               </th>
               <th class="col-sm-2">
                 {% trans 'CCZ Name' %}
               </th>
-              <th class="col-sm-3">
+              <th class="col-sm-2">
                 {% trans 'Note' %}
               </th>
-              <th class="col-sm-1">
+              <th>
                 {% trans 'Action' %}
               </th>
             </tr>
           </thead>
           <tbody data-bind="foreach: hostings">
-            <tr>
+            <tr data-bind="css: {'success': status === 'completed', 'info': status === 'pending',
+                                 'danger': status === 'failed', 'warning': status === 'building'}">
               <td>
                 <a data-bind="attr: { href: viewUrl}, text: link" target="_blank">
                 </a>
+              </td>
+              <td data-bind="text: status">
               </td>
               <td data-bind="text: appName">
               </td>
@@ -76,8 +83,11 @@
               <td data-bind="text: note">
               </td>
               <td>
-                <a data-bind="attr: { href: url}">
+                <a data-bind="attr: { href: removeUrl}" class="btn btn-danger">
                   {% trans 'Remove' %}
+                </a>
+                <a data-bind="attr: { href: recreateUrl}" class="btn btn-danger">
+                  {% trans 'Recreate' %}
                 </a>
               </td>
             </tr>

@@ -123,9 +123,10 @@ class flag_enabled(object):
     """
     enabled = True
 
-    def __init__(self, toggle_name):
+    def __init__(self, toggle_name, is_preview=False):
+        location = 'corehq.feature_previews' if is_preview else 'corehq.toggles'
         self.patches = [
-            mock.patch('.'.join(['corehq.toggles', toggle_name, method_name]),
+            mock.patch('.'.join([location, toggle_name, method_name]),
                        new=lambda *args, **kwargs: self.enabled)
             for method_name in ['enabled', 'enabled_for_request']
         ]

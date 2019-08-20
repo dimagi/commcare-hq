@@ -10,7 +10,7 @@
 {% registerurl "get_app_ui_translations" domain %}
 
 <div class="panel-group" id="language-settings-options">
-  {% if app.doc_type != "LinkedApplication" %}
+  {% if not is_linked_app %}
     <div class="panel panel-appmanager">
       <div class="panel-heading">
         <h4 class="panel-title">
@@ -31,7 +31,7 @@
     </div>
   {% endif %}
 
-  {% if not app.is_remote_app and app.get_doc_type == "Application" %}
+  {% if not is_remote_app and not is_linked_app %}
     <div class="panel panel-appmanager">
       <div class="panel-heading">
         <h4 class="panel-title">
@@ -74,7 +74,7 @@
     </div>
   {% endif %}
 
-  {% if app.doc_type != "LinkedApplication" %}
+  {% if not is_linked_app %}
     <div class="panel panel-appmanager">
       <div class="panel-heading">
         <h4 class="panel-title">

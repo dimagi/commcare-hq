@@ -29,7 +29,8 @@
     "description": "",
     "visible": false,
     "aggregation_columns": [
-      "doc_id"
+      "doc_id",
+      "supervisor_id"
     ],
     "filters": [
       {

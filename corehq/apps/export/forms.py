@@ -7,7 +7,6 @@ from django import forms
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy
-from unidecode import unidecode
 
 from corehq.apps.export.filters import (
     ReceivedOnRangeFilter,
@@ -64,15 +63,15 @@ class CreateExportTagForm(forms.Form):
             ('form', ugettext_lazy('form')),
         ]
     )
-    app_type = forms.CharField()
-    application = forms.CharField()
+    app_type = forms.CharField(widget=forms.Select(choices=[]))
+    application = forms.CharField(widget=forms.Select(choices=[]))
 
     # Form export fields
-    module = forms.CharField(required=False)
-    form = forms.CharField(required=False)
+    module = forms.CharField(required=False, widget=forms.Select(choices=[]))
+    form = forms.CharField(required=False, widget=forms.Select(choices=[]))
 
     # Case export fields
-    case_type = forms.CharField(required=False)
+    case_type = forms.CharField(required=False, widget=forms.Select(choices=[]))
 
     def __init__(self, has_form_export_permissions, has_case_export_permissions, *args, **kwargs):
         self.has_form_export_permissions = has_form_export_permissions
@@ -946,12 +945,13 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         return reverse(EditNewCustomFormExportView.urlname,
                        args=(self.domain_object.name, export._id))
 
-    def _get_es_user_types(self, mobile_user_and_group_slugs=None):
+    def get_es_user_types(self, filter_form_data):
         """
         Return a list of elastic search user types (each item in the return list
         is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
         export user types.
         """
+        mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(filter_form_data)
         es_user_types = []
         export_user_types = self._get_mapped_user_types(
             self._get_selected_es_user_types(mobile_user_and_group_slugs)
@@ -967,24 +967,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         for type_ in export_user_types:
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
-
-    def get_multimedia_task_kwargs(self, export, download_id, form_data):
-        """These are the kwargs for the Multimedia Download task,
-        specific only to forms.
-        """
-        datespan = self.cleaned_data['date_range']
-        mobile_user_and_group_slugs = self.get_mobile_user_and_group_slugs(form_data)
-        return {
-            'domain': self.domain_object.name,
-            'startdate': datespan.startdate.isoformat(),
-            'enddate': (datespan.enddate + timedelta(days=1)).isoformat(),
-            'app_id': export.app_id,
-            'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
-            'export_id': export.get_id,
-            'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
-            'user_types': self._get_es_user_types(mobile_user_and_group_slugs),
-            'download_id': download_id
-        }
 
 
 class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDownloadForm):

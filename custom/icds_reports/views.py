@@ -6,6 +6,8 @@ from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
 import requests
+from lxml import etree
+
 
 from datetime import datetime, date
 from celery.result import AsyncResult
@@ -104,12 +106,16 @@ from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months, \
     get_datatables_ordering_info
 from custom.icds_reports.utils.data_accessor import get_program_summary_data,\
-    get_program_summary_data_with_retrying
+    get_program_summary_data_with_retrying, get_awc_covered_data_with_retrying
 from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
 from couchexport.shortcuts import export_response
 from couchexport.export import Format
+from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.models.views import NICIndicatorsView
+from django.views.decorators.csrf import csrf_exempt
 
 
 @location_safe
@@ -232,6 +238,10 @@ class DashboardView(TemplateView):
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
         )
+
+        if kwargs['have_access_to_all_locations']:
+            kwargs['user_location_id'] = None
+
         is_commcare_user = self.couch_user.is_commcare_user()
 
         if self.couch_user.is_web_user():
@@ -329,7 +339,6 @@ class ServiceDeliveryDashboardView(BaseReportView):
 
         location_filters = get_location_filter(location, domain)
         location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
-        age_sdd = request.GET.get('ageSDD', '0_3')
 
         start, length, order_by_number_column, order_by_name_column, order_dir = \
             get_datatables_ordering_info(request)
@@ -344,7 +353,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
             location_filters,
             year,
             month,
-            age_sdd,
+            step,
             include_test
         )
         return JsonResponse(data=data)
@@ -813,6 +822,11 @@ class FactSheetsView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
+
+        # query database at same level for which it is requested
+        if config.get('aggregation_level') > 1:
+            config['aggregation_level'] -= 1
+
         loc_level = get_location_level(config.get('aggregation_level'))
 
         beta = icds_pre_release_features(request.user)
@@ -1192,19 +1206,7 @@ class AWCsCoveredView(BaseReportView):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = {}
-        if step == "map":
-            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_awcs_covered_sector_data(domain, config, loc_level, location, include_test)
-            else:
-                data = get_awcs_covered_data_map(domain, config.copy(), loc_level, include_test)
-                if loc_level == LocationTypes.BLOCK:
-                    sector = get_awcs_covered_sector_data(
-                        domain, config, loc_level, location, include_test
-                    )
-                    data.update(sector)
-        elif step == "chart":
-            data = get_awcs_covered_data_chart(domain, config, loc_level, include_test)
+        data = get_awc_covered_data_with_retrying(step, domain, config, loc_level, location, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1746,7 +1748,7 @@ class DishaAPIView(View):
         query_month = date(year, month, 1)
         today = date.today()
         current_month = today - relativedelta(months=1) if today.day <= 5 else today
-        if query_month > current_month:
+        if query_month > current_month or query_month < date(2018, 6, 1):
             return JsonResponse(self.message('invalid_month'), status=400)
 
         state_name = self.request.GET.get('state_name')
@@ -1760,6 +1762,55 @@ class DishaAPIView(View):
     @icds_quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_NIC_INDICATOR_API.required_decorator()], name='dispatch')
+class NICIndicatorAPIView(View):
+
+    def message(self, message_name):
+        state_names = ", ".join(self.valid_states.keys())
+        error_messages = {
+            "missing_date": "Please specify valid month and year",
+            "invalid_month": "Please specify a month that's older than or same as current month",
+            "invalid_state": "Please specify one of {} as state_name".format(state_names),
+            "unknown_error": "Unknown Error occured",
+            "no_data": "Data does not exists"
+        }
+
+        return {"message": error_messages[message_name]}
+
+    def get(self, request, *args, **kwargs):
+        try:
+            month = int(request.GET.get('month'))
+            year = int(request.GET.get('year'))
+        except (ValueError, TypeError):
+            return JsonResponse(self.message('missing_date'), status=400)
+
+        query_month = date(year, month, 1)
+
+        if query_month > date.today():
+            return JsonResponse(self.message('invalid_month'),  status=400)
+
+        state_name = self.request.GET.get('state_name')
+        if state_name not in self.valid_states:
+            return JsonResponse(self.message('invalid_state'), status=400)
+
+        try:
+            state_id = self.valid_states[state_name]
+            data = get_inc_indicator_api_data(state_id, month_formatter(query_month))
+            return JsonResponse(data)
+        except NICIndicatorsView.DoesNotExist:
+            return JsonResponse(self.message('no_data'), status=500)
+        except AttributeError:
+            return JsonResponse(self.message('unknown_error'), status=500)
+
+    @property
+    @icds_quickcache([])
+    def valid_states(self):
+        states = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
+                                            state_is_test=0).values_list('state_name', 'state_id')
+        return {state[0]: state[1] for state in states}
 
 
 @location_safe

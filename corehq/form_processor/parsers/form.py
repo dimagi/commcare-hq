@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from ddtrace import tracer
 
-from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
+from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
@@ -178,7 +178,13 @@ def _handle_duplicate(new_doc):
         XFormInstance.get_db().delete_doc(conflict_id)
         return new_doc, None
 
-    existing_md5 = existing_doc.xml_md5()
+    try:
+        existing_md5 = existing_doc.xml_md5()
+    except MissingFormXml:
+        existing_md5 = None
+        if not existing_doc.is_error:
+            existing_doc.problem = 'Missing form.xml'
+
     new_md5 = new_doc.xml_md5()
 
     if existing_md5 != new_md5:
@@ -200,12 +206,25 @@ def _handle_duplicate(new_doc):
             )
             return xform, None
         else:
-            # if the form contents are not the same:
-            #  - "Deprecate" the old form by making a new document with the same contents
-            #    but a different ID and a doc_type of XFormDeprecated
-            #  - Save the new instance to the previous document to preserve the ID
-            existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
-            return new_doc, existing_doc
+            if existing_doc.is_error and not existing_doc.initial_processing_complete:
+                # edge case from ICDS where a form errors and then future re-submissions of the same
+                # form do not have the same MD5 hash due to a bug on mobile:
+                # see https://dimagi-dev.atlassian.net/browse/ICDS-376
+
+                # since we have a new form and the old one was not successfully processed
+                # we can effectively ignore this form and process the new one as normal
+                if not interface.use_sql_domain:
+                    new_doc._rev, existing_doc._rev = existing_doc._rev, new_doc._rev
+                interface.assign_new_id(existing_doc)
+                existing_doc.save()
+                return new_doc, None
+            else:
+                # if the form contents are not the same:
+                #  - "Deprecate" the old form by making a new document with the same contents
+                #    but a different ID and a doc_type of XFormDeprecated
+                #  - Save the new instance to the previous document to preserve the ID
+                existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
+                return new_doc, existing_doc
     else:
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate

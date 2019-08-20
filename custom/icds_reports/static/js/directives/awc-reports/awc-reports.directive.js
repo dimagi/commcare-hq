@@ -1703,7 +1703,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.label = "AWC Report";
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
-    vm.filters = ['ageServiceDeliveryDashboard', 'gender', 'age'];
+    vm.filters = ['gender', 'age'];
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
 
@@ -2149,7 +2149,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     var attended = day ? day.attended : '0';
                     var eligible = day ? day.eligible : '0';
 
-                    var tooltipContent = "<p><strong>" + d3.time.format('%b %Y')(new Date(d.value)) + "</strong></p><br/>";
+                    var tooltipContent = "<p><strong>" + d3.time.format('%d/%m/%Y')(new Date(d.value)) + "</strong></p><br/>";
                     tooltipContent += "<div>Number of children who attended PSE: <strong>" + attended + "</strong></div>";
                     tooltipContent += "<div>Number of children who were eligible to attend PSE: <strong>" + eligible + "</strong></div>";
 

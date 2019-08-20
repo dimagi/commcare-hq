@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from contextlib import contextmanager
 import threading
 
 from django.conf import settings
@@ -143,8 +144,12 @@ def get_cursor(model):
     return connections[db].cursor()
 
 
-def force_citus_engine():
-    _thread_local.force_citus = True
+@contextmanager
+def force_citus_engine(force=False):
+    if force:
+        _thread_local.force_citus = True
+    yield
+    _thread_local.force_citus = False
 
 
 def forced_citus():

@@ -206,7 +206,7 @@ class SimplifiedUserInfo(
     def group_ids(self):
         if hasattr(self, '__group_ids'):
             return getattr(self, '__group_ids')
-        return Group.by_user(self.user_id, False)
+        return Group.by_user_id(self.user_id, False)
 
 
 def _report_user_dict(user):

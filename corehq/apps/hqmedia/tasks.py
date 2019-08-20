@@ -124,14 +124,6 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 
 
 @task(serializer='pickle')
-def build_application_zip_v2(include_multimedia_files, include_index_files, domain, app_id,
-                             download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
-                             download_targeted_version=False):
-    return build_application_zip(include_multimedia_files, include_index_files, domain, app_id, download_id,
-                                 build_profile_id, compress_zip, filename, download_targeted_version)
-
-
-@task(serializer='pickle')
 def build_application_zip(include_multimedia_files, include_index_files, domain, app_id,
                           download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
                           download_targeted_version=False):
@@ -236,6 +228,11 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
                 )
         if include_index_files and include_multimedia_files:
             multimedia_errors = check_ccz_multimedia_integrity(build.domain, fpath)
+            if multimedia_errors:
+                multimedia_errors.insert(0, _(
+                    "Please try syncing multimedia files in multimedia tab under app settings to resolve "
+                    "issues with missing media files. Report an issue if this persists."
+                ))
             errors.extend(multimedia_errors)
             if multimedia_errors:
                 notify_exception(
@@ -296,9 +293,6 @@ def find_missing_locale_ids_in_ccz(file_cache):
 
 # Check that all media files present in media_suite.xml were added to the zip
 def check_ccz_multimedia_integrity(domain, fpath):
-    if not toggles.CAUTIOUS_MULTIMEDIA.enabled(domain):
-        return []
-
     errors = []
 
     with open(fpath, 'rb') as tmp:

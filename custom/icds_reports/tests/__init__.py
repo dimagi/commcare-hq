@@ -42,7 +42,6 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'household_cases': get_table_name('icds-cas', 'static-household_cases'),
     'infrastructure': get_table_name('icds-cas', 'static-infrastructure_form'),
     'infrastructure_v2': get_table_name('icds-cas', 'static-infrastructure_form_v2'),
-    'location_ucr': get_table_name('icds-cas', 'static-awc_location'),
     'person_cases': get_table_name('icds-cas', 'static-person_cases_v3'),
     'usage': get_table_name('icds-cas', 'static-usage_forms'),
     'vhnd': get_table_name('icds-cas', 'static-vhnd_form'),
@@ -58,10 +57,12 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'ls_home_vists': get_table_name('icds-cas', 'static-ls_home_visit_forms_filled'),
     'ls_vhnd': get_table_name('icds-cas', 'static-ls_vhnd_form'),
     'cbe_form': get_table_name('icds-cas', 'static-cbe_form'),
-    'agg_awc': 'agg_awc',
     'birth_preparedness': get_table_name('icds-cas', 'static-dashboard_birth_preparedness_forms'),
     'delivery_form': get_table_name('icds-cas', 'static-dashboard_delivery_forms'),
-    'thr_form_v2': get_table_name('icds-cas','static-thr_forms_v2'),
+    'thr_form_v2': get_table_name('icds-cas', 'static-thr_forms_v2'),
+    'awc_location': 'awc_location',
+    'awc_location_local': 'awc_location_local',
+    'agg_awc': 'agg_awc',
 }
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
@@ -202,7 +203,8 @@ def setUpModule():
             _aggregate_bp_forms(state_id, datetime(2017, 3, 31))
 
         try:
-            move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
+            with mock.patch('custom.icds_reports.tasks._update_aggregate_locations_tables'):
+                move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
             build_incentive_report(agg_date=datetime(2017, 5, 28))
         except Exception as e:
             print(e)
@@ -263,9 +265,10 @@ def tearDownModule():
         with engine.begin() as connection:
             metadata = sqlalchemy.MetaData(bind=engine)
             metadata.reflect(bind=engine, extend_existing=True)
-            table = metadata.tables['ucr_table_name_mapping']
-            delete = table.delete()
-            connection.execute(delete)
+            for name in ('ucr_table_name_mapping', 'awc_location', 'awc_location_local'):
+                table = metadata.tables[name]
+                delete = table.delete()
+                connection.execute(delete)
     LocationType.objects.filter(domain='icds-cas').delete()
     SQLLocation.objects.filter(domain='icds-cas').delete()
 

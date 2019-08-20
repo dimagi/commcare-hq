@@ -636,17 +636,16 @@ HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
 
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'extension_sync',
-    'Enikshay/L10K: Enable extension syncing',
-    TAG_CUSTOM,
+    'Enable extension syncing',
+    TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
     namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'enikshay'},
 )
 
 
 ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
     'role_webapps_permissions',
-    'Enikshay/ICDS: Toggle which webapps to see based on role',
+    'ICDS: Toggle which webapps to see based on role',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -683,15 +682,27 @@ EXPLORE_CASE_DATA = StaticToggle(
     'explore_case_data',
     'Show the Explore Case Data report (in dev). Please make sure the project '
     'is fully migrated to support the CaseSearch index either by enabling '
-    'the Case List Explorer toggle or doing a manual migration.',
+    'the Case List Explorer toggle or doing a manual migration.\n\n'
+    'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
+    'This will be deprecated once the Feature Preview is in full swing.',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
-    'Domains that have undergone migration for Explore Case Data, but are not '
-    'yet ready to see the full report',
+    'Domains that have undergone migration for Explore Case Data and have a '
+    'CaseSearch elasticsearch index created.\n\n'
+    'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
+    'ecd_enterprise_domains',
+    'Enterprise Domains that are eligible to view the Explore Case Data '
+    'Feature Preview. By default, this feature will only be available for '
+    'domains that are Advanced or Pro and have undergone the ECD migration.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -810,7 +821,7 @@ VELLUM_DATA_IN_SETVALUE = StaticToggle(
 
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
-    'Enikshay/REC: Enable the "Cache and Index" format option when choosing sort properties '
+    'REC: Enable the "Cache and Index" format option when choosing sort properties '
     'in the app builder',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
@@ -915,7 +926,7 @@ COMMTRACK = StaticToggle(
 
 NON_COMMTRACK_LEDGERS = StaticToggle(
     'non_commtrack_ledgers',
-    "Enikshay: Enable ledgers for projects not using Supply.",
+    "Enable ledgers for projects not using Supply.",
     TAG_CUSTOM,
     description=(
         'Turns on the ledger fixture and ledger transaction question types in '
@@ -983,37 +994,11 @@ ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     [NAMESPACE_USER]
 )
 
-RETRY_SMS_INDEFINITELY = StaticToggle(
-    'retry_sms_indefinitely',
-    'Enikshay: Retry SMS indefinitely',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    description='Leaves on the queue an SMS that has reached the maximum number of unsuccessful attempts.',
-)
-
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
-)
-
-INDEX_LOCATION_DATA_DESCRIPTION = """
-Add an option to the location fields page allowing you to specify fields which
-should be indexed by the phone. This can provide a performance boost in
-applications dealing with large location fixtures when using those fields for
-filtering. The indexed fields will be made available as top level children of
-the <location/> node with the prefix 'data_', and you must reference that to
-take advantage of the optimization. For example, reference a field called
-'is_test' like:
-    instance('locations')/locations/location[data_is_test='1']
-"""
-INDEX_LOCATION_DATA = StaticToggle(
-    'index_location_data',
-    'Enikshay: Add option to index custom location fields',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    description=INDEX_LOCATION_DATA_DESCRIPTION,
 )
 
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
@@ -1170,7 +1155,7 @@ TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
-    'ICDS/eNikshay: Allow specifying a custom base URL for an application. Main use case is '
+    'ICDS: Allow specifying a custom base URL for an application. Main use case is '
     'to allow migrating ICDS to a new cluster.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
@@ -1218,14 +1203,6 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
 )
 
 
-EXPORT_ZIPPED_APPS = StaticToggle(
-    'export-zipped-apps',
-    'Export+Import Zipped Applications',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-
 SEND_UCR_REBUILD_INFO = StaticToggle(
     'send_ucr_rebuild_info',
     'Notify when UCR rebuilds finish or error.',
@@ -1247,13 +1224,6 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-
-CUSTOM_CALENDAR_FIXTURE = StaticToggle(
-    'custom_calendar_fixture',
-    'Enikshay: Send a calendar fixture down to all users (R&D)',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
@@ -1325,7 +1295,7 @@ ICDS = StaticToggle(
     "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-new', 'india', 'staging'},
+    relevant_environments={'icds', 'india', 'staging'},
     always_enabled={
         "icds-dashboard-qa",
         "reach-test",
@@ -1342,17 +1312,6 @@ DATA_DICTIONARY = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     description='Available in the Data section, shows the names of all properties of each case type.',
-)
-
-LOCATION_USERS = StaticToggle(
-    'location_users',
-    'Enikshay: Autogenerate users for each location',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "This flag adds an option to the location types page (under 'advanced "
-        "mode') to create users for all locations of a specified type."
-    ),
 )
 
 LOCATION_SAFETY_EXEMPTION = StaticToggle(
@@ -1417,13 +1376,6 @@ LOGIN_AS_ALWAYS_OFF = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SHOW_DEV_TOGGLE_INFO = StaticToggle(
-    'highlight_feature_flags',
-    'Highlight / Mark Feature Flags in the UI',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
     'publish_custom_reports',
     "Publish custom reports (No needed Authorization)",
@@ -1478,7 +1430,7 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Ability to filter mobile workers based on Role and username when doing bulk download",
+    "Ability to filter mobile workers based on role, location, and username when doing bulk download",
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )
@@ -1501,13 +1453,6 @@ REGEX_FIELD_VALIDATION = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Regular+Expression+Validation+for+Custom+Data+Fields',
 )
 
-REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
-    'remote_request_quetion_type',
-    'Enikshay: Enable remote request question type in the form builder',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
@@ -1517,8 +1462,8 @@ TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
 
 CUSTOM_ICON_BADGES = StaticToggle(
     'custom_icon_badges',
-    'eNikshay: Custom Icon Badges for modules and forms',
-    TAG_CUSTOM,
+    'Custom Icon Badges for modules and forms',
+    TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -1583,7 +1528,7 @@ WAREHOUSE_APP_STATUS = StaticToggle(
     'warehouse_app_status',
     "User warehouse backend for the app status report. Currently only for sql domains",
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 TRAINING_MODULE = StaticToggle(
@@ -1657,7 +1602,16 @@ ICDS_DISHA_API = StaticToggle(
     'ICDS: Access DISHA API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-new', 'india'},
+    relevant_environments={'icds', 'india'},
+)
+
+
+ICDS_NIC_INDICATOR_API = StaticToggle(
+    'icds_nic_indicator_acess',
+    'ICDS: Dashboard Indicator API for NIC',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
 )
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
@@ -1736,11 +1690,17 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
 )
 
 
+def _enable_bi_integration_preview(domain, enabled):
+    from corehq.feature_previews import BI_INTEGRATION_PREVIEW
+    BI_INTEGRATION_PREVIEW.set(domain, enabled, NAMESPACE_DOMAIN)
+
+
 ODATA = StaticToggle(
     'odata',
     'Enable Odata feed.',
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
+    save_fn=_enable_bi_integration_preview,
 )
 
 
@@ -1822,4 +1782,12 @@ MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
     'Improved MPR ASR by doing aggregation at selected level',
     TAG_CUSTOM,
     [NAMESPACE_USER]
+)
+
+DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
+    'disable_case_update_rule_task',
+    'Disable the `run_case_update_rules` periodic task '
+    'while investigating database performance issues.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )

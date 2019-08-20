@@ -298,7 +298,7 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
         if len(query_context.query_meta.values()) > 1:
             raise Exception('Use of this class assumes only one query meta value!')
 
-        query_meta = query_context.query_meta.values()[0]
+        query_meta = list(query_context.query_meta.values())[0]
         # note: sqlagg doesn't expose access to sqlalchemy except through this private method
         query = query_meta._build_query()
         if split_filters['outer']:
