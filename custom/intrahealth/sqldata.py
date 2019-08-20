@@ -5265,11 +5265,12 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
         return clean_data
 
 
-class RecapPassageOneData(SqlData):
+class RecapPassageOneData(IntraHealthSqlData):
     slug = 'recap_passage_1'
     comment = 'recap passage 1'
     title = 'Recap Passage 1'
-    show_total = True
+    show_total = False
+    total_row = []
     custom_total_calculate = True
 
 
@@ -5495,3 +5496,323 @@ class RecapPassageOneData(SqlData):
         for name in self.product_names:
             headers.add_column(DataTablesColumn(name))
         return headers
+
+
+class LatestVisitData(VisiteDeLOperateurDataSource):
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(_('PPS_Id'), SimpleColumn('pps_id')),
+            DatabaseColumn(_('Doc_id'), SimpleColumn('doc_id')),
+            DatabaseColumn(_('Date'), SimpleColumn('real_date')),
+        ]
+        return columns
+
+    @property
+    def group_by(self):
+        group = ['pps_id', 'doc_id', 'real_date']
+        return group
+
+    @property
+    def rows(self):
+        return self.get_data()
+
+
+class RecapPassageTwoData(RecapPassageOneData):
+    slug = 'recap_passage_2'
+    comment = 'recap passage 2'
+    title = 'Recap Passage 2'
+    show_total = False
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(RecapPassageTwoData, self).__init__(config)
+        self.recap_rows = None
+        self.recap_headers = None
+        self.latest_pps_doc_ids = None
+
+    @property
+    def columns(self):
+        columns = super(RecapPassageTwoData, self).columns
+        if self.loc_id != 'pps_id':
+            columns.extend([
+                DatabaseColumn(_('PPS_Id'), SimpleColumn('pps_id')),
+            ])
+        columns.extend([
+            DatabaseColumn(_('PPS_Name'), SimpleColumn('pps_name')),
+            DatabaseColumn(_('Doc_id'), SimpleColumn('doc_id')),
+            DatabaseColumn(_('Delivery Amt'), SumColumn('delivery_amt_owed')),
+            DatabaseColumn(_('Delivery Margin'), SumColumn('delivery_total_margin')),
+        ])
+        return columns
+
+    @property
+    def group_by(self):
+        group = super(RecapPassageTwoData, self).group_by
+        if self.loc_id != 'pps_id':
+            group.extend(['pps_name', 'pps_id'])
+
+        group.extend(['doc_id'])
+        return group
+
+    @property
+    def program_products(self):
+        program_id = self.config.get('product_program', None)
+        program_products = []
+        if program_id:
+            programs = ProductsInProgramData(config=dict(domain=self.config['domain'])).rows
+            for program in programs:
+                if program[0] == program_id:
+                    list_of_program_ids = program[1].split(' ')
+                    program_products.extend(list_of_program_ids)
+            return list(set(program_products))
+        else:
+            return None
+
+
+    def only_latest_visit_data(self, rows):
+        pps_data = {}
+        for row in rows:
+            name = row['pps_id']
+            if not pps_data.get(name, None):
+                pps_data[name] = []
+
+            pps_data[name].append(row)
+
+        relevant = []
+        relevant_doc_ids = {}
+        for id, data in pps_data.items():
+            #TODO: Check if second date with same date should be relevant
+            sorted_visits_info = sorted(data, key=lambda k: k['real_date_repeat'], reverse=True)
+            latest_date = sorted_visits_info[0]['real_date_repeat']
+            latest_doc_for_pps = sorted_visits_info[0]['doc_id']
+
+            for visit in sorted_visits_info:
+                if visit['real_date_repeat'] != latest_date:
+                    break
+                else:
+                    relevant_doc_ids[visit['pps_id']] = latest_doc_for_pps
+
+        for row in rows:
+            if row['doc_id'] == relevant_doc_ids[row['pps_id']]:
+                relevant.append(row)
+
+        return relevant
+
+    @property
+    def program_name(self):
+        program_id = self.config.get('product_program', None)
+        domain = self.config['domain']
+        if program_id:
+            rows = ProgramData(config={'domain': domain, 'program_id': program_id}).rows
+            name = next(row[1] for row in rows if row[0] == program_id)
+            return name
+        else:
+            return None
+
+    def calculate_table_data(self):
+        rows = self.get_data()
+        rows = self.only_latest_visit_data(rows)
+
+        product_names = set()
+        data = {}
+        valid_products = self.program_products
+
+        for row in rows:
+            product_name = row['product_name']
+            pps_id = row['pps_id']
+            product_id = row['product_id']
+
+            if valid_products and \
+                product_id not in valid_products:
+                continue
+
+            product_names.add(product_name)
+
+            if not data.get(pps_id):
+                data[pps_id] = [row]
+            else:
+                data[pps_id].append(row)
+
+        product_names = sorted(product_names)
+        self.product_names = sorted(set(product_names))
+
+        self.recap_rows = data
+        self.recap_headers = self.get_headers()
+
+        return data, self.get_headers()
+
+    @property
+    def empty_table(self):
+        rows = [[name, 'pas de données'] for name in self.product_names]
+        empty_headers = DataTablesHeader(DataTablesColumn(''), DataTablesColumn('pas de produits'))
+        return rows, empty_headers
+
+    def get_headers(self):
+        headers = DataTablesHeader(DataTablesColumn('LISTE des PPS'))
+
+        for name in self.product_names:
+            headers.add_column(DataTablesColumn(name))
+
+        return headers
+
+
+class RecapPassageTwoTables(RecapPassageTwoData):
+
+    def __init__(self, config):
+        super(RecapPassageTwoTables, self).__init__(config)
+
+    def create_context(self, **kwargs):
+        context = dict(
+            title=kwargs.get('title',self.title),
+            slug=kwargs.get('slug',self.slug),
+            headers=kwargs.get('headers',[]),
+            rows=kwargs.get('rows',[]),
+            total_row=kwargs.get('total_row',self.total_row),
+            default_rows=kwargs.get('default_rows', None),
+            datatables=kwargs.get('datatables', self.datatables),
+            fix_column=kwargs.get('fix_left_col', self.fix_left_col))
+        return context
+
+    @property
+    def sumup_context(self):
+        if self.recap_rows is None:
+            self.calculate_table_data()
+
+        rows = {
+            'Total Versements PPS': dict(html=0.0),
+            'Frais Participation PPS': dict(html=0.0),
+            'Total Facturation District': dict(html=0.0),
+            'Frais Participation District': dict(html=0.0),
+            'Total Facturation PRA': dict(html=0.0),
+            'Total a Verser a La PRA': dict(html=0.0),
+        }
+        data = self.recap_rows
+
+        for pps in data.keys():
+            pps_data = data[pps]
+
+            for element in pps_data:
+                if element['product_name'] not in self.product_names:
+                    continue
+
+                delivery_amt_owed = element.get('delivery_amt_owed', None) or {'html': 0}
+                delivery_total_margin = element.get('delivery_total_margin', None) or {'html': 0}
+                rows['Total Versements PPS']['html'] += delivery_amt_owed['html']
+                rows['Frais Participation PPS']['html'] += delivery_total_margin['html']
+
+        rows['Total Facturation District']['html'] = \
+            rows['Total Versements PPS']['html'] - rows['Frais Participation PPS']['html']
+
+        rows['Frais Participation District']['html'] = rows['Total Facturation District']['html'] * 0.15 * 0.25
+
+        rows['Total Facturation PRA']['html'] = rows['Total Facturation District']['html'] / 1.15
+
+        rows['Total a Verser a La PRA']['html'] = rows['Total Facturation PRA']['html'] \
+                                                  + rows['Frais Participation District']['html'] \
+                                                  + rows['Total Versements PPS']['html']
+
+        row = [["{0:.2f}".format(round(v['html'], 2)) for v in rows.values()]]
+        context = self.create_context(
+            rows=row, headers=rows.keys(),
+            title='Recapitulatif Facturation')
+        return context
+
+    @property
+    def billed_consumption_context(self):
+        context = self.create_table_context('billed_consumption', 'Consommations Facturables')
+
+        return context
+
+    @property
+    def actual_consumption_context(self):
+        context = self.create_table_context('actual_consumption', 'Consommation Réelle')
+        return context
+
+    @property
+    def amt_delivered_convenience_context(self):
+        context = self.create_table_context('amt_delivered_convenience', 'Livraison Total Effectuées', False)
+        rows = context['rows']
+        new_row = self.create_row_with_column_values_sum('Livraison Effectuées', rows)
+        context['rows'].append(new_row)
+        return context
+
+    @property
+    def display_total_stock_context(self):
+        context = self.create_table_context('total_stock', 'Stock Disponible Utilisable', False)
+        rows = context['rows']
+        sum_row = self.create_row_with_column_values_sum('SDU avant Livraison', rows)
+        display_stock_row = self.add_row_with_sum_value('SDU après Livraison', 'display_total_stock')
+        context['rows'].append(sum_row)
+        context['rows'].append(display_stock_row)
+        return context
+
+    def create_table_context(self, displayed_values, title, add_amount_owed_column=True):
+        if self.recap_rows is None:
+            self.calculate_table_data()
+
+        headers = self.get_headers()
+        rows = self.create_table_rows(displayed_values, add_amount_owed_column=add_amount_owed_column)
+
+        if add_amount_owed_column:
+            headers.add_column(DataTablesColumn('Recouvrement PPS Net à Payer'))
+
+        context = self.create_context(
+            rows=rows, headers=headers,
+            title=title)
+
+        return context
+
+    def create_table_rows(self, displayed_values, add_amount_owed_column=True):
+        rows = []
+        data = self.recap_rows
+
+        for pps in data.keys():
+            pps_data = data[pps]
+            pps_name = pps_data[0]['pps_name']
+            row = [pps_name]
+
+            pps_product_values = self.get_row_product_values(pps_data, displayed_values)
+            for name in self.product_names:
+                product_value = pps_product_values.get(name, {'html': 0})
+                row.append(product_value)
+
+            rows.append(row)
+            if add_amount_owed_column:
+                products_amount = self.get_row_product_values(pps_data, 'amount_owed')
+                amount_sum = dict(html=0)
+                for name in self.product_names:
+                    product_value = products_amount.get(name,  {'html': 0})
+                    amount_sum['html'] += product_value['html']
+
+                row.append(amount_sum)
+
+        return rows
+
+    def get_row_product_values(self, pps_data, column):
+        product_value = {}
+        for row in pps_data:
+            product_value[row['product_name']] = row.get(column, {'html': 0})
+        return product_value
+
+    def create_row_with_column_values_sum(self, row_name, rows, title_column=True):
+        if len(rows) == 0:
+            return None
+
+        new_row = [row_name]
+        rows = rows if not title_column else [row[1:] for row in rows]
+        number_of_columns = len(rows[0])
+
+        row_values = [0 for column in range(0, number_of_columns)]
+        for row in rows:
+            for index, column_value in enumerate(row):
+                row_values[index] += column_value['html']
+
+        new_row.extend(row_values)
+        return new_row
+
+    def add_row_with_sum_value(self, row_name, value_name):
+        rows = self.create_table_rows(value_name, False)
+        sum_row = self.create_row_with_column_values_sum(row_name, rows)
+        return sum_row
