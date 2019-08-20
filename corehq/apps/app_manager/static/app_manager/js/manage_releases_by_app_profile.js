@@ -20,9 +20,9 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
                 'version']);
             self.id = details.id;
             self.active = ko.observable(details.active);
-            self.status = ko.computed(function() {
+            self.status = ko.computed(function () {
                 return (self.active() ? gettext("Active") : gettext("Inactive"));
-            })
+            });
             self.appName = details.app_name;
             self.version = details.version;
             self.profileName = details.profile_name;
