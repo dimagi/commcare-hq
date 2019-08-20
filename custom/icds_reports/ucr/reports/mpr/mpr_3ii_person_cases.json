@@ -15,10 +15,10 @@
     "icds-sql",
     "icds-cas",
     "cas-lab",
-    "icds-cas-sandbox"
+    "icds-cas-multi-master"
   ],
   "server_environment": [
-    "india",
+    "staging",
     "icds"
   ],
   "report_id": "static-mpr_3ii_person_cases",

@@ -1,7 +1,7 @@
 {
   "domains": [
     "icds-cas",
-    "icds-cas-sandbox",
+    "icds-cas-multi-master",
     "cas-lab",
     "icds-dashboard-qa",
     "laurence-project-1",
@@ -16,7 +16,7 @@
     "reach-test"
   ],
   "server_environment": [
-    "india",
+    "staging",
     "icds"
   ],
   "report_id": "static-mpr_6b_pse_attendance_per_year",
