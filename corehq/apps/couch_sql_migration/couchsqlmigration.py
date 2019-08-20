@@ -1,4 +1,3 @@
-
 import logging
 import os
 import sys
@@ -18,10 +17,6 @@ from django.conf import settings
 from django.db.utils import IntegrityError
 from gevent.pool import Pool
 
-from corehq.apps.couch_sql_migration.asyncforms import AsyncFormProcessor
-from corehq.apps.couch_sql_migration.casediff import CaseDiffProcess, CaseDiffQueue
-from corehq.apps.couch_sql_migration.diff import filter_form_diffs
-from corehq.apps.couch_sql_migration.statedb import init_state_db
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
@@ -44,6 +39,7 @@ from corehq.form_processor.models import (
     XFormOperationSQL,
 )
 from corehq.form_processor.submission_post import CaseStockProcessingResult
+from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS
 from corehq.form_processor.utils import (
     adjust_datetimes,
     extract_meta_user_id,
@@ -69,6 +65,12 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
+
+from .asyncforms import AsyncFormProcessor
+from .casediff import CaseDiffProcess, CaseDiffQueue
+from .diff import filter_form_diffs
+from .statedb import init_state_db
+from .system_action import do_system_action
 
 log = logging.getLogger(__name__)
 
@@ -172,6 +174,9 @@ class CouchSqlDomainMigrator(object):
                 adjust_datetimes(form_data)
             xmlns = form_data.get("@xmlns", "")
             user_id = extract_meta_user_id(form_data)
+            if xmlns == SYSTEM_ACTION_XMLNS:
+                for form_id, case_ids in do_system_action(couch_form):
+                    self.case_diff_queue.update(case_ids, form_id)
         else:
             xmlns = couch_form.xmlns
             user_id = couch_form.user_id
@@ -186,7 +191,8 @@ class CouchSqlDomainMigrator(object):
         _migrate_form_operations(sql_form, couch_form)
         if couch_form.doc_type != 'SubmissionErrorLog':
             self._save_diffs(couch_form, sql_form)
-        case_stock_result = self._get_case_stock_result(sql_form, couch_form) if form_is_processed else None
+        case_stock_result = (self._get_case_stock_result(sql_form, couch_form)
+            if form_is_processed else None)
         _save_migrated_models(sql_form, case_stock_result)
 
     def _save_diffs(self, couch_form, sql_form):

@@ -9,6 +9,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db import transaction
 from django.test import TestCase, override_settings
 
 import attr
@@ -133,7 +134,11 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.assert_backend("couch", domain)
         options.setdefault("no_input", True)
         options.setdefault("diff_process", False)
-        call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
+        with mock.patch(
+            "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
+            atomic_savepoint,
+        ):
+            call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
 
     def _do_migration_and_assert_flags(self, domain, **options):
         self._do_migration(domain, **options)
@@ -183,6 +188,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         # boto3 and/or minio -> HeadBucket 403 Forbidden
         form = submit_form_locally(xml, self.domain_name).xform
         if received_on is not None:
+            if isinstance(received_on, timedelta):
+                received_on = datetime.utcnow() + received_on
             form.received_on = received_on
             form.save()
         log.debug("form %s received on %s", form.form_id, form.received_on)
@@ -689,10 +696,9 @@ class MigrationTestCase(BaseMigrationTestCase):
             )
 
     def test_live_migrate(self):
-        now = datetime.utcnow()
-        self.submit_form(make_test_form("test-1"), now - timedelta(minutes=95))
-        self.submit_form(make_test_form("test-2"), now - timedelta(minutes=90))
-        self.submit_form(make_test_form("test-3"), now - timedelta(minutes=85))
+        self.submit_form(make_test_form("test-1"), timedelta(minutes=-95))
+        self.submit_form(make_test_form("test-2"), timedelta(minutes=-90))
+        self.submit_form(make_test_form("test-3"), timedelta(minutes=-85))
         self.submit_form(make_test_form("test-4"))
         self.assert_backend("couch")
 
@@ -734,9 +740,8 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_form_ids("XFormArchived"), {"archived"})
 
     def test_edit_form_after_live_migration(self):
-        now = datetime.utcnow()
         self.assert_backend("couch")
-        self.submit_form(make_test_form("test-1"), now - timedelta(minutes=90))
+        self.submit_form(make_test_form("test-1"), timedelta(minutes=-90))
 
         self._do_migration(live=True)
         self.assert_backend("sql")
@@ -756,6 +761,25 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(form.form_data["age"], '27')
         case = self._get_case("test-case")
         self.assertEqual(case.dynamic_case_properties()["age"], '27')
+
+    def test_migrate_archived_form_after_live_migration(self):
+        self.submit_form(make_test_form("arch-1"), timedelta(minutes=-95))
+        self.submit_form(make_test_form("arch-2"), timedelta(minutes=-90)).archive()
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), {"arch-1"})
+        self.assertEqual(self._get_form_ids("XFormArchived"), {"arch-2"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.assert_backend("couch")
+        FormAccessors(self.domain_name).get_form("arch-1").archive()
+
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(self._get_form_ids("XFormArchived"), {"arch-1", "arch-2"})
+        self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"test-case"})
+        self._compare_diffs([])
 
     def test_reset_migration(self):
         now = datetime.utcnow()
@@ -979,6 +1003,22 @@ def make_test_form(form_id, age=27):
     assert form.count(">27<") == 2
     form = form.replace(">27<", ">%s<" % age)
     return form.replace(">test-form<", ">%s<" % form_id)
+
+
+def atomic_savepoint(*args, **kw):
+    """Convert `savepoint=False` to `savepoint=True`
+
+    Avoid error in tests, which are automatically wrapped in a transaction.
+
+        An error occurred in the current transaction. You can't execute
+        queries until the end of the 'atomic' block.
+    """
+    if kw.get("savepoint") is False:
+        kw["savepoint"] = True
+    return _real_atomic(*args, **kw)
+
+
+_real_atomic = transaction.atomic
 
 
 @attr.s(cmp=False)

@@ -11,12 +11,15 @@ from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils.chunked import chunked
 from memoized import memoized
 
+from ..system_action import system_action
 from ..utils import should_use_sql_backend
 
 
 CaseIndexInfo = namedtuple(
     'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
 )
+
+ARCHIVE_FORM = "archive_form"
 
 
 class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'content_stream'])):
@@ -180,6 +183,21 @@ class FormAccessors(object):
         """Un/archive form
 
         :param form: the form to be archived or unarchived.
+        :param archive: Boolean value. Archive if true else unarchive.
+        :param user_id: id of user performing the action.
+        """
+        args = [form, archive, user_id, trigger_signals]
+        args_json = [form.form_id, archive, user_id, trigger_signals]
+        system_action.submit(ARCHIVE_FORM, args, args_json, form.domain)
+
+    @system_action(ARCHIVE_FORM)
+    def _do_archive(form, archive, user_id, trigger_signals):
+        """ARCHIVE_FORM system action
+
+        This method is not meant to be called directly. It is called
+        when an ARCHIVE_FORM system action is submitted.
+
+        :param form: form to be un/archived.
         :param archive: Boolean value. Archive if true else unarchive.
         :param user_id: id of user performing the action.
         """
