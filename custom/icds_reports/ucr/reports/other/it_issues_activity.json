@@ -1,6 +1,6 @@
 {
   "server_environment": [
-    "india",
+    "staging",
     "icds"
   ],
   "domains": [

@@ -18,7 +18,7 @@
     "cas-lab"
   ],
   "server_environment": [
-    "india",
+    "staging",
     "icds"
   ],
   "report_id": "static-it_issues_by_ticket_level",

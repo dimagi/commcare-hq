@@ -18,7 +18,7 @@
     "icds-cas-multi-master"
   ],
   "server_environment": [
-    "india",
+    "staging",
     "icds"
   ],
   "report_id": "static-mpr_8_tasks_cases",

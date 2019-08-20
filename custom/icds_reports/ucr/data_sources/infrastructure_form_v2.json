@@ -16,7 +16,7 @@
     "cas-lab"
   ],
   "server_environment": [
-    "india",
+    "staging",
     "icds"
   ],
   "mirrored_engine_ids": [
@@ -25,7 +25,7 @@
       "engine_ids": ["icds-ucr-citus"]
     },
     {
-      "server_environment": "india",
+      "server_environment": "staging",
       "engine_ids": ["icds-ucr-citus"]
     }
   ],

@@ -16,7 +16,7 @@
     "reach-test"
   ],
   "server_environment": [
-    "india",
+    "staging",
     "icds"
   ],
   "report_id": "static-mpr_9_vhnd",
