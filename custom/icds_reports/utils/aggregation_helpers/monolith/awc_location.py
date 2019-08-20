@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import io
 import json
+import uuid
 
 import csv342 as csv
 from six.moves import map, range
@@ -15,6 +16,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AWC_LOCATION_TABLE_ID, AWW_USER_TABLE_ID
 from custom.icds_reports.exceptions import LocationRemovedException
+from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
@@ -100,8 +102,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             cursor.execute(rollup_query)
 
         self.assert_no_awc_missing_from_new_table(cursor)
-        old_def, new_def = self.generate_diff_of_tables(cursor)
-        # TODO figure what to do with these
+        self.generate_diff_of_tables(cursor)
 
         cursor.execute(self.delete_old_locations())
         cursor.execute(self.move_data_to_real_table())
@@ -150,6 +151,8 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             raise LocationRemovedException(str(num_locations_missing))
 
     def generate_diff_of_tables(self, cursor):
+        from custom.icds_reports.tasks import email_location_changes
+
         cursor.execute(
             """
             SELECT doc_id
@@ -166,29 +169,41 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         )
         changed_awc_ids = [row[0] for row in cursor.fetchall()]
         if not changed_awc_ids:
-            return None, None
+            return
 
-        cursor.execute(
-            """
-            SELECT *
-            FROM "{tablename}"
-            WHERE aggregation_level = 5 AND doc_id = ANY(%s)
-            """.format(
-                tablename=self.base_tablename,
-            ), [changed_awc_ids]
+        def _save_icds_file(query):
+            location_data = io.BytesIO()
+            copy_query = "COPY ({query}) TO STDOUT WITH CSV HEADER".format(query=query)
+            cursor.cursor.copy_expert(copy_query, location_data)
+            icds_file = IcdsFile(blob_id=uuid.uuid4().hex, data_type='location_change')
+            location_data.seek(0)
+            icds_file.store_file_in_blobdb(location_data)
+            icds_file.save()
+            return icds_file
+
+        old_location_file = _save_icds_file(
+            cursor.mogrify(
+                """
+                SELECT *
+                FROM "{tablename}"
+                WHERE aggregation_level = 5 AND doc_id = ANY(%s)
+                """.format(
+                    tablename=self.base_tablename,
+                ), [changed_awc_ids]
+            ).decode('utf-8')
         )
-        old_definitions = cursor.fetchall()
-        cursor.execute(
-            """
-            SELECT doc_id
-            FROM "{temporary_tablename}"
-            WHERE aggregation_level = 5 AND doc_id = ANY(%s)
-            """.format(
-                temporary_tablename=self.temporary_tablename,
-            ), [changed_awc_ids]
+        new_location_file = _save_icds_file(
+            cursor.mogrify(
+                """
+                SELECT *
+                FROM "{temporary_tablename}"
+                WHERE aggregation_level = 5 AND doc_id = ANY(%s)
+                """.format(
+                    temporary_tablename=self.temporary_tablename,
+                ), [changed_awc_ids]
+            ).decode('utf-8')
         )
-        new_definitions = cursor.fetchall()
-        return old_definitions, new_definitions
+        email_location_changes.delay(self.domain, old_location_file.blob_id, new_location_file.blob_id)
 
     def move_data_to_real_table(self):
         columns = (
