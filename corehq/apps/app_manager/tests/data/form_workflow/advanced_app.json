@@ -1,0 +1,2060 @@
+﻿{
+  "modules": [
+    {
+      "name": {
+        "en": "Household Management"
+      },
+      "forms": [
+        {
+          "name": {
+            "en": "Edit Household"
+          },
+          "form_type": "advanced_form",
+          "form_filter": null,
+          "actions": {
+            "load_update_cases": [
+              {
+                "case_type": "household",
+                "details_module": "f9d03f33cab6489da1bd4912edfdcba8",
+                "case_tag": "load_household_0",
+                "case_index": {
+                  "tag": "",
+                  "reference_id": "parent",
+                  "relationship": "child",
+                  "relationship_question": "",
+                  "doc_type": "CaseIndex"
+                },
+                "preload": {
+                  
+                },
+                "case_properties": {
+                  
+                },
+                "close_condition": {
+                  "type": "never",
+                  "question": null,
+                  "answer": null,
+                  "operator": null,
+                  "doc_type": "FormActionCondition"
+                },
+                "show_product_stock": false,
+                "product_program": "",
+                "auto_select": null,
+                "load_case_from_fixture": null,
+                "doc_type": "LoadUpdateAction"
+              }
+            ],
+            "open_cases": [
+              
+            ],
+            "doc_type": "AdvancedFormActions"
+          },
+          "schedule": {
+            "enabled": false,
+            "starts": null,
+            "expires": null,
+            "allow_unscheduled": false,
+            "visits": [
+              
+            ],
+            "transition_condition": {
+              "type": "never",
+              "question": null,
+              "answer": null,
+              "operator": "=",
+              "doc_type": "FormActionCondition"
+            },
+            "termination_condition": {
+              "type": "never",
+              "question": null,
+              "answer": null,
+              "operator": "=",
+              "doc_type": "FormActionCondition"
+            },
+            "doc_type": "FormSchedule"
+          },
+          "doc_type": "AdvancedForm",
+          "name_enum": [
+            
+          ],
+          "unique_id": "e7783c44e34d4cad84a6526ecffcccdb",
+          "show_count": false,
+          "xmlns": "http:\/\/openrosa.org\/formdesigner\/AB82ED08-2AD9-4F44-9591-A98FF91C0677",
+          "version": null,
+          "post_form_workflow": "default",
+          "post_form_workflow_fallback": null,
+          "auto_gps_capture": false,
+          "no_vellum": false,
+          "form_links": [
+            
+          ],
+          "schedule_form_id": null,
+          "custom_assertions": [
+            
+          ],
+          "custom_instances": [
+            
+          ],
+          "case_references_data": {
+            "load": {
+              
+            },
+            "save": {
+              
+            },
+            "doc_type": "CaseReferences"
+          },
+          "is_release_notes_form": false,
+          "enable_release_notes": false,
+          "comment": "",
+          "media_image": {
+            
+          },
+          "media_audio": {
+            
+          },
+          "custom_icons": [
+            
+          ],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false
+        }
+      ],
+      "case_type": "household",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "field": "name",
+              "model": "case",
+              "useXpathExpression": false,
+              "enum": [
+                
+              ],
+              "graph_configuration": {
+                "config": {
+                  
+                },
+                "locale_specific_config": {
+                  
+                },
+                "annotations": [
+                  
+                ],
+                "graph_type": null,
+                "series": [
+                  
+                ],
+                "doc_type": "GraphConfiguration"
+              },
+              "case_tile_field": null,
+              "late_flag": 30,
+              "advanced": "",
+              "filter_xpath": "",
+              "time_ago_interval": 365.25,
+              "doc_type": "DetailColumn"
+            }
+          ],
+          "display": "short",
+          "tabs": [
+            
+          ],
+          "sort_elements": [
+            
+          ],
+          "sort_nodeset_columns": null,
+          "filter": null,
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "custom_variables": null,
+          "use_case_tiles": null,
+          "custom_xml": null,
+          "persist_tile_on_forms": null,
+          "persistent_case_tile_from_module": null,
+          "pull_down_tile": null,
+          "print_template": {
+            
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_action": null,
+          "lookup_name": null,
+          "lookup_image": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_display_results": false,
+          "lookup_field_header": {
+            
+          },
+          "lookup_field_template": null
+        },
+        "long": {
+          "columns": [
+            {
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "field": "name",
+              "model": "case",
+              "useXpathExpression": false,
+              "enum": [
+                
+              ],
+              "graph_configuration": {
+                "config": {
+                  
+                },
+                "locale_specific_config": {
+                  
+                },
+                "annotations": [
+                  
+                ],
+                "graph_type": null,
+                "series": [
+                  
+                ],
+                "doc_type": "GraphConfiguration"
+              },
+              "case_tile_field": null,
+              "late_flag": 30,
+              "advanced": "",
+              "filter_xpath": "",
+              "time_ago_interval": 365.25,
+              "doc_type": "DetailColumn"
+            }
+          ],
+          "display": "long",
+          "tabs": [
+            
+          ],
+          "sort_elements": [
+            
+          ],
+          "sort_nodeset_columns": null,
+          "filter": null,
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "custom_variables": null,
+          "use_case_tiles": null,
+          "custom_xml": null,
+          "persist_tile_on_forms": null,
+          "persistent_case_tile_from_module": null,
+          "pull_down_tile": null,
+          "print_template": {
+            
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_action": null,
+          "lookup_name": null,
+          "lookup_image": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_display_results": false,
+          "lookup_field_header": {
+            
+          },
+          "lookup_field_template": null
+        },
+        "doc_type": "DetailPair"
+      },
+      "product_details": {
+        "short": {
+          "columns": [
+            {
+              "format": "plain",
+              "header": {
+                "en": "Product"
+              },
+              "field": "name",
+              "model": "product",
+              "useXpathExpression": false,
+              "enum": [
+                
+              ],
+              "graph_configuration": {
+                "config": {
+                  
+                },
+                "locale_specific_config": {
+                  
+                },
+                "annotations": [
+                  
+                ],
+                "graph_type": null,
+                "series": [
+                  
+                ],
+                "doc_type": "GraphConfiguration"
+              },
+              "case_tile_field": null,
+              "late_flag": 30,
+              "advanced": "",
+              "filter_xpath": "",
+              "time_ago_interval": 365.25,
+              "doc_type": "DetailColumn"
+            }
+          ],
+          "display": "short",
+          "tabs": [
+            
+          ],
+          "sort_elements": [
+            
+          ],
+          "sort_nodeset_columns": null,
+          "filter": null,
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "custom_variables": null,
+          "use_case_tiles": null,
+          "custom_xml": null,
+          "persist_tile_on_forms": null,
+          "persistent_case_tile_from_module": null,
+          "pull_down_tile": null,
+          "print_template": {
+            
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_action": null,
+          "lookup_name": null,
+          "lookup_image": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_display_results": false,
+          "lookup_field_header": {
+            
+          },
+          "lookup_field_template": null
+        },
+        "long": {
+          "display": "long",
+          "columns": [
+            
+          ],
+          "tabs": [
+            
+          ],
+          "sort_elements": [
+            
+          ],
+          "sort_nodeset_columns": null,
+          "filter": null,
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "custom_variables": null,
+          "use_case_tiles": null,
+          "custom_xml": null,
+          "persist_tile_on_forms": null,
+          "persistent_case_tile_from_module": null,
+          "pull_down_tile": null,
+          "print_template": {
+            
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_action": null,
+          "lookup_name": null,
+          "lookup_image": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_display_results": false,
+          "lookup_field_header": {
+            
+          },
+          "lookup_field_template": null
+        },
+        "doc_type": "DetailPair"
+      },
+      "module_type": "advanced",
+      "case_list": {
+        "label": {
+          
+        },
+        "show": false,
+        "doc_type": "CaseList",
+        "media_image": {
+          "en": ""
+        },
+        "media_audio": {
+          "en": ""
+        },
+        "custom_icons": [
+          
+        ],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "has_schedule": null,
+      "schedule_phases": [
+        
+      ],
+      "search_config": {
+        "command_label": {
+          "en": "Search All Cases"
+        },
+        "properties": [
+          
+        ],
+        "relevant": "count(instance('casedb')\/casedb\/case[@case_id=instance('commcaresession')\/session\/data\/case_id]) = 0",
+        "search_button_display_condition": null,
+        "include_closed": false,
+        "default_properties": [
+          
+        ],
+        "blacklisted_owner_ids_expression": null,
+        "doc_type": "CaseSearch"
+      },
+      "doc_type": "AdvancedModule",
+      "name_enum": [
+        
+      ],
+      "unique_id": "f9d03f33cab6489da1bd4912edfdcba8",
+      "case_list_form": {
+        "form_id": null,
+        "label": {
+          "en": ""
+        },
+        "post_form_workflow": "default",
+        "doc_type": "CaseListForm",
+        "media_image": {
+          "en": ""
+        },
+        "media_audio": {
+          "en": ""
+        },
+        "custom_icons": [
+          
+        ],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "module_filter": "",
+      "put_in_root": false,
+      "root_module_id": null,
+      "fixture_select": {
+        "active": false,
+        "fixture_type": null,
+        "display_column": null,
+        "localize": false,
+        "variable_column": null,
+        "xpath": "",
+        "doc_type": "FixtureSelect"
+      },
+      "auto_select_case": false,
+      "is_training_module": false,
+      "media_image": {
+        "en": ""
+      },
+      "media_audio": {
+        "en": ""
+      },
+      "custom_icons": [
+        
+      ],
+      "use_default_image_for_all": false,
+      "use_default_audio_for_all": false,
+      "comment": ""
+    },
+    {
+      "name": {
+        "en": "View Household Members"
+      },
+      "forms": [
+        {
+          "name": {
+            "en": "Edit Member Info"
+          },
+          "form_type": "advanced_form",
+          "form_filter": null,
+          "actions": {
+            "load_update_cases": [
+              {
+                "case_type": "household",
+                "details_module": "f9d03f33cab6489da1bd4912edfdcba8",
+                "case_tag": "load_household_0",
+                "case_index": {
+                  "tag": "",
+                  "reference_id": "parent",
+                  "relationship": "child",
+                  "relationship_question": "",
+                  "doc_type": "CaseIndex"
+                },
+                "preload": {
+                  
+                },
+                "case_properties": {
+                  
+                },
+                "close_condition": {
+                  "type": "never",
+                  "question": null,
+                  "answer": null,
+                  "operator": null,
+                  "doc_type": "FormActionCondition"
+                },
+                "show_product_stock": false,
+                "product_program": "",
+                "auto_select": null,
+                "load_case_from_fixture": null,
+                "doc_type": "LoadUpdateAction"
+              },
+              {
+                "case_type": "person",
+                "details_module": "af697d1ac8024a14b3e36e3e5a083314",
+                "case_tag": "load_person_0",
+                "case_index": {
+                  "tag": "",
+                  "reference_id": "parent",
+                  "relationship": "child",
+                  "relationship_question": "",
+                  "doc_type": "CaseIndex"
+                },
+                "preload": {
+                  
+                },
+                "case_properties": {
+                  
+                },
+                "close_condition": {
+                  "type": "never",
+                  "question": null,
+                  "answer": null,
+                  "operator": null,
+                  "doc_type": "FormActionCondition"
+                },
+                "show_product_stock": false,
+                "product_program": "",
+                "auto_select": null,
+                "load_case_from_fixture": null,
+                "doc_type": "LoadUpdateAction"
+              }
+            ],
+            "open_cases": [
+              
+            ],
+            "doc_type": "AdvancedFormActions"
+          },
+          "schedule": {
+            "enabled": false,
+            "starts": null,
+            "expires": null,
+            "allow_unscheduled": false,
+            "visits": [
+              
+            ],
+            "transition_condition": {
+              "type": "never",
+              "question": null,
+              "answer": null,
+              "operator": "=",
+              "doc_type": "FormActionCondition"
+            },
+            "termination_condition": {
+              "type": "never",
+              "question": null,
+              "answer": null,
+              "operator": "=",
+              "doc_type": "FormActionCondition"
+            },
+            "doc_type": "FormSchedule"
+          },
+          "doc_type": "AdvancedForm",
+          "name_enum": [
+            
+          ],
+          "unique_id": "436e4638e6e3409582dcb5fbb02b3487",
+          "show_count": false,
+          "xmlns": "http:\/\/openrosa.org\/formdesigner\/1E89EFAC-59F5-4CBF-8611-C946C3898BA3",
+          "version": null,
+          "post_form_workflow": "default",
+          "post_form_workflow_fallback": null,
+          "auto_gps_capture": false,
+          "no_vellum": false,
+          "form_links": [
+            
+          ],
+          "schedule_form_id": null,
+          "custom_assertions": [
+            
+          ],
+          "custom_instances": [
+            
+          ],
+          "case_references_data": {
+            "load": {
+              
+            },
+            "save": {
+              
+            },
+            "doc_type": "CaseReferences"
+          },
+          "is_release_notes_form": false,
+          "enable_release_notes": false,
+          "comment": "",
+          "media_image": {
+            
+          },
+          "media_audio": {
+            
+          },
+          "custom_icons": [
+            
+          ],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false
+        },
+        {
+          "name": {
+            "en": "Possible Pregnancy"
+          },
+          "form_type": "advanced_form",
+          "form_filter": null,
+          "actions": {
+            "load_update_cases": [
+              {
+                "case_type": "household",
+                "details_module": "f9d03f33cab6489da1bd4912edfdcba8",
+                "case_tag": "load_household_0",
+                "case_index": {
+                  "tag": "",
+                  "reference_id": "parent",
+                  "relationship": "child",
+                  "relationship_question": "",
+                  "doc_type": "CaseIndex"
+                },
+                "preload": {
+                  
+                },
+                "case_properties": {
+                  
+                },
+                "close_condition": {
+                  "type": "never",
+                  "question": null,
+                  "answer": null,
+                  "operator": null,
+                  "doc_type": "FormActionCondition"
+                },
+                "show_product_stock": false,
+                "product_program": "",
+                "auto_select": null,
+                "load_case_from_fixture": null,
+                "doc_type": "LoadUpdateAction"
+              },
+              {
+                "case_type": "person",
+                "details_module": "af697d1ac8024a14b3e36e3e5a083314",
+                "case_tag": "load_person_0",
+                "case_index": {
+                  "tag": "",
+                  "reference_id": "parent",
+                  "relationship": "child",
+                  "relationship_question": "",
+                  "doc_type": "CaseIndex"
+                },
+                "preload": {
+                  
+                },
+                "case_properties": {
+                  
+                },
+                "close_condition": {
+                  "type": "never",
+                  "question": null,
+                  "answer": null,
+                  "operator": null,
+                  "doc_type": "FormActionCondition"
+                },
+                "show_product_stock": false,
+                "product_program": "",
+                "auto_select": null,
+                "load_case_from_fixture": null,
+                "doc_type": "LoadUpdateAction"
+              },
+              {
+                "case_type": "commcare-user",
+                "details_module": null,
+                "case_tag": "autoload_person2",
+                "case_index": {
+                  "tag": "",
+                  "reference_id": "parent",
+                  "relationship": "child",
+                  "relationship_question": "",
+                  "doc_type": "CaseIndex"
+                },
+                "preload": {
+                  
+                },
+                "case_properties": {
+                  
+                },
+                "close_condition": {
+                  "type": "never",
+                  "question": null,
+                  "answer": null,
+                  "operator": null,
+                  "doc_type": "FormActionCondition"
+                },
+                "show_product_stock": false,
+                "product_program": "",
+                "auto_select": {
+                  "mode": "usercase",
+                  "value_source": "",
+                  "value_key": "",
+                  "doc_type": "AutoSelectCase"
+                },
+                "load_case_from_fixture": null,
+                "doc_type": "LoadUpdateAction"
+              }
+            ],
+            "open_cases": [
+              
+            ],
+            "doc_type": "AdvancedFormActions"
+          },
+          "schedule": {
+            "enabled": false,
+            "starts": null,
+            "expires": null,
+            "allow_unscheduled": false,
+            "visits": [
+              
+            ],
+            "transition_condition": {
+              "type": "never",
+              "question": null,
+              "answer": null,
+              "operator": "=",
+              "doc_type": "FormActionCondition"
+            },
+            "termination_condition": {
+              "type": "never",
+              "question": null,
+              "answer": null,
+              "operator": "=",
+              "doc_type": "FormActionCondition"
+            },
+            "doc_type": "FormSchedule"
+          },
+          "doc_type": "AdvancedForm",
+          "name_enum": [
+            
+          ],
+          "show_count": false,
+          "xmlns": "http:\/\/openrosa.org\/formdesigner\/d849416ffa584ddfb4466f4a56877172",
+          "version": null,
+          "post_form_workflow": "default",
+          "post_form_workflow_fallback": null,
+          "auto_gps_capture": false,
+          "no_vellum": false,
+          "form_links": [
+            
+          ],
+          "schedule_form_id": null,
+          "custom_assertions": [
+            
+          ],
+          "custom_instances": [
+            
+          ],
+          "case_references_data": {
+            "load": {
+              
+            },
+            "save": {
+              
+            },
+            "doc_type": "CaseReferences"
+          },
+          "is_release_notes_form": false,
+          "enable_release_notes": false,
+          "comment": "",
+          "media_image": {
+            
+          },
+          "media_audio": {
+            
+          },
+          "custom_icons": [
+            
+          ],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false,
+          "unique_id": "4478c63e821d4ab4a3f744a5cbb837eb"
+        },
+        {
+          "name": {
+            "en": "Adolescent Girl Registration \/ De-registration"
+          },
+          "form_type": "advanced_form",
+          "form_filter": "",
+          "actions": {
+            "load_update_cases": [
+              {
+                "case_type": "household",
+                "details_module": "f9d03f33cab6489da1bd4912edfdcba8",
+                "case_tag": "load_household_0",
+                "case_index": {
+                  "tag": "",
+                  "reference_id": "parent",
+                  "relationship": "child",
+                  "relationship_question": "",
+                  "doc_type": "CaseIndex"
+                },
+                "preload": {
+                  
+                },
+                "case_properties": {
+                  
+                },
+                "close_condition": {
+                  "type": "never",
+                  "question": null,
+                  "answer": null,
+                  "operator": null,
+                  "doc_type": "FormActionCondition"
+                },
+                "show_product_stock": false,
+                "product_program": "",
+                "auto_select": null,
+                "load_case_from_fixture": null,
+                "doc_type": "LoadUpdateAction"
+              },
+              {
+                "case_type": "person",
+                "details_module": "af697d1ac8024a14b3e36e3e5a083314",
+                "case_tag": "load_person_0",
+                "case_index": {
+                  "tag": "",
+                  "reference_id": "parent",
+                  "relationship": "child",
+                  "relationship_question": "",
+                  "doc_type": "CaseIndex"
+                },
+                "preload": {
+                  
+                },
+                "case_properties": {
+                  
+                },
+                "close_condition": {
+                  "type": "never",
+                  "question": null,
+                  "answer": null,
+                  "operator": null,
+                  "doc_type": "FormActionCondition"
+                },
+                "show_product_stock": false,
+                "product_program": "",
+                "auto_select": null,
+                "load_case_from_fixture": null,
+                "doc_type": "LoadUpdateAction"
+              }
+            ],
+            "open_cases": [
+              {
+                "case_type": "ag_care",
+                "name_path": "\/data\/something",
+                "case_tag": "open_ag_care_0",
+                "case_properties": {
+                  
+                },
+                "repeat_context": null,
+                "case_indices": [
+                  {
+                    "tag": "load_person_0",
+                    "reference_id": "host",
+                    "relationship": "extension",
+                    "relationship_question": "",
+                    "doc_type": "CaseIndex"
+                  }
+                ],
+                "open_condition": {
+                  "type": "always",
+                  "question": "",
+                  "answer": null,
+                  "operator": "=",
+                  "doc_type": "FormActionCondition"
+                },
+                "close_condition": {
+                  "type": "never",
+                  "question": null,
+                  "answer": null,
+                  "operator": null,
+                  "doc_type": "FormActionCondition"
+                },
+                "doc_type": "AdvancedOpenCaseAction"
+              }
+            ],
+            "doc_type": "AdvancedFormActions"
+          },
+          "schedule": {
+            "enabled": false,
+            "starts": null,
+            "expires": null,
+            "allow_unscheduled": false,
+            "visits": [
+              
+            ],
+            "transition_condition": {
+              "type": "never",
+              "question": null,
+              "answer": null,
+              "operator": "=",
+              "doc_type": "FormActionCondition"
+            },
+            "termination_condition": {
+              "type": "never",
+              "question": null,
+              "answer": null,
+              "operator": "=",
+              "doc_type": "FormActionCondition"
+            },
+            "doc_type": "FormSchedule"
+          },
+          "doc_type": "AdvancedForm",
+          "name_enum": [
+            
+          ],
+          "show_count": false,
+          "xmlns": "http:\/\/openrosa.org\/formdesigner\/bd6d520e3ef74b63a20bfc293c1455d1",
+          "version": null,
+          "post_form_workflow": "previous_screen",
+          "post_form_workflow_fallback": "",
+          "auto_gps_capture": false,
+          "no_vellum": false,
+          "form_links": [
+            
+          ],
+          "schedule_form_id": null,
+          "custom_assertions": [
+            
+          ],
+          "custom_instances": [
+            
+          ],
+          "case_references_data": {
+            "load": {
+              
+            },
+            "save": {
+              
+            },
+            "doc_type": "CaseReferences"
+          },
+          "is_release_notes_form": false,
+          "enable_release_notes": false,
+          "comment": "",
+          "media_image": {
+            "en": ""
+          },
+          "media_audio": {
+            "en": ""
+          },
+          "custom_icons": [
+            
+          ],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false,
+          "unique_id": "0a3e541b5cff4e879afc82af2603a803"
+        }
+      ],
+      "case_type": "person",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "field": "name",
+              "model": "case",
+              "useXpathExpression": false,
+              "enum": [
+                
+              ],
+              "graph_configuration": {
+                "config": {
+                  
+                },
+                "locale_specific_config": {
+                  
+                },
+                "annotations": [
+                  
+                ],
+                "graph_type": null,
+                "series": [
+                  
+                ],
+                "doc_type": "GraphConfiguration"
+              },
+              "case_tile_field": null,
+              "late_flag": 30,
+              "advanced": "",
+              "filter_xpath": "",
+              "time_ago_interval": 365.25,
+              "doc_type": "DetailColumn"
+            }
+          ],
+          "display": "short",
+          "tabs": [
+            
+          ],
+          "sort_elements": [
+            
+          ],
+          "sort_nodeset_columns": null,
+          "filter": null,
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "custom_variables": null,
+          "use_case_tiles": null,
+          "custom_xml": null,
+          "persist_tile_on_forms": null,
+          "persistent_case_tile_from_module": null,
+          "pull_down_tile": null,
+          "print_template": {
+            
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_action": null,
+          "lookup_name": null,
+          "lookup_image": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_display_results": false,
+          "lookup_field_header": {
+            
+          },
+          "lookup_field_template": null
+        },
+        "long": {
+          "columns": [
+            {
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "field": "name",
+              "model": "case",
+              "useXpathExpression": false,
+              "enum": [
+                
+              ],
+              "graph_configuration": {
+                "config": {
+                  
+                },
+                "locale_specific_config": {
+                  
+                },
+                "annotations": [
+                  
+                ],
+                "graph_type": null,
+                "series": [
+                  
+                ],
+                "doc_type": "GraphConfiguration"
+              },
+              "case_tile_field": null,
+              "late_flag": 30,
+              "advanced": "",
+              "filter_xpath": "",
+              "time_ago_interval": 365.25,
+              "doc_type": "DetailColumn"
+            }
+          ],
+          "display": "long",
+          "tabs": [
+            
+          ],
+          "sort_elements": [
+            
+          ],
+          "sort_nodeset_columns": null,
+          "filter": null,
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "custom_variables": null,
+          "use_case_tiles": null,
+          "custom_xml": null,
+          "persist_tile_on_forms": null,
+          "persistent_case_tile_from_module": null,
+          "pull_down_tile": null,
+          "print_template": {
+            
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_action": null,
+          "lookup_name": null,
+          "lookup_image": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_display_results": false,
+          "lookup_field_header": {
+            
+          },
+          "lookup_field_template": null
+        },
+        "doc_type": "DetailPair"
+      },
+      "product_details": {
+        "short": {
+          "columns": [
+            {
+              "format": "plain",
+              "header": {
+                "en": "Product"
+              },
+              "field": "name",
+              "model": "product",
+              "useXpathExpression": false,
+              "enum": [
+                
+              ],
+              "graph_configuration": {
+                "config": {
+                  
+                },
+                "locale_specific_config": {
+                  
+                },
+                "annotations": [
+                  
+                ],
+                "graph_type": null,
+                "series": [
+                  
+                ],
+                "doc_type": "GraphConfiguration"
+              },
+              "case_tile_field": null,
+              "late_flag": 30,
+              "advanced": "",
+              "filter_xpath": "",
+              "time_ago_interval": 365.25,
+              "doc_type": "DetailColumn"
+            }
+          ],
+          "display": "short",
+          "tabs": [
+            
+          ],
+          "sort_elements": [
+            
+          ],
+          "sort_nodeset_columns": null,
+          "filter": null,
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "custom_variables": null,
+          "use_case_tiles": null,
+          "custom_xml": null,
+          "persist_tile_on_forms": null,
+          "persistent_case_tile_from_module": null,
+          "pull_down_tile": null,
+          "print_template": {
+            
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_action": null,
+          "lookup_name": null,
+          "lookup_image": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_display_results": false,
+          "lookup_field_header": {
+            
+          },
+          "lookup_field_template": null
+        },
+        "long": {
+          "display": "long",
+          "columns": [
+            
+          ],
+          "tabs": [
+            
+          ],
+          "sort_elements": [
+            
+          ],
+          "sort_nodeset_columns": null,
+          "filter": null,
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "custom_variables": null,
+          "use_case_tiles": null,
+          "custom_xml": null,
+          "persist_tile_on_forms": null,
+          "persistent_case_tile_from_module": null,
+          "pull_down_tile": null,
+          "print_template": {
+            
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_action": null,
+          "lookup_name": null,
+          "lookup_image": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_display_results": false,
+          "lookup_field_header": {
+            
+          },
+          "lookup_field_template": null
+        },
+        "doc_type": "DetailPair"
+      },
+      "module_type": "advanced",
+      "case_list": {
+        "label": {
+          
+        },
+        "show": false,
+        "doc_type": "CaseList",
+        "media_image": {
+          "en": ""
+        },
+        "media_audio": {
+          "en": ""
+        },
+        "custom_icons": [
+          
+        ],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "has_schedule": null,
+      "schedule_phases": [
+        
+      ],
+      "search_config": {
+        "command_label": {
+          "en": "Search All Cases"
+        },
+        "properties": [
+          
+        ],
+        "relevant": "count(instance('casedb')\/casedb\/case[@case_id=instance('commcaresession')\/session\/data\/case_id]) = 0",
+        "search_button_display_condition": null,
+        "include_closed": false,
+        "default_properties": [
+          
+        ],
+        "blacklisted_owner_ids_expression": null,
+        "doc_type": "CaseSearch"
+      },
+      "doc_type": "AdvancedModule",
+      "name_enum": [
+        
+      ],
+      "unique_id": "af697d1ac8024a14b3e36e3e5a083314",
+      "case_list_form": {
+        "form_id": null,
+        "label": {
+          "en": ""
+        },
+        "post_form_workflow": "default",
+        "doc_type": "CaseListForm",
+        "media_image": {
+          "en": ""
+        },
+        "media_audio": {
+          "en": ""
+        },
+        "custom_icons": [
+          
+        ],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "module_filter": "",
+      "put_in_root": false,
+      "root_module_id": "f9d03f33cab6489da1bd4912edfdcba8",
+      "fixture_select": {
+        "active": false,
+        "fixture_type": null,
+        "display_column": null,
+        "localize": false,
+        "variable_column": null,
+        "xpath": "",
+        "doc_type": "FixtureSelect"
+      },
+      "auto_select_case": false,
+      "is_training_module": false,
+      "media_image": {
+        "en": ""
+      },
+      "media_audio": {
+        "en": ""
+      },
+      "custom_icons": [
+        
+      ],
+      "use_default_image_for_all": false,
+      "use_default_audio_for_all": false,
+      "comment": ""
+    },
+    {
+      "name": {
+        "en": "Adolescent Girls"
+      },
+      "forms": [
+        {
+          "name": {
+            "en": "Followup"
+          },
+          "form_type": "module_form",
+          "form_filter": null,
+          "requires": "case",
+          "actions": {
+            "open_case": {
+              "name_path": null,
+              "external_id": null,
+              "doc_type": "OpenCaseAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "update_case": {
+              "condition": {
+                "type": "always",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              },
+              "update": {
+                
+              },
+              "doc_type": "UpdateCaseAction"
+            },
+            "close_case": {
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "FormAction"
+            },
+            "open_referral": {
+              "name_path": null,
+              "doc_type": "OpenReferralAction",
+              "followup_date": null,
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "update_referral": {
+              "followup_date": null,
+              "doc_type": "UpdateReferralAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "close_referral": {
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              },
+              "doc_type": "FormAction"
+            },
+            "case_preload": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "referral_preload": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "load_from_form": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "usercase_update": {
+              "update": {
+                
+              },
+              "doc_type": "UpdateCaseAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "usercase_preload": {
+              "preload": {
+                
+              },
+              "doc_type": "PreloadAction",
+              "condition": {
+                "type": "never",
+                "question": null,
+                "answer": null,
+                "operator": "=",
+                "doc_type": "FormActionCondition"
+              }
+            },
+            "subcases": [
+              
+            ],
+            "doc_type": "FormActions"
+          },
+          "doc_type": "Form",
+          "name_enum": [
+            
+          ],
+          "unique_id": "b7ec2ebbb8044a6b90900366de7b2a3b",
+          "show_count": false,
+          "xmlns": "http:\/\/openrosa.org\/formdesigner\/E29BC2A0-E505-46F9-8D6D-94B720BAE020",
+          "version": null,
+          "post_form_workflow": "default",
+          "post_form_workflow_fallback": null,
+          "auto_gps_capture": false,
+          "no_vellum": false,
+          "form_links": [
+            
+          ],
+          "schedule_form_id": null,
+          "custom_assertions": [
+            
+          ],
+          "custom_instances": [
+            
+          ],
+          "case_references_data": {
+            "load": {
+              
+            },
+            "save": {
+              
+            },
+            "doc_type": "CaseReferences"
+          },
+          "is_release_notes_form": false,
+          "enable_release_notes": false,
+          "comment": "",
+          "media_image": {
+            
+          },
+          "media_audio": {
+            
+          },
+          "custom_icons": [
+            
+          ],
+          "use_default_image_for_all": false,
+          "use_default_audio_for_all": false
+        }
+      ],
+      "case_type": "ag_care",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "field": "name",
+              "model": "case",
+              "hasAutocomplete": true,
+              "useXpathExpression": false,
+              "enum": [
+                
+              ],
+              "graph_configuration": {
+                "config": {
+                  
+                },
+                "locale_specific_config": {
+                  
+                },
+                "annotations": [
+                  
+                ],
+                "graph_type": null,
+                "series": [
+                  
+                ],
+                "doc_type": "GraphConfiguration"
+              },
+              "case_tile_field": null,
+              "late_flag": 30,
+              "advanced": "",
+              "filter_xpath": "",
+              "time_ago_interval": 365.25,
+              "doc_type": "DetailColumn"
+            }
+          ],
+          "display": "short",
+          "tabs": [
+            
+          ],
+          "sort_elements": [
+            
+          ],
+          "sort_nodeset_columns": null,
+          "filter": null,
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "custom_variables": null,
+          "use_case_tiles": null,
+          "custom_xml": null,
+          "persist_tile_on_forms": null,
+          "persistent_case_tile_from_module": null,
+          "pull_down_tile": null,
+          "print_template": {
+            
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_action": null,
+          "lookup_name": null,
+          "lookup_image": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_display_results": false,
+          "lookup_field_header": {
+            
+          },
+          "lookup_field_template": null
+        },
+        "long": {
+          "columns": [
+            {
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "field": "name",
+              "model": "case",
+              "hasAutocomplete": true,
+              "useXpathExpression": false,
+              "enum": [
+                
+              ],
+              "graph_configuration": {
+                "config": {
+                  
+                },
+                "locale_specific_config": {
+                  
+                },
+                "annotations": [
+                  
+                ],
+                "graph_type": null,
+                "series": [
+                  
+                ],
+                "doc_type": "GraphConfiguration"
+              },
+              "case_tile_field": null,
+              "late_flag": 30,
+              "advanced": "",
+              "filter_xpath": "",
+              "time_ago_interval": 365.25,
+              "doc_type": "DetailColumn"
+            }
+          ],
+          "display": "long",
+          "tabs": [
+            
+          ],
+          "sort_elements": [
+            
+          ],
+          "sort_nodeset_columns": null,
+          "filter": null,
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "custom_variables": null,
+          "use_case_tiles": null,
+          "custom_xml": null,
+          "persist_tile_on_forms": null,
+          "persistent_case_tile_from_module": null,
+          "pull_down_tile": null,
+          "print_template": {
+            
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_action": null,
+          "lookup_name": null,
+          "lookup_image": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_display_results": false,
+          "lookup_field_header": {
+            
+          },
+          "lookup_field_template": null
+        },
+        "doc_type": "DetailPair"
+      },
+      "module_type": "basic",
+      "ref_details": {
+        "short": {
+          "display": "short",
+          "columns": [
+            
+          ],
+          "tabs": [
+            
+          ],
+          "sort_elements": [
+            
+          ],
+          "sort_nodeset_columns": null,
+          "filter": null,
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "custom_variables": null,
+          "use_case_tiles": null,
+          "custom_xml": null,
+          "persist_tile_on_forms": null,
+          "persistent_case_tile_from_module": null,
+          "pull_down_tile": null,
+          "print_template": {
+            
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_action": null,
+          "lookup_name": null,
+          "lookup_image": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_display_results": false,
+          "lookup_field_header": {
+            
+          },
+          "lookup_field_template": null
+        },
+        "long": {
+          "display": "long",
+          "columns": [
+            
+          ],
+          "tabs": [
+            
+          ],
+          "sort_elements": [
+            
+          ],
+          "sort_nodeset_columns": null,
+          "filter": null,
+          "persist_case_context": null,
+          "persistent_case_context_xml": "case_name",
+          "custom_variables": null,
+          "use_case_tiles": null,
+          "custom_xml": null,
+          "persist_tile_on_forms": null,
+          "persistent_case_tile_from_module": null,
+          "pull_down_tile": null,
+          "print_template": {
+            
+          },
+          "doc_type": "Detail",
+          "lookup_enabled": false,
+          "lookup_autolaunch": false,
+          "lookup_action": null,
+          "lookup_name": null,
+          "lookup_image": null,
+          "lookup_extras": [
+            
+          ],
+          "lookup_responses": [
+            
+          ],
+          "lookup_display_results": false,
+          "lookup_field_header": {
+            
+          },
+          "lookup_field_template": null
+        },
+        "doc_type": "DetailPair"
+      },
+      "case_list": {
+        "label": {
+          
+        },
+        "show": false,
+        "doc_type": "CaseList",
+        "media_image": {
+          "en": ""
+        },
+        "media_audio": {
+          "en": ""
+        },
+        "custom_icons": [
+          
+        ],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "referral_list": {
+        "label": {
+          
+        },
+        "show": false,
+        "doc_type": "CaseList",
+        "media_image": {
+          
+        },
+        "media_audio": {
+          
+        },
+        "custom_icons": [
+          
+        ],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "task_list": {
+        "label": {
+          
+        },
+        "show": false,
+        "doc_type": "CaseList",
+        "media_image": {
+          
+        },
+        "media_audio": {
+          
+        },
+        "custom_icons": [
+          
+        ],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "parent_select": {
+        "active": false,
+        "relationship": "parent",
+        "module_id": null,
+        "doc_type": "ParentSelect"
+      },
+      "search_config": {
+        "command_label": {
+          "en": "Search All Cases"
+        },
+        "properties": [
+          
+        ],
+        "relevant": "count(instance('casedb')\/casedb\/case[@case_id=instance('commcaresession')\/session\/data\/case_id]) = 0",
+        "search_button_display_condition": null,
+        "include_closed": false,
+        "default_properties": [
+          
+        ],
+        "blacklisted_owner_ids_expression": null,
+        "doc_type": "CaseSearch"
+      },
+      "display_style": "list",
+      "doc_type": "Module",
+      "name_enum": [
+        
+      ],
+      "unique_id": "b8d781958f41431d945c26bdf894ace6",
+      "case_list_form": {
+        "form_id": "",
+        "label": {
+          "en": ""
+        },
+        "post_form_workflow": "default",
+        "doc_type": "CaseListForm",
+        "media_image": {
+          "en": ""
+        },
+        "media_audio": {
+          "en": ""
+        },
+        "custom_icons": [
+          
+        ],
+        "use_default_image_for_all": false,
+        "use_default_audio_for_all": false
+      },
+      "module_filter": "",
+      "put_in_root": false,
+      "root_module_id": null,
+      "fixture_select": {
+        "active": false,
+        "fixture_type": null,
+        "display_column": null,
+        "localize": false,
+        "variable_column": null,
+        "xpath": "",
+        "doc_type": "FixtureSelect"
+      },
+      "auto_select_case": false,
+      "is_training_module": false,
+      "media_image": {
+        "en": ""
+      },
+      "media_audio": {
+        "en": ""
+      },
+      "custom_icons": [
+        
+      ],
+      "use_default_image_for_all": false,
+      "use_default_audio_for_all": false,
+      "comment": ""
+    }
+  ],
+  "name": "ICDS-394 minimal",
+  "langs": [
+    "en"
+  ],
+  "date_created": "2019-08-14T12:55:00.684337Z",
+  "profile": {
+    
+  },
+  "use_custom_suite": false,
+  "custom_base_url": null,
+  "cloudcare_enabled": true,
+  "translation_strategy": "select-known",
+  "auto_gps_capture": false,
+  "created_from_template": null,
+  "use_grid_menus": false,
+  "grid_form_menus": "none",
+  "add_ons": {
+    "advanced_itemsets": false,
+    "calc_xpaths": false,
+    "case_detail_overwrite": false,
+    "case_list_menu_item": false,
+    "conditional_enum": false,
+    "conditional_form_actions": false,
+    "display_conditions": false,
+    "enum_image": false,
+    "menu_mode": false,
+    "register_from_case_list": false,
+    "subcases": false,
+    "empty_case_lists": false
+  },
+  "smart_lang_display": null,
+  "doc_type": "Application",
+  "recipients": "",
+  "platform": "nokia\/s40",
+  "text_input": "roman",
+  "built_with": {
+    "signed": true,
+    "datetime": null,
+    "doc_type": "BuildRecord",
+    "version": null,
+    "build_number": null,
+    "latest": null
+  },
+  "build_signed": true,
+  "built_on": null,
+  "build_comment": null,
+  "comment_from": null,
+  "build_broken": false,
+  "is_auto_generated": false,
+  "build_broken_reason": null,
+  "is_released": false,
+  "admin_password": null,
+  "admin_password_charset": "n",
+  "secure_submissions": true,
+  "amplifies_workers": "not_set",
+  "amplifies_project": "not_set",
+  "minimum_use_threshold": "15",
+  "experienced_threshold": "3",
+  "cached_properties": {
+    
+  },
+  "description": null,
+  "deployment_date": null,
+  "phone_model": null,
+  "user_type": null,
+  "attribution_notes": null,
+  "case_sharing": false,
+  "vellum_case_management": true,
+  "application_version": "2.0",
+  "last_modified": "2019-08-14T13:19:07.081816Z",
+  "build_profiles": {
+    
+  },
+  "practice_mobile_worker_id": null,
+  "use_j2me_endpoint": false,
+  "target_commcare_flavor": "none",
+  "has_submissions": false,
+  "linked_whitelist": [
+    
+  ],
+  "mobile_ucr_restore_version": "1.0",
+  "location_fixture_restore": "project_default",
+  "copy_history": [
+    
+  ],
+  "comment": "Problematic form is m1-f2.",
+  "translations": {
+    
+  },
+  "multimedia_map": {
+    
+  },
+  "logo_refs": {
+    
+  },
+  "archived_media": {
+    
+  },
+  "build_spec": {
+    "version": "2.43.1",
+    "build_number": null,
+    "latest": true,
+    "doc_type": "BuildSpec"
+  },
+  "_attachments": {
+    "5ed6950f3452453ca4163e3ce3f9120e.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Untitled Form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/5ed6950f3452453ca4163e3ce3f9120e\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "4537ada7f7d544e69e28bdd98eb95c90.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Untitled Form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/4537ada7f7d544e69e28bdd98eb95c90\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "f6991ce411624b7b86c5ea22619341b4.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Referral Management<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/e6e56ef2d9b34c96adeefa40f05501af\" uiVersion=\"1\" version=\"1\" name=\"Referral Management\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "52a8369cb9354e6f9b97640542db081b.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Change Village\/AWC for this household<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/8FA04520-A3CA-4F09-9B0E-92B5DB8B2AE9\" uiVersion=\"1\" version=\"1\" name=\"Change Village\/AWC for this household\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "27e7905b0dca4a0fb0cf530c7909be52.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Untitled Form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/27e7905b0dca4a0fb0cf530c7909be52\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "fbf445747f0b463ba73b11d631736b5b.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Remove Household<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/3EC7B47B-72BD-4F0B-99A5-70E3D77CF483\" uiVersion=\"1\" version=\"1\" name=\"Remove Household\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "fc94615349254a1385cbd988e0e44f02.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Followup<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/61C9F8FF-0D19-46B6-AEC1-5225295B9BD5\" uiVersion=\"1\" version=\"1\" name=\"Followup\">\n\t\t\t\t\t<something \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "6dfa180ff1ab4c4da46f8c00881c4ab8.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Register<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/33D9A37F-CDC6-4B67-8CC5-611E78547800\" uiVersion=\"1\" version=\"1\" name=\"Register\">\n\t\t\t\t\t<something \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "7e5f4fcd52c0441aab2ac9367fc5a8d0.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Migration<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/e0d28adf9694444ca023bf9770111939\" uiVersion=\"1\" version=\"1\" name=\"Migration\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "ea3a2b55f42c4f5a9165dc75115f1a78.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Remove Member<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/6190a886981c41f9b6015b5d7c542535\" uiVersion=\"1\" version=\"1\" name=\"Remove Member\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "3b6f0104caee47039ed2bdc010cf0109.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Register<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/C1B30E1E-DE12-44B1-935E-DF8679136CFD\" uiVersion=\"1\" version=\"1\" name=\"Register\">\n\t\t\t\t\t<something \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "df3a3def38714a8d9dd5d793fee8e76d.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Untitled Form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/df3a3def38714a8d9dd5d793fee8e76d\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "85fbb4bbb8bf4ba89180c3a8a2bc8f81.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Untitled Form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/85fbb4bbb8bf4ba89180c3a8a2bc8f81\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "3a2857ca262d49d489d9bd034688a825.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Edit Member Info<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/3a2857ca262d49d489d9bd034688a825\" uiVersion=\"1\" version=\"1\" name=\"Edit Member Info\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "933dc840d4d14647969710dc689ee00d.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Add Pregnancy<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/123901a5e7f7472e8d7d445eed203df3\" uiVersion=\"1\" version=\"1\" name=\"Add Pregnancy\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "74e89683004a47deb86b3785c726e9aa.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Untitled Form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/74e89683004a47deb86b3785c726e9aa\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "cd4b52fd54824163996571880b2f198f.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>MTP\/Abortion<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/2726da6f98204d808f585648022febaf\" uiVersion=\"1\" version=\"1\" name=\"MTP\/Abortion\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "a4adfbe2475f44058b5f154f0d99f658.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Availing ICDS Services<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/8390eca48d9d499b8c88f72ad6a4d720\" uiVersion=\"1\" version=\"1\" name=\"Availing ICDS Services\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "d4b8496ffc694784aa94184eabfb0100.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Untitled Form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/d4b8496ffc694784aa94184eabfb0100\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "41d4847361b8481f953d25932b7f7e84.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Untitled Form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/41d4847361b8481f953d25932b7f7e84\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "d9718148558a4320aec4ae1b8979e6b6.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Untitled Form<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/d9718148558a4320aec4ae1b8979e6b6\" uiVersion=\"1\" version=\"1\" name=\"Untitled Form\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "d0a162c25930466eb1df0431622bf91a.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Primary or Private School Details<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/0d336b05c14347558d089a6a611b2ba0\" uiVersion=\"1\" version=\"1\" name=\"Primary or Private School Details\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "e7783c44e34d4cad84a6526ecffcccdb.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Edit Household<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/AB82ED08-2AD9-4F44-9591-A98FF91C0677\" uiVersion=\"1\" version=\"1\" name=\"Edit Household\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "436e4638e6e3409582dcb5fbb02b3487.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Edit Member Info<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/1E89EFAC-59F5-4CBF-8611-C946C3898BA3\" uiVersion=\"1\" version=\"1\" name=\"Edit Member Info\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "4478c63e821d4ab4a3f744a5cbb837eb.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Possible Pregnancy<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/d849416ffa584ddfb4466f4a56877172\" uiVersion=\"1\" version=\"1\" name=\"Possible Pregnancy\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "0a3e541b5cff4e879afc82af2603a803.xml": "<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Adolescent Girl Registration \/ De-registration<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/bd6d520e3ef74b63a20bfc293c1455d1\" uiVersion=\"1\" version=\"1\" name=\"Adolescent Girl Registration \/ De-registration\">\n\t\t\t\t\t<something\/>\n\t\t\t\t<\/data><\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\"\/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\"\/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>",
+    "b7ec2ebbb8044a6b90900366de7b2a3b.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http:\/\/www.w3.org\/1999\/xhtml\" xmlns:orx=\"http:\/\/openrosa.org\/jr\/xforms\" xmlns=\"http:\/\/www.w3.org\/2002\/xforms\" xmlns:xsd=\"http:\/\/www.w3.org\/2001\/XMLSchema\" xmlns:jr=\"http:\/\/openrosa.org\/javarosa\" xmlns:vellum=\"http:\/\/commcarehq.org\/xforms\/vellum\">\n\t<h:head>\n\t\t<h:title>Followup<\/h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http:\/\/dev.commcarehq.org\/jr\/xforms\" xmlns=\"http:\/\/openrosa.org\/formdesigner\/E29BC2A0-E505-46F9-8D6D-94B720BAE020\" uiVersion=\"1\" version=\"1\" name=\"Followup\">\n\t\t\t\t\t<something \/>\n\t\t\t\t<\/data>\n\t\t\t<\/instance>\n\t\t\t<bind vellum:nodeset=\"#form\/something\" nodeset=\"\/data\/something\" type=\"xsd:string\" \/>\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"something-label\">\n\t\t\t\t\t\t<value>something<\/value>\n\t\t\t\t\t<\/text>\n\t\t\t\t<\/translation>\n\t\t\t<\/itext>\n\t\t<\/model>\n\t<\/h:head>\n\t<h:body>\n\t\t<input vellum:ref=\"#form\/something\" ref=\"\/data\/something\">\n\t\t\t<label ref=\"jr:itext('something-label')\" \/>\n\t\t<\/input>\n\t<\/h:body>\n<\/h:html>"
+  }
+}
