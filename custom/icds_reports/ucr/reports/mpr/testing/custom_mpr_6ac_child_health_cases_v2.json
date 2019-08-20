@@ -12,11 +12,11 @@
     "reach-dashboard-qa",
     "reach-test",
     "icds-cas",
-    "icds-cas-sandbox",
+    "icds-cas-multi-master",
     "cas-lab"
   ],
   "server_environment": [
-    "india",
+    "staging",
     "icds"
   ],
   "report_id": "static-custom_mpr_6ac_child_health_cases_v2",
