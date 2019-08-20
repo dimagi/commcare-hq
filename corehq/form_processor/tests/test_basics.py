@@ -434,7 +434,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
         xform = submit_form_locally(
             xml, domain=DOMAIN
         ).xform
-        self.assertEqual(xform.commcare_version, '2.18.0')
+        self.assertEqual(xform.commcare_version.vstring, '2.18.0')
         self.assertEqual(xform.time_start, datetime(2010, 7, 22, 13, 54, 27, 971000))
         self.assertEqual(xform.time_end, datetime(2010, 7, 23, 13, 55, 11, 648000))
 
