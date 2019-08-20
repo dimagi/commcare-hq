@@ -279,7 +279,7 @@ def _get_report_module_context(app, module):
             'autoFilterChoices': auto_filter_choices,
             'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
         },
-        'uuids_by_instance_id': get_uuids_by_instance_id(app.domain),
+        'uuids_by_instance_id': get_uuids_by_instance_id(app),
     }
     return context
 
@@ -934,7 +934,6 @@ def edit_report_module(request, domain, app_id, module_unique_id):
         )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
-    get_uuids_by_instance_id.clear(domain)
     return json_response('success')
 
 

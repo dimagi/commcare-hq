@@ -1186,7 +1186,7 @@ class FormBase(DocumentSchema):
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
-        xform.add_missing_instances(app.domain)
+        xform.add_missing_instances(app)
 
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
