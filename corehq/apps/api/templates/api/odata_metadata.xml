@@ -4,11 +4,7 @@
         <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="CommCare">
             <EntityType Name="feed" >
                 <Key>
-                    {% if primary_feed %}
-                    <PropertyRef Name="caseid" />
-                    {% else %}
-                    <PropertyRef Name="number" />
-                    {% endif %}
+                    <PropertyRef Name="{{ primary_key }}" />
                 </Key>
                 {% for field in fields %}
                 <Property Name="{{ field.name }}" Type="{{ field.odata_type }}" />
