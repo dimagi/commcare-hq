@@ -15,7 +15,7 @@ from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
     PROBLEM_TEMPLATE_START,
 )
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
-from corehq.form_processor.parsers.ledgers.form import MissingFormXml
+from corehq.form_processor.exceptions import MissingFormXml
 from couchforms.models import XFormInstance, XFormOperation
 from dimagi.utils.chunked import chunked
 

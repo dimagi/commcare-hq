@@ -68,10 +68,6 @@
                     "index": "not_analyzed",
                     "type": "string"
                 },
-                "output_size": {
-                    "type": "object",
-                    "dynamic": false
-                },
                 "version": {
                     "type": "long"
                 },

@@ -28,7 +28,6 @@ kombu==4.2.2.post1
 billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
 mock==2.0.0
 Pillow~=6.0
-pip-tools>=4.0.0
 phonenumberslite~=8.8
 psycopg2~=2.7.7
 psycogreen~=1.0
@@ -50,6 +49,8 @@ simplejson~=3.11
 sh==1.09
 gevent==1.4.0
 greenlet==0.4.15
+gipc~=1.0.1  # for gevent+multiprocessing, used by Couch to SQL migration
+funcsigs>=1.0.2  # can be removed after Python 3 upgrade
 openpyxl~=2.6
 six~=1.11
 socketpool==0.5.3

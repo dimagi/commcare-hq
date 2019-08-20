@@ -255,10 +255,6 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 
-    @property
-    def show_index_in_fixture(self):
-        return toggles.INDEX_LOCATION_DATA.enabled(self.domain)
-
 
 class LocationTypesView(BaseDomainView):
     urlname = 'location_types'
@@ -293,7 +289,6 @@ class LocationTypesView(BaseDomainView):
             'administrative': loc_type.administrative,
             'shares_cases': loc_type.shares_cases,
             'view_descendants': loc_type.view_descendants,
-            'has_user': loc_type.has_user,
             'code': loc_type.code,
             'expand_from': loc_type.expand_from.pk if loc_type.expand_from else None,
             'expand_from_root': loc_type.expand_from_root,
@@ -313,7 +308,7 @@ class LocationTypesView(BaseDomainView):
                 soft_assert_type_text(pk)
             return isinstance(pk, six.string_types) and pk.startswith("fake-pk-")
 
-        def mk_loctype(name, parent_type, administrative, has_user,
+        def mk_loctype(name, parent_type, administrative,
                        shares_cases, view_descendants, pk, code, **kwargs):
             parent = sql_loc_types[parent_type] if parent_type else None
 
@@ -331,7 +326,6 @@ class LocationTypesView(BaseDomainView):
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
             loc_type.code = unicode_slug(code)
-            loc_type.has_user = has_user
             sql_loc_types[pk] = loc_type
             loc_type.save()
 
@@ -544,11 +538,6 @@ class BaseEditLocationView(BaseLocationView):
             is_new=self.creates_new_location,
         )
 
-    def _get_loc_types_with_users(self):
-        return list(LocationType.objects
-                    .filter(domain=self.domain, has_user=True)
-                    .values_list('name', flat=True))
-
     def form_valid(self):
         messages.success(self.request, _('Location saved!'))
         return HttpResponseRedirect(
@@ -590,7 +579,6 @@ class BaseEditLocationView(BaseLocationView):
                                         user=self.request.couch_user),
             'form_tab': self.form_tab,
             'creates_new_location': self.creates_new_location,
-            'loc_types_with_users': self._get_loc_types_with_users(),
         }
 
 

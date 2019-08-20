@@ -14,18 +14,6 @@
         This application is missing references, so this zip will be incomplete.
       {% endblocktrans %}
     </p>
-    {% if not is_multimedia_reference_checker %}
-      <p>
-        {% url "hqmedia_references" domain app.get_id as checker_url %}
-        {% blocktrans %}
-          Visit the <a href='{{ checker_url }}' target= '_blank'>
-          Multimedia Reference Checker
-          <i class='fa fa-external-link'></i>
-        </a>
-          to upload any missing multimedia.
-        {% endblocktrans %}
-      </p>
-    {% endif %}
   </div>
 {% endif %}
 

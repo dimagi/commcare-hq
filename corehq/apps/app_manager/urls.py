@@ -32,6 +32,7 @@ from corehq.apps.app_manager.views import (
 )
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
+from corehq.apps.linked_domain.views import pull_missing_multimedia
 from corehq.apps.translations.views import (
     download_bulk_ui_translations, upload_bulk_ui_translations,
     download_bulk_app_translations, upload_bulk_app_translations,
@@ -84,7 +85,6 @@ app_urls = [
 
 
 urlpatterns = [
-    url(r'^$', view_app, name='default_app'),
     url(r'^browse/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/source/$',
         get_xform_source, name='get_xform_source'),
     url(r'^casexml/(?P<form_unique_id>[\w-]+)/$', form_casexml, name='form_casexml'),
@@ -104,6 +104,8 @@ urlpatterns = [
         new_form, name='new_form'),
     url(r'^drop_user_case/(?P<app_id>[\w-]+)/$', drop_user_case, name='drop_user_case'),
     url(r'^pull_master/(?P<app_id>[\w-]+)/$', pull_master_app, name='pull_master_app'),
+    url(r'^pull_missing_multimedia/(?P<app_id>[\w-]+)/$', pull_missing_multimedia,
+        name='pull_missing_multimedia'),
     url(r'^linked_whitelist/(?P<app_id>[\w-]+)/$', update_linked_whitelist, name='update_linked_whitelist'),
 
     url(r'^delete_app/(?P<app_id>[\w-]+)/$', delete_app, name='delete_app'),

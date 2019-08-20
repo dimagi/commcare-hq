@@ -1,17 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from django.test import TestCase
 
 from corehq.apps.export.const import CASE_ID_TO_LINK, FORM_ID_TO_LINK
 from corehq.apps.export.models import (
     CaseExportInstance,
-    FormExportInstance,
     ExportColumn,
     ExportInstance,
     ExportItem,
+    FormExportInstance,
     PathNode,
-    RowNumberColumn,
     TableConfiguration,
 )
 
@@ -23,6 +21,7 @@ class TestODataWrap(TestCase):
             is_odata_config=True,
             tables=[
                 TableConfiguration(
+                    selected=True,
                     columns=[
                         ExportColumn(
                             label='.label',
@@ -47,6 +46,7 @@ class TestODataWrap(TestCase):
             is_odata_config=True,
             tables=[
                 TableConfiguration(
+                    selected=True,
                     columns=[
                         ExportColumn(
                             label='@label',
@@ -66,43 +66,12 @@ class TestODataWrap(TestCase):
         cleaned_export = ExportInstance.get(export_with_column_containing_at_sign.get_id)
         self.assertEqual(cleaned_export.tables[0].columns[0].label, 'label')
 
-    def test_row_number_column_is_removed(self):
-        export_with_row_number_column = ExportInstance(
-            is_odata_config=True,
-            tables=[
-                TableConfiguration(
-                    columns=[
-                        RowNumberColumn(
-                            label='row-number',
-                        ),
-                        ExportColumn(
-                            label='label',
-                            item=ExportItem(
-                                path=[
-                                    PathNode(name='val')
-                                ]
-                            ),
-                            selected=True,
-                        )
-                    ]
-                )
-            ]
-        )
-        export_with_row_number_column.save()
-        self.addCleanup(export_with_row_number_column.delete)
-        cleaned_export = ExportInstance.get(export_with_row_number_column.get_id)
-        tables = cleaned_export.tables
-        self.assertEqual(len(tables), 1)
-        columns = tables[0].columns
-        self.assertEqual(len(columns), 1)
-        self.assertFalse(isinstance(columns[0], RowNumberColumn))
-        self.assertEqual(columns[0].label, 'label')
-
     def test_caseid_column_label(self):
         export_with_modified_caseid_column = CaseExportInstance(
             is_odata_config=True,
             tables=[
                 TableConfiguration(
+                    selected=True,
                     columns=[
                         ExportColumn(
                             label='modified_case_id_column',
@@ -127,6 +96,7 @@ class TestODataWrap(TestCase):
             is_odata_config=True,
             tables=[
                 TableConfiguration(
+                    selected=True,
                     columns=[
                         ExportColumn(
                             label='modified_form_id_column',
@@ -153,6 +123,7 @@ class TestODataWrap(TestCase):
             is_odata_config=True,
             tables=[
                 TableConfiguration(
+                    selected=True,
                     columns=[
                         ExportColumn(
                             label='my_case_link',
@@ -178,6 +149,7 @@ class TestODataWrap(TestCase):
             is_odata_config=True,
             tables=[
                 TableConfiguration(
+                    selected=True,
                     columns=[
                         ExportColumn(
                             label='my_form_link',
