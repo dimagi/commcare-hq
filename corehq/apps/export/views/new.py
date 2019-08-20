@@ -142,6 +142,15 @@ class BaseExportView(BaseProjectDataView):
                 # default auto rebuild to False for enterprise clusters
                 # only do this on first save to prevent disabling on every edit
                 export.auto_rebuild_enabled = False
+
+        if export.is_odata_config:
+            for table_id, table in enumerate(export.tables):
+                for column in table.columns:
+                    if (column.label == 'formid' or column.label == 'caseid'
+                        or (column.label == 'number'
+                            and table_id > 0 and table.selected)):
+                        column.selected = True
+
         export.save()
         messages.success(
             request,
