@@ -51,7 +51,7 @@ def is_icds_dashboard_view(request):
 class ICDSAuditMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if is_icds_dashboard_view(request):
-            if toggles.LOAD_DASHBOARD_FROM_CITUS.enabled(request.couch_user.username):
+            if toggles.LOAD_DASHBOARD_FROM_CITUS.enabled_for_request(request):
                 force_citus_engine()
             ICDSAuditEntryRecord.create_entry(request)
             return None

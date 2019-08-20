@@ -1799,7 +1799,7 @@ LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
     'load_dashboard_from_citus',
     'Use CitusDB for loading ICDS Dashboard',
     TAG_CUSTOM,
-    [NAMESPACE_USER]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 PARALLEL_AGGREGATION = StaticToggle(
