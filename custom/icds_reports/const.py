@@ -5,7 +5,7 @@ import pytz
 from django.conf import settings
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
-
+AWW_APP_ID = '48cc1709b7f62ffea24cc6634a004745'
 
 INDIA_TIMEZONE = pytz.timezone('Asia/Kolkata')
 

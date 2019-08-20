@@ -67,7 +67,8 @@ from custom.icds_reports.const import (
     SYSTEM_USAGE_EXPORT,
     THREE_MONTHS,
     INDIA_TIMEZONE,
-    THR_REPORT_EXPORT
+    THR_REPORT_EXPORT,
+    AWW_APP_ID
 )
 from custom.icds_reports.experiment import DashboardQueryExperiment
 from custom.icds_reports.models import (
@@ -1290,7 +1291,6 @@ def last_month_form_submissions_for_aww_app():
     This is used by GS team in an internal monthly report out.
     Original request https://dimagi-dev.atlassian.net/browse/ICDS-676
     """
-    AWW_APP_ID = '48cc1709b7f62ffea24cc6634a004745'
     app = get_app('icds-cas', AWW_APP_ID)
     celery_task_logger.info("Started calculating last month form counts")
     result = xform_counts_for_app_in_last_month(app)
