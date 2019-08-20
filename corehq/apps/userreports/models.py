@@ -1013,6 +1013,7 @@ class AsyncIndicator(models.Model):
     These indicators will be picked up by a queue and placed into celery to be
     saved. Once saved to the data sources, this record will be deleted
     """
+    id = models.BigAutoField(primary_key=True)
     doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
     doc_type = models.CharField(max_length=126, null=False)
     domain = models.CharField(max_length=126, null=False, db_index=True)
