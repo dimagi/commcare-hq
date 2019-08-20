@@ -337,6 +337,23 @@ hqDefine('export/js/models', [
     };
 
     /**
+     * isReservedOdataColumn
+     *
+     * determines if a column is reserved for odata exports and cannot be deleted
+     *
+     * returns {Boolean}
+     */
+    ExportInstance.prototype.isReservedOdataColumn = function (column, tableId) {
+        if (!this.is_odata_config()) {
+            return false;
+        }
+        if (tableId === 0) {
+            return column.formatProperty() === 'formid' || column.formatProperty() === 'caseid';
+        }
+        return column.formatProperty() === 'number';
+    };
+
+    /**
      * save
      *
      * Saves an ExportInstance by serializing it and POSTing it

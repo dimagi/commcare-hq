@@ -50,7 +50,6 @@ class BaseExportView(BaseProjectDataView):
     template_name = 'export/customize_export_new.html'
     export_type = None
     is_async = True
-    allow_deid = True
 
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
@@ -110,7 +109,7 @@ class BaseExportView(BaseProjectDataView):
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
-            'allow_deid': self.allow_deid and has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
+            'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
@@ -143,6 +142,15 @@ class BaseExportView(BaseProjectDataView):
                 # default auto rebuild to False for enterprise clusters
                 # only do this on first save to prevent disabling on every edit
                 export.auto_rebuild_enabled = False
+
+        if export.is_odata_config:
+            for table_id, table in enumerate(export.tables):
+                for column in table.columns:
+                    if (column.label == 'formid' or column.label == 'caseid'
+                        or (column.label == 'number'
+                            and table_id > 0 and table.selected)):
+                        column.selected = True
+
         export.save()
         messages.success(
             request,
@@ -270,7 +278,6 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
 class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_odata_case_feed'
     page_title = ugettext_lazy("Create OData Case Feed")
-    allow_deid = False
 
     def create_new_export_instance(self, schema):
         export_instance = super(CreateODataCaseFeedView, self).create_new_export_instance(schema)
@@ -282,7 +289,6 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
 class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_odata_form_feed'
     page_title = ugettext_lazy("Create OData Form Feed")
-    allow_deid = False
 
     def create_new_export_instance(self, schema):
         export_instance = super(CreateODataFormFeedView, self).create_new_export_instance(schema)
