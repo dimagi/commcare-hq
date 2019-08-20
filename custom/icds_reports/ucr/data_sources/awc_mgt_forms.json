@@ -15,7 +15,7 @@
     "icds-test",
     "icds-cas",
     "cas-lab",
-    "icds-cas-sandbox"
+    "icds-cas-multi-master"
   ],
   "server_environment": [
     "india",

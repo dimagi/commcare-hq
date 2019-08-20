@@ -1,7 +1,7 @@
 {
   "domains": [
     "icds-cas",
-    "icds-cas-sandbox",
+    "icds-cas-multi-master",
     "cas-lab",
     "icds-dashboard-qa",
     "laurence-project-1",

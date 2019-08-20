@@ -14,7 +14,7 @@
     "icds-test",
     "icds-sql",
     "icds-cas",
-    "icds-cas-sandbox",
+    "icds-cas-multi-master",
     "cas-lab"
   ],
   "server_environment": [

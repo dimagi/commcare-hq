@@ -17,7 +17,7 @@
     "reach-test",
     "icds-test",
     "icds-cas",
-    "icds-cas-sandbox",
+    "icds-cas-multi-master",
     "cas-lab"
   ],
   "report_id": "static-it_issues_activity",
