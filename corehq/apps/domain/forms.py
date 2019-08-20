@@ -2385,6 +2385,13 @@ class ManageReleasesByLocationForm(forms.Form):
     app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=False)
     location_id = forms.CharField(label=ugettext_lazy("Location"), widget=Select(choices=[]), required=False)
     version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
+    status = forms.ChoiceField(label=ugettext_lazy("Status"),
+                               choices=(
+                                   ('', ugettext_lazy('Select Status')),
+                                   ('active', ugettext_lazy('Active')),
+                                   ('inactive', ugettext_lazy('Inactive'))),
+                               required=False,
+                               help_text=ugettext_lazy("Applicable for search only"))
 
     def __init__(self, request, domain, *args, **kwargs):
         self.domain = domain
@@ -2392,6 +2399,8 @@ class ManageReleasesByLocationForm(forms.Form):
         self.fields['app_id'].choices = self.app_id_choices()
         if request.GET.get('app_id'):
             self.fields['app_id'].initial = request.GET.get('app_id')
+        if request.GET.get('status'):
+            self.fields['status'].initial = request.GET.get('status')
         self.helper = HQFormHelper()
         self.helper.form_tag = False
 
@@ -2399,6 +2408,7 @@ class ManageReleasesByLocationForm(forms.Form):
             crispy.Field('app_id', id='app-id-search-select', css_class="ko-select2"),
             crispy.Field('location_id', id='location_search_select'),
             crispy.Field('version', id='version-input'),
+            crispy.Field('status', id='status-input'),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
@@ -2467,6 +2477,13 @@ class ManageReleasesByAppProfileForm(forms.Form):
     version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
     build_profile_id = forms.CharField(label=ugettext_lazy('Application Profile'),
                                        required=False, widget=Select(choices=[]))
+    status = forms.ChoiceField(label=ugettext_lazy("Status"),
+                               choices=(
+                                   ('', ugettext_lazy('Select Status')),
+                                   ('active', ugettext_lazy('Active')),
+                                   ('inactive', ugettext_lazy('Inactive'))),
+                               required=False,
+                               help_text=ugettext_lazy("Applicable for search only"))
 
     def __init__(self, request, domain, *args, **kwargs):
         self.domain = domain
@@ -2474,6 +2491,8 @@ class ManageReleasesByAppProfileForm(forms.Form):
         self.fields['app_id'].choices = self.app_id_choices()
         if request.GET.get('app_id'):
             self.fields['app_id'].initial = request.GET.get('app_id')
+        if request.GET.get('status'):
+            self.fields['status'].initial = request.GET.get('status')
         self.helper = HQFormHelper()
         self.helper.form_tag = False
 
@@ -2481,6 +2500,7 @@ class ManageReleasesByAppProfileForm(forms.Form):
             crispy.Field('app_id', id='app-id-search-select', css_class="ko-select2"),
             crispy.Field('version', id='version-input'),
             crispy.Field('build_profile_id', id='app-profile-id-input'),
+            crispy.Field('status', id='status-input'),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),

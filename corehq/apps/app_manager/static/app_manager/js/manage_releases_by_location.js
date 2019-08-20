@@ -95,8 +95,9 @@ hqDefine('app_manager/js/manage_releases_by_location', [
                 var appId = $("#app-id-search-select").val();
                 var locationId = $("#location_search_select").val();
                 var version = $("#version-input").val() || '';
+                var status = $("#status-input").val() || '';
                 window.location.search = ("location_id=" + locationId + "&app_id=" + appId + "&version=" +
-                    version);
+                    version + "&status=" + status);
             };
             self.clear = function () {
                 window.location.search = "";
