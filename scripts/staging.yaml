@@ -50,7 +50,7 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging
-  - fr/case-templates      # FR May 15
+  #- fr/case-templates      # FR May 15
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
   - mk/skip-files-build # MK July 6
   - nh/icds/skip_trans+mk/use-ids-to-validate-translations  # Norman Aug 2
