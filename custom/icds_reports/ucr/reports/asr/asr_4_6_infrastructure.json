@@ -13,10 +13,10 @@
     "reach-test",
     "icds-cas",
     "cas-lab",
-    "icds-cas-sandbox"
+    "icds-cas-multi-master"
   ],
   "server_environment": [
-    "india",
+    "staging",
     "icds"
   ],
   "report_id": "static-asr_4_6_infrastructure",

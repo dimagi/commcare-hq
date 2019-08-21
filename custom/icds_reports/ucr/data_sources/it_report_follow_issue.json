@@ -13,11 +13,11 @@
     "reach-test",
     "icds-test",
     "icds-cas",
-    "icds-cas-sandbox",
+    "icds-cas-multi-master",
     "cas-lab"
   ],
   "server_environment": [
-    "india",
+    "staging",
     "icds"
   ],
   "mirrored_engine_ids": [
@@ -26,7 +26,7 @@
       "engine_ids": ["icds-ucr-citus"]
     },
     {
-      "server_environment": "india",
+      "server_environment": "staging",
       "engine_ids": ["icds-ucr-citus"]
     }
   ],
