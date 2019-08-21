@@ -1,21 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import uuid
 from datetime import datetime, timedelta
+
 from django.test import TestCase
 from django.test.utils import override_settings
-from dimagi.utils.parsing import json_format_datetime
+
 from casexml.apps.case.mock import CaseFactory
+from dimagi.utils.parsing import json_format_datetime
+
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import (
-    get_single_balance_block, get_single_transfer_block,
+    get_single_balance_block,
+    get_single_transfer_block,
 )
-from corehq.apps.reports.analytics.dbaccessors import get_aggregated_ledger_values
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.reports.analytics.couchaccessors import get_ledger_values_for_case_as_of
+from corehq.apps.reports.analytics.couchaccessors import (
+    get_ledger_values_for_case_as_of,
+)
+from corehq.apps.reports.analytics.dbaccessors import (
+    get_aggregated_ledger_values,
+)
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    use_sql_backend,
+)
 from corehq.form_processor.utils import get_simple_form_xml
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 
 
 class TestSupplyAccessors(TestCase):

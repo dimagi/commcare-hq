@@ -1,63 +1,64 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import pytz
-import uuid
-from mock import patch
+from __future__ import absolute_import, unicode_literals
 
+import uuid
 from datetime import datetime, timedelta
+
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 
+import pytz
+import six
+from elasticsearch.exceptions import ConnectionError
+from mock import patch
+
+from casexml.apps.case.const import CASE_ACTION_CREATE
+from casexml.apps.case.models import CommCareCase, CommCareCaseAction
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.parsing import string_to_utc_datetime
+from pillowtop.es_utils import initialize_index_and_mapping
+
+from corehq.apps.es.aggregations import MISSING_KEY
+from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
+from corehq.apps.reports.analytics.esaccessors import (
+    get_active_case_counts_by_owner,
+    get_all_user_ids_submitted,
+    get_case_counts_closed_by_user,
+    get_case_counts_opened_by_user,
+    get_case_types_for_domain_es,
+    get_completed_counts_by_user,
+    get_form_counts_by_user_xmlns,
+    get_form_duration_stats_by_user,
+    get_form_duration_stats_for_users,
+    get_form_ids_having_multimedia,
+    get_forms,
+    get_group_stubs,
+    get_last_form_submission_for_xmlns,
+    get_last_form_submissions_by_user,
+    get_paged_forms_by_type,
+    get_submission_counts_by_date,
+    get_submission_counts_by_user,
+    get_total_case_counts_by_owner,
+    get_user_stubs,
+    get_username_in_last_form_user_id_submitted,
+    guess_form_name_from_submissions_using_xmlns,
+    scroll_case_names,
+)
+from corehq.apps.users.models import CommCareUser
+from corehq.blobs.mixin import BlobMetaRef
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
+from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.utils import TestFormMetadata
+from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from dimagi.utils.dates import DateSpan
-from dimagi.utils.parsing import string_to_utc_datetime
-from elasticsearch.exceptions import ConnectionError
-
-from corehq.util.elastic import ensure_index_deleted
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.groups.models import Group
-from corehq.blobs.mixin import BlobMetaRef
-from corehq.form_processor.utils import TestFormMetadata
-from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from casexml.apps.case.const import CASE_ACTION_CREATE
-from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
-from corehq.pillows.case import transform_case_for_elasticsearch
-from corehq.apps.reports.analytics.esaccessors import (
-    get_submission_counts_by_user,
-    get_completed_counts_by_user,
-    get_submission_counts_by_date,
-    get_active_case_counts_by_owner,
-    get_total_case_counts_by_owner,
-    get_case_counts_closed_by_user,
-    get_case_counts_opened_by_user,
-    get_paged_forms_by_type,
-    get_last_form_submissions_by_user,
-    get_user_stubs,
-    get_group_stubs,
-    get_forms,
-    get_form_counts_by_user_xmlns,
-    get_form_duration_stats_by_user,
-    get_form_duration_stats_for_users,
-    get_last_form_submission_for_xmlns,
-    guess_form_name_from_submissions_using_xmlns,
-    get_all_user_ids_submitted,
-    get_username_in_last_form_user_id_submitted,
-    get_form_ids_having_multimedia,
-    scroll_case_names,
-    get_case_types_for_domain_es,
-)
-from corehq.apps.es.aggregations import MISSING_KEY
+from corehq.pillows.xform import transform_xform_for_elasticsearch
+from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
-from pillowtop.es_utils import initialize_index_and_mapping
-import six
 
 
 class BaseESAccessorsTest(TestCase):
