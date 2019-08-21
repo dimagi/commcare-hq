@@ -10,7 +10,7 @@ from django.utils.functional import cached_property
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
-from custom.intrahealth.filters import DateRangeFilter, YeksiNaaLocationFilter, ProgramFilter
+from custom.intrahealth.filters import DateRangeFilter, YeksiNaaLocationFilter, RecapPassageTwoProgramFilter
 from custom.intrahealth.reports.utils import YeksiNaaMonthYearMixin
 from custom.intrahealth.sqldata import RecapPassageTwoData, RecapPassageTwoTables
 from custom.intrahealth.reports.tableu_de_board_report_v2 import MultiReport
@@ -29,7 +29,7 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
 
     @property
     def fields(self):
-        return [DateRangeFilter, ProgramFilter, YeksiNaaLocationFilter]
+        return [DateRangeFilter, RecapPassageTwoProgramFilter, YeksiNaaLocationFilter]
 
     @cached_property
     def rendered_report_title(self):

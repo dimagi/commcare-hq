@@ -89,6 +89,8 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
         for product in products:
             headers.add_column(DataTablesColumn(product))
 
+        headers.add_column(DataTablesColumn('SYNTHESE'))
+
         return headers
 
     def get_report_context(self):
@@ -136,7 +138,8 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                             if product_for_location['product_id'] == product['product_id']:
                                 amt_delivered_convenience = product['amt_delivered_convenience']
                                 ideal_topup = product['ideal_topup']
-                                locations_with_products[location_name][r]['amt_delivered_convenience'] += amt_delivered_convenience
+                                locations_with_products[location_name][r][
+                                    'amt_delivered_convenience'] += amt_delivered_convenience
                                 locations_with_products[location_name][r]['ideal_topup'] += ideal_topup
                 else:
                     added_locations.append(location_id)
@@ -188,11 +191,33 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
 
             total_row = calculate_total_row(locations_with_products)
             quantities_to_return.append(total_row)
+            quantities_to_return = add_total_column(locations_with_products, quantities_to_return)
+
+            return quantities_to_return
+
+        def add_total_column(locations_with_products, quantities_to_return):
+            length = len(quantities_to_return)
+            for location, products in locations_with_products.items():
+                locations_amt_delivered_convenience = 0
+                locations_ideal_topup = 0
+                for product in products:
+                    locations_amt_delivered_convenience += product['amt_delivered_convenience']
+                    locations_ideal_topup += product['ideal_topup']
+                locations_percent = (locations_amt_delivered_convenience / float(locations_ideal_topup) * 100) \
+                    if locations_ideal_topup != 0 else 0
+                for r in range(0, length):
+                    current_location = quantities_to_return[r][0]
+                    if current_location == location:
+                        quantities_to_return[r].append({
+                                'html': '<b>{:.2f} %</b>'.format(locations_percent),
+                                'sort_key': locations_percent
+                            })
 
             return quantities_to_return
 
         def calculate_total_row(locations_with_products):
-            total_row_to_return = ['<b>NATIONAL</b>']
+            total_row_to_return = ['<b>SYNTHESE</b>']
+            locations_with_products['<b>SYNTHESE</b>'] = []
             data_for_total_row = []
 
             for location, products in locations_with_products.items():
@@ -201,7 +226,8 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                     for product_info in products_list:
                         amt_delivered_convenience = product_info['amt_delivered_convenience']
                         ideal_topup = product_info['ideal_topup']
-                        data_for_total_row.append([amt_delivered_convenience, ideal_topup])
+                        product_name = product_info['product_name']
+                        data_for_total_row.append([amt_delivered_convenience, ideal_topup, product_name])
                 else:
                     for r in range(0, len(products_list)):
                         product_info = products_list[r]
@@ -213,6 +239,12 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
             for data in data_for_total_row:
                 amt_delivered_convenience = data[0]
                 ideal_topup = data[1]
+                product_name = data[2]
+                locations_with_products['<b>SYNTHESE</b>'].append({
+                    'amt_delivered_convenience': amt_delivered_convenience,
+                    'ideal_topup': ideal_topup,
+                    'product_name': product_name,
+                })
                 percent = (amt_delivered_convenience / float(ideal_topup) * 100) \
                     if ideal_topup != 0 else 0
                 total_row_to_return.append({
@@ -231,43 +263,39 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
         chart = MultiBarChart(None, Axis('Location'), Axis('Percent', format='.2f'))
         chart.height = 400
         chart.marginBottom = 100
+        chart.forceY = [0, 100]
 
         def data_to_chart(quantities_list):
             quantities_to_return = []
-            products_data = []
-            added_products = []
+            locations_data = {}
+            added_locations = []
 
             for quantity in quantities_list:
-                sorted_quantity = sorted(quantity['products'], key=lambda x: x['product_name'])
-                for product in sorted_quantity:
-                    product_id = product['product_id']
-                    product_name = product['product_name']
+                location_name = quantity['location_name']
+                location_id = quantity['location_id']
+                for product in quantity['products']:
                     amt_delivered_convenience = product['amt_delivered_convenience']
                     ideal_topup = product['ideal_topup']
-                    if product_id not in added_products:
-                        added_products.append(product_id)
-                        product_dict = {
-                            'product_id': product_id,
-                            'product_name': product_name,
+                    if location_id not in added_locations:
+                        added_locations.append(location_id)
+                        locations_data[location_id] = {
+                            'location_name': location_name,
                             'amt_delivered_convenience': amt_delivered_convenience,
                             'ideal_topup': ideal_topup,
                         }
-                        products_data.append(product_dict)
                     else:
-                        for product_data in products_data:
-                            if product_data['product_id'] == product_id:
-                                product_data['amt_delivered_convenience'] += amt_delivered_convenience
-                                product_data['ideal_topup'] += ideal_topup
+                        locations_data[location_id]['amt_delivered_convenience'] += amt_delivered_convenience
+                        locations_data[location_id]['ideal_topup'] += ideal_topup
 
-            products = sorted(products_data, key=lambda x: x['product_name'])
-            for product in products:
-                product_name = product['product_name']
-                amt_delivered_convenience = product['amt_delivered_convenience']
-                ideal_topup = product['ideal_topup']
+            sorted_locations_data_values = sorted(locations_data.values(), key=lambda x: x['location_name'])
+            for location_info in sorted_locations_data_values:
+                location_name = location_info['location_name']
+                amt_delivered_convenience = location_info['amt_delivered_convenience']
+                ideal_topup = location_info['ideal_topup']
                 percent = (amt_delivered_convenience / float(ideal_topup) * 100) \
                     if ideal_topup != 0 else 0
                 quantities_to_return.append([
-                    product_name,
+                    location_name,
                     {
                         'html': '{:.2f} %'.format(percent),
                         'sort_key': percent
@@ -284,7 +312,7 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
 
             return [
                 {
-                    "key": 'Taux de Satisfaction des produits au niveau national',
+                    "key": 'Taux de Satisfaction des produits',
                     'values': com
                 },
             ]

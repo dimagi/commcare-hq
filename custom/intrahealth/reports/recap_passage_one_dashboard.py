@@ -10,7 +10,7 @@ from django.utils.functional import cached_property
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
-from custom.intrahealth.filters import DateRangeFilter, YeksiNaaLocationFilter, ProgramFilter
+from custom.intrahealth.filters import DateRangeFilter, YeksiNaaLocationFilter, RecapPassageOneProgramFilter
 from custom.intrahealth.sqldata import RecapPassageOneData
 from dimagi.utils.dates import force_to_date
 
@@ -25,7 +25,7 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
 
     @property
     def fields(self):
-        return [DateRangeFilter, ProgramFilter, YeksiNaaLocationFilter]
+        return [DateRangeFilter, RecapPassageOneProgramFilter, YeksiNaaLocationFilter]
 
     @cached_property
     def rendered_report_title(self):

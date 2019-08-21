@@ -4347,12 +4347,13 @@ class ConsommationPerProductData(SqlData):
             'region_id', 'region_name', 'district_id',
             'district_name', 'pps_id', 'pps_name',
             'product_id', 'product_name', 'program_id',
-            'actual_consumption'
+            'actual_consumption', 'real_date_precise'
         ]
 
     @property
     def columns(self):
         columns = [
+            DatabaseColumn('Date', SimpleColumn('real_date_precise')),
             DatabaseColumn('Region ID', SimpleColumn('region_id')),
             DatabaseColumn('Region Name', SimpleColumn('region_name')),
             DatabaseColumn('District ID', SimpleColumn('district_id')),
@@ -4404,7 +4405,7 @@ class ConsommationPerProductData(SqlData):
 
     @property
     def filters(self):
-        filters = []
+        filters = [BETWEEN('real_date_precise', 'startdate', 'enddate')]
         if self.config['product_product']:
             filters.append(EQ('product_id', 'product_product'))
         elif self.config['product_program']:
@@ -4718,7 +4719,7 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
         for product in pn:
             headers.add_column(DataTablesColumn(product))
         headers.add_column(DataTablesColumn('SYNTHESE'))
-
+        
         return headers
 
     @property
@@ -4900,8 +4901,7 @@ class ExpirationRatePerProductData2(LossRatePerProductData2):
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_expiration_rate_to_rows(loc_names, data)
         return sorted(rows, key=lambda x: x[0]['html'])
-
-
+      
 
 class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDataSource):
     slug = 'taux_de_satisfaction_report'

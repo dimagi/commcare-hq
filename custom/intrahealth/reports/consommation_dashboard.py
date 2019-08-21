@@ -3,6 +3,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import division
 
+import datetime
+
 from django.utils.functional import cached_property
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
@@ -10,8 +12,9 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
-from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter
+from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter, DateRangeFilter
 from custom.intrahealth.sqldata import ConsommationPerProductData
+from dimagi.utils.dates import force_to_date
 
 
 class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
@@ -28,7 +31,7 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
 
     @property
     def fields(self):
-        return [ProgramsAndProductsFilter, YeksiNaaLocationFilter]
+        return [DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter]
 
     @cached_property
     def rendered_report_title(self):
@@ -181,7 +184,7 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
             return consumptions_to_return
 
         def calculate_total_row(locations_with_products):
-            total_row_to_return = ['<b>NATIONAL</b>']
+            total_row_to_return = ['<b>SYNTHESE</b>']
             data_for_total_row = []
 
             for location, products in locations_with_products.items():
@@ -275,6 +278,16 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         config = dict(
             domain=self.domain,
         )
+        if self.request.GET.get('startdate'):
+            startdate = force_to_date(self.request.GET.get('startdate'))
+        else:
+            startdate = datetime.datetime.now()
+        if self.request.GET.get('enddate'):
+            enddate = force_to_date(self.request.GET.get('enddate'))
+        else:
+            enddate = datetime.datetime.now()
+        config['startdate'] = startdate
+        config['enddate'] = enddate
         config['product_program'] = self.request.GET.get('product_program')
         config['product_product'] = self.request.GET.get('product_product')
         config['selected_location'] = self.request.GET.get('location_id')
