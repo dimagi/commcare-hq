@@ -9,16 +9,16 @@ CREATE FUNCTION get_ledger_values_for_cases_2(
 ) RETURNS SETOF form_processor_ledgervalue AS $$
 DECLARE
     select_expr         TEXT := 'SELECT * FROM form_processor_ledgervalue WHERE case_id = ANY($1)';
-    section_filter TEXT := ' AND section_ids = ANY($2)';
-    entry_filter   TEXT := ' AND entry_ids = ANY($3)';
+    section_filter TEXT := ' AND section_id = ANY($2)';
+    entry_filter   TEXT := ' AND entry_id = ANY($3)';
     date_filter_start   TEXT := ' AND last_modified >= $4';
     date_filter_end     TEXT := ' AND last_modified <= $5';
 BEGIN
-    IF p_section_ids <> '' THEN
+    IF p_section_ids IS NOT NULL THEN
         select_expr := select_expr || section_filter;
     END IF;
 
-    IF p_entry_ids <> '' THEN
+    IF p_entry_ids IS NOT NULL THEN
         select_expr := select_expr || entry_filter;
     END IF;
 

@@ -1316,10 +1316,13 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_ledger_values_for_cases(case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
         assert isinstance(case_ids, list)
-        assert isinstance(section_ids, list)
-        assert isinstance(entry_ids, list)
         if not case_ids:
             return []
+
+        if section_ids:
+            assert isinstance(section_ids, list)
+        if entry_ids:
+            assert isinstance(entry_ids, list)
 
         return list(LedgerValue.objects.raw(
             'SELECT * FROM get_ledger_values_for_cases_2(%s, %s, %s, %s, %s)',

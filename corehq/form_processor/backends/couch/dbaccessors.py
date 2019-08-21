@@ -338,15 +338,15 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
         from corehq.apps.commtrack.models import StockState
 
         assert isinstance(case_ids, list)
-        assert isinstance(section_ids, list)
-        assert isinstance(entry_ids, list)
         if not case_ids:
             return []
 
         filters = {'case_id__in': case_ids}
         if section_ids:
+            assert isinstance(section_ids, list)
             filters['section_id__in'] = section_ids
         if entry_ids:
+            assert isinstance(entry_ids, list)
             filters['product_id__in'] = entry_ids
         if date_start:
             filters['last_modifed__gte'] = date_start
