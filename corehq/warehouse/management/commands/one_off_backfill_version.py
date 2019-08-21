@@ -5,7 +5,7 @@ from __future__ import print_function
 import six
 
 from django_bulk_update.helper import bulk_update
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand
 from corehq.warehouse.models.dimensions import ApplicationDim
 from corehq.warehouse.models.facts import ApplicationStatusFact
 from corehq.apps.es import FormES
@@ -14,10 +14,10 @@ from corehq.util.queries import paginated_queryset
 from dimagi.utils.chunked import chunked
 
 
-def get_latest_build_ids(app_id, user_ids):
+def get_latest_build_ids(domain, app_id, user_ids):
     query = (
         FormES()
-        .domain('icds-cas')
+        .domain(domain)
         .app([app_id])
         .user_id(user_ids)
         .aggregation(
@@ -40,11 +40,12 @@ def get_latest_build_ids(app_id, user_ids):
     return result
 
 
-def update_build_version_for_app(app_id):
+def update_build_version_for_app(domain, app_id):
     CHUNK_SIZE = 1000
     fact_chunks = chunked(
         paginated_queryset(
             ApplicationStatusFact.objects.filter(
+                domain=domain,
                 last_form_app_build_version__isnull=True,
                 app_dim__application_id=app_id
             ).select_related('user_dim').all(),
@@ -59,18 +60,19 @@ def update_build_version_for_app(app_id):
         new = set(build_ids) - set(six.iterkeys(version_by_build_id))
         if new:
             versions = ApplicationDim.objects.filter(
+                domain=domain,
                 application_id__in=new
             ).values_list('application_id', 'version')
             for k, v in versions:
                 version_by_build_id[k] = v
-        return {k: version_by_build_id[k] for k in build_ids}
+        return {k: version_by_build_id[k] for k in build_ids if k in version_by_build_id}
 
     for fact_chunk in fact_chunks:
         facts_by_user_ids = {
             f.user_dim.user_id: f
             for f in fact_chunk
         }
-        build_ids_by_user_ids = get_latest_build_ids(app_id, list(six.iterkeys(facts_by_user_ids)))
+        build_ids_by_user_ids = get_latest_build_ids(domain, app_id, list(six.iterkeys(facts_by_user_ids)))
         build_ids = list(six.itervalues(build_ids_by_user_ids))
         # could have None value for some users
         build_ids.remove(None)
@@ -88,9 +90,13 @@ def update_build_version_for_app(app_id):
 
 class Command(BaseCommand):
 
-    def handle(self, *args, **kwargs):
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
+
+    def handle(self, domain, **kwargs):
         app_ids = ApplicationDim.objects.filter(
-            copy_of__isnull=True).values('application_id').distinct()
-        )
+            domain=domain,
+            copy_of__isnull=True
+        ).values('application_id').distinct()
         for app_id in six.itervalues(app_ids):
-            update_build_version_for_app(app_id)
+            update_build_version_for_app(domain, app_id)
