@@ -328,6 +328,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                     else:
                         availability_for_ppses[location_id]['in_ppses'] += in_ppses
                         availability_for_ppses[location_id]['all_ppses'] += all_ppses
+
                 for location_id, location_info in availability_for_ppses.items():
                     location_name = location_info['location_name']
                     in_ppses = location_info['in_ppses']
