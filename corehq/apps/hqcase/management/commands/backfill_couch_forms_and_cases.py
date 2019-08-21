@@ -10,7 +10,7 @@ from six.moves import zip_longest
 from django.core.management import BaseCommand
 
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
-from corehq.apps.domain.dbaccessors import iter_domains
+from corehq.apps.domain.dbaccessors import iter_couch_domains
 from corehq.apps.es import FormES, CaseES
 from corehq.apps.hqcase.dbaccessors import get_all_case_owner_ids
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
@@ -84,7 +84,7 @@ class Command(BaseCommand):
 def generate_all_form_ids_by_domain(start, end):
     form_ids_by_domain = {
         domain: get_form_ids_by_type(domain, 'XFormInstance', start, end)
-        for domain in iter_domains()
+        for domain in iter_couch_domains()
     }
     return {
         domain: form_ids
@@ -115,7 +115,7 @@ def get_case_ids_missing_from_elasticsearch(all_case_ids):
 
 def get_all_case_ids_by_domain(start, end):
     all_case_ids_by_domain = {}
-    for domain in iter_domains():
+    for domain in iter_couch_domains():
         print('Pulling cases for {}'.format(domain))
         all_case_ids_by_domain[domain] = use_json_cache_file(
             filename='all_case_ids_last_modified_{}_to_{}__{}.json'.format(start, end, domain),

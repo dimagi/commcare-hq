@@ -119,6 +119,17 @@ def iter_domains():
         yield row['key']
 
 
+def iter_couch_domains():
+    for row in paginate_view(
+            Domain.get_db(),
+            'domain/domains',
+            100,
+            reduce=False,
+            include_docs=True):
+        if not row['doc'].get('use_sql_backend', False):
+            yield row['key']
+
+
 def count_downloads_for_all_snapshots(domain_id):
     """
     domain_id should represent an actual (non-snapshot) domain for this to make sense
