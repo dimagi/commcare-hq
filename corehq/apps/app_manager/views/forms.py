@@ -750,7 +750,6 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'xform_validation_missing': xform_validation_missing,
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not form_has_schedule,
-        'allow_form_workflow': True,
         'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
@@ -782,7 +781,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
-    if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
+    if toggles.FORM_LINK_WORKFLOW.enabled(domain):
         def qualified_form_name(form, auto_link):
             module_name = trans(module.name, langs)
             form_name = trans(form.name, langs)

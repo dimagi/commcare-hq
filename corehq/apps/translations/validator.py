@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 import ghdiff
 from memoized import memoized
-from six.moves import zip
 
 from corehq.apps.translations.app_translations.download import get_bulk_app_sheets_by_name
 from corehq.apps.translations.app_translations.utils import (

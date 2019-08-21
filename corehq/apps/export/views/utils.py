@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 from datetime import datetime, timedelta
 
 import pytz
+
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from couchexport.models import Format
 from dimagi.utils.web import json_response, get_url_base
 from django.contrib import messages
@@ -182,7 +184,7 @@ class DashboardFeedMixin(DailySavedExportMixin):
 
 class ODataFeedMixin(object):
 
-    @method_decorator(toggles.ODATA.required_decorator())
+    @method_decorator(BI_INTEGRATION_PREVIEW.required_decorator())
     def dispatch(self, *args, **kwargs):
         return super(ODataFeedMixin, self).dispatch(*args, **kwargs)
 
@@ -365,11 +367,6 @@ def can_view_form_exports(couch_user, domain):
 
 def can_view_case_exports(couch_user, domain):
     return ExportsPermissionsManager('case', domain, couch_user).has_form_export_permissions
-
-
-def remove_row_number_from_export_columns(export_instance):
-    for table in export_instance.tables:
-        table.columns = [column for column in table.columns if not isinstance(column, RowNumberColumn)]
 
 
 def clean_odata_columns(export_instance):

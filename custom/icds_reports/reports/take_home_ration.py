@@ -47,7 +47,7 @@ class TakeHomeRationExport(object):
 
         headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
                    'Total No. of Beneficiaries eligible for THR',
-                   'Total No. of Beneficiaries received THR>21 days in given month',
+                   'Total No. of Beneficiaries received THR>=21 days in given month',
                    'Total No of Pictures taken by AWW']
 
         excel_rows = [headers]

@@ -87,7 +87,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqapps",
-        "index": "test_hqapps_2019-01-23",
+        "index": "test_hqapps_2019-08-14",
         "type": "app",
         "meta": {
             "settings": {

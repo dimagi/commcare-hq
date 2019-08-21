@@ -24,9 +24,7 @@ from corehq.apps.domain.views.releases import (
     ManageReleasesByLocation,
     ManageReleasesByAppProfile,
 )
-from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
-    CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
-    DeviceLogSoftAssertReport, UserAuditReport
+from corehq.apps.hqadmin.reports import DeviceLogSoftAssertReport, UserAuditReport
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.linked_domain.dbaccessors import is_linked_domain
@@ -53,6 +51,7 @@ from corehq.apps.users.permissions import (
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
+    BI_INTEGRATION_PREVIEW,
 )
 from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
@@ -284,7 +283,7 @@ class SetupTab(UITab):
                 ) for item in dropdown_items
             ] + [
                 dropdown_dict(None, is_divider=True),
-                dropdown_dict(_("View All"), url=ProductListView.urlname),
+                dropdown_dict(_("View All"), url=reverse(ProductListView.urlname, args=[self.domain])),
             ]
 
         return []
@@ -698,7 +697,7 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': True,
                     'subpages': []
                 })
-            if toggles.ODATA.enabled(self.domain):
+            if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
                 subpages = [
                     {
                         'title': _(CreateODataCaseFeedView.page_title),
@@ -721,7 +720,7 @@ class ProjectDataTab(UITab):
                     'title': _(ODataFeedListView.page_title),
                     'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
                     'icon': 'fa fa-plug',
-                    'show_in_dropdown': True,
+                    'show_in_dropdown': False,
                     'subpages': subpages
                 })
 
@@ -818,6 +817,12 @@ class ProjectDataTab(UITab):
                 _('Explore Case Data (Preview)'),
                 url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
+        if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+            from corehq.apps.export.views.list import ODataFeedListView
+            items.append(dropdown_dict(
+                _(ODataFeedListView.page_title),
+                url=reverse(ODataFeedListView.urlname, args=(self.domain,)),
+            ))
 
         if items:
             items += [dropdown_dict(None, is_divider=True)]
@@ -826,13 +831,9 @@ class ProjectDataTab(UITab):
 
 
 class ApplicationsTab(UITab):
-    view = "default_app"
+    view = "default_new_app"
 
     url_prefix_formats = ('/a/{domain}/apps/',)
-
-    @property
-    def view(self):
-        return "default_new_app"
 
     @property
     def title(self):
@@ -1770,17 +1771,12 @@ def _get_integration_section(domain):
 
 
 def _get_feature_flag_items(domain):
-    from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
+    from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
     feature_flag_items = []
     if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({
             'title': _('Case Search'),
             'url': reverse('case_search_config', args=[domain])
-        })
-    if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(domain):
-        feature_flag_items.append({
-            'title': _('Calendar Fixture'),
-            'url': reverse(CalendarFixtureConfigView.urlname, args=[domain])
         })
     if toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
         feature_flag_items.append({
@@ -2054,22 +2050,14 @@ class AdminTab(UITab):
             ] + admin_operations
         sections = [
             (_('Administrative Reports'), [
-                {'title': _('Project Space List'),
-                 'url': reverse('admin_report_dispatcher', args=('domains',))},
                 {'title': _('Submission Map'),
                  'url': reverse('dimagisphere')},
-                {'title': _('Active Project Map'),
-                 'url': reverse('admin_report_dispatcher', args=('project_map',))},
                 {'title': _('User List'),
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
-                {'title': _('Application List'),
-                 'url': reverse('admin_report_dispatcher', args=('app_list',))},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('Download Global Impact Report'),
                  'url': reverse('download_gir')},
-                {'title': _('CommCare Version'),
-                 'url': reverse('admin_report_dispatcher', args=('commcare_version', ))},
                 {'title': _('Admin Phone Number Report'),
                  'url': reverse('admin_report_dispatcher', args=('phone_number_report',))},
             ]),
@@ -2089,13 +2077,7 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [
-                RealProjectSpacesReport,
-                CommConnectProjectSpacesReport,
-                CommTrackProjectSpacesReport,
-                DeviceLogSoftAssertReport,
-                UserAuditReport,
-            ]
+            } for report in [DeviceLogSoftAssertReport, UserAuditReport]
         ]))
         return sections
 

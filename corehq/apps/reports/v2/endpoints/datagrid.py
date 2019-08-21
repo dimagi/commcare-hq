@@ -35,13 +35,16 @@ class DatagridEndpoint(BaseDataEndpoint):
         try:
             results = [formatter(self.request, self.domain, r).get_context()
                        for r in query.run().raw['hits'].get('hits', [])]
+            took = query.run().raw.get('took')
         except ESError:
             results = []
             is_timeout = True
+            took = None
 
         return {
             "rows": results,
             "totalRecords": total,
             'resetPagination': reset_pagination,
             "isTimeout": is_timeout,
+            "took": took,
         }

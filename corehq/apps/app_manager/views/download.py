@@ -35,7 +35,7 @@ import six
 
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
-                      "If error persists, please contact us at commcarehq-support@dimagi.com")
+                      "If error persists, please report an issue")
 
 
 def _get_profile(request):

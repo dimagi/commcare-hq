@@ -1050,3 +1050,8 @@ def calculate_users_in_all_domains(today=None):
             )
         except IntegrityError:
             pass
+        except Exception as e:
+            log_accounting_error(
+                "Exception while creating DomainUserHistory for domain %s: %s" % (domain, e),
+                show_stack_trace=True,
+            )

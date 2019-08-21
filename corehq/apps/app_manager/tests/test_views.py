@@ -221,12 +221,6 @@ class TestViews(TestCase):
             'module_unique_id': module.unique_id,
         })
 
-    def test_dashboard(self, mock):
-        # This redirects to the dashboard
-        self._test_status_codes(['default_app'], {
-            'domain': self.project.name,
-        }, True)
-
     def test_default_new_app(self, mock):
         response = self.client.get(reverse('default_new_app', kwargs={
             'domain': self.project.name,

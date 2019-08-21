@@ -18,7 +18,6 @@ from six.moves import range
 class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
     helper_key = 'agg-awc'
     base_tablename = 'agg_awc'
-    ucr_data_source_id = 'static-awc_location'
 
     def __init__(self, month):
         self.month_start = transform_day_to_month(month)
@@ -83,13 +82,14 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
             thr_v2.thr_distribution_image_count
-            FROM "{ucr_table}" awc_location
+            FROM awc_location_local awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
             LEFT JOIN "{thr_v2_table}" thr_v2 on (awc_location.doc_id = thr_v2.awc_id AND
                                                 thr_v2.month = %(start_date)s
                                                 )
-            group by awc_location.state_id,
+            WHERE awc_location.aggregation_level = 5
+            GROUP BY awc_location.state_id,
             awc_location.district_id,
             awc_location.block_id,
             awc_location.supervisor_id,
@@ -98,7 +98,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         )
         """.format(
             tablename=self.tablename,
-            ucr_table=self.ucr_tablename,
             cbe_table=self._ucr_tablename('static-cbe_form'),
             vhnd_table=self._ucr_tablename('static-vhnd_form'),
             thr_v2_table=AGG_THR_V2_TABLE

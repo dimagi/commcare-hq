@@ -217,13 +217,17 @@ class CommTrackOTATestSQL(CommTrackOTATest):
 
 class CommTrackSubmissionTest(XMLTest):
 
+    @classmethod
+    def setUpClass(cls):
+        super(CommTrackSubmissionTest, cls).setUpClass()
+        cls.process_legder_changes = process_pillow_changes('LedgerToElasticsearchPillow')
+
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()
         loc2 = make_loc('loc2')
         self.sp2 = loc2.linked_supply_point()
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-    @process_pillow_changes('LedgerToElasticsearchPillow')
     def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime,
                         device_id='351746051189879', **submit_extras):
         instance_id = uuid.uuid4().hex
@@ -238,11 +242,12 @@ class CommTrackSubmissionTest(XMLTest):
             date_formatter=date_formatter,
             device_id=device_id,
         )
-        submit_form_locally(
-            instance=instance,
-            domain=self.domain.name,
-            **submit_extras
-        )
+        with self.process_legder_changes:
+            submit_form_locally(
+                instance=instance,
+                domain=self.domain.name,
+                **submit_extras
+            )
         return instance_id
 
     def check_product_stock(self, case, product_id, expected_soh, expected_qty, section_id='stock'):
@@ -645,7 +650,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         # archive and confirm commtrack data is deleted
         form = FormAccessors(self.domain.name).get_form(second_form_id)
-        with process_pillow_changes('LedgerToElasticsearchPillow'):
+        with self.process_legder_changes:
             form.archive()
 
         if should_use_sql_backend(self.domain):
@@ -663,7 +668,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
             self.assertIsNone(state.daily_consumption)
 
         # unarchive and confirm commtrack data is restored
-        with process_pillow_changes('LedgerToElasticsearchPillow'):
+        with self.process_legder_changes:
             form.unarchive()
         _assert_initial_state()
 

@@ -13,7 +13,7 @@ class TestUpdateRoles(BaseLinkedAppsTest):
     @classmethod
     def setUpClass(cls):
         super(TestUpdateRoles, cls).setUpClass()
-        cls.linked_app.master = cls.plain_master_app.get_id
+        cls.linked_app.master = cls.master1.get_id
         cls.linked_app.save()
 
         cls.role = UserRole(
@@ -22,7 +22,7 @@ class TestUpdateRoles(BaseLinkedAppsTest):
             permissions=Permissions(
                 edit_data=True,
                 view_web_apps_list=[
-                    cls.plain_master_app.get_id
+                    cls.master1.get_id
                 ],
                 view_report_list=[
                     'corehq.reports.DynamicReportmaster_report_id'

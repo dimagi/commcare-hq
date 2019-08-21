@@ -63,15 +63,15 @@ class CreateExportTagForm(forms.Form):
             ('form', ugettext_lazy('form')),
         ]
     )
-    app_type = forms.CharField()
-    application = forms.CharField()
+    app_type = forms.CharField(widget=forms.Select(choices=[]))
+    application = forms.CharField(widget=forms.Select(choices=[]))
 
     # Form export fields
-    module = forms.CharField(required=False)
-    form = forms.CharField(required=False)
+    module = forms.CharField(required=False, widget=forms.Select(choices=[]))
+    form = forms.CharField(required=False, widget=forms.Select(choices=[]))
 
     # Case export fields
-    case_type = forms.CharField(required=False)
+    case_type = forms.CharField(required=False, widget=forms.Select(choices=[]))
 
     def __init__(self, has_form_export_permissions, has_case_export_permissions, *args, **kwargs):
         self.has_form_export_permissions = has_form_export_permissions

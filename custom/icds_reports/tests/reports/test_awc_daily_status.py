@@ -8,7 +8,7 @@ from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_da
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestAWCDailyStatus(TestCase):
 
     def test_map_data(self):

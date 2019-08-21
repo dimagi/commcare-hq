@@ -4,6 +4,7 @@ import copy
 from datetime import datetime, timedelta
 import json
 
+from django.contrib import messages
 from django.urls import reverse
 
 from auditcare.models import NavigationEventAudit
@@ -557,17 +558,6 @@ FACET_MAPPING = [
     ]),
 ]
 
-DIMAGISPHERE_FACET_MAPPING = [
-    ("Location", True, [
-        {"facet": "deployment.countries.exact", "name": "Country", "expanded": True},
-    ]),
-    ("Type", True, [
-        {"facet": "internal.area.exact", "name": "Sector", "expanded": True},
-        {"facet": "internal.sub_area.exact", "name": "Sub-Sector", "expanded": False},
-    ]),
-]
-
-
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
 
@@ -861,104 +851,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 ]
 
 
-class AdminDomainMapReport(AdminDomainStatsReport):
-    slug = "project_map"
-    name = ugettext_noop('Project Map')
-    facet_title = ugettext_noop("Project Facets")
-    search_for = ugettext_noop("projects...")
-    es_facet_mapping = DIMAGISPHERE_FACET_MAPPING
-    base_template = "hqadmin/project_map.html"
-
-    exportable = False
-
-    # a modified version of AdminDomainStatsReport.rows
-    @property
-    def rows(self):
-        domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
-
-        def format_date(dstr, default):
-            # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
-            return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') \
-                   if dstr else default
-
-        for dom in domains:
-            # for some reason when using the statistical facet, ES adds an empty dict to hits
-            if 'name' in dom:
-                yield [
-                    dom.get("hr_name") or dom.get("name"),
-                    self.get_name_or_link(dom, internal_settings=True),
-                    format_date((dom.get("date_created")), _('No date')),
-                    dom.get("internal", {}).get('organization_name') or _('No org'),
-                    format_date((dom.get('deployment') or {}).get('date'), _('No date')),
-                    (dom.get("deployment") or {}).get('countries') or _('No countries'),
-                    dom.get("cp_n_active_cc_users", _("Not yet calculated")),
-                    dom.get("cp_n_forms", _("Not yet calculated")),
-                    dom.get("cp_n_forms_30_d", _("Not yet calculated")),
-                    dom.get('internal', {}).get('notes') or _('No notes'),
-                    dom.get('internal', {}).get('area') or _('No info'),
-                    dom.get('internal', {}).get('sub_area') or _('No info')
-                ]
-
-    def _calc_num_active_users_per_country(self, filters):
-        active_users_per_country = (NestedTermAggregationsHelper(
-                                    base_query=DomainES().real_domains().is_active_project().filter(filters),
-                                    terms=[AggregationTerm('countries', 'deployment.countries')],
-                                    inner_most_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
-                                    ).get_data())
-        return active_users_per_country
-
-    def _calc_num_projs_per_countries(self, filters):
-        num_projects_by_country = (DomainES()
-                                   .real_domains()
-                                   .is_active_project()
-                                   .filter(filters)
-                                   .terms_aggregation('deployment.countries', 'countries')
-                                   .size(0).run().aggregations.countries.counts_by_bucket())
-        return num_projects_by_country
-
-    def _calc_total_active_real_projects(self, filters):
-        total_num_projects = (DomainES().is_active_project().real_domains()
-                              .filter(filters)
-                              .count())
-        return total_num_projects
-
-    def parse_params(self, es_params):
-        es_filters = {}
-
-        params_dict = {
-            'deployment.countries.exact': es_params.get('deployment.countries.exact'),
-            'internal.area.exact': es_params.get('internal.area.exact'),
-            'internal.sub_area.exact': es_params.get('internal.sub_area.exact'),
-        }
-        terms = []
-        for param in params_dict:
-            if params_dict[param] is not None:
-                terms.append(filters.term(param, params_dict[param]))
-        if terms:
-            es_filters = (filters.AND(terms))
-
-        return es_filters
-
-    @property
-    def json_dict(self):
-        json = super(AdminDomainMapReport, self).json_dict
-        params = self.parse_params(self.es_params)
-        json['users_per_country'] = dict(self._calc_num_active_users_per_country(params))
-        json['country_projs_count'] = self._calc_num_projs_per_countries(params)
-        json['total_num_projects'] = self._calc_total_active_real_projects(params)
-        return json
-
-
-class AdminDomainMapInternal(AdminDomainMapReport):
-    slug = "internal_project_map"
-
-    @property
-    def template_context(self):
-        context = super(AdminDomainMapInternal, self).template_context
-        context['is_internal_view'] = True
-        return context
-
-
 class AdminUserReport(AdminFacetedReport):
     slug = "user_list"
     name = ugettext_noop('User List')
@@ -984,6 +876,16 @@ class AdminUserReport(AdminFacetedReport):
             {"facet": "doc_type", "name": "User Type", "expanded": True},
         ]),
     ]
+
+    @property
+    def template_context(self):
+        msg = """
+        Note: This report doesn't exist in Salesforce. We're building a new
+        admin report which will allow you to search for users.
+        """
+        ctxt = super(AdminUserReport, self).template_context
+        messages.add_message(self.request, messages.ERROR, msg)
+        return ctxt
 
     @property
     def headers(self):

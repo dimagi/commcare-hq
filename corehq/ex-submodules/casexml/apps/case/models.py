@@ -330,7 +330,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         try:
             return super(CommCareCase, cls).get(id, **kwargs)
         except ResourceNotFound:
-            raise CaseNotFound
+            raise CaseNotFound(id)
 
     @classmethod
     def get_wrap_class(cls, data):

@@ -21,7 +21,7 @@ class Command(BaseCommand):
         parser.add_argument('-l', '--linked_id', required=True,
                             help="ID of the local app to be linked")
         parser.add_argument('-r', '--url_base', required=True,
-                            help="Base URL of remote system e.g. httpw://www.commcarehq.org")
+                            help="Base URL of remote system e.g. https://www.commcarehq.org/")
         parser.add_argument('-d', '--domain', required=True,
                             help="Domain of master app.")
         parser.add_argument('-u', '--username', required=True,

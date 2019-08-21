@@ -1147,10 +1147,16 @@ class CommCareUserFilterForm(forms.Form):
         max_length=30,
         required=False
     )
+    location_id = forms.CharField(
+        label=ugettext_noop("Location"),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
+        from corehq.apps.locations.forms import LocationSelectWidget
         self.domain = kwargs.pop('domain')
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
+        self.fields['location_id'].widget = LocationSelectWidget(self.domain)
 
         roles = UserRole.by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [
@@ -1171,6 +1177,7 @@ class CommCareUserFilterForm(forms.Form):
                 _("Filter and Download Users"),
                 crispy.Field('role_id'),
                 crispy.Field('search_string'),
+                crispy.Field('location_id'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

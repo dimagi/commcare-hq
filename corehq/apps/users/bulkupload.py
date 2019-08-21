@@ -242,7 +242,7 @@ class SiteCodeToLocationCache(BulkCacheBase):
         Note that this can raise SQLLocation.DoesNotExist if the location with the
         given site code is not found.
         """
-        return SQLLocation.objects.get(
+        return SQLLocation.objects.using('default').get(
             domain=self.domain,
             site_code__iexact=site_code
         )

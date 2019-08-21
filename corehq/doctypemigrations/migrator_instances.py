@@ -51,7 +51,6 @@ apps_migration = Migrator(
         'DeleteModuleRecord',
         'RemoteApp',
         'SavedAppBuild',
-        'VersionedDoc',
     )
 )
 

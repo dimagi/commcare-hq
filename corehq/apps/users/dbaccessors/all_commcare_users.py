@@ -5,6 +5,7 @@ from collections import namedtuple
 
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.es import UserES
+from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
@@ -28,13 +29,15 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
     args:
         user_filters: a dict with below structure.
             {'role_id': <Role ID to filter users by>,
-             'search_string': <string to search users by username>}
+             'search_string': <string to search users by username>,
+             'location_id': <Location ID to filter users by>}
     kwargs:
         count_only: If True, returns count of search results
     """
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
-    if not role_id and not search_string and not count_only:
+    location_id = user_filters.get('location_id', None)
+    if not any([role_id, search_string, location_id, count_only]):
         return get_all_commcare_users_by_domain(domain)
 
     query = UserES().domain(domain).mobile_users()
@@ -43,6 +46,9 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
         query = query.role_id(role_id)
     if search_string:
         query = query.search_string_query(search_string, default_fields=['first_name', 'last_name', 'username'])
+    if location_id:
+        location_ids = SQLLocation.objects.get_locations_and_children_ids([location_id])
+        query = query.location(location_ids)
 
     if count_only:
         return query.count()

@@ -22,6 +22,16 @@ class TestRequireJS(SimpleTestCase):
         gevent.joinall(jobs)
 
     @classmethod
+    def _hqDefine_line(cls, filename):
+        pattern = re.compile(r'^\s*hqDefine')
+        with open(filename, 'r') as f:
+            for line in f:
+                if re.match(pattern, line):
+                    return line
+        return None
+
+
+    @classmethod
     def setUpClass(cls):
         super(TestRequireJS, cls).setUpClass()
         prefix = os.path.join(os.getcwd(), 'corehq')
@@ -29,21 +39,20 @@ class TestRequireJS(SimpleTestCase):
         proc = subprocess.Popen(["find", prefix, "-name", "*.js"], stdout=subprocess.PIPE)
         (out, err) = proc.communicate()
         cls.js_files = [f for f in [b.decode('utf-8') for b in out.split(b"\n")] if f
-                    and not re.search(r'/_design/', f)
-                    and not re.search(r'couchapps', f)
-                    and not re.search(r'/vellum/', f)]
+                    and '/_design/' not in f
+                    and 'couchapps' not in f
+                    and '/vellum/' not in f]
 
         cls.hqdefine_files = []
         cls.requirejs_files = []
 
         def _categorize_file(filename):
-            proc = subprocess.Popen(["grep", r"^\s*hqDefine", filename], stdout=subprocess.PIPE)
-            (out, err) = proc.communicate()
-            if out:
+            line = cls._hqDefine_line(filename)
+            if line:
                 cls.hqdefine_files.append(filename)
-                proc = subprocess.Popen(["grep", r"hqDefine.*,.*\[", filename], stdout=subprocess.PIPE)
-                (out, err) = proc.communicate()
-                if out:
+                # RequireJS files list their dependencies: hqDefine("my/module.js", [...
+                # This test does depend on the dependency array starting on the same line as the hqDefine
+                if re.match(r'hqDefine.*,.*\[', line):
                     cls.requirejs_files.append(filename)
 
         cls._run_jobs(cls.js_files, _categorize_file)
@@ -52,9 +61,8 @@ class TestRequireJS(SimpleTestCase):
         errors = []
 
         def _test_file(filename):
-            proc = subprocess.Popen(["grep", "hqDefine", filename], stdout=subprocess.PIPE)
-            (out, err) = proc.communicate()
-            for line in [b.decode('utf-8') for b in out.split(b"\n")]:
+            line = self._hqDefine_line(filename)
+            if line:
                 match = re.search(r'^\s*hqDefine\([\'"]([^\'"]*)[\'"]', line)
                 if match:
                     module = match.group(1)
@@ -77,15 +85,17 @@ class TestRequireJS(SimpleTestCase):
                       and not f.endswith("hqwebapp/js/knockout_bindings.ko.js")]
 
         def _test_file(filename):
-            proc = subprocess.Popen(["grep", "hqImport", filename], stdout=subprocess.PIPE)
-            (out, err) = proc.communicate()
-            for line in [b.decode('utf-8') for b in out.split(b"\n")]:
-                if line:
-                    match = re.search(r'hqImport\([\'"]([^\'"]*)[\'"]', line)
-                    if match:
-                        errors.append("{} imported in {}".format(match.group(1), filename))
-                    else:
-                        errors.append("hqImport found in {}: {}".format(filename, line.strip()))
+            with open(filename, 'r') as f:
+                line = f.readline()
+                pattern = re.compile(r'hqImport\([\'"]([^\'"]*)[\'"]')
+                while line:
+                    if 'hqImport' in line:
+                        match = pattern.search(line)
+                        if match:
+                            errors.append("{} imported in {}".format(match.group(1), filename))
+                        else:
+                            errors.append("hqImport found in {}: {}".format(filename, line.strip()))
+                    line = f.readline()
 
         self._run_jobs(test_files, _test_file)
 
