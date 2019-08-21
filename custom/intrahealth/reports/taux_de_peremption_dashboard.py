@@ -41,7 +41,7 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
         context = {
             'report': self.get_report_context(),
             'title': self.name,
-            'charts': self.charts
+            'charts': self.charts if not self.needs_filters else None
         }
 
         return context
@@ -58,11 +58,13 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
         if self.selected_location:
             location_type = self.selected_location.location_type.code
             if location_type == 'region':
+                return 'Region'
+            elif location_type == 'district':
                 return 'District'
-            else:
+            elif location_type == 'pps':
                 return 'PPS'
         else:
-            return 'Region'
+            pass
 
     @property
     def headers(self):
@@ -96,6 +98,8 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
     @property
     def charts(self):
         chart = MultiBarChart(None, Axis('Location'), Axis('Percent', format='.2f'))
+        chart.forceY = [0, 100]
+
         chart.height = 400
         chart.marginBottom = 100
 
@@ -104,18 +108,16 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
             rows = self.calculate_rows()
             for row in rows:
                 #-1 removes % symbol for cast to float
+                y = row[-1]['html'][:-1]
                 try:
-                    name = row[0]['html']
-                    value = float(row[-1]['html'][:-1])
+                    y = float(y)
                 except ValueError:
-                    value = 0.0
-                    name = "{}\n({})".format(name, "pas de données")
-                finally:
-                    com.append({"x": value, "y": value})
+                    y = 0
+                com.append({"x": row[0]['html'], "y": y})
 
             return [
                 {
-                    "key": "valeur péremption sur valeur totale",
+                    "key": "'Méthode de calcul: nbre de PPS avec le produit disponsible sur le nbre total de PPS visités de la période'",
                     'values': com
                 },
             ]
@@ -139,7 +141,15 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
         config['startdate'] = startdate
         config['enddate'] = enddate
         config['product_program'] = self.request.GET.get('product_program')
+        config['products'] = self.request.GET.get('products')
         config['product_product'] = self.request.GET.get('product_product')
         config['selected_location'] = self.request.GET.get('location_id')
-        config['products'] = ['product1', 'product2', 'product3']
+
+        if self.selected_location_type == "PPS":
+            config['pps_id'] = self.request.GET.get('location_id')
+        elif self.selected_location_type == "District":
+            config['district_id'] = self.request.GET.get('location_id')
+        elif self.selected_location_type == "Region":
+            config['region_id'] = self.request.GET.get('location_id')
+
         return config
