@@ -272,15 +272,18 @@
                 <label class="control-label col-sm-3" for="group-case-sharing-input">{% trans "Case Sharing" %}</label>
                 <div class="col-sm-9">
                   <select-toggle params="name: 'case_sharing',
-                                                       id: 'group-case-sharing-input',
-                                                       options: [{
-                                                                    id: 'true',
-                                                                    text: '{% trans_html_attr 'On' %}',
-                                                                }, {
-                                                                    id: 'false',
-                                                                    text: '{% trans_html_attr 'Off' %}',
-                                                                }],
-                                                       value: '{% if group.case_sharing %}true{% else %}false{% endif %}'"></select-toggle>
+                                         id: 'group-case-sharing-input',
+                                         options: [
+                                           {
+                                             id: 'true',
+                                             text: '{% trans_html_attr 'On' %}',
+                                           },
+                                           {
+                                             id: 'false',
+                                             text: '{% trans_html_attr 'Off' %}',
+                                           },
+                                         ],
+                                         value: '{% if group.case_sharing %}true{% else %}false{% endif %}'"></select-toggle>
                   <p class="help-block">{% trans "Determines whether users within this group will share cases with each other." %}</p>
                   <div id="group-case-sharing-warning" hidden="true">
                     <p class="help-block alert alert-warning">
