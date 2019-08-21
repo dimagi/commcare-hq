@@ -29,7 +29,7 @@ AUDIT_URLS = frozenset(
 # after split we get ['', 'a', 'domain', 'icds-dashboard-view-name']
 def is_path_in_audit_urls(request):
     path = getattr(request, 'path', '').split('/')
-    return len(path) >= 3 and (path[3] in AUDIT_URLS or path[2] in AUDIT_URLS)
+    return len(path) > 3 and (path[3] in AUDIT_URLS or (len(path) > 4 and  path[4] in AUDIT_URLS))
 
 
 def is_login_page(request):
