@@ -5617,7 +5617,6 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     else:
         source_app = wrap_app(app_id_or_source)
     source_domain = source_app.domain
-    app_family_id = source_app.get_id
     source = source_app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']
@@ -5636,7 +5635,8 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     app.convert_build_to_app()
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
-    app.family_id = app_family_id
+    if source_domain == domain and toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(domain):
+        app.family_id = source_app.get_id
 
     report_map = get_static_report_mapping(source_domain, domain)
     if report_map:
