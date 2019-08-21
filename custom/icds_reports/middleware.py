@@ -24,12 +24,12 @@ AUDIT_URLS = frozenset(
 
 
 # function to check that path contains correct view to Audit.
-# the most important in the path is the value on the 4th place because this is the view name
-# example path: /a/domain/icds-dashboard-view-name
-# after split we get ['', 'a', 'domain', 'icds-dashboard-view-name']
+# the most important in the path is the value on the 4th or 5th place because this is the view name or sub-view
+# example path: /a/domain/icds-dashboard-view-name/sub-view
+# after split we get ['', 'a', 'domain', 'icds-dashboard-view-name', 'sub-view']
 def is_path_in_audit_urls(request):
     path = getattr(request, 'path', '').split('/')
-    return len(path) > 3 and (path[3] in AUDIT_URLS or (len(path) > 4 and  path[4] in AUDIT_URLS))
+    return len(path) > 3 and (path[3] in AUDIT_URLS or (len(path) > 4 and path[4] in AUDIT_URLS))
 
 
 def is_login_page(request):
@@ -51,7 +51,7 @@ def is_icds_dashboard_view(request):
 class ICDSAuditMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if is_icds_dashboard_view(request):
-            if toggles.LOAD_DASHBOARD_FROM_CITUS.enabled(request.couch_user.username):
+            if toggles.LOAD_DASHBOARD_FROM_CITUS.enabled_for_request(request):
                 use_citus_for_request()
             ICDSAuditEntryRecord.create_entry(request)
             return None
