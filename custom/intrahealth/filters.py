@@ -174,6 +174,72 @@ class ProgramFilter(BaseReportFilter):
         }
 
 
+class RecapPassageOneProgramFilter(BaseReportFilter):
+    template = "yeksi_naa/program_filter.html"
+    slug = 'program'
+    label = "Programme"
+    included_programs = [
+        'PALUDISME', 'PLANIFICATION FAMILIALE', 'IMPORTANCE VITALE 1',
+        'PRODUITS ESSENTIELS 1', 'PRODUITS ESSENTIELS 2',
+        'TEST PROGRAM'
+    ]
+
+    def program(self):
+        program_filter = [{
+            'name': 'All',
+            'value': "",
+        }]
+        programs = ProgramData(config={'domain': self.domain}).rows
+        for program in programs:
+            if program[1].upper() in self.included_programs:
+                program_filter.append({
+                    'name': program[1],
+                    'value': program[0],
+                })
+        return program_filter
+
+    @property
+    def filter_context(self):
+        return {
+            'programs': self.program(),
+            'chosen_program': self.request.GET.get('program', ''),
+        }
+
+
+class RecapPassageTwoProgramFilter(BaseReportFilter):
+    template = "yeksi_naa/program_filter.html"
+    slug = 'program'
+    label = "Programme"
+    included_programs = [
+        'VIH', 'TUBERCULOSE', 'PRODUITS ESSENTIELS 3'
+        'PRODUITS ESSENTIELS 4', 'PRODUITS ESSENTIELS 5',
+        'PRODUITS ESSENTIELS 6',
+        'TEST PROGRAM'
+    ]
+
+    def program(self):
+        program_filter = [{
+            'name': 'All',
+            'value': "",
+        }]
+        programs = ProgramData(config={'domain': self.domain}).rows
+        for program in programs:
+            if program[1].upper() in self.included_programs:
+                program_filter.append({
+                    'name': program[1],
+                    'value': program[0],
+                })
+        return program_filter
+
+    @property
+    def filter_context(self):
+        return {
+            'programs': self.program(),
+            'chosen_program': self.request.GET.get('program', ''),
+        }
+
+
+
 class ProgramsAndProductsFilter(BaseDrilldownOptionFilter):
     slug = 'product'
     label = 'Programmes et produits'

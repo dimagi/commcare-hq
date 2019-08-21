@@ -265,7 +265,8 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
                     else:
                         locations_data[location_id]['final_pna_stock_valuation'] += final_pna_stock_valuation
 
-            for location_info in locations_data.values():
+            sorted_locations_data_values = sorted(locations_data.values(), key=lambda x: x['location_name'])
+            for location_info in sorted_locations_data_values:
                 location_name = location_info['location_name']
                 final_pna_stock_valuation = location_info['final_pna_stock_valuation']
                 pna = final_pna_stock_valuation if final_pna_stock_valuation is not 0 else 0

@@ -270,7 +270,6 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
             locations_data = {}
             added_locations = []
 
-            quantities_list = sorted(quantities_list, key=lambda x: x['location_name'])
             for quantity in quantities_list:
                 location_name = quantity['location_name']
                 location_id = quantity['location_id']
@@ -288,7 +287,8 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                         locations_data[location_id]['amt_delivered_convenience'] += amt_delivered_convenience
                         locations_data[location_id]['ideal_topup'] += ideal_topup
 
-            for location_info in locations_data.values():
+            sorted_locations_data_values = sorted(locations_data.values(), key=lambda x: x['location_name'])
+            for location_info in sorted_locations_data_values:
                 location_name = location_info['location_name']
                 amt_delivered_convenience = location_info['amt_delivered_convenience']
                 ideal_topup = location_info['ideal_topup']
