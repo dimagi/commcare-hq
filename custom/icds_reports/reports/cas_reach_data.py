@@ -83,7 +83,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, pre_release_fe
             'color': get_color_with_green_positive(daily_attendance_percent),
             'percent': daily_attendance_percent,
             'value': get_value(daily_yesterday, 'daily_attendance'),
-            'all':  get_value(awc_this_month_data if pre_release_features else daily_yesterday, 'awcs'),
+            'all': get_value(awc_this_month_data if pre_release_features else daily_yesterday, 'awcs'),
             'format': 'div',
             'frequency': 'day',
             'redirect': 'icds_cas_reach/awc_daily_status',
