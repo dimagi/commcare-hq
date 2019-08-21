@@ -67,6 +67,11 @@ class DetailContributor(SectionContributor):
                                 detail.custom_xml,
                                 xmlclass=Detail
                             )
+                            expected = id_strings.detail(module, detail_type)
+                            if not id_strings.is_custom_app_string(d.id) and d.id != expected:
+                                raise SuiteError("Module {} uses custom case list xml, the "
+                                                 "specified detail ID is '{}', expected '{}'"
+                                                 .format(module.id, d.id, expected))
                             r.append(d)
                         else:
                             detail_column_infos = get_detail_column_infos(
