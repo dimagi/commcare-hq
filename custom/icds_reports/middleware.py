@@ -8,7 +8,7 @@ from corehq.sql_db.routers import force_citus_engine
 from corehq.apps.users.models import CouchUser
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import ICDSAuditEntryRecord
-from custom.icds_reports.urls import urlpatterns
+from custom.icds_reports.urls import DASHBOARD_URL_GROUPS
 
 exclude_urls = (
     'have_access_to_location',
@@ -17,7 +17,7 @@ exclude_urls = (
 )
 
 AUDIT_URLS = frozenset(
-    [url.name for url in urlpatterns if hasattr(url, 'name') and url.name not in exclude_urls] + [
+    [url.name for url in DASHBOARD_URL_GROUPS if hasattr(url, 'name') and url.name not in exclude_urls] + [
         'icds_dashboard',
     ]
 )
@@ -29,7 +29,7 @@ AUDIT_URLS = frozenset(
 # after split we get ['', 'a', 'domain', 'icds-dashboard-view-name']
 def is_path_in_audit_urls(request):
     path = getattr(request, 'path', '').split('/')
-    return len(path) >= 3 and path[3] in AUDIT_URLS
+    return len(path) >= 3 and (path[3] in AUDIT_URLS or path[2] in AUDIT_URLS)
 
 
 def is_login_page(request):
