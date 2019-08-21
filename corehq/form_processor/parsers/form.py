@@ -6,7 +6,8 @@ from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from ddtrace import tracer
 
-from corehq.form_processor.exceptions import MissingFormXml
+from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
+from corehq.form_processor.exceptions import FormEditNotAllowed, MissingFormXml
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
@@ -223,6 +224,8 @@ def _handle_duplicate(new_doc):
                 #  - "Deprecate" the old form by making a new document with the same contents
                 #    but a different ID and a doc_type of XFormDeprecated
                 #  - Save the new instance to the previous document to preserve the ID
+                if couch_sql_migration_in_progress(new_doc.domain):
+                    raise FormEditNotAllowed("migration in progress")
                 existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
                 return new_doc, existing_doc
     else:
