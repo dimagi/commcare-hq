@@ -38,7 +38,7 @@ The **multimedia_id** is the id of the corresponding `CommCareMultimedia` docume
 
 The **unique_id** is a hash of the concatenated multimedia id and path at the time the item was created. That means this id will be unique within the multimedia map, but will not be globally unique.
 
-The **version** is the app version where the multimedia was added or most recently changed. More on this below.
+The **version** is the app version where the multimedia was added or most recently changed. The version can be `None` for applications that are unbuilt, and then any blank versions will be assigned when a new build is made. More on this below.
 
 #### Versioning multimedia
 
@@ -50,6 +50,9 @@ The version is updated (set to the latest app version) in the following situatio
 - The path alone is changed using the "Manage Multimedia Paths" bulk uploader. This does not change the unique id, even though the path changes.
 - The path and content are changed together in the UI. This also replaces the multimedia id and re-generates the unique id.
 
+#### Linked apps
+
+Linked apps, when pulled, copy the multimedia map directly from the master app, so all the attributes of each item will match those in the master app. Because linked apps are always pulled from a released version of a master app, each item should have a version set.
 
 ### media_suite.xml
 
