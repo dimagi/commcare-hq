@@ -21,6 +21,7 @@ from corehq.apps.reports.filters.controllers import (
     EmwfOptionsController,
     MobileWorkersOptionsController,
     CaseListFilterOptionsController,
+    ReassignCaseOptionsController
 )
 
 from phonelog.models import DeviceReportEntry
@@ -121,19 +122,10 @@ class CaseListFilterOptions(EmwfOptionsView):
 
 @location_safe
 class ReassignCaseOptions(CaseListFilterOptions):
-
     @property
-    def data_sources(self):
-        """
-        Includes case-sharing groups but not reporting groups
-        """
-        sources = []
-        if self.request.can_access_all_locations:
-            sources.append((self.get_sharing_groups_size, self.get_sharing_groups))
-        sources.append((self.get_locations_size, self.get_locations))
-        sources.append((self.get_all_users_size, self.get_all_users))
-        return sources
-
+    @memoized
+    def options_controller(self):
+        return ReassignCaseOptionsController(self.request, self.domain, self.search)
 
 
 class DeviceLogFilter(LoginAndDomainMixin, JSONResponseMixin, View):
