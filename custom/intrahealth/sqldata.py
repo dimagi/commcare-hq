@@ -4684,63 +4684,6 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
 
         return loc_names, data
 
-    ''' records = [
-            {'region_id': 'region_id1',
-             'region_name': 'region_name1',
-             'district_id': 'district_id1',
-             'district_name': 'district_name1',
-             'pps_id': 'pps_id11',
-             'pps_name': 'pps_name1',
-             'loss_amt': {'html': 20},
-             'final_pna_stock': {'html': 30},
-             'real_date_repeat': datetime.strptime('May 2, 2019', "%b %d, %Y").date(),
-             'product_name': 'product1',
-             'product_id': 'id_1'},
-            {'region_id': 'region_id1',
-             'region_name': 'region_name12',
-             'district_id': 'district_id2',
-             'district_name': 'district_name1',
-             'pps_id': 'pps_id2',
-             'pps_name': 'pps_name2',
-             'loss_amt': {'html': 25},
-             'final_pna_stock': {'html': 35},
-             'real_date_repeat': datetime.strptime('May 2, 2019', "%b %d, %Y").date(),
-             'product_name': 'product2',
-             'product_id': 'id_1'},
-            {'region_id': 'region_id2',
-             'region_name': 'region_name2',
-             'district_id': 'district_id3',
-             'district_name': 'district_name2',
-             'pps_id': 'pps_id121',
-             'pps_name': 'pps_name1',
-             'loss_amt': {'html': 40},
-             'final_pna_stock': {'html': 45},
-             'real_date_repeat': datetime.strptime('Jul 5, 2019', "%b %d, %Y").date(),
-             'product_name': 'product1',
-             'product_id': 'id_1'},
-            {'region_id': 'region_id2',
-             'region_name': 'region_name2',
-             'district_id': 'district_id4',
-             'district_name': 'district_name3',
-             'pps_id': 'pps_id122',
-             'pps_name': 'pps_name2',
-             'loss_amt': {'html': 40},
-             'final_pna_stock': {'html': 45},
-             'real_date_repeat': datetime.strptime('Jul 5, 2019', "%b %d, %Y").date(),
-             'product_name': 'product2',
-             'product_id': 'id_2'},
-            {'region_id': 'region_id2',
-             'region_name': 'region_name2',
-             'district_id': 'district_id5',
-             'district_name': 'district_name3',
-             'pps_id': 'pps_id123',
-             'pps_name': 'pps_name3',
-             'loss_amt': {'html': 40},
-             'final_pna_stock': {'html': 45},
-             'real_date_repeat': datetime.strptime('Jul 5, 2019', "%b %d, %Y").date(),
-             'product_name': 'product3',
-             'product_id': 'id_3'},
-        ] '''
     @property
     def rows(self):
         records = self.get_data()
@@ -4875,10 +4818,6 @@ class ExpirationRatePerProductData2(LossRatePerProductData2):
             })
         return total_row
 
-    # @property
-    # def group_by(self):
-    #     return ['real_date_repeat', self.loc_id, self.loc_name]
-
     @property
     def columns(self):
         columns = super(ExpirationRatePerProductData2, self).columns
@@ -4886,41 +4825,7 @@ class ExpirationRatePerProductData2(LossRatePerProductData2):
             DatabaseColumn("Expired products valuation", SumColumn('expired_pna_valuation')),
             DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation'))
         ])
-        # columns = [
-        #     DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
-        #     DatabaseColumn("Expired products valuation", SumColumn('expired_pna_valuation')),
-        #     DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation')),
-        # ]
-        # if self.loc_id == 'pps_id':
-        #     columns.append(DatabaseColumn("PPS ID", SimpleColumn('pps_id')))
-        #     columns.append(DatabaseColumn("PPS Name", SimpleColumn('pps_name')))
-        # elif self.loc_id == 'district_id':
-        #     columns.append(DatabaseColumn("District ID", SimpleColumn('district_id')))
-        #     columns.append(DatabaseColumn("District Name", SimpleColumn('district_name')))
-        # else:
-        #     columns.append(DatabaseColumn("Region ID", SimpleColumn('region_id')))
-        #     columns.append(DatabaseColumn("Region Name", SimpleColumn('region_name')))
         return columns
-
-    # @property
-    # def columns(self):
-    #     columns = [
-    #         DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
-    #         DatabaseColumn("Product ID", SimpleColumn('product_id')),
-    #         DatabaseColumn("Product Name", SimpleColumn('product_name')),
-    #         DatabaseColumn("Total number of PNA lost product", SumColumn('loss_amt')),
-    #         DatabaseColumn("PNA final stock", SumColumn('final_pna_stock')),
-    #     ]
-    #     if self.loc_id == 'pps_id':
-    #         columns.append(DatabaseColumn("PPS ID", SimpleColumn('pps_id')))
-    #         columns.append(DatabaseColumn("PPS Name", SimpleColumn('pps_name')))
-    #     elif self.loc_id == 'district_id':
-    #         columns.append(DatabaseColumn("District ID", SimpleColumn('district_id')))
-    #         columns.append(DatabaseColumn("District Name", SimpleColumn('district_name')))
-    #     else:
-    #         columns.append(DatabaseColumn("Region ID", SimpleColumn('region_id')))
-    #         columns.append(DatabaseColumn("Region Name", SimpleColumn('region_name')))
-    #     return columns
 
     def get_average_expiration_rate_in_location(self, data_per_localization):
         numerator = 0
