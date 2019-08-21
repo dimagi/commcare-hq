@@ -14,7 +14,6 @@ from corehq.apps.es import aggregations
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.warehouse.models.facts import FormFact
 from couchforms.const import DEVICE_LOG_XMLNS
