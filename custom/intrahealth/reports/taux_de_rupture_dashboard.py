@@ -231,6 +231,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         chart = MultiBarChart(None, Axis('Product'), Axis('Percent', format='.2f'))
         chart.height = 400
         chart.marginBottom = 100
+        chart.forceY = [0, 100]
 
         def data_to_chart(stocks_list):
             stocks_to_return = []
@@ -282,7 +283,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
             return [
                 {
-                    "key": 'Taux de rupture par produit au niveau national',
+                    "key": 'Taux de rupture par produit',
                     'values': com
                 },
             ]
