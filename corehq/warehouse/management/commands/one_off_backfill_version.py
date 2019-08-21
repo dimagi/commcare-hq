@@ -40,7 +40,7 @@ def get_latest_build_ids(domain, app_id, user_ids):
     return result
 
 
-def update_build_version_for_app(domain, app_id):
+def update_build_version_for_app(domain, app_id, check_only):
     CHUNK_SIZE = 1000
     fact_chunks = chunked(
         paginated_queryset(
@@ -84,19 +84,31 @@ def update_build_version_for_app(domain, app_id):
             if not fact.last_form_app_build_version and version:
                 fact.last_form_app_build_version = version
                 facts_to_update.append(fact)
-        print("Updating {} facts for app {}".format(len(facts_to_update), app_id))
-        bulk_update(facts_to_update)
+        if check_only:
+            for fact in facts_to_update:
+                print("Fact ID {}, user {}, version {}".format(
+                    fact.id, fact.user_dim.user_id, fact.last_form_app_build_version))
+        else:
+            print("Updating {} facts for app {}".format(len(facts_to_update), app_id))
+            bulk_update(facts_to_update)
 
 
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument(
+            '--check_only',
+            action='store_true',
+            dest='check_only',
+            default=True,
+            help="Dry Run and print results"
+        )
 
-    def handle(self, domain, **kwargs):
+    def handle(self, domain, **options):
         app_ids = ApplicationDim.objects.filter(
             domain=domain,
             copy_of__isnull=True
         ).values('application_id').distinct()
         for app_id in six.itervalues(app_ids):
-            update_build_version_for_app(domain, app_id)
+            update_build_version_for_app(domain, app_id, options['check_only'])
