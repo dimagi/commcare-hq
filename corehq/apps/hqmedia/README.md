@@ -36,7 +36,7 @@ The **media_type** is `CommCareMultimedia` or one of its subclasses.
 
 The **multimedia_id** is the id of the corresponding `CommCareMultimedia` document.
 
-The **unique_id** is a hash of the concatenated multimedia id and path. That means this id will be unique within the multimedia map, but will not be globally unique.
+The **unique_id** is a hash of the concatenated multimedia id and path at the time the item was created. That means this id will be unique within the multimedia map, but will not be globally unique.
 
 The **version** is the app version where the multimedia was added or most recently changed. More on this below.
 
@@ -46,7 +46,7 @@ CommCare (on mobile) uses the version to determine when to re-download an update
 
 The version is updated (set to the latest app version) in the following situations:
 - Multimedia is added to the app.
-- The content of multimedia is changed, by using the "Replace" button in the uploader. This also causes the multimedia id to change.
+- The content of multimedia is changed, by using the "Replace" button in the uploader. This also causes the multimedia id to change. It typically does not change the unique_id, because `set_media_versions` looks up the path in the previous version of the app and uses that item's unique id.
 - The path alone is changed using the "Manage Multimedia Paths" bulk uploader. This does not change the unique id, even though the path changes.
 - The path and content are changed together in the UI. This also replaces the multimedia id and re-generates the unique id.
 
