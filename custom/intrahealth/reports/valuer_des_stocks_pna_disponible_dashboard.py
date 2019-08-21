@@ -19,7 +19,7 @@ from dimagi.utils.dates import force_to_date
 
 class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     slug = 'valeur_des_stocks_pna_disponible_report'
-    comment = 'Valeur des stocks PNA disponible (chaque produit)'
+    comment = 'Valeur des stocks PNA disponible'
     name = 'Valeur des stocks PNA disponible'
     default_rows = 10
 
@@ -89,7 +89,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
         for product in products:
             headers.add_column(DataTablesColumn(product))
 
-        headers.add_column(DataTablesColumn('NATIONAL'))
+        headers.add_column(DataTablesColumn('SYNTHESE'))
 
         return headers
 
@@ -203,8 +203,8 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
             return pnas_to_return
 
         def calculate_total_row(locations_with_products):
-            total_row_to_return = ['<b>NATIONAL</b>']
-            locations_with_products['<b>NATIONAL</b>'] = []
+            total_row_to_return = ['<b>SYNTHESE</b>']
+            locations_with_products['<b>SYNTHESE</b>'] = []
             data_for_total_row = []
 
             for location, products in locations_with_products.items():
@@ -223,7 +223,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
             for data in data_for_total_row:
                 final_pna_stock_valuation = data[0]
                 product_name = data[1]
-                locations_with_products['<b>NATIONAL</b>'].append({
+                locations_with_products['<b>SYNTHESE</b>'].append({
                     'final_pna_stock_valuation': final_pna_stock_valuation,
                     'product_name': product_name,
                 })
@@ -240,48 +240,44 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
 
     @property
     def charts(self):
-        chart = MultiBarChart(None, Axis('Location'), Axis('Amount', format='i'))
+        chart = MultiBarChart(None, Axis('Location'), Axis('Percent', format='i'))
         chart.height = 400
         chart.marginBottom = 100
+        chart.forceY = [0, 100]
 
-        def data_to_chart(pnas_list):
-            pnas_to_return = []
-            products_data = []
-            added_products = []
+        def data_to_chart(quantities_list):
+            quantities_to_return = []
+            locations_data = {}
+            added_locations = []
 
-            for pna in pnas_list:
-                sorted_stock = sorted(pna['products'], key=lambda x: x['product_name'])
-                for product in sorted_stock:
-                    product_id = product['product_id']
-                    product_name = product['product_name']
+            quantities_list = sorted(quantities_list, key=lambda x: x['location_name'])
+            for quantity in quantities_list:
+                location_name = quantity['location_name']
+                location_id = quantity['location_id']
+                for product in quantity['products']:
                     final_pna_stock_valuation = product['final_pna_stock_valuation']
-                    if product_id not in added_products:
-                        added_products.append(product_id)
-                        product_dict = {
-                            'product_id': product_id,
-                            'product_name': product_name,
+                    if location_id not in added_locations:
+                        added_locations.append(location_id)
+                        locations_data[location_id] = {
+                            'location_name': location_name,
                             'final_pna_stock_valuation': final_pna_stock_valuation,
                         }
-                        products_data.append(product_dict)
                     else:
-                        for product_data in products_data:
-                            if product_data['product_id'] == product_id:
-                                product_data['final_pna_stock_valuation'] += final_pna_stock_valuation
+                        locations_data[location_id]['final_pna_stock_valuation'] += final_pna_stock_valuation
 
-            products = sorted(products_data, key=lambda x: x['product_name'])
-            for product in products:
-                product_name = product['product_name']
-                final_pna_stock_valuation = product['final_pna_stock_valuation']
+            for location_info in locations_data.values():
+                location_name = location_info['location_name']
+                final_pna_stock_valuation = location_info['final_pna_stock_valuation']
                 pna = final_pna_stock_valuation if final_pna_stock_valuation is not 0 else 0
-                pnas_to_return.append([
-                    product_name,
+                quantities_to_return.append([
+                    location_name,
                     {
-                        'html': '{}'.format(pna),
+                        'html': '{:.2f} %'.format(pna),
                         'sort_key': pna
                     }
                 ])
 
-            return pnas_to_return
+            return quantities_to_return
 
         def get_data_for_graph():
             com = []

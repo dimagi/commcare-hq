@@ -215,7 +215,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
             return stocks_to_return
 
         def calculate_total_row(locations_with_products):
-            total_row_to_return = ['<b>NATIONAL</b>']
+            total_row_to_return = ['<b>SYNTHESE</b>']
             data_for_total_row = []
 
             for location, products in locations_with_products.items():
@@ -358,92 +358,6 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
         chart.data = get_data_for_graph()
         return [chart]
-
-    # def calculate_rows(self):
-    #
-    #     def to_report_row(s):
-    #         stocks_to_return = []
-    #         added_locations = []
-    #         added_locations_with_products = {}
-    #
-    #         for stock in s:
-    #             location_id = stock['location_id']
-    #             location_name = stock['location_name']
-    #             products = stock['products']
-    #             if location_id in added_locations:
-    #                 in_ppses = added_locations_with_products[location_name][0]
-    #                 all_ppses = added_locations_with_products[location_name][1]
-    #                 for product in products:
-    #                     in_ppses += product['in_ppses']
-    #                     all_ppses += product['all_ppses']
-    #                 added_locations_with_products[location_name][0] = in_ppses
-    #                 added_locations_with_products[location_name][1] = all_ppses
-    #             else:
-    #                 added_locations.append(location_id)
-    #                 in_ppses = 0
-    #                 all_ppses = 0
-    #                 for product in products:
-    #                     in_ppses += product['in_ppses']
-    #                     all_ppses += product['all_ppses']
-    #                 added_locations_with_products[location_name] = [in_ppses, all_ppses]
-    #
-    #         for location, products in added_locations_with_products.items():
-    #             in_ppses = products[0]
-    #             all_ppses = products[1]
-    #             percent = (in_ppses / float(all_ppses)) * 100
-    #             stocks_to_return.append([
-    #                 location,
-    #                 {
-    #                     'html': '{:.2f} %'.format(percent),
-    #                     'sort_key': percent,
-    #                 }
-    #             ])
-    #
-    #         return stocks_to_return
-    #
-    #     def calculate_total_row(s):
-    #         total_row_to_return = ['<b>NATIONAL</b>']
-    #         all_ppses = 0
-    #         in_ppses = 0
-    #
-    #         for stock in s:
-    #             products = stock['products']
-    #             for product in products:
-    #                 all_ppses += product['all_ppses']
-    #                 in_ppses += product['in_ppses']
-    #
-    #         percent = (in_ppses / float(all_ppses)) * 100 if all_ppses is not 0 else 0
-    #         total_row_to_return.append({
-    #             'html': '<b>{:.2f} %</b>'.format(percent),
-    #             'sort_key': percent,
-    #         })
-    #
-    #         return total_row_to_return
-    #
-    #     rows = to_report_row(self.clean_rows)
-    #     total_row = calculate_total_row(self.clean_rows)
-    #     rows.append(total_row)
-    #     return rows
-
-    # @property
-    # def charts(self):
-    #     chart = MultiBarChart(None, Axis('Location'), Axis('Percent', format='.2f'))
-    #     chart.height = 400
-    #     chart.marginBottom = 100
-    #
-    #     def get_data_for_graph():
-    #         com = []
-    #         rows = self.calculate_rows()
-    #         rows.pop()
-    #         for row in rows:
-    #             com.append({"x": row[0], "y": row[1]['sort_key']})
-    #
-    #         return [
-    #             {"key": "Taux de disponibilité de la Gamme des produits ", 'values': com},
-    #         ]
-    #
-    #     chart.data = get_data_for_graph()
-    #     return [chart]
 
     @property
     def config(self):

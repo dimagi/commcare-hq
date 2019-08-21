@@ -89,7 +89,7 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
         for product in products:
             headers.add_column(DataTablesColumn(product))
 
-        headers.add_column(DataTablesColumn('NATIONAL'))
+        headers.add_column(DataTablesColumn('SYNTHESE'))
 
         return headers
 
@@ -216,8 +216,8 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
             return quantities_to_return
 
         def calculate_total_row(locations_with_products):
-            total_row_to_return = ['<b>NATIONAL</b>']
-            locations_with_products['<b>NATIONAL</b>'] = []
+            total_row_to_return = ['<b>SYNTHESE</b>']
+            locations_with_products['<b>SYNTHESE</b>'] = []
             data_for_total_row = []
 
             for location, products in locations_with_products.items():
@@ -240,7 +240,7 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                 amt_delivered_convenience = data[0]
                 ideal_topup = data[1]
                 product_name = data[2]
-                locations_with_products['<b>NATIONAL</b>'].append({
+                locations_with_products['<b>SYNTHESE</b>'].append({
                     'amt_delivered_convenience': amt_delivered_convenience,
                     'ideal_topup': ideal_topup,
                     'product_name': product_name,
@@ -263,43 +263,39 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
         chart = MultiBarChart(None, Axis('Location'), Axis('Percent', format='.2f'))
         chart.height = 400
         chart.marginBottom = 100
+        chart.forceY = [0, 100]
 
         def data_to_chart(quantities_list):
             quantities_to_return = []
-            products_data = []
-            added_products = []
+            locations_data = {}
+            added_locations = []
 
+            quantities_list = sorted(quantities_list, key=lambda x: x['location_name'])
             for quantity in quantities_list:
-                sorted_quantity = sorted(quantity['products'], key=lambda x: x['product_name'])
-                for product in sorted_quantity:
-                    product_id = product['product_id']
-                    product_name = product['product_name']
+                location_name = quantity['location_name']
+                location_id = quantity['location_id']
+                for product in quantity['products']:
                     amt_delivered_convenience = product['amt_delivered_convenience']
                     ideal_topup = product['ideal_topup']
-                    if product_id not in added_products:
-                        added_products.append(product_id)
-                        product_dict = {
-                            'product_id': product_id,
-                            'product_name': product_name,
+                    if location_id not in added_locations:
+                        added_locations.append(location_id)
+                        locations_data[location_id] = {
+                            'location_name': location_name,
                             'amt_delivered_convenience': amt_delivered_convenience,
                             'ideal_topup': ideal_topup,
                         }
-                        products_data.append(product_dict)
                     else:
-                        for product_data in products_data:
-                            if product_data['product_id'] == product_id:
-                                product_data['amt_delivered_convenience'] += amt_delivered_convenience
-                                product_data['ideal_topup'] += ideal_topup
+                        locations_data[location_id]['amt_delivered_convenience'] += amt_delivered_convenience
+                        locations_data[location_id]['ideal_topup'] += ideal_topup
 
-            products = sorted(products_data, key=lambda x: x['product_name'])
-            for product in products:
-                product_name = product['product_name']
-                amt_delivered_convenience = product['amt_delivered_convenience']
-                ideal_topup = product['ideal_topup']
+            for location_info in locations_data.values():
+                location_name = location_info['location_name']
+                amt_delivered_convenience = location_info['amt_delivered_convenience']
+                ideal_topup = location_info['ideal_topup']
                 percent = (amt_delivered_convenience / float(ideal_topup) * 100) \
                     if ideal_topup != 0 else 0
                 quantities_to_return.append([
-                    product_name,
+                    location_name,
                     {
                         'html': '{:.2f} %'.format(percent),
                         'sort_key': percent
@@ -316,7 +312,7 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
 
             return [
                 {
-                    "key": 'Taux de Satisfaction des produits au niveau national',
+                    "key": 'Taux de Satisfaction des produits',
                     'values': com
                 },
             ]

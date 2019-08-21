@@ -4683,7 +4683,7 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
         headers = DataTablesHeader(DataTablesColumn(first_row))
         for product in self.products:
             headers.add_column(DataTablesColumn(product))
-        headers.add_column(DataTablesColumn('NATIONALE'))
+        headers.add_column(DataTablesColumn('SYNTHESE'))
         return headers
 
     @property
@@ -4906,7 +4906,7 @@ class ExpirationRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
         headers = DataTablesHeader(DataTablesColumn(first_row))
         for product in self.products:
             headers.add_column(DataTablesColumn(product))
-        headers.add_column(DataTablesColumn('NATIONALE'))
+        headers.add_column(DataTablesColumn('SYNTHESE'))
         return headers
 
     @property
