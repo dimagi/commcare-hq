@@ -154,3 +154,7 @@ def force_citus_engine(force=False):
 
 def forced_citus():
     return getattr(_thread_local, 'force_citus', False)
+
+
+def use_citus_for_request():
+    _thread_local.force_citus = True
