@@ -649,10 +649,6 @@ REMINDERS_RATE_LIMIT_PERIOD = 60
 
 SYNC_CASE_FOR_MESSAGING_ON_SAVE = True
 
-PILLOW_RETRY_QUEUE_ENABLED = False
-
-SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
-
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',
