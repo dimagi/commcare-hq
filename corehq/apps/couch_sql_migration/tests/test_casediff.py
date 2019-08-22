@@ -74,6 +74,12 @@ class TestCaseDiffQueue(SimpleTestCase):
             queue.update({"c"}, "f0")
         self.assertDiffed("c")
 
+    def test_case_with_null_form_update(self):
+        self.add_cases("cx", "fx")
+        with self.queue() as queue:
+            queue.update({"cx"}, None)
+        self.assertDiffed("cx")
+
     def test_diff_batching(self):
         self.add_cases("a b c d e", "fx")
         batch_size = mod.CaseDiffQueue.BATCH_SIZE

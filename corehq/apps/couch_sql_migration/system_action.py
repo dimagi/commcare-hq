@@ -41,7 +41,9 @@ _actions = {}
 def _archive_form_data(args_json):
     def iter_forms_and_cases():
         couch_form = FormAccessorCouch.get_form(form.form_id)
-        yield form.form_id, get_case_ids(couch_form)
+        # null form_id -> do not increment form counts in case diff queue
+        yield None, get_case_ids(couch_form)
+
     args = list(args_json)
     try:
         args[0] = form = FormAccessorSQL.get_form(args_json[0])
