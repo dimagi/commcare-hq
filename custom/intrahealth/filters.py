@@ -107,6 +107,10 @@ class YeksiNaaLocationFilter(AsyncLocationFilter):
         }
 
 
+class YeksiRecapPassageNaaLocationFilter(YeksiNaaLocationFilter):
+    template = 'yeksi_naa/recap_passage_location_filter.html'
+
+
 class YeksiNaaLocationFilter2(LocationFilter):
     template = 'yeksi_naa/location_filter.html'
 
