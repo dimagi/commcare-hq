@@ -16,6 +16,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
     TableDataFormat, calculate_total_row
+from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.intrahealth import PRODUCT_NAMES as INIT_PRODUCT_NAMES
 from custom.intrahealth import PRODUCT_MAPPING
@@ -2484,7 +2485,11 @@ class ProductsDataSource(YeksiSqlData):
 
     @property
     def table_name(self):
-        return get_table_name(self.config['domain'], YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT)
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain,
+                                                          YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT)
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
 
     @property
     def headers(self):
@@ -3911,7 +3916,10 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @property
     def table_name(self):
-        return get_table_name(self.config['domain'], 'yeksi_naa_reports_consumption')
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, 'yeksi_naa_reports_consumption')
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
 
     @cached_property
     def selected_location(self):
@@ -4126,7 +4134,10 @@ class TauxDeRuptureRateData(SqlData):
 
     @property
     def table_name(self):
-        return get_table_name(self.config['domain'], 'yeksi_naa_reports_consumption')
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, 'yeksi_naa_reports_consumption')
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
 
     @property
     def group_by(self):
@@ -4339,7 +4350,10 @@ class ConsommationPerProductData(SqlData):
 
     @property
     def table_name(self):
-        return get_table_name(self.config['domain'], 'yeksi_naa_reports_consumption')
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, 'yeksi_naa_reports_consumption')
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
 
     @property
     def group_by(self):
@@ -5101,7 +5115,10 @@ class ValuationOfPNAStockPerProductV2Data(SqlData):
 
     @property
     def table_name(self):
-        return get_table_name(self.config['domain'], "")
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, '')
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
 
     @property
     def group_by(self):
@@ -5180,7 +5197,10 @@ class RecapPassageOneData(SqlData):
 
     @property
     def table_name(self):
-        return get_table_name(self.config['domain'], OPERATEUR_COMBINED2)
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, OPERATEUR_COMBINED2)
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
 
     @property
     def group_by(self):
