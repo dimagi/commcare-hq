@@ -19,39 +19,55 @@ from corehq.apps.translations.app_translations.utils import (
     get_module_sheet_name,
     get_modules_and_forms_row,
 )
+from corehq.apps.translations.generators import EligibleForTransifexChecker
 
 
-def get_bulk_app_single_sheet_by_name(app, lang):
+def get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=False):
+    checker = EligibleForTransifexChecker(app)
+
     rows = []
     for module in app.modules:
+        if eligible_for_transifex_only and checker.exclude_module(module):
+            continue
         sheet_name = get_module_sheet_name(module)
         rows.append(get_name_menu_media_row(module, sheet_name, lang))
         for module_row in get_module_rows([lang], module):
+            if eligible_for_transifex_only:
+                field_name, field_type, translation = module_row
+                if checker.is_blacklisted(module.unique_id, field_type, field_name, [translation]):
+                    continue
             rows.append(get_list_detail_case_property_row(module_row, sheet_name))
 
         for form in module.get_forms():
+            if eligible_for_transifex_only and checker.exclude_form(form):
+                continue
             sheet_name = get_form_sheet_name(form)
             rows.append(get_name_menu_media_row(form, sheet_name, lang))
             for label_name_media in get_form_question_label_name_media([lang], form):
+                if (
+                    eligible_for_transifex_only and
+                    checker.is_label_to_skip(form.unique_id, label_name_media[0])
+                ):
+                    continue
                 rows.append(get_question_row(label_name_media, sheet_name))
 
     return OrderedDict({SINGLE_SHEET_NAME: rows})
 
 
-def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
+def get_bulk_app_sheets_by_name(app, eligible_for_transifex_only=False):
     """
     Data rows for bulk app translation download
 
-    exclude_module and exclude_form are functions that take in one argument
-    (form or module) and return True if the module/form should be excluded
-    from the returned list
+    If `eligible_for_transifex_only` is True, sheets will omit
+    translations that would not be sent to Transifex.
     """
+    checker = EligibleForTransifexChecker(app)
 
     # keys are the names of sheets, values are lists of tuples representing rows
     rows = OrderedDict({MODULES_AND_FORMS_SHEET_NAME: []})
 
     for module in app.get_modules():
-        if exclude_module is not None and exclude_module(module):
+        if eligible_for_transifex_only and checker.exclude_module(module):
             continue
 
         module_sheet_name = get_module_sheet_name(module)
@@ -64,10 +80,17 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
             unique_id=module.unique_id,
         ))
 
-        rows[module_sheet_name] = get_module_rows(app.langs, module)
+        rows[module_sheet_name] = []
+        for module_row in get_module_rows(app.langs, module):
+            if eligible_for_transifex_only:
+                field_name, field_type, translations = module_row[0], module_row[1], module_row[2:]
+                # field_name, field_type, *translations = module_row  # TODO: Post-Py2
+                if checker.is_blacklisted(module.unique_id, field_type, field_name, translations):
+                    continue
+            rows[module_sheet_name].append(module_row)
 
         for form in module.get_forms():
-            if exclude_form is not None and exclude_form(form):
+            if eligible_for_transifex_only and checker.exclude_form(form):
                 continue
 
             form_sheet_name = get_form_sheet_name(form)
@@ -80,7 +103,14 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
                 unique_id=form.unique_id
             ))
 
-            rows[form_sheet_name] = get_form_question_label_name_media(app.langs, form)
+            rows[form_sheet_name] = []
+            for label_name_media in get_form_question_label_name_media(app.langs, form):
+                if (
+                    eligible_for_transifex_only and
+                    checker.is_label_to_skip(form.unique_id, label_name_media[0])
+                ):
+                    continue
+                rows[form_sheet_name].append(label_name_media)
 
     return rows
 
