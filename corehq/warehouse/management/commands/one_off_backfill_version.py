@@ -12,11 +12,12 @@ from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import TermsAggregation, TopHitsAggregation
 from corehq.util.queries import paginated_queryset
 from dimagi.utils.chunked import chunked
+from corehq.elastic import ES_EXPORT_INSTANCE
 
 
 def get_latest_build_ids(domain, app_id, user_ids):
     query = (
-        FormES()
+        FormES(es_instance_alias=ES_EXPORT_INSTANCE)
         .domain(domain)
         .app([app_id])
         .user_id(user_ids)
@@ -24,7 +25,7 @@ def get_latest_build_ids(domain, app_id, user_ids):
             TermsAggregation('user_id', 'form.meta.userID').aggregation(
                 TopHitsAggregation(
                     'top_hits_last_form_submissions',
-                    'form.meta.timeEnd',
+                    'received_on',
                     is_ascending=False,
                     include=['build_id'],
                 )
@@ -56,7 +57,7 @@ def update_build_version_for_app(domain, app_id, check_only):
 
     version_by_build_id = {}
 
-    def memoized_get_version(build_ids):
+    def memoized_get_versions(build_ids):
         new = set(build_ids) - set(six.iterkeys(version_by_build_id))
         if new:
             versions = ApplicationDim.objects.filter(
@@ -74,9 +75,7 @@ def update_build_version_for_app(domain, app_id, check_only):
         }
         build_ids_by_user_ids = get_latest_build_ids(domain, app_id, list(six.iterkeys(facts_by_user_ids)))
         build_ids = list(six.itervalues(build_ids_by_user_ids))
-        # could have None value for some users
-        build_ids.remove(None)
-        version_by_build_id = memoized_get_version(build_ids)
+        version_by_build_id = memoized_get_versions(build_ids)
         facts_to_update = []
         for user_id, fact in six.iteritems(facts_by_user_ids):
             build_id = build_ids_by_user_ids.get(user_id, '')
