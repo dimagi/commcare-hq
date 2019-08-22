@@ -12,18 +12,18 @@ endif
 
 requirements: export CUSTOM_COMPILE_COMMAND=`make requirements` or `make upgrade-requirements`
 requirements:
-	pip-compile -o $(REQUIREMENTS_TXT_DIR)/requirements.txt requirements/requirements.in
+	pip-compile -o $(REQUIREMENTS_TXT_DIR)/requirements.txt requirements/requirements.in --allow-unsafe
 	pip-compile -o $(REQUIREMENTS_TXT_DIR)/prod-requirements.txt requirements/prod-requirements.in --allow-unsafe
-	pip-compile -o $(REQUIREMENTS_TXT_DIR)/test-requirements.txt requirements/test-requirements.in
-	pip-compile -o $(REQUIREMENTS_TXT_DIR)/dev-requirements.txt requirements/dev-requirements.in
+	pip-compile -o $(REQUIREMENTS_TXT_DIR)/test-requirements.txt requirements/test-requirements.in --allow-unsafe
+	pip-compile -o $(REQUIREMENTS_TXT_DIR)/dev-requirements.txt requirements/dev-requirements.in --allow-unsafe
 	scripts/pip-post-compile.sh $(REQUIREMENTS_TXT_DIR)/*requirements.txt
 
 upgrade-requirements: export CUSTOM_COMPILE_COMMAND=`make requirements` or `make upgrade-requirements`
 upgrade-requirements:
-	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/requirements.txt requirements/requirements.in
+	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/requirements.txt requirements/requirements.in --allow-unsafe
 	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/prod-requirements.txt requirements/prod-requirements.in --allow-unsafe
-	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/test-requirements.txt requirements/test-requirements.in
-	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/dev-requirements.txt requirements/dev-requirements.in
+	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/test-requirements.txt requirements/test-requirements.in --allow-unsafe
+	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/dev-requirements.txt requirements/dev-requirements.in --allow-unsafe
 	scripts/pip-post-compile.sh $(REQUIREMENTS_TXT_DIR)/*requirements.txt
 
 docs:
