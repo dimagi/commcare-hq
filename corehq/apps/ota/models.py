@@ -188,3 +188,13 @@ class MobileRecoveryMeasure(models.Model):
             res["app_version_min"] = self.app_version_min
             res["app_version_max"] = self.app_version_max
         return res
+
+
+class DeviceLogRequest(models.Model):
+    """
+    A pending request that a particular device submit their logs
+    """
+    domain = models.CharField(max_length=255)
+    username = models.CharField(max_length=255)
+    device_id = models.CharField(max_length=255)
+    created_on = models.DateTimeField(auto_now_add=True)
