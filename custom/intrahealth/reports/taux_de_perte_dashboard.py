@@ -99,11 +99,12 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
 
     @property
     def charts(self):
-        chart = PNAMultiBarChart(None, Axis('Location'), Axis('Amount', format='i'))
+        chart = PNAMultiBarChart(None, Axis('Location'), Axis('Percent', format='.2f'))
         chart.height = 550
         chart.marginBottom = 150
         chart.rotateLabels = -45
         chart.showControls = False
+        chart.forceY = [0, 100]
 
         def get_data_for_graph():
             com = []

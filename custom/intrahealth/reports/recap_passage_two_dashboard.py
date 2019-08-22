@@ -22,7 +22,7 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
     name = 'Recap Passage 2'
     title = "Recap Passage 2"
     default_rows = 10
-    exportable = True
+
     report_template_path = "intrahealth/multi_report.html"
 
     @property

@@ -24,8 +24,41 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
     slug = 'disponibilite_report'
     comment = 'Taux de disponibilité de la gamme'
     default_rows = 10
+    exportable = True
 
     report_template_path = 'yeksi_naa/tabular_report.html'
+
+    @property
+    def export_table(self):
+        report = [
+            [
+                'Disponibilité',
+                [],
+            ]
+        ]
+        headers = [self.selected_location_type]
+        for product in self.products:
+            headers.append(product)
+        rows = self.calculate_rows()
+        report[0][1].append(headers)
+
+        for row in rows:
+            location_name = row[0]
+            location_name = location_name.replace('<b>', '')
+            location_name = location_name.replace('</b>', '')
+
+            row_to_return = [location_name]
+
+            rows_length = len(row)
+            for r in range(1, rows_length):
+                value = row[r]['html']
+                value = value.replace('<b>', '')
+                value = value.replace('</b>', '')
+                row_to_return.append(value)
+
+            report[0][1].append(row_to_return)
+
+        return report
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):

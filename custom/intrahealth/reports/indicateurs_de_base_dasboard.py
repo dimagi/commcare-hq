@@ -19,7 +19,46 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
     comment = 'indicateurs de base'
     name = 'Indicateurs de Base'
     default_rows = 10
+    exportable = True
+
     report_template_path = 'yeksi_naa/tabular_report.html'
+
+    @property
+    def export_table(self):
+        report = [
+            [
+                'Indicateurs de Base',
+                [],
+            ]
+        ]
+        headers = [
+            self.selected_location_type,
+            'Date effective de livraison',
+            'Nombre de PPS enregistrés',
+            'Nombre de PPS visités',
+            'Taux de couverture',
+            'Taux de soumission',
+        ]
+        rows = self.calculate_rows()
+        report[0][1].append(headers)
+
+        for row in rows:
+            location_name = row[0]
+            location_name = location_name.replace('<b>', '')
+            location_name = location_name.replace('</b>', '')
+
+            row_to_return = [location_name]
+
+            rows_length = len(row)
+            for r in range(1, rows_length):
+                value = row[r]['html']
+                value = value.replace('<b>', '')
+                value = value.replace('</b>', '')
+                row_to_return.append(value)
+
+            report[0][1].append(row_to_return)
+
+        return report
 
     @property
     def fields(self):
