@@ -123,6 +123,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         # all new domains are set complete when they are created
         DomainMigrationProgress.objects.filter(domain=self.domain_name).delete()
         self.assert_backend("couch")
+        self.migration_success = None
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
@@ -138,7 +139,12 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
             atomic_savepoint,
         ):
-            call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
+            try:
+                call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
+                success = True
+            except SystemExit:
+                success = False
+        self.migration_success = success
 
     def _do_migration_and_assert_flags(self, domain, **options):
         self._do_migration(domain, **options)
@@ -157,6 +163,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             for kind, counts in six.iteritems(state.get_doc_counts())
             if counts.missing
         }, missing or {})
+        if not expected_diffs and not self.migration_success:
+            self.fail("migration failed")
 
     def _get_form_ids(self, doc_type='XFormInstance'):
         return set(
@@ -285,9 +293,9 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_archived_form_migration(self):
         form = create_and_save_a_form(self.domain_name)
         form.archive('user1')
-        self.assertEqual(1, len(self._get_form_ids('XFormArchived')))
+        self.assertEqual(self._get_form_ids('XFormArchived'), {form.form_id})
         self._do_migration_and_assert_flags(self.domain_name)
-        self.assertEqual(1, len(self._get_form_ids('XFormArchived')))
+        self.assertEqual(self._get_form_ids('XFormArchived'), {form.form_id})
         self._compare_diffs([])
 
     def test_archived_form_with_case_migration(self):
@@ -439,11 +447,11 @@ class MigrationTestCase(BaseMigrationTestCase):
         form.doc_type = 'HQSubmission'
         form.save()
 
-        self.assertEqual(1, len(get_doc_ids_in_domain_by_type(
-            self.domain_name, "HQSubmission", XFormInstance.get_db())
-        ))
+        self.assertEqual(get_doc_ids_in_domain_by_type(
+            self.domain_name, "HQSubmission", XFormInstance.get_db()
+        ), [form.form_id])
         self._do_migration_and_assert_flags(self.domain_name)
-        self.assertEqual(1, len(self._get_form_ids()))
+        self.assertEqual(self._get_form_ids(), {form.form_id})
         self._compare_diffs([])
 
     @flag_enabled('MM_CASE_PROPERTIES')
