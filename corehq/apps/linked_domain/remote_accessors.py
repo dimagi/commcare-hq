@@ -30,20 +30,22 @@ def get_user_roles(domain_link):
     return _do_simple_request('linked_domain:user_roles', domain_link)['user_roles']
 
 
+def get_brief_apps(domain_link):
+    return _do_simple_request('linked_domain:brief_apps', domain_link)['brief_apps']
+
+
 def get_case_search_config(domain_link):
     return _do_simple_request('linked_domain:case_search_config', domain_link)
-
-
-def get_released_app_version(master_domain, app_id, remote_details):
-    url = reverse('current_app_version', args=[master_domain, app_id])
-    response = _do_request_to_remote_hq_json(url, remote_details, None)
-    return response.get('latestReleasedBuild')
 
 
 def get_released_app(master_domain, app_id, linked_domain, remote_details):
     url = reverse('linked_domain:latest_released_app_source', args=[master_domain, app_id])
     response = _do_request_to_remote_hq_json(url, remote_details, linked_domain)
     return _convert_app_from_remote_linking_source(response)
+
+
+def get_latest_released_versions_by_app_id(domain_link):
+    return _do_simple_request('linked_domain:released_app_versions', domain_link)['versions']
 
 
 def _convert_app_from_remote_linking_source(app_json):
