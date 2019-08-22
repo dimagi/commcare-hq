@@ -10,11 +10,13 @@ from django.utils.functional import cached_property
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.graph_models import MultiBarChart, Axis
+from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter
 from custom.intrahealth.sqldata import ValuationOfPNAStockPerProductV2Data
 from dimagi.utils.dates import force_to_date
+
+from custom.intrahealth.utils import PNAMultiBarChart
 
 
 class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
@@ -240,10 +242,11 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
 
     @property
     def charts(self):
-        chart = MultiBarChart(None, Axis('Location'), Axis('Percent', format='i'))
-        chart.height = 400
-        chart.marginBottom = 100
-        chart.forceY = [0, 100]
+        chart = PNAMultiBarChart(None, Axis('Location'), Axis('Amount', format='i'))
+        chart.height = 550
+        chart.marginBottom = 150
+        chart.rotateLabels = -45
+        chart.showControls = False
 
         def data_to_chart(quantities_list):
             quantities_to_return = []

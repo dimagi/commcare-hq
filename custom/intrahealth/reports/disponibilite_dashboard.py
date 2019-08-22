@@ -10,11 +10,13 @@ from django.utils.functional import cached_property
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.graph_models import MultiBarChart, Axis
+from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter, DateRangeFilter
 from custom.intrahealth.sqldata import VisiteDeLOperateurPerProductV2DataSource
 from dimagi.utils.dates import force_to_date
+
+from custom.intrahealth.utils import PNAMultiBarChart
 
 
 class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
@@ -261,10 +263,12 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
     @property
     def charts(self):
-        chart = MultiBarChart(None, Axis('Product'), Axis('Percent', format='.2f'))
-        chart.height = 400
-        chart.marginBottom = 100
+        chart = PNAMultiBarChart(None, Axis('Product'), Axis('Percent', format='.2f'))
+        chart.height = 550
+        chart.marginBottom = 150
         chart.forceY = [0, 100]
+        chart.rotateLabels = -45
+        chart.showControls = False
 
         def data_to_chart(stocks_list):
             stocks_to_return = []

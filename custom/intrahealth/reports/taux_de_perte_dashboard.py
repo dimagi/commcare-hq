@@ -9,12 +9,13 @@ from django.utils.functional import cached_property
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.graph_models import MultiBarChart, Axis
+from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter
 from custom.intrahealth.sqldata import LossRatePerProductData2
 from dimagi.utils.dates import force_to_date
+
+from custom.intrahealth.utils import PNAMultiBarChart
 
 
 class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
@@ -98,11 +99,11 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
 
     @property
     def charts(self):
-        chart = MultiBarChart(None, Axis('Location'), Axis('Percent', format='.2f'))
-        chart.forceY = [0, 100]
-
-        chart.height = 400
-        chart.marginBottom = 100
+        chart = PNAMultiBarChart(None, Axis('Location'), Axis('Amount', format='i'))
+        chart.height = 550
+        chart.marginBottom = 150
+        chart.rotateLabels = -45
+        chart.showControls = False
 
         def get_data_for_graph():
             com = []
