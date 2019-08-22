@@ -528,26 +528,26 @@ class LocationAggregationTest(TestCase):
         LocationType.objects.filter(domain=cls.domain_name).delete()
 
         setup_locations_and_types(
-                cls.domain_name,
-                ['state', 'district', 'block', 'supervisor', 'awc'],
-                [],
-                [
-                    ('State1', [
-                        ('District1', [
-                            ('Block1', [
-                                ('Supervisor1', [
-                                    ('Awc1', []),
-                                    ('Awc2', []),
-                                    ]),
-                                ('Supervisor2', [
-                                    ('Awc3', []),
-                                    ]),
-                                ]),
-                            ('Block2', []),
+            cls.domain_name,
+            ['state', 'district', 'block', 'supervisor', 'awc'],
+            [],
+            [
+                ('State1', [
+                    ('District1', [
+                        ('Block1', [
+                            ('Supervisor1', [
+                                ('Awc1', []),
+                                ('Awc2', []),
                             ]),
-                        ])
-                    ]
-                )
+                            ('Supervisor2', [
+                                ('Awc3', []),
+                            ]),
+                        ]),
+                        ('Block2', []),
+                    ]),
+                ])
+            ]
+        )
 
         block1 = SQLLocation.objects.filter(domain=cls.domain_name, name='Block1').first()
         block1.metadata = {"map_location_name": "Not Block1"}
@@ -616,64 +616,87 @@ class LocationAggregationTest(TestCase):
                 'aggregation_level': 5,
                 'awc_is_test': 0, 'awc_name': 'Awc1', 'awc_site_code': 'awc',
                 'supervisor_is_test': 0, 'supervisor_name': 'Supervisor1', 'supervisor_site_code': 'supervisor',
-                'block_is_test': 0, 'block_map_location_name': 'Not Block1', 'block_name': 'Block1', 'block_site_code': 'block',
-                'district_is_test': 0, 'district_map_location_name': '', 'district_name': 'District1', 'district_site_code': 'district',
-                'state_is_test': 0, 'state_map_location_name': '', 'state_name': 'State1', 'state_site_code': 'state',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
             },
             {
                 'aggregation_level': 5,
                 'awc_is_test': 0, 'awc_name': 'Awc2', 'awc_site_code': 'awc',
                 'supervisor_is_test': 0, 'supervisor_name': 'Supervisor1', 'supervisor_site_code': 'supervisor',
-                'block_is_test': 0, 'block_map_location_name': 'Not Block1', 'block_name': 'Block1', 'block_site_code': 'block',
-                'district_is_test': 0, 'district_map_location_name': '', 'district_name': 'District1', 'district_site_code': 'district',
-                'state_is_test': 0, 'state_map_location_name': '', 'state_name': 'State1', 'state_site_code': 'state',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
             },
             {
                 'aggregation_level': 5,
                 'awc_is_test': 0, 'awc_name': 'Awc3', 'awc_site_code': 'awc',
                 'supervisor_is_test': 1, 'supervisor_name': 'Supervisor2', 'supervisor_site_code': 'supervisor',
-                'block_is_test': 0, 'block_map_location_name': 'Not Block1', 'block_name': 'Block1', 'block_site_code': 'block',
-                'district_is_test': 0, 'district_map_location_name': '', 'district_name': 'District1', 'district_site_code': 'district',
-                'state_is_test': 0, 'state_map_location_name': '', 'state_name': 'State1', 'state_site_code': 'state',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
             },
             {
                 'aggregation_level': 4,
                 'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
                 'supervisor_is_test': 0, 'supervisor_name': 'Supervisor1', 'supervisor_site_code': 'supervisor',
-                'block_is_test': 0, 'block_map_location_name': 'Not Block1', 'block_name': 'Block1', 'block_site_code': 'block',
-                'district_is_test': 0, 'district_map_location_name': '', 'district_name': 'District1', 'district_site_code': 'district',
-                'state_is_test': 0, 'state_map_location_name': '', 'state_name': 'State1', 'state_site_code': 'state',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
             },
             {
                 'aggregation_level': 4,
                 'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
                 'supervisor_is_test': 1, 'supervisor_name': 'Supervisor2', 'supervisor_site_code': 'supervisor',
-                'block_is_test': 0, 'block_map_location_name': 'Not Block1', 'block_name': 'Block1', 'block_site_code': 'block',
-                'district_is_test': 0, 'district_map_location_name': '', 'district_name': 'District1', 'district_site_code': 'district',
-                'state_is_test': 0, 'state_map_location_name': '', 'state_name': 'State1', 'state_site_code': 'state',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
             },
             {
                 'aggregation_level': 3,
                 'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
                 'supervisor_is_test': 0, 'supervisor_name': None, 'supervisor_site_code': 'All',
-                'block_is_test': 0, 'block_map_location_name': 'Not Block1', 'block_name': 'Block1', 'block_site_code': 'block',
-                'district_is_test': 0, 'district_map_location_name': '', 'district_name': 'District1', 'district_site_code': 'district',
-                'state_is_test': 0, 'state_map_location_name': '', 'state_name': 'State1', 'state_site_code': 'state',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
             },
             {
                 'aggregation_level': 2,
                 'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
                 'supervisor_is_test': 0, 'supervisor_name': None, 'supervisor_site_code': 'All',
-                'block_is_test': 0, 'block_map_location_name': 'All', 'block_name': None, 'block_site_code': 'All',
-                'district_is_test': 0, 'district_map_location_name': '', 'district_name': 'District1', 'district_site_code': 'district',
-                'state_is_test': 0, 'state_map_location_name': '', 'state_name': 'State1', 'state_site_code': 'state',
+                'block_is_test': 0, 'block_map_location_name': 'All',
+                'block_name': None, 'block_site_code': 'All',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
             },
             {
                 'aggregation_level': 1,
                 'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
                 'supervisor_is_test': 0, 'supervisor_name': None, 'supervisor_site_code': 'All',
                 'block_is_test': 0, 'block_map_location_name': 'All', 'block_name': None, 'block_site_code': 'All',
-                'district_is_test': 0, 'district_map_location_name': 'All', 'district_name': None, 'district_site_code': 'All',
-                'state_is_test': 0, 'state_map_location_name': '', 'state_name': 'State1', 'state_site_code': 'state',
+                'district_is_test': 0, 'district_map_location_name': 'All',
+                'district_name': None, 'district_site_code': 'All',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
             }
         ]
