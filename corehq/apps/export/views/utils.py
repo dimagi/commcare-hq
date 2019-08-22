@@ -226,6 +226,13 @@ class ODataFeedMixin(object):
         from corehq.apps.export.views.list import ODataFeedListView
         return ODataFeedListView
 
+    def get_export_instance(self, schema, original_export_instance):
+        export_instance = super(ODataFeedMixin, self).get_export_instance(schema, original_export_instance)
+        clean_odata_columns(export_instance)
+        export_instance.is_odata_config = True
+        export_instance.transform_dates = False
+        return export_instance
+
 
 class GenerateSchemaFromAllBuildsView(View):
     urlname = 'build_full_schema'
