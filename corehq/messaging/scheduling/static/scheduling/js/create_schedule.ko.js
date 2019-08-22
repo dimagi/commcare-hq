@@ -4,6 +4,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/select2_handler',
     'jquery-ui/ui/datepicker',
+    'bootstrap-timepicker/js/bootstrap-timepicker',
 ], function ($, ko, initialPageData, select2Handler) {
     ko.bindingHandlers.useTimePicker = {
         init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {

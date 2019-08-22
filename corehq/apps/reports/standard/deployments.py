@@ -47,6 +47,7 @@ from corehq.apps.reports.standard import (
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
+from corehq.util.queries import paginated_queryset
 from corehq.util.quickcache import quickcache
 from corehq.warehouse.models.facts import ApplicationStatusFact
 
@@ -73,7 +74,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def warehouse(self):
-        return toggles.WAREHOUSE_APP_STATUS.enabled(self.domain)
+        return toggles.WAREHOUSE_APP_STATUS.enabled_for_request(self.request)
 
     @property
     def headers(self):
@@ -336,20 +337,18 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             rows.append(row_data)
         return rows
 
-    def process_users(self, users, fmt_for_export=False):
+    def process_facts(self, app_status_facts, fmt_for_export=False):
         rows = []
-        first = self.pagination.start
-        last = first + self.pagination.count
-        for user in users[first:last]:
+        for fact in app_status_facts:
             rows.append([
-                user_display_string(user.user_dim.username,
-                                    user.user_dim.first_name,
-                                    user.user_dim.last_name),
-                _fmt_date(user.last_form_submission_date, fmt_for_export),
-                _fmt_date(user.last_sync_log_date, fmt_for_export),
-                getattr(user.app_dim, 'name', '---'),
-                user.last_form_app_build_version,
-                user.last_form_app_commcare_version
+                user_display_string(fact.user_dim.username,
+                                    fact.user_dim.first_name,
+                                    fact.user_dim.last_name),
+                _fmt_date(fact.last_form_submission_date, fmt_for_export),
+                _fmt_date(fact.last_sync_log_date, fmt_for_export),
+                getattr(fact.app_dim, 'name', '---'),
+                fact.last_form_app_build_version,
+                fact.last_form_app_commcare_version
             ])
         return rows
 
@@ -387,33 +386,49 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @property
     def rows(self):
         if self.warehouse:
-            mobile_user_and_group_slugs = set(
-                # Cater for old ReportConfigs
-                self.request.GET.getlist('location_restricted_mobile_worker') +
-                self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
-            )
-            users = ExpandedMobileWorkerFilter.user_es_query(
-                self.domain,
-                mobile_user_and_group_slugs,
-                self.request.couch_user,
-            ).values_list('_id', flat=True)
+            user_ids = self.get_user_ids()
             sort_clause = self.get_sql_sort()
             rows = ApplicationStatusFact.objects.filter(
-                user_dim__user_id__in=users
+                user_dim__user_id__in=user_ids
             ).order_by(sort_clause).select_related('user_dim', 'app_dim')
             if self.selected_app_id:
                 rows = rows.filter(app_dim__application_id=self.selected_app_id)
             self._total_records = rows.count()
-            return self.process_users(rows)
+            first = self.pagination.start
+            last = first + self.pagination.count
+            return self.process_facts(rows[first:last])
         else:
             users = self.user_query().run()
             self._total_records = users.total
             return self.process_rows(users.hits)
 
+    def get_user_ids(self):
+        mobile_user_and_group_slugs = set(
+            # Cater for old ReportConfigs
+            self.request.GET.getlist('location_restricted_mobile_worker') +
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+        )
+        user_ids = ExpandedMobileWorkerFilter.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+            self.request.couch_user,
+        ).values_list('_id', flat=True)
+        return user_ids
+
     @property
     def get_all_rows(self):
-        users = self.user_query(False).scroll()
-        return self.process_rows(users, True)
+        if self.warehouse:
+            user_ids = self.get_user_ids()
+            rows = ApplicationStatusFact.objects.filter(
+                user_dim__user_id__in=user_ids
+            ).select_related('user_dim', 'app_dim')
+            if self.selected_app_id:
+                rows = rows.filter(app_dim__application_id=self.selected_app_id)
+            self._total_records = rows.count()
+            return self.process_facts(paginated_queryset(rows, 10000))
+        else:
+            users = self.user_query(False).scroll()
+            return self.process_rows(users, True)
 
     @property
     def export_table(self):

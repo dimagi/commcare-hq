@@ -23,7 +23,7 @@ bad/
 startover.sh
 celery.db
 tmp.sh
-/resource_versions.py
+/resource_versions.yaml
 /loadtest/results/
 /loadtest/localsettings.py
 /loadtest/config.cfg

@@ -71,6 +71,10 @@ HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
 
 
+HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', False)
+KISSMETRICS_ENABLED = settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', False)
+
+
 def _raise_for_urllib3_response(response):
     '''
     this mimics the behavior of requests.response.raise_for_status so we can
@@ -438,6 +442,10 @@ def track_periodic_data():
     :return:
     """
     # Start by getting a list of web users mapped to their domains
+
+    if not KISSMETRICS_ENABLED and not HUBSPOT_ENABLED:
+        return
+
     three_months_ago = date.today() - timedelta(days=90)
 
     user_query = (UserES()

@@ -224,9 +224,26 @@ class ExportListHelper(object):
             'addedToBulk': False,
             'emailedExport': self._get_daily_saved_export_metadata(export),
             'odataUrl': self._get_odata_url(export),
+            'secondaryOdataUrls': self._get_secondary_odata_urls(export),
         }
 
+    def _get_secondary_odata_urls(self, export):
+        urls = []
+        for table_id, table in enumerate(export.tables):
+            if table.selected and table_id > 0:
+                urls.append({
+                    "label": table.label,
+                    "url": self._fmt_odata_url(
+                        export,
+                        export.get_id + "/{}".format(table_id)
+                    ),
+                })
+        return urls
+
     def _get_odata_url(self, export):
+        return self._fmt_odata_url(export, export.get_id)
+
+    def _fmt_odata_url(self, export, pk):
         resource_class = ODataCaseResource if isinstance(export, CaseExportInstance) else ODataFormResource
         return absolute_reverse(
             'api_dispatch_detail',
@@ -234,7 +251,7 @@ class ExportListHelper(object):
                 'domain': export.domain,
                 'api_name': 'v0.5',
                 'resource_name': resource_class._meta.resource_name,
-                'pk': export.get_id + '/feed',
+                'pk': pk + '/feed',
             }
         )[:-1]  # Remove trailing forward slash for compatibility with BI tools
 

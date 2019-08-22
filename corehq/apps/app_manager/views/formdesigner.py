@@ -329,8 +329,6 @@ def _get_vellum_features(request, domain, app):
         'rich_text': True,
         'sorted_itemsets': app.enable_sorted_itemsets,
         'advanced_itemsets': add_ons.show("advanced_itemsets", request, app),
-        'remote_requests': (app.enable_remote_requests
-                            and toggles.REMOTE_REQUEST_QUESTION_TYPE.enabled(domain)),
     })
     return vellum_features
 

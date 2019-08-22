@@ -1,0 +1,1814 @@
+{
+  "domains": [
+    "test-pna",
+    "ipm-senegal",
+    "testing-ipm-senegal"
+  ],
+  "server_environment": ["production", "pna"],
+  "config": {
+    "table_id": "operateur_combined2",
+    "display_name": "Operateur Combined Passage Report",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "named_expressions": {
+    },
+    "named_filters": {
+      "is_not_v2.0": {
+        "operator": "eq",
+        "type": "boolean_expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "products",
+              "@count"
+            ]
+          }
+        },
+        "comment": null,
+        "property_value": null
+      },
+      "is_v1": {
+        "operator": "eq",
+        "type": "boolean_expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "xmlns"
+          }
+        },
+        "comment": null,
+        "property_value": "http://openrosa.org/formdesigner/7330597b92db84b1a33c7596bb7b1813502879be"
+      },
+      "is_not_v2.1": {
+        "operator": "eq",
+        "type": "boolean_expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "products_update",
+              "@count"
+            ]
+          }
+        },
+        "comment": null,
+        "property_value": null
+      }
+    },
+    "engine_id": "ucr",
+    "disable_destructive_rebuild": false,
+    "base_item_expression": {
+      "test": {
+        "comment": null,
+        "type": "named",
+        "name": "is_v1"
+      },
+      "expression_if_true": {
+        "datatype": null,
+        "type": "property_path",
+        "property_path": [
+          "form",
+          "products"
+        ]
+      },
+      "type": "conditional",
+      "expression_if_false": {
+        "test": {
+          "comment": null,
+          "type": "named",
+          "name": "is_not_v2.0"
+        },
+        "expression_if_true": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_not_v2.1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "confirmed_products_update",
+              "products_update"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "products_update",
+              "item"
+            ]
+          }
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "products",
+            "item"
+          ]
+        }
+      }
+    },
+    "configured_filter": {
+      "operator": "in",
+      "type": "boolean_expression",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "comment": null,
+      "property_value": [
+        "http://openrosa.org/formdesigner/7330597b92db84b1a33c7596bb7b1813502879be",
+        "http://openrosa.org/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D"
+      ]
+    },
+    "configured_indicators": [
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "region_name"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "column_id": "region_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "PPS_name"
+            ]
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "pps_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "district_name"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "column_id": "district_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "PPS ID",
+        "datatype": "string",
+        "expression": {
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "location_id"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "pps_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "District ID",
+        "datatype": "string",
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "ancestor_location",
+            "location_property": null,
+            "location_id": {
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "location_id"
+                ]
+              },
+              "type": "root_doc"
+            },
+            "location_type": {
+              "type": "constant",
+              "constant": "District"
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "district_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "Region ID",
+        "datatype": "string",
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "ancestor_location",
+            "location_property": null,
+            "location_id": {
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "location_id"
+                ]
+              },
+              "type": "root_doc"
+            },
+            "location_type": {
+              "type": "constant",
+              "constant": "Region"
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "region_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "product_name"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "product_name"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_name"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "product_name"
+              ]
+            }
+          }
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "product_name"
+      },
+        {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "product_id"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "product_id"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_id"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "product_id"
+              ]
+            }
+          }
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "product_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "real_date_repeat"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "real_date_repeat"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "real_date_repeat"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "real_date_repeat"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "real_date_repeat"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "old_stock_total"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "old_stock_total"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "old_stock_total"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "old_stock_total"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "old_stock_total"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "total_stock"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "question1",
+                  "total_stock"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "question1",
+                  "total_stock"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "question1",
+                "total_stock"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "total_stock"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "display_total_stock"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "display_total_stock"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "display_total_stock"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "display_total_stock"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "display_total_stock"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "old_stock_pps"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "old_stock_pps"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "old_stock_pps"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "old_stock_pps"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "old_stock_pps"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "outside_receipts_amt"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "question1",
+                  "outside_receipts_amt"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "question1",
+                  "outside_receipts_amt"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "question1",
+                "outside_receipts_amt"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "outside_receipts_amt"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "actual_consumption"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "actual_consumption"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "actual_consumption"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "actual_consumption"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "actual_consumption"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "billed_consumption"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "billed_consumption"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "billed_consumption"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "billed_consumption"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "billed_consumption"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "loss_amt"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "question1",
+                  "loss_amt"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "question1",
+                  "loss_amt"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "question1",
+                "loss_amt"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "loss_amt"
+      },
+
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "amount_billed"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "amount_billed"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "amount_billed"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "amount_billed"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "amount_billed"
+      },
+        {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "amount_owed"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "amount_owed"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "amount_owed"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "amount_owed"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "amount_owed"
+      },
+        {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "amt_delivered_convenience"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "amt_delivered_convenience"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "amt_delivered_convenience"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "amt_delivered_convenience"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "amt_delivered_convenience"
+      },
+        {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "total_loss_amt"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "question1",
+                  "total_loss_amt"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "question1",
+                  "total_loss_amt"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "question1",
+                "total_loss_amt"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "total_loss_amt"
+      },
+        {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "expired_pna"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "question1",
+                  "expired_pna"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "question1",
+                  "expired_pna"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "question1",
+                "expired_pna"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "expired_pna"
+      },
+        {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "ajustment"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "question1",
+                  "ajustment"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "question1",
+                  "ajustment"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "question1",
+                "ajustment"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "ajustment"
+      },
+        {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "nb_days_outstock "
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "question1",
+                  "nb_days_outstock"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "question1",
+                  "nb_days_outstock"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "question1",
+                "nb_days_outstock"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "nb_days_outstock"
+      },
+        {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "top_up",
+              "transfer",
+              "entry",
+              "value",
+              "@quantity"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": "integer",
+            "type": "evaluator",
+            "context_variables": {
+              "actual_consumption": {
+                "test": {
+                  "comment": null,
+                  "type": "named",
+                  "name": "is_not_v2.0"
+                },
+                "expression_if_true": {
+                  "test": {
+                    "comment": null,
+                    "type": "named",
+                    "name": "is_not_v2.1"
+                  },
+                  "expression_if_true": {
+                    "datatype": "integer",
+                    "type": "property_path",
+                    "property_path": [
+                      "actual_consumption"
+                    ]
+                  },
+                  "type": "conditional",
+                  "expression_if_false": {
+                    "datatype": "integer",
+                    "type": "property_path",
+                    "property_path": [
+                      "is_relevant",
+                      "product_confirmed_info",
+                      "actual_consumption"
+                    ]
+                  }
+                },
+                "type": "conditional",
+                "expression_if_false": {
+                  "datatype": "integer",
+                  "type": "property_path",
+                  "property_path": [
+                    "is-relevant",
+                    "actual_consumption"
+                  ]
+                }
+              },
+              "billed_consumption": {
+                "test": {
+                  "comment": null,
+                  "type": "named",
+                  "name": "is_not_v2.0"
+                },
+                "expression_if_true": {
+                  "test": {
+                    "comment": null,
+                    "type": "named",
+                    "name": "is_not_v2.1"
+                  },
+                  "expression_if_true": {
+                    "datatype": "integer",
+                    "type": "property_path",
+                    "property_path": [
+                      "billed_consumption"
+                    ]
+                  },
+                  "type": "conditional",
+                  "expression_if_false": {
+                    "datatype": "integer",
+                    "type": "property_path",
+                    "property_path": [
+                      "is_relevant",
+                      "product_confirmed_info",
+                      "billed_consumption"
+                    ]
+                  }
+                },
+                "type": "conditional",
+                "expression_if_false": {
+                  "datatype": "integer",
+                  "type": "property_path",
+                  "property_path": [
+                    "is-relevant",
+                    "billed_consumption"
+                  ]
+                }
+              }
+            },
+            "statement": "actual_consumption - billed_consumption"
+          }
+        },
+        "column_id": "consommations_non_facturable"
+      },
+        {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "adjusted_monthly_consumption"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "question4",
+                  "adjusted_monthly_consumption"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "question4",
+                  "adjusted_monthly_consumption"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "question4",
+                "adjusted_monthly_consumption"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "adjusted_monthly_consumption"
+      },
+        {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "pps_stock_new"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "comment": null,
+              "type": "named",
+              "name": "is_not_v2.0"
+            },
+            "expression_if_true": {
+              "test": {
+                "comment": null,
+                "type": "named",
+                "name": "is_not_v2.1"
+              },
+              "expression_if_true": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "pps_stock_new"
+                ]
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is_relevant",
+                  "product_confirmed_info",
+                  "pps_stock_new"
+                ]
+              }
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "is-relevant",
+                "pps_stock_new"
+              ]
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "pps_stock_new"
+      },
+
+
+
+
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "expression": {
+          "expression": {
+            "datatype": "date",
+            "type": "property_name",
+            "property_name": "received_on"
+          },
+          "type": "root_doc"
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "received_on"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "expression": {
+          "expression": {
+            "datatype": "date",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "real_date"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "real_date"
+      }
+    ]
+  }
+}

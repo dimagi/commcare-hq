@@ -1,21 +1,17 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import requests
-import json
-from couchdbkit.exceptions import ResourceNotFound
+
 from django.urls.base import reverse
 from requests import ConnectionError
 
-from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import wrap_app
-from corehq.apps.app_manager.exceptions import MultimediaMissingError
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.linked_domain.auth import ApiKeyAuth
 from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.util.view_utils import absolute_reverse
-from corehq.util.soft_assert import soft_assert
+
 from dimagi.utils.logging import notify_exception
-from django.utils.translation import ugettext as _
 
 
 def get_toggles_previews(domain_link):
@@ -57,38 +53,7 @@ def _convert_app_from_remote_linking_source(app_json):
     return app
 
 
-def pull_missing_multimedia_for_app(app):
-    missing_media = _get_missing_multimedia(app)
-    remote_details = app.domain_link.remote_details
-    _fetch_remote_media(app.domain, missing_media, remote_details)
-    if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
-        still_missing_media = _get_missing_multimedia(app)
-        if still_missing_media:
-            raise MultimediaMissingError(_(
-                'Application has missing multimedia even after an attempt to re-pull them. '
-                'Please try re-pulling the app. If this persists, report an issue.'
-            ))
-
-
-def _get_missing_multimedia(app):
-    missing = []
-    for path, media_info in app.multimedia_map.items():
-        try:
-            local_media = CommCareMultimedia.get(media_info['multimedia_id'])
-        except ResourceNotFound:
-            filename = path.split('/')[-1]
-            missing.append((filename, media_info))
-        else:
-            _add_domain_access(app.domain, local_media)
-    return missing
-
-
-def _add_domain_access(domain, media):
-    if domain not in media.valid_domains:
-        media.add_domain(domain)
-
-
-def _fetch_remote_media(local_domain, missing_media, remote_app_details):
+def fetch_remote_media(local_domain, missing_media, remote_app_details):
     for filename, item in missing_media:
         media_class = CommCareMultimedia.get_doc_class(item['media_type'])
         content = _fetch_remote_media_content(item, remote_app_details)

@@ -8,7 +8,7 @@ from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestPrevalenceOfStunting(TestCase):
     maxDiff = None
 

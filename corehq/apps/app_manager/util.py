@@ -580,7 +580,9 @@ class LatestAppInfo(object):
 
     def clear_caches(self):
         self.get_latest_app_version.clear(self)
+        self.get_latest_apk_version.clear(self)
 
+    @quickcache(vary_on=['self.app_id'])
     def get_latest_apk_version(self):
         from corehq.apps.app_manager.models import LATEST_APK_VALUE
         from corehq.apps.builds.models import BuildSpec

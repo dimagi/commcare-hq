@@ -9,7 +9,7 @@ from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, 
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestAWCSCovered(TestCase):
 
     def test_map_data(self):

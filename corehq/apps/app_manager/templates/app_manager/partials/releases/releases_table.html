@@ -35,9 +35,9 @@
   </p>
   <p>
     {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-      <a class="btn btn-default" href="{% url 'app_form_summary_diff' domain latest_build_id app.id %}">
+      <a class="btn btn-default" data-bind="attr: {href: compareUnbuiltChangesUrl}, visible: savedApps().length">
         <i class="fa fa-exchange"></i>
-        {% trans "View Changes" %}
+        {% trans "Version Preview" %}
       </a>
     {% endif %}
     <button class="btn btn-primary" data-bind="
@@ -189,7 +189,13 @@
       </div><!-- .panel-body -->
       <div class="panel-footer clearfix">
         {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-          <a class="btn btn-default" data-bind="attr: { href: $parent.reverse('app_form_summary_diff', $parent.previousBuildId($index()), $data.id()) }">
+          <a class="btn btn-default" data-bind="
+                    attr: {href: $parent.reverse(
+                            'app_form_summary_diff',
+                            $parent.previousBuildId($index()),
+                            $data.id())
+                          },
+                    visible: $parent.previousBuildId($index())">
             <i class="fa fa-exchange"></i>
             {% trans "View Changes" %}
           </a>

@@ -19,13 +19,14 @@
             CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
             CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END,
             thr_v2.thr_distribution_image_count
-            FROM "ucr_icds-cas_static-awc_location_88b3f9c3" awc_location
+            FROM awc_location_local awc_location
             LEFT JOIN "ucr_icds-cas_static-cbe_form_f7988a04" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "ucr_icds-cas_static-vhnd_form_28e7fd58" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
             LEFT JOIN "icds_dashboard_thr_v2" thr_v2 on (awc_location.doc_id = thr_v2.awc_id AND
                                                 thr_v2.month = %(start_date)s
                                                 )
-            group by awc_location.state_id,
+            WHERE awc_location.aggregation_level = 5
+            GROUP BY awc_location.state_id,
             awc_location.district_id,
             awc_location.block_id,
             awc_location.supervisor_id,

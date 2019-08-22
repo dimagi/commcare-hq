@@ -630,7 +630,7 @@ class ReportModuleValidator(ModuleBaseValidator):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
         duplicate_instance_ids = {
             instance_id
-            for instance_id, uuids in get_uuids_by_instance_id(self.module.get_app().domain).items()
+            for instance_id, uuids in get_uuids_by_instance_id(self.module.get_app()).items()
             if len(uuids) > 1
         }
         return any(report_config.instance_id in duplicate_instance_ids

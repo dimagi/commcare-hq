@@ -48,7 +48,8 @@ class Command(ResourceStaticCommand):
             _confirm_or_exit()
 
         try:
-            from resource_versions import resource_versions
+            from get_resource_versions import get_resource_versions
+            resource_versions = get_resource_versions()
         except (ImportError, SyntaxError):
             resource_versions = {}
 
@@ -96,7 +97,7 @@ class Command(ResourceStaticCommand):
             }, indent=2))
         resource_versions["hqwebapp/js/resource_versions.js"] = self.get_hash(filename)
 
-        self.overwrite_resources(resource_versions)
+        self.update_resources(resource_versions, overwrite=False)
 
 
 def _confirm_or_exit():

@@ -105,7 +105,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateTHRForm
 )
 from custom.icds_reports.models.helper import IcdsFile
-from custom.icds_reports.reports.disha import build_dumps_for_month
+from custom.icds_reports.reports.disha import build_dumps_for_month, DishaDump
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.issnip_monthly_register import (
     ISSNIPMonthlyReport,
@@ -132,6 +132,7 @@ from custom.icds_reports.utils import (
     create_excel_file_in_openpyxl,
     create_lady_supervisor_excel_file,
     create_thr_report_excel_file,
+    create_child_report_excel_file,
     create_pdf_file,
     get_performance_report_blob_key,
     icds_pre_release_features,
@@ -749,6 +750,17 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             show_test=include_test,
             beta=beta
         ).get_excel_data(location)
+        if beta:
+            if file_format == 'xlsx':
+                cache_key = create_child_report_excel_file(
+                    excel_data,
+                    data_type,
+                    config['month'].strftime("%B %Y"),
+                    aggregation_level,
+                )
+            else:
+                cache_key = create_excel_file(excel_data, data_type, file_format)
+
     elif indicator == PREGNANT_WOMEN_EXPORT:
         data_type = 'Pregnant_Women'
         excel_data = PregnantWomenExport(
@@ -848,7 +860,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
 
-    if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT):
+    if (indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT) and
+        (beta is False or indicator !=CHILDREN_EXPORT)):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
@@ -1173,6 +1186,13 @@ def build_disha_dump():
     celery_task_logger.info("Finished dumping DISHA data")
 
 
+@task(queue='icds_dashboard_reports_queue', serializer='pickle')
+def build_missing_disha_dump(month, state_name):
+    # the params should already be validated and cleaned
+    assert month < date.today()
+    DishaDump(state_name, month).build_export_json(query_master=True)
+
+
 @periodic_task(run_every=crontab(hour=17, minute=0, day_of_month='12'), acks_late=True, queue='icds_aggregation_queue')
 def build_incentive_report(agg_date=None):
     state_ids = (SQLLocation.objects
@@ -1306,3 +1326,42 @@ def _child_health_monthly_aggregation(day):
 
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
+
+
+@task
+def email_location_changes(domain, old_location_blob_id, new_location_blob_id):
+    old_params = {
+        'file_format': 'csv',
+        'data_type': 'old_location_definitions',
+        'uuid': old_location_blob_id,
+    }
+    new_params = {
+        'file_format': 'csv',
+        'data_type': 'new_location_definitions',
+        'uuid': new_location_blob_id,
+    }
+    email_content = """
+    Location data has changed. This can mean one or more of the following:
+
+    * Locations were added
+    * A location name was modified
+    * The location hierarchy was modified
+    * A user's name was modified
+
+    To determine the exact change, please find the links to CSV changes below.
+    Each file will only contain information on those AWCs which were added or changed:
+
+    Old location definitions: {old_file_url}
+    New location definitions: {new_file_url}
+
+    NOTE this file contains identifiable data such as name and phone number.
+    IT MAY ONLY BE SHARED CONFIDENTIALLY THROUGH SECURE MEANS.
+    """.format(
+        old_file_url=reverse('icds_download_excel', params=old_params, absolute=True, kwargs={'domain': domain}),
+        new_file_url=reverse('icds_download_excel', params=new_params, absolute=True, kwargs={'domain': domain}),
+    )
+
+    send_HTML_email(
+        '[{}] - ICDS Dashboard Location Table Changed'.format(settings.SERVER_ENVIRONMENT),
+        DASHBOARD_TEAM_EMAILS, email_content,
+    )

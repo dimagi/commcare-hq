@@ -2,6 +2,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
 
+from django.core.paginator import Paginator
+from django.core.paginator import EmptyPage
+
 
 def fast_distinct(model_cls, column, using='default'):
     """
@@ -82,3 +85,16 @@ def _execute(command, params=None, using='default'):
             cursor.execute(command, params)
         for row in cursor.fetchall():
             yield row
+
+
+def paginated_queryset(queryset, chunk_size):
+    # Paginate a large queryset into multiple smaller queries
+    paginator = Paginator(queryset, chunk_size)
+    page = 0
+    while True:
+        page += 1
+        try:
+            for obj in paginator.page(page):
+                yield obj
+        except EmptyPage:
+            return

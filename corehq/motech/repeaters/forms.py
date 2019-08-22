@@ -251,17 +251,6 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
         return cleaned_data
 
 
-class Dhis2RepeaterForm(FormRepeaterForm):
-
-    def __init__(self, *args, **kwargs):
-        super(Dhis2RepeaterForm, self).__init__(*args, **kwargs)
-        # self.fields['location_id'].widget = SupplyPointSelectWidget(self.domain, id='id_location_id')
-
-    def get_ordered_crispy_form_fields(self):
-        fields = super(Dhis2RepeaterForm, self).get_ordered_crispy_form_fields()
-        return fields
-
-
 class EmailBulkPayload(forms.Form):
     repeater_id = forms.ChoiceField(label=_("Repeater"))
     payload_ids_file = forms.FileField(

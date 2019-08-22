@@ -236,6 +236,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             var self = {};
 
             self.caseConfig = caseConfig;
+            self.hasPrivilege = true;
 
             self.getCaseTags = function (type, action) {
                 var tags = [],
@@ -468,16 +469,12 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                         potential_child;
                     self.load_update_cases.remove(action);
 
-                    // remove references to deleted action in other load actions
+                    // remove references to deleted action in subsequent load actions
                     var loadUpdateCases = self.caseConfig.caseConfigViewModel.load_update_cases();
                     for (var i = index; i < loadUpdateCases.length; i++) {
-                        potential_child = loadUpdateCases[i];
-                        for (var j = 0; j < potential_child.parents.length; j++) {
-                            var caseIndex = potential_child.parents[i];
-                            if (caseIndex.tag() === action.case_tag()) {
-                                caseIndex.tag('');
-                            }
-
+                        var caseIndex = loadUpdateCases[i].case_index;
+                        if (caseIndex.tag() === action.case_tag()) {
+                            caseIndex.tag('');
                         }
                     }
                 }

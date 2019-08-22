@@ -12,7 +12,8 @@ hqDefine('app_manager/js/summary/models',[
     'hqwebapp/js/layout',
     'app_manager/js/widgets',       // version dropdown
     'analytix/js/kissmetrix',
-], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets, kissmetricsAnalytics) {
+    'DOMPurify/dist/purify.min',
+], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets, kissmetricsAnalytics, DOMPurify) {
     var menuItemModel = function (options) {
         assertProperties.assert(options, ['unique_id', 'name', 'icon'], ['subitems', 'has_errors', 'has_changes']);
         var self = _.extend({
@@ -21,6 +22,7 @@ hqDefine('app_manager/js/summary/models',[
         }, options);
 
         self.isSelected = ko.observable(false);
+        self.isVisibleInMenu = ko.observable(true);
         self.select = function () {
             self.isSelected(true);
         };
@@ -41,7 +43,6 @@ hqDefine('app_manager/js/summary/models',[
 
         self.select = function (item) {
             self.selectedItemId(item.unique_id);
-            self.viewChangedOnlySelected(false);
             _.each(self.items, function (i) {
                 i.isSelected(item.unique_id === i.unique_id);
                 _.each(i.subitems, function (s) {
@@ -50,7 +51,18 @@ hqDefine('app_manager/js/summary/models',[
             });
         };
         self.selectAll = function () {
+            self.viewChangedOnlySelected(false);
+            self.showAll();
             self.select('');
+        };
+
+        self.showAll = function () {
+            _.each(self.items, function (i) {
+                i.isVisibleInMenu(true);
+                _.each(i.subitems, function (s) {
+                    s.isVisibleInMenu(true);
+                });
+            });
         };
 
         self.viewChanged = options.viewChanged;
@@ -58,9 +70,10 @@ hqDefine('app_manager/js/summary/models',[
         self.viewChangedOnly = function () {
             self.viewChangedOnlySelected(true);
             _.each(self.items, function (i) {
-                i.isSelected(i.has_changes);
+                i.isVisibleInMenu(i.has_changes);
                 _.each(i.subitems, function (s) {
-                    s.isSelected(s.has_changes);
+                    i.isVisibleInMenu(i.isVisibleInMenu() || s.has_changes);
+                    s.isVisibleInMenu(s.has_changes);
                 });
             });
         };
@@ -69,12 +82,18 @@ hqDefine('app_manager/js/summary/models',[
             return !self.selectedItemId() && !self.viewChangedOnlySelected();
         });
 
-
         return self;
     };
 
     var contentItemModel = function (options) {
         var self = _.extend({}, options);
+
+        var basePopoverOptions = {
+            "trigger": "hover",
+            "placement": "auto right",
+            "container": "body",
+            "html": true,
+        };
 
         self.children = _.map(options.children, function (child) { return contentItemModel(child); });
         self.isSelected = ko.observable(true);  // based on what's selected in menu
@@ -82,17 +101,105 @@ hqDefine('app_manager/js/summary/models',[
         self.isVisible = ko.computed(function () {
             return self.isSelected() && self.matchesQuery();
         });
+        self.getDiffPopover = function (change, attribute) {
+            if (!change || !change['type']) {
+                return {};
+            }
+            var oldValue = change['old_value'],
+                newValue = change['new_value'],
+                content = '',
+                attributeToName = {
+                    'module': gettext("Module"),
+                    'form': gettext("Form"),
+                    'question': gettext("Question"),
+                    'name': gettext("Name"),
+                    'label': gettext("Label"),
+                    'type': gettext("Question Type"),
+                    'value': gettext("Question Value"),
+                    'options': gettext("Option"),
+                    'calculate': gettext("Calculate condition"),
+                    'relevant': gettext("Display condition"),
+                    'required': gettext("Required"),
+                    'comment': gettext("Question Comment"),
+                    'setvalue': gettext("Default Value"),
+                    'constraint': gettext("Validation Condition"),
+                    'short_comment': gettext("Comment"),
+                    'form_filter': gettext("Form Filter"),
+                    'module_filter': gettext("Module Filter"),
+                };
+            if (oldValue || newValue) {
+                content = "<dl>";
+                content += _getPopoverText(gettext('Old Value'), oldValue);
+                content += _getPopoverText(gettext('New Value'), newValue);
+                content += "</dl>";
+            }
+            return _.defaults({
+                "title": attributeToName[attribute] + " " + gettext(change["type"]),
+                "content": content,
+            }, basePopoverOptions);
+        };
+        self.getLoadSavePopover = function (attribute, caseType, caseProperty) {
+            try {
+                var change = self.changes[attribute][caseType][caseProperty];
+            } catch (e) {
+                return {};
+            }
+            if (!change) {
+                return {};
+            }
+            var title = {
+                    'load_properties': gettext("Loaded Case Properties"),
+                    'save_properties': gettext("Saved Case Properties"),
+                }[attribute],
+                loadOrSave = {
+                    'load_properties': gettext("load"),
+                    'save_properties': gettext("save"),
+                }[attribute],
+                content = "<dl>" + _getPopoverText(
+                    gettext("Case Property") + " " + loadOrSave + " " + gettext(change['type']),
+                    gettext("Case Property") + " <strong>" + caseProperty + "</strong> " + gettext("of Case Type") + " <strong>" + caseType + "</strong> " + gettext(change['type'])
+                ) + "</dl>";
+
+            return _.defaults({
+                "title": title,
+                "content": content,
+            }, basePopoverOptions);
+        };
+        var _getPopoverText = function (title, value) {
+            if (!value) {
+                return '';
+            }
+
+            var text = "<dt>" + title + "</dt>";
+            if (value instanceof Object) { // translatable property
+                text += "<dl>";
+                for (var translationKey in value) {
+                    text += "<dt>" + translationKey + "</dt>";
+                    text += "<dd>" + DOMPurify.sanitize(value[translationKey]) + "</dd>";
+                }
+                text += "</dl>";
+            } else {
+                text += "<dd>" + DOMPurify.sanitize(value) + "</dd>";
+            }
+            return text;
+        };
+
         self.getDiffClass = function (attribute) {
-            return self.changes[attribute] ? 'diff-' + self.changes[attribute] : '';
+            return self.changes[attribute]['type'] ? 'diff-' + self.changes[attribute]['type'] : '';
         };
         self.getOptionsDiffClass = function (option) {
-            return self.changes['options'][option] ? 'diff-' + self.changes['options'][option] : '';
+            try {
+                return 'diff-' + self.changes['options'][option]['type'];
+            } catch (e) {
+                return '';
+            }
         };
         self.getLoadSaveDiffClass = function (attribute, caseType, caseProperty) {
-            if (self.changes[attribute][caseType] && self.changes[attribute][caseType][caseProperty]) {
-                return 'diff-' + self.changes[attribute][caseType][caseProperty];
+            try {
+                return 'diff-' + self.changes[attribute][caseType][caseProperty]['type'];
+            } catch (e) {
+                return '';
             }
-            return '';
         };
 
         return self;

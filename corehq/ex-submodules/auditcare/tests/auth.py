@@ -125,9 +125,3 @@ class AuthenticationTestCase(TestCase):
         response = self.client.post(reverse('auth_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrong'})
         cooled_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
         self.assertEquals(cooled_audit.failures_since_start, 1)
-
-
-
-    def testAuditViews(self):
-        for v in settings.AUDIT_VIEWS:
-            pass
