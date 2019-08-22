@@ -299,6 +299,21 @@ class CaseListFilterOptionsController(EmwfOptionsController):
         return self.group_es_query(query, group_type="case_sharing").count()
 
 
+class ReassignCaseOptionsController(CaseListFilterOptionsController):
+
+    @property
+    def data_sources(self):
+        """
+        Includes case-sharing groups but not reporting groups
+        """
+        sources = []
+        if self.request.can_access_all_locations:
+            sources.append((self.get_sharing_groups_size, self.get_sharing_groups))
+        sources.append((self.get_locations_size, self.get_locations))
+        sources.append((self.get_all_users_size, self.get_all_users))
+        return sources
+
+
 class LocationGroupOptionsController(EmwfOptionsController):
 
     @property
