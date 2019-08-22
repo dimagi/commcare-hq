@@ -111,10 +111,12 @@ def download_bulk_app_translations(request, domain, app_id):
     temp = io.BytesIO()
     data = [(k, v) for k, v in six.iteritems(sheets)]
     export_raw(headers, data, temp)
-    filename = '{app_name} v.{app_version} - App Translations{lang}'.format(
+    filename = '{app_name} v.{app_version} - App Translations{lang}{transifex_only}'.format(
         app_name=app.name,
         app_version=app.version,
-        lang=' ' + lang if lang else '')
+        lang=' ' + lang if lang else '',
+        transifex_only=' (Transifex only)' if skip_blacklisted else '',
+    )
     return export_response(temp, Format.XLS_2007, filename)
 
 
