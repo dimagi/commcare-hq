@@ -249,11 +249,11 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.addCleanup(linked_app.delete)
 
         master_app.add_module(Module.new_module('M1', None))
-        copy1 = self._make_master1_build(True)
+        copy1 = self._make_build(master_app, True)
 
         master_app.add_module(Module.new_module('M2', None))
         master_app.save()  # increment version number
-        self._make_master1_build(True)
+        self._make_build(master_app, True)
 
         update_linked_app(linked_app, 'test_update_from_specific_build', master_build=copy1)
         linked_app = LinkedApplication.get(linked_app._id)
