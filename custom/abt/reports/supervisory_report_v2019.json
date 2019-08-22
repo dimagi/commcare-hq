@@ -46,6 +46,10 @@
                 "order": "DESC"
             },
             {
+                "field": "inspection_date",
+                "order": "DESC"
+            },
+            {
                 "field": "level_1",
                 "order": "ASC"
             },

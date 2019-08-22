@@ -182,15 +182,18 @@
                 "transform": {},
                 "type": "expression"
             },
-            {
+             {
                 "column_id": "inspection_date",
                 "datatype": "datetime",
                 "display_name": "inspection_date",
                 "expression": {
                     "expression": {
                         "datatype": null,
-                        "property_name": "date",
-                        "type": "property_name"
+                        "property_path": [
+                            "form",
+                            "date"
+                        ],
+                        "type": "property_path"
                     },
                     "type": "root_doc"
                 },
