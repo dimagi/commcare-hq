@@ -5,15 +5,16 @@ from __future__ import division
 
 from django.utils.functional import cached_property
 
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport
 from custom.intrahealth.filters import YeksiNaaLocationFilter, FRMonthFilter, FRYearFilter
+from custom.intrahealth.report_calcs import _locations_per_type
 from custom.intrahealth.reports.utils import YeksiNaaMonthYearMixin
+from custom.intrahealth.sqldata import IndicateursDeBaseData
 
 
 class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
-    # TODO: we need new filters and Data
     slug = 'indicateurs_de_base'
     comment = 'indicateurs de base'
     name = 'Indicateurs de Base'
@@ -57,14 +58,16 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
 
     @property
     def headers(self):
-        # TODO: needs further implementation
-        return DataTablesHeader(
+        headers = DataTablesHeader(
+            DataTablesColumn(self.selected_location_type),
             DataTablesColumn('Date effective de livraison'),
             DataTablesColumn('Nombre de PPS enregistrés'),
             DataTablesColumn('Nombre de PPS visités'),
             DataTablesColumn('Taux de couverture'),
             DataTablesColumn('Taux de soumission')
         )
+
+        return headers
 
     def get_report_context(self):
         if self.needs_filters:
@@ -88,22 +91,47 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
         return context
 
     def calculate_rows(self):
-        # TODO calculations
-        rows = [
-                   ['7 June 2019 - 31 August 2019', 500, 780, 25.2, 55.69],
-                   ['1 June 2019 - 16 August 2019', 120, 600, 36.5, 45.45],
-                   ['2 June 2019 - 11 August 2019', 444, 40, 66.7, 78.78],
-                   ['2 July 2019 - 2 August 2019', 771, 200, 77.45, 89.58]
-               ]
-        return rows
+        rows = IndicateursDeBaseData(config=self.config).rows
+        rows_to_return = []
+
+        for row in rows:
+            location_name = row['location_name']
+
+            min_date = row['min_date']
+            max_date = row['max_date']
+            date = '{} - {}'.format(min_date, max_date)
+
+            nb_pps_enregistres = row['nb_pps_enregistres']
+            nb_pps_visites = row['nb_pps_visites']
+            couverture = '{:.2f} %'.format((nb_pps_visites / nb_pps_enregistres) * 100) \
+                if nb_pps_enregistres is not 0 else 'pas de données'
+
+            loc = get_location(row['location_id'], domain=self.config['domain'])
+            no_de_pps_aces_donnes_soumies = _locations_per_type(self.config['domain'], 'PPS', loc)
+            soumission = '{:.2f} %'.format((no_de_pps_aces_donnes_soumies / nb_pps_visites) * 100) \
+                if nb_pps_visites is not 0 else 'pas de données'
+
+            columns_for_location = [date, nb_pps_enregistres, nb_pps_visites, couverture, soumission]
+            rows_to_return.append([
+                location_name,
+            ])
+
+            for column in columns_for_location:
+                rows_to_return[-1].append({
+                    'html': '{}'.format(column),
+                    'sort_key': column,
+                })
+
+        return rows_to_return
 
     @property
     def config(self):
         config = dict(
             domain=self.domain,
         )
-        # TODO not sure is it important see YeksiNaaMonthYearMixin property year and month
         config['month'] = self.request.GET.get('month')
         config['year'] = self.request.GET.get('year')
-        # TODO add location district and region !!!
+        config['product_program'] = self.request.GET.get('product_program')
+        config['product_product'] = self.request.GET.get('product_product')
+        config['selected_location'] = self.request.GET.get('location_id')
         return config

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-from datetime import datetime, date
+import datetime
 
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
@@ -24,7 +24,8 @@ from custom.intrahealth.report_calcs import _locations_per_type
 from custom.intrahealth.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
     YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT, YEKSI_NAA_REPORTS_LOGISTICIEN, \
     YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM, \
-    OPERATEUR_COMBINED, OPERATEUR_COMBINED2, COMMANDE_COMBINED, RAPTURE_COMBINED, LIVRAISON_COMBINED, RECOUVREMENT_COMBINED
+    OPERATEUR_COMBINED, OPERATEUR_COMBINED2, COMMANDE_COMBINED, RAPTURE_COMBINED, LIVRAISON_COMBINED, \
+    RECOUVREMENT_COMBINED, INDICATEURS_DE_BASE, YEKSI_NAA_REPORTS_CONSUMPTION
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
@@ -3917,7 +3918,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
     @property
     def table_name(self):
         config_domain = self.config['domain']
-        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, 'yeksi_naa_reports_consumption')
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, YEKSI_NAA_REPORTS_CONSUMPTION)
         config, _ = get_datasource_config(doc_id, config_domain)
         return get_table_name(config_domain, config.table_id)
 
@@ -4135,7 +4136,7 @@ class TauxDeRuptureRateData(SqlData):
     @property
     def table_name(self):
         config_domain = self.config['domain']
-        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, 'yeksi_naa_reports_consumption')
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, YEKSI_NAA_REPORTS_CONSUMPTION)
         config, _ = get_datasource_config(doc_id, config_domain)
         return get_table_name(config_domain, config.table_id)
 
@@ -4339,7 +4340,7 @@ class TauxDeRuptureRateData(SqlData):
 
 class ConsommationPerProductData(SqlData):
     slug = 'consommation_per_product'
-    comment = 'Exemple s'
+    comment = ''
     title = 'Consommation per product'
     show_total = True
     custom_total_calculate = True
@@ -4351,7 +4352,7 @@ class ConsommationPerProductData(SqlData):
     @property
     def table_name(self):
         config_domain = self.config['domain']
-        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, 'yeksi_naa_reports_consumption')
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, YEKSI_NAA_REPORTS_CONSUMPTION)
         config, _ = get_datasource_config(doc_id, config_domain)
         return get_table_name(config_domain, config.table_id)
 
@@ -5503,27 +5504,6 @@ class RecapPassageOneData(IntraHealthSqlData):
         return headers
 
 
-class LatestVisitData(VisiteDeLOperateurDataSource):
-
-    @property
-    def columns(self):
-        columns = [
-            DatabaseColumn(_('PPS_Id'), SimpleColumn('pps_id')),
-            DatabaseColumn(_('Doc_id'), SimpleColumn('doc_id')),
-            DatabaseColumn(_('Date'), SimpleColumn('real_date')),
-        ]
-        return columns
-
-    @property
-    def group_by(self):
-        group = ['pps_id', 'doc_id', 'real_date']
-        return group
-
-    @property
-    def rows(self):
-        return self.get_data()
-
-
 class RecapPassageTwoData(RecapPassageOneData):
     slug = 'recap_passage_2'
     comment = 'recap passage 2'
@@ -5821,3 +5801,183 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         rows = self.create_table_rows(value_name, False)
         sum_row = self.create_row_with_column_values_sum(row_name, rows)
         return sum_row
+
+
+class IndicateursDeBaseData(SqlData):
+    slug = 'indicateurs_de_base'
+    comment = ''
+    title = 'Consommation per product'
+    show_total = True
+    custom_total_calculate = True
+
+    def __init__(self, config):
+        super(IndicateursDeBaseData, self).__init__()
+        self.config = config
+
+    @property
+    def table_name(self):
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, INDICATEURS_DE_BASE)
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
+
+    @property
+    def group_by(self):
+        return [
+            'region_id', 'region_name', 'district_id',
+            'district_name', 'date_prevue_livraison_debut',
+            'date_prevue_livraison_fin', 'nb_pps_enregistres',
+            'nb_pps_visites'
+        ]
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn('Date (Start)', SimpleColumn('date_prevue_livraison_debut')),
+            DatabaseColumn('Date (End)', SimpleColumn('date_prevue_livraison_fin')),
+            DatabaseColumn('Region ID', SimpleColumn('region_id')),
+            DatabaseColumn('Region Name', SimpleColumn('region_name')),
+            DatabaseColumn('District ID', SimpleColumn('district_id')),
+            DatabaseColumn('District Name', SimpleColumn('district_name')),
+            DatabaseColumn("NB PPS Enregistres", SimpleColumn('nb_pps_enregistres')),
+            DatabaseColumn("NB PPS Visites", SimpleColumn('nb_pps_visites')),
+        ]
+        return columns
+
+    @cached_property
+    def selected_location(self):
+        if self.config['selected_location']:
+            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        else:
+            return None
+
+    @cached_property
+    def selected_location_type(self):
+        if not self.selected_location:
+            return 'national'
+        return self.selected_location.location_type.code
+
+    @cached_property
+    def loc_type(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id(self):
+        return "{}_id".format(self.loc_type)
+
+    @cached_property
+    def loc_name(self):
+        return "{}_name".format(self.loc_type)
+
+    @property
+    def desired_location(self):
+        if self.config['selected_location']:
+            return self.config['selected_location']
+        return None
+
+    @property
+    def month(self):
+        if self.config['month']:
+            return int(self.config['month'])
+        return 01
+
+    @property
+    def year(self):
+        if self.config['year']:
+            return int(self.config['year'])
+        return 2008
+
+    @property
+    def min_date(self):
+        month = self.month
+        year = self.year
+        min_date = datetime.date(year, month, 1)
+
+        return min_date
+
+    @property
+    def max_date(self):
+
+        def last_day_of_month(any_day):
+            next_month = any_day.replace(day=28) + datetime.timedelta(days=4)
+            return next_month - datetime.timedelta(days=next_month.day)
+
+        max_date = last_day_of_month(self.min_date)
+
+        return max_date
+
+    @property
+    def filters(self):
+        return []
+
+    @property
+    def rows(self):
+        all_wanted_rows = []
+        rows = self.get_data()
+
+        rows_with_wanted_date = []
+        for row in rows:
+            min_date = row['date_prevue_livraison_debut']
+            max_date = row['date_prevue_livraison_fin']
+            if min_date >= self.min_date and max_date <= self.max_date:
+                rows_with_wanted_date.append(row)
+
+        if self.desired_location:
+            for row in rows_with_wanted_date:
+                if self.desired_location in row.values():
+                    all_wanted_rows.append(row)
+        else:
+            all_wanted_rows = rows_with_wanted_date
+
+        def clean_rows(data_to_clean):
+            sorted_rows = sorted(data_to_clean, key=lambda x: x[self.loc_name])
+            added_locations = []
+            data_for_locations = {}
+            data_to_return = []
+
+            for row in sorted_rows:
+                location_id = row[self.loc_id]
+                location_name = row[self.loc_name]
+                nb_pps_enregistres = row['nb_pps_enregistres']
+                nb_pps_visites = row['nb_pps_visites']
+                tmp_min_date = row['date_prevue_livraison_debut']
+                tmp_max_date = row['date_prevue_livraison_fin']
+                if location_id not in added_locations:
+                    added_locations.append(location_id)
+                    data_for_locations[location_id] = {
+                        'location_name': location_name,
+                        'min_date': tmp_min_date,
+                        'max_date': tmp_max_date,
+                        'nb_pps_enregistres': nb_pps_enregistres,
+                        'nb_pps_visites': nb_pps_visites,
+                    }
+                else:
+                    data_for_locations[location_id]['nb_pps_enregistres'] += nb_pps_enregistres
+                    data_for_locations[location_id]['nb_pps_visites'] += nb_pps_visites
+                    current_min_date = data_for_locations[location_id]['min_date']
+                    current_max_date = data_for_locations[location_id]['max_date']
+                    if tmp_min_date < current_min_date:
+                        data_for_locations[location_id]['min_date'] = tmp_min_date
+                    if tmp_max_date < current_max_date:
+                        data_for_locations[location_id]['max_date'] = tmp_max_date
+
+            for location_id, location_info in data_for_locations.items():
+                data_to_return.append({
+                    'location_id': location_id,
+                    'location_name': location_info['location_name'],
+                    'min_date': location_info['min_date'],
+                    'max_date': location_info['max_date'],
+                    'nb_pps_enregistres': location_info['nb_pps_enregistres'],
+                    'nb_pps_visites': location_info['nb_pps_visites'],
+                })
+
+            return data_to_return
+
+        clean_data = clean_rows(all_wanted_rows)
+
+        return clean_data
