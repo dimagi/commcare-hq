@@ -34,6 +34,7 @@
         {% blocktrans %}
           <strong>Case Sharing Groups</strong> allow their members to share a case list in a case-sharing app.
         {% endblocktrans %}
+        {% include 'groups/partials/case_sharing_upgrade_notice.html' %}
       </li>
     </ul>
     {% if not request.is_view_only %}
