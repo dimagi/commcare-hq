@@ -45,8 +45,15 @@ def _get_odata_fields_from_columns(export_config, special_types, table_id):
     if not table.selected:
         return []
 
-    return [FieldMetadata(column.label, special_types.get(_get_dot_path(column), 'Edm.String'))
-            for column in table.selected_columns]
+    metadata = []
+    for column in table.selected_columns:
+        for header in column.get_headers(split_column=export_config.split_multiselects):
+            metadata.append(FieldMetadata(
+                header,
+                special_types.get(_get_dot_path(column), 'Edm.String')
+            ))
+
+    return metadata
 
 
 def record_feed_access_in_datadog(request, config_id, duration, response):
