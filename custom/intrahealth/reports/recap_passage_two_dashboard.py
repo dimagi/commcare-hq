@@ -7,12 +7,10 @@ import datetime
 
 from django.utils.functional import cached_property
 
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
-from custom.intrahealth.filters import DateRangeFilter, YeksiNaaLocationFilter, RecapPassageTwoProgramFilter
+from custom.intrahealth.filters import DateRangeFilter, RecapPassageTwoProgramFilter, \
+    YeksiRecapPassageNaaLocationFilter
 from custom.intrahealth.reports.utils import YeksiNaaMonthYearMixin
-from custom.intrahealth.sqldata import RecapPassageTwoData, RecapPassageTwoTables
+from custom.intrahealth.sqldata import RecapPassageTwoTables
 from custom.intrahealth.reports.tableu_de_board_report_v2 import MultiReport
 from dimagi.utils.dates import force_to_date
 
@@ -29,7 +27,7 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
 
     @property
     def fields(self):
-        return [DateRangeFilter, RecapPassageTwoProgramFilter, YeksiNaaLocationFilter]
+        return [DateRangeFilter, RecapPassageTwoProgramFilter, YeksiRecapPassageNaaLocationFilter]
 
     @cached_property
     def rendered_report_title(self):
@@ -47,11 +45,8 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
         ]
 
     def get_report_context(self, table_context):
-        total_row = []
         self.data_source = table_context
         if self.needs_filters:
-            headers = []
-            rows = []
             context = dict(
                 report_table = dict(
                     rows = [],
