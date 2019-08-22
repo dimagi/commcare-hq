@@ -272,6 +272,9 @@ class ICDSMixin(object):
                 elif column_agg_func == 'avg':
                     values = [x.get(column_name, 0) for x in report_data]
                     column_data = sum(values) / (len(values) or 1)
+                elif column_agg_func == 'last_value':
+                    awc_mapping = {x.get(group_by): x.get(column_name, 0) for x in report_data}
+                    column_data = sum(awc_mapping.values())
                 column_display = column_name if 'column_in_report' not in column else column['column_in_report']
                 data.update({
                     column_display: data.get(column_display, 0) + column_data
