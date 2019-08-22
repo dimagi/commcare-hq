@@ -1,4 +1,5 @@
 
+import json
 import logging
 import os
 import uuid
@@ -69,7 +70,6 @@ from corehq.util.test_utils import (
     softer_assert,
     trap_extra_setup,
 )
-from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
 from ..asyncforms import get_case_ids
 from ..couchsqlmigration import (
@@ -172,6 +172,11 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             .get_all_form_ids_in_domain(doc_type=doc_type)
         )
 
+    def _iter_forms(self, form_ids):
+        db = FormAccessors(domain=self.domain_name)
+        for form_id in form_ids:
+            yield db.get_form(form_id)
+
     def _get_case_ids(self, doc_type=None):
         if doc_type is None:
             return set(CaseAccessors(domain=self.domain_name).get_case_ids_in_domain())
@@ -205,17 +210,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
 
     @contextmanager
     def patch_migration_chunk_size(self, chunk_size):
-        def iter_with_chunk_size(self, *args, **kw):
-            assert self.chunk_size > 0, self.chunk_size
-            self.chunk_size = chunk_size
-            return real_iter_all_changes(self, *args, **kw)
-
-        real_iter_all_changes = CouchDomainDocTypeChangeProvider.iter_all_changes
-        with mock.patch.object(
-            CouchDomainDocTypeChangeProvider,
-            "iter_all_changes",
-            iter_with_chunk_size,
-        ):
+        path = "corehq.apps.couch_sql_migration.couchsqlmigration._iter_docs.chunk_size"
+        with mock.patch(path, chunk_size):
             yield
 
 
@@ -771,6 +767,13 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(case.dynamic_case_properties()["age"], '27')
 
     def test_migrate_archived_form_after_live_migration(self):
+        def describe(form):
+            try:
+                arg0 = json.loads(form.form_data.get("args"))[0]
+            except Exception:
+                arg0 = repr(form)
+            return "%s %s" % (form.form_data.get("name", form.form_id), arg0)
+
         self.submit_form(make_test_form("arch-1"), timedelta(minutes=-95))
         self.submit_form(make_test_form("arch-2"), timedelta(minutes=-90)).archive()
         with self.patch_migration_chunk_size(1):
@@ -785,6 +788,10 @@ class MigrationTestCase(BaseMigrationTestCase):
         FormAccessors(self.domain_name).get_form("arch-1").archive()
 
         self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(
+            {describe(f) for f in self._iter_forms(self._get_form_ids())},
+            {"archive_form arch-1"},
+        )
         self.assertEqual(self._get_form_ids("XFormArchived"), {"arch-1", "arch-2"})
         self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"test-case"})
         self._compare_diffs([])
