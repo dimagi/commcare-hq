@@ -44,7 +44,7 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         context = {
             'report': self.get_report_context(),
             'title': self.name,
-            'charts': self.charts
+            'charts': self.charts if not self.needs_filters else None
         }
 
         return context
