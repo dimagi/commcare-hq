@@ -5806,7 +5806,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 class IndicateursDeBaseData(SqlData):
     slug = 'indicateurs_de_base'
     comment = ''
-    title = 'Consommation per product'
+    title = 'Indicateur de Base'
     show_total = True
     custom_total_calculate = True
 
@@ -5884,7 +5884,7 @@ class IndicateursDeBaseData(SqlData):
     def month(self):
         if self.config['month']:
             return int(self.config['month'])
-        return 01
+        return 1
 
     @property
     def year(self):
