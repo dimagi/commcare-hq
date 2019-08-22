@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from mock import patch
 
+from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.updates import update_user_roles
 from corehq.apps.userreports.util import get_ucr_class_name
@@ -13,16 +14,16 @@ class TestUpdateRoles(BaseLinkedAppsTest):
     @classmethod
     def setUpClass(cls):
         super(TestUpdateRoles, cls).setUpClass()
-        cls.linked_app.master = cls.master1.get_id
+        cls.linked_app = LinkedApplication.new_app(cls.linked_domain, "Linked Application")
+        cls.linked_app.master = cls.plain_master.get_id
         cls.linked_app.save()
-
         cls.role = UserRole(
             domain=cls.domain,
             name='test',
             permissions=Permissions(
                 edit_data=True,
                 view_web_apps_list=[
-                    cls.master1.get_id
+                    cls.plain_master.get_id
                 ],
                 view_report_list=[
                     'corehq.reports.DynamicReportmaster_report_id'
@@ -33,6 +34,7 @@ class TestUpdateRoles(BaseLinkedAppsTest):
 
     @classmethod
     def tearDownClass(cls):
+        cls.linked_app.delete()
         cls.role.delete()
         super(TestUpdateRoles, cls).tearDownClass()
 
