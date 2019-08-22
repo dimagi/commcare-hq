@@ -27,6 +27,7 @@ from casexml.apps.phone.restore import (
 from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_utc_datetime
+from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
@@ -57,7 +58,7 @@ from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
 
-from .models import MobileRecoveryMeasure, SerialIdBucket
+from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
     demo_user_restore_response,
     get_restore_user,
@@ -315,6 +316,8 @@ def heartbeat(request, domain, app_build_id):
                 couch_user = CouchUser.get(couch_user.user_id)
                 update_user_reporting_data(app_build_id, app_id, couch_user, request)
 
+    if _should_force_log_submission(request):
+        info['force_logs'] = True
     return JsonResponse(info)
 
 
@@ -362,6 +365,22 @@ def update_user_reporting_data(app_build_id, app_id, couch_user, request):
     )
     if save_user:
         couch_user.save(fire_signals=False)
+
+
+def _should_force_log_submission(request):
+    return (
+        request.domain,
+        request.couch_user.username,
+        request.GET.get('device_id', ''),
+    ) in get_device_log_requests()
+
+
+@memoized
+def get_device_log_requests():
+    return {
+        (r.domain, r.username, r.device_id)
+        for r in DeviceLogRequest.objects.all()
+    }
 
 
 @location_safe
