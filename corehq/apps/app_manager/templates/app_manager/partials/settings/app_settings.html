@@ -26,10 +26,27 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
-  <span class="col-sm-3">
-        <input type="checkbox"
-               data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
-    </span>
+  <div class="col-sm-2">
+  <!-- ko if: showDisabledCheckbox -->
+    <input type="checkbox"
+           data-bind="checked: boolValue,
+                      attr: {disabled: true, id: inputId}"/>
+  <!-- /ko -->
+  <!-- ko ifnot: showDisabledCheckbox -->
+    <input type="checkbox"
+           data-bind="checked: boolValue,
+                      attr: {disabled: !enabled(), id: inputId}"/>
+  <!-- /ko -->
+  </div>
+  <!-- ko if: showUncheckWarning -->
+  <div class="alert alert-warning alert-small clearfix">
+    <i class="fa fa-warning"></i>
+    {% blocktrans %}
+      You cannot re-enable this feature once it is disabled
+      until you upgrade your subscription.
+    {% endblocktrans %}
+  </div>
+  <!-- /ko -->
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.customProperty">
