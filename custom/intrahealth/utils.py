@@ -16,6 +16,7 @@ from dimagi.utils.dates import force_to_datetime
 from corehq.apps.locations.models import get_location, SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.graph_models import MultiBarChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.fluff.calculators.xform import FormPropertyFilter, IN
@@ -238,6 +239,10 @@ def get_region_id(case):
 def get_district_id(case):
     loc = get_loc_from_case(case)
     return loc.location_id if loc else None
+
+
+class PNAMultiBarChart(MultiBarChart):
+    template_partial = 'yeksi_naa/partials/pna_multibar_chart.html'
 
 
 class YeksiNaaLocationMixin(object):
