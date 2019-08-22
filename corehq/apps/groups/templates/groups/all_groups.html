@@ -93,7 +93,17 @@
                   {% if group.reporting %}<i class="fa fa-check"></i>{% endif %}
                 </td>
                 <td>
-                  {% if group.case_sharing %}<i class="fa fa-check"></i>{% endif %}
+                  {% if group.case_sharing %}
+                    <i class="fa fa-check"></i>
+                    {% if not is_case_sharing_enabled %}
+                      <span class="js-case-sharing-alert label label-warning"
+                            title="{% trans_html_attr 'Limited Access' %}"
+                            data-content="{% trans_html_attr 'Your subscription was downgraded after creating this group. Group membership will not be editable until case sharing is disabled.' %}">
+                        <i class="fa fa-warning"></i>
+                        {% trans "Limited Access" %}
+                      </span>
+                    {% endif %}
+                  {% endif %}
                 </td>
               </tr>
             {% endfor %}
