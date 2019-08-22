@@ -4727,12 +4727,11 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
         products = [self.config['product_product']]
         if not self.config['product_product']:
             selected_program = self.config['product_program']
-
             program = ProductsInProgramData(config=dict(domain=self.config['domain'])).rows
             products = []
             for p in program:
-                if not selected_program \
-                    or p[0] != selected_program:
+                if selected_program \
+                and p[0] != selected_program:
                     continue
                 products.extend(p[1].split(' '))
             products.sort()
