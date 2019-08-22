@@ -105,7 +105,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
     def test_instance_check(self):
         xml = self.get_xml('missing_instances')
         with self.assertRaises(XFormValidationError) as cm:
-            XForm(xml).add_missing_instances(self.domain)
+            XForm(xml).add_missing_instances(self.app)
         exception_message = str(cm.exception)
         self.assertIn('casebd', exception_message)
         self.assertIn('custom2', exception_message)

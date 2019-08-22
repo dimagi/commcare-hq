@@ -474,7 +474,7 @@ def get_instances_for_module(app, module, additional_xpaths=None):
     for detail_id in detail_ids:
         xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
-    instances, _ = get_all_instances_referenced_in_xpaths(app.domain, xpaths)
+    instances, _ = get_all_instances_referenced_in_xpaths(app, xpaths)
     return instances
 
 

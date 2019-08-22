@@ -1186,7 +1186,7 @@ class FormBase(DocumentSchema):
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
-        xform.add_missing_instances(app.domain)
+        xform.add_missing_instances(app)
 
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
@@ -4417,7 +4417,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
-        copy.create_build_files()
+        if copy.create_build_files_on_build:
+            copy.create_build_files()
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
@@ -4469,6 +4470,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         for name in other.lazy_list_attachments() or {}:
             if regexp is None or re.match(regexp, name):
                 self.lazy_put_attachment(other.lazy_fetch_attachment(name), name)
+
+    @property
+    @memoized
+    def create_build_files_on_build(self):
+        return not toggles.SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD.enabled(self.domain)
 
     def delete_app(self):
         domain_has_apps.clear(self.domain)

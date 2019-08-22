@@ -1,30 +1,61 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import os
 from collections import OrderedDict
 from xml.etree import cElementTree as ElementTree
-from django.test import SimpleTestCase, TestCase
-import mock
-from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
-from corehq.apps.app_manager.fixtures import report_fixture_generator
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
-from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportModule, \
-    GraphConfiguration, GraphSeries, MobileSelectFilter, _get_auto_filter_function, _filter_by_user_id
-from corehq.apps.app_manager.tests.mocks.mobile_ucr import mock_report_configurations, \
-    mock_report_configuration_get, mock_report_data
+from django.test import SimpleTestCase, TestCase
+
+import mock
+import six
+
+from casexml.apps.phone.tests.utils import (
+    call_fixture_generator,
+    create_restore_user,
+)
+
+from corehq.apps.app_manager.const import MOBILE_UCR_VERSION_2
+from corehq.apps.app_manager.fixtures import report_fixture_generator
+from corehq.apps.app_manager.models import (
+    Application,
+    GraphConfiguration,
+    GraphSeries,
+    MobileSelectFilter,
+    Module,
+    ReportAppConfig,
+    ReportModule,
+    _filter_by_user_id,
+    _get_auto_filter_function,
+)
+from corehq.apps.app_manager.tests.mocks.mobile_ucr import (
+    mock_report_configuration_get,
+    mock_report_configurations,
+    mock_report_data,
+)
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration, ReportMeta
-from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider
-from corehq.apps.userreports.reports.filters.specs import DynamicChoiceListFilterSpec, ChoiceListFilterSpec, \
-    FilterChoice
-from corehq.apps.userreports.reports.specs import FieldColumn, MultibarChartSpec, \
-    GraphDisplayColumn
-from corehq.apps.userreports.tests.utils import mock_datasource_config
+from corehq.apps.userreports.reports.filters.choice_providers import (
+    ChoiceProvider,
+)
+from corehq.apps.userreports.reports.filters.specs import (
+    ChoiceListFilterSpec,
+    DynamicChoiceListFilterSpec,
+    FilterChoice,
+)
+from corehq.apps.userreports.reports.specs import (
+    FieldColumn,
+    GraphDisplayColumn,
+    MultibarChartSpec,
+)
+from corehq.apps.userreports.tests.utils import (
+    get_sample_report_config,
+    mock_datasource_config,
+)
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.toggles import MOBILE_UCR, NAMESPACE_DOMAIN
-import six
+from corehq.util.test_utils import flag_enabled
 
 
 class ReportAppConfigTest(SimpleTestCase):
@@ -376,3 +407,84 @@ class TestReportAutoFilters(SimpleTestCase):
     def test_get_filter_function(self):
         fn = _get_auto_filter_function('user_id')
         self.assertEqual(fn, _filter_by_user_id)
+
+
+@flag_enabled('MOBILE_UCR')
+class TestReportConfigInstances(TestCase, TestXmlMixin):
+    file_path = ('data',)
+    domain = 'test_report_config_instances'
+
+    def test_autogenerate_instance_declaration(self):
+        app = self._make_app("Untitled Application")
+        report_app_config = self._make_report_app_config("my_report")
+        module = self._add_report_module(app, report_app_config)
+        form = self._add_form_with_report_reference(app, report_app_config)
+
+        expected_declaration = ("""<instance id="commcare-reports:{}" src="jr://fixture/commcare-reports:{}"/>"""
+                                .format(report_app_config.report_slug, report_app_config.uuid))
+        self.assertIn(expected_declaration, self._render_form(app, form))
+
+    def test_disallow_duplicate_slugs(self):
+        app = self._make_app("Untitled Application")
+
+        report_app_config1 = self._make_report_app_config("duplicate")
+        module1 = self._add_report_module(app, report_app_config1)
+
+        report_app_config2 = self._make_report_app_config("duplicate")
+        module2 = self._add_report_module(app, report_app_config2)
+
+        errors = module2.validate_for_build()
+        self.assertEqual('report config id duplicated', errors[0]['type'])
+
+    def test_allow_duplicates_on_different_apps(self):
+        app1 = self._make_app("Untitled Application")
+        report_app_config1 = self._make_report_app_config("duplicate")
+        module1 = self._add_report_module(app1, report_app_config1)
+
+        app2 = self._make_app("Untitled Application")
+        report_app_config2 = self._make_report_app_config("duplicate")
+        module2 = self._add_report_module(app2, report_app_config2)
+
+        errors = module2.validate_for_build()
+        self.assertEqual([], errors)
+
+    def _make_app(self, app_name):
+        app = Application.new_app(self.domain, app_name)
+        app.mobile_ucr_restore_version = MOBILE_UCR_VERSION_2
+        app.save()
+        self.addCleanup(app.delete)
+        return app
+
+    def _make_report_app_config(self, report_slug):
+        report = get_sample_report_config()
+        report.domain = self.domain
+        report.save()
+        self.addCleanup(report.delete)
+        report_app_config = ReportAppConfig(
+            report_id=report._id,
+            report_slug=report_slug,
+        )
+        report_app_config._report = report
+        return report_app_config
+
+    def _add_report_module(self, app, report_app_config):
+        report_module = app.add_module(ReportModule.new_module('Reports', None))
+        report_module.report_configs = [report_app_config]
+        app.save()
+        return report_module
+
+    def _add_form_with_report_reference(self, app, report_app_config):
+        other_module = app.add_module(Module.new_module('m0', None))
+        form = other_module.new_form('f0', None)
+        report_reference = "instance('commcare-reports:{}')/rows/row[0]/@index".format(report_app_config.report_slug)
+        form.source = self.get_xml('very_simple_form').decode('utf-8')
+        form.source = form.source.replace(
+            """<bind nodeset="/data/question1" type="xsd:string"/>""",
+            """<bind nodeset="/data/question1" type="xsd:string" calculate="{}"/>""".format(report_reference),
+        )
+        app.save()
+        return form
+
+    def _render_form(self, app, form):
+        with mock.patch('corehq.apps.app_manager.suite_xml.features.mobile_ucr.get_apps_in_domain', lambda d: [app]):
+            return form.render_xform().decode('utf-8')

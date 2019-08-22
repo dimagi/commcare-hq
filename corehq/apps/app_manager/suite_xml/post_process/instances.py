@@ -20,7 +20,7 @@ class EntryInstances(PostProcessor):
 
     def add_entry_instances(self, entry):
         xpaths = self._get_all_xpaths_for_entry(entry)
-        known_instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app.domain, xpaths)
+        known_instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app, xpaths)
         custom_instances, unknown_instance_ids = self._get_custom_instances(
             entry,
             known_instances,
@@ -128,7 +128,7 @@ INSTANCE_KWARGS_BY_ID = {
 
 
 @register_factory(*list(INSTANCE_KWARGS_BY_ID.keys()))
-def preset_instances(domain, instance_name):
+def preset_instances(app, instance_name):
     kwargs = INSTANCE_KWARGS_BY_ID.get(instance_name, None)
     if kwargs:
         return Instance(**kwargs)
@@ -136,50 +136,50 @@ def preset_instances(domain, instance_name):
 
 @register_factory('item-list', 'schedule', 'indicators', 'commtrack')
 @memoized
-def generic_fixture_instances(domain, instance_name):
+def generic_fixture_instances(app, instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
 @register_factory('commcare')
-def commcare_fixture_instances(domain, instance_name):
-    if instance_name == 'commcare:reports' and toggles.MOBILE_UCR.enabled(domain):
+def commcare_fixture_instances(app, instance_name):
+    if instance_name == 'commcare:reports' and toggles.MOBILE_UCR.enabled(app.domain):
         return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
-def _commcare_reports_instances(domain, instance_name, prefix):
+def _commcare_reports_instances(app, instance_name, prefix):
     from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
-    if instance_name.startswith(prefix) and toggles.MOBILE_UCR.enabled(domain):
+    if instance_name.startswith(prefix) and toggles.MOBILE_UCR.enabled(app.domain):
         instance_id = instance_name[len(prefix):]
-        uuid = get_uuids_by_instance_id(domain).get(instance_id, [instance_id])[0]
+        uuid = get_uuids_by_instance_id(app).get(instance_id, [instance_id])[0]
         return Instance(id=instance_name, src='jr://fixture/{}{}'.format(prefix, uuid))
 
 
 @register_factory('commcare-reports')
-def commcare_reports_fixture_instances(domain, instance_name):
-    return _commcare_reports_instances(domain, instance_name, 'commcare-reports:')
+def commcare_reports_fixture_instances(app, instance_name):
+    return _commcare_reports_instances(app, instance_name, 'commcare-reports:')
 
 
 @register_factory('commcare-reports-filters')
-def commcare_reports_filters_instances(domain, instance_name):
-    return _commcare_reports_instances(domain, instance_name, 'commcare-reports-filters:')
+def commcare_reports_filters_instances(app, instance_name):
+    return _commcare_reports_instances(app, instance_name, 'commcare-reports-filters:')
 
 
 @register_factory('locations')
-def location_fixture_instances(domain, instance_name):
+def location_fixture_instances(app, instance_name):
     from corehq.apps.locations.models import LocationFixtureConfiguration
-    if (toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain)
-            and not LocationFixtureConfiguration.for_domain(domain).sync_flat_fixture):
+    if (toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(app.domain)
+            and not LocationFixtureConfiguration.for_domain(app.domain).sync_flat_fixture):
         return Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name))
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
 @register_factory('related_locations')
-def related_locations_fixture_instances(domain, instance_name):
-    if instance_name == 'related_locations' and toggles.RELATED_LOCATIONS.enabled(domain):
+def related_locations_fixture_instances(app, instance_name):
+    if instance_name == 'related_locations' and toggles.RELATED_LOCATIONS.enabled(app.domain):
         return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
-def get_all_instances_referenced_in_xpaths(domain, xpaths):
+def get_all_instances_referenced_in_xpaths(app, xpaths):
     instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
     instances = set()
     unknown_instance_ids = set()
@@ -192,7 +192,7 @@ def get_all_instances_referenced_in_xpaths(domain, xpaths):
                 scheme = instance_name if instance_name == 'locations' else None
 
             factory = get_instance_factory(scheme)
-            instance = factory(domain, instance_name)
+            instance = factory(app, instance_name)
             if instance:
                 instances.add(instance)
             else:
