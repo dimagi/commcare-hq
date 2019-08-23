@@ -69,7 +69,6 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
             header = headers[r]
             row = rows[r]
             report[0][1].append(header)
-            print(row)
             for one_row in row:
                 if one_row is not None:
                     report[0][1].append(one_row)
