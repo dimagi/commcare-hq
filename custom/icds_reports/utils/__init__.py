@@ -47,7 +47,7 @@ from django.db.utils import OperationalError
 import six
 import uuid
 from six.moves import range
-from sqlagg.filters import EQ, NOT, AND
+from sqlagg.filters import EQ, NOT
 from pillowtop.models import KafkaCheckpoint
 from six.moves import zip
 

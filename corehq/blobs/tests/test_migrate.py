@@ -17,7 +17,6 @@ from django.test import TestCase
 from testil import tempdir
 
 
-
 class TestMigrateBackend(TestCase):
 
     slug = "migrate_backend"
