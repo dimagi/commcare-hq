@@ -23,8 +23,35 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
     comment = 'valeur péremption sur valeur totale'
     name = 'Taux de Péremption'
     default_rows = 10
+    exportable = True
 
     report_template_path = 'yeksi_naa/tabular_report.html'
+
+    @property
+    def export_table(self):
+        report = [
+            [
+                'Taux de Péremption',
+                [],
+            ]
+        ]
+        headers = [x.html for x in self.headers]
+        headers.pop()
+        rows = self.calculate_rows()
+        report[0][1].append(headers)
+
+        for row in rows:
+            location_name = row[0]['html']
+            row_to_return = [location_name]
+
+            rows_length = len(row) - 1
+            for r in range(1, rows_length):
+                value = row[r]['html']
+                row_to_return.append(value)
+
+            report[0][1].append(row_to_return)
+
+        return report
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):

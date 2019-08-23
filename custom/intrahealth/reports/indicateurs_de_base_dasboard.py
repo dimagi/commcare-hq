@@ -8,7 +8,7 @@ from django.utils.functional import cached_property
 from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import CustomProjectReport
-from custom.intrahealth.filters import YeksiNaaLocationFilter, FRMonthFilter, FRYearFilter
+from custom.intrahealth.filters import FRMonthFilter, FRYearFilter, IndicateursDeBaseLocationFilter
 from custom.intrahealth.report_calcs import _locations_per_type
 from custom.intrahealth.reports.utils import YeksiNaaMonthYearMixin
 from custom.intrahealth.sqldata import IndicateursDeBaseData
@@ -62,7 +62,7 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
 
     @property
     def fields(self):
-        return [FRMonthFilter, FRYearFilter, YeksiNaaLocationFilter]
+        return [FRMonthFilter, FRYearFilter, IndicateursDeBaseLocationFilter]
 
     @cached_property
     def rendered_report_title(self):

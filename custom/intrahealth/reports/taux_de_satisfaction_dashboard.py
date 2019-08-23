@@ -36,9 +36,7 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                 [],
             ]
         ]
-        headers = [self.selected_location_type]
-        for product in self.products:
-            headers.append(product)
+        headers = [x.html for x in self.headers]
         rows = self.calculate_rows()
         report[0][1].append(headers)
 
@@ -49,7 +47,7 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
 
             row_to_return = [location_name]
 
-            rows_length = len(row) - 1
+            rows_length = len(row)
             for r in range(1, rows_length):
                 value = row[r]['html']
                 value = value.replace('<b>', '')

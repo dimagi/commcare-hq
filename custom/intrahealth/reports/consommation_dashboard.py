@@ -36,9 +36,7 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
                 [],
             ]
         ]
-        headers = [self.selected_location_type]
-        for product in self.products:
-            headers.append(product)
+        headers = [x.html for x in self.headers]
         rows = self.calculate_rows()
         report[0][1].append(headers)
 

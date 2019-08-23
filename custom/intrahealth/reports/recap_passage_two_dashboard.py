@@ -22,8 +22,62 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
     name = 'Recap Passage 2'
     title = "Recap Passage 2"
     default_rows = 10
+    exportable = True
 
     report_template_path = "intrahealth/multi_report.html"
+
+    @property
+    def export_table(self):
+        report = [
+            [
+                'Recap Passage 2',
+                [],
+            ]
+        ]
+
+        table_provider = RecapPassageTwoTables(config=self.config)
+        data = [
+            table_provider.sumup_context,
+            table_provider.billed_consumption_context,
+            table_provider.actual_consumption_context,
+            table_provider.amt_delivered_convenience_context,
+            table_provider.display_total_stock_context,
+        ]
+
+        headers = []
+        for d in data:
+            to_add = []
+            for header in d['headers']:
+                try:
+                    to_add.append(header.html)
+                except AttributeError:
+                    to_add.append(header)
+            headers.append(to_add)
+
+        rows = []
+        for d in data:
+            to_add = []
+            for row in d['rows']:
+                try:
+                    to_add.append(row.html)
+                except AttributeError:
+                    to_add.append(row)
+            rows.append(to_add)
+
+        length = len(headers)
+        for r in range(0, length):
+            header = headers[r]
+            row = rows[r]
+            report[0][1].append(header)
+            print(row)
+            for one_row in row:
+                if one_row is not None:
+                    report[0][1].append(one_row)
+
+            if r != length - 1:
+                report[0][1].append([])
+
+        return report
 
     @property
     def fields(self):
