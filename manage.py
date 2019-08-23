@@ -138,10 +138,8 @@ def patch_jsonfield():
 
 
 def patch_assertItemsEqual():
-    import six
     import unittest
-    if six.PY3:
-        unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
+    unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
 
 
 def patch_pickle_version():
