@@ -172,14 +172,6 @@ class Product(Document):
         return list(SQLProduct.objects.filter(domain=domain).product_ids())
 
     @classmethod
-    def count_by_domain(cls, domain):
-        """
-        Gets count of products in a domain
-        """
-        # todo: we should add a reduce so we can get this out of couch
-        return len(cls.ids_by_domain(domain))
-
-    @classmethod
     def _export_attrs(cls):
         return [
             ('name', six.text_type),
