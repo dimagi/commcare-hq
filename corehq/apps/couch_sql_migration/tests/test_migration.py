@@ -1000,9 +1000,6 @@ class Diff(object):
             )
         return NotImplemented
 
-    def __ne__(self, other):
-        return not (self == other)
-
     __hash__ = None
 
 

@@ -278,9 +278,6 @@ class IndexedSchema(DocumentSchema):
             and (self._parent == other._parent)
         )
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     class Getter(object):
 
         def __init__(self, attr):
@@ -3886,9 +3883,6 @@ class BuildProfile(DocumentSchema):
 
     def __eq__(self, other):
         return self.langs == other.langs and self.practice_mobile_worker_id == other.practice_mobile_worker_id
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
 
 class ApplicationBase(LazyBlobDoc, SnapshotMixin,
