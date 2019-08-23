@@ -1,8 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from dimagi.utils.couch.database import safe_delete
-from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.parsing import json_format_datetime
+
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.util.test_utils import unit_testing_only
 
 
 def get_latest_case_export_schema(domain, case_type):
@@ -214,3 +217,10 @@ def delete_all_export_instances():
     for row in db.view('export_instances_by_domain/view', reduce=False):
         doc_id = row['id']
         safe_delete(db, doc_id)
+
+
+def get_ledger_section_entry_combinations(domain):
+    """Get all section / entry combinations in a domain.
+    :returns: a generator of namedtuples with fields ``section_id``, ``entry_id``, ``doc_count``
+    """
+    return LedgerAccessors(domain).get_section_and_entry_combinations()

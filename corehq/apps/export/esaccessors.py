@@ -7,7 +7,6 @@ from elasticsearch import ElasticsearchException
 from corehq.apps.es import CaseES, FormES, GroupES
 from corehq.apps.es.sms import SMSES
 from corehq.elastic import ES_EXPORT_INSTANCE, get_es_new
-from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.python_compatibility import soft_assert_type_text
 
 
@@ -52,13 +51,6 @@ def get_groups_user_ids(group_ids):
             results.extend(user_list)
 
     return results
-
-
-def get_ledger_section_entry_combinations(domain):
-    """Get all section / entry combinations in a domain.
-    :returns: a generator of namedtuples with fields ``section_id``, ``entry_id``, ``doc_count``
-    """
-    return LedgerAccessors(domain).get_section_and_entry_combinations()
 
 
 def get_case_name(case_id):

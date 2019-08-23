@@ -1,8 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import uuid
 from datetime import datetime, timedelta
+
 from django.test import TestCase
 
+from casexml.apps.case.mock import CaseFactory
+
+from corehq.apps.commtrack.helpers import make_product
+from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
@@ -24,7 +31,10 @@ from corehq.apps.export.dbaccessors import (
     get_case_exports_by_domain,
     get_brief_exports,
     get_brief_deid_exports,
+    get_ledger_section_entry_combinations,
 )
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 
 
 class TestExportDBAccessors(TestCase):
@@ -289,3 +299,56 @@ class TestInferredSchemasDBAccessors(TestCase):
     def test_get_form_inferred_schema_missing(self):
         result = get_form_inferred_schema(self.domain, 'not-here', self.xmlns)
         self.assertIsNone(result)
+
+
+class TestExportLedgerAccessors(TestCase):
+    domain = uuid.uuid4().hex
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestExportLedgerAccessors, cls).setUpClass()
+        cls.product_a = make_product(cls.domain, 'A Product', 'product_a')
+        cls.product_b = make_product(cls.domain, 'B Product', 'product_b')
+        cls.product_c = make_product(cls.domain, 'C Product', 'product_c')
+
+        cls.expected_combos = {
+            ('stock', cls.product_a.get_id),
+            ('stock', cls.product_b.get_id),
+            ('consumption', cls.product_a.get_id),
+            ('consumption', cls.product_c.get_id),
+        }
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.product_a.delete()
+        cls.product_b.delete()
+        cls.product_c.delete()
+        super(TestExportLedgerAccessors, cls).tearDownClass()
+
+    def setUp(self):
+        super(TestExportLedgerAccessors, self).setUp()
+        factory = CaseFactory(domain=self.domain)
+        self.case_one = factory.create_case()
+
+        for section, entry in self.expected_combos:
+            submit_case_blocks(
+                [get_single_balance_block(
+                    case_id=self.case_one.case_id,
+                    section_id=section,
+                    product_id=entry,
+                    quantity=20,
+                )],
+                self.domain
+            )
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
+        super(TestExportLedgerAccessors, self).tearDown()
+
+    @run_with_all_backends
+    def test_get_ledger_section_entry_combinations(self):
+        combos = get_ledger_section_entry_combinations(self.domain)
+        self.assertEqual(
+            self.expected_combos,
+            {(combo.section_id, combo.entry_id) for combo in combos}
+        )
