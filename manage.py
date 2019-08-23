@@ -1,7 +1,10 @@
 #!/usr/bin/env python
-
+import os
+import sys
 
 import attr
+from gevent import monkey
+from psycogreen.gevent import patch_psycopg
 
 
 @attr.s
@@ -28,8 +31,6 @@ def _set_source_root_parent(source_root_parent):
     then foo and bar would become top-level importable
 
     """
-    import os
-    import sys
     filedir = os.path.dirname(__file__)
     submodules_list = os.listdir(os.path.join(filedir, source_root_parent))
     for d in submodules_list:
@@ -41,8 +42,6 @@ def _set_source_root_parent(source_root_parent):
 
 
 def _set_source_root(source_root):
-    import os
-    import sys
     filedir = os.path.dirname(__file__)
     sys.path.insert(1, os.path.join(filedir, source_root))
 
@@ -55,14 +54,12 @@ def _setup_once(*args, **kw):
 
 
 def init_hq_python_path():
-    import os
     _set_source_root_parent('submodules')
     _set_source_root(os.path.join('corehq', 'ex-submodules'))
     _set_source_root(os.path.join('custom', '_legacy'))
 
 
 def _should_patch_gevent(args, gevent_commands):
-    import requests
     should_patch = False
     for gevent_command in gevent_commands:
         should_patch = args[1] == gevent_command.command
@@ -70,13 +67,13 @@ def _should_patch_gevent(args, gevent_commands):
             should_patch = should_patch and gevent_command.contains in ' '.join(args)
         if should_patch:
             if gevent_command.http_adapter_pool_size:
+                import requests
                 requests.adapters.DEFAULT_POOLSIZE = gevent_command.http_adapter_pool_size
             break
     return should_patch
 
 
 def set_default_settings_path(argv):
-    import os
     if len(argv) > 1 and argv[1] == 'test' or os.environ.get('CCHQ_TESTING') == '1':
         os.environ.setdefault('CCHQ_TESTING', '1')
         module = 'testsettings'
@@ -176,7 +173,6 @@ if __name__ == "__main__":
     # but compressor doesn't like it
     # ('module' object has no attribute 'poll' which has to do with
     # gevent-patching subprocess)
-    import sys
     GEVENT_COMMANDS = (
         GeventCommand('run_gunicorn'),
         GeventCommand('run_sql'),
@@ -195,8 +191,8 @@ if __name__ == "__main__":
         GeventCommand('send_pillow_retry_queue_through_pillows'),
     )
     if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):
-        from gevent.monkey import patch_all; patch_all(subprocess=True)
-        from psycogreen.gevent import patch_psycopg; patch_psycopg()
+        monkey.patch_all(subprocess=True)
+        patch_psycopg()
 
     init_hq_python_path()
     run_patches()
