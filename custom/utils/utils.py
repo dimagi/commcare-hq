@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.reports.util import get_INFilter_element_bindparam
 import fluff
 import six

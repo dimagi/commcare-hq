@@ -1,6 +1,4 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 from sqlagg.filters import EQ, IN, NOT
 
 from corehq.apps.reports.util import get_INFilter_bindparams

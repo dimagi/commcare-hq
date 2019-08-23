@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from eulxml.xmlmap import (
     IntegerField, NodeField, NodeListField,
     SimpleBooleanField, StringField, XmlObject,

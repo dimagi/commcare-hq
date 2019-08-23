@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain

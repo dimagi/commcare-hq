@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from io import BytesIO
 from uuid import uuid4
 from django.test import TestCase

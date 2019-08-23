@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from decimal import Decimal
 from django.utils.encoding import force_text

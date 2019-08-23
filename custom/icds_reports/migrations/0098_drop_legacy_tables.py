@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
 
 from django.db import migrations
 from django.db.migrations import RunSQL

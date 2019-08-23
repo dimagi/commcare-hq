@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 USER_DATETIME_FORMAT = "%b %d, %Y %H:%M %Z"
 USER_DATETIME_FORMAT_WITH_SEC = "%b %d, %Y %H:%M:%S %Z"
 

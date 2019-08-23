@@ -1,5 +1,4 @@
 # Use modern Python
-from __future__ import unicode_literals, absolute_import, print_function
 
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.producer import ChangeProducer

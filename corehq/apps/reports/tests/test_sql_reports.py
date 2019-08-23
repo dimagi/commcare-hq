@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, time
 from django import test as unittest
 from django.test.client import RequestFactory

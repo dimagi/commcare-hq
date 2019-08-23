@@ -1,5 +1,3 @@
-from __future__ import absolute_import, print_function
-from __future__ import unicode_literals
 from corehq.form_processor.interfaces import dbaccessors
 from casexml.apps.case.models import CommCareCase
 import random

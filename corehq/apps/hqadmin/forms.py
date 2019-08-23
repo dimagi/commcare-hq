@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 from memoized import memoized
 from corehq.apps.hqwebapp.crispy import FormActions, FieldWithHelpBubble

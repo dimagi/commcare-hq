@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 COMMTRACK_REPORT_XMLNS = 'http://commcarehq.org/ledger/v1'
 
 SECTION_TYPE_STOCK = 'stock'

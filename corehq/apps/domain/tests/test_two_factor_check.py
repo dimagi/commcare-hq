@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase, RequestFactory
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import CouchUser

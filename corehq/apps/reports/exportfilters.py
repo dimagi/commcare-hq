@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from casexml.apps.case.xform import is_device_report
 from six.moves import filter  # keep unused import so py3 conversion scripts don't rewrite file
 

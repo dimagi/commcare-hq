@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY

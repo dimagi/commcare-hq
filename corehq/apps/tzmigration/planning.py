@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import sqlite3
 from sqlite3 import dbapi2 as sqlite

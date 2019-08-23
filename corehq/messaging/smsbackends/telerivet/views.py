@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback

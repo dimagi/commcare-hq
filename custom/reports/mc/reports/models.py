@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.reports.filters.base import BaseReportFilter

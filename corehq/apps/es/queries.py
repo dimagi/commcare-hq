@@ -10,8 +10,6 @@ are available, and put 'em here if you end up using any of 'em.
 
 .. _`query_docs`: https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-queries.html
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from .filters import range_filter, date_range
 import re
 

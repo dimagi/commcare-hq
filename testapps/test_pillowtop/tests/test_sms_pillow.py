@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import OrderedDict
 from django.core.validators import RegexValidator
 from django.urls import reverse

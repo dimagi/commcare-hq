@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import pytz
 from django.template.loader import render_to_string
 from memoized import memoized

@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function
-from __future__ import unicode_literals
 import csv342 as csv
 
 from django.core.management.base import BaseCommand, CommandError
