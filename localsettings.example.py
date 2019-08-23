@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 
 INTERNAL_IPS = ['127.0.0.1']

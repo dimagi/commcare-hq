@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.domain.shortcuts import create_domain

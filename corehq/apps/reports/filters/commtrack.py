@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, CheckboxFilter
 from django.utils.translation import ugettext_lazy, ugettext_noop

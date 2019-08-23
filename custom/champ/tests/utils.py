@@ -1,6 +1,4 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 import json
 from django.test.testcases import TestCase
 from django.test.client import RequestFactory

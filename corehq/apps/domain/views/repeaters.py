@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 import csv342 as csv
 
 from django.http import HttpResponseRedirect

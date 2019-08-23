@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.db import transaction
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.urls import reverse

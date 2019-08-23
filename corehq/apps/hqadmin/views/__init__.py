@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 
 from corehq.apps.hqadmin.views.data import (
     doc_in_es,

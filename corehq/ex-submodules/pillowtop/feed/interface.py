@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from corehq.sql_db.util import handle_connection_failure, get_all_db_aliases

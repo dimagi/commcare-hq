@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractproperty, abstractmethod
 from collections import Counter
 from datetime import datetime

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf import settings
 from django.utils.cache import _generate_cache_header_key
 from corehq.util.quickcache import quickcache

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from django.urls import reverse
 from tastypie import fields

@@ -1,5 +1,4 @@
 # Use modern Python
-from __future__ import absolute_import, print_function, unicode_literals
 
 # Standard library imports
 import logging

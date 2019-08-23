@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 JSERROR_COUNT = 'commcare.jserror.count'
 ERROR_COUNT = 'commcare.error.count'
 REPEATER_ERROR_COUNT = 'commcare.repeaters.error'

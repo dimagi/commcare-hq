@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.custom_data_fields.models import is_system_key
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type

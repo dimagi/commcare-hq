@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from functools import total_ordering
 
 from corehq.apps.aggregate_ucrs.date_utils import Month, Week

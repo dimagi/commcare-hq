@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config

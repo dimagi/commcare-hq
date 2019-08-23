@@ -1,8 +1,6 @@
 """
 API endpoints for filter options
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 
 from django.views.generic import View

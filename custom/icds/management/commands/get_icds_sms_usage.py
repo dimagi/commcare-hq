@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import pytz
 from corehq.apps.sms.models import SMS
 from corehq.apps.locations.models import SQLLocation

@@ -3,10 +3,6 @@
 SQL statement templates may use the `{chunk_size}` placeholder, which
 will be replaced with the value of the --chunk-size=N command argument.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 import pprint
 import sys
 import traceback

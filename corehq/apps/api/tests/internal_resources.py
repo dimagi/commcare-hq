@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
 from corehq.apps.locations.resources.v0_1 import InternalLocationResource

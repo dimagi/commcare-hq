@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.util.elastic import es_index
 from corehq.pillows.mappings.utils import mapping_from_json
 from pillowtop.es_utils import ElasticsearchIndexInfo
