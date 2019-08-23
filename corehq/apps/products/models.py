@@ -355,5 +355,10 @@ class SQLProduct(models.Model):
     def get_id(self):
         return self.product_id
 
+    @property
+    def unit(self):
+        # For compatibility with Product
+        return self.units
+
     class Meta(object):
         app_label = 'products'
