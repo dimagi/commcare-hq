@@ -2,7 +2,6 @@ import os
 import sys
 
 from collections import defaultdict
-from io import open
 
 import csv342 as csv
 from django.core.management.base import BaseCommand

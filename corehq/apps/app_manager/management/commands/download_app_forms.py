@@ -3,7 +3,6 @@ from django.core.management.base import BaseCommand
 import os
 from corehq.apps.app_manager.models import Application
 from corehq.apps.commtrack.util import unicode_slug
-from io import open
 
 
 class Command(BaseCommand):

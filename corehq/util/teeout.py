@@ -1,7 +1,6 @@
 import sys
 import traceback
 from contextlib import contextmanager
-from io import open
 
 import six
 

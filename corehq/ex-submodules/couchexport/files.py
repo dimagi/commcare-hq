@@ -1,7 +1,6 @@
 import os
 import tempfile
 import six
-from io import open
 
 from corehq.util.python_compatibility import soft_assert_type_text
 

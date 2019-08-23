@@ -9,7 +9,6 @@ from corehq.apps.hqadmin.management.commands.export_domain_forms_raw import Form
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from couchforms.models import DefaultAuthContext
-from io import open
 
 
 class Command(BaseCommand):

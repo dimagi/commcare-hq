@@ -14,7 +14,6 @@ from corehq.apps.hqmedia.models import CommCareImage
 from corehq.apps.hqmedia.tasks import check_ccz_multimedia_integrity, find_missing_locale_ids_in_ccz
 from corehq.apps.hqmedia.views import iter_media_files
 from corehq.util.test_utils import flag_enabled
-from io import open
 
 
 class CCZTest(TestCase):

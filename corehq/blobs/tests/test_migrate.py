@@ -16,7 +16,6 @@ from corehq.blobs.tests.util import (
 from django.test import TestCase
 from testil import tempdir
 
-from io import open
 
 
 class TestMigrateBackend(TestCase):

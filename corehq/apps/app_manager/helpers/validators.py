@@ -1,6 +1,5 @@
 # coding=utf-8
 
-from io import open
 import json
 import logging
 import os

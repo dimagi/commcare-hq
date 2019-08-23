@@ -9,7 +9,6 @@ from datetime import datetime
 from time import sleep
 
 from six.moves import input
-from io import open
 
 logger = logging.getLogger(__name__)
 

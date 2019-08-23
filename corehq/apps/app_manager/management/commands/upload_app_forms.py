@@ -7,7 +7,6 @@ from corehq.apps.app_manager.util import save_xform
 from datetime import datetime
 from corehq.apps.users.models import CouchUser
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
-from io import open
 
 
 class Command(BaseCommand):

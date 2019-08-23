@@ -2,7 +2,6 @@ import json
 import os
 
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-from io import open
 
 
 def mapping_from_json(filename):

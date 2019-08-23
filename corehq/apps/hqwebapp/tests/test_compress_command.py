@@ -5,7 +5,6 @@ from django.test import SimpleTestCase
 
 from django.conf import settings
 from django.template.loaders.app_directories import get_app_template_dirs
-from io import open
 
 B3_BASE = 'hqwebapp/base.html'
 

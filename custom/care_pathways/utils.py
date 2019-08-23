@@ -9,7 +9,6 @@ from corehq.apps.reports.sqlreport import DataFormatter
 import six
 from six.moves import range
 from six.moves import map
-from io import open
 
 
 @quickcache(['domain'], timeout=5 * 60)

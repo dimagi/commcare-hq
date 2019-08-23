@@ -42,7 +42,6 @@ from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
 from corehq import toggles
 from memoized import memoized
-from io import open
 
 
 class DetailContributor(SectionContributor):

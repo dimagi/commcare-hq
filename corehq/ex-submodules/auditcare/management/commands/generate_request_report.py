@@ -7,7 +7,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 from auditcare.utils.export import write_log_events, get_users_to_export
 from corehq.apps.domain.models import Domain
-from io import open
 
 
 def valid_date(s):

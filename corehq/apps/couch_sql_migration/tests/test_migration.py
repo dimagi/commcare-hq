@@ -4,7 +4,6 @@ import os
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from io import open
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile

@@ -6,7 +6,6 @@ from mock import patch
 
 from corehq.apps.app_manager.models import Application, CaseList, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from io import open
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)

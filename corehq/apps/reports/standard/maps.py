@@ -14,7 +14,6 @@ from dimagi.utils.modules import to_function
 from django.template.loader import render_to_string
 import six
 from six.moves import zip
-from io import open
 
 
 class GenericMapReport(ProjectReport, ProjectReportParametersMixin):

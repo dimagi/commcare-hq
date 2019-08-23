@@ -20,7 +20,6 @@ from corehq.apps.export.models import MAIN_TABLE, PathNode
 from corehq.apps.export.multiprocess import MultiprocessExporter, OutputPaginator, run_multiprocess_exporter
 from corehq.util.files import safe_filename
 from dimagi.utils.parsing import string_to_utc_datetime
-from io import open
 
 logger = logging.getLogger(__name__)
 

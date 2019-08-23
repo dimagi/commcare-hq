@@ -3,7 +3,6 @@ import json
 import os
 import uuid
 from collections import OrderedDict
-from io import open
 
 from django.test import SimpleTestCase
 from django.test.testcases import TestCase

@@ -5,7 +5,6 @@ import os
 import re
 import tempfile
 import zipfile
-from io import open
 from wsgiref.util import FileWrapper
 
 from dimagi.utils.logging import notify_exception

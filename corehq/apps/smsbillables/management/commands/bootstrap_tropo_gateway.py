@@ -5,7 +5,6 @@ from corehq.apps.smsbillables.utils import log_smsbillables_info
 from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
-from io import open
 
 
 def bootstrap_tropo_gateway(apps):

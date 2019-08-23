@@ -3,7 +3,6 @@ import os
 from django.core.management.base import LabelCommand
 from django.template import Engine
 from django.conf import settings
-from io import open
 
 SQL_ACCESSOR_DIR = os.path.join(settings.FILEPATH, 'corehq', 'sql_accessors', 'sql_templates')
 

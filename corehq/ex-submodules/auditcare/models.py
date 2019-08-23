@@ -18,7 +18,6 @@ from django.contrib.contenttypes.models import ContentType
 
 from auditcare import utils
 import six
-from io import open
 
 log = logging.getLogger(__name__)
 

@@ -5,7 +5,6 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.util.files import safe_filename
-from io import open
 
 
 def download_saved_export(export_id, dest_dir=None):

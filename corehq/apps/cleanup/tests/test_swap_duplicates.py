@@ -10,7 +10,6 @@ from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import \
     FIXED_FORM_PROBLEM_TEMPLATE, BAD_FORM_PROBLEM_TEMPLATE
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from couchforms.models import XFormInstance
-from io import open
 
 DOMAIN = "test"
 

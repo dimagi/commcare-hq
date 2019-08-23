@@ -20,7 +20,6 @@ from dimagi.utils.couch.loosechange import map_reduce
 from memoized import memoized
 from soil import DownloadBase
 from soil.util import expose_blob_download
-from io import open
 
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,

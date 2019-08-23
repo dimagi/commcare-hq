@@ -9,7 +9,6 @@ from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB
 from corehq.blobs.util import check_safe_key
 from corehq.util.datadog.gauges import datadog_counter
-from io import open
 
 CHUNK_SIZE = 4096
 

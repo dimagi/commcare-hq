@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.builds.jadjar import sign_jar
-from io import open
 
 
 class Command(BaseCommand):

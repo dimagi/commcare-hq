@@ -26,7 +26,6 @@ from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq import toggles
 import six
-from io import open
 
 
 register = template.Library()

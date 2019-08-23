@@ -8,7 +8,6 @@ from django.core.management import BaseCommand
 
 from couchforms.models import XFormInstance, XFormDuplicate
 from six.moves import input
-from io import open
 
 
 PROBLEM_TEMPLATE_START = "This document was an xform duplicate that replaced "

@@ -6,7 +6,6 @@ from corehq.apps.case_importer.tracking.models import CaseUploadRecord, \
     CaseUploadFormRecord
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet
 from memoized import memoized
-from io import open
 
 
 class CaseUpload(object):

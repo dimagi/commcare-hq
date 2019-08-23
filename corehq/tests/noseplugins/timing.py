@@ -8,7 +8,6 @@ import time
 
 from nose.plugins import Plugin
 from corehq.tests.noseplugins.uniformresult import uniform_description
-from io import open
 
 
 class TimingPlugin(Plugin):

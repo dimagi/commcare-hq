@@ -22,7 +22,6 @@ from corehq.util.datadog.utils import get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from six.moves import range
-from io import open
 
 
 def clean_exception(exception):
