@@ -1,13 +1,14 @@
 
-from django.utils.decorators import method_decorator
 from django.contrib import messages
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
 from corehq import toggles
-from corehq.apps.locations.forms import LocationFixtureForm
-from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
+from corehq.apps.locations.forms import LocationFixtureForm
+from corehq.apps.locations.models import LocationFixtureConfiguration
 
 
 class LocationFixtureConfigView(BaseAdminProjectSettingsView):

@@ -1,26 +1,24 @@
-from collections import Counter
-import os
-import re
 import datetime
 import json
-import csv342 as csv
+import os
+import re
 import sys
 import tempfile
+from collections import Counter
 
 from django.conf import settings
 
+import csv342 as csv
 from celery.task import task
+
+from couchexport.models import Format
+from dimagi.utils.django.email import send_HTML_email
+from soil.util import expose_zipped_blob_download
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
-from corehq.util.quickcache import quickcache
 from corehq.apps.es import DomainES
-
-from dimagi.utils.django.email import send_HTML_email
-
-from soil.util import expose_zipped_blob_download
-from couchexport.models import Format
-
+from corehq.util.quickcache import quickcache
 
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'
 

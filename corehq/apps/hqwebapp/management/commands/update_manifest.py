@@ -1,10 +1,11 @@
 import json
 import os
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from dimagi.utils import gitinfo
-from django.core import cache
 
+from django.conf import settings
+from django.core import cache
+from django.core.management.base import BaseCommand
+
+from dimagi.utils import gitinfo
 
 rcache = cache.caches['redis']
 COMPRESS_PREFIX = '#compress_%s'

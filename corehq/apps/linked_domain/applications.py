@@ -1,8 +1,15 @@
 
-from corehq.apps.app_manager.dbaccessors import get_latest_released_app_version, get_app, get_latest_released_app
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_latest_released_app,
+    get_latest_released_app_version,
+)
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.linked_domain.models import DomainLink
-from corehq.apps.linked_domain.remote_accessors import get_released_app_version, get_released_app
+from corehq.apps.linked_domain.remote_accessors import (
+    get_released_app,
+    get_released_app_version,
+)
 
 
 def get_master_app_version(domain_link, app_id):

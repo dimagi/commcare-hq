@@ -1,22 +1,22 @@
 import uuid
 from datetime import datetime
+
 from django.test import TestCase
 
-from corehq.apps.users.models import CommCareUser
+from pillowtop.es_utils import initialize_index_and_mapping
+
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.test_utils import trap_extra_setup
-from corehq.util.elastic import ensure_index_deleted
-
-
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.pillow import get_location_pillow
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.apps.users.models import CommCareUser
+from corehq.elastic import get_es_new
+from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import trap_extra_setup
 
 
 class TestLocationDataSource(TestCase):

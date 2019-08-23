@@ -3,10 +3,11 @@ import copy
 import json
 import re
 
-import six
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.forms import model_to_dict
+
+import six
 from jsonfield.fields import JSONField
 
 from corehq.util.quickcache import quickcache

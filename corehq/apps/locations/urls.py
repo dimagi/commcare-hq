@@ -1,20 +1,28 @@
 from django.conf.urls import url
 
 from .views import (
-    LocationsListView,
-    LocationsSearchView,
-    NewLocationView,
-    EditLocationView,
-    LocationImportView,
-    LocationImportStatusView,
-    LocationTypesView,
-    LocationFieldsView,
     DowngradeLocationsView,
     DownloadLocationStatusView,
-    default, child_locations_for_select2, location_importer_job_poll,
-    location_export, unassign_users, archive_location, unarchive_location,
-    delete_location, location_descendants_count, location_download_job_poll,
-    location_lineage)
+    EditLocationView,
+    LocationFieldsView,
+    LocationImportStatusView,
+    LocationImportView,
+    LocationsListView,
+    LocationsSearchView,
+    LocationTypesView,
+    NewLocationView,
+    archive_location,
+    child_locations_for_select2,
+    default,
+    delete_location,
+    location_descendants_count,
+    location_download_job_poll,
+    location_export,
+    location_importer_job_poll,
+    location_lineage,
+    unarchive_location,
+    unassign_users,
+)
 
 settings_urls = [
     url(r'^$', default, name='default_locations_view'),

@@ -1,13 +1,15 @@
+from datetime import date, time
+
+from mock import patch
+
 from corehq.apps.hqcase.utils import update_case
+from corehq.apps.reminders.models import RECIPIENT_OWNER, RECIPIENT_USER_GROUP
 from corehq.apps.sms.api import incoming
+from corehq.apps.sms.messages import *
 from corehq.apps.sms.models import WORKFLOW_KEYWORD
 from corehq.apps.sms.tests.util import TouchformsTestCase, time_parser
-from corehq.apps.reminders.models import (RECIPIENT_OWNER, RECIPIENT_USER_GROUP)
-from corehq.apps.sms.messages import *
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from datetime import date, time
-from mock import patch
 
 
 class MockContextManager(object):

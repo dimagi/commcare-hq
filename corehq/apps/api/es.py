@@ -3,13 +3,17 @@ import datetime
 import json
 import logging
 
-import six
 from django.http import HttpResponse
-from django.utils.decorators import method_decorator, classonlymethod
+from django.utils.decorators import classonlymethod, method_decorator
 from django.views.generic import View
+
+import six
 from elasticsearch.exceptions import ElasticsearchException, NotFoundError
 
 from casexml.apps.case.models import CommCareCase
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import ISO_DATE_FORMAT
+
 from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.apps.api.util import object_does_not_exist
@@ -17,15 +21,17 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import ESError, get_es_new, report_and_fail_on_shard_failures
-from corehq.pillows.base import restore_property_dict, VALUE_TAG
+from corehq.elastic import (
+    ESError,
+    get_es_new,
+    report_and_fail_on_shard_failures,
+)
+from corehq.pillows.base import VALUE_TAG, restore_property_dict
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import ISO_DATE_FORMAT
 from no_exceptions.exceptions import Http400
 
 logger = logging.getLogger('es')

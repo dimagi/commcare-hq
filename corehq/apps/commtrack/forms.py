@@ -1,15 +1,20 @@
-from crispy_forms.bootstrap import PrependedText
 from django import forms
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, HTML
+from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 
+from crispy_forms.bootstrap import PrependedText
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import HTML, ButtonHolder, Fieldset, Layout, Submit
+
+from corehq.apps.consumption.shortcuts import (
+    get_default_monthly_consumption,
+    set_default_consumption_for_product,
+)
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.forms import FormListForm
 from corehq.apps.products.models import Product
-from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_monthly_consumption
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
-from django.urls import reverse
 
 
 class CommTrackSettingsForm(forms.Form):

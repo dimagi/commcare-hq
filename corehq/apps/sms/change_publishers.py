@@ -1,7 +1,9 @@
+from django.conf import settings
+
+from pillowtop.feed.interface import ChangeMeta
+
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
-from pillowtop.feed.interface import ChangeMeta
-from django.conf import settings
 
 
 def do_publish():

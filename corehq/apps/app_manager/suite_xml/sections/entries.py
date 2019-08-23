@@ -1,29 +1,41 @@
-import six
-from collections import namedtuple, defaultdict
-from six.moves import zip_longest
+from collections import defaultdict, namedtuple
 
 from django.utils.translation import ugettext as _
-from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 
+import six
+from six.moves import zip_longest
+
+from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
+from corehq.apps.app_manager.exceptions import (
+    FormNotFoundException,
+    ParentModuleReferenceError,
+    SuiteValidationError,
+)
+from corehq.apps.app_manager.suite_xml.contributors import (
+    SuiteContributorByModule,
+)
 from corehq.apps.app_manager.suite_xml.utils import (
-    get_select_chain_meta,
     get_form_enum_text,
     get_form_locale_id,
+    get_select_chain_meta,
 )
-from corehq.apps.app_manager.exceptions import (
-    ParentModuleReferenceError,
-    SuiteValidationError)
-from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import (
-    USERCASE_ID, USERCASE_TYPE, )
-from corehq.apps.app_manager.exceptions import FormNotFoundException
-from corehq.apps.app_manager.util import actions_use_usercase
-from corehq.apps.app_manager.xform import autoset_owner_id_for_open_case, \
-    autoset_owner_id_for_subcase, autoset_owner_id_for_advanced_action
-from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
-    ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath, \
-    interpolate_xpath
 from corehq.apps.app_manager.suite_xml.xml_models import *
+from corehq.apps.app_manager.util import actions_use_usercase
+from corehq.apps.app_manager.xform import (
+    autoset_owner_id_for_advanced_action,
+    autoset_owner_id_for_open_case,
+    autoset_owner_id_for_subcase,
+)
+from corehq.apps.app_manager.xpath import (
+    CaseIDXPath,
+    ItemListFixtureXpath,
+    ProductInstanceXpath,
+    UserCaseXPath,
+    XPath,
+    interpolate_xpath,
+    session_var,
+)
 
 
 class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action from_parent')):

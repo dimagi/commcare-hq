@@ -1,11 +1,11 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from corehq.apps.domain.tests.test_views import BaseAutocompleteTest
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.tests.test_views import BaseAutocompleteTest
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import CommCareUser, WebUser
 
 
 class TestEmailAuthenticationFormAutocomplete(BaseAutocompleteTest):

@@ -2,8 +2,6 @@
 from django.db import migrations
 
 
-
-
 def confirm_no_data_loss(apps, schema_editor):
     if apps.get_model('smsbillables', 'SmsBillable').objects.filter(api_response__isnull=False).exists():
         raise Exception(

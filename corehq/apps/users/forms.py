@@ -1,53 +1,54 @@
-from django.conf import settings
-from django.contrib.auth.forms import SetPasswordForm
-from crispy_forms.bootstrap import InlineField, StrictButton
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
-from crispy_forms.layout import Fieldset, Layout, Submit
 import datetime
 import json
+import re
 
-from corehq.apps.hqwebapp.widgets import Select2Ajax
-from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
+from django.conf import settings
+from django.contrib.auth.forms import SetPasswordForm
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
-from django.urls import reverse
 from django.forms.widgets import PasswordInput
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, string_concat
 from django.template.loader import get_template
+from django.urls import reverse
+# required to translate inside of a mark_safe tag
+from django.utils.functional import lazy
+from django.utils.safestring import mark_safe
+from django.utils.translation import string_concat
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+import six  # Python 3 compatibility
+# Bootstrap 3 Crispy Forms
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import helper as cb3_helper
+from crispy_forms import layout as cb3_layout
+from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
+from memoized import memoized
+from six.moves import range
+
+from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
+from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import user_can_access_location_id
-from corehq.util.python_compatibility import soft_assert_type_text
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
-from corehq.apps.users.models import CouchUser, UserRole
-from corehq.apps.users.util import format_username, cc_user_domain
-from corehq.apps.app_manager.models import validate_lang
-from corehq.apps.programs.models import Program
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils import decode_password
-# Bootstrap 3 Crispy Forms
-from crispy_forms import layout as cb3_layout
-from crispy_forms import helper as cb3_helper
-from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import Select2Ajax
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import user_can_access_location_id
+from corehq.apps.programs.models import Program
+from corehq.apps.users.models import CouchUser, UserRole
+from corehq.apps.users.util import cc_user_domain, format_username
+from corehq.util.python_compatibility import soft_assert_type_text
+from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
-from memoized import memoized
-
-import re
-
-# required to translate inside of a mark_safe tag
-from django.utils.functional import lazy
-import six  # Python 3 compatibility
-from six.moves import range
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')

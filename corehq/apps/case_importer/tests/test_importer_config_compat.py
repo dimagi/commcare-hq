@@ -1,5 +1,7 @@
-from django.test import SimpleTestCase
 import pickle
+
+from django.test import SimpleTestCase
+
 from corehq.apps.case_importer.util import ImporterConfig
 from corehq.util.test_utils import make_make_path
 

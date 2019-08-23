@@ -1,4 +1,5 @@
 from xml.etree import cElementTree as ElementTree
+
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.mock import CaseBlock

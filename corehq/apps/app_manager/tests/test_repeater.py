@@ -3,11 +3,12 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 from django.test.client import Client
+
 from mock import patch
 
 from corehq.apps.app_manager.models import Application
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
-from corehq.motech.repeaters.models import RepeatRecord, AppStructureRepeater
+from corehq.motech.repeaters.models import AppStructureRepeater, RepeatRecord
 
 
 class TestAppStructureRepeater(TestCase):

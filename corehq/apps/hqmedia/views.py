@@ -1,70 +1,89 @@
-from mimetypes import guess_all_extensions, guess_type
-import uuid
-import zipfile
 import io
+import itertools
+import json
 import logging
 import os
-import json
-import itertools
+import shutil
+import uuid
+import zipfile
 from collections import defaultdict
+from mimetypes import guess_all_extensions, guess_type
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    JsonResponse,
+)
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import View, TemplateView
+from django.views.generic import TemplateView, View
 
-from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
-
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
-
-from django.shortcuts import render
-import shutil
-from corehq import privileges
-from corehq.apps.app_manager.const import TARGET_COMMCARE, TARGET_COMMCARE_LTS
-from corehq.apps.hqmedia.exceptions import BadMediaFileException
-from corehq.util.files import file_extention_from_filename
-from corehq.util.workbook_reading import SpreadsheetFileExtError
-
-from soil import DownloadBase
+import six
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from django_prbac.decorators import requires_privilege_raise404
+from memoized import memoized
 
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
-from corehq import toggles
-from corehq.middleware import always_allow_browser_caching
+from dimagi.utils.web import json_response
+from soil import DownloadBase
+from soil.util import expose_cached_download
+
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.app_manager.const import TARGET_COMMCARE, TARGET_COMMCARE_LTS
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
+from corehq.apps.app_manager.decorators import (
+    require_can_edit_apps,
+    safe_cached_download,
+)
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
-from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet, ALLOWED_EXTENSIONS
+from corehq.apps.case_importer.util import (
+    ALLOWED_EXTENSIONS,
+    get_spreadsheet,
+    open_spreadsheet_download_ref,
+)
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
+from corehq.apps.hqmedia.cache import (
+    BulkMultimediaStatusCache,
+    BulkMultimediaStatusCacheNfs,
+)
 from corehq.apps.hqmedia.controller import (
+    MultimediaAudioUploadController,
     MultimediaBulkUploadController,
     MultimediaImageUploadController,
-    MultimediaAudioUploadController,
-    MultimediaVideoUploadController
+    MultimediaVideoUploadController,
 )
-from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
+from corehq.apps.hqmedia.exceptions import BadMediaFileException
+from corehq.apps.hqmedia.models import (
+    MULTIMEDIA_PREFIX,
+    CommCareAudio,
+    CommCareImage,
+    CommCareMultimedia,
+    CommCareVideo,
+)
 from corehq.apps.hqmedia.tasks import (
-    process_bulk_upload_zip,
     build_application_zip,
+    process_bulk_upload_zip,
 )
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from dimagi.utils.web import json_response
-from memoized import memoized
-from soil.util import expose_cached_download
-from django.utils.translation import ugettext as _, ugettext_noop
-from django_prbac.decorators import requires_privilege_raise404
-import six
-
+from corehq.middleware import always_allow_browser_caching
+from corehq.util.files import file_extention_from_filename
+from corehq.util.workbook_reading import SpreadsheetFileExtError
 
 transient_file_store = TransientFileStore("hqmedia_upload_paths", timeout=1 * 60 * 60)
 

@@ -1,28 +1,32 @@
-from datetime import datetime
 import re
+from datetime import datetime
+
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.mail.message import EmailMessage
-from django.urls import reverse
 from django.db import transaction
 from django.db.models.aggregates import Count
 from django.http.response import Http404
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop as _
-from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.hqpillow_retry.filters import PillowErrorFilter
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.dispatcher import AdminReportDispatcher
-from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
-from corehq.apps.reports.standard import DatespanMixin
+
 from memoized import memoized
+
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import get_url_base
 from pillow_retry.models import PillowError
-from django.conf import settings
-from django.contrib.humanize.templatetags.humanize import naturaltime
+
+from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.hqpillow_retry.filters import PillowErrorFilter
+from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.dispatcher import AdminReportDispatcher
+from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
+from corehq.apps.reports.standard import DatespanMixin
 
 SOURCE_SINGLE = 'single'
 ACTION_RESET = 'reset'

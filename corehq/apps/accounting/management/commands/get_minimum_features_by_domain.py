@@ -1,12 +1,15 @@
 from django.core.management import BaseCommand
 
+from six.moves import map
+
 from corehq import privileges
 from corehq.apps.accounting.models import DefaultProductPlan
-from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
+from corehq.apps.accounting.subscription_changes import (
+    DomainDowngradeStatusHandler,
+)
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.app_manager.util import app_callout_templates
 from corehq.apps.domain.models import Domain
-from six.moves import map
 
 
 class Command(BaseCommand):

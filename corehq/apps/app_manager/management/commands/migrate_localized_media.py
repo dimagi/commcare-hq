@@ -1,7 +1,10 @@
-from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
+import six
+
+from corehq.apps.app_manager.management.commands.helpers import (
+    AppMigrationCommandBase,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.util.python_compatibility import soft_assert_type_text
-import six
 
 
 class Command(AppMigrationCommandBase):

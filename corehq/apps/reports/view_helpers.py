@@ -1,14 +1,16 @@
 
-from functools import partial
 import datetime
 import numbers
-import pytz
+from functools import partial
 
-from couchdbkit import ResourceNotFound
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
+import pytz
+from couchdbkit import ResourceNotFound
+
 from casexml.apps.case.views import get_wrapped_case
+
 from corehq.apps.hqwebapp.templatetags.proptable_tags import get_display_data
 
 

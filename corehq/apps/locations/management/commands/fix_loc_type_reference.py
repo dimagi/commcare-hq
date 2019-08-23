@@ -1,8 +1,9 @@
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.locations.models import SQLLocation, LocationType
 from six.moves import input
+
+from corehq.apps.locations.models import LocationType, SQLLocation
 
 
 class Command(BaseCommand):

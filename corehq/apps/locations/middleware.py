@@ -1,8 +1,10 @@
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import ugettext_lazy
+
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.users.models import AnonymousCouchUser
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+
 from .permissions import is_location_safe, location_restricted_response
 
 RESTRICTED_USER_UNASSIGNED_MSG = ugettext_lazy("""

@@ -1,13 +1,25 @@
 import json
-from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.exceptions import BadSpecError
+
 from django.conf import settings
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.reports.specs import PieChartSpec, \
-    MultibarAggregateChartSpec, MultibarChartSpec, \
-    FieldColumn, PercentageColumn, ExpandedColumn, AggregateDateColumn, \
-    OrderBySpec, LocationColumn, ExpressionColumn, ConditionalAggregationColumn, \
-    SumWhenColumn
+
+from jsonobject.exceptions import BadValueError
+
+from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.reports.specs import (
+    AggregateDateColumn,
+    ConditionalAggregationColumn,
+    ExpandedColumn,
+    ExpressionColumn,
+    FieldColumn,
+    LocationColumn,
+    MultibarAggregateChartSpec,
+    MultibarChartSpec,
+    OrderBySpec,
+    PercentageColumn,
+    PieChartSpec,
+    SumWhenColumn,
+)
 
 
 class ReportColumnFactory(object):

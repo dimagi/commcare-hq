@@ -20,9 +20,10 @@ seem to be a good fit.
 """
 import re
 import uuid
+
+import six
 from lxml import etree
 from lxml.builder import E
-import six
 
 from corehq.util.python_compatibility import soft_assert_type_text
 

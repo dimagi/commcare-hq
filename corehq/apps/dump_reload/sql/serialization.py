@@ -2,9 +2,9 @@
 import json
 from copy import copy
 
+from django.core.serializers.json import Serializer as JsonSerializer
+
 import six
-from django.core.serializers.json import (
-    Serializer as JsonSerializer)
 
 from corehq.util.json import CommCareJSONEncoder
 

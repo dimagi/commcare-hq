@@ -4,7 +4,7 @@ from mock import patch
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.updates import update_user_roles
 from corehq.apps.userreports.util import get_ucr_class_name
-from corehq.apps.users.models import UserRole, Permissions
+from corehq.apps.users.models import Permissions, UserRole
 
 
 class TestUpdateRoles(BaseLinkedAppsTest):

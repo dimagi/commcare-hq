@@ -1,33 +1,44 @@
 # coding=utf-8
 
-import ghdiff
-import six
-
 import io
+
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+
+import ghdiff
+import six
 
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.translations.app_translations.upload_form import (
+    BulkAppTranslationFormUpdater,
+)
+from corehq.apps.translations.app_translations.upload_module import (
+    BulkAppTranslationModuleUpdater,
+)
 from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
+    get_bulk_app_sheet_headers,
+    get_menu_or_form_by_sheet_name,
+    get_menu_or_form_by_unique_id,
     get_unicode_dicts,
     is_form_sheet,
     is_module_sheet,
     is_modules_and_forms_sheet,
     is_single_sheet,
-    get_menu_or_form_by_sheet_name,
-    get_menu_or_form_by_unique_id,
-    get_bulk_app_sheet_headers,
 )
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
-from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
-from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
+from corehq.apps.translations.const import (
+    MODULES_AND_FORMS_SHEET_NAME,
+    SINGLE_SHEET_NAME,
+)
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
-from corehq.util.workbook_json.excel import get_single_worksheet, WorkbookJSONError
+from corehq.util.workbook_json.excel import (
+    WorkbookJSONError,
+    get_single_worksheet,
+)
 
 
 def validate_bulk_app_translation_upload(app, workbook, email, lang_to_compare):

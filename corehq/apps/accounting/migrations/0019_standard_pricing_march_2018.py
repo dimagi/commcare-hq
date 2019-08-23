@@ -1,9 +1,10 @@
 
 from django.db import migrations
 
-from corehq.apps.accounting.bootstrap.config.standard_pricing_march_2018 import BOOTSTRAP_CONFIG
+from corehq.apps.accounting.bootstrap.config.standard_pricing_march_2018 import (
+    BOOTSTRAP_CONFIG,
+)
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
-
 
 
 def _bootstrap_new_standard_pricing(apps, schema_editor):

@@ -1,7 +1,7 @@
 from casexml.apps.case.xform import extract_case_blocks
+
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-
 
 MAX_RECENT_UPLOADS = 100
 

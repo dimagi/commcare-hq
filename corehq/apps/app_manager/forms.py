@@ -1,10 +1,13 @@
-from crispy_forms import layout as crispy
-from crispy_forms import bootstrap as twbscrispy
-from crispy_forms.helper import FormHelper
-from crispy_forms.bootstrap import StrictButton, PrependedText
 from django import forms
 from django.urls import reverse
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import PrependedText, StrictButton
+from crispy_forms.helper import FormHelper
+
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy

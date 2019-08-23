@@ -4,13 +4,15 @@ from collections import defaultdict
 from itertools import chain, count
 
 import gevent
-import gipc
 import six
-from gevent.pool import Pool
 from gevent.event import Event
+from gevent.pool import Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.stock.models import StockReport
+from dimagi.utils.chunked import chunked
+
+import gipc
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.tzmigration.timezonemigration import json_diff
 from corehq.form_processor.backends.couch.dbaccessors import (
@@ -23,7 +25,6 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL,
 )
 from corehq.form_processor.exceptions import MissingFormXml
-from dimagi.utils.chunked import chunked
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .lrudict import LRUDict

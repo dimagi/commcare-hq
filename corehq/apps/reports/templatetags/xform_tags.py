@@ -2,9 +2,9 @@
 from django import template
 from django.utils.html import format_html
 
-from corehq.util.xml_utils import indent_xml
 import six
 
+from corehq.util.xml_utils import indent_xml
 
 register = template.Library()
 

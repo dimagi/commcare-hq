@@ -1,7 +1,11 @@
 from django.conf.urls import url
+
 from corehq.apps.commtrack.views import (
-    DefaultConsumptionView, SMSSettingsView, CommTrackSettingsView,
-    StockLevelsView, RebuildStockStateView,
+    CommTrackSettingsView,
+    DefaultConsumptionView,
+    RebuildStockStateView,
+    SMSSettingsView,
+    StockLevelsView,
     default,
 )
 

@@ -2,16 +2,18 @@ import json
 import logging
 import os
 import re
-import six
 import subprocess
-import yaml
 from collections import defaultdict
-from django.conf import settings
 from shutil import copyfile
 from subprocess import call
 
-from corehq.apps.hqwebapp.management.commands.resource_static import Command as ResourceStaticCommand
+from django.conf import settings
 
+import six
+import yaml
+
+from corehq.apps.hqwebapp.management.commands.resource_static import \
+    Command as ResourceStaticCommand
 
 logger = logging.getLogger('__name__')
 ROOT_DIR = settings.FILEPATH

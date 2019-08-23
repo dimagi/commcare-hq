@@ -1,9 +1,8 @@
 
 from django.test import TestCase
 
-from corehq.apps.domain.models import Domain
-
 from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.domain.models import Domain
 
 
 class DomainCopyTest(TestCase):

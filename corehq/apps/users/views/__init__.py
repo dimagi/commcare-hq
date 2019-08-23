@@ -3,10 +3,6 @@ import json
 import logging
 from datetime import datetime
 
-import langcodes
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -23,14 +19,18 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
-
-from corehq.apps.hqwebapp.crispy import make_form_readonly
-from django_digest.decorators import httpdigest
 from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import json_response
+
+import langcodes
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
@@ -51,6 +51,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
+from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (
@@ -74,10 +75,10 @@ from corehq.apps.sms.verify import (
 )
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import (
-    require_can_edit_web_users,
     require_can_edit_or_view_web_users,
-    require_permission_to_edit_user,
+    require_can_edit_web_users,
     require_can_view_roles,
+    require_permission_to_edit_user,
 )
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
@@ -102,8 +103,7 @@ from corehq.apps.users.models import (
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.web import json_response
+from django_digest.decorators import httpdigest
 
 
 def _is_exempt_from_location_safety(view_fn, *args, **kwargs):

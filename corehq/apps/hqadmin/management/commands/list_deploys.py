@@ -1,7 +1,9 @@
 from datetime import datetime
-from dateutil import parser
 
 from django.core.management.base import BaseCommand
+
+from dateutil import parser
+
 from corehq.apps.hqadmin.models import HqDeploy
 
 

@@ -5,8 +5,6 @@ from datetime import date
 from django.db import migrations
 
 
-
-
 def assert_date_delay_invoicing_does_not_apply(apps, schema_editor):
     Subscription = apps.get_model('accounting', 'Subscription')
     assert not Subscription.visible_objects.filter(

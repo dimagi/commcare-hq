@@ -1,13 +1,12 @@
 
-from dropbox import Dropbox
-from dropbox.files import UploadSessionCursor, CommitInfo, WriteMode
-from dropbox.oauth import DropboxOAuth2Flow
-
 from django.conf import settings
 from django.urls import reverse
 
 from dimagi.utils.web import get_url_base
 
+from dropbox import Dropbox
+from dropbox.files import CommitInfo, UploadSessionCursor, WriteMode
+from dropbox.oauth import DropboxOAuth2Flow
 
 DROPBOX_CSRF_TOKEN = 'dropbox-auth-csrf-token'
 CHUNK_SIZE = 5000000  # Read file in 5 MB chunks

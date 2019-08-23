@@ -1,7 +1,5 @@
-from django.test import (
-    SimpleTestCase,
-    TestCase,
-)
+from django.test import SimpleTestCase, TestCase
+
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,

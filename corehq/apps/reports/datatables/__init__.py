@@ -1,9 +1,10 @@
 from django.template.loader import render_to_string
 from django.utils.functional import Promise
 
-from . import DTSortDirection, DTSortType
 import six
 from six.moves import map
+
+from . import DTSortDirection, DTSortType
 
 
 class DataTablesColumn(object):

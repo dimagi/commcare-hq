@@ -1,10 +1,11 @@
 
 import os
-from zipfile import ZipFile
 from datetime import datetime
-from django.db import connections
+from zipfile import ZipFile
+
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from django.db import connections
 
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.form_processor.models import CommCareCaseSQL

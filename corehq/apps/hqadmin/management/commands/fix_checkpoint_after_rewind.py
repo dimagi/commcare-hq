@@ -1,7 +1,10 @@
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
-from pillowtop.utils import get_pillow_by_name
+
 from six.moves import input
+
+from pillowtop.utils import get_pillow_by_name
+
+from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 
 
 def confirm(msg):

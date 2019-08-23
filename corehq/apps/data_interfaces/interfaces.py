@@ -1,7 +1,8 @@
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from memoized import memoized
 
@@ -11,15 +12,15 @@ from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import FormDisplay
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.util import get_simplified_users
 
 from .dispatcher import EditDataInterfaceDispatcher

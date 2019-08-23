@@ -1,16 +1,23 @@
-from copy import deepcopy
 import uuid
+from copy import deepcopy
 
 from django.test import SimpleTestCase, TestCase
-from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
-from corehq.apps.change_feed.producer import producer
-from corehq.apps.change_feed.topics import get_multi_topic_first_available_offsets
+
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.feed.interface import ChangeMeta
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.sample import CountingProcessor
+
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
+from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
+from corehq.apps.change_feed.producer import producer
+from corehq.apps.change_feed.topics import (
+    get_multi_topic_first_available_offsets,
+)
 
 
 class KafkaChangeFeedTest(SimpleTestCase):

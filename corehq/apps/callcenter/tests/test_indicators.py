@@ -1,22 +1,38 @@
 from collections import namedtuple
 
+from django.core import cache
+from django.test import TestCase
 from django.test.utils import override_settings
+
 from mock import patch
 
-from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0, MONTH1
-from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
-    cache_key, CachedIndicators
-from corehq.apps.callcenter.models import CallCenterIndicatorConfig, TypedIndicator
-from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.callcenter.const import (
+    DATE_RANGES,
+    MONTH0,
+    MONTH1,
+    WEEK0,
+    WEEK1,
+)
+from corehq.apps.callcenter.indicator_sets import (
+    AAROHI_MOTHER_FORM,
+    CachedIndicators,
+    CallCenterIndicators,
+    cache_key,
+)
+from corehq.apps.callcenter.models import (
+    CallCenterIndicatorConfig,
+    TypedIndicator,
+)
 from corehq.apps.callcenter.sync_user_case import sync_call_center_user_case
+from corehq.apps.callcenter.tests.sql_fixture import (
+    clear_data,
+    load_custom_data,
+    load_data,
+)
+from corehq.apps.callcenter.utils import CallCenterCase
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
-from django.test import TestCase
-
-from django.core import cache
-
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.sql_db.connections import connection_manager, override_engine

@@ -2,10 +2,13 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.domain.models import Domain
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settings
 import six
+
+from corehq.apps.app_manager.commcare_settings import (
+    get_custom_commcare_settings,
+)
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.domain.models import Domain
 
 logger = logging.getLogger('audit_app_profile_properties')
 

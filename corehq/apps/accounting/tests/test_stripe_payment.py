@@ -1,12 +1,15 @@
-from mock import patch
-
 from django.test import TestCase
 from django.test.client import RequestFactory
 
 import stripe
+from mock import patch
 from stripe.resource import StripeObject
 
-from corehq.apps.accounting.models import PaymentRecord, PaymentMethod, BillingAccount
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    PaymentMethod,
+    PaymentRecord,
+)
 from corehq.apps.accounting.payment_handlers import CreditStripePaymentHandler
 from corehq.apps.domain.models import Domain
 

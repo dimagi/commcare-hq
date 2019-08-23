@@ -1,6 +1,7 @@
 import couchdbkit
-from corehq.apps.app_manager.const import APP_V2
 import six
+
+from corehq.apps.app_manager.const import APP_V2
 
 
 class AppManagerException(Exception):

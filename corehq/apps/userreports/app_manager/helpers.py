@@ -1,12 +1,22 @@
+import unidecode
+
 from corehq.apps.app_manager.xform import XForm
-from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, CaseIndexItem
-from corehq.apps.export.system_properties import BOTTOM_MAIN_FORM_TABLE_PROPERTIES, MAIN_CASE_TABLE_PROPERTIES
-from corehq.apps.userreports.app_manager.data_source_meta import make_form_data_source_filter, \
-    make_case_data_source_filter
+from corehq.apps.export.models import (
+    CaseExportDataSchema,
+    CaseIndexItem,
+    FormExportDataSchema,
+)
+from corehq.apps.export.system_properties import (
+    BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
+    MAIN_CASE_TABLE_PROPERTIES,
+)
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    make_case_data_source_filter,
+    make_form_data_source_filter,
+)
 from corehq.apps.userreports.exceptions import DuplicateColumnIdError
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.sql import get_column_name
-import unidecode
 
 
 def get_case_data_sources(app):

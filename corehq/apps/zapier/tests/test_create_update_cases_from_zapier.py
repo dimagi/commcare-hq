@@ -1,10 +1,16 @@
 import json
 
-from django.urls import reverse
 from django.test.testcases import TestCase
+from django.urls import reverse
+
 from tastypie.models import ApiKey
 
-from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.zapier.views import ZapierCreateCase, ZapierUpdateCase

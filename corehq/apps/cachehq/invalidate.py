@@ -1,5 +1,6 @@
-from corehq.pillows.cacheinvalidate import CacheInvalidateProcessor
 from memoized import memoized
+
+from corehq.pillows.cacheinvalidate import CacheInvalidateProcessor
 
 
 @memoized

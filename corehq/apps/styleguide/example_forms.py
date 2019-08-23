@@ -1,7 +1,10 @@
 from django import forms
-from django.utils.translation import ugettext_lazy, ugettext as _
-from crispy_forms import layout as crispy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
 from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+
 from corehq.apps.hqwebapp import crispy as hqcrispy
 
 

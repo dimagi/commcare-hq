@@ -4,9 +4,16 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_version_build_id
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
-from corehq.apps.translations.generators import AppTranslationsGenerator, PoFileGenerator
-from corehq.apps.translations.integrations.transifex.client import TransifexApiClient
-from corehq.apps.translations.integrations.transifex.parser import TranslationsParser
+from corehq.apps.translations.generators import (
+    AppTranslationsGenerator,
+    PoFileGenerator,
+)
+from corehq.apps.translations.integrations.transifex.client import (
+    TransifexApiClient,
+)
+from corehq.apps.translations.integrations.transifex.parser import (
+    TranslationsParser,
+)
 from corehq.apps.translations.models import TransifexProject
 
 

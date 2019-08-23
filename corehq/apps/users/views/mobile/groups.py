@@ -1,39 +1,41 @@
-from couchdbkit.exceptions import ResourceNotFound
 from django.contrib import messages
-from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
-from corehq.apps.reports.filters.api import MobileWorkersOptionsView
-from corehq.apps.hqwebapp.decorators import use_multiselect
+from couchdbkit.exceptions import ResourceNotFound
 from django_prbac.utils import has_privilege
+from memoized import memoized
+
+from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.sms.models import Keyword
+from corehq.apps.reports.filters.api import MobileWorkersOptionsView
 from corehq.apps.reports.util import get_simplified_users
+from corehq.apps.sms.models import Keyword
 from corehq.apps.sms.verify import (
-    initiate_sms_verification_workflow,
     VERIFICATION__ALREADY_IN_USE,
     VERIFICATION__ALREADY_VERIFIED,
     VERIFICATION__RESENT_PENDING,
     VERIFICATION__WORKFLOW_STARTED,
+    initiate_sms_verification_workflow,
 )
-from corehq.apps.users.forms import GroupMembershipForm
 from corehq.apps.users.decorators import (
     require_can_edit_groups,
     require_can_edit_or_view_groups,
 )
+from corehq.apps.users.forms import GroupMembershipForm
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.messaging.scheduling.util import domain_has_reminders
-from corehq import privileges
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
-from memoized import memoized
 
 
 class GroupNotFoundException(Exception):

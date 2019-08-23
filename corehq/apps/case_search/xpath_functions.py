@@ -1,9 +1,10 @@
 
 import datetime
 
-import six
 from django.utils.dateparse import parse_date
 from django.utils.translation import ugettext as _
+
+import six
 
 from corehq.util.python_compatibility import soft_assert_type_text
 

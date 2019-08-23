@@ -2,7 +2,6 @@
 from django.db import migrations
 
 
-
 def copy_checkpoint(apps, schema_editor):
     DjangoPillowCheckpoint = apps.get_model('pillowtop', 'DjangoPillowCheckpoint')
     try:

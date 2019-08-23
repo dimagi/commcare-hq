@@ -1,5 +1,7 @@
-import csv342 as csv
 from django.core.management.base import BaseCommand
+
+import csv342 as csv
+
 from corehq.apps.domain.models import Domain
 
 

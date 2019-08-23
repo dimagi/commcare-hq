@@ -1,11 +1,12 @@
 import datetime
-import sqlalchemy
 
 from django.test import SimpleTestCase
 
-from .test_data_source_config import get_sample_data_source
+import sqlalchemy
+
 from ..sql import get_indicator_table
 from ..views import process_url_params
+from .test_data_source_config import get_sample_data_source
 
 
 class ParameterTest(SimpleTestCase):

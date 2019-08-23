@@ -1,5 +1,5 @@
-from django.core.management import BaseCommand
 from django.core.cache import cache
+from django.core.management import BaseCommand
 
 
 class Command(BaseCommand):

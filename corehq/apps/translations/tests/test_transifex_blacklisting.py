@@ -1,5 +1,6 @@
 
 from django.test import TestCase
+
 from mock import patch
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory

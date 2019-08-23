@@ -1,11 +1,12 @@
-from corehq.apps.sms.api import send_sms_to_verified_number, MessageMetadata
+from datetime import timedelta
+
+from corehq.apps.formplayer_api.smsforms.api import current_question
+from corehq.apps.sms.api import MessageMetadata, send_sms_to_verified_number
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.messaging.scheduling.util import utcnow
 from corehq.util.celery_utils import no_result_task
-from corehq.apps.formplayer_api.smsforms.api import current_question
-from datetime import timedelta
 
 
 def session_is_stale(session):

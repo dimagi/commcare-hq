@@ -1,16 +1,22 @@
-from django.test import TestCase
 import datetime
-from dimagi.utils.dates import add_months
-from corehq.apps.reports.standard.project_health import MonthlyPerformanceSummary, ProjectHealthDashboard
-from corehq.apps.data_analytics.models import MALTRow
-from corehq.const import MISSING_APP_ID
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership
-from corehq.apps.groups.models import Group
-from django.test import RequestFactory
+
+from django.test import RequestFactory, TestCase
+
 import mock
+
+from dimagi.utils.dates import add_months
+
+from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.domain.models import Domain
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
+from corehq.apps.groups.models import Group
+from corehq.apps.reports.standard.project_health import (
+    MonthlyPerformanceSummary,
+    ProjectHealthDashboard,
+)
+from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
+from corehq.const import MISSING_APP_ID
 
 
 @mock.patch('corehq.apps.reports.standard.project_health.UserES', UserESFake)

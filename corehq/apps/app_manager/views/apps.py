@@ -2,35 +2,59 @@
 import copy
 import json
 import os
-import urllib3
 from collections import defaultdict
 
-from couchdbkit.exceptions import ResourceConflict
 from django.contrib import messages
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.http import urlencode as django_urlencode
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET
+
+import six
+import urllib3
+from couchdbkit.exceptions import ResourceConflict
 from django_prbac.utils import has_privilege
 
-from corehq import toggles, privileges
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request, json_response
+from toggle.shortcuts import set_toggle
+
+from corehq import privileges, toggles
 from corehq.apps.analytics.tasks import (
     HUBSPOT_APP_TEMPLATE_FORM_ID,
     send_hubspot_form,
     track_workflow,
 )
-from corehq.apps.app_manager import id_strings, add_ons
-from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
-from corehq.apps.app_manager.const import (
-    MAJOR_RELEASE_TO_VERSION,
-    AUTO_SELECT_USERCASE,
+from corehq.apps.app_manager import add_ons, id_strings
+from corehq.apps.app_manager.commcare_settings import (
+    get_commcare_settings_layout,
 )
-from corehq.apps.app_manager.dbaccessors import get_app, get_current_app, get_latest_released_app
-from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps, require_deploy_apps
-from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppLinkError
+from corehq.apps.app_manager.const import (
+    AUTO_SELECT_USERCASE,
+    MAJOR_RELEASE_TO_VERSION,
+)
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_current_app,
+    get_latest_released_app,
+)
+from corehq.apps.app_manager.decorators import (
+    no_conflict_require_POST,
+    require_can_edit_apps,
+    require_deploy_apps,
+)
+from corehq.apps.app_manager.exceptions import (
+    AppLinkError,
+    IncompatibleFormTypeException,
+    RearrangeError,
+)
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
     Application,
@@ -40,31 +64,33 @@ from corehq.apps.app_manager.models import (
     Module,
     ModuleNotFoundException,
     app_template_dir,
-    load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.tasks import (
-    update_linked_app_and_notify_task,
-)
+from corehq.apps.app_manager.models import load_app_template
+from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
-    get_settings_values,
     app_doc_types,
     get_and_assert_practice_user_in_domain,
     get_latest_enabled_versions_per_profile,
+    get_settings_values,
     is_linked_app,
     is_remote_app,
 )
-from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, update_linked_app, clear_xmlns_app_id_cache
-from corehq.apps.app_manager.xform import (
-    XFormException)
-from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
+from corehq.apps.app_manager.views.utils import (
+    back_to_main,
+    clear_xmlns_app_id_cache,
+    get_langs,
+    update_linked_app,
+    validate_langs,
+)
+from corehq.apps.app_manager.xform import XFormException
+from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig
 from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
-    track_domain_request
+    track_domain_request,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
@@ -75,16 +101,14 @@ from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.dbaccessors import is_master_linked_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
-from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_practice_mode_mobile_workers,
+)
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response, json_request
-from toggle.shortcuts import set_toggle
-import six
 
 
 @no_conflict_require_POST
