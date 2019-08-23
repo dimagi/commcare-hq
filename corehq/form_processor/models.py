@@ -1658,6 +1658,9 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
         unique_together = ("case", "section_id", "entry_id")
+        index_together = [
+            ("domain", "section_id", "entry_id")
+        ]
 
 
 @six.python_2_unicode_compatible
