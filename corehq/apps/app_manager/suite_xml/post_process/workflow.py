@@ -609,9 +609,6 @@ class CommandId(object):
     def __eq__(self, other):
         return self.id == other.id
 
-    def __ne__(self, other):
-        return not self == other
-
     __hash__ = None
 
     def __repr__(self):
@@ -680,9 +677,6 @@ class WorkflowDatumMeta(object):
 
     def __eq__(self, other):
         return self.id == other.id
-
-    def __ne__(self, other):
-        return not self == other
 
     __hash__ = None
 

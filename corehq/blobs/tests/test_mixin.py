@@ -19,7 +19,6 @@ from corehq.util.test_utils import generate_cases, trap_extra_setup
 from dimagi.ext.couchdbkit import Document
 from mock import patch
 import six
-from io import open
 
 
 class BaseTestCase(TestCase):

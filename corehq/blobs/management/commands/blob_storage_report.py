@@ -18,7 +18,6 @@ from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.util.decorators import change_log_level
 from corehq.util.log import with_progress_bar
-from io import open
 
 
 USAGE = "Usage: ./manage.py blob_storage_report [options] FILE [FILE ...]"

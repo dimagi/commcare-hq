@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 from zipfile import BadZipfile
 from datetime import datetime, time
-from io import open
 
 from memoized import memoized
 import openpyxl

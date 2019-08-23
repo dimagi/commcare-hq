@@ -1,7 +1,6 @@
 import argparse
 import yaml
 import six
-from io import open
 
 parser = argparse.ArgumentParser(
     description='''

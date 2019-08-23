@@ -17,7 +17,6 @@ from corehq.apps.domainsync.config import DocumentTransform, save
 from dimagi.utils.parsing import json_format_date
 from six.moves import range
 import six
-from io import open
 
 DEFAULT_EXCLUDE_TYPES = [
     'ReportNotification',

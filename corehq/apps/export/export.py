@@ -31,7 +31,6 @@ from corehq.apps.export.models.new import (
 )
 from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
 import six
-from io import open
 
 
 class ExportFile(object):

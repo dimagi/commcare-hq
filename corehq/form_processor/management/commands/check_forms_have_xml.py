@@ -6,7 +6,6 @@ from corehq.form_processor.models import XFormInstanceSQL
 from corehq.util.log import with_progress_bar
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance as CouchForm
-from io import open
 
 
 class Command(BaseCommand):

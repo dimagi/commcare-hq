@@ -7,7 +7,6 @@ import logging
 import yaml
 from collections import OrderedDict, namedtuple
 from copy import deepcopy
-from io import open
 
 
 from couchdbkit import ResourceNotFound

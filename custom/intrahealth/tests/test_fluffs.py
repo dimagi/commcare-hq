@@ -11,7 +11,6 @@ import sqlalchemy
 
 from custom.intrahealth.tests.test_utils import IntraHealthTestCase, TEST_DOMAIN
 from testapps.test_pillowtop.utils import real_pillow_settings
-from io import open
 
 DATAPATH = os.path.join(os.path.dirname(__file__), 'data')
 

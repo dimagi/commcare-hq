@@ -7,7 +7,6 @@ from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.cases import CaseES
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from io import open
 
 
 class Command(BaseCommand):

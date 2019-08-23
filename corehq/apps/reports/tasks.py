@@ -3,7 +3,6 @@ import os
 import uuid
 import zipfile
 from datetime import datetime, timedelta
-from io import open
 
 from django.conf import settings
 

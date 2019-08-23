@@ -2,7 +2,6 @@
 import os
 import sys
 import six
-from io import open
 from zipfile import ZipFile
 
 from celery.task import task

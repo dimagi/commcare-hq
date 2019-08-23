@@ -14,7 +14,6 @@ from lxml import etree
 from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from six.moves import range
-from io import open
 
 
 TEST_DOMAIN_NAME = 'test-domain'

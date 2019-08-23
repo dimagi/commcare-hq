@@ -1,5 +1,4 @@
 
-from io import open
 from six.moves import input
 from django.core.management.base import BaseCommand
 

@@ -7,7 +7,6 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from dimagi.ext.jsonobject import JsonObject
 import six
-from io import open
 
 
 class FormMetadata(JsonObject):

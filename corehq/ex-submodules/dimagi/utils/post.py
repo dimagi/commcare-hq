@@ -4,7 +4,6 @@ import tempfile
 from subprocess import PIPE
 import requests
 import six
-from io import open
 
 
 def tmpfile(*args, **kwargs):

@@ -9,7 +9,6 @@ from datetime import (
     date,
     timedelta,
 )
-from io import open
 from xml.etree import cElementTree as ElementTree
 
 from django.core.management.base import BaseCommand

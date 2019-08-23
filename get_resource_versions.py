@@ -1,6 +1,5 @@
 import yaml
 from django.conf import settings
-from io import open
 import os
 
 

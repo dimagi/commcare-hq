@@ -25,7 +25,6 @@ from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
     _aggregate_gm_forms)
-from io import open
 from six.moves import range
 from six.moves import zip
 

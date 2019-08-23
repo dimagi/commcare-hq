@@ -7,7 +7,6 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.app_manager.models import Application
 from corehq.util.quickcache import quickcache
 import six
-from io import open
 
 
 class AbtExpressionSpec(JsonObject):

@@ -7,7 +7,6 @@ import re
 import six
 import sqlalchemy
 
-
 from mock import patch
 from six.moves import zip
 
@@ -18,8 +17,6 @@ from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfig
 from corehq.sql_db.connections import connection_manager
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
-
-from io import open
 
 
 def get_sample_report_config():

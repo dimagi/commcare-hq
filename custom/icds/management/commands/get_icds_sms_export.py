@@ -11,7 +11,6 @@ from couchexport.export import export_raw
 from datetime import datetime, timedelta, time
 from memoized import memoized
 from django.core.management.base import BaseCommand
-from io import open
 
 
 class BaseICDSSMSExportCommand(BaseCommand):

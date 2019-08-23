@@ -3,7 +3,6 @@ import json
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from io import open
 
 CACHE_DIR = os.path.join(settings.STATIC_ROOT, settings.COMPRESS_OUTPUT_DIR)
 

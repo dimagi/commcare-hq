@@ -15,7 +15,6 @@ Usage:
 import datetime
 import os
 import sys
-from io import open
 try:
     from shlex import quote  # py3
 except ImportError:

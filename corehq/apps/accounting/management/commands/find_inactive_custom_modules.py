@@ -1,7 +1,6 @@
 
 from collections import defaultdict
 from importlib import import_module
-from io import open
 
 from django.apps import apps
 from django.conf import settings

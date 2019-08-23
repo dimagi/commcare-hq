@@ -408,10 +408,6 @@ class LooselyEqualDocumentSchema(DocumentSchema):
         if isinstance(other, self.__class__):
             return self._doc == other._doc
 
-    # TODO - remove this in Python 3
-    def __ne__(self, other):
-        return not (self == other)
-
     def __hash__(self):
         return hash(json.dumps(self._doc, sort_keys=True))
 

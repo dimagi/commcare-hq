@@ -8,7 +8,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.form_processor.models import CommCareCaseSQL
-from io import open
 
 
 class Command(BaseCommand):

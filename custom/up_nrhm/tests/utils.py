@@ -10,7 +10,6 @@ from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 import os
-from io import open
 
 
 class UpNrhmTestCase(TestCase):

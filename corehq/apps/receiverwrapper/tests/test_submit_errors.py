@@ -22,7 +22,6 @@ from couchforms.models import UnfinishedSubmissionStub
 from couchforms.openrosa_response import ResponseNature
 from dimagi.utils.post import tmpfile
 from couchforms.signals import successful_form_received
-from io import open
 
 
 class SubmissionErrorTest(TestCase, TestFileMixin):

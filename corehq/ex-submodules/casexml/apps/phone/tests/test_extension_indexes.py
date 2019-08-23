@@ -11,7 +11,6 @@ from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import softer_assert
 import six
-from io import open
 
 
 @nottest

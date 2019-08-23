@@ -2,7 +2,6 @@
 import json
 import os
 import tempfile
-from io import open
 
 import polib
 import requests
