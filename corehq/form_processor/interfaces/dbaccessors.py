@@ -488,6 +488,10 @@ class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
     def get_ledger_values_for_cases(case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
         raise NotImplementedError
 
+    @abstractmethod
+    def get_section_and_entry_combinations(domain):
+        raise NotImplementedError
+
 
 class LedgerAccessors(object):
     """
@@ -534,3 +538,6 @@ class LedgerAccessors(object):
 
     def get_ledger_values_for_cases(self, case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
         return self.db_accessor.get_ledger_values_for_cases(case_ids, section_ids, entry_ids, date_start, date_end)
+
+    def get_section_and_entry_combinations(self):
+        return self.db_accessor.get_section_and_entry_combinations(self.domain)

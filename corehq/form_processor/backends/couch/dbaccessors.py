@@ -355,6 +355,17 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
 
         return list(StockState.objects.filter(**filters))
 
+    @staticmethod
+    def get_section_and_entry_combinations(domain):
+        from corehq.apps.commtrack.models import StockState
+
+        return list(
+            StockState.objects
+            .filter(sql_product__domain=domain)
+            .values('section_id', 'product_id')
+            .distinct()
+        )
+
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):
     try:

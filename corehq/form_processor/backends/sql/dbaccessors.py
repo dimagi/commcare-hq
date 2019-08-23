@@ -1467,6 +1467,20 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             for trans in resultset:
                 yield trans
 
+    @staticmethod
+    def get_section_and_entry_combinations(domain):
+        section_entry_combos = set()
+        for db_name in get_db_aliases_for_partitioned_query():
+            results = (
+                LedgerValue.objects.using(db_name)
+                .filter(domain=domain)
+                .values('section_id', 'entry_id')
+                .distinct()
+            )
+            for section_id, entry_id in results:
+                section_entry_combos.add((section_id, entry_id))
+        return section_entry_combos
+
 
 def _sort_with_id_list(object_list, id_list, id_property):
     """Sort object list in the same order as given list of ids
