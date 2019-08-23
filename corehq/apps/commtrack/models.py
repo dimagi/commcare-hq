@@ -186,8 +186,9 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     def get_ota_restore_settings(self):
         # for some reason it doesn't like this import
         from casexml.apps.phone.restore import StockSettings
-        default_product_ids = Product.ids_by_domain(self.domain) \
-            if self.ota_restore_config.use_dynamic_product_list else []
+        default_product_ids = []
+        if self.ota_restore_config.use_dynamic_product_list:
+            default_product_ids = SQLProduct.objects.filter(domain=self.domain).product_ids()
         case_filter = lambda stub: stub.type in set(self.ota_restore_config.force_consumption_case_types)
         return StockSettings(
             section_to_consumption_types=self.ota_restore_config.section_to_consumption_types,

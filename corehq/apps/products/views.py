@@ -371,7 +371,8 @@ def download_products(request, domain):
         return model_data, uncategorized_data
 
     def _get_products(domain):
-        for p_doc in iter_docs(Product.get_db(), Product.ids_by_domain(domain)):
+        product_ids = SQLProduct.objects.filter(domain=domain).product_ids()
+        for p_doc in iter_docs(Product.get_db(), product_ids):
             # filter out archived products from export
             if not ('is_archived' in p_doc and p_doc['is_archived']):
                 yield Product.wrap(p_doc)

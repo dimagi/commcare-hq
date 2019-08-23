@@ -168,10 +168,6 @@ class Product(Document):
         return list(queryset.couch_products(wrapped=wrap))
 
     @classmethod
-    def ids_by_domain(cls, domain):
-        return list(SQLProduct.objects.filter(domain=domain).product_ids())
-
-    @classmethod
     def _export_attrs(cls):
         return [
             ('name', six.text_type),
