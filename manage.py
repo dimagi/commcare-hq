@@ -142,12 +142,6 @@ def patch_assertItemsEqual():
     unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
 
 
-def patch_pickle_version():
-    # to avoid incompatibility between python 2 and 3
-    import pickle
-    pickle.HIGHEST_PROTOCOL = 2
-
-
 def run_patches():
     # workaround for https://github.com/smore-inc/tinys3/issues/33
     import mimetypes
@@ -156,9 +150,6 @@ def run_patches():
     patch_jsonfield()
 
     patch_assertItemsEqual()
-
-    # After PY3 migration: remove
-    patch_pickle_version()
 
     import django
     _setup_once.setup = django.setup
