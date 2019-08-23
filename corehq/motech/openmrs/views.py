@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -181,7 +182,7 @@ class OpenmrsImporterView(BaseProjectSettingsView):
         for importer in get_openmrs_importers_by_domain(self.request.domain):
             dict_ = dict(importer)
             dict_['password'] = PASSWORD_PLACEHOLDER
-            dict_['report_params'] = json.dumps(dict_['report_params'], indent=2)
+            dict_['report_params'] = json.dumps(dict_['report_params'], cls=DjangoJSONEncoder, indent=2)
             dict_['column_map'] = json.dumps([
                 {k: v for k, v in dict(m).items() if not (
                     # Drop '"doc_type": ColumnMapping' from each column mapping.

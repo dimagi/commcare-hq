@@ -32,7 +32,7 @@ class SessionDetailsView(View):
 
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.body.decode('utf-8'))
         except ValueError:
             return HttpResponseBadRequest()
 

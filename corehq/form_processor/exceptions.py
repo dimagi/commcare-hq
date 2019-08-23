@@ -6,6 +6,10 @@ from couchdbkit import ResourceNotFound
 from django.core.exceptions import ObjectDoesNotExist
 
 
+class StockProcessingError(Exception):
+    pass
+
+
 class CaseNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass
 
@@ -69,3 +73,11 @@ class XFormLockError(Exception):
 
     The error message should identify the locked form.
     """
+
+
+class MissingFormXml(Exception):
+    pass
+
+
+class FormEditNotAllowed(Exception):
+    pass

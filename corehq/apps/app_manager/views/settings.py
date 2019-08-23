@@ -50,7 +50,7 @@ def edit_commcare_settings(request, domain, app_id):
 @require_can_edit_apps
 def edit_commcare_profile(request, domain, app_id):
     try:
-        settings = json.loads(request.body)
+        settings = json.loads(request.body.decode('utf-8'))
     except TypeError:
         return HttpResponseBadRequest(json.dumps({
             'reason': 'POST body must be of the form:'

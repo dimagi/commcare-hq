@@ -19,7 +19,6 @@ from corehq.util.soft_assert import soft_assert
 import six
 
 _soft_assert = soft_assert(
-    to='{}@{}'.format('npellegrino+ucr-get-data', 'dimagi.com'),
     exponential_backoff=True,
 )
 

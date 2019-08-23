@@ -10,7 +10,7 @@ class AppManagerException(Exception):
 
 
 class VersioningError(AppManagerException):
-    """For errors that violate the principles of versioning in VersionedDoc"""
+    """For errors that violate the principles of versioning in ApplicationBase"""
     pass
 
 
@@ -174,4 +174,8 @@ class MultimediaMissingError(AppManagerException):
 
 
 class BuildNotFoundException(AppManagerException):
+    pass
+
+
+class BuildConflictException(Exception):
     pass

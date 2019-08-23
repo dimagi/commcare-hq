@@ -83,6 +83,7 @@ class CODES:
     fixture = 13        # domain-fixtures
     demo_user_restore = 14  # DemoUserRestore
     data_file = 15      # domain data file (see DataFile class)
+    form_multimedia = 16     # form submission multimedia zip
 
 
 CODES.name_of = {code: name

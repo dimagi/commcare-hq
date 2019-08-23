@@ -47,6 +47,7 @@
   privilege: 'practice_mobile_workers'
   toggle: 'MOBILE_USER_DEMO_MODE'
   description: "Select the mobile worker to use as a practice user for this application"
+  supports_linked_app: true
 
 # RemoteApp Only
 - id: profile_url

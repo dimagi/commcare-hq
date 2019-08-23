@@ -15,7 +15,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         vm.locations = data.locations;
     });
     var now = moment();
-    if (now.date() <= 15) {
+    if (now.date() <= 7) {
         now.subtract(2, 'months');
     } else {
         now.subtract(1, 'months');
@@ -24,7 +24,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     vm.selectedMonth = now.month() + 1;
     vm.selectedYear = now.year();
 
-    window.angular.forEach(moment.months(), function(key, value) {
+    window.angular.forEach(moment.months(), function (key, value) {
         vm.monthsCopy.push({
             name: key,
             id: value + 1,
@@ -33,7 +33,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
 
     if (vm.selectedYear === new Date().getFullYear()) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
-            return month.id < new Date().getMonth() || (month.id === new Date().getMonth() && moment().date() > 15);
+            return month.id < new Date().getMonth() || (month.id === new Date().getMonth() && moment().date() > 7);
         });
     } else if (vm.selectedYear === 2017) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
@@ -43,7 +43,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         vm.months = vm.monthsCopy;
     }
 
-    for (var year=2017; year <= new Date().getFullYear(); year++ ) {
+    for (var year = 2017; year <= new Date().getFullYear(); year++) {
         vm.yearsCopy.push({
             name: year,
             id: year,

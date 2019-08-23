@@ -1,23 +1,41 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.db import transaction
-from django.http import HttpResponseNotFound, HttpResponseForbidden, \
-    StreamingHttpResponse, HttpResponseBadRequest
+from __future__ import absolute_import, unicode_literals
 
-from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_records, \
-    get_case_ids_for_case_upload, get_form_ids_for_case_upload
-from corehq.apps.case_importer.tracking.jsmodels import case_upload_to_user_json
-from corehq.apps.case_importer.tracking.models import CaseUploadRecord, \
-    MAX_COMMENT_LENGTH
-from corehq.apps.case_importer.tracking.permissions import user_may_view_file_upload, \
-    user_may_update_comment
-from corehq.apps.case_importer.views import require_can_edit_data
-from corehq.util.view_utils import set_file_download
-from dimagi.utils.web import json_response
 from io import open
+
+from django.db import transaction
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    StreamingHttpResponse,
+)
+
+from dimagi.utils.web import json_response
+
+from corehq.apps.case_importer.base import location_safe_case_imports_enabled
+from corehq.apps.case_importer.tracking.dbaccessors import (
+    get_case_ids_for_case_upload,
+    get_case_upload_records,
+    get_form_ids_for_case_upload,
+)
+from corehq.apps.case_importer.tracking.jsmodels import (
+    case_upload_to_user_json,
+)
+from corehq.apps.case_importer.tracking.models import (
+    MAX_COMMENT_LENGTH,
+    CaseUploadRecord,
+)
+from corehq.apps.case_importer.tracking.permissions import (
+    user_may_update_comment,
+    user_may_view_file_upload,
+)
+from corehq.apps.case_importer.views import require_can_edit_data
+from corehq.apps.locations.permissions import conditionally_location_safe
+from corehq.util.view_utils import set_file_download
 
 
 @require_can_edit_data
+@conditionally_location_safe(location_safe_case_imports_enabled)
 def case_uploads(request, domain):
     try:
         limit = int(request.GET.get('limit'))
@@ -29,7 +47,7 @@ def case_uploads(request, domain):
     except (TypeError, ValueError):
         page = 1
 
-    case_upload_records = get_case_upload_records(domain, limit, skip=limit * (page - 1))
+    case_upload_records = get_case_upload_records(domain, request.couch_user, limit, skip=limit * (page - 1))
 
     with transaction.atomic():
         for case_upload_record in case_upload_records:
@@ -43,9 +61,10 @@ def case_uploads(request, domain):
 
 
 @require_can_edit_data
+@conditionally_location_safe(location_safe_case_imports_enabled)
 def update_case_upload_comment(request, domain, upload_id):
     try:
-        case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
+        case_upload = _get_case_upload_record(domain, upload_id, request.couch_user)
     except CaseUploadRecord.DoesNotExist:
         return HttpResponseNotFound()
 
@@ -65,9 +84,10 @@ def update_case_upload_comment(request, domain, upload_id):
 
 
 @require_can_edit_data
+@conditionally_location_safe(location_safe_case_imports_enabled)
 def case_upload_file(request, domain, upload_id):
     try:
-        case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
+        case_upload = _get_case_upload_record(domain, upload_id, request.couch_user)
     except CaseUploadRecord.DoesNotExist:
         return HttpResponseNotFound()
 
@@ -81,9 +101,10 @@ def case_upload_file(request, domain, upload_id):
 
 
 @require_can_edit_data
+@conditionally_location_safe(location_safe_case_imports_enabled)
 def case_upload_form_ids(request, domain, upload_id):
     try:
-        case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
+        case_upload = _get_case_upload_record(domain, upload_id, request.couch_user)
     except CaseUploadRecord.DoesNotExist:
         return HttpResponseNotFound()
 
@@ -94,9 +115,10 @@ def case_upload_form_ids(request, domain, upload_id):
 
 
 @require_can_edit_data
+@conditionally_location_safe(location_safe_case_imports_enabled)
 def case_upload_case_ids(request, domain, upload_id):
     try:
-        case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
+        case_upload = _get_case_upload_record(domain, upload_id, request.couch_user)
     except CaseUploadRecord.DoesNotExist:
         return HttpResponseNotFound()
 
@@ -104,3 +126,13 @@ def case_upload_case_ids(request, domain, upload_id):
                   for case_id in get_case_ids_for_case_upload(case_upload))
 
     return StreamingHttpResponse(ids_stream, content_type='text/plain')
+
+
+def _get_case_upload_record(domain, upload_id, user):
+    kwargs = {
+        'domain': domain,
+        'upload_id': upload_id,
+    }
+    if not user.has_permission(domain, 'access_all_locations'):
+        kwargs['couch_user_id'] = user._id
+    return CaseUploadRecord.objects.get(**kwargs)

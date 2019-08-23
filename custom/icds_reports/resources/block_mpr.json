@@ -693,6 +693,7 @@
       {
         "id": "static-{domain}-static-dashboard_mpr_4a_6_pse",
         "date_filter_field": "submitted_on",
+        "disallow_conditional_agg": true,
         "columns": [
           {
             "column_name": "open_pse_count",

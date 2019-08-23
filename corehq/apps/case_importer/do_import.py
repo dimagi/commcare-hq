@@ -11,6 +11,7 @@ from couchdbkit import NoResultFound
 
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
+from corehq.apps.case_importer.exceptions import CaseRowError
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import set_task_progress
@@ -33,6 +34,7 @@ from .util import EXTERNAL_ID, RESERVED_FIELDS, lookup_case
 
 CASEBLOCK_CHUNKSIZE = 100
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
+ALL_LOCATIONS = 'ALL_LOCATIONS'
 
 
 def do_import(spreadsheet, config, domain, task=None, record_form_callback=None):
@@ -82,7 +84,8 @@ class _Importer(object):
             domain=self.domain,
             user_id=self.user.user_id,
             name_cache=self.name_cache,
-            id_cache=self.id_cache
+            id_cache=self.id_cache,
+            locations=self.locations_accessible_to_user,
         )
         if row.relies_on_uncreated_case(self.uncreated_external_ids):
             self.commit_caseblocks()
@@ -106,6 +109,16 @@ class _Importer(object):
     @cached_property
     def user(self):
         return CouchUser.get_by_user_id(self.config.couch_user_id, self.domain)
+
+    @cached_property
+    def locations_accessible_to_user(self):
+        if self.user.has_permission(self.domain, 'access_all_locations'):
+            return ALL_LOCATIONS
+        return set(
+            SQLLocation.objects
+            .accessible_to_user(self.domain, self.user)
+            .values_list('location_id', flat=True)
+        )
 
     def add_caseblock(self, caseblock):
         self._unsubmitted_caseblocks.append(caseblock)
@@ -159,7 +172,7 @@ class _Importer(object):
 
 
 class _CaseImportRow(object):
-    def __init__(self, search_id, fields_to_update, config, domain, user_id, name_cache, id_cache):
+    def __init__(self, search_id, fields_to_update, config, domain, user_id, name_cache, id_cache, locations):
         self.search_id = search_id
         self.fields_to_update = fields_to_update
         self.config = config
@@ -167,6 +180,7 @@ class _CaseImportRow(object):
         self.user_id = user_id
         self.name_cache = name_cache
         self.id_cache = id_cache
+        self.accessible_locations = locations
 
         self.case_name = fields_to_update.pop('name', None)
         self.external_id = fields_to_update.pop('external_id', None)
@@ -223,15 +237,33 @@ class _CaseImportRow(object):
 
         if owner_id:
             # If an owner_id mapping exists, verify it is a valid user
-            # or case sharing group
-            if _is_valid_id(owner_id, self.domain, self.id_cache):
-                self.id_cache[owner_id] = True
-            else:
-                self.id_cache[owner_id] = False
-                raise exceptions.InvalidOwnerId('owner_id')
+            # or case sharing group and that their location is valid
+            self._check_owner_id(owner_id)
 
         # if they didn't supply an owner, default to current user
         return owner_id or self.user_id
+
+    def _check_owner_id(self, owner_id):
+        """
+        Raises InvalidOwnerId if the owner cannot own cases.
+        Raises InvalidLocation if a location-restricted user tries to assign
+            an owner outside their location hierarchy.
+        Returns True if owner ID is valid.
+        """
+        if owner_id in self.id_cache:
+            if isinstance(self.id_cache[owner_id], CaseRowError):
+                raise self.id_cache[owner_id]
+            return True
+
+        owner = get_wrapped_owner(owner_id)
+        try:
+            _check_owner(owner, self.domain, self.user_id, self.accessible_locations)
+        except CaseRowError as err:
+            self.id_cache[owner_id] = err
+            raise
+        else:
+            self.id_cache[owner_id] = True
+        return True
 
     def _get_parent_index(self):
         for column, search_field, search_id in [
@@ -429,27 +461,34 @@ def _populate_updated_fields(config, row):
     return fields_to_update
 
 
-def _is_valid_id(uploaded_id, domain, cache):
-    if uploaded_id in cache:
-        return cache[uploaded_id]
-
-    owner = get_wrapped_owner(uploaded_id)
-    return _is_valid_owner(owner, domain)
-
-
-def _is_valid_owner(owner, domain):
-    return (
-        (isinstance(owner, CouchUser) and owner.is_member_of(domain)) or
-        (isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(domain)) or
-        _is_valid_location_owner(owner, domain)
-    )
+def _check_owner(owner, domain, user_id=None, locations=ALL_LOCATIONS):
+    owner_is_user = isinstance(owner, CouchUser) and owner.is_member_of(domain)
+    owner_is_casesharing_group = isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(domain)
+    if not (owner_is_user or owner_is_casesharing_group or _is_valid_location_owner(owner, domain)):
+        raise exceptions.InvalidOwnerId('owner_id')
+    if not _is_owner_location_accessible_to_user(owner, domain, user_id, locations):
+        raise exceptions.InvalidLocation('owner_id')
+    return True
 
 
 def _is_valid_location_owner(owner, domain):
-    if isinstance(owner, SQLLocation):
-        return owner.domain == domain and owner.location_type.shares_cases
-    else:
-        return False
+    return (
+        isinstance(owner, SQLLocation) and
+        owner.domain == domain and
+        owner.location_type.shares_cases
+    )
+
+
+def _is_owner_location_accessible_to_user(owner, domain, user_id, locations_accessible_to_user):
+    return (
+        owner._id == user_id or
+        locations_accessible_to_user == ALL_LOCATIONS or
+        owner._id in locations_accessible_to_user or
+        (
+            hasattr(owner, 'get_location_id')  # is a user, not a location
+            and owner.get_location_id(domain) in locations_accessible_to_user
+        )
+    )
 
 
 def _get_id_from_name(name, domain, cache):

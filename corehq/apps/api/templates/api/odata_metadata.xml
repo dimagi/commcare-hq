@@ -3,14 +3,6 @@
     <edmx:DataServices>
         <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="CommCare">
             {% for case_type, properties in case_type_to_properties.items %}
-            <ComplexType Name="CaseProperties:{{ case_type }}" >
-                {% for property in properties %}
-                <Property Name="{{ property }}" Type="Edm.String" />
-                {% endfor %}
-            </ComplexType>
-            {% endfor %}
-
-            {% for case_type in case_type_to_properties %}
             <EntityType Name="{{ case_type }}" >
                 <Key>
                     <PropertyRef Name="case_id" />
@@ -21,12 +13,14 @@
                 <Property Name="date_closed" Type="Edm.DateTimeOffset" />
                 <Property Name="date_modified" Type="Edm.DateTimeOffset" />
                 <Property Name="opened_by" Type="Edm.String" />
-                <Property Name="properties" Type="CommCare.CaseProperties:{{ case_type }}" Nullable="false"/>
                 <Property Name="server_date_modified" Type="Edm.DateTimeOffset" />
                 <Property Name="server_date_opened" Type="Edm.DateTimeOffset" />
                 <Property Name="user_id" Type="Edm.String" />
                 <!-- todo: this isn't working - may be a tableau limitation on list properties -->
                 <Property Name="xform_ids" Type="Collection(Edm.String)" />
+                {% for property in properties %}
+                <Property Name="{{ property }}" Type="Edm.String" />
+                {% endfor %}
             </EntityType>
             {% endfor %}
 

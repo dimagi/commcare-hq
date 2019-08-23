@@ -6,7 +6,7 @@ from django.views.generic import RedirectView
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from corehq.apps.fixtures.views import (
     UploadItemLists, FixtureUploadStatusView,
-    upload_fixture_api, fixture_metadata, tables, download_item_lists,
+    upload_fixture_api, fixture_metadata, download_item_lists,
     download_file, update_tables, fixture_upload_job_poll,
     fixture_api_upload_status,
 )
@@ -18,7 +18,6 @@ urlpatterns = [
     url(r'^metadata/$', fixture_metadata, name='fixture_metadata'),
     url(r'^$', RedirectView.as_view(url='edit_lookup_tables', permanent=True), name='edit_lookup_tables'),
     FixtureInterfaceDispatcher.url_pattern(),
-    url(r'^edit_lookup_tables/data-types/$', tables, name='fixture_data_types'),
     url(r'^edit_lookup_tables/download/$', download_item_lists, name="download_fixtures"),
     url(r'^edit_lookup_tables/upload/$', UploadItemLists.as_view(), name='upload_fixtures'),
     url(r'^edit_lookup_tables/file/$', download_file, name="download_fixture_file"),

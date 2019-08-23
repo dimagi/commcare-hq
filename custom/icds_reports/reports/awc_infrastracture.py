@@ -5,17 +5,11 @@ from datetime import datetime
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.util.quickcache import quickcache
 from custom.icds_reports.messages import awcs_reported_clean_drinking_water_help_text, \
     awcs_reported_functional_toilet_help_text, awcs_reported_weighing_scale_infants_help_text, \
     awcs_reported_weighing_scale_mother_and_child_help_text, awcs_reported_medicine_kit_help_text
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude, percent_diff, get_value
-
-
-@quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
-def get_awc_infrastructure_data_with_cache(domain, config, show_test=False):
-    return get_awc_infrastructure_data(domain, config, show_test)
+from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, get_color_with_green_positive
 
 
 def get_awc_infrastructure_data(domain, config, show_test=False):
@@ -57,12 +51,12 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                         prev_month_data,
                         'sum_last_update'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'clean_water',
                         this_month_data,
                         prev_month_data,
                         'sum_last_update'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'clean_water'),
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
@@ -78,12 +72,12 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                         prev_month_data,
                         'sum_last_update'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'functional_toilet',
                         this_month_data,
                         prev_month_data,
                         'sum_last_update'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'functional_toilet'),
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
@@ -110,12 +104,12 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                         prev_month_data,
                         'sum_last_update'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'infant_scale',
                         this_month_data,
                         prev_month_data,
                         'sum_last_update'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'infant_scale'),
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
@@ -131,12 +125,12 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                         prev_month_data,
                         'sum_last_update'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'adult_scale',
                         this_month_data,
                         prev_month_data,
                         'sum_last_update'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'adult_scale'),
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
@@ -154,12 +148,12 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                         prev_month_data,
                         'sum_last_update'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'medicine_kits',
                         this_month_data,
                         prev_month_data,
                         'sum_last_update'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(this_month_data, 'medicine_kits'),
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',

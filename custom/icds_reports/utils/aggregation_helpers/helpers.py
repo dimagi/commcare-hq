@@ -33,6 +33,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     PostnatalCareFormsChildHealthAggregationDistributedHelper,
     THRFormsCcsRecordAggregationDistributedHelper,
     THRFormsChildHealthAggregationDistributedHelper,
+    THRFormV2AggDistributedHelper
 )
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
     AggAwcHelper,
@@ -63,6 +64,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith import (
     PostnatalCareFormsChildHealthAggregationHelper,
     THRFormsCcsRecordAggregationHelper,
     THRFormsChildHealthAggregationHelper,
+    THRFormV2AggHelper
 )
 
 
@@ -160,6 +162,9 @@ HELPERS = [
     HelperPair(
         THRFormsCcsRecordAggregationHelper, THRFormsCcsRecordAggregationDistributedHelper
     ),
+    HelperPair(
+        THRFormV2AggHelper, THRFormV2AggDistributedHelper
+    )
 ]
 
 

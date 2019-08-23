@@ -39,4 +39,11 @@
             </div>
         </div>
     </div>
+    <div class="row fixed-dots">
+      <div class="dot-menu">
+          <div class="dot-menu-item pointer" ng-repeat="step in $ctrl.steps">
+              <dot-link label="{$ step.label $}" route="{$ step.route $}"></dot-link>
+          </div>
+      </div>
+    </div>
 </div>

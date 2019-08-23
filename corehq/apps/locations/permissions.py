@@ -188,6 +188,7 @@ def conditionally_location_safe(conditional_function):
     safe based on the arguments or kwarguments. That function should return
     True or False.
 
+    Note - for the page to show up in the menus, the function should not rely on `request`.
     """
     def _inner(view_fn):
         if isinstance(view_fn, type):
@@ -277,6 +278,8 @@ def user_can_access_other_user(domain, user, other_user):
 
 def user_can_access_case(domain, user, case):
     from corehq.apps.reports.standard.cases.data_sources import CaseInfo
+    if user.has_permission(domain, 'access_all_locations'):
+        return True
 
     info = CaseInfo(None, case.to_json())
     if info.owner_type == 'location':

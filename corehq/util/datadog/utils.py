@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
 from datetime import timedelta
-from functools import wraps
+from functools import wraps, partial
 
 from datadog import api
 from django.conf import settings
@@ -188,3 +188,27 @@ def ucr_load_counter(engine_id, *args, **kw):
     """
     # grep: commcare.load.ucr
     return load_counter("ucr.{}".format(engine_id), *args, **kw)
+
+
+def schedule_load_counter(*args, **kw):
+    """Make a schedule load counter function
+
+    This is used to count load from ScheduleInstances
+    """
+    # grep: commcare.load.schedule
+    return load_counter("schedule", *args, **kw)
+
+
+def load_counter_for_model(model):
+    from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        AlertScheduleInstance, TimedScheduleInstance, CaseTimedScheduleInstance, CaseAlertScheduleInstance
+    )
+    return {
+        CommCareCaseSQL: case_load_counter,
+        XFormInstanceSQL: form_load_counter,
+        AlertScheduleInstance: schedule_load_counter,
+        TimedScheduleInstance: schedule_load_counter,
+        CaseTimedScheduleInstance: schedule_load_counter,
+        CaseAlertScheduleInstance: schedule_load_counter,
+    }.get(model, partial(load_counter, 'unknown'))  # grep: commcare.load.unknown

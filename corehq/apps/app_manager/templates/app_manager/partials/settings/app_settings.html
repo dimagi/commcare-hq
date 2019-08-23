@@ -166,13 +166,14 @@
 
 <div class="tabbable">
   <ul class="nav nav-tabs sticky-tabs">
-    {% if app.get_doc_type == 'LinkedApplication' %}
+    {% if is_linked_app %}
       <li><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
       <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
+      <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
       <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
     {% else %}
       <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
-      {% if app.get_doc_type == 'Application' %}
+      {% if not is_remote_app %}
         <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
       {% endif %}
       <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
@@ -181,7 +182,7 @@
     <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
   </ul>
   <div class="tab-content appmanager-tab-content">
-    {% if app.get_doc_type == 'LinkedApplication' %}
+    {% if is_linked_app %}
       <div class="tab-pane" id="linked-app">
         <div class="panel panel-appmanager panel-appmanager-form">
           <form action="{% url "pull_master_app" domain app.id %}" method="POST">
@@ -204,7 +205,7 @@
               <div class="checkbox">
                 <label>
                   <input type="checkbox" name="notify">
-                  {% trans "Email when when finished (recommended for large applications)" %}
+                  {% trans "Email when finished (recommended for large applications)" %}
                 </label>
               </div>
               <button type="submit" class="btn btn-primary">
@@ -216,7 +217,7 @@
         </div>
       </div>
     {% endif %}
-    {% if app.get_doc_type == 'Application' %}
+    {% if not is_remote_app %}
       <div class="tab-pane" id="multimedia-tab">
         <div data-bind="if: load_state() === 'loading'">
           <i class="fa fa-spin fa-spinner"></i>
@@ -233,7 +234,7 @@
       {% include 'app_manager/languages.html' %}
     </div>
     <div class="tab-pane" id="actions">
-      {% if app.get_doc_type != 'LinkedApplication' %}
+      {% if not is_linked_app %}
         {% if copy_app_form %}
           <div class="panel panel-appmanager panel-appmanager-form" id="copy-app-form">
             <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
@@ -271,21 +272,6 @@
                 </tbody>
               </table>
             </div>
-          </div>
-        {% endif %}
-        {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
-        {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-          <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
-            <form action="{% url "gzip_app" domain app.id %}" method="POST">
-              {% csrf_token %}
-              <legend>Export compressed application</legend>
-              <div class="panel-body">
-                <button type="submit" class="btn btn-primary">
-                  <i class="fa fa-arrow-down"></i>
-                  {% trans "Download" %}
-                </button>
-              </div>
-            </form>
           </div>
         {% endif %}
       {% endif %}

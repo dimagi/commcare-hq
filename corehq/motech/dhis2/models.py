@@ -1,18 +1,9 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
-from __future__ import unicode_literals
 from itertools import chain
 
-from corehq.motech.dhis2.utils import (
-    get_date_filter,
-    get_previous_month,
-    get_report_config,
-    get_ucr_data,
-    get_previous_quarter,
-)
-from corehq.motech.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY, SEND_FREQUENCIES
-from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
+    BooleanProperty,
     Document,
     DocumentSchema,
     IntegerProperty,
@@ -20,12 +11,27 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
+from corehq.motech.dhis2.const import (
+    SEND_FREQUENCIES,
+    SEND_FREQUENCY_MONTHLY,
+    SEND_FREQUENCY_QUARTERLY,
+)
+from corehq.motech.dhis2.utils import (
+    get_date_filter,
+    get_previous_month,
+    get_previous_quarter,
+    get_report_config,
+    get_ucr_data,
+)
+from corehq.util.quickcache import quickcache
+
 
 class Dhis2Connection(Document):
     domain = StringProperty()
     server_url = StringProperty()
     username = StringProperty()
     password = StringProperty()
+    skip_cert_verify = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):

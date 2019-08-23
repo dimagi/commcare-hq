@@ -8,7 +8,7 @@ from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_da
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestAdolescentGirls(TestCase):
 
     def test_map_data(self):

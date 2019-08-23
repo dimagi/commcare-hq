@@ -1,69 +1,106 @@
 from __future__ import absolute_import, unicode_literals
+
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
+
 from tastypie.serializers import Serializer
 
-from corehq.apps.api.odata.utils import get_case_type_to_properties
-from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
 
+from corehq.apps.api.odata.views import (
+    ODataCaseMetadataView,
+    ODataFormMetadataView,
+)
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
+from corehq.util.view_utils import absolute_reverse
 
-class ODataCommCareCaseSerializer(Serializer):
-    """
-    A custom serializer that converts case data into an odata-compliant format.
-    Must be paired with ODataCommCareCaseResource
-    # todo: should maybe be generalized into a mixin paired with the resource to support both cases and forms
-    """
+
+class ODataBaseSerializer(Serializer):
+
+    metadata_url = None
+    table_metadata_url = None
+
+    def get_config(self, config_id):
+        raise NotImplementedError("implement get_config")
+
     def to_json(self, data, options=None):
-        options = options or {}
+        # Convert bundled objects to JSON
+        data['objects'] = [
+            bundle.obj for bundle in data['objects']
+        ]
+
         domain = data.pop('domain', None)
-        if not domain:
-            raise Exception('API requires domain to be set! Did you add it in a custom create_response function?')
-        case_type = data.pop('case_type', None)
-        if not case_type:
-            raise Exception(
-                'API requires case_type to be set! Did you add it in a custom create_response function?'
-            )
+        config_id = data.pop('config_id', None)
         api_path = data.pop('api_path', None)
-        if not api_path:
-            raise Exception(
-                'API requires api_path to be set! Did you add it in a custom create_response function?'
-            )
-        data = self.to_simple(data, options)
-        data['@odata.context'] = '{}#{}'.format(absolute_reverse('odata_meta', args=[domain]), case_type)
+        table_id = data.pop('table_id', None)
 
-        next_url = data.pop('meta', {}).get('next')
-        if next_url:
-            data['@odata.nextLink'] = '{}{}{}'.format(get_url_base(), api_path, next_url)
-        # move "objects" to "value"
-        data['value'] = data.pop('objects')
+        assert all([domain, config_id, api_path]), [domain, config_id, api_path]
 
-        # clean properties
-        def _clean_property_name(name):
-            # for whatever ridiculous reason, at least in Tableau,
-            # when these are nested inside an object they can't have underscores in them
-            return name.replace('_', '')
+        context_urlname = self.metadata_url
+        context_url_args = [domain, config_id]
+        if table_id > 0:
+            context_urlname = self.table_metadata_url
+            context_url_args.append(table_id)
 
-        for i, case_json in enumerate(data['value']):
-            case_json['properties'] = {_clean_property_name(k): v for k, v in case_json['properties'].items()}
+        data['@odata.context'] = '{}#{}'.format(
+            absolute_reverse(context_urlname, args=context_url_args),
+            'feed'
+        )
 
-        case_type_to_properties = get_case_type_to_properties(domain)
-        properties_to_include = [
-            'casename', 'casetype', 'dateopened', 'ownerid', 'backendid'
-        ] + case_type_to_properties.get(case_type, [])
+        next_link = self.get_next_url(data.pop('meta'), api_path)
+        if next_link:
+            data['@odata.nextLink'] = next_link
 
-        for value in data['value']:
-            for remove_property in [
-                'id',
-                'indexed_on',
-                'indices',
-                'resource_uri',
-            ]:
-                value.pop(remove_property)
-            properties = value.get('properties')
-            for property_name in list(properties):
-                if property_name not in properties_to_include:
-                    properties.pop(property_name)
-
+        config = self.get_config(config_id)
+        data['value'] = self.serialize_documents_using_config(
+            data.pop('objects'),
+            config,
+            table_id
+        )
         return json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True)
+
+    @staticmethod
+    def get_next_url(meta, api_path):
+        next_page = meta['next']
+        if next_page:
+            return '{}{}{}'.format(get_url_base(), api_path, next_page)
+
+    @staticmethod
+    def serialize_documents_using_config(documents, config, table_id):
+        if table_id + 1 > len(config.tables):
+            return []
+
+        table = config.tables[table_id]
+        if not table.selected:
+            return []
+
+        data = []
+        for row_number, document in enumerate(documents):
+            rows = table.get_rows(
+                document,
+                row_number,
+                split_columns=config.split_multiselects,
+                transform_dates=config.transform_dates,
+                as_json=True,
+            )
+            data.extend(rows)
+        return data
+
+
+class ODataCaseSerializer(ODataBaseSerializer):
+
+    metadata_url = ODataCaseMetadataView.urlname
+    table_metadata_url = ODataCaseMetadataView.table_urlname
+
+    def get_config(self, config_id):
+        return CaseExportInstance.get(config_id)
+
+
+class ODataFormSerializer(ODataBaseSerializer):
+
+    metadata_url = ODataFormMetadataView.urlname
+    table_metadata_url = ODataFormMetadataView.table_urlname
+
+    def get_config(self, config_id):
+        return FormExportInstance.get(config_id)

@@ -289,14 +289,10 @@ class ReportBuilderView(BaseDomainView):
         allowed_num_reports = allowed_report_builder_reports(self.request)
         main_context.update({
             'has_report_builder_access': has_report_builder_access(self.request),
-            'at_report_limit': (
-                number_of_report_builder_reports(self.domain) >= allowed_num_reports
-                and allowed_num_reports is not None
-            ),
+            'at_report_limit': number_of_report_builder_reports(self.domain) >= allowed_num_reports,
             'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
             'pricing_page_url': settings.PRICING_PAGE_URL,
-            'support_email': settings.SUPPORT_EMAIL,
         })
         return main_context
 
@@ -334,14 +330,6 @@ class ReportBuilderPaywallBase(BaseDomainView):
         return paywall_home(self.domain)
 
     @property
-    def page_context(self):
-        context = super(ReportBuilderPaywallBase, self).page_context
-        context.update({
-            'support_email': settings.SUPPORT_EMAIL
-        })
-        return context
-
-    @property
     @memoized
     def plan_name(self):
         return Subscription.get_subscribed_plan_by_domain(self.domain).plan.name
@@ -359,9 +347,8 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
         num_builder_reports = number_of_report_builder_reports(self.domain)
         context.update({
             'has_report_builder_access': has_report_builder_access(self.request),
-            'at_report_limit': num_builder_reports >= max_allowed_reports and max_allowed_reports is not None,
-            'max_allowed_reports': max_allowed_reports if max_allowed_reports is not None else 0,
-            'support_email': settings.SUPPORT_EMAIL,
+            'at_report_limit': num_builder_reports >= max_allowed_reports,
+            'max_allowed_reports': max_allowed_reports,
             'pricing_page_url': settings.PRICING_PAGE_URL,
         })
         return context
@@ -383,7 +370,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
                 self.plan_name
             ),
             settings.DEFAULT_FROM_EMAIL,
-            [settings.REPORT_BUILDER_ADD_ON_EMAIL],
+            [settings.SALES_EMAIL],
         )
         update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
@@ -623,7 +610,7 @@ class ConfigureReport(ReportBuilderView):
         if not has_report_builder_access(request):
             raise Http404
 
-        report_data = json.loads(request.body)
+        report_data = json.loads(request.body.decode('utf-8'))
         if report_data['existing_report'] and not self.existing_report:
             # This is the case if the user has clicked "Save" for a second time from the new report page
             # i.e. the user created a report with the first click, but didn't navigate to the report view page
@@ -1085,7 +1072,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             except DataSourceConfigurationNotFoundError:
                 _soft_assert = soft_assert(to=[
                     '{}@{}'.format(name, 'dimagi.com')
-                    for name in ['jemord', 'cellowitz', 'npellegrino', 'frener']
+                    for name in ['jemord', 'cellowitz', 'frener']
                 ])
                 _soft_assert(False, "Report {} on domain {} attempted to reference deleted table".format(
                     report._id, self.domain

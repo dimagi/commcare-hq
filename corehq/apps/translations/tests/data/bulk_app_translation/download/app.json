@@ -136,8 +136,9 @@
       "case_list": {
         "doc_type": "CaseList",
         "label": {
+          "en": "Steth List"
         },
-        "show": false
+        "show": true
       },
       "forms": [
         {

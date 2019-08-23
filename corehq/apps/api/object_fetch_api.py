@@ -12,7 +12,7 @@ from corehq.apps.locations.permissions import location_safe
 from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
 
 from corehq.apps.domain.decorators import api_auth
-from corehq.apps.reports.views import can_view_attachments, _get_location_safe_form, require_form_view_permission
+from corehq.apps.reports.views import can_view_attachments, safely_get_form, require_form_view_permission
 from corehq.form_processor.exceptions import CaseNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, get_cached_case_attachment, FormAccessors
 
@@ -128,13 +128,13 @@ class FormAttachmentAPI(View):
             raise Http404
 
         # this raises a PermissionDenied error if necessary
-        _get_location_safe_form(domain, request.couch_user, form_id)
+        safely_get_form(request, domain, form_id)
 
         try:
             content = FormAccessors(domain).get_attachment_content(form_id, attachment_id)
         except AttachmentNotFound:
             raise Http404
-        
+
         return StreamingHttpResponse(
             streaming_content=FileWrapper(content.content_stream),
             content_type=content.content_type

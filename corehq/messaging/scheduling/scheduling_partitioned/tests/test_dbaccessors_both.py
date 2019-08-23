@@ -7,7 +7,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
-from corehq.sql_db.util import run_query_across_partitioned_databases
+from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from datetime import datetime, date
 from django.db.models import Q
 from django.test import TestCase
@@ -52,8 +52,8 @@ class SchedulingDBAccessorsTest(TestCase):
         self.addCleanup(instance.delete)
 
     def get_case_schedule_instances_for_domain(self, domain):
-        instances = list(run_query_across_partitioned_databases(CaseAlertScheduleInstance, Q(domain=domain)))
-        instances.extend(run_query_across_partitioned_databases(CaseTimedScheduleInstance, Q(domain=domain)))
+        instances = list(paginate_query_across_partitioned_databases(CaseAlertScheduleInstance, Q(domain=domain)))
+        instances.extend(paginate_query_across_partitioned_databases(CaseTimedScheduleInstance, Q(domain=domain)))
         return instances
 
     def test_delete_schedule_instances_for_cases(self):

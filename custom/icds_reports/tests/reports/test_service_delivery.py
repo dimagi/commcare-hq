@@ -20,7 +20,7 @@ class TestServiceDelivery(TestCase):
             },
             2017,
             5,
-            '0_3',
+            'pw_lw_children',
         )
         expected = {
             'aggregationLevel': 1,
@@ -85,7 +85,6 @@ class TestServiceDelivery(TestCase):
                     'home_visits': '0.00 %'
                 }
             ],
-            'ageSDD': '0_3',
         }
         self.assertDictEqual(expected, data)
 
@@ -102,7 +101,7 @@ class TestServiceDelivery(TestCase):
             },
             2017,
             5,
-            '0_3',
+            'pw_lw_children',
         )
         expected = {
             'aggregationLevel': 2,
@@ -129,7 +128,6 @@ class TestServiceDelivery(TestCase):
                     'home_visits': '0.99 %'
                 }
             ],
-            'ageSDD': '0_3',
         }
         self.assertDictEqual(expected, data)
 
@@ -145,7 +143,7 @@ class TestServiceDelivery(TestCase):
             },
             2017,
             5,
-            '3_6',
+            'children',
         )
         expected = {
             'aggregationLevel': 1,
@@ -201,7 +199,6 @@ class TestServiceDelivery(TestCase):
                     'num_launched_awcs': 1,
                 }
             ],
-            'ageSDD': '3_6',
         }
         self.assertDictEqual(expected, data)
 
@@ -218,7 +215,7 @@ class TestServiceDelivery(TestCase):
             },
             2017,
             5,
-            '3_6',
+            'children',
         )
         expected = {
             'aggregationLevel': 2,
@@ -242,6 +239,5 @@ class TestServiceDelivery(TestCase):
                     'num_launched_awcs': 9
                 }
             ],
-            'ageSDD': '3_6',
         }
         self.assertDictEqual(expected, data)

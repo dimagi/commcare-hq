@@ -86,6 +86,7 @@ class WorkflowHelper(PostProcessor):
         module_command = id_strings.menu_id(target_module)
         module_datums = self.get_module_datums(target_module_id)
         form_datums = module_datums[target_form_id]
+        frame_children = []
 
         if module_command == id_strings.ROOT:
             datums_list = self.root_module_datums
@@ -94,11 +95,14 @@ class WorkflowHelper(PostProcessor):
             root_module = target_module.root_module
             if root_module and include_target_root:
                 datums_list = datums_list + list(self.get_module_datums(id_strings.menu_id(root_module)).values())
+                root_module_command = id_strings.menu_id(target_module.root_module)
+                if root_module_command != id_strings.ROOT:
+                    frame_children.append(CommandId(root_module_command))
+            frame_children.append(CommandId(module_command))
 
         common_datums = commonprefix(datums_list)
         remaining_datums = form_datums[len(common_datums):]
 
-        frame_children = [CommandId(module_command)] if module_command != id_strings.ROOT else []
         frame_children.extend(common_datums)
         if not module_only:
             frame_children.append(CommandId(command))

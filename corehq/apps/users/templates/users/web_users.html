@@ -82,8 +82,8 @@
         <div class="col-sm-6">
           <search-box data-apply-bindings="false"
                       params="value: query,
-                                        action: function() { goToPage(1); },
-                                        placeholder: '{% trans_html_attr "Search Users..." %}'"></search-box>
+                              action: function() { goToPage(1); },
+                              placeholder: '{% trans_html_attr "Search Users..." %}'"></search-box>
         </div>
       </div>
     </div>
@@ -186,11 +186,12 @@
       </table>
       <pagination data-bind="visible: showUsers" data-apply-bindings="false"
                   params="goToPage: goToPage,
-                                slug: 'web-users',
-                                perPage: itemsPerPage,
-                                maxPagesShown: 10,
-                                totalItems: totalItems,
-                                showSpinner: showPaginationSpinner"></pagination>
+                          slug: 'web-users',
+                          perPage: itemsPerPage,
+                          maxPagesShown: 10,
+                          totalItems: totalItems,
+                          onLoad: onPaginationLoad,
+                          showSpinner: showPaginationSpinner"></pagination>
 
     </div><!-- end .panel-body -->
   </div><!-- end .panel -->

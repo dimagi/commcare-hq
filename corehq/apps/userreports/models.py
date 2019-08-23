@@ -15,10 +15,13 @@ import yaml
 from couchdbkit.exceptions import BadValueError
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import ugettext as _
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from memoized import memoized
+
+from dimagi.utils.dates import DateSpan
 
 from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
@@ -588,6 +591,10 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             return [None]
 
         expression = config_filter['expression']
+
+        if not isinstance(expression, dict):
+            return [None]
+
         if expression['type'] == 'property_name' and expression['property_name'] == property_name:
             prop_value = config_filter['property_value']
             if not isinstance(prop_value, list):
@@ -1006,6 +1013,7 @@ class AsyncIndicator(models.Model):
     These indicators will be picked up by a queue and placed into celery to be
     saved. Once saved to the data sources, this record will be deleted
     """
+    id = models.BigAutoField(primary_key=True)
     doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
     doc_type = models.CharField(max_length=126, null=False)
     domain = models.CharField(max_length=126, null=False, db_index=True)
@@ -1281,12 +1289,19 @@ def _filter_by_server_env(configs):
 _Validation = namedtuple('_Validation', 'name error_message validation_function')
 
 
+class FilterValueEncoder(DjangoJSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, DateSpan):
+            return str(obj)
+        return super(FilterValueEncoder, self).default(obj)
+
+
 class ReportComparisonException(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField()
+    filter_values = JSONField(encoder=FilterValueEncoder)
     exception = models.TextField()
     notes = models.TextField(blank=True)
 
@@ -1296,7 +1311,7 @@ class ReportComparisonDiff(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField()
+    filter_values = JSONField(encoder=FilterValueEncoder)
     control = JSONField()
     candidate = JSONField()
     diff = JSONField()
@@ -1308,6 +1323,6 @@ class ReportComparisonTiming(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField()
+    filter_values = JSONField(encoder=FilterValueEncoder)
     control_duration = models.DecimalField(max_digits=10, decimal_places=3)
     candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)

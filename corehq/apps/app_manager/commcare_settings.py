@@ -60,7 +60,7 @@ def _load_custom_commcare_settings():
     return settings
 
 
-def _load_commcare_settings_layout(doc_type):
+def _load_commcare_settings_layout(app):
     settings = dict([
         ('{0}.{1}'.format(setting.get('type'), setting.get('id')), setting)
         for setting in _load_custom_commcare_settings()
@@ -69,6 +69,8 @@ def _load_commcare_settings_layout(doc_type):
     with open(os.path.join(path, 'commcare-settings-layout.yaml'), encoding='utf-8') as f:
         layout = yaml.safe_load(f)
 
+    doc_type = app.get_doc_type()
+    j2me_section_ids = ['app-settings-j2me-properties', 'app-settings-j2me-ui']
     for section in layout:
         # i18n; not statically analyzable
         section['title'] = ugettext_noop(section['title'])
@@ -93,6 +95,9 @@ def _load_commcare_settings_layout(doc_type):
                 if prop in setting:
                     setting[prop] = _translate_setting(setting, prop)
 
+        if not app.build_spec.supports_j2me() and section['id'] in j2me_section_ids:
+            section['always_show'] = False
+
     if settings:
         raise Exception(
             "CommCare settings layout should mention "
@@ -110,9 +115,10 @@ def get_custom_commcare_settings():
 
 
 @memoized
-def get_commcare_settings_layout(doc_type):
+def get_commcare_settings_layout(app):
+    doc_type = app.get_doc_type()
     if doc_type in app_doc_types():
-        return _load_commcare_settings_layout(doc_type)
+        return _load_commcare_settings_layout(app)
     raise Exception("Unexpected doc_type received: %s" % doc_type)
 
 

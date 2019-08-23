@@ -28,7 +28,6 @@ from corehq.motech.repeaters.forms import (
     FormRepeaterForm,
     GenericRepeaterForm,
     OpenmrsRepeaterForm,
-    Dhis2RepeaterForm,
 )
 from corehq.motech.repeaters.models import Repeater, RepeatRecord, BASIC_AUTH, DIGEST_AUTH
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
@@ -221,16 +220,15 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
         return repeater
 
 
-class AddDhis2RepeaterView(AddFormRepeaterView):
+class AddDhis2RepeaterView(AddRepeaterView):
     urlname = 'new_dhis2_repeater$'
-    repeater_form_class = Dhis2RepeaterForm
-    page_title = ugettext_lazy("Forward to DHIS2")
-    page_name = ugettext_lazy("Forward to DHIS2")
+    repeater_form_class = GenericRepeaterForm
+    page_title = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
+    page_name = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
 
-    def set_repeater_attr(self, repeater, cleaned_data):
-        repeater = super(AddDhis2RepeaterView, self).set_repeater_attr(repeater, cleaned_data)
-        repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
-        return repeater
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
 
 
 class EditRepeaterView(BaseRepeaterView):
@@ -314,7 +312,7 @@ class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
 
 class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
     urlname = 'edit_dhis2_repeater'
-    page_title = ugettext_lazy("Edit OpenMRS Repeater")
+    page_title = ugettext_lazy("Edit DHIS2 Anonymous Event Repeater")
 
 
 @require_POST
@@ -380,11 +378,11 @@ def test_repeater(request, domain):
             resp = simple_post(fake_post, url, headers=headers, auth=auth, verify=verify)
             if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
-                                                "response": resp.content,
+                                                "response": resp.text,
                                                 "status": resp.status_code}))
             else:
                 return HttpResponse(json.dumps({"success": False,
-                                                "response": resp.content,
+                                                "response": resp.text,
                                                 "status": resp.status_code}))
 
         except Exception as e:

@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 
-from corehq.util.quickcache import quickcache
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
@@ -17,16 +16,11 @@ from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, ex
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
-@quickcache(['domain', 'config', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
-def get_maternal_child_data_with_cache(domain, config, show_test=False, icds_feature_flag=False):
-    return get_maternal_child_data(domain, config, show_test, icds_feature_flag)
-
-
 def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=False):
 
     def get_data_for_child_health_monthly(date, filters):
 
-        age_filters = {'age_tranche': 72} if icds_feature_flag else {'age_tranche__in': [0, 6, 72]}
+        age_filters = {'age_tranche': 72}
 
         moderately_underweight = exclude_records_by_age_for_column(
             {'age_tranche': 72},
@@ -132,12 +126,12 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                         prev_month_data,
                         'valid'
                     ),
-                    'color': 'red' if percent_diff(
+                    'color': get_color_with_red_positive(percent_diff(
                         'underweight',
                         this_month_data,
                         prev_month_data,
                         'valid'
-                    ) > 0 else 'green',
+                    )),
                     'value': get_value(this_month_data, 'underweight'),
                     'all': get_value(this_month_data, 'valid'),
                     'format': 'percent_and_div',
@@ -153,12 +147,12 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                         prev_month_data,
                         'weighed_and_height_measured_in_month'
                     ),
-                    'color': 'red' if percent_diff(
+                    'color': get_color_with_red_positive(percent_diff(
                         'wasting',
                         this_month_data,
                         prev_month_data,
                         'weighed_and_height_measured_in_month'
-                    ) > 0 else 'green',
+                    )),
                     'value': get_value(this_month_data, 'wasting'),
                     'all': get_value(this_month_data, 'weighed_and_height_measured_in_month'),
                     'format': 'percent_and_div',
@@ -176,12 +170,12 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                         prev_month_data,
                         'height_measured_in_month'
                     ),
-                    'color': 'red' if percent_diff(
+                    'color': get_color_with_red_positive(percent_diff(
                         'stunting',
                         this_month_data,
                         prev_month_data,
                         'height_measured_in_month'
-                    ) > 0 else 'green',
+                    )),
                     'value': get_value(this_month_data, 'stunting'),
                     'all': get_value(this_month_data, 'height_measured_in_month'),
                     'format': 'percent_and_div',

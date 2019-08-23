@@ -12,7 +12,7 @@ from six.moves.urllib.parse import urlencode
 from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import F, Q, Sum
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
@@ -80,7 +80,10 @@ from corehq.util.dates import get_previous_month_date_range
 from corehq.util.soft_assert import soft_assert
 
 _invoicing_complete_soft_assert = soft_assert(
-    to='{}@{}'.format('npellegrino', 'dimagi.com'),
+    to=[
+        '{}@{}'.format(name, 'dimagi.com')
+        for name in ['gbova', 'dmore', 'accounts']
+    ],
     exponential_backoff=False,
 )
 
@@ -1039,8 +1042,16 @@ def calculate_users_in_all_domains(today=None):
     for domain in Domain.get_all_names():
         num_users = CommCareUser.total_by_domain(domain)
         record_date = today - relativedelta(days=1)
-        DomainUserHistory.objects.create(
-            domain=domain,
-            num_users=num_users,
-            record_date=record_date
-        )
+        try:
+            DomainUserHistory.objects.create(
+                domain=domain,
+                num_users=num_users,
+                record_date=record_date
+            )
+        except IntegrityError:
+            pass
+        except Exception as e:
+            log_accounting_error(
+                "Exception while creating DomainUserHistory for domain %s: %s" % (domain, e),
+                show_stack_trace=True,
+            )

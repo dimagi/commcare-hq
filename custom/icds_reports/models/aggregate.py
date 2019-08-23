@@ -12,7 +12,7 @@ from custom.icds_reports.const import (AGG_CCS_RECORD_BP_TABLE,
     AGG_COMP_FEEDING_TABLE, AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE, AGG_INFRASTRUCTURE_TABLE, AWW_INCENTIVE_TABLE,
                                        AGG_LS_AWC_VISIT_TABLE, AGG_LS_VHND_TABLE,
-                                       AGG_LS_BENEFICIARY_TABLE)
+                                       AGG_LS_BENEFICIARY_TABLE, AGG_THR_V2_TABLE)
 from django.db import connections, models, transaction
 
 from custom.icds_reports.models.manager import CitusComparisonManager
@@ -42,7 +42,8 @@ from custom.icds_reports.utils.aggregation_helpers.monolith import (
     AggAwcHelper,
     AggAwcDailyAggregationHelper,
     LocationAggregationHelper,
-    DailyAttendanceAggregationHelper
+    DailyAttendanceAggregationHelper,
+    THRFormV2AggHelper
 )
 
 
@@ -209,13 +210,15 @@ class AwcLocation(models.Model, AggregateMixin):
     block_map_location_name = models.TextField(blank=True, null=True)
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
-    aww_name = models.TextField(blank=True, null=True)
-    contact_phone_number = models.TextField(blank=True, null=True)
     state_is_test = models.SmallIntegerField(blank=True, null=True)
     district_is_test = models.SmallIntegerField(blank=True, null=True)
     block_is_test = models.SmallIntegerField(blank=True, null=True)
     supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
+
+    # from commcare-user case
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
 
     objects = CitusComparisonManager()
 
@@ -357,7 +360,9 @@ class AggAwc(models.Model, AggregateMixin):
     awc_num_open = models.IntegerField(null=True)
     awc_not_open_no_data = models.IntegerField(null=True)
     wer_weighed = models.IntegerField(null=True)
+    wer_weighed_0_2 = models.IntegerField(null=True)
     wer_eligible = models.IntegerField(null=True)
+    wer_eligible_0_2 = models.IntegerField(null=True)
     wer_score = models.DecimalField(max_digits=64, decimal_places=16, null=True)
     thr_eligible_child = models.IntegerField(null=True)
     thr_rations_21_plus_distributed_child = models.IntegerField(null=True)
@@ -475,6 +480,7 @@ class AggAwc(models.Model, AggregateMixin):
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
     valid_visits = models.IntegerField(null=True)
     expected_visits = models.IntegerField(null=True)
+    thr_distribution_image_count = models.IntegerField(null=True)
 
     objects = CitusComparisonManager()
 
@@ -558,6 +564,22 @@ class AggLs(models.Model, AggregateMixin):
         db_table = 'agg_ls'
 
     _agg_helper_cls = AggLsHelper
+    _agg_atomic = False
+
+
+class AggregateTHRForm(models.Model, AggregateMixin):
+    state_id = models.TextField()
+    supervisor_id = models.TextField()
+    awc_id = models.TextField()
+    month = models.DateField()
+    thr_distribution_image_count = models.IntegerField(help_text='Count of Images clicked per awc')
+
+    objects = CitusComparisonManager()
+
+    class Meta(object):
+        db_table = AGG_THR_V2_TABLE
+
+    _agg_helper_cls = THRFormV2AggHelper
     _agg_atomic = False
 
 

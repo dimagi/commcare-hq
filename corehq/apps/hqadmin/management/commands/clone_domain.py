@@ -6,7 +6,6 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db.models.query import Q
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
@@ -149,9 +148,6 @@ class Command(BaseCommand):
                 self.save_couch_copy(item, self.new_domain)
 
         # TODO: FixtureOwnership - requires copying users & groups
-
-        existing_fixture_config = CalendarFixtureSettings.for_domain(self.existing_domain)
-        self.save_sql_copy(existing_fixture_config, self.new_domain)
 
     def copy_locations(self, types_only=False):
         from corehq.apps.locations.models import LocationType, SQLLocation

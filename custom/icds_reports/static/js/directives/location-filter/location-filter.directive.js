@@ -128,10 +128,6 @@ function LocationModalController($uibModalInstance, $location, locationsService,
         }
     };
 
-    vm.isAwcReport = function () {
-        return $location.path().indexOf('awc_reports') !== -1;
-    };
-
     vm.close = function () {
         $uibModalInstance.dismiss('cancel');
     };
@@ -209,10 +205,6 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
         vm.selectedLocations = new Array(vm.maxLevel);
     };
 
-    vm.isAwcReport = function () {
-        return $location.path().indexOf('awc_reports') !== -1;
-    };
-
     vm.open = function () {
         var modalInstance = $uibModal.open({
             animation: vm.animationsEnabled,
@@ -221,7 +213,6 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             templateUrl: 'locationModalContent.html',
             controller: LocationModalController,
             controllerAs: '$ctrl',
-            backdrop: vm.isAwcReport() ? 'static' : true,
             resolve: {
                 location_id: function () {
                     return vm.location_id;
@@ -273,7 +264,19 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             }
             storageService.setKey('search', $location.search());
             if (selectedLocationIndex() === 4 && $location.path().indexOf('awc_reports') === -1) {
-                $location.path('awc_reports');
+                var awcReportPath = 'awc_reports';
+                if ($location.path().indexOf('maternal_child') !== -1 || $location.path().indexOf('maternal_and_child') !== -1) {
+                    awcReportPath += '/maternal_child';
+                } else if ($location.path().indexOf('demographics') !== -1) {
+                    awcReportPath += '/demographics';
+                } else if ($location.path().indexOf('awc_infrastructure') !== -1) {
+                    awcReportPath += '/awc_infrastructure';
+                } else if ($location.path().indexOf('beneficiary') !== -1) {
+                    awcReportPath += '/beneficiary';
+                } else {
+                    awcReportPath += '/pse';
+                }
+                $location.path(awcReportPath);
             }
             $scope.$emit('filtersChange');
         });

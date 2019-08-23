@@ -84,7 +84,7 @@ class SQLAppositBackend(SQLSMSBackend):
         data = {
             'from': config.from_number,
             'to': msg.phone_number,
-            'message': msg.text.encode('utf-8'),
+            'message': msg.text,
         }
         json_payload = json.dumps(data)
         response = requests.post(

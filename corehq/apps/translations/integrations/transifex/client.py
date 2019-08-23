@@ -55,6 +55,15 @@ class TransifexApiClient(object):
             # get all slugs
             return [r['slug'] for r in all_resources]
 
+    def update_resource_slug(self, old_resource_slug, new_resource_slug):
+        url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
+            self.project, old_resource_slug)
+        data = {'slug': new_resource_slug}
+        headers = {'content-type': 'application/json'}
+        return requests.put(
+            url, data=json.dumps(data), auth=self._auth, headers=headers,
+        )
+
     def lock_resource(self, resource_slug):
         """
         lock a resource so that it can't be translated/reviewed anymore.

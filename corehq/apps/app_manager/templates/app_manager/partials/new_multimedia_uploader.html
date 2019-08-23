@@ -1,9 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-
-{{ request|toggle_tag_info:"NEW_MULTIMEDIA_UPLOADER" }}
-
 {% if request|toggle_enabled:'NEW_MULTIMEDIA_UPLOADER' %}
   <p>This is only a test.</p>
 {% endif %}

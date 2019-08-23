@@ -110,7 +110,7 @@ def get_latest_build_version(domain, app_id):
     return res['value']['version'] if res else None
 
 
-def _get_build_by_version(domain, app_id, version, return_doc=False):
+def get_build_by_version(domain, app_id, version, return_doc=False):
     from .models import Application
     kwargs = {}
     if version:
@@ -127,7 +127,7 @@ def _get_build_by_version(domain, app_id, version, return_doc=False):
 
 
 def get_build_doc_by_version(domain, app_id, version):
-    return _get_build_by_version(domain, app_id, version, return_doc=True)
+    return get_build_by_version(domain, app_id, version, return_doc=True)
 
 
 def wrap_app(app_doc, wrap_cls=None):
@@ -300,21 +300,35 @@ def get_built_app_ids(domain):
     return [app_id for app_id in app_ids if app_id]
 
 
-def get_built_app_ids_for_app_id(domain, app_id, version=None):
+def get_build_ids_after_version(domain, app_id, version):
     """
-    Returns all the built apps for an application id. If version is specified returns all apps after that
-    version.
+    Returns ids of all an app's builds that are more recent than the given version.
     """
     from .models import Application
     key = [domain, app_id]
-    skip = 1 if version else 0
     results = Application.get_db().view(
         'app_manager/saved_app',
         startkey=key + [version],
         endkey=key + [{}],
         reduce=False,
         include_docs=False,
-        skip=skip
+        skip=1
+    ).all()
+    return [result['id'] for result in results]
+
+
+def get_build_ids(domain, app_id):
+    """
+    Returns all the built apps for an application id, in descending order of time built.
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain, app_id, {}],
+        endkey=[domain, app_id],
+        descending=True,
+        reduce=False,
+        include_docs=False,
     ).all()
     return [result['id'] for result in results]
 
@@ -481,7 +495,7 @@ def get_available_versions_for_app(domain, app_id):
 
 
 def get_version_build_id(domain, app_id, version):
-    build = _get_build_by_version(domain, app_id, version)
+    build = get_build_by_version(domain, app_id, version)
     if not build:
         raise BuildNotFoundException(_("Build for version requested not found"))
     return build['id']

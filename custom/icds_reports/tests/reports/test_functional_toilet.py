@@ -12,7 +12,7 @@ from custom.icds_reports.reports.functional_toilet import get_functional_toilet_
 from custom.icds_reports.const import ChartColors, MapColors
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestFunctionalToilet(TestCase):
 
     def test_map_data_keys(self):

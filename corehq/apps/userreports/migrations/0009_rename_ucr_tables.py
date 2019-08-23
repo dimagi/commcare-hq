@@ -6,12 +6,12 @@ from __future__ import print_function
 import sys
 from collections import defaultdict
 
-from django.conf import settings
 from django.db import migrations
 
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name, LEGACY_UCR_TABLE_PREFIX
 from corehq.sql_db.connections import connection_manager
+from corehq.util.django_migrations import skip_on_fresh_install
 
 GIT_COMMIT_WITH_MANAGEMENT_COMMAND = "8ec458ce9dd6a690c0b48bba07ffee2455f267d2"
 AUTO_MIGRATE_FAILED_MESSAGE = """
@@ -58,10 +58,8 @@ def _data_sources_by_engine_id():
     return by_engine_id
 
 
+@skip_on_fresh_install
 def _assert_migrated(apps, schema_editor):
-    if settings.UNIT_TESTING:
-        return
-
     for engine_id, data_sources in _data_sources_by_engine_id().items():
         with connection_manager.get_engine(engine_id).begin() as conn:
             for data_source in data_sources:

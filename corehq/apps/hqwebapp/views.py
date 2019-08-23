@@ -1201,19 +1201,6 @@ def deactivate_alert(request):
     return HttpResponseRedirect(reverse('alerts'))
 
 
-# Use instead of djangular's base JSONResponseMixin
-# Adds djng_current_rmi to view context
-class HQJSONResponseMixin(JSONResponseMixin):
-    # Add the output of djng_current_rmi to view context, which requires having
-    # the rest of the context, specifically context['view'], available.
-    # See https://github.com/jrief/django-angular/blob/master/djng/templatetags/djng_tags.py
-    def get_context_data(self, **kwargs):
-        context = super(HQJSONResponseMixin, self).get_context_data(**kwargs)
-        from djangular.templatetags.djangular_tags import djng_current_rmi
-        context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
-        return context
-
-
 def redirect_to_dimagi(endpoint):
     def _redirect(request, lang_code=None):
         if settings.SERVER_ENVIRONMENT in [

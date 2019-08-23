@@ -1,28 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import os
 import re
 from io import open
 
-import attr
 from django.conf import settings
 from django.db import connection, router
 from django.db.migrations import RunPython, RunSQL
 from django.template import engines
+
+import attr
+
+from corehq.util.django_migrations import noop_migration
 
 NOOP = object()
 
 
 class IndexRenameOperationException(Exception):
     pass
-
-
-def noop_migration():
-    """
-    A migration that does nothing. Used to replace old migrations that are no longer required e.g moved.
-    """
-    return RunPython(RunPython.noop, RunPython.noop)
 
 
 class RunSqlLazy(RunSQL):

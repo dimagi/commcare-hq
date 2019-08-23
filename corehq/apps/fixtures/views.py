@@ -96,15 +96,6 @@ def _to_kwargs(req):
 
 
 @require_can_edit_fixtures
-def tables(request, domain):
-    if request.method == 'GET':
-        return json_response(
-            [strip_json(x) for x in
-             sorted(FixtureDataType.by_domain(domain), key=lambda data_type: data_type.tag)]
-        )
-
-
-@require_can_edit_fixtures
 def update_tables(request, domain, data_type_id):
     """
     receives a JSON-update patch like following

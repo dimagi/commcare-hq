@@ -6,6 +6,8 @@ from copy import deepcopy
 from django.urls import reverse
 from django.utils.http import urlencode
 
+from flaky import flaky
+
 from corehq.apps.api.resources import v0_5
 from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
@@ -40,6 +42,7 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(len(api_users), 1)
         self.assertEqual(api_users[0]['id'], backend_id)
 
+    @flaky
     def test_get_single(self):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')

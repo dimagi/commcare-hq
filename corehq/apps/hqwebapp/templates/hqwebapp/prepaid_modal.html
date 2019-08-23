@@ -25,22 +25,17 @@
             CommCare {{ edition }} Edition plan.
           {% endblocktrans %}
         </p>
-        <div class="row">
-          <div class="col-sm-6 text-center flag-link">
-            <a id="prepaid-link"
-               href={% url 'domain_subscription_view' domain %}>
-              <button class="btn btn-primary">
-                {% trans "Add Credits or Modify Subscription" %}
-              </button>
-            </a>
-          </div>
-          <div id="prepaid-snooze"
-               class="col-sm-6 text-center">
-            <button class="btn btn-default">
-              {% trans "Remind me later" %}
-            </button>
-          </div>
-        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-default" id="prepaid-snooze">
+          {% trans "Remind me later" %}
+        </button>
+        <a id="prepaid-link"
+           class="btn btn-primary"
+           href={% url 'domain_subscription_view' domain %}>
+          {% trans "Add Credits or Modify Subscription" %}
+        </a>
       </div>
 
     </div>

@@ -69,7 +69,7 @@ hqDefine("translations/js/translations", function () {
                         tags: true,
                         width: '100%',
                         ajax: {
-                            quietMillis: 100,
+                            delay: 100,
                             url: suggestionURL,
                             data: function () {
                                 return {

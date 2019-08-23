@@ -21,8 +21,7 @@ Renaming a SQL function
 2. Rename the function references
 3. Rename the function template file to match the function name
 4. Create a new migration to delete the old function and add the new one
-5. Delete any references to the old SQL template file in old migrations (or
-replace them with a `noop_migration` operation if it is the only operation in the migration)
+5. Delete any references to the old SQL template file in old migrations
 6. Do steps 3-5 for the plproxy function as well
 
 
@@ -95,12 +94,10 @@ example](https://github.com/dimagi/commcare-hq/pull/19195):
         ]
     ```
 2. Delete the `.sql` files containing the old function definition.
-3. Replace all references to the old file in existing migrations with `noop_migration`
-    1. Or you can just remove it completely if there are other migration operations
-    happening in the migration.
+3. Remove all references to the old file in existing migrations
 4. Repeat the above for the pl_proxy function defined in `sql_proxy_accessors`
    if applicable.
 
-These `migrations.RunSQL` operations can later be replaced with `noop_migration`s, but
-there's no urgency in that, so we can wait until someone goes through and
-squashes all these migrations.
+These `migrations.RunSQL` operations can later be deleted, but there's no
+urgency in that, so we can wait until someone goes through and squashes all
+these migrations.

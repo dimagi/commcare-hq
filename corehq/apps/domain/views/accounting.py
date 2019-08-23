@@ -547,7 +547,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     "(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
-                    }
+                    },
+                    show_stack_trace=True
                 )
 
     def refresh_item(self, item_id):
@@ -1027,7 +1028,6 @@ class SelectPlanView(DomainAccountingSettings):
             'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
                                            if self.current_subscription is not None else False),
             'next_subscription_edition': self.next_subscription_edition,
-            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL
         }
 
 

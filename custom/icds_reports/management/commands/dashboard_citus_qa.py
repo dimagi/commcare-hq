@@ -21,6 +21,8 @@ from corehq.apps.users.models import WebUser
 from corehq.toggles import LOAD_DASHBOARD_FROM_CITUS
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from dimagi.utils.web import get_url_base
+from io import open
+from six.moves import zip
 
 
 class SessionHolder(object):

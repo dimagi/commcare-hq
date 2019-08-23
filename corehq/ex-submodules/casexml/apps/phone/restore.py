@@ -669,6 +669,7 @@ class RestoreConfig(object):
             # recorded since it is async (see self.get_response).
             with self.timing_context("wait_for_task_to_start"):
                 task = get_async_restore_payload.delay(self, self.domain, self.restore_user.username)
+                logger.info('RestoreConfig after get_async_restore_payload task is created: %r', self)
             new_task = True
             # store the task id in cache
             self.async_restore_task_id_cache.set_value(task.id)

@@ -18,7 +18,7 @@ def sms_in(request, backend_id=None):
     """
     from tropo import Tropo
     if request.method == "POST":
-        data = json.loads(request.body)
+        data = json.loads(request.body.decode('utf-8'))
         session = data["session"]
         # Handle when Tropo posts to us to send an SMS
         if "parameters" in session:
@@ -54,7 +54,7 @@ def ivr_in(request):
     """
     from tropo import Tropo
     if request.method == "POST":
-        data = json.loads(request.body)
+        data = json.loads(request.body.decode('utf-8'))
         phone_number = data["session"]["from"]["id"]
 
         if phone_number:

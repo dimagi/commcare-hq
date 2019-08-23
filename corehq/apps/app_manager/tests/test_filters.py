@@ -327,7 +327,7 @@ class AutoFilterTests(TestCase):
         self.assertEqual(ancestor_state_value, ui_filter.default_value())
 
 
-class NumericFilterTests(TestCase):
+class NumericFilterTests(SimpleTestCase):
 
     def test_numeric_filter(self):
         self.assertEqual(

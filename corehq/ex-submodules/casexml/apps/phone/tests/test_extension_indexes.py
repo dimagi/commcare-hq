@@ -112,8 +112,14 @@ class IndexTreeTest(six.with_metaclass(TestSequenceMeta, BaseSyncTest)):
     {
         "name": The name of the test,
         "owned": Cases whose owner id is set to the user. Cases not in this list are owned by someone else,
-        "subcases": [ A list of ordered pairs e.g. ["a","b"] means "a creates a child index pointing to b"],
-        "extensions": [ A list of ordered pairs e.g. ["a","b"] means "a creates an extension index pointing to b"],
+        "subcases": [ A list of ordered pairs
+            ["a","b"] means "a creates a child index pointing to b"
+            or "a is a child of b"
+        ],
+        "extensions": [ A list of ordered pairs
+            ["a","b"] means "a creates an extension index pointing to b"
+            or "a is an extension of b"
+        ],
         "closed": A list of the closed cases,
         "outcome": When syncing all the cases, which cases should be sent to the phone,
         "only": For debugging purposes, run a single test by adding 'only': true to those tests,

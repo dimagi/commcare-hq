@@ -50,7 +50,7 @@ class VertexBackend(SQLSMSBackend):
     def populate_params(self, msg_obj):
         config = self.config
         try:
-            message = str(msg_obj.text)
+            message = msg_obj.text.encode('ascii')
             msgtype = TEXT_MSG_TYPE
         except UnicodeEncodeError:
             message = msg_obj.text.encode('utf-8')

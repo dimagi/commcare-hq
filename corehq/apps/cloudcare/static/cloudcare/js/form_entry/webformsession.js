@@ -242,7 +242,13 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
         errorMessage = Formplayer.Errors.LOCK_TIMEOUT_ERROR;
     } else if (textStatus === 'timeout') {
         errorMessage = Formplayer.Errors.TIMEOUT_ERROR;
-    } else if (resp.hasOwnProperty('responseJSON')) {
+    } else if (!window.navigator.onLine) {
+        errorMessage = Formplayer.Errors.NO_INTERNET_ERROR;
+        if (action === Formplayer.Const.SUBMIT) {
+            $('.submit').removeAttr('disabled');
+            $('.form-control').removeAttr('disabled');
+        }
+    } else if (resp.hasOwnProperty('responseJSON') && resp.responseJSON !== undefined) {
         errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
     }
     if (failureCallback) {

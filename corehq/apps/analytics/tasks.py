@@ -50,13 +50,6 @@ from corehq.apps.analytics.utils import analytics_enabled_for_email
 from io import open
 from six.moves import range
 
-_hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
-                                               '{}@{}'.format('biyeun', 'dimagi.com'),
-                                               '{}@{}'.format('jschweers', 'dimagi.com'),
-                                               '{}@{}'.format('aphilippot', 'dimagi.com'),
-                                               '{}@{}'.format('colaughlin', 'dimagi.com')],
-                                           send_to_ops=False)
-
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
 
@@ -76,6 +69,10 @@ HUBSPOT_SAVED_APP_FORM_ID = "8494a26a-8576-4241-97de-a28dc8bf927c"
 HUBSPOT_SAVED_UCR_FORM_ID = "a0d64c4a-2e37-4f48-9700-b9831acdd1d9"
 HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
+
+
+HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', False)
+KISSMETRICS_ENABLED = settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', False)
 
 
 def _raise_for_urllib3_response(response):
@@ -438,15 +435,6 @@ def _get_report_count(domain):
     return get_report_builder_count(domain)
 
 
-def _log_failed_periodic_data(email, message):
-    soft_assert(to='{}@{}'.format('bbuczyk', 'dimagi.com'))(
-        False, "ANALYTICS - Failed to sync periodic data", {
-            'user_email': email,
-            'message': message,
-        }
-    )
-
-
 @periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
@@ -454,6 +442,10 @@ def track_periodic_data():
     :return:
     """
     # Start by getting a list of web users mapped to their domains
+
+    if not KISSMETRICS_ENABLED and not HUBSPOT_ENABLED:
+        return
+
     three_months_ago = date.today() - timedelta(days=90)
 
     user_query = (UserES()
@@ -594,7 +586,13 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except requests.exceptions.HTTPError as e:
-            _hubspot_failure_soft_assert(False, e.response.content)
+            soft_assert(to=[settings.SUPPORT_EMAIL,
+                            '{}@{}'.format('miemma', 'dimagi.com'),
+                            '{}@{}'.format('aphilippot', 'dimagi.com'),
+                            '{}@{}'.format('colaughlin', 'dimagi.com')],
+                        send_to_ops=False)(False,
+                                           'Error submitting periodic analytics data to Hubspot or Kissmetrics',
+                                           {'response': e.response.content.decode('utf-8')})
         except Exception as e:
             notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
 
@@ -625,7 +623,7 @@ def _track_periodic_data_on_kiss(submit_json):
     ] + ['Prop:{}'.format(prop['property']) for prop in periodic_data_list[0]['properties']]
 
     filename = 'periodic_data.{}.csv'.format(date.today().strftime('%Y%m%d'))
-    with open(filename, 'wb') as csvfile:
+    with open(filename, 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(headers)
 

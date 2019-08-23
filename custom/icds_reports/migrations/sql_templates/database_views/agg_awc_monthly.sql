@@ -34,6 +34,8 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."awc_days_pse_conducted" AS "awc_days_pse_conducted",
         "agg_awc"."awc_num_open" AS "awc_num_open",
         "agg_awc"."wer_weighed" AS "wer_weighed",
+        "agg_awc"."wer_weighed_0_2" AS "wer_weighed_0_2",
+        "agg_awc"."wer_eligible_0_2" AS "wer_eligible_0_2",
         "agg_awc"."wer_eligible" AS "wer_eligible",
         "agg_awc"."num_anc_visits" AS "num_anc_visits",
         "agg_awc"."num_children_immunized" AS "num_children_immunized",

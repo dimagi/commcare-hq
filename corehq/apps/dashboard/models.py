@@ -205,7 +205,7 @@ class DataPaginator(TilePaginator):
         exports = []
         if self.permissions.has_form_export_permissions:
             from corehq.apps.export.dbaccessors import get_form_exports_by_domain
-            exports = get_form_exports_by_domain(self.request.domain, self.permissions.has_deid_view_permissions)
+            exports = get_form_exports_by_domain(self.request.domain)
         return exports
 
     @property
@@ -214,7 +214,7 @@ class DataPaginator(TilePaginator):
         exports = []
         if self.permissions.has_case_export_permissions:
             from corehq.apps.export.dbaccessors import get_case_exports_by_domain
-            exports = get_case_exports_by_domain(self.request.domain, self.permissions.has_deid_view_permissions)
+            exports = get_case_exports_by_domain(self.request.domain)
         return exports
 
     def _paginated_items(self, items_per_page, skip):

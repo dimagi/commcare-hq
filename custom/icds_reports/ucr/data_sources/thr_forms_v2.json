@@ -21,6 +21,10 @@
   ],
   "mirrored_engine_ids": [
     {
+      "server_environment": "icds",
+      "engine_ids": ["icds-ucr-citus"]
+    },
+    {
       "server_environment": "india",
       "engine_ids": ["icds-ucr-citus"]
     }
@@ -90,6 +94,24 @@
           "type": "location_parent_id"
         }
       },
+       {
+        "display_name": "State ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "state_id",
+        "type": "expression"
+      },
       {
         "display_name": "Submission Date",
         "datatype": "date",
@@ -117,6 +139,22 @@
           "type": "constant",
           "constant": 1
         }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "photo_thr_packets_distributed"
+          ]
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "photo_thr_packets_distributed",
+        "type": "expression"
       }
     ],
     "named_expressions": {

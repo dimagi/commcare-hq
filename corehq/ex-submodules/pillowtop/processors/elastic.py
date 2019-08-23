@@ -10,6 +10,8 @@ from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.logger import pillow_logging
 from .interface import PillowProcessor
 
+from corehq.util.datadog.gauges import datadog_bucket_timer
+
 
 def identity(x):
     return x
@@ -35,30 +37,34 @@ class ElasticProcessor(PillowProcessor):
             self._delete_doc_if_exists(change.id)
             return
 
-        doc = change.get_document()
+        with self._datadog_timing('extract'):
+            doc = change.get_document()
 
-        ensure_document_exists(change)
-        ensure_matched_revisions(change, doc)
+            ensure_document_exists(change)
+            ensure_matched_revisions(change, doc)
 
-        if doc is None or (self.doc_filter_fn and self.doc_filter_fn(doc)):
-            return
+        with self._datadog_timing('transform'):
+            if doc is None or (self.doc_filter_fn and self.doc_filter_fn(doc)):
+                return
 
-        if doc.get('doc_type') is not None and doc['doc_type'].endswith("-Deleted"):
-            self._delete_doc_if_exists(change.id)
-            return
+            if doc.get('doc_type') is not None and doc['doc_type'].endswith("-Deleted"):
+                self._delete_doc_if_exists(change.id)
+                return
 
-        # prepare doc for es
-        doc_ready_to_save = self.doc_transform_fn(doc)
+            # prepare doc for es
+            doc_ready_to_save = self.doc_transform_fn(doc)
+
         # send it across
-        send_to_elasticsearch(
-            index=self.index_info.index,
-            doc_type=self.index_info.type,
-            doc_id=change.id,
-            es_getter=self.es_getter,
-            name='ElasticProcessor',
-            data=doc_ready_to_save,
-            update=self._doc_exists(change.id),
-        )
+        with self._datadog_timing('load'):
+            send_to_elasticsearch(
+                index=self.index_info.index,
+                doc_type=self.index_info.type,
+                doc_id=change.id,
+                es_getter=self.es_getter,
+                name='ElasticProcessor',
+                data=doc_ready_to_save,
+                update=self._doc_exists(change.id),
+            )
 
     def _doc_exists(self, doc_id):
         return self.elasticsearch.exists(self.index_info.index, self.index_info.type, doc_id)
@@ -66,6 +72,12 @@ class ElasticProcessor(PillowProcessor):
     def _delete_doc_if_exists(self, doc_id):
         if self._doc_exists(doc_id):
             self.elasticsearch.delete(self.index_info.index, self.index_info.type, doc_id)
+
+    def _datadog_timing(self, step):
+        return datadog_bucket_timer('commcare.change_feed.processor.timing', tags=[
+            'action:{}'.format(step),
+            'index:{}'.format(self.index_info.alias),
+        ], timing_buckets=(.03, .1, .3, 1, 3, 10))
 
 
 def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,

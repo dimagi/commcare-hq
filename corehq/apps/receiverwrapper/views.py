@@ -34,7 +34,7 @@ from corehq.form_processor.exceptions import XFormLockError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.datadog.metrics import (
     MULTIMEDIA_SUBMISSION_ERROR_COUNT,
     XFORM_LOCKED_COUNT,
@@ -131,7 +131,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             'Response is: \n{0}\n'
         )
 
-    _record_metrics(metric_tags, result.submission_type, response, timer)
+    _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
     return response
 
@@ -156,17 +156,24 @@ def _submission_error(request, message, count_metric, metric_tags,
         notify_exception(request, message, details)
     response = HttpResponseBadRequest(
         message, status=status, content_type="text/plain")
-    _record_metrics(metric_tags, 'unknown', response)
+    _record_metrics(metric_tags, 'error', response)
     return response
 
 
-def _record_metrics(tags, submission_type, response, timer=None):
+def _record_metrics(tags, submission_type, response, timer=None, xform=None):
+    if xform and xform.metadata and xform.metadata.timeEnd and xform.received_on:
+        lag = xform.received_on - xform.metadata.timeEnd
+        lag_days = lag.total_seconds() / 86400
+        tags += [
+            'lag:%s' % bucket_value(lag_days, (1, 2, 4, 7, 14, 31, 90), 'd')
+        ]
+
     tags += [
         'submission_type:{}'.format(submission_type),
         'status_code:{}'.format(response.status_code)
     ]
 
-    if response.status_code == 201 and timer:
+    if timer:
         tags += [
             'duration:%s' % bucket_value(timer.duration, (1, 5, 20, 60, 120, 300, 600), 's'),
         ]

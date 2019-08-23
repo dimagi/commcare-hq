@@ -134,15 +134,17 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 'checked': self._hide_fuzzy_results,
             },
             'display_app_type': self.display_app_type,
-            'support_email': settings.SUPPORT_EMAIL,
             'all_form_retrieval_failed': self.all_form_retrieval_failed,
         })
 
-        if self.display_app_type and not context['selected']:
+        show_advanced = self.request.GET.get('show_advanced') == 'on'
+        
+        #set Default app type to active only when advanced option is not selected
+        if self.display_app_type and not context['selected'] and not show_advanced:
             context['selected'] = [PARAM_VALUE_STATUS_ACTIVE]
 
         context["show_advanced"] = (
-            self.request.GET.get('show_advanced') == 'on'
+            show_advanced
             or context["unknown"]["show"]
             or context["hide_fuzzy"]["checked"]
             or (len(context['selected']) > 0

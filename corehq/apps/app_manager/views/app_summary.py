@@ -28,6 +28,7 @@ from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import get_langs
+from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
@@ -53,14 +54,14 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
             'app_langs': app.langs,
             'app_id': app.id,
             'app_name': app.name,
-            'read_only': app.doc_type == 'LinkedApplication' or app.id != app.master_id,
+            'read_only': is_linked_app(app) or app.id != app.master_id,
             'app_version': app.version,
             'latest_app_id': app.master_id,
         }
 
     @property
     def page_context(self):
-        if not self.app or self.app.doc_type == 'RemoteApp':
+        if not self.app or is_remote_app(self.app):
             raise Http404()
 
         return self._app_dict(self.app)

@@ -42,7 +42,7 @@ class TestHostedCCZ(TestCase):
     @mock.patch('custom.icds.models.get_build_doc_by_version', lambda *args: {'is_released': True, 'name': 'App'})
     def test_setup_ccz_file_for_hosting_on_save(self, setup_mock):
         self.hosted_ccz.save()
-        setup_mock.assert_called_with(self.hosted_ccz.pk)
+        setup_mock.assert_called_with(self.hosted_ccz.pk, user_email=None)
         self.hosted_ccz.delete()
 
     @mock.patch('custom.icds.models.get_build_doc_by_version', lambda *args: {'is_released': True, 'name': 'App'})

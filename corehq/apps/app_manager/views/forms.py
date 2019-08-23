@@ -638,6 +638,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         logging.exception(e)
         form_errors.append("Unexpected error in form: %s" % e)
 
+    has_case_error = False
     if xform and xform.exists():
         if xform.already_has_meta():
             messages.warning(
@@ -681,6 +682,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
                 if not form_action_errors:
                     form.add_stuff_to_xform(xform)
             except CaseError as e:
+                has_case_error = True
                 messages.error(request, "Error in Case Management: %s" % e)
             except XFormException as e:
                 messages.error(request, six.text_type(e))
@@ -721,14 +723,24 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         valid_index_names.append(USERCASE_PREFIX[0:-1])     # strip trailing slash
 
     form_has_schedule = isinstance(form, AdvancedForm) and module.has_schedule
+
+    try:
+        case_properties_map = get_all_case_properties(app)
+        usercase_properties_map = get_usercase_properties(app)
+    except CaseError as e:
+        case_properties_map = {}
+        usercase_properties_map = {}
+        if not has_case_error:
+            messages.error(request, "Error in Case Management: %s" % e)
+
     case_config_options = {
         'caseType': form.get_case_type(),
         'moduleCaseTypes': module_case_types,
-        'propertiesMap': get_all_case_properties(app),
+        'propertiesMap': case_properties_map,
         'propertyDescriptions': get_case_property_description_dict(domain),
         'questions': xform_questions,
         'reserved_words': load_case_reserved_words(),
-        'usercasePropertiesMap': get_usercase_properties(app),
+        'usercasePropertiesMap': usercase_properties_map,
     }
     context = {
         'nav_form': form,
@@ -738,7 +750,6 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'xform_validation_missing': xform_validation_missing,
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not form_has_schedule,
-        'allow_form_workflow': True,
         'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
@@ -770,7 +781,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
-    if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
+    if toggles.FORM_LINK_WORKFLOW.enabled(domain):
         def qualified_form_name(form, auto_link):
             module_name = trans(module.name, langs)
             form_name = trans(form.name, langs)

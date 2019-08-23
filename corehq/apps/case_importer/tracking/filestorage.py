@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
 import os
+import six
 from tempfile import mkstemp
 import uuid
 from django.core.cache import caches
@@ -86,6 +87,8 @@ class TransientFileStore(object):
     def get_tempfile_ref_for_contents(self, identifier):
         try:
             filename, content = self._get_filename_content(identifier)
+            if isinstance(content, six.text_type):
+                content = content.encode('utf-8')
         except (TypeError, ValueError):
             return None
         suffix = file_extention_from_filename(filename)

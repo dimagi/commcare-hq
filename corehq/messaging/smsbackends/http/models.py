@@ -1,22 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
+import ssl
+import sys
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.forms.fields import BooleanField, ChoiceField
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
+import six
+from crispy_forms import layout as crispy
 from six.moves.urllib.parse import urlencode
 from six.moves.urllib.request import urlopen
-import sys
-from corehq.apps.sms.mixin import BackendProcessingException
-from corehq.apps.sms.forms import BackendForm
-from corehq.apps.reminders.forms import RecordListField
-from django.forms.fields import *
-from django.core.exceptions import ValidationError
-from dimagi.ext.couchdbkit import *
+
 from dimagi.utils.django.fields import TrimmedCharField
+
+from corehq.apps.reminders.forms import RecordListField
+from corehq.apps.sms.forms import BackendForm
+from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number, strip_plus
 from corehq.util.validation import is_url_or_host_banned
-from django.utils.translation import ugettext as _, ugettext_noop
-from crispy_forms import layout as crispy
-from django.conf import settings
-import six
 
 
 class HttpBackendForm(BackendForm):
@@ -48,7 +53,10 @@ class HttpBackendForm(BackendForm):
     def __init__(self, *args, **kwargs):
         if "initial" in kwargs and "additional_params" in kwargs["initial"]:
             additional_params_dict = kwargs["initial"]["additional_params"]
-            kwargs["initial"]["additional_params"] = [{"name" : key, "value" : value} for key, value in additional_params_dict.items()]
+            kwargs["initial"]["additional_params"] = [
+                {"name": key, "value": value}
+                for key, value in additional_params_dict.items()
+            ]
         super(HttpBackendForm, self).__init__(*args, **kwargs)
 
     def clean_url(self):
@@ -140,12 +148,20 @@ class SQLHttpBackend(SQLSMSBackend):
 
         url_params = urlencode(params)
         try:
+            unverified = ssl._create_unverified_context()
             if config.method == "GET":
-                response = urlopen("%s?%s" % (config.url, url_params),
-                    timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+                urlopen(
+                    "%s?%s" % (config.url, url_params),
+                    context=unverified,
+                    timeout=settings.SMS_GATEWAY_TIMEOUT,
+                ).read()
             else:
-                response = urlopen(config.url, url_params,
-                    timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+                urlopen(
+                    config.url,
+                    url_params,
+                    context=unverified,
+                    timeout=settings.SMS_GATEWAY_TIMEOUT,
+                ).read()
         except Exception as e:
             msg = "Error sending message from backend: '{}'\n\n{}".format(self.pk, str(e))
-            six.reraise(BackendProcessingException(msg), None, sys.exc_info()[2])
+            six.reraise(BackendProcessingException, BackendProcessingException(msg), sys.exc_info()[2])

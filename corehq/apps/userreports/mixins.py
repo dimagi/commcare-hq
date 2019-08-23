@@ -1,11 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 from collections import OrderedDict
 
+import six
+from sqlagg.columns import SimpleColumn
+
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.userreports.reports.filters.specs import create_filter_value
 from corehq.apps.userreports.util import get_table_name
 from corehq.util.python_compatibility import soft_assert_type_text
-import six
 
 
 class ConfigurableReportDataSourceMixin(object):
@@ -73,6 +76,16 @@ class ConfigurableReportDataSourceMixin(object):
         return [
             inner_col for col in self.top_level_columns
             for inner_col in col.get_column_config(self.config, self.lang).columns
+        ]
+
+    @property
+    def columns(self):
+        fields = {c.slug for c in self._db_columns}
+
+        return self._db_columns + [
+            DatabaseColumn('', SimpleColumn(field))
+            for field in self._defer_fields
+            if field not in fields
         ]
 
     @property

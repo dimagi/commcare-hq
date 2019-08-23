@@ -49,12 +49,21 @@
 trunk: master
 name: autostaging
 branches:
-  - es/module-display  # Ethan March 4th
-  #- nh/cdc/one_domain  # Norman March 26
-  - sr-ucr-mirror # Sravan May 1
-  - fr/case-templates      # FR May 15
-  - form-odata-escaped  # Nick P May 21
-  - web-user-reports-project-access  # Gabriella May 13
-  - jls/bulk-conditional-alerts-custom-schedules # Jenny June 4
-  - rn_fix_assign_case_regression # Rohit June 6
+  - vellum-staging
+  #- fr/case-templates      # FR May 15
+  - rn_only_select_app_type_when_no_advanced # Rohit June 27
+  - mk/skip-files-build # MK July 6
+  - nh/icds/skip_trans+mk/use-ids-to-validate-translations  # Norman Aug 2
+  - nh/icds/skip_trans  # Norman Aug 2
+  - mk/use-ids-to-validate-translations # July 19
+  - revert-24882-jls/compress-mobile-workers-js # Jenny July 24 
+  - jls/resource-versions # Jenny July 24
+  - jls/more-eof-nav # Jenny Aug 13
+  #- jls/add-js-to-sentry # Jenny Aug 7
+  - jls/icds-reports-on-staging # Jenny Aug 20
+  - jls/linked-app-multiple-masters-rebased # Jenny Aug 17
+  - rn_fix_case_reassign_option_list #Negi Aug 14
+  - bmb/bi-schema-updates  # Biyeun Aug 16
+  - bmb/case-sharing  #Biyeun Aug 22
+  #- mk/validate-single-sheet # MK Aug 20
 submodules: {}

@@ -262,7 +262,6 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
-    'corehq.apps.calendar_fixture',
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
@@ -342,12 +341,10 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'hsph',
     'pact',
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.hope',
     'custom.ilsgateway',
     'custom.zipline',
     'custom.ewsghana',
@@ -363,7 +360,6 @@ HQ_APPS = (
 
     'custom.icds',
     'custom.icds_reports',
-    'custom.pnlppgi',
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
@@ -446,10 +442,11 @@ BILLING_EMAIL = 'billing-comm@example.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
 GROWTH_EMAIL = 'growth@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
-REPORT_BUILDER_ADD_ON_EMAIL = 'sales@example.com'
+SALES_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
+PRIVACY_EMAIL = 'privacy@example.com'
 CONTACT_EMAIL = 'info@example.com'
-FEEDBACK_EMAIL = 'hq-feedback@dimagi.com'
+FEEDBACK_EMAIL = 'feedback@example.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
@@ -458,7 +455,7 @@ EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 ENABLE_SOFT_ASSERT_EMAILS = True
 
 SERVER_ENVIRONMENT = 'localdev'
-ICDS_ENVS = ('icds', 'icds-new')
+ICDS_ENVS = ('icds',)
 UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
@@ -484,7 +481,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.programs.fixtures.program_fixture_generator",
     "corehq.apps.app_manager.fixtures.report_fixture_generator",
     "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
-    "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.locations.fixtures.related_locations_fixture_generator",
@@ -651,9 +647,7 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
-PILLOW_RETRY_QUEUE_ENABLED = False
-
-SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
+SYNC_CASE_FOR_MESSAGING_ON_SAVE = True
 
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
@@ -707,6 +701,11 @@ GMAPS_API_KEY = "changeme"
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
+
+# Set to True to remove the `actions` and `xform_id` fields from the
+# ES Case index. These fields contribute high load to the shard
+# databases.
+CASE_ES_DROP_FORM_FIELDS = False
 
 # tuple of fully qualified repeater class names that are enabled.
 # Set to None to enable all or empty tuple to disable all.
@@ -975,6 +974,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
+                'corehq.util.context_processors.emails',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1314,7 +1314,6 @@ COUCHDB_APPS = [
     'fluff_filter',
     'hqcase',
     'hqmedia',
-    'hope',
     'case_importer',
     'indicators',
     'locations',
@@ -1342,7 +1341,6 @@ COUCHDB_APPS = [
     'openclinica',
 
     # custom reports
-    'hsph',
     'pact',
     'accounting',
     'succeed',
@@ -1727,6 +1725,11 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
         },
+        {
+            'name': 'case_messaging_sync_pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.messaging.pillow.get_case_messaging_sync_pillow',
+        },
     ],
     'core_ext': [
         {
@@ -1820,6 +1823,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
+    os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
 ]
 
 
@@ -1871,19 +1875,19 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
-    os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
-    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'livraison_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined2.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'rapture_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'recouvrement_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_product_consumption.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
@@ -1915,9 +1919,6 @@ COUCH_CACHE_BACKENDS = [
 # Adding a domain will not automatically index that domain's existing cases
 ES_CASE_FULL_INDEX_DOMAINS = [
     'pact',
-    'hsph',
-    'hsph-dev',
-    'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
     'crs-remind',
     'succeed',
@@ -1944,8 +1945,6 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
-    ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
-    ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -1976,8 +1975,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'hsph-dev': 'hsph',
-    'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
     'pact': 'pact',
 
@@ -2000,7 +1997,6 @@ DOMAIN_MODULE_MAP = {
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
     'care-macf-ghana': 'custom.care_pathways',
-    'pnlppgi': 'custom.pnlppgi',
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production

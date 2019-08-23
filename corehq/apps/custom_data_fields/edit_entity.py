@@ -46,12 +46,12 @@ class CustomDataEditor(object):
     """
 
     def __init__(self, field_view, domain, existing_custom_data=None, post_dict=None,
-                 prefix=None, required_only=False, angular_model=None):
+                 prefix=None, required_only=False, ko_model=None):
         self.field_view = field_view
         self.domain = domain
         self.existing_custom_data = existing_custom_data
         self.required_only = required_only
-        self.angular_model = angular_model
+        self.ko_model = ko_model
         self.prefix = prefix if prefix is not None else CUSTOM_DATA_FIELD_PREFIX
         self.form = self.init_form(post_dict)
 
@@ -113,20 +113,18 @@ class CustomDataEditor(object):
     @property
     @memoized
     def fields(self):
-        return self.model.get_fields(required_only=self.required_only)
+        return list(self.model.get_fields(required_only=self.required_only))
 
     def init_form(self, post_dict=None):
         fields = OrderedDict()
         for field in self.fields:
             fields[field.slug] = self._make_field(field)
 
-        if self.angular_model:
+        if self.ko_model:
             field_names = [
-
                 Field(
                     field_name,
-                    ng_model="{}.{}".format(self.angular_model, field_name),
-                    ng_required="true" if field.required else "false"
+                    data_bind="value: {}.{}".format(self.ko_model, field_name),
                 )
                 for field_name, field in fields.items()
             ]
@@ -134,7 +132,7 @@ class CustomDataEditor(object):
             field_names = list(fields)
 
         CustomDataForm = type('CustomDataForm' if six.PY3 else b'CustomDataForm', (forms.Form,), fields)
-        if self.angular_model:
+        if self.ko_model:
             CustomDataForm.helper = HQModalFormHelper()
         else:
             CustomDataForm.helper = HQFormHelper()

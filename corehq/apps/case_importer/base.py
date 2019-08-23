@@ -1,13 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_record_count
-from corehq.apps.data_interfaces.interfaces import DataInterface
-from corehq.apps.data_interfaces.views import DataInterfaceSection
-from django.utils.translation import ugettext_noop as _
+from __future__ import absolute_import, unicode_literals
+
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_noop
+
+from corehq.apps.case_importer.tracking.dbaccessors import (
+    get_case_upload_record_count,
+)
+from corehq.apps.data_interfaces.interfaces import DataInterface
+from corehq.apps.data_interfaces.views import DataInterfaceSection
+from corehq.apps.locations.permissions import conditionally_location_safe
+from corehq.toggles import LOCATION_SAFE_CASE_IMPORTS
 
 
+def location_safe_case_imports_enabled(view_func, request, *args, **kwargs):
+    return LOCATION_SAFE_CASE_IMPORTS.enabled(kwargs['domain'])
+
+
+@conditionally_location_safe(location_safe_case_imports_enabled)
 class ImportCases(DataInterface):
     name = ugettext_lazy("Import Cases from Excel")
     slug = "import_cases"
@@ -20,7 +30,7 @@ class ImportCases(DataInterface):
         return {
             'current_page': self.current_page_context(domain=self.domain),
             'section': self.section_context(),
-            'record_count': get_case_upload_record_count(self.domain),
+            'record_count': get_case_upload_record_count(self.domain, self.request.couch_user),
         }
 
     @classmethod
@@ -42,11 +52,11 @@ class ImportCases(DataInterface):
     def get_subpages(cls):
         return [
             {
-                'title': _('Case Options'),
+                'title': ugettext_noop('Case Options'),
                 'urlname': 'excel_config'
             },
             {
-                'title': _('Match Excel Columns to Case Properties'),
+                'title': ugettext_noop('Match Excel Columns to Case Properties'),
                 'urlname': 'excel_fields'
             }
         ]

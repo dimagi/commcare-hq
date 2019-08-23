@@ -138,11 +138,12 @@ def get_download_file_path(use_transfer, filename):
 
 
 def expose_download(use_transfer, file_path, filename, download_id, file_type):
-    common_kwargs = dict(
-        mimetype=Format.from_format(file_type).mimetype,
-        content_disposition='attachment; filename="{fname}"'.format(fname=filename),
-        download_id=download_id, expiry=(1 * 60 * 60),
-    )
+    common_kwargs = {
+        'mimetype': Format.from_format(file_type).mimetype,
+        'content_disposition': 'attachment; filename="{fname}"'.format(fname=filename),
+        'download_id': download_id,
+        'expiry': (1 * 60 * 60),
+    }
     if use_transfer:
         expose_file_download(
             file_path,

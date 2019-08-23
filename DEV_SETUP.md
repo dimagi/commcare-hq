@@ -238,10 +238,10 @@ Install LESS and UglifyJS:
 
 For all STATICFILES changes (primarily LESS and JavaScript), run:
 
-    $ manage.py collectstatic
-    $ manage.py compilejsi18n
-    $ manage.py fix_less_imports_collectstatic
-    $ manage.py compress
+    $ ./manage.py collectstatic
+    $ ./manage.py compilejsi18n
+    $ ./manage.py fix_less_imports_collectstatic
+    $ ./manage.py compress
 
 
 #### Formplayer
@@ -307,6 +307,12 @@ Running CommCare HQ
 -------------------
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka, Elasticsearch).
+
+```bash
+$ ./manage.py check_services
+```
+
+Some of the services listed there aren't necessary for very basic operation, but it can give you a good idea of what's broken.
 
 Then run the following separately:
 

@@ -22,7 +22,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.filters = ['age', 'ageServiceDeliveryDashboard'];
+    vm.filters = ['age'];
     vm.rightLegend = {
         info: 'Of the total children enrolled for Anganwadi services between the ages of 0 to 6 months, the percentage that was exclusively fed with breast milk. An infant is exclusively breastfed if they receive only breastmilk with no additional food or liquids (even water), ensuring optimal nutrition and growth between 0 - 6 months\n' +
         '\n' +

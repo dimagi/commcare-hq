@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
 from collections import OrderedDict
+from flaky import flaky
 from uuid import uuid4
 
 from django.urls import reverse
@@ -358,6 +359,7 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
 
+    @flaky
     @run_with_all_backends
     def test_claim_restore_as(self):
         """Server should assign cases to the correct user

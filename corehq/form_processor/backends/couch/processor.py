@@ -95,7 +95,8 @@ class FormProcessorCouch(object):
             i = XFormQuestionValueIterator(question)
             for (qid, repeat_index) in i:
                 data = data[qid]
-                if repeat_index is not None:
+                # Repeat groups with multiple responses store them in a list
+                if repeat_index is not None and isinstance(data, list):
                     data = data[repeat_index]
             data[i.last()] = response
 

@@ -21,7 +21,8 @@ function(doc){
             is_released: doc.is_released,
             case_sharing: doc.case_sharing,
             build_profiles: doc.build_profiles,
-            vellum_case_management: !!doc.vellum_case_management
+            vellum_case_management: !!doc.vellum_case_management,
+            target_commcare_flavor: doc.target_commcare_flavor
         });
     }
 }

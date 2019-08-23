@@ -14,6 +14,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.pillow import get_case_messaging_sync_pillow
 from corehq.messaging.scheduling.models import TimedSchedule, TimedEvent, SMSContent, Content
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
@@ -24,6 +25,8 @@ from corehq.messaging.scheduling.tests.util import delete_timed_schedules
 from corehq.util.test_utils import create_test_case, set_parent_case
 from datetime import time
 from mock import patch
+
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 
 class SchedulingRecipientTest(TestCase):
@@ -80,6 +83,9 @@ class SchedulingRecipientTest(TestCase):
 
         cls.case_group = CommCareCaseGroup(domain=cls.domain)
         cls.case_group.save()
+
+        cls.process_pillow_changes = process_pillow_changes('DefaultChangeFeedPillow')
+        cls.process_pillow_changes.add_pillow(get_case_messaging_sync_pillow())
 
     @classmethod
     def tearDownClass(cls):
@@ -597,7 +603,8 @@ class SchedulingRecipientTest(TestCase):
 
         with self.create_user_case(user3) as case:
             # If the user has no number, the user case's number is used
-            update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
+            with self.process_pillow_changes:
+                update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
             case = CaseAccessors(self.domain).get_case(case.case_id)
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(0, only_count_two_way=True)
@@ -617,8 +624,9 @@ class SchedulingRecipientTest(TestCase):
     @run_with_all_backends
     def test_ignoring_entries(self):
         with create_case(self.domain, 'person') as case:
-            update_case(self.domain, case.case_id,
-                case_properties={'contact_phone_number': '12345', 'contact_phone_number_is_verified': '1'})
+            with self.process_pillow_changes:
+                update_case(self.domain, case.case_id,
+                    case_properties={'contact_phone_number': '12345', 'contact_phone_number_is_verified': '1'})
 
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(1, only_count_two_way=True)
@@ -628,7 +636,8 @@ class SchedulingRecipientTest(TestCase):
                     patch('corehq.messaging.scheduling.models.abstract.use_phone_entries') as patch3:
 
                 patch1.return_value = patch2.return_value = patch3.return_value = False
-                update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '23456'})
+                with self.process_pillow_changes:
+                    update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '23456'})
                 case = CaseAccessors(self.domain).get_case(case.case_id)
 
                 self.assertPhoneEntryCount(1)
@@ -648,15 +657,17 @@ class SchedulingRecipientTest(TestCase):
         self.assertIsNone(user1.memoized_usercase)
         self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
-        with self.create_user_case(user2) as case:
-            self.assertIsNotNone(user2.memoized_usercase)
-            self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
-            self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
+        with self.process_pillow_changes:
+            with self.create_user_case(user2) as case:
+                self.assertIsNotNone(user2.memoized_usercase)
+                self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
+                self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
 
         with self.create_user_case(user3) as case:
             # If the user has no number, the user case's number is used
-            update_case(self.domain, case.case_id,
-                case_properties={'contact_phone_number': '12345678', 'contact_phone_number_is_verified': '1'})
+            with self.process_pillow_changes:
+                update_case(self.domain, case.case_id,
+                    case_properties={'contact_phone_number': '12345678', 'contact_phone_number_is_verified': '1'})
             case = CaseAccessors(self.domain).get_case(case.case_id)
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(1, only_count_two_way=True)

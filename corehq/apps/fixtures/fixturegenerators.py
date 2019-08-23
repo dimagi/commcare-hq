@@ -1,32 +1,17 @@
 from __future__ import absolute_import, unicode_literals
 
 from collections import defaultdict
-from io import BytesIO
+from functools import partial
 from operator import attrgetter
 from xml.etree import cElementTree as ElementTree
 
-import six
-
 from casexml.apps.phone.fixtures import FixtureProvider
-from casexml.apps.phone.utils import ITEMS_COMMENT_PREFIX
-
+from casexml.apps.phone.utils import GLOBAL_USER_ID, get_or_cache_global_fixture
 from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
 from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataType
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
-from corehq.blobs import CODES, get_blob_db
-from corehq.blobs.exceptions import NotFound
-from corehq.blobs.models import BlobMeta
-
 from .utils import get_index_schema_node
-
-# GLOBAL_USER_ID is expected to be a globally unique string that will never
-# change and can always be search-n-replaced in global fixture XML. The UUID
-# in this string was generated with `uuidgen` on Mac OS X 10.11.6
-# HACK if this string is present anywhere in an item list it will be replaced
-# with the restore user's user_id. DO NOT DEPEND ON THIS IMPLEMENTATION DETAIL.
-# This is an optimization to avoid an extra XML parse/serialize cycle.
-GLOBAL_USER_ID = 'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
 
 
 def item_lists_by_domain(domain):
@@ -80,44 +65,9 @@ class ItemListsProvider(FixtureProvider):
         return items
 
     def get_global_items(self, global_types, restore_state):
-        restore_user = restore_state.restore_user
-        user_id = restore_user.user_id
-        domain = restore_user.domain
-        db = get_blob_db()
-        if not restore_state.overwrite_cache:
-            global_id = GLOBAL_USER_ID.encode('utf-8')
-            b_user_id = user_id.encode('utf-8')
-            try:
-                data = db.get(key=FIXTURE_BUCKET + '/' + domain).read()
-                return [data.replace(global_id, b_user_id)] if data else []
-            except NotFound:
-                pass
-        global_items = self._get_global_items(global_types, domain)
-        io = BytesIO()
-        io.write(ITEMS_COMMENT_PREFIX)
-        io.write(six.text_type(len(global_items)).encode('utf-8'))
-        io.write(b'-->')
-        for element in global_items:
-            io.write(ElementTree.tostring(element, encoding='utf-8'))
-            # change user_id AFTER writing to string for the cache
-            element.attrib["user_id"] = user_id
-        io.seek(0)
-        try:
-            kw = {"meta": db.metadb.get(
-                parent_id=domain,
-                type_code=CODES.fixture,
-                name="",
-            )}
-        except BlobMeta.DoesNotExist:
-            kw = {
-                "domain": domain,
-                "parent_id": domain,
-                "type_code": CODES.fixture,
-                "name": "",
-                "key": FIXTURE_BUCKET + '/' + domain,
-            }
-        db.put(io, **kw)
-        return global_items
+        domain = restore_state.restore_user.domain
+        data_fn = partial(self._get_global_items, global_types, domain)
+        return get_or_cache_global_fixture(restore_state, FIXTURE_BUCKET, '', data_fn)
 
     def _get_global_items(self, global_types, domain):
         def get_items_by_type(data_type):

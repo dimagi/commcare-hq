@@ -1,0 +1,100 @@
+{% load i18n %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+
+<div class="appnav-item {% ifequal form selected_form %} active{% if not formdesigner %} settings-view{% endif %}{% endifequal %}">
+
+    <a href="#form_confirm_delete_{{ module.unique_id }}_{{ form.unique_id }}"
+       class="appnav-delete"
+       data-toggle="modal">
+        <i class="fa fa-trash-o"></i>
+    </a>
+
+    <a id="view_form_{{ module.unique_id }}_{{ form.unique_id }}_sidebar"
+       {% if form.no_vellum %}
+       href="{% url "view_form" domain app.id form.unique_id %}"
+       {% else %}
+       href="{% url "form_source" domain app.id form.unique_id %}"
+       {% endif %}
+       data-moduleid="{{ module.id }}"
+       data-formid="{{ form.id }}"
+       data-category="App Builder"
+       data-action="Open Form"
+       data-label="Edit Pen"
+       class="appnav-title
+              track-usage-link
+              {% if not form.no_vellum %}appnav-title-secondary {% endif %}
+              appnav-responsive">
+            <i class="drag_handle appnav-drag-icon"></i>
+        <i
+        {% if form.get_action_type == 'open' %}
+            class="fcc fcc-app-createform appnav-primary-icon appnav-primary-icon-lg"
+        {% elif form.get_action_type == 'close' %}
+            class="fcc fcc-app-completeform appnav-primary-icon appnav-primary-icon-lg"
+        {% elif form.get_action_type == 'update' %}
+            class="fcc fcc-app-updateform appnav-primary-icon appnav-primary-icon-lg"
+        {% elif form.form_type == 'shadow_form' %}
+            class="fa fa-moon-o appnav-primary-icon"
+        {% else %}
+            class="fa fa-file-o appnav-primary-icon"
+        {% endif %}
+            title="{{ form.get_icon_help_text }}"
+            data-toggle="tooltip"
+            data-placement="right"
+            data-container="body"
+            >
+        </i>
+        <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
+            {{ form.name|html_trans_prefix:langs }}
+        </span>
+    </a>
+
+    {% if not form.no_vellum %}
+    <a href="{% url "view_form" domain app.id form.unique_id %}"
+       data-moduleid="{{ module.id }}"
+       data-formid="{{ form.id }}"
+       data-category="App Builder"
+       data-action="View Form"
+       data-label="Sidebar"
+       class="appnav-secondary appnav-settings appnav-responsive track-usage-link">
+        <i class="fa fa-gear appnav-show-on-hover"></i>
+    </a>
+    {% endif %}
+
+    <!-- Deletion confirmation modal -->
+    <div id="form_confirm_delete_{{ module.unique_id }}_{{ form.unique_id }}" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">
+              {% blocktrans %}
+                Are you sure you want to delete this form?
+              {% endblocktrans %}
+            </h4>
+          </div>
+
+          <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}"
+                method="post">
+            {% csrf_token %}
+            <div class="modal-body">
+              <p class="lead">
+                {% blocktrans %}You are about to delete the form{% endblocktrans %}
+                <strong>{{ form.name|html_trans:langs }}</strong>!
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">
+                {% trans "Cancel" %}
+              </button>
+              <button type="submit" class="disable-on-submit btn btn-danger">
+                <i class="fa fa-trash"></i>
+                {% trans "Delete Form" %}
+              </button>
+            </div>
+          </form>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+</div>

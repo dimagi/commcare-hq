@@ -36,6 +36,11 @@ class RemindersTest(ILSTestScript):
         )
         create_products(cls, TEST_DOMAIN, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.user1.delete()
+        super(RemindersTest, cls).tearDownClass()
+
     def tearDown(self):
         SupplyPointStatus.objects.all().delete()
         super(RemindersTest, self).tearDown()
@@ -153,6 +158,11 @@ class TestStockOut(RemindersTest):
         set_default_consumption_for_supply_point(TEST_DOMAIN, cls.id.get_id, cls.facility_sp_id, 100)
         set_default_consumption_for_supply_point(TEST_DOMAIN, cls.dp.get_id, cls.facility_sp_id, 100)
         set_default_consumption_for_supply_point(TEST_DOMAIN, cls.ip.get_id, cls.facility_sp_id, 100)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user2.delete()
+        super(TestStockOut, cls).tearDownClass()
 
     def test_reminder(self):
         now = datetime.utcnow()

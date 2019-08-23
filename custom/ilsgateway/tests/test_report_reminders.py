@@ -42,6 +42,7 @@ class TestReportGroups(TestCase):
         delete_domain_phone_numbers(TEST_DOMAIN)
         cls.sms_backend.delete()
         cls.sms_backend_mapping.delete()
+        cls.user1.delete()
         cls.domain.delete()
         super(TestReportGroups, cls).tearDownClass()
 

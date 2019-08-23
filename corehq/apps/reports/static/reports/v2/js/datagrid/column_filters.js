@@ -54,6 +54,7 @@ hqDefine('reports/v2/js/datagrid/column_filters', [
          *   filterName: "unique name identifying the filter",
          *   choiceName: "unique name identifying the choice",
          *   value: "value to be applied alongside the filter",
+         *   getExpression: a string describing the filter, used by analytics
          * }}
          */
         var self = {};
@@ -61,6 +62,10 @@ hqDefine('reports/v2/js/datagrid/column_filters', [
         self.filterName = ko.observable(data.filterName);
         self.choiceName = ko.observable(data.choiceName);
         self.value = ko.observable(data.value);
+
+        self.getExpression = function () {
+            return self.filterName() + " " + self.choiceName() + " " + self.value();
+        };
 
         return self;
     };

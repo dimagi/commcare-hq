@@ -468,7 +468,7 @@ def num_repeaters(domain):
 
 
 def _get_domain_exports(domain):
-    return get_form_exports_by_domain(domain, True) + get_case_exports_by_domain(domain, True)
+    return get_form_exports_by_domain(domain) + get_case_exports_by_domain(domain)
 
 
 def num_deid_exports(domain):

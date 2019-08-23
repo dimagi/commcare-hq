@@ -432,7 +432,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         }
 
     def put(self, request, *args, **kwargs):
-        j = json.loads(request.body)
+        j = json.loads(request.body.decode('utf-8'))
         old = ApplicationAccess.get_by_domain(self.domain)
         new = ApplicationAccess.wrap(j)
         old.restrict = new.restrict

@@ -39,7 +39,7 @@ class SubscribeView(View):
         return super(SubscribeView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, domain, *args, **kwargs):
-        data = json.loads(request.body)
+        data = json.loads(request.body.decode('utf-8'))
 
         subscription = get_subscription_by_url(domain, data['target_url'])
         if subscription:
@@ -86,7 +86,7 @@ class UnsubscribeView(View):
 
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.body.decode('utf-8'))
         except ValueError:
             return HttpResponseBadRequest()
         url = data.get('target_url')
@@ -112,7 +112,7 @@ class ZapierCreateCase(View):
         domain = request.GET.get('domain')
         case_type = request.GET.get('case_type')
         owner_id = request.GET.get('owner_id')
-        properties = json.loads(request.body)
+        properties = json.loads(request.body.decode('utf-8'))
         case_name = properties.pop('case_name')
         user_name = request.GET.get('user')
 
@@ -150,7 +150,7 @@ class ZapierUpdateCase(View):
         domain = request.GET.get('domain')
         case_type = request.GET.get('case_type')
         user_name = request.GET.get('user')
-        properties = json.loads(request.body)
+        properties = json.loads(request.body.decode('utf-8'))
         case_id = properties['case_id']
 
         properties.pop('case_id')

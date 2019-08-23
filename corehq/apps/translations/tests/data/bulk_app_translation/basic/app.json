@@ -468,7 +468,7 @@
       "case_type": "",
       "case_list": {
         "doc_type": "CaseList",
-        "show": false,
+        "show": true,
         "media_audio": {
 
         },

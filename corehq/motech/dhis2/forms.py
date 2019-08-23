@@ -4,8 +4,10 @@ import logging
 from base64 import b64encode
 
 import bz2
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
+from crispy_forms import (
+    layout as crispy,
+    bootstrap as twbscrispy,
+)
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
@@ -30,6 +32,11 @@ class Dhis2ConnectionForm(forms.Form):
                                  help_text=_('e.g. "https://play.dhis2.org/demo/api/"'))
     username = forms.CharField(label=_('Username'), required=True)
     password = forms.CharField(label=_('Password'), widget=forms.PasswordInput, required=False)
+    skip_cert_verify = forms.BooleanField(
+        label=_('Skip SSL certificate verification'),
+        required=False,
+        help_text=_('FOR TESTING ONLY: DO NOT ENABLE THIS FOR PRODUCTION INTEGRATIONS'),
+    )
 
     def __init__(self, *args, **kwargs):
         super(Dhis2ConnectionForm, self).__init__(*args, **kwargs)
@@ -43,9 +50,10 @@ class Dhis2ConnectionForm(forms.Form):
                 crispy.Field('server_url'),
                 crispy.Field('username'),
                 crispy.Field('password'),
+                twbscrispy.PrependedText('skip_cert_verify', ''),
             ),
             hqcrispy.FormActions(
-                StrictButton(
+                twbscrispy.StrictButton(
                     _("Update DHIS2 connection"),
                     type="submit",
                     css_class='btn-primary',
@@ -65,6 +73,7 @@ class Dhis2ConnectionForm(forms.Form):
                 # strong, considering we'd have to store the algorithm and the key together anyway; it just
                 # shouldn't be plaintext.
                 dhis2_conn.password = b64encode(bz2.compress(self.cleaned_data['password']))
+            dhis2_conn.skip_cert_verify = self.cleaned_data['skip_cert_verify']
             dhis2_conn.save()
             return True
         except Exception as err:

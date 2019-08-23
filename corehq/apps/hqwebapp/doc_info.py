@@ -73,7 +73,11 @@ def get_doc_info(doc, domain_hint=None, cache=None):
     if cache and doc_id in cache:
         return cache[doc_id]
 
-    if has_doc_type(doc_type, 'Application') or has_doc_type(doc_type, 'RemoteApp'):
+    if (
+        has_doc_type(doc_type, 'Application')
+        or has_doc_type(doc_type, 'LinkedApplication')
+        or has_doc_type(doc_type, 'RemoteApp')
+    ):
         if doc.get('copy_of'):
             doc_info = DocInfo(
                 display='%s (#%s)' % (doc['name'], doc['version']),

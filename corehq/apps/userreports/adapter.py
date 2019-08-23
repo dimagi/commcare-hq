@@ -93,9 +93,9 @@ class IndicatorAdapter(object):
         "Gets all the values from a document to save"
         return self.config.get_all_values(doc, eval_context)
 
-    def bulk_delete(self, doc_ids):
-        for _id in doc_ids:
-            self.delete({'_id': _id})
+    def bulk_delete(self, docs):
+        for doc in docs:
+            self.delete(doc)
 
     def delete(self, doc):
         raise NotImplementedError

@@ -64,44 +64,56 @@ def get_form_inferred_schema(domain, app_id, xmlns):
     return FormInferredSchema.wrap(result['doc']) if result else None
 
 
-def get_form_export_instances(domain, include_docs=True):
-    from .models import FormExportInstance
-    key = [domain, 'FormExportInstance']
-    return _get_export_instance(FormExportInstance, key, include_docs=include_docs)
-
-
-def get_case_export_instances(domain, include_docs=True):
+def get_case_exports_by_domain(domain):
     from .models import CaseExportInstance
     key = [domain, 'CaseExportInstance']
-    return _get_export_instance(CaseExportInstance, key, include_docs=include_docs)
+    return _get_export_instance(CaseExportInstance, key)
 
 
-def _get_saved_exports(domain, has_deid_permissions, new_exports_getter, include_docs=True):
-    exports = new_exports_getter(domain, include_docs=include_docs)
-    if not include_docs:
-        return _get_brief_saved_exports(domain, has_deid_permissions, new_exports_getter)
-    if not has_deid_permissions:
-        exports = [e for e in exports if not e.is_safe]
-    return exports
+def get_form_exports_by_domain(domain):
+    from .models import FormExportInstance
+    key = [domain, 'FormExportInstance']
+    return _get_export_instance(FormExportInstance, key)
 
 
-def _get_brief_saved_exports(domain, has_deid_permissions, new_exports_getter):
-    exports = new_exports_getter(domain)
-    if not has_deid_permissions:
-        exports = [e for e in exports if not e['is_deidentified']]
-    return exports
+def get_odata_case_configs_by_domain(domain):
+    return [
+        config for config in get_case_exports_by_domain(domain)
+        if config.is_odata_config
+    ]
 
 
-# Note that if include_docs is True, this will return wrapped documents, but
-# if False, it will return dicts (the value from export_instances_by_domain's map.js)
-def get_case_exports_by_domain(domain, has_deid_permissions, include_docs=True):
-    return _get_saved_exports(domain, has_deid_permissions, get_case_export_instances, include_docs=include_docs)
+def get_odata_form_configs_by_domain(domain):
+    return [
+        config for config in get_form_exports_by_domain(domain)
+        if config.is_odata_config
+    ]
 
 
-# Note that if include_docs is True, this will return wrapped documents, but
-# if False, it will return dicts (the value from export_instances_by_domain's map.js)
-def get_form_exports_by_domain(domain, has_deid_permissions, include_docs=True):
-    return _get_saved_exports(domain, has_deid_permissions, get_form_export_instances, include_docs=include_docs)
+def get_brief_exports(domain, form_or_case=None):
+    from .models import ExportInstance
+    if form_or_case == 'form':
+        key = [domain, 'FormExportInstance']
+    elif form_or_case == 'case':
+        key = [domain, 'CaseExportInstance']
+    else:
+        key = [domain]
+    return _get_export_instance(ExportInstance, key, include_docs=False)
+
+
+def get_brief_deid_exports(domain, form_or_case=None):
+    from .models import ExportInstance
+    doc_types = [doc_type for doc_type in [
+        'FormExportInstance' if form_or_case in ['form', None] else None,
+        'CaseExportInstance' if form_or_case in ['case', None] else None,
+    ] if doc_type is not None]
+    results = ExportInstance.get_db().view(
+        'export_instances_by_domain/view',
+        keys=[[domain, doc_type, True] for doc_type in doc_types],
+        include_docs=False,
+        reduce=False,
+    ).all()
+    return [result['value'] for result in results]
 
 
 def get_export_count_by_domain(domain):

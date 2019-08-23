@@ -16,7 +16,6 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case import transform_case_for_elasticsearch
-from custom.hope.models import CC_BIHAR_PREGNANCY
 
 from .utils import APIResourceTest, FakeXFormES
 
@@ -229,42 +228,3 @@ class TestCommCareCaseResource(APIResourceTest):
 
         response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')
         self.assertEqual(response.status_code, 200)
-
-
-class TestHOPECaseResource(APIResourceTest):
-    """
-    Tests the HOPECaseREsource, currently only v0_4, just to make sure
-    it does not crash right away
-    """
-    resource = v0_4.HOPECaseResource
-
-    def test_get_list(self):
-        """
-        Any case in the appropriate domain should be in the list from the API.
-        """
-
-        # The actual infrastructure involves saving to CouchDB, having PillowTop
-        # read the changes and write it to ElasticSearch.
-
-        fake_case_es = FakeXFormES()
-        v0_3.MOCK_CASE_ES = fake_case_es
-
-        modify_date = datetime.utcnow()
-
-        backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name)
-        backend_case.type = CC_BIHAR_PREGNANCY
-        backend_case.save()
-        self.addCleanup(backend_case.delete)
-
-        translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
-
-        fake_case_es.add_doc(translated_doc['_id'], translated_doc)
-
-        response = self._assert_auth_get_resource(self.list_endpoint)
-        self.assertEqual(response.status_code, 200)
-
-        api_cases = json.loads(response.content)['objects']
-        self.assertEqual(len(api_cases), 2)
-
-        api_case = api_cases['mother_lists'][0]
-        self.assertEqual(api_case['id'], backend_case.case_id)

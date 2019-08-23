@@ -135,7 +135,6 @@ class LocationType(models.Model):
     def __init__(self, *args, **kwargs):
         super(LocationType, self).__init__(*args, **kwargs)
         self._administrative_old = self.administrative
-        self._has_user_old = self.has_user
 
     @property
     def expand_from(self):
@@ -168,8 +167,6 @@ class LocationType(models.Model):
         self.overstock_threshold = config.overstock_threshold
 
     def save(self, *args, **kwargs):
-        from .tasks import update_location_users
-
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
@@ -185,8 +182,6 @@ class LocationType(models.Model):
 
         if is_not_first_save:
             self.sync_administrative_status()
-            if self._has_user_old != self.has_user:
-                update_location_users.delay(self)
 
         return saved
 
@@ -204,7 +199,7 @@ class LocationType(models.Model):
             self.domain,
             self.name,
             self.administrative,
-        ).encode('utf-8')
+        )
 
     @property
     @memoized
@@ -397,7 +392,7 @@ class SQLLocation(AdjListModel):
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True, blank=True)
 
-    # For locations where location_type.has_user == True
+    # No longer used. Should be removed once all references have been tracked down and removed
     user_id = models.CharField(max_length=255, blank=True)
 
     objects = _tree_manager = LocationManager()
@@ -620,7 +615,7 @@ class SQLLocation(AdjListModel):
             self.domain,
             self.name,
             self.location_type.name if hasattr(self, 'location_type') else None,
-        ).encode('utf-8')
+        )
 
     @property
     def display_name(self):

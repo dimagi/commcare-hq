@@ -98,8 +98,8 @@ def sign_jar(jad, jar, use_j2me_endpoint=False):
             step_two = 'java -jar "%s" -addcert -alias %s -keystore "%s" -storepass %s -inputjad "%s" -outputjad "%s"' % \
                             (jad_tool, key_alias, key_store, store_pass, jad_file.name, jad_file.name)
 
-            with subprocess_context() as subprocess:
-                for step in (step_one, step_two):
+            for step in (step_one, step_two):
+                with subprocess_context() as subprocess:
                     p = subprocess.Popen(shlex.split(step), stdout=PIPE, stderr=PIPE, shell=False)
                     _, stderr = p.communicate()
                     if stderr.strip():

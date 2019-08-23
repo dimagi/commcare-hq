@@ -70,13 +70,14 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
     def _selected_group_entries(self, mobile_user_and_group_slugs):
         query_results = self._selected_groups_query(mobile_user_and_group_slugs)
         reporting_group_ids = self.selected_reporting_group_ids(mobile_user_and_group_slugs)
+        sharing_group_ids = self.selected_sharing_group_ids(mobile_user_and_group_slugs)
 
         reporting = list()
         sharing = list()
         for group in query_results:
             if group['_id'] in reporting_group_ids:
                 reporting.append(self.utils.reporting_group_tuple(group))
-            else:
+            if group['_id'] in sharing_group_ids:
                 sharing.append(self.utils.sharing_group_tuple(group))
 
         return reporting + sharing

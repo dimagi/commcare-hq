@@ -51,6 +51,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.templatetags.xforms_extras import translate
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_FORM_BUILDER_FORM_ID
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
 from corehq.util.context_processors import websockets_override
@@ -117,7 +118,7 @@ def _get_form_designer_view(request, domain, app, module, form):
         return back_to_main(request, domain, app_id=app.id,
                             form_unique_id=form.unique_id)
 
-    if app.doc_type == 'LinkedApplication':
+    if is_linked_app(app):
         messages.warning(request, _(
             "You tried to edit this form in the Form Builder. "
             "However, this is a linked application and you can only make changes to the "
@@ -328,8 +329,6 @@ def _get_vellum_features(request, domain, app):
         'rich_text': True,
         'sorted_itemsets': app.enable_sorted_itemsets,
         'advanced_itemsets': add_ons.show("advanced_itemsets", request, app),
-        'remote_requests': (app.enable_remote_requests
-                            and toggles.REMOTE_REQUEST_QUESTION_TYPE.enabled(domain)),
     })
     return vellum_features
 

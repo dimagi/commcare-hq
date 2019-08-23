@@ -40,7 +40,8 @@ class RequestsTests(SimpleTestCase):
                 TEST_API_URL + 'me',
                 allow_redirects=True,
                 headers={'Accept': 'application/json'},
-                auth=(TEST_API_USERNAME, TEST_API_PASSWORD)
+                auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
+                timeout=600,
             )
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json()['code'], TEST_API_USERNAME)
@@ -69,7 +70,8 @@ class RequestsTests(SimpleTestCase):
                 data=None,
                 json=payload,
                 headers={'Content-type': 'application/json', 'Accept': 'application/json'},
-                auth=(TEST_API_USERNAME, TEST_API_PASSWORD)
+                auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
+                timeout=600,
             )
             self.assertEqual(response.status_code, 201)
             self.assertEqual(response.json()['status'], 'SUCCESS')
@@ -87,6 +89,7 @@ class RequestsTests(SimpleTestCase):
                 allow_redirects=True,
                 headers={'Accept': 'application/json'},
                 auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
+                timeout=600,
                 verify=False
             )
 

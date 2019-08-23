@@ -56,13 +56,20 @@ class BillingModalsMixin(object):
     @property
     def main_context(self):
         main_context = super(BillingModalsMixin, self).main_context
-        if self.request.couch_user and self.request.couch_user.has_permission(
-            self.domain,
-            get_permission_name(Permissions.edit_billing)
-        ):
+        if self._should_display_billing_modals():
             main_context.update(self._downgrade_modal_context)
             main_context.update(self._low_credits_context)
         return main_context
+
+    def _should_display_billing_modals(self):
+        return (
+            self.request.couch_user
+            and not self.request.couch_user.is_superuser
+            and self.request.couch_user.has_permission(
+                self.domain,
+                get_permission_name(Permissions.edit_billing)
+            )
+        )
 
     @property
     def _downgrade_modal_context(self):

@@ -453,12 +453,6 @@
       <script src="{% static 'notifications/js/notifications_service_main.js' %}"></script>
     {% endif %}
 
-    {% if request.use_angular_js and not requirejs_main %}
-      {% compress js %}
-        {% include "hqwebapp/includes/angular.html" %}
-      {% endcompress %}
-    {% endif %}
-
     {% if not requirejs_main %}
       {% compress js %}
         <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>

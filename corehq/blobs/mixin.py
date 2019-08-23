@@ -15,11 +15,11 @@ from corehq.blobs import get_blob_db, CODES  # noqa: F401
 from corehq.blobs.exceptions import AmbiguousBlobStorageError, NotFound
 from corehq.blobs.util import (
     classproperty,
-    ClosingContextProxy,
     document_method,
     random_url_id,
     SAFENAME,
 )
+from corehq.util.io import ClosingContextProxy
 from couchdbkit.exceptions import InvalidAttachment, ResourceNotFound
 from dimagi.ext.couchdbkit import (
     Document,

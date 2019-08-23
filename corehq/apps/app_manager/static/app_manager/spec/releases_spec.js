@@ -16,7 +16,8 @@ describe('App Releases', function () {
                     build_broken: false,
                     is_released: false,
                     domain: 'test-domain',
-                    target_commcare_flavor: false,
+                    commcare_flavor: null,
+                    copy_of: null,
                 }, extraProps),
                 releasesMain));
         }
@@ -46,6 +47,7 @@ describe('App Releases', function () {
             registerUrl("odk_media_install", "/a/test-domain/apps/odk/---/media_install/");
             registerUrl("download_ccz", "/a/text-domain/apps/download/---/CommCare.ccz");
             registerUrl("download_multimedia_zip", "/a/test-domain/apps/download/---/multimedia/commcare.zip");
+            registerUrl("app_form_summary_diff", "/a/test-domain/apps/compare/---..---");
             ajax_stub = sinon.stub($, 'ajax');
             releases = releasesMainModel(options);
             releases.savedApps(getSavedApps(5, {}, releases));

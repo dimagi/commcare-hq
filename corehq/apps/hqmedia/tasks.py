@@ -124,17 +124,22 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 
 
 @task(serializer='pickle')
-def build_application_zip_v2(include_multimedia_files, include_index_files, domain, app_id,
-                             download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
-                             download_targeted_version=False):
+def build_application_zip(include_multimedia_files, include_index_files, domain, app_id,
+                          download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
+                          download_targeted_version=False):
+    DownloadBase.set_progress(build_application_zip, 0, 100)
     app = get_app(domain, app_id)
-    return build_application_zip(include_multimedia_files, include_index_files, app, download_id,
-                                 build_profile_id, compress_zip, filename, download_targeted_version)
+    fpath = create_files_for_ccz(app, build_profile_id, include_multimedia_files, include_index_files,
+                                 download_id, compress_zip, filename, download_targeted_version,
+                                 task=build_application_zip, expose_link=True)
+    _expose_download_link(fpath, filename, compress_zip, download_id)
+    DownloadBase.set_progress(build_application_zip, 100, 100)
 
 
 def _get_file_path(app, include_multimedia_files, include_index_files, build_profile_id,
                    download_targeted_version):
     if settings.SHARED_DRIVE_CONF.transfer_enabled:
+
         fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "{}{}{}{}{}".format(
             app._id,
             'mm' if include_multimedia_files else '',
@@ -175,7 +180,7 @@ def _build_ccz_files(build, build_profile_id, include_multimedia_files, include_
 def _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count, compression, task):
     file_cache = {}
     with open(fpath, 'wb') as tmp:
-        with zipfile.ZipFile(tmp, "w") as z:
+        with zipfile.ZipFile(tmp, "w", allowZip64=True) as z:
             for path, data in files:
                 # don't compress multimedia files
                 extension = os.path.splitext(path)[1]
@@ -223,6 +228,11 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
                 )
         if include_index_files and include_multimedia_files:
             multimedia_errors = check_ccz_multimedia_integrity(build.domain, fpath)
+            if multimedia_errors:
+                multimedia_errors.insert(0, _(
+                    "Please try syncing multimedia files in multimedia tab under app settings to resolve "
+                    "issues with missing media files. Report an issue if this persists."
+                ))
             errors.extend(multimedia_errors)
             if multimedia_errors:
                 notify_exception(
@@ -257,21 +267,9 @@ def _expose_download_link(fpath, filename, compress_zip, download_id):
                                **common_kwargs)
 
 
-@task(serializer='pickle')
-def build_application_zip(include_multimedia_files, include_index_files, app,
-                          download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
-                          download_targeted_version=False):
-    DownloadBase.set_progress(build_application_zip, 0, 100)
-    fpath = create_files_for_ccz(app, build_profile_id, include_multimedia_files, include_index_files,
-                                 download_id, compress_zip, filename, download_targeted_version,
-                                 task=build_application_zip, expose_link=True)
-    _expose_download_link(fpath, filename, compress_zip, download_id)
-    DownloadBase.set_progress(build_application_zip, 100, 100)
-
-
 def find_missing_locale_ids_in_ccz(file_cache):
     errors = [
-        _("Could not find {file_path} in CCZ").format(file_path)
+        _("Could not find {file_path} in CCZ").format(file_path=file_path)
         for file_path in ('default/app_strings.txt', 'suite.xml') if file_path not in file_cache]
     if errors:
         return errors
@@ -295,9 +293,6 @@ def find_missing_locale_ids_in_ccz(file_cache):
 
 # Check that all media files present in media_suite.xml were added to the zip
 def check_ccz_multimedia_integrity(domain, fpath):
-    if not toggles.CAUTIOUS_MULTIMEDIA.enabled(domain):
-        return []
-
     errors = []
 
     with open(fpath, 'rb') as tmp:

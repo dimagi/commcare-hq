@@ -6,6 +6,7 @@ import logging
 from collections import namedtuple
 
 from ddtrace import tracer
+from django.db import IntegrityError
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -507,20 +508,31 @@ def _transform_instance_to_error(interface, exception, instance):
 
 def handle_unexpected_error(interface, instance, exception):
     instance = _transform_instance_to_error(interface, exception, instance)
-    notify_submission_error(instance, exception, instance.problem)
-    FormAccessors(interface.domain).save_new_form(instance)
+
+    # get this here in case we hit the integrity error below and lose the exception context
+    exec_info = sys.exc_info()
+
+    try:
+        FormAccessors(interface.domain).save_new_form(instance)
+    except IntegrityError:
+        instance = interface.xformerror_from_xform_instance(instance, instance.problem, with_new_id=True)
+        FormAccessors(interface.domain).save_new_form(instance)
+
+    notify_submission_error(instance, instance.problem, exec_info)
 
 
-def notify_submission_error(instance, exception, message):
+def notify_submission_error(instance, message, exec_info=None):
     from corehq.util.global_request.api import get_request
+
+    exec_info = exec_info or sys.exc_info()
     domain = getattr(instance, 'domain', '---')
     details = {
         'domain': domain,
         'error form ID': instance.form_id,
     }
-    should_email = not isinstance(exception, CouchSaveAborted)  # intentionally don't double-email these
+    should_email = not isinstance(exec_info[1], CouchSaveAborted)  # intentionally don't double-email these
     if should_email:
         request = get_request()
-        notify_exception(request, message, details=details)
+        notify_exception(request, message, details=details, exec_info=exec_info)
     else:
         logging.error(message, exc_info=sys.exc_info(), extra={'details': details})

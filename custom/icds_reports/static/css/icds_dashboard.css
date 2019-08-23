@@ -95,6 +95,24 @@ nvd3#sectorChart > div.title.h4 {
     text-align: center !important;
 }
 
+.dataTables_scrollHeadInner {
+    width: 100% !important;
+}
+
+.dataTables_scrollHeadInner table {
+    width: 100% !important;
+}
+
+.scrollStyle {
+    overflow-x:auto !important;
+}
+
+.factSheetTable td {
+    white-space: inherit !important;
+}
+
+
+
 @media print {
     .white, .fa, .fa-info-circle:before, .number, .second_number {
       color: white !important;

@@ -23,7 +23,7 @@ There are two different localsettings configurations, depending on whether HQ is
 This is the recommended setup for local development.  If you want to run the server process in docker, see below.
 
 * If you are using _Docker Toolbox_ (not _Docker for Mac_): change all service host settings (DATABASES HOST, COUCH_SERVER_ROOT, etc.) in your localsettings.py file to point to the IP address of your virtualbox docker VM.
-* Run `./scripts/docker up -d postgres couch redis elasticsearch kafka riakcs` to build and start those docker services in the background.
+* Run `./scripts/docker up -d postgres couch redis elasticsearch kafka minio` to build and start those docker services in the background.
 * Once the services are all up (`./scripts/docker ps` to check) you can return to the CommCare HQ DEV_SETUP and [Setup your Django environment](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md#set-up-your-django-environment).
 
 ### Run services and HQ in docker

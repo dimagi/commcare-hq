@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-bash scripts/_vendor/pip-post-compile.sh "$@"
+scripts/pip-post-compile-edx.sh "$@"
 
 function clean_file {
     FILE_PATH=$1

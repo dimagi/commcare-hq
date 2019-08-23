@@ -40,6 +40,7 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_can_edit_apps, safe_cached_download
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.case_importer.tracking.filestorage import TransientFileStore
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet, ALLOWED_EXTENSIONS
@@ -54,7 +55,7 @@ from corehq.apps.hqmedia.controller import (
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import (
     process_bulk_upload_zip,
-    build_application_zip_v2,
+    build_application_zip,
 )
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
@@ -611,7 +612,7 @@ class ProcessLogoFileUploadView(ProcessImageFileUploadView):
             ProcessLogoFileUploadView, self
         ).process_upload()
         self.app.logo_refs[self.filename] = ref['ref']
-        if self.app.doc_type == 'LinkedApplication':
+        if is_linked_app(self.app):
             self.app.linked_app_logo_refs[self.filename] = ref['ref']
         self.app.save()
         return ref
@@ -786,7 +787,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         if domain_has_privilege(request.domain, privileges.BUILD_PROFILES):
             build_profile_id = request.GET.get('profile')
         download_targeted_version = request.GET.get('download_targeted_version') == 'true'
-        download.set_task(build_application_zip_v2.delay(
+        download.set_task(build_application_zip.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
             domain=self.app.domain,

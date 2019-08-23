@@ -641,6 +641,9 @@ Formplayer.Errors = {
         "Internet in order to submit your form.",
     LOCK_TIMEOUT_ERROR: gettext('Another process prevented us from servicing your request. ' +
         'Please try again later.'),
+    NO_INTERNET_ERROR: gettext("We have detected an issue with your network. " +
+        "Please check your Internet connection and retry when connectivity " +
+        "improves."),
 };
 
 Formplayer.Utils.touchformsError = function (message) {

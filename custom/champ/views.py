@@ -56,7 +56,7 @@ def update_date_property(config, post_data, property, filter_key):
 class ChampView(View):
     @property
     def post_data(self):
-        return json.loads(self.request.body)
+        return json.loads(self.request.body.decode('utf-8'))
 
     def get_list_property(self, property):
         value = self.post_data.get(property, [])

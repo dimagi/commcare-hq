@@ -236,7 +236,7 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, 
     encounter_date = etree.XML('<encounter_date>%s</encounter_date>' % json_format_date(datetime.utcnow()))
     form.append(encounter_date)
 
-    submission_xml_string = etree.tostring(form)
+    submission_xml_string = etree.tostring(form).decode('utf-8')
     if sync_token:
         extra_meta = {LAST_SYNCTOKEN_HEADER: sync_token}
     else:

@@ -2,10 +2,11 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import re
 
-import six
 from django.utils.translation import ugettext as _
+
+import six
 from eulxml.xpath import parse as parse_xpath
-from eulxml.xpath.ast import FunctionCall, Step, serialize
+from eulxml.xpath.ast import FunctionCall, Step, UnaryExpression, serialize
 from six import integer_types, string_types
 
 from corehq.apps.case_search.xpath_functions import (
@@ -151,6 +152,8 @@ def build_filter_from_ast(domain, node):
     def _unwrap_function(node):
         """Returns the value of the node if it is wrapped in a function, otherwise just returns the node
         """
+        if isinstance(node, UnaryExpression) and node.op == '-':
+            return -1 * node.right
         if not isinstance(node, FunctionCall):
             return node
         try:
@@ -170,8 +173,9 @@ def build_filter_from_ast(domain, node):
         """Returns the filter for an equality operation (=, !=)
 
         """
+        acceptable_rhs_types = integer_types + (string_types, float, FunctionCall, UnaryExpression)
         if isinstance(node.left, Step) and (
-                isinstance(node.right, integer_types + (string_types, float, FunctionCall))):
+                isinstance(node.right, acceptable_rhs_types)):
             # This is a leaf node
             case_property_name = serialize(node.left)
             value = _unwrap_function(node.right)

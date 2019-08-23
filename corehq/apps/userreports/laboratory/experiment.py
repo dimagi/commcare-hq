@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import json
 import traceback
 
 import json_delta
@@ -10,6 +11,7 @@ from corehq.apps.userreports.models import (
     ReportComparisonException,
     ReportComparisonTiming,
 )
+from corehq.util.json import CommCareJSONEncoder
 
 
 class UCRExperiment(laboratory.Experiment):
@@ -41,6 +43,10 @@ class UCRExperiment(laboratory.Experiment):
         )
 
     def log_diff(self, control_value, candidate_value):
+        # handle serialization of Decimals and dates
+        control_value = json.loads(json.dumps(control_value, cls=CommCareJSONEncoder))
+        candidate_value = json.loads(json.dumps(candidate_value, cls=CommCareJSONEncoder))
+
         diff = json_delta.diff(control_value, candidate_value, verbose=False)
         ReportComparisonDiff.objects.create(
             domain=self.context['domain'],

@@ -171,7 +171,7 @@ class MetaDB(object):
             kw.pop("type_code", None)
             kw.pop("name", None)
             if not kw:
-                raise TypeError("Missing argument 'name' and/or 'parent_id'")
+                raise TypeError("Missing argument 'parent_id', 'type_code' and/or 'name'")
             raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
         dbname = get_db_alias_for_partitioned_doc(kw["parent_id"])
         meta = BlobMeta.objects.using(dbname).filter(**kw).first()

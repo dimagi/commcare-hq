@@ -384,7 +384,7 @@ class FixtureDataItem(Document):
 
     @classmethod
     def by_user(cls, user, wrap=True):
-        group_ids = Group.by_user(user, wrap=False)
+        group_ids = Group.by_user_id(user.user_id, wrap=False)
         loc_ids = user.sql_location.path if user.sql_location else []
 
         def make_keys(owner_type, ids):
@@ -420,7 +420,7 @@ class FixtureDataItem(Document):
             if deleted_fixture_ids:
                 # delete ownership documents pointing deleted/non-existent fixture documents
                 # this cleanup is necessary since we used to not do this
-                remove_deleted_ownerships.delay(deleted_fixture_ids, user.domain)
+                remove_deleted_ownerships.delay(list(deleted_fixture_ids), user.domain)
             return docs
         else:
             return fixture_ids
