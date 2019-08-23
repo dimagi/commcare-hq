@@ -131,11 +131,13 @@ def apps_update_calculated_properties():
 
 @task(serializer='pickle', ignore_result=True)
 def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject=None):
+    from corehq.apps.reports.standard.deployments import ApplicationStatusReport
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
     report.rendered_as = 'export'
 
     setattr(report.request, 'REQUEST', {})
+    report_start = datetime.utcnow()
     file = report.excel_response
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
     hash_id = _store_excel_in_blobdb(report_class, file, report.domain)
@@ -143,6 +145,26 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
         _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject=subject)
+
+    report_end = datetime.utcnow()
+    if settings.SERVER_ENVIRONMENT == 'icds' and isinstance(report, ApplicationStatusReport):
+        message = """
+            Duration: {dur},
+            Total rows: {total},
+            Warehouse Enabled: {enabled},
+            User List: {users}
+            """.format(
+            dur=report_end - report_start,
+            total=report.total_records,
+            enabled=report.warehouse,
+            users=recipient_list
+        )
+        send_mail_async.delay(
+            subject="ApplicationStatusReport Download metrics",
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=["{}@{}.com".format("sreddy", "dimagi")]
+        )
 
 
 def _send_email(user, report, hash_id, recipient, subject=None):
