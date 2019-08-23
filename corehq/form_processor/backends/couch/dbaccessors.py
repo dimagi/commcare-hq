@@ -1,7 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from couchdbkit.exceptions import ResourceNotFound
+
+from collections import namedtuple
 from datetime import datetime
+
+from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case.dbaccessors import (
     get_extension_case_ids,
@@ -358,13 +361,17 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
     @staticmethod
     def get_section_and_entry_combinations(domain):
         from corehq.apps.commtrack.models import StockState
+        SectionEntryCombo = namedtuple('SectionEntryCombo', 'section_id, entry_id')
 
-        return list(
-            StockState.objects
-            .filter(sql_product__domain=domain)
-            .values('section_id', 'product_id')
-            .distinct()
-        )
+        return [
+            SectionEntryCombo(res['section_id'], res['product_id'])
+            for res in (
+                StockState.objects
+                .filter(sql_product__domain=domain)
+                .values('section_id', 'product_id')
+                .distinct()
+            )
+        ]
 
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):

@@ -1469,6 +1469,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
     def get_section_and_entry_combinations(domain):
+        SectionEntryCombo = namedtuple('SectionEntryCombo', 'section_id, entry_id')
         section_entry_combos = set()
         for db_name in get_db_aliases_for_partitioned_query():
             results = (
@@ -1477,8 +1478,8 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                 .values('section_id', 'entry_id')
                 .distinct()
             )
-            for section_id, entry_id in results:
-                section_entry_combos.add((section_id, entry_id))
+            for res in results:
+                section_entry_combos.add(SectionEntryCombo(res['section_id'], res['entry_id']))
         return section_entry_combos
 
 

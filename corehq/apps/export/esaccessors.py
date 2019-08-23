@@ -4,11 +4,11 @@ from __future__ import unicode_literals
 import six
 from elasticsearch import ElasticsearchException
 
-from corehq.apps.es import CaseES, FormES, GroupES, LedgerES
-from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
+from corehq.apps.es import CaseES, FormES, GroupES
 from corehq.apps.es.sms import SMSES
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.elastic import ES_EXPORT_INSTANCE, get_es_new
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
@@ -58,12 +58,7 @@ def get_ledger_section_entry_combinations(domain):
     """Get all section / entry combinations in a domain.
     :returns: a generator of namedtuples with fields ``section_id``, ``entry_id``, ``doc_count``
     """
-    terms = [
-        AggregationTerm('section_id', 'section_id'),
-        AggregationTerm('entry_id', 'entry_id'),
-    ]
-    query = LedgerES().domain(domain)
-    return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
+    return LedgerAccessors(domain).get_section_and_entry_combinations()
 
 
 def get_case_name(case_id):

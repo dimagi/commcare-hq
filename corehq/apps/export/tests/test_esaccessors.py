@@ -4,9 +4,15 @@ import uuid
 
 from django.test import TestCase, SimpleTestCase
 
+from casexml.apps.case.mock import CaseFactory
+
+from corehq.apps.commtrack.helpers import make_product
+from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations, get_groups_user_ids
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.elastic import send_to_elasticsearch, get_es_new
 from corehq.form_processor.models import LedgerValue
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.apps.groups.models import Group
@@ -20,34 +26,45 @@ class TestExportESAccessors(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestExportESAccessors, cls).setUpClass()
-        ensure_index_deleted(LEDGER_INDEX_INFO.index)
-        es = get_es_new()
-        initialize_index_and_mapping(es, LEDGER_INDEX_INFO)
+        cls.product_a = make_product(cls.domain, 'A Product', 'product_a')
+        cls.product_b = make_product(cls.domain, 'B Product', 'product_b')
+        cls.product_c = make_product(cls.domain, 'C Product', 'product_c')
 
         cls.expected_combos = {
-            ('stock', 'product_a'),
-            ('stock', 'product_b'),
-            ('consumption', 'product_a'),
-            ('consumption', 'product_c'),
+            ('stock', cls.product_a.get_id),
+            ('stock', cls.product_b.get_id),
+            ('consumption', cls.product_a.get_id),
+            ('consumption', cls.product_c.get_id),
         }
-        for section, entry in cls.expected_combos:
-            ledger = LedgerValue(
-                domain=cls.domain,
-                case_id=uuid.uuid4().hex,
-                section_id=section,
-                entry_id=entry,
-            )
-            ledger_json = ledger.to_json(include_location_id=False)
-            ledger_json['_id'] = ledger.ledger_reference.as_id()
-            send_to_elasticsearch('ledgers', doc=ledger_json)
-
-        es.indices.refresh(LEDGER_INDEX_INFO.index)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(LEDGER_INDEX_INFO.index)
+        cls.product_a.delete()
+        cls.product_b.delete()
+        cls.product_c.delete()
         super(TestExportESAccessors, cls).tearDownClass()
 
+    def setUp(self):
+        super(TestExportESAccessors, self).setUp()
+        factory = CaseFactory(domain=self.domain)
+        self.case_one = factory.create_case()
+
+        for section, entry in self.expected_combos:
+            submit_case_blocks(
+                [get_single_balance_block(
+                    case_id=self.case_one.case_id,
+                    section_id=section,
+                    product_id=entry,
+                    quantity=20,
+                )],
+                self.domain
+            )
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
+        super(TestExportESAccessors, self).tearDown()
+
+    @run_with_all_backends
     def test_get_ledger_section_entry_combinations(self):
         combos = get_ledger_section_entry_combinations(self.domain)
         self.assertEqual(
