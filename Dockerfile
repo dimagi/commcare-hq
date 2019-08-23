@@ -1,5 +1,4 @@
-# When changing this file, also update Dockerfile-py3
-FROM python:2.7-jessie
+FROM python:3.6-jessie
 MAINTAINER Dimagi <devops@dimagi.com>
 
 ENV PYTHONUNBUFFERED=1 \
@@ -15,7 +14,7 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
 
 RUN apt-get update && apt-get install -y --no-install-recommends openjdk-7-jdk
 
-COPY requirements/test-requirements.txt package.json /vendor/
+COPY requirements-python3/test-requirements.txt package.json /vendor/
 
 # prefer https for git checkouts made by pip
 RUN git config --global url."https://".insteadOf git:// \
