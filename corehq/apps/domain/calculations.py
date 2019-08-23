@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
 from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count, get_mobile_user_count

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from dateutil.parser import parse
 from dimagi.ext.couchdbkit import DateTimeProperty, Property
 import json

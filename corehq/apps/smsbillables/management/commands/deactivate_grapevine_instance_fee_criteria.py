@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria
 from corehq.apps.smsbillables.utils import log_smsbillables_info

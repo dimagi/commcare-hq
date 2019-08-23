@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import csv342 as csv
 
 from django.core.management.base import BaseCommand, CommandError
@@ -12,7 +9,6 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAcce
 from corehq.apps.app_manager.dbaccessors import get_app
 from dimagi.utils.django.management import are_you_sure
 from datetime import datetime
-from io import open
 
 
 XFORM_HEADER = ['Version', 'Form Id', 'Domain']

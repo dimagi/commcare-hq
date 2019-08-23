@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
 from corehq.apps.change_feed import topics

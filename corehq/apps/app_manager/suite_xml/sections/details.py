@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 import os
 from xml.sax.saxutils import escape
@@ -44,7 +42,6 @@ from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
 from corehq import toggles
 from memoized import memoized
-from io import open
 
 
 class DetailContributor(SectionContributor):

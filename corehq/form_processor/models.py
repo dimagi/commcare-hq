@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import mimetypes
 import os
@@ -1247,9 +1244,6 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             self.relationship_id == other.relationship_id,
         )
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     def __hash__(self):
         return hash((self.case_id, self.identifier, self.referenced_id, self.relationship_id))
 
@@ -1434,9 +1428,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             self.form_id == other.form_id
         )
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     @classmethod
     def form_transaction(cls, case, xform, client_date, action_types=None):
         action_types = action_types or []
@@ -1546,9 +1537,6 @@ class CaseTransactionDetail(JsonObject):
 
     def __eq__(self, other):
         return self.type == other.type and self.to_json() == other.to_json()
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     __hash__ = None
 

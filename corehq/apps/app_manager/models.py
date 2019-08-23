@@ -1,5 +1,4 @@
 # coding=utf-8
-from __future__ import absolute_import, unicode_literals
 
 import calendar
 import datetime
@@ -278,9 +277,6 @@ class IndexedSchema(DocumentSchema):
             and (self.id == other.id)
             and (self._parent == other._parent)
         )
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     class Getter(object):
 
@@ -3887,9 +3883,6 @@ class BuildProfile(DocumentSchema):
 
     def __eq__(self, other):
         return self.langs == other.langs and self.practice_mobile_worker_id == other.practice_mobile_worker_id
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
 
 class ApplicationBase(LazyBlobDoc, SnapshotMixin,

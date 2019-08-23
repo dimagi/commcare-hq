@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import mock
 from collections import namedtuple
 from django.test import TestCase, SimpleTestCase

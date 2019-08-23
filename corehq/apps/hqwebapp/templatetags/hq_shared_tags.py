@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import OrderedDict
 from datetime import datetime, timedelta
 import hashlib
@@ -28,7 +26,6 @@ from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq import toggles
 import six
-from io import open
 
 
 register = template.Library()

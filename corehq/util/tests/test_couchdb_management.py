@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf import settings
 from django.test import SimpleTestCase
 from corehq.util.couchdb_management import CouchConfig, couch_config

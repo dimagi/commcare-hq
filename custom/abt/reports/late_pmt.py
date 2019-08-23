@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from dateutil.rrule import rrule, DAILY, MO, TU, WE, TH, FR, SA
 from sqlagg.columns import SimpleColumn

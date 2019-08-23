@@ -27,8 +27,6 @@ Common Output:
             }
         }
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q, Count

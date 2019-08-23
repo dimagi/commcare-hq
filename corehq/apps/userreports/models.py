@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 import glob
 import json
@@ -7,7 +6,6 @@ import re
 from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime
-from io import open
 from uuid import UUID
 
 import six

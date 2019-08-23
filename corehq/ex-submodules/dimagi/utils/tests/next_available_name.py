@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from dimagi.utils.next_available_name import next_available_name
 

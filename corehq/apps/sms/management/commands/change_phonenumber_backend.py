@@ -1,11 +1,7 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import sys
 
 from collections import defaultdict
-from io import open
 
 import csv342 as csv
 from django.core.management.base import BaseCommand

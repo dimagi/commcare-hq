@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import couchdbkit
 from corehq.apps.app_manager.const import APP_V2
 import six

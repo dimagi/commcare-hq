@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from decimal import Decimal
 
 from django.db.models import Q
@@ -49,7 +47,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.products.models import Product
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from testapps.test_pillowtop.utils import process_pillow_changes
-from io import open
 
 
 class XMLTest(TestCase):

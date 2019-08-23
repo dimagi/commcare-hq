@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.formplayer_api.smsforms.api import answer_question, next
 from corehq.apps.formplayer_api.smsforms.signals import sms_form_complete
 

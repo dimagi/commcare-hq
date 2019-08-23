@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty

@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 import datetime
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-from io import open
 
 
 DOC_ID = 'repeat-id'

@@ -1,6 +1,4 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 import copy
 import json
 import os
@@ -87,7 +85,6 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response, json_request
 from toggle.shortcuts import set_toggle
 import six
-from io import open
 
 
 @no_conflict_require_POST

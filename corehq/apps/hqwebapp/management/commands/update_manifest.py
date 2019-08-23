@@ -1,13 +1,9 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from dimagi.utils import gitinfo
 from django.core import cache
-from io import open
 
 
 rcache = cache.caches['redis']

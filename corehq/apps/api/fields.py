@@ -2,8 +2,6 @@
 Fields for use in Tastypie Resources
 '''
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import six
 
 from tastypie.fields import ApiField, CharField

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from dimagi.utils.logging import notify_exception
 from celery.signals import task_failure
 import signal

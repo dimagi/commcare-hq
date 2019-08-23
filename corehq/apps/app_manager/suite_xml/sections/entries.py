@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import six
 from collections import namedtuple, defaultdict
 from six.moves import zip_longest

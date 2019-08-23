@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from ..models import LocationType, SQLLocation
 from .util import LocationHierarchyTestCase
 

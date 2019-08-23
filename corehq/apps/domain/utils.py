@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import Counter
 import os
 import re
@@ -22,7 +20,6 @@ from dimagi.utils.django.email import send_HTML_email
 
 from soil.util import expose_zipped_blob_download
 from couchexport.models import Format
-from io import open
 
 
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'

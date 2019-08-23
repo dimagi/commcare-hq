@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from contextlib import contextmanager
 from datetime import date, datetime, time

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 import six
 from os.path import join
@@ -11,7 +9,6 @@ from testil import assert_raises, tempdir
 import corehq.blobs as mod
 from corehq.util.test_utils import generate_cases
 from settingshelper import SharedDriveConfiguration
-from io import open
 
 
 @generate_cases([

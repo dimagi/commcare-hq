@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string

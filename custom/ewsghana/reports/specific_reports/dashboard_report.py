@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict
 from django.http import HttpResponse
 from corehq.apps.locations.models import SQLLocation

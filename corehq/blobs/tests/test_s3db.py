@@ -60,8 +60,6 @@ Finally, add the following to `localsettings.py`:
         }
 
 """  # noqa: W605
-from __future__ import unicode_literals
-from __future__ import absolute_import
 from io import BytesIO, SEEK_SET, TextIOWrapper
 
 from django.conf import settings

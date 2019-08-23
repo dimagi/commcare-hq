@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django import template
 import pytz
 from corehq.util.timezones.conversions import ServerTime

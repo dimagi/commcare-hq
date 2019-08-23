@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from collections import OrderedDict
 import re
 import os
@@ -12,7 +9,6 @@ from corehq.apps.reports.sqlreport import DataFormatter
 import six
 from six.moves import range
 from six.moves import map
-from io import open
 
 
 @quickcache(['domain'], timeout=5 * 60)

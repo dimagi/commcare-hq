@@ -5,9 +5,6 @@ OpenmrsCaseConfig.match_on_ids have successfully matched a patient.
 
 See `README.md`__ for more context.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 from collections import namedtuple
 from functools import partial
