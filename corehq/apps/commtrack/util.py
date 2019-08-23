@@ -6,9 +6,8 @@ from corehq import toggles, feature_previews
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
-import itertools
 from datetime import date, timedelta
 from calendar import monthrange
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -20,7 +19,6 @@ import re
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 import six
-from six.moves import zip
 
 CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 
@@ -28,11 +26,16 @@ CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 def all_sms_codes(domain):
     config = CommtrackConfig.for_domain(domain)
 
-    actions = dict((action.keyword, action) for action in config.actions)
-    products = dict((p.code, p) for p in Product.by_domain(domain))
+    actions = {action.keyword: action for action in config.actions}
+    products = {p.code: p for p in SQLProduct.by_domain(domain)}
 
-    sms_codes = zip(('action', 'product'), (actions, products))
-    return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in six.iteritems(codes)] for type, codes in sms_codes)))
+    ret = {}
+    for action_key, action in actions.items():
+        ret[action_key] = ('action', action)
+    for product_key, product in products.items():
+        ret[product_key] = ('product', product)
+
+    return ret
 
 
 def get_supply_point_and_location(domain, site_code):
