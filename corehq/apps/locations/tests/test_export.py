@@ -1,4 +1,3 @@
-# coding: utf-8
 from decimal import Decimal
 
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField

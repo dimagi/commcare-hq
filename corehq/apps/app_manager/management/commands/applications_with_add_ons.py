@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import csv342 as csv
 
 from django.core.management.base import BaseCommand, CommandError

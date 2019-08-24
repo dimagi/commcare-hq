@@ -1,4 +1,3 @@
-# coding: utf-8
 import contextlib
 
 from django.db.utils import InternalError

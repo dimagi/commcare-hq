@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.util.quickcache import quickcache

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -
 __author__ = 'dmyung'
 from datetime import datetime
 from couchdbkit import Database

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.db import migrations
 
 from corehq.apps.sms.migration_status import assert_domain_default_backend_migration_complete
