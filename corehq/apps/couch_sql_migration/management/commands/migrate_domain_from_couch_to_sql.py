@@ -275,12 +275,11 @@ class Command(BaseCommand):
         sep = "|" if ids_in_couch == ids_in_sql else "≠"
         doc_count_row = row.format(n_couch, sep, n_sql)
 
-        print('\n{:_^79}'.format(" %s " % name))
+        print('\n{:_^79}'.format(f" {name} "))
         print(row.format('Couch', '|', 'SQL'))
-        print(_highlight(doc_count_row).encode('utf-8'))
+        print(_highlight(doc_count_row))
         if diff_count:
-            highlighted = _highlight("{:^83}".format('{} diffs ({} docs)'.format(diff_count, num_docs_with_diffs)))
-            print(highlighted.encode('utf-8'))
+            print(_highlight("{:^83}".format(f'{diff_count} diffs ({num_docs_with_diffs} docs)')))
 
         if not short:
             if ids_in_couch ^ ids_in_sql:
