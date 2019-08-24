@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 import logging
 import os
 from itertools import groupby
@@ -121,7 +119,7 @@ class Command(BaseCommand):
 
     def handle(self, domain, action, **options):
         if should_use_sql_backend(domain):
-            raise CommandError('It looks like {} has already been migrated.'.format(domain))
+            raise CommandError(f'It looks like {domain} has already been migrated.')
 
         for opt in ["no_input", "debug", "verbose", "state_dir", "dry_run", "live_migrate", "diff_process"]:
             setattr(self, opt, options[opt])
@@ -166,8 +164,8 @@ class Command(BaseCommand):
     def do_reset(self, domain, dst_domain):
         if not self.no_input:
             _confirm(
-                "This will delete all SQL forms and cases for the domain {}. "
-                "Are you sure you want to continue?".format(dst_domain)
+                "This will delete all SQL forms and cases for the domain "
+                f"{dst_domain}. Are you sure you want to continue?"
             )
         set_couch_sql_migration_not_started(domain)
         if domain != dst_domain:
@@ -181,7 +179,7 @@ class Command(BaseCommand):
             _confirm(
                 "This will convert the domain to use the SQL backend and"
                 "allow new form submissions to be processed. "
-                "Are you sure you want to do this for domain '{}'?".format(domain)
+                f"Are you sure you want to do this for domain '{domain}'?"
             )
         if domain == dst_domain:
             set_couch_sql_migration_complete(domain)
@@ -196,13 +194,13 @@ class Command(BaseCommand):
         db = open_state_db(domain, self.state_dir)
         diffs = sorted(db.get_diffs(), key=lambda d: d.kind)
         for doc_type, diffs in groupby(diffs, key=lambda d: d.kind):
-            print('-' * 50, "Diffs for {}".format(doc_type), '-' * 50)
+            print('-' * 50, f"Diffs for {doc_type}", '-' * 50)
             for diff in diffs:
-                print('[{}({})] {}'.format(doc_type, diff.doc_id, diff.json_diff))
+                print(f'[{doc_type}({diff.doc_id})] {diff.json_diff}')
 
     def print_stats(self, src_domain, dst_domain, short=True, diffs_only=False):
         status = get_couch_sql_migration_status(src_domain)
-        print("Couch to SQL migration status for {}: {}".format(src_domain, status))
+        print(f"Couch to SQL migration status for {src_domain}: {status}")
         db = open_state_db(src_domain, self.state_dir)
         try:
             diff_stats = db.get_diff_stats()
@@ -262,7 +260,7 @@ class Command(BaseCommand):
             )
             if doc_type == "CommCareCase" and couch_missing_cases:
                 has_diffs = True
-                print(shell_red("%s cases could not be loaded from Couch" % couch_missing_cases))
+                print(shell_red(f"{couch_missing_cases} cases could not be loaded from Couch"))
                 if not short:
                     for case_id in db.get_missing_doc_ids("CommCareCase-couch"):
                         print(case_id)
@@ -299,11 +297,11 @@ class Command(BaseCommand):
         sep = "|" if ids_in_couch == ids_in_sql else "≠"
         doc_count_row = row.format(n_couch, sep, n_sql)
 
-        print('\n{:_^79}'.format(" %s " % name))
+        print('\n{:_^79}'.format(f" {name} "))
         print(row.format('Couch', '|', 'SQL'))
         print(_highlight(doc_count_row))
         if diff_count:
-            print(_highlight("{:^83}".format('{} diffs ({} docs)'.format(diff_count, num_docs_with_diffs))))
+            print(_highlight("{:^83}".format(f'{diff_count} diffs ({num_docs_with_diffs} docs)')))
 
         if not short:
             if ids_in_couch ^ ids_in_sql:
@@ -316,7 +314,7 @@ class Command(BaseCommand):
 
 
 def _confirm(message):
-    response = input('{} [y/N]'.format(message)).lower()
+    response = input(f'{message} [y/N]').lower()
     if response != 'y':
         raise CommandError('abort')
 
@@ -342,7 +340,7 @@ def blow_away_migration(domain, dst_domain, state_dir):
 
     sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(dst_domain)
     CaseAccessorSQL.hard_delete_cases(dst_domain, sql_case_ids)
-    log.info("blew away migration for domain {}\n".format(domain))
+    log.info(f"blew away migration for domain {domain}\n")
 
 
 def _commit_src_domain(domain):
@@ -366,8 +364,8 @@ def _commit_src_domain(domain):
         )
         keys = {meta.key for meta in metas}
         if len(metas) != len(keys):
-            print('DUPLICATE META KEYS for form {}!'.format(form_id))
-            log.error('DUPLICATE META KEYS for form {}!'.format(form_id))
+            print(f'DUPLICATE META KEYS for form {form_id}!')
+            log.error(f'DUPLICATE META KEYS for form {form_id}!')
             continue
         for meta in metas:
             # `get_for_parent()` will return meta for both `domain`
