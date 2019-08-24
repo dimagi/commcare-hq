@@ -127,7 +127,7 @@ class StockTransactionHelper(jsonobject.JsonObject):
         else:
             quant = ''
         return '{}{}'.format(
-            SQLProduct.objects.values_list('code', flat=True).get(product_id=self.product_id).code.lower(),
+            SQLProduct.objects.values_list('code', flat=True).get(product_id=self.product_id).lower(),
             quant
         )
 
