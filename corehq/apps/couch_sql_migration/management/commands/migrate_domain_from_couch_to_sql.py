@@ -123,12 +123,14 @@ class Command(BaseCommand):
         if should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
-        for opt in ["no_input", "verbose", "state_dir", "live_migrate", "diff_process"]:
+        for opt in ["no_input", "debug", "verbose", "state_dir", "dry_run", "live_migrate", "diff_process"]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('--no-input only allowed for unit testing')
 
+        if action != MIGRATE and self.dry_run:
+            raise CommandError("--dry-run only allowed with `MIGRATE`")
         if action != MIGRATE and self.live_migrate:
             raise CommandError("--live only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
