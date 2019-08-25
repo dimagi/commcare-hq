@@ -18,7 +18,10 @@ from corehq.apps.translations.const import (
     SINGLE_SHEET_STATIC_HEADERS,
     SINGLE_SHEET_NAME,
 )
-from corehq.apps.translations.generators import AppTranslationsGenerator
+from corehq.apps.translations.generators import (
+    AppTranslationsGenerator,
+    SKIP_TRANSFEX_STRING,
+)
 
 COLUMNS_TO_COMPARE = {
     'module_and_form': ['Type', 'menu_or_form'],
