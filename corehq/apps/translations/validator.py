@@ -18,7 +18,7 @@ from corehq.apps.translations.app_translations.utils import (
     is_single_sheet,
 )
 from corehq.apps.translations.const import (
-    SINGLE_SHEET_INFO_HEADERS,
+    SINGLE_SHEET_STATIC_HEADERS,
     SINGLE_SHEET_NAME,
 )
 from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING, AppTranslationsGenerator
@@ -148,7 +148,7 @@ class UploadedTranslationsValidator(object):
 
     def _compare_single_sheet(self):
         sheet = self.uploaded_workbook.worksheets[0]
-        columns_to_compare = SINGLE_SHEET_INFO_HEADERS + self.lang_cols_to_compare
+        columns_to_compare = SINGLE_SHEET_STATIC_HEADERS + self.lang_cols_to_compare
         parsed_expected_rows = self._processed_single_sheet_expected_rows(self.expected_rows[sheet.title],
                                                                           columns_to_compare)
         parsed_uploaded_rows = self._processed_single_sheet_uploaded_rows(get_unicode_dicts(sheet),
