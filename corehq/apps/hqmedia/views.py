@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from mimetypes import guess_all_extensions, guess_type
 import uuid
 import zipfile

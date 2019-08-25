@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import inspect
 from collections import namedtuple
@@ -1314,17 +1311,6 @@ DATA_DICTIONARY = StaticToggle(
     description='Available in the Data section, shows the names of all properties of each case type.',
 )
 
-LOCATION_USERS = StaticToggle(
-    'location_users',
-    'Enikshay: Autogenerate users for each location',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "This flag adds an option to the location types page (under 'advanced "
-        "mode') to create users for all locations of a specified type."
-    ),
-)
-
 LOCATION_SAFETY_EXEMPTION = StaticToggle(
     'location_safety_exemption',
     'Exemption from location restrictions for EWS and ILS',
@@ -1757,7 +1743,7 @@ LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
     'load_dashboard_from_citus',
     'Use CitusDB for loading ICDS Dashboard',
     TAG_CUSTOM,
-    [NAMESPACE_USER]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 PARALLEL_AGGREGATION = StaticToggle(
@@ -1793,6 +1779,14 @@ MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
     'Improved MPR ASR by doing aggregation at selected level',
     TAG_CUSTOM,
     [NAMESPACE_USER]
+)
+
+SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD = StaticToggle(
+    'skip_creating_default_build_files_on_build',
+    'Skips creating the build files for default profile each time a build is made'
+    'which helps speed up the build and revert process',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )
 
 DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(

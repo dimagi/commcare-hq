@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import inspect
 from collections import defaultdict
@@ -262,7 +260,6 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
-    'corehq.apps.calendar_fixture',
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
@@ -443,10 +440,11 @@ BILLING_EMAIL = 'billing-comm@example.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
 GROWTH_EMAIL = 'growth@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
-REPORT_BUILDER_ADD_ON_EMAIL = 'sales@example.com'
+SALES_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
+PRIVACY_EMAIL = 'privacy@example.com'
 CONTACT_EMAIL = 'info@example.com'
-FEEDBACK_EMAIL = 'hq-feedback@dimagi.com'
+FEEDBACK_EMAIL = 'feedback@example.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
@@ -647,9 +645,7 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
-PILLOW_RETRY_QUEUE_ENABLED = False
-
-SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
+SYNC_CASE_FOR_MESSAGING_ON_SAVE = True
 
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
@@ -976,6 +972,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
+                'corehq.util.context_processors.emails',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1726,6 +1723,11 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
         },
+        {
+            'name': 'case_messaging_sync_pillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.messaging.pillow.get_case_messaging_sync_pillow',
+        },
     ],
     'core_ext': [
         {
@@ -1876,12 +1878,14 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'livraison_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined2.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'rapture_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'recouvrement_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_product_consumption.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),

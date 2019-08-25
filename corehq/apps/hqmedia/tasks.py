@@ -1,4 +1,3 @@
-from __future__ import absolute_import, division, unicode_literals
 
 import itertools
 import json
@@ -6,7 +5,6 @@ import os
 import re
 import tempfile
 import zipfile
-from io import open
 from wsgiref.util import FileWrapper
 
 from dimagi.utils.logging import notify_exception
@@ -269,7 +267,7 @@ def _expose_download_link(fpath, filename, compress_zip, download_id):
 
 def find_missing_locale_ids_in_ccz(file_cache):
     errors = [
-        _("Could not find {file_path} in CCZ").format(file_path)
+        _("Could not find {file_path} in CCZ").format(file_path=file_path)
         for file_path in ('default/app_strings.txt', 'suite.xml') if file_path not in file_cache]
     if errors:
         return errors
@@ -293,9 +291,6 @@ def find_missing_locale_ids_in_ccz(file_cache):
 
 # Check that all media files present in media_suite.xml were added to the zip
 def check_ccz_multimedia_integrity(domain, fpath):
-    if not toggles.CAUTIOUS_MULTIMEDIA.enabled(domain):
-        return []
-
     errors = []
 
     with open(fpath, 'rb') as tmp:

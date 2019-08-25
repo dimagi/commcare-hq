@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import logging
 from collections import defaultdict
@@ -233,6 +231,7 @@ class CaseDiffQueue(object):
                 self.pending_cases = defaultdict(int)
             join(pool)
             if complete:
+                log.info("Diffing cases with unprocessed forms...")
                 to_diff = self.statedb.iter_cases_with_unprocessed_forms()
                 for chunk in chunked(to_diff, self.BATCH_SIZE, list):
                     self._enqueue_cases(chunk)

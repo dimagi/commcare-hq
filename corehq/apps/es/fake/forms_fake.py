@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from copy import deepcopy
 from dateutil import parser
 from corehq.pillows.xform import transform_xform_for_elasticsearch

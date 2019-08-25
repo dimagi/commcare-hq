@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from couchdbkit import ResourceConflict
 from couchdbkit.client import Database
 from dimagi.ext.couchdbkit import Document

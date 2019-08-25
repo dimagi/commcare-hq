@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import json
 from collections import defaultdict
@@ -82,14 +79,6 @@ def stats_data(request):
 @datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
 def admin_reports_stats_data(request):
     return stats_data(request)
-
-
-class DimagisphereView(TemplateView):
-
-    def get_context_data(self, **kwargs):
-        context = super(DimagisphereView, self).get_context_data(**kwargs)
-        context['tvmode'] = 'tvmode' in self.request.GET
-        return context
 
 
 def top_five_projects_by_country(request):

@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 import json
 import uuid
@@ -8,12 +7,14 @@ from django.core.serializers.json import DjangoJSONEncoder
 from sqlalchemy.dialects import postgresql
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
+from corehq.sql_db.connections import ICDS_UCR_CITUS_ENGINE_ID, ICDS_UCR_ENGINE_ID
+from corehq.sql_db.routers import forced_citus
 from corehq.toggles import ICDS_COMPARE_QUERIES_AGAINST_CITUS, NAMESPACE_OTHER
 from custom.icds_reports.utils.tasks import call_citus_experiment
 
 
 class IcdsSqlData(SqlData):
-    engine_id = 'icds-ucr'
+    engine_id = ICDS_UCR_CITUS_ENGINE_ID if forced_citus() else ICDS_UCR_ENGINE_ID
 
     def get_data(self, start=None, limit=None):
         query_context = self.query_context()

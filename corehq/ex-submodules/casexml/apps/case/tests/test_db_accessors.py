@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 
 from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION

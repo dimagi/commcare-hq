@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from django.contrib import messages
 from django.http import Http404
@@ -18,7 +17,6 @@ from corehq.apps.export.views.utils import (
     DashboardFeedMixin,
     ODataFeedMixin,
     clean_odata_columns,
-    remove_row_number_from_export_columns,
 )
 from corehq.apps.locations.permissions import location_safe
 
@@ -126,7 +124,6 @@ class EditODataCaseFeedView(ODataFeedMixin, EditNewCustomCaseExportView):
 
     def get_export_instance(self, schema, original_export_instance):
         export_instance = super(EditODataCaseFeedView, self).get_export_instance(schema, original_export_instance)
-        remove_row_number_from_export_columns(export_instance)
         clean_odata_columns(export_instance)
         return export_instance
 
@@ -137,7 +134,6 @@ class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
 
     def get_export_instance(self, schema, original_export_instance):
         export_instance = super(EditODataFormFeedView, self).get_export_instance(schema, original_export_instance)
-        remove_row_number_from_export_columns(export_instance)
         clean_odata_columns(export_instance)
         return export_instance
 

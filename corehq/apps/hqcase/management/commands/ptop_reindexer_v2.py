@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management import BaseCommand, CommandError
 
 from corehq.pillows.app_submission_tracker import (

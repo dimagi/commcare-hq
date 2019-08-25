@@ -1,6 +1,4 @@
 # This management command is a one-off and can certainly be removed after say May 2019
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from django.core.management import BaseCommand
 

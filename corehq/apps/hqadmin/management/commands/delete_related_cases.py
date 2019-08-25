@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import csv342 as csv
 from django.core.management import BaseCommand
 import sys
@@ -9,7 +6,6 @@ from corehq.apps.users.util import cached_owner_id_to_display
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from six.moves import input
 import six
-from io import open
 
 
 class Command(BaseCommand):

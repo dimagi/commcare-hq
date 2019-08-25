@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from copy import copy
 import hashlib
 import json
@@ -44,7 +42,6 @@ from corehq.apps.domain import SHARED_DOMAIN
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from corehq.blobs.mixin import BlobMixin, CODES
 import six
-from io import open
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -447,7 +444,6 @@ class HQMediaMapItem(DocumentSchema):
 
     multimedia_id = StringProperty()
     media_type = StringProperty()
-    output_size = DictProperty()
     version = IntegerProperty()
     unique_id = StringProperty()
 

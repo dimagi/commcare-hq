@@ -1,6 +1,4 @@
 # encoding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 from io import BytesIO
@@ -34,7 +32,6 @@ from corehq.apps.export.views.new import (
 )
 from corehq.apps.export.views.utils import DataFileDownloadDetail
 from corehq.util.test_utils import flag_enabled, generate_cases
-from io import open
 
 
 class FakeDB(object):

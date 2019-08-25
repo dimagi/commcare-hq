@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from contextlib import contextmanager
 import threading
@@ -154,3 +152,7 @@ def force_citus_engine(force=False):
 
 def forced_citus():
     return getattr(_thread_local, 'force_citus', False)
+
+
+def use_citus_for_request():
+    _thread_local.force_citus = True

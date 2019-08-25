@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import ghdiff
 from memoized import memoized
-from six.moves import zip
 
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
@@ -21,7 +18,7 @@ from corehq.apps.translations.const import (
     SINGLE_SHEET_STATIC_HEADERS,
     SINGLE_SHEET_NAME,
 )
-from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING, AppTranslationsGenerator
+from corehq.apps.translations.generators import AppTranslationsGenerator
 
 COLUMNS_TO_COMPARE = {
     'module_and_form': ['Type', 'menu_or_form'],
@@ -71,6 +68,7 @@ class UploadedTranslationsValidator(object):
         self.headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(
             self.app,
             lang=self.lang_to_compare,
+            eligible_for_transifex_only=True,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
             exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
         )}
@@ -82,6 +80,7 @@ class UploadedTranslationsValidator(object):
         else:
             self.expected_rows = get_bulk_app_sheets_by_name(
                 self.app,
+                eligible_for_transifex_only=True,
                 exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
                 exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
             )
@@ -94,13 +93,13 @@ class UploadedTranslationsValidator(object):
 
     def _filter_rows(self, for_type, expected_rows, sheet_name):
         if for_type == 'form':
-            return self.app_translation_generator._filter_invalid_rows_for_form(
+            return self.app_translation_generator.filter_invalid_rows_for_form(
                 expected_rows,
                 self.app_translation_generator.sheet_name_to_module_or_form_type_and_id[sheet_name].id,
                 self._get_header_index(sheet_name, 'label')
             )
         elif for_type == 'module':
-            return self.app_translation_generator._filter_invalid_rows_for_module(
+            return self.app_translation_generator.filter_invalid_rows_for_module(
                 expected_rows,
                 self.app_translation_generator.sheet_name_to_module_or_form_type_and_id[sheet_name].id,
                 self._get_header_index(sheet_name, 'case_property'),

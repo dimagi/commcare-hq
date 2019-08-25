@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from django.utils.translation import ugettext_lazy, ugettext as _
 from corehq.util.dates import iso_string_to_date

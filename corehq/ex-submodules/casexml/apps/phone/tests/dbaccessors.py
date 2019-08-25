@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.util.test_utils import unit_testing_only
 

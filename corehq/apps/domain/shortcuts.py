@@ -3,8 +3,6 @@ Shortcuts for working with domains and users.
 """
 
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 
 def create_domain(name, active=True):

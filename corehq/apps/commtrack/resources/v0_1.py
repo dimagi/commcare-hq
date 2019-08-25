@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from tastypie import fields
 
 from corehq.apps.api.resources.auth import DomainAdminAuthentication

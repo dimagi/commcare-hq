@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import datetime
 
@@ -163,6 +161,20 @@ def commcare_hq_names(request=None):
             'COMMCARE_NAME': _get_cc_name(request, 'COMMCARE_NAME'),
             'COMMCARE_HQ_NAME': _get_cc_name(request, 'COMMCARE_HQ_NAME'),
         },
+    }
+
+
+def emails(request=None):
+    """
+    Emails commonly referenced in user-facing templates.
+    Please use (and add to) these references rather than hard-coding or adding
+    a page-specific context variable.
+    """
+    return {
+        'SALES_EMAIL': settings.SALES_EMAIL,
+        'SUPPORT_EMAIL': settings.SUPPORT_EMAIL,
+        'PRIVACY_EMAIL': settings.PRIVACY_EMAIL,
+        'INVOICING_CONTACT_EMAIL': settings.INVOICING_CONTACT_EMAIL,
     }
 
 

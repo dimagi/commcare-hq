@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 from decimal import Decimal
 import itertools
@@ -636,9 +634,6 @@ class SoftwareProductRate(models.Model):
                 return False
         return True
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     @classmethod
     def new_rate(cls, product_name, monthly_fee, save=True):
         rate = SoftwareProductRate(name=product_name, monthly_fee=monthly_fee)
@@ -702,9 +697,6 @@ class FeatureRate(models.Model):
             if not getattr(self, field) == getattr(other, field):
                 return False
         return True
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     @classmethod
     def new_rate(cls, feature_name, feature_type,
@@ -1121,9 +1113,6 @@ class Subscription(models.Model):
             and other.subscriber.pk == self.subscriber.pk
             and other.account.pk == self.account.pk
         )
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def save(self, *args, **kwargs):
         """
@@ -1574,7 +1563,7 @@ class Subscription(models.Model):
                 DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
             'base_url': get_site_domain(),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
-            'sales_email': settings.REPORT_BUILDER_ADD_ON_EMAIL
+            'sales_email': settings.SALES_EMAIL,
         }
 
         if self.account.is_customer_billing_account:

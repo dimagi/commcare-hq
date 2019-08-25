@@ -2,8 +2,6 @@
 # The largest change is the addition of the evaluation context to every filter
 
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.userreports.operators import OPERATOR_DISPLAY
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.userreports.const import NAMED_FILTER_PREFIX

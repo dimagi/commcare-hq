@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import re
 from corehq.apps.api.decorators import api_user_basic_auth

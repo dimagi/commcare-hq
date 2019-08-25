@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
@@ -205,9 +203,6 @@ class Permissions(DocumentSchema):
             if self._getattr(name) != other._getattr(name):
                 return False
         return True
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     @classmethod
     def max(cls):
@@ -934,9 +929,6 @@ class DeviceIdLastUsed(DocumentSchema):
 
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
 
 class LastSubmission(DocumentSchema):

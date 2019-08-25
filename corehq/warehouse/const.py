@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 DJANGO_MAX_BATCH_SIZE = 5000
 
 # Slugs

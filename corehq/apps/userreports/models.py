@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 import glob
 import json
@@ -7,7 +6,6 @@ import re
 from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime
-from io import open
 from uuid import UUID
 
 import six
@@ -1013,6 +1011,7 @@ class AsyncIndicator(models.Model):
     These indicators will be picked up by a queue and placed into celery to be
     saved. Once saved to the data sources, this record will be deleted
     """
+    id = models.BigAutoField(primary_key=True)
     doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
     doc_type = models.CharField(max_length=126, null=False)
     domain = models.CharField(max_length=126, null=False, db_index=True)

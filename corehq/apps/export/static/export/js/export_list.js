@@ -38,7 +38,7 @@ hqDefine("export/js/export_list", [
     var exportModel = function (options, pageOptions) {
         assertProperties.assert(pageOptions, ['is_deid', 'model_type', 'urls']);
 
-        _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'isOData', 'showLink'], function (key) {
+        _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'isOData'], function (key) {
             options[key] = options[key] || false;
         });
         options.formname = options.formname || '';
@@ -61,6 +61,7 @@ hqDefine("export/js/export_list", [
             'owner_username',
             'sharing',
             'odataUrl',
+            'secondaryOdataUrls',
         ], [
             'case_type',
             'isAutoRebuildEnabled',
@@ -69,7 +70,6 @@ hqDefine("export/js/export_list", [
             'isOData',
             'editNameUrl',
             'editDescriptionUrl',
-            'showLink',
         ]);
         assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
 
@@ -85,6 +85,9 @@ hqDefine("export/js/export_list", [
         self.hasEmailedExport = !!options.emailedExport;
         if (self.hasEmailedExport) {
             self.emailedExport = emailedExportModel(options.emailedExport, pageOptions, self.id(), self.exportType());
+            if (options.isFeed) {
+                self.feedUrl = exportFeedUrl(options.emailedExport.fileData.downloadUrl);
+            }
         }
 
         if (options.editNameUrl) {
@@ -95,7 +98,14 @@ hqDefine("export/js/export_list", [
         }
 
         if (options.isOData) {
-            self.odataFeedUrl = options.odataUrl;
+            self.odataFeedUrl = exportFeedUrl(options.odataUrl);
+            self.odataSecondaryFeedUrls = ko.observableArray(_.map(options.secondaryOdataUrls, function (urlData) {
+                urlData.url = exportFeedUrl(urlData.url);
+                return urlData;
+            }));
+            self.hasSecondaryOdataFeed = ko.computed(function () {
+                return self.odataSecondaryFeedUrls().length > 0;
+            });
         }
 
         self.isLocationSafeForUser = function () {
@@ -107,16 +117,6 @@ hqDefine("export/js/export_list", [
             $btn.addClass('disabled');
             $btn.text(gettext('Download Requested'));
             return true;    // allow default click action to process so file is downloaded
-        };
-        self.copyLinkRequested = function (model, e) {
-            self.showLink(true);
-            var clipboard = new Clipboard(e.target, {
-                target: function (trigger) {
-                    return trigger.nextElementSibling;
-                },
-            });
-            clipboard.onClick(e);
-            clipboard.destroy();
         };
 
         self.updateDisabledState = function (model, e) {
@@ -142,6 +142,27 @@ hqDefine("export/js/export_list", [
                     $('#modalEnableDisableAutoRefresh-' + self.id() + '-' + self.emailedExport.groupId()).modal('hide');
                 },
             });
+        };
+
+        return self;
+    };
+
+    var exportFeedUrl = function (url) {
+        var self = {};
+
+        self.url = ko.observable(url);
+
+        self.showLink = ko.observable(false);
+
+        self.copyLinkRequested = function (model, e) {
+            self.showLink(true);
+            var clipboard = new Clipboard(e.target, {
+                target: function (trigger) {
+                    return trigger.nextElementSibling;
+                },
+            });
+            clipboard.onClick(e);
+            clipboard.destroy();
         };
 
         return self;

@@ -1,7 +1,4 @@
-from __future__ import print_function
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import multiprocessing
 import os
 import re
@@ -19,7 +16,6 @@ from corehq.apps.export.multiprocess import (
     UNPROCESSED_PAGES_DIR, _add_compressed_page_to_zip)
 from corehq.util.files import safe_filename
 from six.moves import input
-from io import open
 
 
 class Command(BaseCommand):

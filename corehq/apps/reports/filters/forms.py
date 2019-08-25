@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import six
 from couchdbkit.exceptions import ResourceNotFound
@@ -134,7 +132,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 'checked': self._hide_fuzzy_results,
             },
             'display_app_type': self.display_app_type,
-            'support_email': settings.SUPPORT_EMAIL,
             'all_form_retrieval_failed': self.all_form_retrieval_failed,
         })
 

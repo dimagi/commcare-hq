@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.urls import reverse
 from django.test import TestCase, Client
 from corehq.apps.app_manager.models import Application

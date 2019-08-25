@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from corehq.apps.products.models import SQLProduct
 from dimagi.utils.dates import force_to_date

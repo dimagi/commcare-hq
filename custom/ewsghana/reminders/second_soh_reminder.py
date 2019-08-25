@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from custom.ewsghana.reminders import SECOND_STOCK_ON_HAND_REMINDER, SECOND_INCOMPLETE_SOH_REMINDER

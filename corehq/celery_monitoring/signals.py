@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 
 from celery.signals import before_task_publish, task_prerun, task_postrun

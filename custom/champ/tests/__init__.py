@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import mock
 import postgres_copy
 import six
@@ -14,7 +12,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
-from io import open
 
 
 def setUpModule():

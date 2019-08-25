@@ -1,7 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import re
 from collections import defaultdict
 
@@ -12,7 +8,6 @@ from django.core.management import BaseCommand
 
 from couchforms.models import XFormInstance, XFormDuplicate
 from six.moves import input
-from io import open
 
 
 PROBLEM_TEMPLATE_START = "This document was an xform duplicate that replaced "

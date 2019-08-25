@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.sms.models import INCOMING, PhoneNumber

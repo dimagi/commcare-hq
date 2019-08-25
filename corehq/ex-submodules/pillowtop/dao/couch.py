@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import six
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import iter_docs

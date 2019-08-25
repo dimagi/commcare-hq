@@ -1,7 +1,4 @@
 # coding=utf-8
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 from io import BytesIO
@@ -18,8 +15,6 @@ from corehq.blobs.tests.util import (
 
 from django.test import TestCase
 from testil import tempdir
-
-from io import open
 
 
 class TestMigrateBackend(TestCase):

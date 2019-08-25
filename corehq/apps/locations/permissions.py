@@ -65,8 +65,6 @@ workflow to make sure it still makes sense, there could be for instance, ajax
 requests that must also be protected, or links to features the user shouldn't
 see.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import six
 from django_prbac.decorators import requires_privilege_raise404

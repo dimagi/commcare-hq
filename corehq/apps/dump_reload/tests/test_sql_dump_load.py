@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import inspect
 import json
 import uuid
@@ -31,7 +29,6 @@ from corehq.form_processor.models import (
     LedgerValue, LedgerTransaction)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
 from six.moves import zip
-from io import open
 
 
 class BaseDumpLoadTest(TestCase):

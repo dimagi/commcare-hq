@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import json
 
@@ -15,7 +13,6 @@ import mock
 
 
 OTHER_DETAILS = {
-    'has_user': False,
     'expand_from': None,
     'expand_to': None,
     'expand_from_root': False,

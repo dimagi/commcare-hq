@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from django.test import SimpleTestCase
 
@@ -20,11 +19,17 @@ class TestODataCaseSerializer(SimpleTestCase):
 
     def test_selected_column_included(self):
         self.assertEqual(
-            ODataCaseSerializer.serialize_cases_using_config(
-                [{'owner_name': 'owner-name-value', 'properties': {}}],
+            ODataCaseSerializer.serialize_documents_using_config(
+                [{
+                    'domain': 'test_domain',
+                    '_id': '54352-25234',
+                    'owner_name': 'owner-name-value',
+                    'properties': {},
+                }],
                 CaseExportInstance(
                     tables=[
                         TableConfiguration(
+                            selected=True,
                             columns=[
                                 ExportColumn(
                                     label='owner-name-label',
@@ -38,18 +43,25 @@ class TestODataCaseSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'owner-name-label': 'owner-name-value'}]
         )
 
     def test_unselected_column_excluded(self):
         self.assertEqual(
-            ODataCaseSerializer.serialize_cases_using_config(
-                [{'owner_name': 'owner-name-value', 'properties': {}}],
+            ODataCaseSerializer.serialize_documents_using_config(
+                [{
+                    'domain': 'test_domain',
+                    '_id': '54352-25234',
+                    'owner_name': 'owner-name-value',
+                    'properties': {},
+                }],
                 CaseExportInstance(
                     tables=[
                         TableConfiguration(
+                            selected=True,
                             columns=[
                                 ExportColumn(
                                     label='owner-name-label',
@@ -63,18 +75,23 @@ class TestODataCaseSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{}]
         )
 
     def test_missing_value_is_null(self):
         self.assertEqual(
-            ODataCaseSerializer.serialize_cases_using_config(
-                [{}],
+            ODataCaseSerializer.serialize_documents_using_config(
+                [{
+                    'domain': 'test_domain',
+                    '_id': '54352-25234',
+                }],
                 CaseExportInstance(
                     tables=[
                         TableConfiguration(
+                            selected=True,
                             columns=[
                                 ExportColumn(
                                     label='owner-name-label',
@@ -88,18 +105,24 @@ class TestODataCaseSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'owner-name-label': '---'}]
         )
 
     def test_non_standard_case_property(self):
         self.assertEqual(
-            ODataCaseSerializer.serialize_cases_using_config(
-                [{'property_1': 'property-1-value'}],
+            ODataCaseSerializer.serialize_documents_using_config(
+                [{
+                    'domain': 'test_domain',
+                    '_id': '54352-25234',
+                    'property_1': 'property-1-value',
+                }],
                 CaseExportInstance(
                     tables=[
                         TableConfiguration(
+                            selected=True,
                             columns=[
                                 ExportColumn(
                                     label='property-1-label',
@@ -113,18 +136,23 @@ class TestODataCaseSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'property-1-label': 'property-1-value'}]
         )
 
     def test_case_id(self):
         self.assertEqual(
-            ODataCaseSerializer.serialize_cases_using_config(
-                [{'_id': 'case-id-value'}],
+            ODataCaseSerializer.serialize_documents_using_config(
+                [{
+                    'domain': 'test_domain',
+                    '_id': 'case-id-value',
+                }],
                 CaseExportInstance(
                     tables=[
                         TableConfiguration(
+                            selected=True,
                             columns=[
                                 ExportColumn(
                                     label='case-id-label',
@@ -138,18 +166,24 @@ class TestODataCaseSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'case-id-label': 'case-id-value'}]
         )
 
     def test_case_name(self):
         self.assertEqual(
-            ODataCaseSerializer.serialize_cases_using_config(
-                [{'name': 'case-name-value'}],
+            ODataCaseSerializer.serialize_documents_using_config(
+                [{
+                    'domain': 'test_domain',
+                    '_id': '54352-25234',
+                    'name': 'case-name-value',
+                }],
                 CaseExportInstance(
                     tables=[
                         TableConfiguration(
+                            selected=True,
                             columns=[
                                 ExportColumn(
                                     label='case-name-label',
@@ -163,7 +197,8 @@ class TestODataCaseSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'case-name-label': 'case-name-value'}]
         )
@@ -189,11 +224,16 @@ class TestODataFormSerializer(SimpleTestCase):
 
     def test_selected_column_included(self):
         self.assertEqual(
-            ODataFormSerializer.serialize_forms_using_config(
-                [{'user_id': 'the-user-id'}],
+            ODataFormSerializer.serialize_documents_using_config(
+                [{
+                    'domain': 'test_domain',
+                    '_id': '54352-25234',
+                    'user_id': 'the-user-id',
+                }],
                 FormExportInstance(
                     tables=[
                         TableConfiguration(
+                            selected=True,
                             columns=[
                                 ExportColumn(
                                     label='user-id',
@@ -207,18 +247,24 @@ class TestODataFormSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'user-id': 'the-user-id'}]
         )
 
     def test_unselected_column_excluded(self):
         self.assertEqual(
-            ODataFormSerializer.serialize_forms_using_config(
-                [{'user_id': 'the-user-id'}],
+            ODataFormSerializer.serialize_documents_using_config(
+                [{
+                    'domain': 'test_domain',
+                    '_id': '54352-25234',
+                    'user_id': 'the-user-id',
+                }],
                 FormExportInstance(
                     tables=[
                         TableConfiguration(
+                            selected=True,
                             columns=[
                                 ExportColumn(
                                     label='user-id',
@@ -232,18 +278,23 @@ class TestODataFormSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{}]
         )
 
     def test_missing_value_is_null(self):
         self.assertEqual(
-            ODataFormSerializer.serialize_forms_using_config(
-                [{}],
+            ODataFormSerializer.serialize_documents_using_config(
+                [{
+                    'domain': 'test_domain',
+                    '_id': '54352-25234',
+                }],
                 FormExportInstance(
                     tables=[
                         TableConfiguration(
+                            selected=True,
                             columns=[
                                 ExportColumn(
                                     label='user-id',
@@ -257,7 +308,8 @@ class TestODataFormSerializer(SimpleTestCase):
                             ]
                         )
                     ]
-                )
+                ),
+                0
             ),
             [{'user-id': '---'}]
         )

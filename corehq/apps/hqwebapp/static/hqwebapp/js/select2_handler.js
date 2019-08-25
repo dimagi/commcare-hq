@@ -3,7 +3,6 @@ hqDefine("hqwebapp/js/select2_handler", [
     "knockout",
     "underscore",
     "select2/dist/js/select2.full.min",
-    "bootstrap-timepicker/js/bootstrap-timepicker",
 ], function (
     $,
     ko,

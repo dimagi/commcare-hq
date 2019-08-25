@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 import os
 import re
@@ -12,15 +11,21 @@ import sqlalchemy
 from freezegun import freeze_time
 from six.moves import zip
 
+from custom.icds_reports.exceptions import LocationRemovedException
+from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.tests.util import setup_locations_and_types
 from corehq.sql_db.connections import connection_manager
 from custom.icds_reports.models.aggregate import (
     AggregateInactiveAWW,
+    AwcLocation,
     get_cursor,
+    maybe_atomic,
 )
 from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
 from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
     InactiveAwwsAggregationHelper,
+    LocationAggregationHelper,
 )
 
 
@@ -505,3 +510,192 @@ class InactiveAWWsTest(TestCase):
         record = AggregateInactiveAWW.objects.filter(awc_id='a10').first()
         self.assertEquals(date(2017, 4, 5), record.first_submission)
         self.assertEquals(date(2017, 5, 5), record.last_submission)
+
+
+@override_settings(SERVER_ENVIRONMENT='icds')
+class LocationAggregationTest(TestCase):
+    domain_name = 'icds-cas'
+
+    @classmethod
+    def setUpClass(cls):
+        super(LocationAggregationTest, cls).setUpClass()
+
+        # save locations that are setup in module so we can add them back later
+        cls.all_locations = list(SQLLocation.objects.filter(domain=cls.domain_name).all())
+        cls.all_location_types = list(LocationType.objects.filter(domain=cls.domain_name).all())
+        SQLLocation.objects.filter(domain=cls.domain_name).delete()
+        LocationType.objects.filter(domain=cls.domain_name).delete()
+
+        setup_locations_and_types(
+            cls.domain_name,
+            ['state', 'district', 'block', 'supervisor', 'awc'],
+            [],
+            [
+                ('State1', [
+                    ('District1', [
+                        ('Block1', [
+                            ('Supervisor1', [
+                                ('Awc1', []),
+                                ('Awc2', []),
+                            ]),
+                            ('Supervisor2', [
+                                ('Awc3', []),
+                            ]),
+                        ]),
+                        ('Block2', []),
+                    ]),
+                ])
+            ]
+        )
+
+        block1 = SQLLocation.objects.filter(domain=cls.domain_name, name='Block1').first()
+        block1.metadata = {"map_location_name": "Not Block1"}
+        block1.save()
+
+        sup2 = SQLLocation.objects.filter(domain=cls.domain_name, name='Supervisor2').first()
+        sup2.metadata = {"is_test_location": "test"}
+        sup2.save()
+
+        cls.helper = LocationAggregationHelper()
+
+    @classmethod
+    def tearDownClass(cls):
+        SQLLocation.objects.filter(domain=cls.domain_name).delete()
+        LocationType.objects.filter(domain=cls.domain_name).delete()
+        LocationType.objects.bulk_create(cls.all_location_types)
+        SQLLocation.objects.bulk_create(cls.all_locations)
+        super(LocationAggregationTest, cls).tearDownClass()
+
+    def test_number_rows_csv(self):
+        csv = self.helper.generate_csv()
+        self.assertEqual(len(csv.readlines()), 4)
+
+    def test_agg(self):
+        # This is copied over in the module
+        self.assertEqual(AwcLocation.objects.count(), 92)
+        self.maxDiff = None
+
+        with maybe_atomic(AwcLocation):
+            # if we ran the aggregation now, we'd have 55 fewer locations
+            with self.assertRaisesRegex(LocationRemovedException, '55'):
+                with get_cursor(AwcLocation) as cursor:
+                    self.helper.aggregate(cursor)
+
+            try:
+                with maybe_atomic(AwcLocation):
+                    # run agg again without any locations in awc_location
+                    with get_cursor(AwcLocation) as cursor:
+                        cursor.execute("DELETE FROM awc_location")
+                        self.helper.aggregate(cursor)
+
+                    self.assertEqual(AwcLocation.objects.count(), 8)
+                    self.assertEqual(
+                        list(AwcLocation.objects.values(
+                            'aggregation_level',
+                            'awc_is_test', 'awc_name', 'awc_site_code',
+                            'supervisor_is_test', 'supervisor_name', 'supervisor_site_code',
+                            'block_is_test', 'block_name', 'block_site_code', 'block_map_location_name',
+                            'district_is_test', 'district_name', 'district_site_code', 'district_map_location_name',
+                            'state_is_test', 'state_name', 'state_site_code', 'state_map_location_name',
+                        ).order_by(
+                            '-aggregation_level', 'awc_name', 'supervisor_name',
+                            'block_name', 'district_name', 'state_name'
+                        ).all()),
+                        self._expected_end_state
+                    )
+                    raise Exception("Don't allow this to be commited")
+            except Exception as e:
+                if 'allow this' not in str(e):
+                    raise
+
+    @property
+    def _expected_end_state(self):
+        return [
+            {
+                'aggregation_level': 5,
+                'awc_is_test': 0, 'awc_name': 'Awc1', 'awc_site_code': 'awc',
+                'supervisor_is_test': 0, 'supervisor_name': 'Supervisor1', 'supervisor_site_code': 'supervisor',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 5,
+                'awc_is_test': 0, 'awc_name': 'Awc2', 'awc_site_code': 'awc',
+                'supervisor_is_test': 0, 'supervisor_name': 'Supervisor1', 'supervisor_site_code': 'supervisor',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 5,
+                'awc_is_test': 0, 'awc_name': 'Awc3', 'awc_site_code': 'awc',
+                'supervisor_is_test': 1, 'supervisor_name': 'Supervisor2', 'supervisor_site_code': 'supervisor',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 4,
+                'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
+                'supervisor_is_test': 0, 'supervisor_name': 'Supervisor1', 'supervisor_site_code': 'supervisor',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 4,
+                'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
+                'supervisor_is_test': 1, 'supervisor_name': 'Supervisor2', 'supervisor_site_code': 'supervisor',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 3,
+                'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
+                'supervisor_is_test': 0, 'supervisor_name': None, 'supervisor_site_code': 'All',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 2,
+                'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
+                'supervisor_is_test': 0, 'supervisor_name': None, 'supervisor_site_code': 'All',
+                'block_is_test': 0, 'block_map_location_name': 'All',
+                'block_name': None, 'block_site_code': 'All',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 1,
+                'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
+                'supervisor_is_test': 0, 'supervisor_name': None, 'supervisor_site_code': 'All',
+                'block_is_test': 0, 'block_map_location_name': 'All', 'block_name': None, 'block_site_code': 'All',
+                'district_is_test': 0, 'district_map_location_name': 'All',
+                'district_name': None, 'district_site_code': 'All',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            }
+        ]

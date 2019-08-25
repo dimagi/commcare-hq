@@ -47,6 +47,7 @@
 /corehq/apps/sms*/ @millerdev
 /corehq/apps/smsbillables/static/ @orangejenny
 /corehq/apps/styleguide/ @orangejenny
+/corehq/apps/translations/app_translations/ @orangejenny
 /corehq/apps/userreports/ @emord
 /corehq/apps/userreports/static/ @emord @orangejenny
 /corehq/apps/userreports/templates/ @emord @orangejenny

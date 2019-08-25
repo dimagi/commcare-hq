@@ -1,7 +1,4 @@
-from __future__ import print_function
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
