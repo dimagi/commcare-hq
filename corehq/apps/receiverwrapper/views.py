@@ -35,6 +35,7 @@ from corehq.apps.receiverwrapper.auth import (
     WaivedAuthContext,
     domain_requires_auth,
 )
+from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
 from corehq.apps.receiverwrapper.util import (
     DEMO_SUBMIT_MODE,
     from_demo_user,
@@ -64,6 +65,11 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @profile_prod('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
+    if not submission_rate_limiter.allow_usage(domain):
+        datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
+            'domain:{}'.format(domain),
+        ])
+    submission_rate_limiter.report_usage(domain)
     metric_tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
         'domain:{}'.format(domain),
