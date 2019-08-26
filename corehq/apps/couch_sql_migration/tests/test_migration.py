@@ -937,10 +937,10 @@ class DummyObject(object):
     id = attrib()
 
 
-class TestLockingQueues(SimpleTestCase):
+class TestLockingQueues(TestCase):
 
     def setUp(self):
-        super(TestHelperFunctions, self).setUp()
+        super(TestLockingQueues, self).setUp()
 
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain_name = uuid.uuid4().hex
@@ -1138,7 +1138,7 @@ class UpdateXmlTests(SimpleTestCase):
         form_xml = update_xml(form_xml, ['data', 'name'], 'Prince', 'Christopher')
         # NOTE: Path is not given as ['data', 'n0:case', 'n0:create', 'n0:case_name']
         form_xml = update_xml(form_xml, ['data', 'case', 'create', 'case_name'], 'Prince', 'Christopher')
-        eq(form_xml, """<?xml version='1.0' encoding='utf-8'?>
+        eq(form_xml.decode('utf-8'), """<?xml version='1.0' encoding='utf-8'?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" """
         """xmlns="http://openrosa.org/formdesigner/C5AEC5A2-FF7D-4C00-9C7E-6B5AE23D735A" """
         """uiVersion="1" """
@@ -1172,7 +1172,7 @@ class UpdateXmlTests(SimpleTestCase):
         root = etree.XML(orig_xml)
         update_xml(root, ['foo', 'bar'], 'BAZ', 'QUUX')
         updated_xml = etree.tostring(root)
-        eq(updated_xml, '<foo><bar>QUUX</bar></foo>')
+        eq(updated_xml, b'<foo><bar>QUUX</bar></foo>')
 
     def test_node_list(self):
         orig_xml = (
@@ -1184,11 +1184,11 @@ class UpdateXmlTests(SimpleTestCase):
         )
         updated_xml = update_xml(orig_xml, ['foo', 'bar', 'baz'], '13', '42')
         eq(updated_xml, DECL + (
-            '<foo>'
-            '<bar><baz>42</baz></bar>'
-            '<bar><qux>13</qux></bar>'
-            '<bar><coj>13</coj></bar>'
-            '</foo>'
+            b'<foo>'
+            b'<bar><baz>42</baz></bar>'
+            b'<bar><qux>13</qux></bar>'
+            b'<bar><coj>13</coj></bar>'
+            b'</foo>'
         ))
 
     def test_list_item(self):
@@ -1201,11 +1201,11 @@ class UpdateXmlTests(SimpleTestCase):
         )
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'HAM', 'SPAM')
         eq(updated_xml, DECL + (
-            '<foo>'
-            '<bar>eggs</bar>'
-            '<bar>SPAM</bar>'
-            '<bar>SPAM</bar>'
-            '</foo>'
+            b'<foo>'
+            b'<bar>eggs</bar>'
+            b'<bar>SPAM</bar>'
+            b'<bar>SPAM</bar>'
+            b'</foo>'
         ))
 
     @skip  # We don't need to support replacing child element tails
@@ -1218,12 +1218,12 @@ class UpdateXmlTests(SimpleTestCase):
             '</foo>'
         )
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'HAM', 'SPAM')
-        eq(updated_xml, DECL + (
-            '<foo>'
-            '<bar><q/>eggs</bar>'
-            '<bar><q/>SPAM</bar>'
-            '<bar><q/>SPAM</bar>'
-            '</foo>'
+        eq(updated_xml, DECL + bytes(
+            b'<foo>'
+            b'<bar><q/>eggs</bar>'
+            b'<bar><q/>SPAM</bar>'
+            b'<bar><q/>SPAM</bar>'
+            b'</foo>'
         ))
 
     def test_list_item_text(self):
@@ -1236,11 +1236,11 @@ class UpdateXmlTests(SimpleTestCase):
         )
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'HAM', 'SPAM')
         eq(updated_xml, DECL + (
-            '<foo>'
-            '<bar>eggs<q/></bar>'
-            '<bar>SPAM<q/></bar>'
-            '<bar>SPAM<q/></bar>'
-            '</foo>'
+            b'<foo>'
+            b'<bar>eggs<q/></bar>'
+            b'<bar>SPAM<q/></bar>'
+            b'<bar>SPAM<q/></bar>'
+            b'</foo>'
         ))
 
     def test_trimming(self):

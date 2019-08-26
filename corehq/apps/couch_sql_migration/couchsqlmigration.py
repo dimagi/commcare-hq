@@ -261,10 +261,10 @@ def update_xml(xml, path, old_value, new_value):
     Change a value in an XML document at path, where path is a list of
     node names.
 
-    >>> decl = "<?xml version='1.0' encoding='utf-8'?>\\n"
+    >>> decl = b"<?xml version='1.0' encoding='utf-8'?>\\n"
     >>> xml = '<foo><bar>BAZ</bar></foo>'
     >>> xml = update_xml(xml, ['foo', 'bar'], 'BAZ', 'QUUX')
-    >>> xml == decl + '<foo><bar>QUUX</bar></foo>'
+    >>> xml == decl + b'<foo><bar>QUUX</bar></foo>'
     True
 
     """
@@ -291,12 +291,12 @@ def update_xml(xml, path, old_value, new_value):
         if len(next_steps) == 1 and elem_has_attr(elem, next_steps[0]):
             recurse_elements(elem, next_steps)
 
-    if isinstance(xml, six.string_types):
+    if isinstance(xml, str) or isinstance(xml, bytes):
         root = etree.XML(xml)
-        return_as_string = True
+        return_as_bytestring = True
     else:
         root = xml
-        return_as_string = False
+        return_as_bytestring = False
     assert get_localname(root) == path[0], 'root "{}" not found in path {}'.format(root.tag, path)
     recurse_elements(root, path)
     if not any(found):
@@ -305,7 +305,7 @@ def update_xml(xml, path, old_value, new_value):
             xml=xml if isinstance(xml, six.string_types) else etree.tostring(xml),
             path=path,
         ))
-    if return_as_string:
+    if return_as_bytestring:
         return etree.tostring(root, encoding='utf-8', xml_declaration=True)
 
 

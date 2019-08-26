@@ -17,7 +17,7 @@ def test_map_form_ids():
 
 def check_missing_value_error_form(form_id):
     form_json = json.loads(read_data_file(form_id + '.json'))
-    form_xml_root = etree.XML(read_data_file(form_id + '.xml'))
+    form_xml_root = etree.XML(read_data_file(form_id + '.xml', binary=True))
     ignore_paths = []
     map_form_ids(form_json['form'], form_xml_root, id_map, ignore_paths)
     assert True  # assert map_form_ids() does not raise MissingValueError
