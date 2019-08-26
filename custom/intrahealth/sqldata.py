@@ -3916,6 +3916,10 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
         self.config = config
 
     @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
     def table_name(self):
         config_domain = self.config['domain']
         doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, YEKSI_NAA_REPORTS_CONSUMPTION)
@@ -4134,6 +4138,10 @@ class TauxDeRuptureRateData(SqlData):
         self.config = config
 
     @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
     def table_name(self):
         config_domain = self.config['domain']
         doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, YEKSI_NAA_REPORTS_CONSUMPTION)
@@ -4348,6 +4356,10 @@ class ConsommationPerProductData(SqlData):
     def __init__(self, config):
         super(ConsommationPerProductData, self).__init__()
         self.config = config
+
+    @property
+    def engine_id(self):
+        return 'ucr'
 
     @property
     def table_name(self):
@@ -5813,6 +5825,10 @@ class IndicateursDeBaseData(SqlData):
     def __init__(self, config):
         super(IndicateursDeBaseData, self).__init__()
         self.config = config
+
+    @property
+    def engine_id(self):
+        return 'ucr'
 
     @property
     def table_name(self):
