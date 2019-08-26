@@ -1033,10 +1033,11 @@ class CaseDataView(BaseProjectReportSectionView):
 
         ledger_map = LedgerAccessors(self.domain).get_case_ledger_state(self.case_id, ensure_form_id=True)
         for section, entry_map in ledger_map.items():
-            product_tuples = sorted(
+            product_tuples = [
                 (_product_name(product_id), entry_map[product_id])
                 for product_id in entry_map
-            )
+            ]
+            product_tuples.sort(key=lambda product_name, entry_state: product_name)
             ledger_map[section] = product_tuples
 
         repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)
