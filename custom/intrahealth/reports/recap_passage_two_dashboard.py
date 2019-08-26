@@ -7,8 +7,7 @@ import datetime
 
 from django.utils.functional import cached_property
 
-from custom.intrahealth.filters import DateRangeFilter, RecapPassageTwoProgramFilter, \
-    YeksiRecapPassageNaaLocationFilter
+from custom.intrahealth.filters import DateRangeFilter, RecapPassageTwoProgramFilter, YeksiRecapPassageNaaLocationFilter
 from custom.intrahealth.reports.utils import YeksiNaaMonthYearMixin
 from custom.intrahealth.sqldata import RecapPassageTwoTables
 from custom.intrahealth.reports.tableu_de_board_report_v2 import MultiReport
