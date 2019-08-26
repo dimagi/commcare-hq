@@ -441,8 +441,16 @@ class CouchSqlDomainMigrator(object):
         if couch_form.doc_type != 'SubmissionErrorLog':
             self._save_diffs(couch_form, sql_form)
 
-        case_stock_result = self._get_case_stock_result(sql_form, couch_form) if form_is_processed else None
+        if form_is_processed and self._is_formxml_avail():
+            case_stock_result = self._get_case_stock_result(sql_form, couch_form)
+        else:
+            case_stock_result = None
         _save_migrated_models(sql_form, case_stock_result)
+
+    def _is_formxml_avail(self):
+        # form.xml attachments are not available when doing a dry run of
+        # a migration to a different domain
+        return self.same_domain() or not self.dry_run
 
     def _build_id_map(self):
         """
@@ -557,13 +565,8 @@ class CouchSqlDomainMigrator(object):
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
         if sql_form.initial_processing_complete:
-            try:
-                case_stock_result = _get_case_and_ledger_updates(self.dst_domain, sql_form)
-            except (AttachmentNotFound, TypeError):
-                # Dry runs don't copy form.xml attachments to dst_domain.
-                if not self.dry_run:
-                    raise
-            if case_stock_result and case_stock_result.case_models:
+            case_stock_result = _get_case_and_ledger_updates(self.dst_domain, sql_form)
+            if case_stock_result.case_models:
                 has_noop_update = any(
                     len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
                     for update in get_case_updates(couch_form)
