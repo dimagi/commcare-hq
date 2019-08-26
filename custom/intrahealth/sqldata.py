@@ -5703,8 +5703,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         rows['Total Facturation PRA']['html'] = rows['Total Facturation District']['html'] / 1.15
 
         rows['Total a Verser a La PRA']['html'] = rows['Total Facturation PRA']['html'] + \
-                                                  rows['Frais Participation District']['html'] + \
-                                                  rows['Total Versements PPS']['html']
+            rows['Frais Participation District']['html'] + rows['Total Versements PPS']['html']
 
         row = [["{0:.2f}".format(v['html']) for v in rows.values()]]
         context = self.create_context(
