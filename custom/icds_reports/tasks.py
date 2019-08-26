@@ -28,6 +28,7 @@ from six.moves import range
 
 from corehq.util.celery_utils import periodic_task_on_envs
 from couchexport.export import export_from_tables
+from couchexport.models import Format
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -1330,12 +1331,12 @@ def _child_health_monthly_aggregation(day):
 @task
 def email_location_changes(domain, old_location_blob_id, new_location_blob_id):
     old_params = {
-        'file_format': 'csv',
+        'file_format': Format.UNZIPPED_CSV,
         'data_type': 'old_location_definitions',
         'uuid': old_location_blob_id,
     }
     new_params = {
-        'file_format': 'csv',
+        'file_format': Format.UNZIPPED_CSV,
         'data_type': 'new_location_definitions',
         'uuid': new_location_blob_id,
     }
