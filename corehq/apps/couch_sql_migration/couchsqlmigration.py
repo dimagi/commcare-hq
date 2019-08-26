@@ -321,20 +321,16 @@ class CouchSqlDomainMigrator(object):
         live_migrate=False,
         diff_process=True,
     ):
-        from corehq.apps.tzmigration.planning import DiffDB
-
-        domain = dst_domain if src_domain == dst_domain else None
-        if domain:
-            self._check_for_migration_restrictions(domain)
-        self.with_progress = with_progress
-        self.debug = debug
         self.src_domain = src_domain
         self.dst_domain = dst_domain
-        self.domain = domain
+        if self.same_domain():
+            self._check_for_migration_restrictions(self.src_domain)
+        self.with_progress = with_progress
+        self.debug = debug
         self.dry_run = dry_run
         self.live_migrate = live_migrate
         self.live_stopper = LiveStopper(live_migrate)
-        self.statedb = init_state_db(domain, state_dir)
+        self.statedb = init_state_db(src_domain, state_dir)
         diff_queue = CaseDiffProcess if diff_process else CaseDiffQueue
         self.case_diff_queue = diff_queue(self.statedb)
         # exit immediately on uncaught greenlet error
@@ -360,10 +356,10 @@ class CouchSqlDomainMigrator(object):
         return self.src_domain == self.dst_domain
 
     def migrate(self):
-        if self.domain:
+        if self.same_domain():
             log.info('{live}migrating domain {domain} ({state})'.format(
                 live=("live " if self.live_migrate else ""),
-                domain=self.domain,
+                domain=self.src_domain,
                 state=self.statedb.unique_id,
             ))
         else:
@@ -389,7 +385,7 @@ class CouchSqlDomainMigrator(object):
                 self._copy_unprocessed_cases()
 
         self._send_timings(timing_context)
-        log.info('migrated domain {}'.format(self.domain or self.src_domain))
+        log.info('migrated domain {}'.format(self.src_domain))
 
     def _process_main_forms(self):
         """process main forms (including cases and ledgers)"""
@@ -1143,7 +1139,7 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
         cache_utils.clear_limit(self._cache_key())
 
     def _cache_key(self):
-        return "couchsqlmigration.%s" % self.domain
+        return f"couchsqlmigration.{self.domain}"
 
     def stop(self):
         if self.should_stop is not None:
