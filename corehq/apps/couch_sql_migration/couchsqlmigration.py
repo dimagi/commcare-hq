@@ -542,11 +542,11 @@ class CouchSqlDomainMigrator(object):
         if sql_form.initial_processing_complete:
             try:
                 case_stock_result = _get_case_and_ledger_updates(self.dst_domain, sql_form)
-            except AttachmentNotFound:
+            except (AttachmentNotFound, TypeError):
                 # Dry runs don't copy form.xml attachments to dst_domain.
                 if not self.dry_run:
                     raise
-            if case_stock_result.case_models:
+            if case_stock_result and case_stock_result.case_models:
                 has_noop_update = any(
                     len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
                     for update in get_case_updates(couch_form)
