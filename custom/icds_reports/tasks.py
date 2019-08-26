@@ -1042,44 +1042,50 @@ def _get_value(data, field):
     acks_late=True,
     queue='icds_aggregation_queue'
 )
-def collect_inactive_awws():
-    celery_task_logger.info("Started updating the Inactive AWW")
-    filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
-    last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
-
-    # If last sync not exist then collect initial data
-    if not last_sync:
-        last_sync_date = datetime(2017, 3, 1).date()
-    else:
-        last_sync_date = last_sync.file_added
-
-    _aggregate_inactive_aww(last_sync_date)
+def collect_inactive_awws_task():
+    collect_inactive_awws().delay
     if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
-        _aggregate_inactive_aww.delay(last_sync_date, force_citus=True)
+        collect_inactive_awws.delay(force_citus=True)
 
-    celery_task_logger.info("Collecting inactive AWW to generate zip file")
-    excel_data = AggregateInactiveAWW.objects.all()
 
-    celery_task_logger.info("Preparing data to csv file")
-    columns = [x.name for x in AggregateInactiveAWW._meta.fields] + [
-        'days_since_start',
-        'days_inactive'
-    ]
-    rows = [columns]
-    for data in excel_data:
-        rows.append(
-            [_get_value(data, field) for field in columns]
-        )
+@task(queue='icds_aggregation_queue')
+def collect_inactive_awws(force_citus=False):
+    with force_citus_engine(force_citus):
+        celery_task_logger.info("Started updating the Inactive AWW")
+        filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
+        last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
 
-    celery_task_logger.info("Creating csv file")
-    export_file = BytesIO()
-    export_from_tables([['inactive AWWSs', rows]], export_file, 'csv')
+        # If last sync not exist then collect initial data
+        if not last_sync:
+            last_sync_date = datetime(2017, 3, 1).date()
+        else:
+            last_sync_date = last_sync.file_added
 
-    celery_task_logger.info("Saving csv file in blobdb")
-    sync = IcdsFile(blob_id=filename, data_type='inactive_awws')
-    sync.store_file_in_blobdb(export_file)
-    sync.save()
-    celery_task_logger.info("Ended updating the Inactive AWW")
+        _aggregate_inactive_aww(last_sync_date)
+
+        celery_task_logger.info("Collecting inactive AWW to generate zip file")
+        excel_data = AggregateInactiveAWW.objects.all()
+
+        celery_task_logger.info("Preparing data to csv file")
+        columns = [x.name for x in AggregateInactiveAWW._meta.fields] + [
+            'days_since_start',
+            'days_inactive'
+        ]
+        rows = [columns]
+        for data in excel_data:
+            rows.append(
+                [_get_value(data, field) for field in columns]
+            )
+
+        celery_task_logger.info("Creating csv file")
+        export_file = BytesIO()
+        export_from_tables([['inactive AWWSs', rows]], export_file, 'csv')
+
+        celery_task_logger.info("Saving csv file in blobdb")
+        sync = IcdsFile(blob_id=filename, data_type='inactive_awws')
+        sync.store_file_in_blobdb(export_file)
+        sync.save()
+        celery_task_logger.info("Ended updating the Inactive AWW")
 
 
 @periodic_task(run_every=crontab(day_of_week='monday', hour=0, minute=0),
