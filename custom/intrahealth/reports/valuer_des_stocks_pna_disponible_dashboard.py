@@ -230,9 +230,9 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
                     current_location = pnas_to_return[r][0]
                     if current_location == location:
                         pnas_to_return[r].append({
-                                'html': '<b>{}</b>'.format(locations_final_pna_stock_valuation),
-                                'sort_key': locations_final_pna_stock_valuation
-                            })
+                            'html': '<b>{}</b>'.format(locations_final_pna_stock_valuation),
+                            'sort_key': locations_final_pna_stock_valuation
+                        })
 
             return pnas_to_return
 

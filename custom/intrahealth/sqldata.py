@@ -4042,7 +4042,8 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
                             location_position = r
                             break
 
-                    added_products_for_location = [x['product_id'] for x in added_products_for_locations[location_id]]
+                    added_products_for_location = \
+                        [x['product_id'] for x in added_products_for_locations[location_id]]
                     products_for_location = added_products_for_locations[location_id]
                     if product_id not in added_products_for_location:
                         product_data = {
@@ -4262,7 +4263,8 @@ class TauxDeRuptureRateData(SqlData):
                             location_position = r
                             break
 
-                    added_products_for_location = [x['product_id'] for x in added_products_for_locations[location_id]]
+                    added_products_for_location = \
+                        [x['product_id'] for x in added_products_for_locations[location_id]]
                     products_for_location = added_products_for_locations[location_id]
                     if product_id not in added_products_for_location:
                         product_data = {
@@ -4483,7 +4485,8 @@ class ConsommationPerProductData(SqlData):
                             location_position = r
                             break
 
-                    added_products_for_location = [x['product_id'] for x in added_products_for_locations[location_id]]
+                    added_products_for_location = \
+                        [x['product_id'] for x in added_products_for_locations[location_id]]
                     products_for_location = added_products_for_locations[location_id]
                     if product_id not in added_products_for_location:
                         product_data = {
@@ -5050,7 +5053,8 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
                             location_position = r
                             break
 
-                    added_products_for_location = [x['product_id'] for x in added_products_for_locations[location_id]]
+                    added_products_for_location = \
+                        [x['product_id'] for x in added_products_for_locations[location_id]]
                     products_for_location = added_products_for_locations[location_id]
                     if product_id not in added_products_for_location:
                         product_data = {
@@ -5231,7 +5235,8 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
                             location_position = r
                             break
 
-                    added_products_for_location = [x['product_id'] for x in added_products_for_locations[location_id]]
+                    added_products_for_location = \
+                        [x['product_id'] for x in added_products_for_locations[location_id]]
                     products_for_location = added_products_for_locations[location_id]
                     if product_id not in added_products_for_location:
                         product_data = {
@@ -5703,7 +5708,8 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         rows['Total Facturation PRA']['html'] = rows['Total Facturation District']['html'] / 1.15
 
         rows['Total a Verser a La PRA']['html'] = rows['Total Facturation PRA']['html'] + \
-            rows['Frais Participation District']['html'] + rows['Total Versements PPS']['html']
+                                                  rows['Frais Participation District']['html'] + \
+                                                  rows['Total Versements PPS']['html']
 
         row = [["{0:.2f}".format(v['html']) for v in rows.values()]]
         context = self.create_context(

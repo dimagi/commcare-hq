@@ -242,9 +242,9 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                     current_location = quantities_to_return[r][0]
                     if current_location == location:
                         quantities_to_return[r].append({
-                                'html': '<b>{:.2f} %</b>'.format(locations_percent),
-                                'sort_key': locations_percent
-                            })
+                            'html': '<b>{:.2f} %</b>'.format(locations_percent),
+                            'sort_key': locations_percent
+                        })
 
             return quantities_to_return
 
