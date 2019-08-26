@@ -1090,46 +1090,54 @@ def collect_inactive_awws(force_citus=False):
 
 @periodic_task(run_every=crontab(day_of_week='monday', hour=0, minute=0),
                acks_late=True, queue='background_queue')
-def collect_inactive_dashboard_users():
-    celery_task_logger.info("Started updating the Inactive Dashboard users")
+def collect_inactive_dashboard_users_task():
+    collect_inactive_dashboard_users.delay()
+    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
+        collect_inactive_dashboard_users.delay(force_citus=True)
 
-    end_date = datetime.utcnow()
-    start_date_week = end_date - timedelta(days=7)
-    start_date_month = end_date - timedelta(days=30)
 
-    not_logged_in_week = get_dashboard_users_not_logged_in(start_date_week, end_date)
-    not_logged_in_month = get_dashboard_users_not_logged_in(start_date_month, end_date)
+@task(queue='background_queue')
+def collect_inactive_dashboard_users(force_citus=False):
+    with force_citus_engine(force_citus):
+        celery_task_logger.info("Started updating the Inactive Dashboard users")
 
-    week_file_name = 'dashboard_users_not_logged_in_{:%Y-%m-%d}_to_{:%Y-%m-%d}.csv'.format(
-        start_date_week, end_date
-    )
-    month_file_name = 'dashboard_users_not_logged_in_{:%Y-%m-%d}_to_{:%Y-%m-%d}.csv'.format(
-        start_date_month, end_date
-    )
-    rows_not_logged_in_week = _get_inactive_dashboard_user_rows(not_logged_in_week)
-    rows_not_logged_in_month = _get_inactive_dashboard_user_rows(not_logged_in_month)
+        end_date = datetime.utcnow()
+        start_date_week = end_date - timedelta(days=7)
+        start_date_month = end_date - timedelta(days=30)
 
-    sync = IcdsFile(blob_id="inactive_dashboad_users_%s.zip" % date.today().strftime('%Y-%m-%d'),
-                    data_type='inactive_dashboard_users')
+        not_logged_in_week = get_dashboard_users_not_logged_in(start_date_week, end_date)
+        not_logged_in_month = get_dashboard_users_not_logged_in(start_date_month, end_date)
 
-    in_memory = BytesIO()
-    zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
+        week_file_name = 'dashboard_users_not_logged_in_{:%Y-%m-%d}_to_{:%Y-%m-%d}.csv'.format(
+            start_date_week, end_date
+        )
+        month_file_name = 'dashboard_users_not_logged_in_{:%Y-%m-%d}_to_{:%Y-%m-%d}.csv'.format(
+            start_date_month, end_date
+        )
+        rows_not_logged_in_week = _get_inactive_dashboard_user_rows(not_logged_in_week)
+        rows_not_logged_in_month = _get_inactive_dashboard_user_rows(not_logged_in_month)
 
-    zip_file.writestr(week_file_name,
-                      '\n'.join(rows_not_logged_in_week)
-                      )
-    zip_file.writestr(month_file_name,
-                      '\n'.join(rows_not_logged_in_month)
-                      )
+        sync = IcdsFile(blob_id="inactive_dashboad_users_%s.zip" % date.today().strftime('%Y-%m-%d'),
+                        data_type='inactive_dashboard_users')
 
-    zip_file.close()
+        in_memory = BytesIO()
+        zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
 
-    # we need to reset buffer position to the beginning after creating zip, if not read() will return empty string
-    # we read this to save file in blobdb
-    in_memory.seek(0)
-    sync.store_file_in_blobdb(in_memory)
+        zip_file.writestr(week_file_name,
+                          '\n'.join(rows_not_logged_in_week)
+                          )
+        zip_file.writestr(month_file_name,
+                          '\n'.join(rows_not_logged_in_month)
+                          )
 
-    sync.save()
+        zip_file.close()
+
+        # we need to reset buffer position to the beginning after creating zip, if not read() will return empty string
+        # we read this to save file in blobdb
+        in_memory.seek(0)
+        sync.store_file_in_blobdb(in_memory)
+
+        sync.save()
 
 
 def _get_inactive_dashboard_user_rows(not_logged_in_week):
