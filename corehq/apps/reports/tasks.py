@@ -74,8 +74,6 @@ def _update_calculated_properties():
         get_domains_to_update_es_filter()
     ).fields(["name", "_id"]).run().hits
 
-    all_stats = all_domain_stats()
-    datadog_report_user_stats(commcare_users_by_domain=all_stats['commcare_users'])
     for r in results:
         dom = r["name"]
         domain_obj = Domain.get_by_name(dom)
@@ -93,6 +91,12 @@ def _update_calculated_properties():
             send_to_elasticsearch("domains", props, es_merge_update=True)
         except Exception as e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
+
+
+@periodic_task(run_every=timedelta(hours=6), queue='background_queue')
+def run_datadog_user_stats():
+    all_stats = all_domain_stats()
+    datadog_report_user_stats(commcare_users_by_domain=all_stats['commcare_users'])
 
 
 def datadog_report_user_stats(commcare_users_by_domain):
