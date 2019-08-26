@@ -47,7 +47,7 @@ class AsyncLocationFilter(BaseReportFilter):
             'make_optional': self.make_optional,
             'hierarchy': self.location_hierarchy_config,
             'path': self.request.path,
-            'have_access_to_features': icds_pre_release_features(user)
+            'have_access_to_icds_dashboard_features': icds_pre_release_features(user)
         }
 
     @classmethod

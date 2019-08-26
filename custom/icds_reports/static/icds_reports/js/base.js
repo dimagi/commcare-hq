@@ -4,9 +4,9 @@ hqDefine("icds_reports/js/base", function () {
             e.stopPropagation();
             var applyBtn = $('#apply-filters');
 
-            var hasAccessToFeatures = hqImport('hqwebapp/js/initial_page_data').get('hasAccessToFeatures');
+            var hasAccessToIcdsDashboardFeatures = hqImport('hqwebapp/js/initial_page_data').get('hasAccessToIcdsDashboardFeatures');
 
-            if (hasAccessToFeatures) {
+            if (hasAccessToIcdsDashboardFeatures) {
 
                 var mprLocationInfo = $('#mpr-banner-info');
                 var isMprReport = mprLocationInfo.length === 1;

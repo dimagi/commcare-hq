@@ -506,7 +506,7 @@ class GenericReportView(object):
             'type': self.dispatcher.prefix,
             'urlRoot': self.url_root,
             'asyncUrl': async_url,
-            'hasAccessToFeatures': self.icds_pre_release_features()
+            'hasAccessToIcdsDashboardFeatures': self.icds_pre_release_features()
         }
 
     def icds_pre_release_features(self):
