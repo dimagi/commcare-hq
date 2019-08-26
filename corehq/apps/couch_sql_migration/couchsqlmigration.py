@@ -368,8 +368,6 @@ class CouchSqlDomainMigrator(object):
                 dst_domain=self.dst_domain,
                 state=self.statedb.unique_id,
             ))
-
-        if self.src_domain != self.dst_domain:
             self._build_id_map()
 
         self.processed_docs = 0
