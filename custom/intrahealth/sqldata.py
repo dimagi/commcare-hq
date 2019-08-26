@@ -3912,6 +3912,10 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
         self.config = config
 
     @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
     def table_name(self):
         config_domain = self.config['domain']
         doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, 'yeksi_naa_reports_consumption')
@@ -4130,6 +4134,10 @@ class TauxDeRuptureRateData(SqlData):
         self.config = config
 
     @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
     def table_name(self):
         config_domain = self.config['domain']
         doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, 'yeksi_naa_reports_consumption')
@@ -4344,6 +4352,10 @@ class ConsommationPerProductData(SqlData):
     def __init__(self, config):
         super(ConsommationPerProductData, self).__init__()
         self.config = config
+
+    @property
+    def engine_id(self):
+        return 'ucr'
 
     @property
     def table_name(self):
@@ -5111,6 +5123,10 @@ class ValuationOfPNAStockPerProductV2Data(SqlData):
         self.config = config
 
     @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
     def table_name(self):
         config_domain = self.config['domain']
         doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, '')
@@ -5191,6 +5207,10 @@ class RecapPassageOneData(SqlData):
         super(RecapPassageOneData, self).__init__()
         self.config = config
         self.product_names = []
+
+    @property
+    def engine_id(self):
+        return 'ucr'
 
     @property
     def table_name(self):
