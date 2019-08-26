@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 XFormBuilder is intended to be a simple way to create an XForm, and add
 questions to it.

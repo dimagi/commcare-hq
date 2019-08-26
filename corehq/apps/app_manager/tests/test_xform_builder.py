@@ -1,4 +1,3 @@
-# coding: utf-8
 import doctest
 from collections import OrderedDict
 
