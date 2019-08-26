@@ -14,6 +14,7 @@ from custom.intrahealth.sqldata import RecapPassageTwoTables
 from custom.intrahealth.reports.tableu_de_board_report_v2 import MultiReport
 from dimagi.utils.dates import force_to_date
 
+
 class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
     slug = 'recap_passage_2'
     comment = 'recap passage 2'

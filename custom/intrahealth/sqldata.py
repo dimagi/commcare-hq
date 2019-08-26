@@ -5569,6 +5569,7 @@ class RecapPassageTwoData(RecapPassageOneData):
             return list(set(program_products))
         else:
             return None
+
     def only_latest_visit_data(self, rows):
         pps_data = {}
         for row in rows:
