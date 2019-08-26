@@ -1,7 +1,6 @@
 
 from datetime import datetime
 from django.http import JsonResponse
-from io import open
 
 import json
 import logging

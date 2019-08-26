@@ -15,7 +15,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.views import secure_post
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from couchforms import openrosa_response
-from io import open
 
 
 class FakeFile(object):

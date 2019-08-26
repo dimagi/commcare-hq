@@ -43,6 +43,8 @@ from six.moves import zip
 from six.moves import range
 from itertools import chain
 
+from corehq import toggles
+
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
 
@@ -502,7 +504,11 @@ class GenericReportView(object):
             'type': self.dispatcher.prefix,
             'urlRoot': self.url_root,
             'asyncUrl': async_url,
+            'hasAccessToIcdsDashboardFeatures': self.icds_pre_release_features()
         }
+
+    def icds_pre_release_features(self):
+        return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username)
 
     def update_filter_context(self):
         """

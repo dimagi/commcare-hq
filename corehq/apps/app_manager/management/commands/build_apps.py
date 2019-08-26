@@ -5,7 +5,6 @@ from django.core.management.base import BaseCommand
 from lxml import etree
 import os
 from corehq.apps.app_manager.dbaccessors import wrap_app
-from io import open
 
 try:
     from guppy import hpy

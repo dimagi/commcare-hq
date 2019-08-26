@@ -19,7 +19,6 @@ from corehq.sql_db.util import (
     split_list_by_db_partition, new_id_in_same_dbalias, get_db_aliases_for_partitioned_query
 )
 from dimagi.utils.chunked import chunked
-from io import open
 
 
 def get_forms_to_reprocess(form_ids):

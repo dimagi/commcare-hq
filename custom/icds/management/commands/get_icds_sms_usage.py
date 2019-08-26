@@ -9,7 +9,6 @@ from corehq.util.timezones.conversions import UserTime
 from couchexport.export import export_raw
 from datetime import datetime, timedelta, time
 from django.core.management.base import BaseCommand
-from io import open
 
 
 class Command(BaseCommand):

@@ -1,4 +1,3 @@
-# coding: utf-8
 import json
 import uuid
 
@@ -22,7 +21,6 @@ from corehq.apps.userreports.tests.utils import get_sample_report_config
 
 from six.moves import zip
 from six.moves import range
-from io import open
 
 
 class AppManagerTest(TestCase, TestXmlMixin):

@@ -1,4 +1,3 @@
-import six
 __author__ = 'dmyung'
 
 #taken from the django debug toolbar sql panel

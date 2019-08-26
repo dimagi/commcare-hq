@@ -74,7 +74,6 @@ from base64 import b64encode
 from contextlib import contextmanager
 from datetime import timedelta
 from tempfile import mkdtemp
-from io import open
 
 import gevent
 import six

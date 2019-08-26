@@ -3,7 +3,6 @@ from django.core.management.base import BaseCommand
 
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.models import RebuildWithReason
-from io import open
 
 
 logger = logging.getLogger('rebuild_cases')

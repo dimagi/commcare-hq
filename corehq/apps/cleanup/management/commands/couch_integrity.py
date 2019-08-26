@@ -5,7 +5,6 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
 from jsonobject.base import DefaultProperty
-from io import open
 
 # This command relies on a properly formatted json spec in order to run.
 # Here is an example of a spec:

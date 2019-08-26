@@ -6,7 +6,6 @@ from copy import deepcopy
 import settings
 from corehq.apps.callcenter.utils import get_call_center_domains
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from io import open
 
 MODULE_PATH = os.path.dirname(__file__)
 DATA_SOURCES_PATH = os.path.join(MODULE_PATH, 'data_sources')

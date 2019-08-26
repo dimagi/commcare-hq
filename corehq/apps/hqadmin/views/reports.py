@@ -81,14 +81,6 @@ def admin_reports_stats_data(request):
     return stats_data(request)
 
 
-class DimagisphereView(TemplateView):
-
-    def get_context_data(self, **kwargs):
-        context = super(DimagisphereView, self).get_context_data(**kwargs)
-        context['tvmode'] = 'tvmode' in self.request.GET
-        return context
-
-
 def top_five_projects_by_country(request):
     data = {}
     internalMode = request.user.is_superuser

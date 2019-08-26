@@ -3,7 +3,6 @@ import json
 import mock
 
 from datetime import date
-from io import open
 
 from django.test import TestCase
 

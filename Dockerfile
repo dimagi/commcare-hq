@@ -14,7 +14,7 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
 
 RUN apt-get update && apt-get install -y --no-install-recommends openjdk-7-jdk
 
-COPY requirements-python3/test-requirements.txt package.json /vendor/
+COPY requirements/test-requirements.txt package.json /vendor/
 
 # prefer https for git checkouts made by pip
 RUN git config --global url."https://".insteadOf git:// \

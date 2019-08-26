@@ -8,7 +8,6 @@ from django.core.management.base import BaseCommand
 from django.db import connections, transaction
 
 from corehq.sql_db.connections import get_icds_ucr_db_alias
-from io import open
 
 
 @transaction.atomic

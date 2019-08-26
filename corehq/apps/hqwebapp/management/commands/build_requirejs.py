@@ -11,7 +11,6 @@ from shutil import copyfile
 from subprocess import call
 
 from corehq.apps.hqwebapp.management.commands.resource_static import Command as ResourceStaticCommand
-from io import open
 
 
 logger = logging.getLogger('__name__')

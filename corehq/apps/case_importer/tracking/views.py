@@ -1,5 +1,4 @@
 
-from io import open
 
 from django.db import transaction
 from django.http import (

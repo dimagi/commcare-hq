@@ -8,7 +8,6 @@ from corehq.util.couch import IterDB
 from corehq.util.log import with_progress_bar
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
-from io import open
 
 
 class Command(BaseCommand):

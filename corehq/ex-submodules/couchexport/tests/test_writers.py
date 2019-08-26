@@ -1,4 +1,3 @@
-# coding: utf-8
 from codecs import BOM_UTF8
 from contextlib import closing
 import io

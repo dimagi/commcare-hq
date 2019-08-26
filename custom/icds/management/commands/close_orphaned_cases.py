@@ -10,7 +10,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from corehq.util.log import with_progress_bar
 import six
-from io import open
 
 
 class Command(BaseCommand):

@@ -16,7 +16,6 @@ from corehq.apps.export.multiprocess import (
     UNPROCESSED_PAGES_DIR, _add_compressed_page_to_zip)
 from corehq.util.files import safe_filename
 from six.moves import input
-from io import open
 
 
 class Command(BaseCommand):

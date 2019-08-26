@@ -14,7 +14,6 @@ from corehq.apps.hqmedia.view_helpers import (
     validate_multimedia_paths_rows,
     update_multimedia_paths,
 )
-from io import open
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)

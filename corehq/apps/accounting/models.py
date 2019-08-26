@@ -634,9 +634,6 @@ class SoftwareProductRate(models.Model):
                 return False
         return True
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     @classmethod
     def new_rate(cls, product_name, monthly_fee, save=True):
         rate = SoftwareProductRate(name=product_name, monthly_fee=monthly_fee)
@@ -700,9 +697,6 @@ class FeatureRate(models.Model):
             if not getattr(self, field) == getattr(other, field):
                 return False
         return True
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     @classmethod
     def new_rate(cls, feature_name, feature_type,
@@ -1119,9 +1113,6 @@ class Subscription(models.Model):
             and other.subscriber.pk == self.subscriber.pk
             and other.account.pk == self.account.pk
         )
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def save(self, *args, **kwargs):
         """

@@ -8,7 +8,6 @@ from dimagi.utils.parsing import json_format_datetime
 from pillowtop.utils import get_pillow_by_name
 import six
 from six.moves import input
-from io import open
 
 from corehq.util.python_compatibility import soft_assert_type_text
 

@@ -5,7 +5,6 @@ from dimagi.utils.web import json_handler
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.util import ImporterConfig, get_spreadsheet
 from corehq.apps.users.models import WebUser
-from io import open
 
 
 class Command(BaseCommand):

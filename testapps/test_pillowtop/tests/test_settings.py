@@ -6,7 +6,6 @@ import json
 from corehq.util.test_utils import TestFileMixin
 from pillowtop.utils import get_all_pillow_configs
 from testapps.test_pillowtop.utils import real_pillow_settings
-from io import open
 
 
 @override_settings(DEBUG=True)

@@ -11,7 +11,6 @@ from corehq.apps.hqadmin.views.users import AdminRestoreView
 from corehq.apps.ota.views import get_restore_response
 from corehq.apps.users.models import CouchUser
 from corehq.util.dates import get_timestamp_for_filename
-from io import open
 
 
 class Command(BaseCommand):

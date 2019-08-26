@@ -16,7 +16,6 @@ from django_transfer import TransferHttpResponse
 from soil.progress import get_task_progress, get_multiple_task_progress, set_task_progress
 from corehq.blobs import get_blob_db
 import six
-from io import open
 
 from corehq.const import ONE_DAY
 from corehq.util.python_compatibility import soft_assert_type_text

@@ -108,7 +108,6 @@ def run_patches():
     mimetypes.init()
 
     patch_jsonfield()
-
     patch_assertItemsEqual()
 
     import django

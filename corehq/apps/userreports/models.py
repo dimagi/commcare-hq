@@ -6,7 +6,6 @@ import re
 from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime
-from io import open
 from uuid import UUID
 
 import six

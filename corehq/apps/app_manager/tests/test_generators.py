@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 
 import os
-from io import open
 
 import polib
 from django.test.testcases import SimpleTestCase

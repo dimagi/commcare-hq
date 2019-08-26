@@ -9,7 +9,6 @@ from testil import assert_raises, tempdir
 import corehq.blobs as mod
 from corehq.util.test_utils import generate_cases
 from settingshelper import SharedDriveConfiguration
-from io import open
 
 
 @generate_cases([

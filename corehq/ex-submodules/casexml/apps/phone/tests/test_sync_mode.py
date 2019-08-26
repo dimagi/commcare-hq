@@ -44,7 +44,6 @@ from casexml.apps.phone.restore import (
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from six.moves import range
-from io import open
 
 USERNAME = "syncguy"
 OTHER_USERNAME = "ferrel"

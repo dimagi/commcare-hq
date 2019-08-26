@@ -4,7 +4,6 @@ import os
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from io import open
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
@@ -999,9 +998,6 @@ class Diff(object):
                 and self.new == other.new_value
             )
         return NotImplemented
-
-    def __ne__(self, other):
-        return not (self == other)
 
     __hash__ = None
 

@@ -1,7 +1,6 @@
 
 import six
 import sys
-from io import open
 from celery.task import task
 from django.template.defaultfilters import linebreaksbr
 

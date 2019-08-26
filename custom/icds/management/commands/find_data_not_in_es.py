@@ -1,7 +1,6 @@
 
 import csv342 as csv
 from datetime import datetime
-from io import open
 
 from django.core.management import BaseCommand
 from django.db.models import Min

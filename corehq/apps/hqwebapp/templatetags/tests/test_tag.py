@@ -5,7 +5,6 @@ from django.conf import settings
 from django.template import Template, Context, TemplateSyntaxError
 from django.test import SimpleTestCase, override_settings
 from corehq.util.test_utils import make_make_path
-from io import open
 
 _make_path = make_make_path(__file__)
 

@@ -26,9 +26,6 @@ class LooslyEqualJsonObject(object):
     def __hash__(self):
         return hash(json.dumps(self._obj, sort_keys=True))
 
-    def __ne__(self, other):
-        return not self == other
-
 
 class ShardMeta(JsonObject, LooslyEqualJsonObject):
     id = IntegerProperty()

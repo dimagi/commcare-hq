@@ -4,7 +4,6 @@ from django.core.management.base import BaseCommand
 
 from couchdbkit.exceptions import ResourceNotFound
 from dimagi.utils.couch.database import get_db
-from io import open
 
 
 # possible expansion: allow this to accept doc ids on the command line

@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.test import SimpleTestCase
 from dimagi.utils.modules import to_function
 

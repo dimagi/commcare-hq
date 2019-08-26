@@ -31,7 +31,6 @@ from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
     _get_missing_multimedia,
 )
-from io import open
 
 from corehq.util.test_utils import flag_enabled, softer_assert
 

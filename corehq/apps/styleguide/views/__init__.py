@@ -1,5 +1,4 @@
 
-from io import open
 import os
 
 from django.urls import reverse

@@ -12,7 +12,6 @@ from corehq.messaging.scheduling.models import (
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
 from django.core.management.base import BaseCommand, CommandError
-from io import open
 import copy
 import json
 import jsonobject

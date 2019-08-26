@@ -3,7 +3,6 @@ from couchdbkit import Database
 from dimagi.utils.couch.database import get_db
 from django.core.management.base import BaseCommand
 from corehq.apps.domainsync.config import DocumentTransform, save
-from io import open
 
 
 class Command(BaseCommand):

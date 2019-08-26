@@ -42,9 +42,6 @@ class SelfRegistrationUserInfo(object):
 
         return False
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     __hash__ = None
 
     def __init__(self, phone_number, custom_user_data=None):

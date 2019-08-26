@@ -8,7 +8,6 @@ from custom.icds.const import (
     MADHYA_PRADESH_SITE_CODE,
     RAJASTHAN_SITE_CODE,
 )
-from io import open
 
 
 class Command(BaseICDSSMSExportCommand):

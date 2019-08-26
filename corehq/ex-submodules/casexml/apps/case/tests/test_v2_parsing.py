@@ -15,7 +15,6 @@ from casexml.apps.case.xml import V2, V2_NAMESPACE
 from casexml.apps.case import const
 from casexml.apps.phone import xml
 from corehq.form_processor.tests.utils import use_sql_backend
-from io import open
 
 
 class Version2CaseParsingTest(TestCase):
