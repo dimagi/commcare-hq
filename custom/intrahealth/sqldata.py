@@ -4703,7 +4703,7 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
                 loc_names[record[self.loc_id]] = record[self.loc_name]
 
             if not self.date_in_selected_date_range(record['real_date_repeat']) \
-                or record['product_id'] not in self.products:
+                    or record['product_id'] not in self.products:
                 continue
 
             product = self.products.index(record['product_id'])
@@ -4910,7 +4910,7 @@ class ExpirationRatePerProductData2(LossRatePerProductData2):
                 loc_names[record[self.loc_id]] = record[self.loc_name]
 
             if not self.date_in_selected_date_range(record['real_date_repeat']) \
-                or record['product_id'] not in self.products:
+                    or record['product_id'] not in self.products:
                 continue
 
             product = self.products.index(record['product_id'])
@@ -5569,7 +5569,6 @@ class RecapPassageTwoData(RecapPassageOneData):
             return list(set(program_products))
         else:
             return None
-
     def only_latest_visit_data(self, rows):
         pps_data = {}
         for row in rows:
