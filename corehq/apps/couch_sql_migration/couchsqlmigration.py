@@ -25,6 +25,7 @@ from casexml.apps.case.xform import (
     get_case_updates,
 )
 from casexml.apps.case.xml.parser import CaseNoopAction
+from corehq.apps.couch_sql_migration.diffrule import Ignore
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from couchforms.models import doc_types as form_doc_types
@@ -40,7 +41,7 @@ from corehq.apps.couch_sql_migration.casediff import (
     CaseDiffProcess,
     CaseDiffQueue,
 )
-from corehq.apps.couch_sql_migration.diff import filter_form_diffs
+from corehq.apps.couch_sql_migration.diff import filter_form_diffs, ignore_rules
 from corehq.apps.couch_sql_migration.statedb import init_state_db
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
@@ -369,6 +370,10 @@ class CouchSqlDomainMigrator(object):
                 state=self.statedb.unique_id,
             ))
             self._build_id_map()
+            # Add expected diffs to `diff.ignore_rules`. This must be
+            # done before `self._process_main_forms()` is called,
+            # because it will memoize the value of `ignore_rules`.
+            self._extend_ignore_rules()
 
         self.processed_docs = 0
         timing = TimingContext("couch_sql_migration")
@@ -476,6 +481,20 @@ class CouchSqlDomainMigrator(object):
                 f.write(' -> '.join((src, dst)))
                 f.write('\n')
             f.write('\n')
+
+    def _extend_ignore_rules(self):
+        ignore_rules['CommCareCase*'].append(
+            Ignore('diff', 'domain', old=self.src_domain, new=self.dst_domain)
+        )
+        ignore_rules['CommCareCase*'].extend([
+            Ignore('diff', 'owner_id', old=src, new=dst)
+            for src, dst in self._id_map.items()
+        ])
+        ignore_rules['CommCareCase'].append(
+            # New xform attachments (with new IDs) are created when
+            # migrating to a different domain
+            Ignore(path=('xform_ids', '[*]'))
+        )
 
     def _map_form_ids(self, couch_form):
         """
