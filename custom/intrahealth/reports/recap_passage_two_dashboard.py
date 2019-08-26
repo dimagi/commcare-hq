@@ -15,7 +15,6 @@ from custom.intrahealth.reports.tableu_de_board_report_v2 import MultiReport
 from dimagi.utils.dates import force_to_date
 
 
-
 class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
     slug = 'recap_passage_2'
     comment = 'recap passage 2'
@@ -101,9 +100,9 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
         self.data_source = table_context
         if self.needs_filters:
             context = dict(
-                report_table = dict(
-                    rows = [],
-                    headers = []
+                report_table=dict(
+                    rows=[],
+                    headers=[]
                 )
             )
         else:

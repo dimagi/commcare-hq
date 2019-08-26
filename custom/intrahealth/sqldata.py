@@ -4746,7 +4746,7 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
         for product in pn:
             headers.add_column(DataTablesColumn(product))
         headers.add_column(DataTablesColumn('SYNTHESE'))
-        
+
         return headers
 
     @property
@@ -4757,8 +4757,7 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
             program = ProductsInProgramData(config=dict(domain=self.config['domain'])).rows
             products = []
             for p in program:
-                if selected_program \
-                and p[0] != selected_program:
+                if selected_program and p[0] != selected_program:
                     continue
                 products.extend(p[1].split(' '))
             products.sort()
@@ -4776,7 +4775,7 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
             if product_names.get(id, None) is "":
                 product_names[id] = row['product_name']
 
-        pn = [key[0] for key in sorted(product_names.items(),  key=lambda x: x[1]) if key[1]]
+        pn = [key[0] for key in sorted(product_names.items(), key=lambda x: x[1]) if key[1]]
         return pn
 
 
@@ -4927,7 +4926,7 @@ class ExpirationRatePerProductData2(LossRatePerProductData2):
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_expiration_rate_to_rows(loc_names, data)
         return sorted(rows, key=lambda x: x[0]['html'])
-      
+
 
 class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDataSource):
     slug = 'taux_de_satisfaction_report'
@@ -5288,7 +5287,6 @@ class RecapPassageOneData(IntraHealthSqlData):
     total_row = []
     custom_total_calculate = True
 
-
     def __init__(self, config):
         super(RecapPassageOneData, self).__init__()
         self.config = config
@@ -5337,7 +5335,7 @@ class RecapPassageOneData(IntraHealthSqlData):
             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
             DatabaseColumn(_("Product name"), SimpleColumn('product_name')),
             DatabaseColumn(_("Product id"), SimpleColumn('product_id')),
-            DatabaseColumn(_("Precedent"),    SumColumn('old_stock_pps')),
+            DatabaseColumn(_("Precedent"), SumColumn('old_stock_pps')),
             DatabaseColumn(_("Old stock total"), SumColumn('old_stock_total')),
             DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('total_stock')),
             DatabaseColumn(_("Stock Total"), SumColumn('display_total_stock')),
@@ -5483,24 +5481,24 @@ class RecapPassageOneData(IntraHealthSqlData):
 
     @property
     def empty_table(self):
-        rows = [['Stock ε PPS Précédent','pas de données'],
-                ['Stock Total Précédent','pas de données'],
-                ['Stock Disponible Utilisable','pas de données'],
-                ['Stock Total Restant','pas de données'],
-                ['Réception Hors Entrepot','pas de données'],
-                ['Consommations Réelle','pas de données'],
-                ['Consommations Facturable','pas de données'],
-                ['Pertes Facturables PNA','pas de données'],
-                ['Facturation Produit','pas de données'],
-                ['amount_owed','pas de données'],
-                ['Livraison','pas de données'],
-                ['Pertes / Péremptions PPS','pas de données'],
-                ['Péremptions PNA','pas de données'],
-                ['Ajustements / Retraits PNA','pas de données'],
-                ['Nombre Jours de rupture','pas de données'],
-                ['Consommations Non Facturable','pas de données'],
-                ['CMM Ajustée','pas de données'],
-                ['Stock Restant ε PPS','pas de données']]
+        rows = [['Stock ε PPS Précédent', 'pas de données'],
+                ['Stock Total Précédent', 'pas de données'],
+                ['Stock Disponible Utilisable', 'pas de données'],
+                ['Stock Total Restant', 'pas de données'],
+                ['Réception Hors Entrepot', 'pas de données'],
+                ['Consommations Réelle', 'pas de données'],
+                ['Consommations Facturable', 'pas de données'],
+                ['Pertes Facturables PNA', 'pas de données'],
+                ['Facturation Produit', 'pas de données'],
+                ['amount_owed', 'pas de données'],
+                ['Livraison', 'pas de données'],
+                ['Pertes / Péremptions PPS', 'pas de données'],
+                ['Péremptions PNA', 'pas de données'],
+                ['Ajustements / Retraits PNA', 'pas de données'],
+                ['Nombre Jours de rupture', 'pas de données'],
+                ['Consommations Non Facturable', 'pas de données'],
+                ['CMM Ajustée', 'pas de données'],
+                ['Stock Restant ε PPS', 'pas de données']]
         empty_headers = DataTablesHeader(DataTablesColumn(''), DataTablesColumn('pas de produits'))
         return rows, empty_headers
 
@@ -5567,7 +5565,6 @@ class RecapPassageTwoData(RecapPassageOneData):
         else:
             return None
 
-
     def only_latest_visit_data(self, rows):
         pps_data = {}
         for row in rows:
@@ -5580,7 +5577,7 @@ class RecapPassageTwoData(RecapPassageOneData):
         relevant = []
         relevant_doc_ids = {}
         for id, data in pps_data.items():
-            #TODO: Check if second date with same date should be relevant
+            # TODO: Check if second date with same date should be relevant
             sorted_visits_info = sorted(data, key=lambda k: k['real_date_repeat'], reverse=True)
             latest_date = sorted_visits_info[0]['real_date_repeat']
             latest_doc_for_pps = sorted_visits_info[0]['doc_id']
@@ -5621,8 +5618,7 @@ class RecapPassageTwoData(RecapPassageOneData):
             pps_id = row['pps_id']
             product_id = row['product_id']
 
-            if valid_products and \
-                product_id not in valid_products:
+            if valid_products and product_id not in valid_products:
                 continue
 
             product_names.add(product_name)
@@ -5662,11 +5658,11 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
     def create_context(self, **kwargs):
         context = dict(
-            title=kwargs.get('title',self.title),
-            slug=kwargs.get('slug',self.slug),
-            headers=kwargs.get('headers',[]),
-            rows=kwargs.get('rows',[]),
-            total_row=kwargs.get('total_row',self.total_row),
+            title=kwargs.get('title', self.title),
+            slug=kwargs.get('slug', self.slug),
+            headers=kwargs.get('headers', []),
+            rows=kwargs.get('rows', []),
+            total_row=kwargs.get('total_row', self.total_row),
             default_rows=kwargs.get('default_rows', None),
             datatables=kwargs.get('datatables', self.datatables),
             fix_column=kwargs.get('fix_left_col', self.fix_left_col))
@@ -5706,13 +5702,13 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
         rows['Total Facturation PRA']['html'] = rows['Total Facturation District']['html'] / 1.15
 
-        rows['Total a Verser a La PRA']['html'] = rows['Total Facturation PRA']['html'] \
-                                                  + rows['Frais Participation District']['html'] \
-                                                  + rows['Total Versements PPS']['html']
+        rows['Total a Verser a La PRA']['html'] = rows['Total Facturation PRA']['html'] + \
+                                                  rows['Frais Participation District']['html'] + \
+                                                  rows['Total Versements PPS']['html']
 
-        row = [["{0:.2f}".format(round(v['html'], 2)) for v in rows.values()]]
+        row = [["{0:.2f}".format(v['html']) for v in rows.values()]]
         context = self.create_context(
-            rows=row, headers=rows.keys(),
+            rows=row, headers=[key for key in rows.keys()],
             title='Recapitulatif Facturation')
         return context
 
@@ -5780,7 +5776,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                 products_amount = self.get_row_product_values(pps_data, 'amount_owed')
                 amount_sum = dict(html=0)
                 for name in self.product_names:
-                    product_value = products_amount.get(name,  {'html': 0})
+                    product_value = products_amount.get(name, {'html': 0})
                     amount_sum['html'] += product_value['html']
 
                 row.append(amount_sum)

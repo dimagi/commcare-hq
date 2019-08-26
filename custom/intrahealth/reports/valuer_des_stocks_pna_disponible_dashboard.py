@@ -170,7 +170,8 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
                         for product in products:
                             if product_for_location['product_id'] == product['product_id']:
                                 final_pna_stock_valuation = product['final_pna_stock_valuation']
-                                locations_with_products[location_name][r]['final_pna_stock_valuation'] += final_pna_stock_valuation
+                                locations_with_products[location_name][r]['final_pna_stock_valuation'] += \
+                                    final_pna_stock_valuation
                 else:
                     added_locations.append(location_id)
                     locations_with_products[location_name] = []
