@@ -282,6 +282,29 @@ class StateDB(DiffDB):
             .filter(MissingDoc.kind == doc_type)
         }
 
+    def add_ignore_paths(self, couch_form_id, paths):
+
+        def path_to_string(p):
+            return json.dumps(list(p))
+
+        with self.session() as session:
+            session.bulk_save_objects([
+                IgnorePath(form_id=couch_form_id, path=path_to_string(path))
+                for path in paths
+            ])
+
+    def get_ignore_paths(self, couch_form_id):
+
+        def path_from_string(s):
+            return tuple(json.loads(s))
+
+        with self.session() as session:
+            return [
+                path_from_string(result.path)
+                for result in session.query(IgnorePath.path)
+                                     .filter(IgnorePath.form_id == couch_form_id)
+            ]
+
 
 class ResumeError(Exception):
     pass
@@ -338,7 +361,16 @@ class UnexpectedCaseUpdate(Base):
     id = Column(String(50), nullable=False, primary_key=True)
 
 
+class IgnorePath(Base):
+    __tablename__ = 'ignore_path'
+
+    id = Column(Integer, primary_key=True)
+    form_id = Column(String(50), nullable=False)
+    path = Column(String(255), nullable=False)
+
+
 diff_doc_id_idx = Index("diff_doc_id_idx", Diff.doc_id)
+ignore_path_form_id_idx = Index("ignore_path_form_id_idx", IgnorePath.form_id)
 
 
 Counts = namedtuple('Counts', 'total missing')

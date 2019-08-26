@@ -346,7 +346,6 @@ class CouchSqlDomainMigrator(object):
         self.errors_with_normal_doc_type = []
         self.forms_that_touch_cases_without_actions = set()
         self._id_map = {}
-        self._ignore_paths = defaultdict(list)
 
     def same_domain(self):
         """
@@ -505,7 +504,7 @@ class CouchSqlDomainMigrator(object):
                 key = None
             message = 'couch form ID {!r}. Attachment key {!r}.'.format(couch_form.form_id, key)
             raise MissingValueError('{} {}'.format(err, message))
-        self._ignore_paths[couch_form.get_id].extend(ignore_paths)
+        self.statedb.add_ignore_paths(couch_form.get_id, ignore_paths)
         form_xml = etree.tostring(form_root, encoding='utf-8', xml_declaration=True)
         return couch_form, form_xml
 
@@ -527,7 +526,7 @@ class CouchSqlDomainMigrator(object):
         if self.same_domain():
             ignore_paths = None
         else:
-            ignore_paths = self._ignore_paths[couch_form.get_id] + [('domain',), ('_id',)]
+            ignore_paths = self.statedb.get_ignore_paths(couch_form.get_id) + [('domain',), ('_id',)]
         diffs = json_diff(
             couch_form_json, sql_form_json,
             track_list_indices=False,
