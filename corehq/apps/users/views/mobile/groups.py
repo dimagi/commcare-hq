@@ -136,6 +136,9 @@ class BaseGroupsView(BaseUserSettingsView):
         context = super(BaseGroupsView, self).main_context
         context.update({
             'all_groups': self.all_groups,
+            'is_case_sharing_enabled': has_privilege(
+                self.request, privileges.CASE_SHARING_GROUPS
+            ),
             'needs_to_downgrade_locations': (
                 users_have_locations(self.domain) and
                 not has_privilege(self.request, privileges.LOCATIONS)
@@ -224,6 +227,9 @@ class EditGroupMembersView(BaseGroupsView):
             'can_edit_group_membership': (self.couch_user.can_edit_users_in_groups()
                                           or self.couch_user.can_edit_commcare_users()),
             'domain_uses_case_sharing': self.domain_uses_case_sharing,
+            'show_disable_case_sharing': not has_privilege(
+                self.request, privileges.CASE_SHARING_GROUPS
+            ) and self.group.case_sharing,
         }
 
     @property
