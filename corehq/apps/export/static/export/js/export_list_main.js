@@ -31,6 +31,9 @@ hqDefine("export/js/export_list_main", [
             }));
             $('#createExportOptionsModal').on('show.bs.modal', function () {
                 kissmetricsAnalytics.track.event("Clicked New Export");
+                if (isOData) {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked + Add Odata Feed button");
+                }
             });
         }
 
