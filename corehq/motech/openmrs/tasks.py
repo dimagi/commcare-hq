@@ -3,23 +3,27 @@ Tasks are used to pull data from OpenMRS. They either use OpenMRS's
 Reporting REST API to import cases on a regular basis (like weekly), or
 its Atom Feed (daily or more) to track changes.
 """
+import time
 import uuid
 from collections import namedtuple
 from datetime import datetime
+
+import six
 from celery.schedules import crontab
-from celery.task import task, periodic_task
+from celery.task import periodic_task, task
 from couchdbkit import ResourceNotFound
 from jinja2 import Template
-from requests import HTTPError
-import time
+
 from casexml.apps.case.mock import CaseBlock
+from toggle.shortcuts import find_domains_with_toggle_enabled
+
 from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.openmrs.atom_feed import (
     get_feed_updates,
@@ -29,8 +33,8 @@ from corehq.motech.openmrs.atom_feed import (
 from corehq.motech.openmrs.const import (
     ATOM_FEED_NAME_ENCOUNTER,
     ATOM_FEED_NAME_PATIENT,
-    IMPORT_FREQUENCY_WEEKLY,
     IMPORT_FREQUENCY_MONTHLY,
+    IMPORT_FREQUENCY_WEEKLY,
     OPENMRS_ATOM_FEED_POLL_INTERVAL,
     OPENMRS_IMPORTER_DEVICE_ID_PREFIX,
     XMLNS_OPENMRS,
@@ -42,8 +46,6 @@ from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.python_compatibility import soft_assert_type_text
-from toggle.shortcuts import find_domains_with_toggle_enabled
-import six
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 LOCATION_OPENMRS = 'openmrs_uuid'  # The location metadata key that maps to its corresponding OpenMRS location UUID
