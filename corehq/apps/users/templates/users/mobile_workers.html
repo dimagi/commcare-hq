@@ -1,5 +1,4 @@
 {% extends "hqwebapp/base_section.html" %}
-{% load compress %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -8,10 +7,8 @@
   {% if strong_mobile_passwords %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
   {% endif %}
-  {% compress js %}
-    <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
-    <script src="{% static 'users/js/mobile_workers.js' %}"></script>
-  {% endcompress %}
+  <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
+  <script src="{% static 'users/js/mobile_workers.js' %}?version2=20190717"></script>
 {% endblock %}
 
 {% block page_content %}
