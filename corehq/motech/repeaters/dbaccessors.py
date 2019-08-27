@@ -176,7 +176,7 @@ def get_domains_that_have_repeat_records():
 @unit_testing_only
 def delete_all_repeat_records():
     from .models import RepeatRecord
-    results = RepeatRecord.get_db().view('repeaters/repeat_records_by_next_check', reduce=False).all()
+    results = RepeatRecord.get_db().view('repeaters/repeat_records', reduce=False).all()
     for result in results:
         try:
             repeat_record = RepeatRecord.get(result['id'])
