@@ -136,6 +136,17 @@ hqDefine("export/js/export_list", [
             }
         };
 
+        self.deleteExport = function (observable, event) {
+            if (options.isOData) {
+                kissmetricsAnalytics.track.event("[BI Integration] Deleted Feed");
+                setTimeout(function () {
+                    $(event.currentTarget).closest('form').submit();
+                }, 250);
+            } else {
+                $(event.currentTarget).closest('form').submit();
+            }
+        };
+
         self.isLocationSafeForUser = function () {
             return !self.hasEmailedExport || self.emailedExport.isLocationSafeForUser();
         };
