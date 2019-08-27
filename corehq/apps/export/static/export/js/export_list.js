@@ -125,6 +125,17 @@ hqDefine("export/js/export_list", [
             }
         }
 
+        self.editExport = function () {
+            if (options.isOData) {
+                kissmetricsAnalytics.track.event("[BI Integration] Clicked Copy OData Feed Link");
+                setTimeout(function () {
+                    window.location.href = self.editUrl();
+                }, 250);
+            } else {
+                window.location.href = self.editUrl();
+            }
+        };
+
         self.isLocationSafeForUser = function () {
             return !self.hasEmailedExport || self.emailedExport.isLocationSafeForUser();
         };
