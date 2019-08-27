@@ -427,6 +427,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             return self.process_facts(paginated_queryset(rows, 10000))
         else:
             users = self.user_query(False).scroll()
+            self._total_records = self.user_query(False).count()
             return self.process_rows(users, True)
 
     @property
