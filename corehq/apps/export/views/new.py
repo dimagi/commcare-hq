@@ -5,6 +5,7 @@ import json
 
 from couchdbkit import ResourceNotFound
 
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from dimagi.utils.web import json_response
 from django.conf import settings
@@ -150,6 +151,16 @@ class BaseExportView(BaseProjectDataView):
                         or (column.label == 'number'
                             and table_id > 0 and table.selected)):
                         column.selected = True
+            num_nodes = sum([1 for table in export.tables[1:] if table.selected])
+            if hasattr(self, 'is_copy') and self.is_copy:
+                event_title = "[BI Integration] Clicked Save button for feed copy"
+            else:
+                event_title = "[BI Integration] Clicked Save button for feed creation"
+            track_workflow(request.user.username, event_title, {
+                    "Feed Type": export.type,
+                    "Number of additional nodes": num_nodes,
+                }
+            )
 
         export.save()
         messages.success(

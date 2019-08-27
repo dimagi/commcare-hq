@@ -122,11 +122,13 @@ class EditFormDailySavedExportView(DailySavedExportMixin, EditNewCustomFormExpor
 class EditODataCaseFeedView(ODataFeedMixin, EditNewCustomCaseExportView):
     urlname = 'edit_odata_case_feed'
     page_title = ugettext_lazy("Copy OData Feed")
+    is_copy = True
 
 
 class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_odata_form_feed'
     page_title = ugettext_lazy("Copy OData Feed")
+    is_copy = True
 
 
 class EditExportAttrView(BaseEditNewCustomExportView):
