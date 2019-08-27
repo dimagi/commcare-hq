@@ -7,8 +7,12 @@ from corehq.motech.const import (  # pylint: disable=unused-import,F401; (F401 =
     COMMCARE_DATA_TYPES,
     DATA_TYPE_UNKNOWN,
     DIRECTION_BOTH,
+    # pylint: disable=unused-import,F401
+    # (F401 = flake8 "'%s' imported but unused")
+    # Used in ValueSource.check_direction doctest
     DIRECTION_EXPORT,
     DIRECTION_IMPORT,
+    # pylint: enable=unused-import,F401
     DIRECTIONS,
 )
 from corehq.motech.serializers import serializers

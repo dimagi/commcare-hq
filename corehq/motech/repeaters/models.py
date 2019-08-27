@@ -840,4 +840,4 @@ def _is_response(duck):
 
 # import signals
 # Do not remove this import, its required for the signals code to run even though not explicitly used in this file
-from corehq.motech.repeaters import signals
+from corehq.motech.repeaters import signals  # pylint: disable=unused-import,F401

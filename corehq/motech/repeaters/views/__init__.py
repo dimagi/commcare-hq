@@ -1,3 +1,4 @@
+# pylint: disable=unused-import,F401
 from .repeat_records import (
     DomainForwardingRepeatRecords,
     RepeatRecordView,
@@ -18,3 +19,4 @@ from .repeaters import (
     resume_repeater,
     test_repeater,
 )
+# pylint: enable=unused-import,F401

@@ -33,7 +33,6 @@ from corehq.motech.openmrs.repeater_helpers import (
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
-from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_encrypt
 
 
