@@ -70,7 +70,7 @@ def get_openmrs_patients(requests, importer, location=None):
     """
     Send request to OpenMRS Reporting API and return results
     """
-    endpoint = '/ws/rest/v1/reportingrest/reportdata/' + importer.report_uuid
+    endpoint = f'/ws/rest/v1/reportingrest/reportdata/{importer.report_uuid}'
     params = parse_params(importer.report_params, location)
     response = requests.get(endpoint, params=params, raise_for_status=True)
     data = response.json()
@@ -145,7 +145,7 @@ def import_patients_of_owner(requests, importer, domain_name, owner, location=No
     submit_case_blocks(
         [cb.case.as_text() for cb in case_blocks],
         domain_name,
-        device_id='{}{}'.format(OPENMRS_IMPORTER_DEVICE_ID_PREFIX, importer.get_id),
+        device_id=f'{OPENMRS_IMPORTER_DEVICE_ID_PREFIX}{importer.get_id}',
         user_id=owner.user_id,
         xmlns=XMLNS_OPENMRS,
     )
@@ -200,8 +200,8 @@ def import_patients_to_domain(domain_name, force=False):
                 location_type = LocationType.objects.get(domain=domain_name, name=importer.location_type_name)
             except LocationType.DoesNotExist:
                 logger.error(
-                    'No organization level named "{location_type}" found in project space "{domain}".'.format(
-                        location_type=importer.location_type_name, domain=domain_name)
+                    f'No organization level named "{importer.location_type_name}" found in project space '
+                    f'"{domain_name}".'
                 )
                 continue
             if importer.location_id:
@@ -214,9 +214,8 @@ def import_patients_to_domain(domain_name, force=False):
                 owner = get_one_commcare_user_at_location(domain_name, location.location_id)
                 if not owner:
                     logger.error(
-                        'Project space "{domain}" at location "{location}" has no user to own cases imported from '
-                        'OpenMRS Importer "{importer}"'.format(
-                            domain=domain_name, location=location.name, importer=importer)
+                        f'Project space "{domain_name}" at location "{location.name}" has no user to own cases '
+                        f'imported from OpenMRS Importer "{importer}"'
                     )
                     continue
                 import_patients_of_owner(requests, importer, domain_name, owner, location)
@@ -225,17 +224,15 @@ def import_patients_to_domain(domain_name, force=False):
                 owner = CommCareUser.get(importer.owner_id)
             except ResourceNotFound:
                 logger.error(
-                    'Project space "{domain}" has no user to own cases imported from OpenMRS Importer '
-                    '"{importer}"'.format(
-                        domain=domain_name, importer=importer)
+                    f'Project space "{domain_name}" has no user to own cases imported from OpenMRS Importer '
+                    f'"{importer}"'
                 )
                 continue
             import_patients_of_owner(requests, importer, domain_name, owner)
         else:
             logger.error(
-                'Error importing patients for project space "{domain}" from OpenMRS Importer "{importer}": Unable '
-                'to determine the owner of imported cases without either owner_id or location_type_name'.format(
-                    domain=domain_name, importer=importer)
+                f'Error importing patients for project space "{domain_name}" from OpenMRS Importer "{importer}": '
+                f'Unable to determine the owner of imported cases without either owner_id or location_type_name'
             )
             continue
 
