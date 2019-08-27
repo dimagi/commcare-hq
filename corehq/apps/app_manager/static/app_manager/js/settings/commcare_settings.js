@@ -217,6 +217,11 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                         (setting.permission && !self.permissions[setting.permission])
                 );
             });
+
+            setting.showUpgradeText = ko.computed(function () {
+                return setting.permission && !self.permissions[setting.permission] && setting.upgrade_plan;
+            });
+
             setting.disabledButHasValue = ko.computed(function () {
                 return setting.disabled && setting.visibleValue() !== setting['default'];
             });
@@ -401,6 +406,12 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                     value ? self.values[0] : self.values[1]
                 );
             },
+        });
+        self.showDisabledCheckbox = ko.computed(function () {
+            return self.showUpgradeText() && !self.boolValue();
+        });
+        self.showUncheckWarning = ko.computed(function () {
+            return self.showUpgradeText() && self.boolValue();
         });
     };
 
