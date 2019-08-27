@@ -143,7 +143,7 @@ def import_patients_of_owner(requests, importer, domain_name, owner, location=No
             case_blocks.append(RowAndCase(i, case_block))
 
     submit_case_blocks(
-        [cb.case.as_string() for cb in case_blocks],
+        [cb.case.as_text() for cb in case_blocks],
         domain_name,
         device_id='{}{}'.format(OPENMRS_IMPORTER_DEVICE_ID_PREFIX, importer.get_id),
         user_id=owner.user_id,
