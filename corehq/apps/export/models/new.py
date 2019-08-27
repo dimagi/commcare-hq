@@ -522,9 +522,9 @@ class TableConfiguration(DocumentSchema):
                     transform_dates=transform_dates,
                 )
                 if as_json:
-                    for ind, header in enumerate(col.get_headers(split_column=split_columns)):
+                    for index, header in enumerate(col.get_headers(split_column=split_columns)):
                         if isinstance(val, list):
-                            row_data[header] = "{}".format(val[ind])
+                            row_data[header] = "{}".format(val[index])
                         else:
                             row_data[header] = "{}".format(val)
                 elif isinstance(val, list):
