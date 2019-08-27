@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 

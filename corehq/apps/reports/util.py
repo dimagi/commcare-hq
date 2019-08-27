@@ -1,7 +1,3 @@
-# coding: utf-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
@@ -206,7 +202,7 @@ class SimplifiedUserInfo(
     def group_ids(self):
         if hasattr(self, '__group_ids'):
             return getattr(self, '__group_ids')
-        return Group.by_user(self.user_id, False)
+        return Group.by_user_id(self.user_id, False)
 
 
 def _report_user_dict(user):

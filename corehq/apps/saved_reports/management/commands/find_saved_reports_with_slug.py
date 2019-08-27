@@ -1,6 +1,4 @@
-from __future__ import absolute_import, print_function
 
-from __future__ import unicode_literals
 from django.conf import settings
 from dimagi.utils.couch.cache import cache_core
 from corehq.apps.saved_reports.models import ReportConfig

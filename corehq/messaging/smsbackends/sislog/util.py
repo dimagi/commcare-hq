@@ -1,6 +1,5 @@
 
 
-from __future__ import unicode_literals
 GSM_03_38_POR_BASIC = {
     0x00: "@",
     0x01: "\u00a3",

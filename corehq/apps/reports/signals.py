@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from django.dispatch.dispatcher import receiver
 
 from casexml.apps.case.signals import case_post_save

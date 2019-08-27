@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
@@ -76,7 +74,7 @@ class RemoteRequestFactory(object):
         claim_relevant_xpaths = [self.module.search_config.relevant]
 
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(
-            self.domain,
+            self.app,
             query_xpaths + claim_relevant_xpaths
         )
         # we use the module's case list/details view to select the datum so also

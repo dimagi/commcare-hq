@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 from copy import copy
 
@@ -173,6 +171,7 @@ class ApplicationDataRMIHelper(object):
     corehq.apps.export.views.get_app_data_drilldown_values
     """
     UNKNOWN_SOURCE = '_unknown'
+    UNKNOWN_MODULE_ID = '_unknown_module'
 
     APP_TYPE_ALL = 'all'
     APP_TYPE_DELETED = 'deleted'
@@ -442,7 +441,7 @@ class ApplicationDataRMIHelper(object):
 
             app_id = form['app']['id'] if has_app else self.UNKNOWN_SOURCE
             module = None
-            module_id = None
+            module_id = self.UNKNOWN_MODULE_ID
             if 'module' in form:
                 module = form['module']
             if has_app and module is not None:

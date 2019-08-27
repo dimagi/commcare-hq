@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from custom.ilsgateway.models import SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import REMINDER_STOCKONHAND
 from casexml.apps.stock.models import StockTransaction

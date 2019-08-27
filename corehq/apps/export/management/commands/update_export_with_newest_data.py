@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from __future__ import print_function
 
-from __future__ import unicode_literals
 import logging
 import os
 import re
@@ -23,7 +20,6 @@ from corehq.apps.export.models import MAIN_TABLE, PathNode
 from corehq.apps.export.multiprocess import MultiprocessExporter, OutputPaginator, run_multiprocess_exporter
 from corehq.util.files import safe_filename
 from dimagi.utils.parsing import string_to_utc_datetime
-from io import open
 
 logger = logging.getLogger(__name__)
 

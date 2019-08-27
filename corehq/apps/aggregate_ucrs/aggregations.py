@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from functools import total_ordering
 
 from corehq.apps.aggregate_ucrs.date_utils import Month, Week
@@ -62,9 +60,6 @@ class TimePeriodAggregationWindow(object):
 
     def __eq__(self, other):
         return isinstance(other, TimePeriodAggregationWindow) and self._period == other._period
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def __hash__(self):
         return hash((type(self), self.start))

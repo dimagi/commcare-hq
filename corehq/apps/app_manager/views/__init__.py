@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 
 from corehq.apps.app_manager.views.app_summary import (
     AppCaseSummaryView,
@@ -29,7 +28,6 @@ from corehq.apps.app_manager.views.apps import (
     undo_delete_app,
     validate_language,
     view_app,
-    export_gzip,
     pull_master_app,
     update_linked_whitelist,
 )

@@ -187,16 +187,6 @@ describe('Download Directive', function () {
             assert.equal(expected, result);
         });
 
-        it('tests on indicator select when child beneficiary list is not selected', function () {
-            controller.selectedIndicator = 5;
-            var expected = "xlsx";
-
-            controller.onIndicatorSelect();
-            var result = controller.selectedFormat;
-
-            assert.equal(expected, result);
-        });
-
         it('tests isDistrictOrBelowSelected - state selected', function () {
             controller.selectedLocations = ['state', 'all'];
             var result = controller.isDistrictOrBelowSelected();
@@ -238,6 +228,18 @@ describe('Download Directive', function () {
             controller.selectedPDFFormat = 'one';
             var result = controller.isCombinedPDFSelected();
             assert.isTrue(result);
+        });
+
+        it('tests isTakeHomeRatioReportSelected - THR selected', function () {
+            controller.selectedIndicator = 10;
+            var result = controller.isTakeHomeRationReportSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isTakeHomeRatioReportSelected - THR not selected', function () {
+            controller.selectedIndicator = 9;
+            var result = controller.isTakeHomeRationReportSelected();
+            assert.isFalse(result);
         });
 
     });
@@ -285,8 +287,63 @@ describe('Download Directive', function () {
         }));
 
         it('tests that all users have access to ISSNIP monthly register', function () {
+            var expected = 10;
+
             var length = controller.indicators.length;
-            assert.equal(9, length);
+            assert.equal(expected, length);
+        });
+
+        it('tests first possible data choice on THR raport', function () {
+            var fakeDate = new Date(2020, 8, 1);
+            var clock = sinon.useFakeTimers(fakeDate);
+            var expectedMonth = 7;
+            var expectedFirstYear = 2019;
+
+            controller.selectedYear = 2019;
+            controller.selectedIndicator = 10;
+            controller.onIndicatorSelect();
+
+            var firstAvailableMonth = controller.months[0].id;
+            var actualFirstYear = controller.selectedYear;
+
+            assert.equal(expectedMonth, firstAvailableMonth);
+            assert.equal(expectedFirstYear, actualFirstYear);
+            clock.restore();
+        });
+
+        it('tests latest possible data choice on THR raport', function () {
+            var fakeDate = new Date(2023, 8, 15);
+            var clock = sinon.useFakeTimers(fakeDate);
+            var expectedMonth = 8;
+            var expectedYear = 2023;
+            controller.yearsCopy = _.range(2017, 2024);
+
+            controller.selectedIndicator = 10;
+            controller.onIndicatorSelect();
+
+            var m = controller.months;
+            var y = controller.yearsCopy;
+            var actualMonth = m[m.length - 1].id - 1;
+            var actualYear = y[y.length - 1];
+
+            assert.equal(expectedMonth, actualMonth);
+            assert.equal(expectedYear, actualYear);
+            clock.restore();
+        });
+
+        it('tests THR Report AWC hierarchy reduction', function () {
+            for (var i = 0; i < 5; i++) {
+                controller.hierarchy[i].selected = i;
+                controller.selectedLocations[i] = i;
+            }
+            controller.selectedIndicator = 10;
+            controller.onIndicatorSelect();
+
+            var awcHierarchy = controller.hierarchy[4].selected;
+            var awcLocation = controller.selectedLocations[4];
+
+            assert.isNull(awcHierarchy);
+            assert.isNull(awcLocation);
         });
     });
 
@@ -334,7 +391,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(9, length);
+            assert.equal(10, length);
         });
     });
 

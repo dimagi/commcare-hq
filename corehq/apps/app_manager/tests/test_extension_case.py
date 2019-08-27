@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.models import (
     Application,
@@ -229,7 +227,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         """
         CaseBlock index relationship should only allow valid values
         """
-        with self.assertRaisesRegexp(CaseError,
+        with self.assertRaisesRegex(CaseError,
                                      'Valid values for an index relationship are'):
             self.subcase_block.add_index_ref(
                 'host',

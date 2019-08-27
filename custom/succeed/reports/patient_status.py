@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from custom.succeed.reports import PM_APP_PM_MODULE, PM3, PM4
 from custom.succeed.reports.patient_details import PatientDetailsReport
 

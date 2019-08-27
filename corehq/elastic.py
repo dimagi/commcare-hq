@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import json
 from collections import namedtuple
 import copy
 import logging
 import time
-from io import open
 
 from six.moves.urllib.parse import unquote
 

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from django.test import SimpleTestCase
 import mock
@@ -257,7 +255,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         return user
 
     @classmethod
-    @mock.patch('corehq.apps.groups.models.Group.by_user', mock.Mock(return_value=[]))
+    @mock.patch('corehq.pillows.user.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
     def setUpClass(cls):
         super(UserChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
@@ -309,7 +307,7 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         return group
 
     @classmethod
-    @mock.patch('corehq.apps.groups.models.Group.by_user', mock.Mock(return_value=[]))
+    @mock.patch('corehq.pillows.user.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
     def setUpClass(cls):
         super(GroupChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)

@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM
 
 

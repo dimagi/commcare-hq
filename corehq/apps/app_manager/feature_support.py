@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from distutils.version import LooseVersion, Version
 from django.conf import settings
 import six
@@ -157,13 +155,6 @@ class CommCareFeatureSupportMixin(object):
         Ability to configure apk/app update checks
         """
         return self._require_minimum_version('2.38')
-
-    @property
-    def enable_remote_requests(self):
-        """
-        Enable Remote Request question type in the form builder.
-        """
-        return self._require_minimum_version('2.40')
 
     @property
     def enable_training_modules(self):

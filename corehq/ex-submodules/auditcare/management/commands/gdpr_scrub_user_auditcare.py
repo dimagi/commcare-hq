@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.util.log import with_progress_bar
 from corehq.util.couch import iter_update, DocUpdate
 from django.core.management.base import BaseCommand

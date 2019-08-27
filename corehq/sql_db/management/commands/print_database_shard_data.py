@@ -1,5 +1,3 @@
-from __future__ import absolute_import, print_function
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 from corehq.sql_db.shard_data_management import get_database_shard_info_for_testing
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query

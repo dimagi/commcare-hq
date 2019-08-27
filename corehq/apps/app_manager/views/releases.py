@@ -1,12 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import division
 import json
 import uuid
 from math import ceil
 
 from django.db.models import Count
-from django.http import HttpResponse, Http404
+from django.http.response import (
+    HttpResponse,
+    Http404,
+    JsonResponse
+)
 from django.http import HttpResponseRedirect
 from django_prbac.utils import has_privilege
 from django.views.generic import View
@@ -46,7 +47,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_cached,
-    get_built_app_ids_for_app_id,
+    get_build_ids,
     get_current_app_version,
     get_latest_build_id,
     get_latest_build_version,
@@ -64,8 +65,13 @@ from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
     require_deploy_apps,
+    avoid_parallel_build_request,
 )
-from corehq.apps.app_manager.exceptions import ModuleIdMissingException, PracticeUserException
+from corehq.apps.app_manager.exceptions import (
+    ModuleIdMissingException,
+    PracticeUserException,
+    BuildConflictException,
+)
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
@@ -119,7 +125,7 @@ def paginate_releases(request, domain, app_id):
     if not bool(only_show_released or query):
         # If user is limiting builds by released status or build comment, it's much
         # harder to be performant with couch. So if they're not doing so, take shortcuts.
-        total_apps = len(get_built_app_ids_for_app_id(domain, app_id))
+        total_apps = len(get_build_ids(domain, app_id))
         saved_apps = _get_batch(skip=skip)
     else:
         app_es = (
@@ -271,7 +277,7 @@ def release_build(request, domain, app_id, saved_app_id):
 def save_copy(request, domain, app_id):
     """
     Saves a copy of the app to a new doc.
-    See VersionedDoc.save_copy
+    See ApplicationBase.save_copy
 
     """
     track_built_app_on_hubspot.delay(request.couch_user)
@@ -290,12 +296,12 @@ def save_copy(request, domain, app_id):
             timer = datadog_bucket_timer('commcare.app_build.new_release', tags=[],
                                          timing_buckets=(1, 10, 30, 60, 120, 240))
             with timer:
-                copy = app.make_build(
-                    comment=comment,
-                    user_id=user_id,
-                )
-                copy.save(increment_version=False)
+                copy = make_app_build(app, comment, user_id)
             CouchUser.get(user_id).set_has_built_app()
+        except BuildConflictException:
+            return JsonResponse({
+                'error': _("There is already a version build in progress. Please wait.")
+            }, status=400)
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():
@@ -323,6 +329,16 @@ def save_copy(request, domain, app_id):
     })
 
 
+@avoid_parallel_build_request
+def make_app_build(app, comment, user_id):
+    copy = app.make_build(
+        comment=comment,
+        user_id=user_id,
+    )
+    copy.save(increment_version=False)
+    return copy
+
+
 def _track_build_for_app_preview(domain, couch_user, app_id, message):
     track_workflow(couch_user.username, message, properties={
         'domain': domain,
@@ -337,7 +353,7 @@ def _track_build_for_app_preview(domain, couch_user, app_id, message):
 def revert_to_copy(request, domain, app_id):
     """
     Copies a saved doc back to the original.
-    See VersionedDoc.revert_to_copy
+    See ApplicationBase.revert_to_copy
 
     """
     app = get_app(domain, app_id)
@@ -376,7 +392,7 @@ def revert_to_copy(request, domain, app_id):
 def delete_copy(request, domain, app_id):
     """
     Deletes a saved copy permanently from the database.
-    See VersionedDoc.delete_copy
+    See ApplicationBase.delete_copy
 
     """
     app = get_app(domain, app_id)

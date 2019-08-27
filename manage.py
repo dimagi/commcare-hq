@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import attr
 
@@ -63,18 +61,22 @@ def init_hq_python_path():
     _set_source_root(os.path.join('custom', '_legacy'))
 
 
-def _should_patch_gevent(args, gevent_commands):
-    import requests
-    should_patch = False
+def _patch_gevent_if_required(args, gevent_commands):
+    if len(args) <= 1:
+        return
     for gevent_command in gevent_commands:
         should_patch = args[1] == gevent_command.command
         if gevent_command.contains:
             should_patch = should_patch and gevent_command.contains in ' '.join(args)
         if should_patch:
+            from gevent.monkey import patch_all; patch_all(subprocess=True)
+            from psycogreen.gevent import patch_psycopg; patch_psycopg()
+
             if gevent_command.http_adapter_pool_size:
+                # requests must be imported after `patch_all()` is called
+                import requests
                 requests.adapters.DEFAULT_POOLSIZE = gevent_command.http_adapter_pool_size
             break
-    return should_patch
 
 
 def set_default_settings_path(argv):
@@ -149,12 +151,6 @@ def patch_assertItemsEqual():
         unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
 
 
-def patch_pickle_version():
-    # to avoid incompatibility between python 2 and 3
-    import pickle
-    pickle.HIGHEST_PROTOCOL = 2
-
-
 def run_patches():
     # workaround for https://github.com/smore-inc/tinys3/issues/33
     import mimetypes
@@ -163,9 +159,6 @@ def run_patches():
     patch_jsonfield()
 
     patch_assertItemsEqual()
-
-    # After PY3 migration: remove
-    patch_pickle_version()
 
     import django
     _setup_once.setup = django.setup
@@ -193,10 +186,10 @@ if __name__ == "__main__":
         GeventCommand('populate_form_date_modified'),
         GeventCommand('migrate_domain_from_couch_to_sql', http_adapter_pool_size=32),
         GeventCommand('migrate_multiple_domains_from_couch_to_sql', http_adapter_pool_size=32),
+        GeventCommand('run_aggregation_query'),
+        GeventCommand('send_pillow_retry_queue_through_pillows'),
     )
-    if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):
-        from gevent.monkey import patch_all; patch_all(subprocess=True)
-        from psycogreen.gevent import patch_psycopg; patch_psycopg()
+    _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 
     init_hq_python_path()
     run_patches()

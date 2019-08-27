@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import random
 import string
@@ -149,6 +147,14 @@ class FixtureTest(TestCase, TestXmlMixin):
         """
         self.assertXmlEqual(schema_xml, ElementTree.tostring(index_schema))
 
+        # test restore with different user
+        user2 = create_restore_user(self.domain, username='user2')
+        self.addCleanup(user2._couch_user.delete)
+        fixture_xml = self.generate_product_fixture_xml(user2)
+        index_schema, fixture = call_fixture_generator(product_fixture_generator, user2)
+
+        self.assertXmlEqual(fixture_xml, ElementTree.tostring(fixture))
+
     def test_selective_product_sync(self):
         user = self.user
 
@@ -239,6 +245,17 @@ class FixtureTest(TestCase, TestXmlMixin):
         program_xml = self.generate_program_xml(program_list, user)
 
         fixture = call_fixture_generator(program_fixture_generator, user)
+
+        self.assertXmlEqual(
+            program_xml,
+            ElementTree.tostring(fixture[0])
+        )
+
+        # test restore with different user
+        user2 = create_restore_user(self.domain, username='user2')
+        self.addCleanup(user2._couch_user.delete)
+        program_xml = self.generate_program_xml(program_list, user2)
+        fixture = call_fixture_generator(program_fixture_generator, user2)
 
         self.assertXmlEqual(
             program_xml,

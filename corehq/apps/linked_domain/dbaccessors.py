@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals, absolute_import
 
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.util.quickcache import quickcache

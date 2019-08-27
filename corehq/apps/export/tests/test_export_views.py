@@ -1,6 +1,3 @@
-# encoding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 from io import BytesIO
@@ -34,7 +31,6 @@ from corehq.apps.export.views.new import (
 )
 from corehq.apps.export.views.utils import DataFileDownloadDetail
 from corehq.util.test_utils import flag_enabled, generate_cases
-from io import open
 
 
 class FakeDB(object):
@@ -121,7 +117,7 @@ class DataFileDownloadDetailTest(ViewTestCase):
 @generate_cases([
     (0, 999),
     (1000, 1999),
-    (12000, None)
+    (11000, None)  # This test uses this file (test_export_views.py). `11000` must be less than its size.
 ], DataFileDownloadDetailTest)
 @flag_enabled('DATA_FILE_DOWNLOAD')
 def test_data_file_download_partial(self, start, end):

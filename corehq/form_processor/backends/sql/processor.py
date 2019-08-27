@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import logging
 import uuid
@@ -221,7 +219,7 @@ class FormProcessorSQL(object):
                 if xform.is_deprecated:
                     deprecated_form = xform
                 if not (xform.is_deprecated and xform.problem):
-                    # don't process deprecatd forms which have errors.
+                    # don't process deprecated forms which have errors.
                     # see http://manage.dimagi.com/default.asp?243382 for context.
                     # note that we have to use .problem instead of .is_error because applying
                     # the state=DEPRECATED overrides state=ERROR

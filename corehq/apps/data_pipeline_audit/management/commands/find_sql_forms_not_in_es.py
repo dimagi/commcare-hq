@@ -6,11 +6,7 @@ For a full description and suggestions on usage see the original PR
 description here: https://github.com/dimagi/commcare-hq/pull/22477
 
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
-from __future__ import print_function
 from datetime import datetime
 from django.core.management.base import BaseCommand
 import sys
@@ -84,4 +80,5 @@ def iter_form_ids_by_last_modified(start_datetime, end_datetime):
             F('state'))),
         annotate=annotate,
         values=['form_id'],
+        load_source='find_sql_forms_not_in_es'
     )

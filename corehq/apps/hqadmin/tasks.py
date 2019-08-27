@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import date, timedelta
 
 import csv342 as csv
@@ -125,9 +123,6 @@ class AbnormalUsageAlert(object):
     message = attr.ib()
 
 
-support_email = "support@dimagi.com"
-
-
 @task(serializer='pickle', queue="email_queue")
 def send_abnormal_usage_alert(alert):
     """ Sends an alert to #support and email to let support know when a domain is doing something weird
@@ -142,7 +137,7 @@ def send_abnormal_usage_alert(alert):
     )
     send_html_email_async(
         subject,
-        support_email,
+        settings.SUPPORT_EMAIL,
         alert.message
     )
 

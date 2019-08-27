@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import time
 import uuid
 
@@ -47,20 +44,32 @@ class NestableTimer(object):
 
     @property
     def percent_of_total(self):
-        return (self.duration / self.root.duration * 100) if self.duration and self.root else None
+        if self.duration and self.root and self.root.duration:
+            return self.duration / self.root.duration * 100
+        else:
+            return None
 
     @property
     def percent_of_parent(self):
-        return (self.duration / self.parent.duration * 100) if self.parent else None
+        if self.duration and self.parent and self.parent.duration:
+            return self.duration / self.parent.duration * 100
+        else:
+            return None
 
     def to_dict(self):
-        return {
+        timer_dict = {
             'name': self.name,
             'duration': self.duration,
             'percent_total': self.percent_of_total,
             'percent_parent': self.percent_of_parent,
             'subs': [sub.to_dict() for sub in self.subs]
         }
+        if not self.duration:
+            timer_dict.update({
+                'beginning': self.beginning,
+                'end': self.end
+            })
+        return timer_dict
 
     def to_list(self, exclude_root=False):
         root = [] if exclude_root else [self]
@@ -82,11 +91,12 @@ class NestableTimer(object):
         return "%s.%s" % (self.parent.full_name, self.name)
 
     def __repr__(self):
-        return "NestableTimer(name='{}', beginning={}, end={}, parent='{}')".format(
+        return "NestableTimer(name='{}', beginning={}, end={}, parent='{}', subs='{}')".format(
             self.name,
             self.beginning,
             self.end,
-            self.parent.name if self.parent else ''
+            self.parent.name if self.parent else '',
+            self.subs
         )
 
 
@@ -189,9 +199,8 @@ class TimingContext(object):
         return self.root.to_list(exclude_root)
 
     def __repr__(self):
-        return "TimingContext(root='{}', root_dict='{}')".format(
-            self.root,
-            self.root.to_dict()
+        return "TimingContext(root='{}')".format(
+            self.root
         )
 
 

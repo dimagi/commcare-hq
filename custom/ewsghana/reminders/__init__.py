@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy as _
 
 REGISTER_HELP = _("Sorry, I didn't understand. To register, send register <name> <facility code>. "

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from couchexport.export import export_raw
 from custom.icds.management.commands.get_icds_sms_export import BaseICDSSMSExportCommand
 from custom.icds.const import (
@@ -10,7 +8,6 @@ from custom.icds.const import (
     MADHYA_PRADESH_SITE_CODE,
     RAJASTHAN_SITE_CODE,
 )
-from io import open
 
 
 class Command(BaseICDSSMSExportCommand):

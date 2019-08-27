@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import copy
 import re
 import textwrap
@@ -7,7 +5,6 @@ from django.conf import settings
 from django.template import Template, Context, TemplateSyntaxError
 from django.test import SimpleTestCase, override_settings
 from corehq.util.test_utils import make_make_path
-from io import open
 
 _make_path = make_make_path(__file__)
 
@@ -127,7 +124,7 @@ class TagTest(SimpleTestCase):
 
     def test_requirejs_main_multiple_tags(self):
         msg = r"multiple 'requirejs_main' tags not allowed \(\"requirejs/two\"\)"
-        with self.assertRaisesRegexp(TemplateSyntaxError, msg):
+        with self.assertRaisesRegex(TemplateSyntaxError, msg):
             self.render("""
                 {% load hq_shared_tags %}
                 {% requirejs_main "requirejs/one" %}
@@ -136,7 +133,7 @@ class TagTest(SimpleTestCase):
 
     def test_requirejs_main_too_short(self):
         msg = r"bad 'requirejs_main' argument: '"
-        with self.assertRaisesRegexp(TemplateSyntaxError, msg):
+        with self.assertRaisesRegex(TemplateSyntaxError, msg):
             self.render("""
                 {% load hq_shared_tags %}
                 {% requirejs_main ' %}
@@ -144,7 +141,7 @@ class TagTest(SimpleTestCase):
 
     def test_requirejs_main_bad_string(self):
         msg = r"bad 'requirejs_main' argument: \.'"
-        with self.assertRaisesRegexp(TemplateSyntaxError, msg):
+        with self.assertRaisesRegex(TemplateSyntaxError, msg):
             self.render("""
                 {% load hq_shared_tags %}
                 {% requirejs_main .' %}
@@ -152,7 +149,7 @@ class TagTest(SimpleTestCase):
 
     def test_requirejs_main_mismatched_delimiter(self):
         msg = r"bad 'requirejs_main' argument: 'x\""
-        with self.assertRaisesRegexp(TemplateSyntaxError, msg):
+        with self.assertRaisesRegex(TemplateSyntaxError, msg):
             self.render("""
                 {% load hq_shared_tags %}
                 {% requirejs_main 'x" %}

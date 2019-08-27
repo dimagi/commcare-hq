@@ -1,5 +1,4 @@
 # coding=utf-8
-from __future__ import absolute_import, unicode_literals
 
 import calendar
 import datetime
@@ -13,7 +12,6 @@ import re
 import types
 import uuid
 from collections import defaultdict, namedtuple, Counter, OrderedDict
-from functools import wraps
 
 from copy import deepcopy
 from distutils.version import LooseVersion
@@ -89,10 +87,14 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_build_doc,
     get_latest_released_app_doc,
+    get_build_by_version,
+    wrap_app,
 )
 from corehq.apps.app_manager.util import (
     get_latest_app_release_by_location,
     expire_get_latest_app_release_by_location_cache,
+    is_linked_app,
+    is_remote_app,
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -205,8 +207,6 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
 LATEST_APK_VALUE = 'latest'
 LATEST_APP_VALUE = 0
 
-_soft_assert = soft_assert(to="{}@{}.com".format('npellegrino', 'dimagi'), exponential_backoff=True)
-
 
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
@@ -277,9 +277,6 @@ class IndexedSchema(DocumentSchema):
             and (self.id == other.id)
             and (self._parent == other._parent)
         )
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     class Getter(object):
 
@@ -731,8 +728,6 @@ class FormSource(object):
             source = app.lazy_fetch_attachment(filename)
             if isinstance(source, bytes):
                 source = source.decode('utf-8')
-            else:
-                _soft_assert(False, type(source))
 
         return source
 
@@ -742,8 +737,6 @@ class FormSource(object):
         filename = "%s.xml" % unique_id
         if isinstance(value, six.text_type):
             value = value.encode('utf-8')
-        else:
-            _soft_assert(False, type(value))
         app.lazy_put_attachment(value, filename)
         form.clear_validation_cache()
         try:
@@ -1135,7 +1128,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(self.get_app().domain, etree.tostring(form.xml))
+                    validate_xform(self.get_app().domain, etree.tostring(form.xml, encoding="unicode"))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -1189,7 +1182,7 @@ class FormBase(DocumentSchema):
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
-        xform.add_missing_instances(app.domain)
+        xform.add_missing_instances(app)
 
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
@@ -3868,162 +3861,6 @@ class LazyBlobDoc(BlobMixin):
             super_save()
 
 
-class VersionedDoc(LazyBlobDoc):
-    """
-    A document that keeps an auto-incrementing version number, knows how to make copies of itself,
-    delete a copy of itself, and revert back to an earlier copy of itself.
-
-    """
-    domain = StringProperty()
-    copy_of = StringProperty()
-    version = IntegerProperty()
-    short_url = StringProperty()
-    short_odk_url = StringProperty()
-    short_odk_media_url = StringProperty()
-
-    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url', 'short_odk_url', 'short_odk_media_url']
-
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def master_id(self):
-        """Return the ID of the 'master' app. For app builds this is the ID
-        of the app they were built from otherwise it's just the app's ID."""
-        return self.copy_of or self._id
-
-    def save(self, response_json=None, increment_version=None, **params):
-        if increment_version is None:
-            increment_version = not self.copy_of and self.doc_type != 'LinkedApplication'
-        if increment_version:
-            self.version = self.version + 1 if self.version else 1
-        super(VersionedDoc, self).save(**params)
-        if response_json is not None:
-            if 'update' not in response_json:
-                response_json['update'] = {}
-            response_json['update']['app-version'] = self.version
-
-    def make_build(self):
-        assert self.get_id
-        assert self.copy_of is None
-        cls = self.__class__
-        copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True, limit=1).all()
-        if copies:
-            copy = copies[0]
-        else:
-            copy = deepcopy(self.to_json())
-            bad_keys = ('_id', '_rev', '_attachments', 'external_blobs',
-                        'short_url', 'short_odk_url', 'short_odk_media_url', 'recipients')
-
-            for bad_key in bad_keys:
-                if bad_key in copy:
-                    del copy[bad_key]
-
-            copy = cls.wrap(copy)
-            copy['copy_of'] = self._id
-
-            copy.copy_attachments(self)
-        return copy
-
-    def copy_attachments(self, other, regexp=ATTACHMENT_REGEX):
-        for name in other.lazy_list_attachments() or {}:
-            if regexp is None or re.match(regexp, name):
-                self.lazy_put_attachment(other.lazy_fetch_attachment(name), name)
-
-    def make_reversion_to_copy(self, copy):
-        """
-        Replaces couch doc with a copy of the backup ("copy").
-        Returns the another Application/RemoteApp referring to this
-        updated couch doc. The returned doc should be used in place of
-        the original doc, i.e. should be called as follows:
-            app = app.make_reversion_to_copy(copy)
-            app.save()
-        """
-        if copy.copy_of != self._id:
-            raise VersioningError("%s is not a copy of %s" % (copy, self))
-        app = deepcopy(copy.to_json())
-        app['_rev'] = self._rev
-        app['_id'] = self._id
-        app['version'] = self.version
-        app['copy_of'] = None
-        app.pop('_attachments', None)
-        app.pop('external_blobs', None)
-        cls = self.__class__
-        app = cls.wrap(app)
-        app.copy_attachments(copy)
-        return app
-
-    def delete_copy(self, copy):
-        if copy.copy_of != self._id:
-            raise VersioningError("%s is not a copy of %s" % (copy, self))
-        copy.delete_app()
-        copy.save(increment_version=False)
-
-    def scrub_source(self, source):
-        """
-        To be overridden.
-
-        Use this to scrub out anything
-        that should be shown in the
-        application source, such as ids, etc.
-
-        """
-        return source
-
-    def export_json(self, dump_json=True):
-        source = deepcopy(self.to_json())
-        for field in self._meta_fields:
-            if field in source:
-                del source[field]
-        _attachments = self.get_attachments()
-
-        # the '_attachments' value is a dict of `name: blob_content`
-        # pairs, and is part of the exported (serialized) app interface
-        source['_attachments'] = {k: v.decode('utf-8') for (k, v) in _attachments.items()}
-        source.pop("external_blobs", None)
-        source = self.scrub_source(source)
-
-        return json.dumps(source) if dump_json else source
-
-    def get_attachments(self):
-        attachments = {}
-        for name in self.lazy_list_attachments():
-            if re.match(ATTACHMENT_REGEX, name):
-                # FIXME loss of metadata (content type, etc.)
-                attachments[name] = self.lazy_fetch_attachment(name)
-        return attachments
-
-    def save_attachments(self, attachments, save=None):
-        with self.atomic_blobs(save=save):
-            for name, attachment in attachments.items():
-                if re.match(ATTACHMENT_REGEX, name):
-                    self.put_attachment(attachment, name)
-        return self
-
-    @classmethod
-    def from_source(cls, source, domain):
-        for field in cls._meta_fields:
-            if field in source:
-                del source[field]
-        source['domain'] = domain
-        app = cls.wrap(source)
-        return app
-
-    def is_deleted(self):
-        return self.doc_type.endswith(DELETED_SUFFIX)
-
-    def unretire(self):
-        self.doc_type = self.get_doc_type()
-        self.save()
-
-    def get_doc_type(self):
-        if self.doc_type.endswith(DELETED_SUFFIX):
-            return self.doc_type[:-len(DELETED_SUFFIX)]
-        else:
-            return self.doc_type
-
-
 def absolute_url_property(method):
     """
     Helper for the various fully qualified application URLs
@@ -4047,11 +3884,8 @@ class BuildProfile(DocumentSchema):
     def __eq__(self, other):
         return self.langs == other.langs and self.practice_mobile_worker_id == other.practice_mobile_worker_id
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
-
-class ApplicationBase(VersionedDoc, SnapshotMixin,
+class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                       CommCareFeatureSupportMixin,
                       CommentMixin):
     """
@@ -4063,6 +3897,17 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     _blobdb_type_code = CODES.application
     recipients = StringProperty(default="")
+    domain = StringProperty()
+
+    # Version-related properties. An application keeps an auto-incrementing version number and knows how to
+    # make copies of itself, delete a copy of itself, and revert back to an earlier copy of itself.
+    copy_of = StringProperty()
+    version = IntegerProperty()
+    short_url = StringProperty()
+    short_odk_url = StringProperty()
+    short_odk_media_url = StringProperty()
+    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version',
+                    'short_url', 'short_odk_url', 'short_odk_media_url']
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
@@ -4166,6 +4011,29 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         required=False
     )
 
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def master_id(self):
+        """Return the ID of the 'master' app. For app builds this is the ID
+        of the app they were built from otherwise it's just the app's ID."""
+        return self.copy_of or self._id
+
+    def is_deleted(self):
+        return self.doc_type.endswith(DELETED_SUFFIX)
+
+    def unretire(self):
+        self.doc_type = self.get_doc_type()
+        self.save()
+
+    def get_doc_type(self):
+        if self.doc_type.endswith(DELETED_SUFFIX):
+            return self.doc_type[:-len(DELETED_SUFFIX)]
+        else:
+            return self.doc_type
+
     @staticmethod
     def _scrap_old_conventions(data):
         should_save = False
@@ -4230,7 +4098,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return False
 
     @memoized
-    def get_previous_version(self):
+    def get_latest_build(self):
         return self.view('app_manager/applications',
             startkey=[self.domain, self.master_id, {}],
             endkey=[self.domain, self.master_id],
@@ -4249,8 +4117,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self.__class__.wrap(doc) if doc else None
 
     def set_admin_password(self, raw_password):
-        salt = os.urandom(5).encode('hex')
-        self.admin_password = make_password(raw_password, salt=salt)
+        self.admin_password = make_password(raw_password)
 
         if raw_password.isnumeric():
             self.admin_password_charset = 'n'
@@ -4514,34 +4381,93 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @time_method()
     def make_build(self, comment=None, user_id=None):
-        copy = super(ApplicationBase, self).make_build()
+        assert self.get_id
+        assert self.copy_of is None
+        cls = self.__class__
+        copies = cls.view(
+            'app_manager/applications',
+            key=[self.domain, self._id, self.version],
+            include_docs=True,
+            limit=1
+        ).all()
+        if copies:
+            copy = copies[0]
+        else:
+            copy = deepcopy(self.to_json())
+            bad_keys = ('_id', '_rev', '_attachments', 'external_blobs',
+                        'short_url', 'short_odk_url', 'short_odk_media_url', 'recipients')
+
+            for bad_key in bad_keys:
+                if bad_key in copy:
+                    del copy[bad_key]
+
+            copy = cls.wrap(copy)
+            copy.convert_app_to_build(self._id, user_id, comment)
+            copy.copy_attachments(self)
+
         if not copy._id:
             # I expect this always to be the case
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
-        copy.create_build_files()
+        if copy.create_build_files_on_build:
+            copy.create_build_files()
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
         # which makes tests error
         assert copy._id
-
-        built_on = datetime.datetime.utcnow()
-        copy.date_created = built_on
-        copy.built_on = built_on
-        copy.built_with = BuildRecord(
-            version=copy.build_spec.version,
-            build_number=copy.version,
-            datetime=built_on,
-        )
-        copy.build_comment = comment
-        copy.comment_from = user_id
-        copy.is_released = False
-
         prune_auto_generated_builds.delay(self.domain, self._id)
 
         return copy
+
+    def convert_app_to_build(self, copy_of, user_id, comment=None):
+        self.copy_of = copy_of
+        built_on = datetime.datetime.utcnow()
+        self.date_created = built_on
+        self.built_on = built_on
+        self.built_with = BuildRecord(
+            version=self.build_spec.version,
+            build_number=self.version,
+            datetime=built_on,
+        )
+        self.build_comment = comment
+        self.comment_from = user_id
+        self.is_released = False
+
+    def convert_build_to_app(self):
+        self.copy_of = None
+        self.date_created = None
+        self.built_on = None
+        self.built_with = BuildRecord()
+        self.build_comment = None
+        self.comment_from = None
+        self.is_released = False
+
+    def get_attachments(self):
+        attachments = {}
+        for name in self.lazy_list_attachments():
+            if re.match(ATTACHMENT_REGEX, name):
+                # FIXME loss of metadata (content type, etc.)
+                attachments[name] = self.lazy_fetch_attachment(name)
+        return attachments
+
+    def save_attachments(self, attachments, save=None):
+        with self.atomic_blobs(save=save):
+            for name, attachment in attachments.items():
+                if re.match(ATTACHMENT_REGEX, name):
+                    self.put_attachment(attachment, name)
+        return self
+
+    def copy_attachments(self, other, regexp=ATTACHMENT_REGEX):
+        for name in other.lazy_list_attachments() or {}:
+            if regexp is None or re.match(regexp, name):
+                self.lazy_put_attachment(other.lazy_fetch_attachment(name), name)
+
+    @property
+    @memoized
+    def create_build_files_on_build(self):
+        return not toggles.SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD.enabled(self.domain)
 
     def delete_app(self):
         domain_has_apps.clear(self.domain)
@@ -4572,8 +4498,17 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
         if self.copy_of:
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
-        super(ApplicationBase, self).save(
-            response_json=response_json, increment_version=increment_version, **params)
+
+        if increment_version is None:
+            increment_version = not self.copy_of and not is_linked_app(self)
+        if increment_version:
+            self.version = self.version + 1 if self.version else 1
+        super(ApplicationBase, self).save(**params)
+
+        if response_json is not None:
+            if 'update' not in response_json:
+                response_json['update'] = {}
+            response_json['update']['app-version'] = self.version
 
     @classmethod
     def save_docs(cls, docs, **kwargs):
@@ -4639,7 +4574,7 @@ class SavedAppBuild(ApplicationBase):
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
             'enable_offline_install': self.enable_offline_install,
-            'include_media': self.doc_type != 'RemoteApp',
+            'include_media': not is_remote_app(self),
             'j2me_enabled': menu_item_label in CommCareBuildConfig.j2me_enabled_config_labels(),
             'commcare_flavor': (
                 self.commcare_flavor
@@ -4720,8 +4655,33 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             get_form_analytics_metadata.clear(self.domain, self._id, xmlns)
         signals.app_post_save.send(Application, application=self)
 
+    def delete_copy(self, copy):
+        if copy.copy_of != self._id:
+            raise VersioningError("%s is not a copy of %s" % (copy, self))
+        copy.delete_app()
+        copy.save(increment_version=False)
+
     def make_reversion_to_copy(self, copy):
-        app = super(Application, self).make_reversion_to_copy(copy)
+        """
+        Replaces couch doc with a copy of the backup ("copy").
+        Returns a new Application referring to this updated couch doc.
+        The returned doc should be used in place of
+        the original doc, i.e. should be called as follows:
+            app = app.make_reversion_to_copy(copy)
+            app.save()
+        """
+        if copy.copy_of != self._id:
+            raise VersioningError("%s is not a copy of %s" % (copy, self))
+        app = deepcopy(copy.to_json())
+        app['_rev'] = self._rev
+        app['_id'] = self._id
+        app['version'] = self.version
+        app['copy_of'] = None
+        app.pop('_attachments', None)
+        app.pop('external_blobs', None)
+        cls = self.__class__
+        app = cls.wrap(app)
+        app.copy_attachments(copy)
 
         for form in app.get_forms():
             # reset the form's validation cache, since the form content is
@@ -4776,32 +4736,33 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
-        previous_version = self.get_previous_version()
-        if previous_version:
-            force_new_version = self.build_profiles != previous_version.build_profiles
-            for form_stuff in self.get_forms(bare=False):
-                filename = 'files/%s' % self.get_form_filename(**form_stuff)
-                form = form_stuff["form"]
-                if not force_new_version:
-                    try:
-                        previous_form = previous_version.get_form(form.unique_id)
-                        # take the previous version's compiled form as-is
-                        # (generation code may have changed since last build)
-                        previous_source = previous_version.fetch_attachment(filename)
-                    except (ResourceNotFound, FormNotFoundException):
-                        form.version = None
-                    else:
-                        previous_hash = _hash(previous_source)
-
-                        # hack - temporarily set my version to the previous version
-                        # so that that's not treated as the diff
-                        previous_form_version = previous_form.get_version()
-                        form.version = previous_form_version
-                        my_hash = _hash(self.fetch_xform(form=form))
-                        if previous_hash != my_hash:
-                            form.version = None
-                else:
+        latest_build = self.get_latest_build()
+        if not latest_build:
+            return
+        force_new_version = self.build_profiles != latest_build.build_profiles
+        for form_stuff in self.get_forms(bare=False):
+            filename = 'files/%s' % self.get_form_filename(**form_stuff)
+            form = form_stuff["form"]
+            if not force_new_version:
+                try:
+                    previous_form = latest_build.get_form(form.unique_id)
+                    # take the previous version's compiled form as-is
+                    # (generation code may have changed since last build)
+                    previous_source = latest_build.fetch_attachment(filename)
+                except (ResourceNotFound, FormNotFoundException):
                     form.version = None
+                else:
+                    previous_hash = _hash(previous_source)
+
+                    # hack - temporarily set my version to the previous version
+                    # so that that's not treated as the diff
+                    previous_form_version = previous_form.get_version()
+                    form.version = previous_form_version
+                    my_hash = _hash(self.fetch_xform(form=form))
+                    if previous_hash != my_hash:
+                        form.version = None
+            else:
+                form.version = None
 
     def set_media_versions(self):
         """
@@ -4811,8 +4772,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
 
         # access to .multimedia_map is slow
-        previous_version = self.get_previous_version()
-        prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
+        latest_build = self.get_latest_build()
+        prev_multimedia_map = latest_build.multimedia_map if latest_build else {}
 
         for path, map_item in six.iteritems(self.multimedia_map):
             prev_map_item = prev_multimedia_map.get(path, None)
@@ -5288,7 +5249,36 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         normal_modules = [m for modules in modules_by_parent_id.values() for m in modules]
         self.modules = normal_modules + orphaned_modules
 
+    @classmethod
+    def from_source(cls, source, domain):
+        for field in cls._meta_fields:
+            if field in source:
+                del source[field]
+        source['domain'] = domain
+        app = cls.wrap(source)
+        return app
+
+    def export_json(self, dump_json=True):
+        source = deepcopy(self.to_json())
+        for field in self._meta_fields:
+            if field in source:
+                del source[field]
+        _attachments = self.get_attachments()
+
+        # the '_attachments' value is a dict of `name: blob_content`
+        # pairs, and is part of the exported (serialized) app interface
+        source['_attachments'] = {k: v.decode('utf-8') for (k, v) in _attachments.items()}
+        source.pop("external_blobs", None)
+        source = self.scrub_source(source)
+
+        return json.dumps(source) if dump_json else source
+
     def scrub_source(self, source):
+        """
+        Use this to scrub out anything
+        that should be shown in the
+        application source, such as ids, etc.
+        """
         source = update_form_unique_ids(source)
         return update_report_module_ids(source)
 
@@ -5316,14 +5306,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         save_xform(to_app, copy_form, form.source.encode('utf-8'))
 
         return copy_form
-
-    @cached_property
-    def has_case_management(self):
-        for module in self.get_modules():
-            for form in module.get_forms():
-                if len(form.active_actions()) > 0:
-                    return True
-        return False
 
     @memoized
     def case_type_exists(self, case_type):
@@ -5376,7 +5358,6 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             # If there are multiple forms with the same xmlns, then all but one are shadow forms, therefore they
             # all have the same xform.
             return forms[0].wrapped_xform()
-
 
     def get_questions(self, xmlns, langs=None, include_triggers=False, include_groups=False,
                       include_translations=False):
@@ -5624,23 +5605,16 @@ class LinkedApplication(Application):
         for key, ref in self.logo_refs.items():
             mm = CommCareMultimedia.get(ref['m_id'])
             self.create_mapping(mm, ref['path'], save=False)
-        self.save()
 
 
 def import_app(app_id_or_source, domain, source_properties=None, request=None):
     if isinstance(app_id_or_source, six.string_types):
         soft_assert_type_text(app_id_or_source)
-        app_id = app_id_or_source
-        source = get_app(None, app_id)
-        source_domain = source['domain']
-        source = source.export_json(dump_json=False)
-        report_map = get_static_report_mapping(source_domain, domain)
+        source_app = get_app(None, app_id_or_source)
     else:
-        cls = get_correct_app_class(app_id_or_source)
-        # Don't modify original app source
-        app = cls.wrap(deepcopy(app_id_or_source))
-        source = app.export_json(dump_json=False)
-        report_map = {}
+        source_app = wrap_app(app_id_or_source)
+    source_domain = source_app.domain
+    source = source_app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']
     except KeyError:
@@ -5655,9 +5629,11 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     if 'build_spec' in source:
         del source['build_spec']
     app = cls.from_source(source, domain)
+    app.convert_build_to_app()
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
+    report_map = get_static_report_mapping(source_domain, domain)
     if report_map:
         for module in app.get_report_modules():
             for config in module.report_configs:
@@ -5867,6 +5843,7 @@ class AppReleaseByLocation(models.Model):
 class LatestEnabledBuildProfiles(models.Model):
     # ToDo: this would be deprecated after AppReleaseByLocation is released and
     # this model's entries are migrated to the new location specific model
+    domain = models.CharField(max_length=255, null=False, default='')
     app_id = models.CharField(max_length=255)
     build_profile_id = models.CharField(max_length=255)
     version = models.IntegerField()
@@ -5875,23 +5852,23 @@ class LatestEnabledBuildProfiles(models.Model):
 
     def save(self, *args, **kwargs):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
-        self.expire_cache(self.build.domain)
+        self.expire_cache(self.domain)
 
     @property
     def build(self):
         if not hasattr(self, '_build'):
-            self._build = Application.get(self.build_id)
+            self._build = get_build_by_version(self.domain, self.app_id, self.version)['value']
         return self._build
 
     def clean(self):
         if self.active:
-            if not self.build.is_released:
+            if not self.build['is_released']:
                 raise ValidationError({
                     'version': _("Version {} not released. Can not enable profiles for unreleased versions"
-                                 ).format(self.build.version)
+                                 ).format(self.build['version'])
                 })
             latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
-                app_id=self.build.copy_of,
+                app_id=self.build['copy_of'],
                 build_profile_id=self.build_profile_id
             )
             if latest_enabled_build_profile and latest_enabled_build_profile.version > self.version:
@@ -5922,7 +5899,8 @@ class LatestEnabledBuildProfiles(models.Model):
                 app_id=app_id,
                 version=version,
                 build_profile_id=build_profile_id,
-                build_id=build_id
+                build_id=build_id,
+                domain=build.domain
             )
         # assign it to avoid re-fetching during validations
         build_profile._build = build

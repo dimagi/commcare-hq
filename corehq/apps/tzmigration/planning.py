@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import sqlite3
 from sqlite3 import dbapi2 as sqlite
@@ -87,6 +85,12 @@ class BaseDB(object):
         self.engine = create_engine(
             'sqlite+pysqlite:///{}'.format(db_filepath), module=sqlite)
         self.Session = sessionmaker(bind=self.engine)
+
+    def __getstate__(self):
+        return self.db_filepath
+
+    def __setstate__(self, db_filepath):
+        self.__init__(db_filepath)
 
     @classmethod
     def init(cls, db_filepath):

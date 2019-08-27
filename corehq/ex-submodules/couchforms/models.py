@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 
 import datetime
@@ -32,7 +30,7 @@ from lxml.etree import XMLSyntaxError
 
 from corehq.blobs.mixin import DeferredBlobMixin, CODES
 from corehq.form_processor.abstract_models import AbstractXFormInstance
-from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.exceptions import XFormNotFound, MissingFormXml
 from corehq.form_processor.utils import clean_metadata
 
 from couchforms import const
@@ -285,7 +283,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
             try:
                 return self[const.TAG_XML]
             except AttributeError:
-                return None
+                raise MissingFormXml(self.form_id)
 
     def get_attachment(self, attachment_name):
         return self.fetch_attachment(attachment_name)

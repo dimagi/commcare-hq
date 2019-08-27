@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.toggles import RUN_AUTO_CASE_UPDATES_ON_SAVE
 from dimagi.utils.logging import notify_exception
 

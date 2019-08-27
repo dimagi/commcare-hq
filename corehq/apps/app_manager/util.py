@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import json
 import os
@@ -9,7 +7,6 @@ import logging
 import yaml
 from collections import OrderedDict, namedtuple
 from copy import deepcopy
-from io import open
 
 
 from couchdbkit import ResourceNotFound
@@ -72,6 +69,23 @@ def app_doc_types():
         'LinkedApplication': LinkedApplication,
         'LinkedApplication-Deleted': LinkedApplication
     }
+
+
+def is_linked_app(app_or_doc, include_deleted=False):
+    return _get_doc_type(app_or_doc) in ('LinkedApplication', 'LinkedApplication-Deleted')
+
+
+def is_remote_app(app_or_doc, include_deleted=False):
+    return _get_doc_type(app_or_doc) in ('RemoteApp', 'RemoteApp-Deleted')
+
+
+def _get_doc_type(app_or_doc):
+    if hasattr(app_or_doc, 'doc_type'):
+        doc_type = app_or_doc.doc_type
+    elif 'doc_type' in app_or_doc:
+        doc_type = app_or_doc['doc_type']
+    assert doc_type
+    return doc_type
 
 
 def _prepare_xpath_for_validation(xpath):
@@ -563,7 +577,9 @@ class LatestAppInfo(object):
 
     def clear_caches(self):
         self.get_latest_app_version.clear(self)
+        self.get_latest_apk_version.clear(self)
 
+    @quickcache(vary_on=['self.app_id'])
     def get_latest_apk_version(self):
         from corehq.apps.app_manager.models import LATEST_APK_VALUE
         from corehq.apps.builds.models import BuildSpec

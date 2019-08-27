@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 
 from corehq.apps.domain.views.base import (
     select,
@@ -39,7 +38,6 @@ from corehq.apps.domain.views.exchange import (
     set_published_snapshot,
 )
 from corehq.apps.domain.views.fixtures import (
-    CalendarFixtureConfigView,
     LocationFixtureConfigView,
 )
 from corehq.apps.domain.views.internal import (

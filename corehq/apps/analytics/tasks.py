@@ -1,7 +1,4 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
-from __future__ import division
 import csv342 as csv
 import os
 
@@ -47,7 +44,6 @@ from dimagi.utils.logging import notify_exception
 from memoized import memoized
 
 from corehq.apps.analytics.utils import analytics_enabled_for_email
-from io import open
 from six.moves import range
 
 logger = logging.getLogger('analytics')
@@ -69,6 +65,10 @@ HUBSPOT_SAVED_APP_FORM_ID = "8494a26a-8576-4241-97de-a28dc8bf927c"
 HUBSPOT_SAVED_UCR_FORM_ID = "a0d64c4a-2e37-4f48-9700-b9831acdd1d9"
 HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
+
+
+HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', False)
+KISSMETRICS_ENABLED = settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', False)
 
 
 def _raise_for_urllib3_response(response):
@@ -438,6 +438,10 @@ def track_periodic_data():
     :return:
     """
     # Start by getting a list of web users mapped to their domains
+
+    if not KISSMETRICS_ENABLED and not HUBSPOT_ENABLED:
+        return
+
     three_months_ago = date.today() - timedelta(days=90)
 
     user_query = (UserES()

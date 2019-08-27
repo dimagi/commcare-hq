@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import six
 import json
@@ -11,7 +8,6 @@ from six.moves import input
 from pillowtop.models import KafkaCheckpoint
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_pillow_by_name
-from io import open
 
 
 PILLOW_REORG_MAPPING = {

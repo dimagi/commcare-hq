@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import mimetypes
 import os
@@ -33,7 +30,7 @@ from corehq.blobs.exceptions import NotFound, BadName
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import get_content_md5
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
-from corehq.form_processor.exceptions import UnknownActionType
+from corehq.form_processor.exceptions import UnknownActionType, MissingFormXml
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel, RestrictedManager
@@ -553,10 +550,16 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     @memoized
     def get_xml(self):
-        return self.get_attachment('form.xml')
+        try:
+            return self.get_attachment('form.xml')
+        except NotFound:
+            raise MissingFormXml(self.form_id)
 
     def xml_md5(self):
-        return self.get_attachment_meta('form.xml').content_md5()
+        try:
+            return self.get_attachment_meta('form.xml').content_md5()
+        except NotFound:
+            raise MissingFormXml(self.form_id)
 
     def archive(self, user_id=None, trigger_signals=True):
         # If this archive was initiated by a user, delete all other stubs for this action so that this action
@@ -1241,9 +1244,6 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             self.relationship_id == other.relationship_id,
         )
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     def __hash__(self):
         return hash((self.case_id, self.identifier, self.referenced_id, self.relationship_id))
 
@@ -1428,9 +1428,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             self.form_id == other.form_id
         )
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     @classmethod
     def form_transaction(cls, case, xform, client_date, action_types=None):
         action_types = action_types or []
@@ -1540,9 +1537,6 @@ class CaseTransactionDetail(JsonObject):
 
     def __eq__(self, other):
         return self.type == other.type and self.to_json() == other.to_json()
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     __hash__ = None
 

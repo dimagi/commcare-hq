@@ -20,7 +20,9 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
                 'version']);
             self.id = details.id;
             self.active = ko.observable(details.active);
-            self.status = details.active ? gettext('Active') : gettext('Inactive');
+            self.status = ko.computed(function () {
+                return (self.active() ? gettext("Active") : gettext("Inactive"));
+            });
             self.appName = details.app_name;
             self.version = details.version;
             self.profileName = details.profile_name;
@@ -74,8 +76,9 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
                 var appId = $("#app-id-search-select").val();
                 var profileId = $("#app-profile-id-input").val() || '';
                 var version = $("#version-input").val() || '';
+                var status = $("#status-input").val() || '';
                 window.location.search = ("build_profile_id=" + profileId + "&app_id=" + appId + "&version=" +
-                    version);
+                    version + "&status=" + status);
             };
             self.clear = function () {
                 window.location.search = "";

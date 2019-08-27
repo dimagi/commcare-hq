@@ -147,7 +147,10 @@ hqDefine("scheduling/js/conditional_alert_list", [
             });
         };
 
-        self.goToPage(self.currentPage());
+        self.onPaginationLoad = function () {
+            self.goToPage(self.currentPage());
+        };
+
         // Refresh table periodically, unless someone is typing a project name in the copy input
         setInterval(function () {
             if (!_.find(self.rules(), function (r) { return r.projectName(); })) {

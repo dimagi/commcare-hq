@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import uuid
 from corehq.apps.accounting.models import SoftwarePlanEdition
@@ -43,13 +41,11 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
-from flaky import flaky
 from mock import patch
 from six.moves.urllib.parse import urlencode
 from six.moves import range
 
 
-@flaky
 class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
     @classmethod

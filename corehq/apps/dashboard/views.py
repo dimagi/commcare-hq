@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-from __future__ import unicode_literals
 from django.conf import settings
 from django.urls import reverse
 from django.http import HttpResponseRedirect
@@ -46,9 +44,6 @@ def default_dashboard_url(request, domain):
 
     if couch_user and user_has_custom_top_menu(domain, couch_user):
         return reverse('saved_reports', args=[domain])
-
-    if not domain_has_apps(domain):
-        return reverse('default_app', args=[domain])
 
     return reverse(DomainDashboardView.urlname, args=[domain])
 

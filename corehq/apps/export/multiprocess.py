@@ -18,9 +18,6 @@ The export works as follows:
   * Add successful pages to final ZIP archive
   * Add raw data dumps for unsuccessful pages to final ZIP archive
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import gzip
 import json
 import logging
@@ -41,7 +38,6 @@ from corehq.elastic import ScanResult
 from corehq.util.files import safe_filename
 from couchexport.export import get_writer
 from couchexport.writers import ZippedExportWriter
-from io import open
 
 TEMP_FILE_PREFIX = 'cchq_export_dump_'
 

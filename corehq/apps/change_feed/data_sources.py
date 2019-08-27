@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf import settings
 from casexml.apps.phone.document_store import ReadonlySyncLogDocumentStore
 from corehq.apps.change_feed import topics

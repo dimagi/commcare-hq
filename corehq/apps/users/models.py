@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
@@ -205,9 +203,6 @@ class Permissions(DocumentSchema):
             if self._getattr(name) != other._getattr(name):
                 return False
         return True
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     @classmethod
     def max(cls):
@@ -934,9 +929,6 @@ class DeviceIdLastUsed(DocumentSchema):
 
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
 
 class LastSubmission(DocumentSchema):
@@ -1868,12 +1860,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self._id
         ))
 
-        groups += [group for group in Group.by_user(self) if group.case_sharing]
+        groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
         return groups
 
     def get_reporting_groups(self):
         from corehq.apps.groups.models import Group
-        return [group for group in Group.by_user(self) if group.reporting]
+        return [group for group in Group.by_user_id(self._id) if group.reporting]
 
     @classmethod
     def cannot_share(cls, domain, limit=None, skip=0):
@@ -1894,7 +1886,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
-        return Group.by_user(self, wrap=False)
+        return Group.by_user_id(self._id, wrap=False)
 
     def set_groups(self, group_ids):
         from corehq.apps.groups.models import Group
@@ -1940,9 +1932,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return None
 
     def get_location_ids(self, domain):
+        # domain arg included here for compatibility with WebUser
         return self.assigned_location_ids
 
     def get_sql_locations(self, domain):
+        # domain arg included here for compatibility with WebUser
         from corehq.apps.locations.models import SQLLocation
         if self.assigned_location_ids:
             return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)

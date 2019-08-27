@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from datetime import datetime
 from django.utils.decorators import method_decorator
@@ -67,8 +65,14 @@ class ManageReleasesByLocation(BaseProjectSettingsView):
         version = self.request.GET.get('version')
         if version:
             q = q.filter(version=version)
+        status = self.request.GET.get('status')
+        if status:
+            if status == 'active':
+                q = q.filter(active=True)
+            elif status == 'inactive':
+                q = q.filter(active=False)
 
-        app_releases_by_location = [release.to_json() for release in q]
+        app_releases_by_location = [release.to_json() for release in q.order_by('-version')]
         for r in app_releases_by_location:
             r['app'] = app_names.get(r['app'], r['app'])
         return {
@@ -122,7 +126,7 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
     @property
     def page_context(self):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
-        query = LatestEnabledBuildProfiles.objects.order_by('version')
+        query = LatestEnabledBuildProfiles.objects
         app_id = self.request.GET.get('app_id')
         if app_id:
             query = query.filter(app_id=app_id)
@@ -134,7 +138,13 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
         build_profile_id = self.request.GET.get('build_profile_id')
         if build_profile_id:
             query = query.filter(build_profile_id=build_profile_id)
-        app_releases_by_app_profile = [release.to_json(app_names) for release in query]
+        status = self.request.GET.get('status')
+        if status:
+            if status == 'active':
+                query = query.filter(active=True)
+            elif status == 'inactive':
+                query = query.filter(active=False)
+        app_releases_by_app_profile = [release.to_json(app_names) for release in query.order_by('-version')]
         return {
             'manage_releases_by_app_profile_form': self.form,
             'app_releases_by_app_profile': app_releases_by_app_profile,

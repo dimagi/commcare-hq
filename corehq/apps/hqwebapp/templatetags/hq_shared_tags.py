@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import OrderedDict
 from datetime import datetime, timedelta
 import hashlib
@@ -28,7 +26,6 @@ from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq import toggles
 import six
-from io import open
 
 
 register = template.Library()
@@ -99,7 +96,8 @@ def concat(str1, str2):
     return "%s%s" % (str1, str2)
 
 try:
-    from resource_versions import resource_versions
+    from get_resource_versions import get_resource_versions
+    resource_versions = get_resource_versions()
 except (ImportError, SyntaxError):
     resource_versions = {}
 
@@ -251,27 +249,6 @@ def ui_notify_slug(ui_notify_instance_or_name):
     import corehq.apps.notifications.ui_notify
     ui_notify = _get_obj_from_name_or_instance(corehq.apps.notifications.ui_notify, ui_notify_instance_or_name)
     return ui_notify.slug
-
-
-@register.filter
-def toggle_tag_info(request, toggle_or_toggle_name):
-    """Show Tag Information for feature flags / Toggles,
-    and if not enabled, show where the UI would be.
-    Useful for trying to find out if you have all the flags enabled in a
-    particular location or whether a feature on prod is part of a particular
-    flag. """
-    if not toggles.SHOW_DEV_TOGGLE_INFO.enabled_for_request(request):
-        return ""
-    flag = _get_obj_from_name_or_instance(toggles, toggle_or_toggle_name)
-    tag = flag.tag
-    is_enabled = flag.enabled_for_request(request)
-    return mark_safe("""<div class="label label-{css_class} label-flag{css_disabled}">{tag_name}: {description}{status}</div>""".format(
-        css_class=tag.css_class,
-        tag_name=tag.name,
-        description=flag.label,
-        status=" <strong>[DISABLED]</strong>" if not is_enabled else "",
-        css_disabled=" label-flag-disabled" if not is_enabled else "",
-    ))
 
 
 @register.filter

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -125,7 +123,7 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
     def test_pause(self):
         xform = self.get_xml('form')
         set_tz_migration_started(self.domain)
-        with self.assertRaisesRegexp(LocalSubmissionError, 'status code 503'):
+        with self.assertRaisesRegex(LocalSubmissionError, 'status code 503'):
             submit_form_locally(xform, self.domain)
         _run_timezone_migration_for_domain(self.domain)
         set_tz_migration_complete(self.domain)

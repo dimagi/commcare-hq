@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
@@ -249,17 +247,6 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
                     'Specify a location so that CommCare can set an owner for cases added via the Atom feed.'
                 ))
         return cleaned_data
-
-
-class Dhis2RepeaterForm(FormRepeaterForm):
-
-    def __init__(self, *args, **kwargs):
-        super(Dhis2RepeaterForm, self).__init__(*args, **kwargs)
-        # self.fields['location_id'].widget = SupplyPointSelectWidget(self.domain, id='id_location_id')
-
-    def get_ordered_crispy_form_fields(self):
-        fields = super(Dhis2RepeaterForm, self).get_ordered_crispy_form_fields()
-        return fields
 
 
 class EmailBulkPayload(forms.Form):

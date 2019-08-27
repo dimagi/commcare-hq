@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.sms.models import SMS
 from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from datetime import datetime

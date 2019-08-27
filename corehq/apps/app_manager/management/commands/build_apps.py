@@ -1,14 +1,10 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import contextlib
 import json
 import time
 from django.core.management.base import BaseCommand
 from lxml import etree
 import os
-from corehq.apps.app_manager.models import Application, RemoteApp
-from io import open
+from corehq.apps.app_manager.dbaccessors import wrap_app
 
 try:
     from guppy import hpy
@@ -70,10 +66,7 @@ class Command(BaseCommand):
             source_path = os.path.join(path, 'src', '%s.json' % slug)
             with open(source_path, encoding='utf-8') as f:
                 j = json.load(f)
-                if j['doc_type'] == 'Application':
-                    app = Application.wrap(j)
-                elif j['doc_type'] == 'RemoteApp':
-                    app = RemoteApp.wrap(j)
+                app = wrap_app(j)
 
             app.version = 1
             if not app.domain:

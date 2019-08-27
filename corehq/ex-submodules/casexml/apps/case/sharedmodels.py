@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import mimetypes
 
 from corehq.form_processor.abstract_models import IsImageMixin

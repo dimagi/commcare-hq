@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from io import BytesIO, open
 from zipfile import ZipFile
@@ -138,7 +137,7 @@ class ConvertTranslations(BaseTranslationsView):
 
         :return: Workbook object
         """
-        po_file = polib.pofile(uploaded_file.read())
+        po_file = polib.pofile(uploaded_file.read().decode('utf-8'))
         wb = openpyxl.Workbook()
         ws = wb.worksheets[0]
         ws.title = "Translations"

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # CommCareHQ documentation build configuration file, created by
 # sphinx-quickstart on Wed Sep  3 09:42:11 2014.
@@ -11,8 +10,6 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import django
 import sys, os
 from mock import MagicMock
