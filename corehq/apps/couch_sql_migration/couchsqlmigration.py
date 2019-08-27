@@ -400,7 +400,7 @@ class CouchSqlDomainMigrator(object):
 
     def _migrate_form(self, wrapped_form, case_ids):
         if self.same_domain():
-            set_local_domain_sql_backend_override(self.src_domain)
+            set_local_domain_sql_backend_override(self.src_domain)  # TODO: Why do we do this for every form?
         form_id = wrapped_form.form_id
         try:
             self._migrate_form_and_associated_models(wrapped_form)
