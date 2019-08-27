@@ -25,7 +25,6 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
-import csv
 import six
 from couchdbkit import ResourceNotFound
 from django_prbac.decorators import requires_privilege_raise404
