@@ -9,7 +9,7 @@ from django.template import Context, Template
 from django.template.loader import render_to_string
 
 import attr
-import csv342 as csv
+import csv
 import requests
 from celery.schedules import crontab
 from celery.task import task

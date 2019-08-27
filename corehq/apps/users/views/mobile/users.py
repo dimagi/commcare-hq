@@ -20,7 +20,7 @@ from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 
-import csv342 as csv
+import csv
 import six
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound

@@ -1,6 +1,6 @@
 from datetime import datetime
 from openpyxl import Workbook
-import csv342 as csv
+import csv
 from couchdbkit import ResourceNotFound
 
 from django.core.management.base import BaseCommand, CommandError

@@ -15,7 +15,7 @@ from django.core.cache import cache
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 
-import csv342 as csv
+import csv
 import six
 from celery import chain
 from celery.schedules import crontab

@@ -1,5 +1,4 @@
-
-import csv342 as csv
+import csv
 import six
 import sys
 import time

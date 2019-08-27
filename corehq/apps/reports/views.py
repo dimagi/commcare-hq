@@ -34,7 +34,7 @@ from django.views.decorators.http import (
 from django.views.generic import View
 from django.views.generic.base import TemplateView
 
-import csv342 as csv
+import csv
 import pytz
 import six
 from couchdbkit.exceptions import ResourceNotFound

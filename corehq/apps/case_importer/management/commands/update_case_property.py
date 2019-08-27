@@ -1,7 +1,7 @@
 
 from django.core.management import BaseCommand
 
-import csv342 as csv
+import csv
 import six
 
 from dimagi.utils.chunked import chunked
