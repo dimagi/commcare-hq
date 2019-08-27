@@ -1,4 +1,3 @@
-# encoding: utf-8
 import json
 import os
 from io import BytesIO
@@ -118,7 +117,7 @@ class DataFileDownloadDetailTest(ViewTestCase):
 @generate_cases([
     (0, 999),
     (1000, 1999),
-    (12000, None)
+    (11000, None)  # This test uses this file (test_export_views.py). `11000` must be less than its size.
 ], DataFileDownloadDetailTest)
 @flag_enabled('DATA_FILE_DOWNLOAD')
 def test_data_file_download_partial(self, start, end):

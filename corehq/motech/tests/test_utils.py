@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 import doctest
 from base64 import b64encode
 

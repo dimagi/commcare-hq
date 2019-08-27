@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 from django.db import models, migrations
 from corehq.util.django_migrations import AlterIndexIfNotExists

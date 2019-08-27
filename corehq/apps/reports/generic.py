@@ -43,6 +43,8 @@ from six.moves import zip
 from six.moves import range
 from itertools import chain
 
+from corehq import toggles
+
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
 
@@ -479,7 +481,8 @@ class GenericReportView(object):
             report_configs=report_configs,
             show_time_notice=self.show_time_notice,
             domain=self.domain,
-            layout_flush_content=self.flush_layout
+            layout_flush_content=self.flush_layout,
+            hasAccessToIcdsDashboardFeatures=self.icds_pre_release_features()
         )
 
     @property
@@ -501,8 +504,11 @@ class GenericReportView(object):
             'emailDefaultSubject': self.rendered_report_title,
             'type': self.dispatcher.prefix,
             'urlRoot': self.url_root,
-            'asyncUrl': async_url,
+            'asyncUrl': async_url
         }
+
+    def icds_pre_release_features(self):
+        return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username)
 
     def update_filter_context(self):
         """

@@ -1,4 +1,3 @@
-Updating SQL Case and Form models
 ---------------------------------
 
 1. Update python models

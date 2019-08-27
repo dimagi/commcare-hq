@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 from django.db import migrations
 from corehq.doctypemigrations.djangomigrations import assert_initial_complete

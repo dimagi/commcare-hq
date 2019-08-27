@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import requests
 
 from dimagi.utils.logging import notify_exception

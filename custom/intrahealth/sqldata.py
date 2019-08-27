@@ -3912,6 +3912,10 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
         self.config = config
 
     @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
     def table_name(self):
         config_domain = self.config['domain']
         doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, 'yeksi_naa_reports_consumption')
@@ -3996,6 +4000,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
         rows_to_return = []
         all_wanted_rows = []
         rows = self.get_data()
+
         if self.desired_location:
             for row in rows:
                 if self.desired_location in row.values():
@@ -4007,7 +4012,6 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
             stocks = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
 
             stocks_list = []
-            stocks_list_to_return = []
             added_locations = []
             added_programs = []
             added_products_for_locations = {}
@@ -4015,6 +4019,9 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
             for stock in stocks:
                 location_name = stock['{}'.format(self.loc_name)]
                 location_id = stock['{}'.format(self.loc_id)]
+                if location_id is None:
+                    location_id = ''
+                    location_name = ''
                 product_name = stock['product_name']
                 product_id = stock['product_id']
                 program_id = stock['program_id']
@@ -4086,13 +4093,9 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
                     stocks_list.pop(index)
                     for program in programs:
                         stock['program_id'] = program
-                        stocks_list.append(stock)
+                        stocks_list.append(stock.copy())
 
-            stocks_list = sorted(stocks_list, key=lambda x: x['location_id'])
-
-            for stock in stocks_list:
-                if stock not in stocks_list_to_return:
-                    stocks_list_to_return.append(stock)
+            stocks_list_to_return = sorted(stocks_list, key=lambda x: x['location_id'])
 
             return stocks_list_to_return
 
@@ -4128,6 +4131,10 @@ class TauxDeRuptureRateData(SqlData):
     def __init__(self, config):
         super(TauxDeRuptureRateData, self).__init__()
         self.config = config
+
+    @property
+    def engine_id(self):
+        return 'ucr'
 
     @property
     def table_name(self):
@@ -4223,7 +4230,6 @@ class TauxDeRuptureRateData(SqlData):
             stocks = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
 
             stocks_list = []
-            stocks_list_to_return = []
             added_locations = []
             added_programs = []
             added_products_for_locations = {}
@@ -4231,6 +4237,9 @@ class TauxDeRuptureRateData(SqlData):
             for stock in stocks:
                 location_name = stock['{}'.format(self.loc_name)]
                 location_id = stock['{}'.format(self.loc_id)]
+                if location_id is None:
+                    location_id = ''
+                    location_name = ''
                 product_name = stock['product_name']
                 product_id = stock['product_id']
                 program_id = stock['program_id']
@@ -4302,13 +4311,9 @@ class TauxDeRuptureRateData(SqlData):
                     stocks_list.pop(index)
                     for program in programs:
                         stock['program_id'] = program
-                        stocks_list.append(stock)
+                        stocks_list.append(stock.copy())
 
-            stocks_list = sorted(stocks_list, key=lambda x: x['location_id'])
-
-            for stock in stocks_list:
-                if stock not in stocks_list_to_return:
-                    stocks_list_to_return.append(stock)
+            stocks_list_to_return = sorted(stocks_list, key=lambda x: x['location_id'])
 
             return stocks_list_to_return
 
@@ -4344,6 +4349,10 @@ class ConsommationPerProductData(SqlData):
     def __init__(self, config):
         super(ConsommationPerProductData, self).__init__()
         self.config = config
+
+    @property
+    def engine_id(self):
+        return 'ucr'
 
     @property
     def table_name(self):
@@ -4438,7 +4447,6 @@ class ConsommationPerProductData(SqlData):
             consumptions = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
 
             consumptions_list = []
-            consumptions_list_to_return = []
             added_locations = []
             added_programs = []
             added_products_for_locations = {}
@@ -4446,6 +4454,9 @@ class ConsommationPerProductData(SqlData):
             for consumption in consumptions:
                 location_name = consumption['{}'.format(self.loc_name)]
                 location_id = consumption['{}'.format(self.loc_id)]
+                if location_id is None:
+                    location_id = ''
+                    location_name = ''
                 product_name = consumption['product_name']
                 product_id = consumption['product_id']
                 program_id = consumption['program_id']
@@ -4509,13 +4520,9 @@ class ConsommationPerProductData(SqlData):
                     consumptions_list.pop(index)
                     for program in programs:
                         consumption['program_id'] = program
-                        consumptions_list.append(consumption)
+                        consumptions_list.append(consumption.copy())
 
-            consumptions_list = sorted(consumptions_list, key=lambda x: x['location_id'])
-
-            for consumption in consumptions_list:
-                if consumption not in consumptions_list_to_return:
-                    consumptions_list_to_return.append(consumption)
+            consumptions_list_to_return = sorted(consumptions_list, key=lambda x: x['location_id'])
 
             return consumptions_list_to_return
 
@@ -5018,7 +5025,6 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
         def clean_rows(data_to_clean):
             quantities = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
             quantities_list = []
-            quantities_to_return = []
             added_locations = []
             added_programs = []
             added_products_for_locations = {}
@@ -5026,6 +5032,9 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
             for quantity in quantities:
                 location_id = quantity['{}'.format(self.loc_id)]
                 location_name = quantity['{}'.format(self.loc_name)]
+                if location_id is None:
+                    location_id = ''
+                    location_name = ''
                 product_name = quantity['product_name']
                 product_id = quantity['product_id']
                 program_id = quantity['select_programs']
@@ -5086,13 +5095,9 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
                     quantities_list.append(data_dict)
                     added_products_for_locations[location_id] = [product_data]
 
-            quantities_list = sorted(quantities_list, key=lambda x: x['location_id'])
+            quantities_list_to_return = sorted(quantities_list, key=lambda x: x['location_id'])
 
-            for quantity in quantities_list:
-                if quantity not in quantities_to_return:
-                    quantities_to_return.append(quantity)
-
-            return quantities_to_return
+            return quantities_list_to_return
 
         clean_data = clean_rows(all_wanted_rows)
 
@@ -5109,6 +5114,10 @@ class ValuationOfPNAStockPerProductV2Data(SqlData):
     def __init__(self, config):
         super(ValuationOfPNAStockPerProductV2Data, self).__init__()
         self.config = config
+
+    @property
+    def engine_id(self):
+        return 'ucr'
 
     @property
     def table_name(self):
@@ -5191,6 +5200,10 @@ class RecapPassageOneData(SqlData):
         super(RecapPassageOneData, self).__init__()
         self.config = config
         self.product_names = []
+
+    @property
+    def engine_id(self):
+        return 'ucr'
 
     @property
     def table_name(self):

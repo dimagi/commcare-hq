@@ -1,4 +1,3 @@
-# coding: utf-8
 from six.moves import input
 import os
 import time

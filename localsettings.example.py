@@ -227,9 +227,6 @@ REPORT_CACHE = 'default'  # or e.g. 'redis'
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://127.0.0.1:6379/0',
-    'OPTIONS': {
-        'PICKLE_VERSION': 2,  # After PY3 migration: remove
-    },
 }
 # example redis cluster setting
 redis_cluster_cache = {
@@ -241,7 +238,6 @@ redis_cluster_cache = {
         'CONNECTION_POOL_KWARGS': {
             'skip_full_coverage_check': True
         },
-        'PICKLE_VERSION': 2,  # After PY3 migration: remove
     }
 }
 CACHES = {
