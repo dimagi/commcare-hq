@@ -56,6 +56,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
     LedgerAccessors,
 )
+from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import (
@@ -766,13 +767,6 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(case.dynamic_case_properties()["age"], '27')
 
     def test_migrate_archived_form_after_live_migration(self):
-        def describe(form):
-            try:
-                arg0 = json.loads(form.form_data.get("args"))[0]
-            except Exception:
-                arg0 = repr(form)
-            return "%s %s" % (form.form_data.get("name", form.form_id), arg0)
-
         self.submit_form(make_test_form("arch-1"), timedelta(minutes=-95))
         self.submit_form(make_test_form("arch-2"), timedelta(minutes=-90)).archive()
         with self.patch_migration_chunk_size(1):
@@ -788,12 +782,44 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(
-            {describe(f) for f in self._iter_forms(self._get_form_ids())},
+            {self._describe(f) for f in self._iter_forms(self._get_form_ids())},
             {"archive_form arch-1"},
         )
         self.assertEqual(self._get_form_ids("XFormArchived"), {"arch-1", "arch-2"})
         self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"test-case"})
         self._compare_diffs([])
+
+    def test_migrate_unarchived_form_after_live_migration(self):
+        self.submit_form(make_test_form("form"), timedelta(minutes=-90))
+        self.submit_form(make_test_form("arch"), timedelta(minutes=-95)).archive()
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids("XFormArchived"), {"arch"})
+        self.assertEqual(self._get_form_ids(), {"form"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.assert_backend("couch")
+        FormAccessors(self.domain_name).get_form("arch").unarchive()
+
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(
+            {self._describe(f) for f in self._iter_forms(self._get_form_ids())},
+            {"form", "archive_form arch", "arch"},
+        )
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        # diff because "arch" was originally migrated as an "unprocessed_form"
+        self._compare_diffs([
+            ('CommCareCase', Diff('set_mismatch', ['xform_ids', '[*]'], old='arch', new='')),
+        ])
+
+    @staticmethod
+    def _describe(form):
+        data = form.form_data
+        if data.get("@xmlns", "") == SYSTEM_ACTION_XMLNS:
+            return f"{data['name']} {json.loads(data['args'])[0]}"
+        return form.form_id
 
     def test_reset_migration(self):
         now = datetime.utcnow()
