@@ -106,6 +106,23 @@ hqDefine("export/js/export_list", [
             self.hasAdditionalODataFeeds = ko.computed(function () {
                 return self.odataAdditionalFeedUrls().length > 0;
             });
+            self.sendAnalyticsOpenAdditionalFeeds = function () {
+                if (options.exportType === 'form') {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Repeat Group Feeds");
+                } else {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Parent Feeds");
+                }
+            };
+            self.sendAnalyticsCloseAdditionalFeeds = function () {
+                var eventData = {
+                    "Number of feeds": self.odataAdditionalFeedUrls().length,
+                };
+                if (options.exportType === 'form') {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Close on Repeat Group Feeds modal", eventData);
+                } else {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Close on Parent Feeds modal", eventData);
+                }
+            }
         }
 
         self.isLocationSafeForUser = function () {

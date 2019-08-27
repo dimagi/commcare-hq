@@ -140,13 +140,16 @@
           <!-- ko if: hasAdditionalODataFeeds -->
             <p>
               <a class="btn btn-link btn-sm"
-                 data-bind="attr: {href: '#' + id() + 'secondary-odata'}"
+                 data-bind="attr: {
+                              href: '#' + id() + '-odata-additional'
+                            },
+                            click: sendAnalyticsOpenAdditionalFeeds"
                  data-toggle="modal">
                 {% trans "Show Additional Feeds" %}
               </a>
             </p>
             <div class="modal fade"
-                 data-bind="attr: {id: id() + 'secondary-odata'}">
+                 data-bind="attr: {id: id() + '-odata-additional'}">
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
@@ -201,6 +204,7 @@
                   <div class="modal-footer">
                     <a href="#"
                        class="btn btn-default"
+                       data-bind="click: sendAnalyticsCloseAdditionalFeeds"
                        data-dismiss="modal">
                       {% trans "Close" %}
                     </a>
