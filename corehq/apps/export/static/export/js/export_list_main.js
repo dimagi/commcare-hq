@@ -13,7 +13,8 @@ hqDefine("export/js/export_list_main", [
     listModels
 ) {
     $(function () {
-        var $createExport = $("#create-export");
+        var $createExport = $("#create-export"),
+            isOData = initialPageData.get('is_odata', true);
 
         if ($createExport.length) {
             $createExport.koApplyBindings(createModels.createExportModel({
@@ -33,13 +34,25 @@ hqDefine("export/js/export_list_main", [
             });
         }
 
+        if (isOData) {
+            kissmetricsAnalytics.track.event("[BI Integration] Visited feature page");
+            kissmetricsAnalytics.track.outboundLink(
+                '#js-odata-track-learn-more',
+                "[BI Integration] Clicked Learn More-Wiki"
+            );
+            kissmetricsAnalytics.track.outboundLink(
+                '#js-odata-track-learn-more-preview',
+                "[BI Integration] Clicked Learn More-Feature Preview"
+            );
+        }
+
         var modelType = initialPageData.get("model_type");
         $("#export-list").koApplyBindings(listModels.exportListModel({
             modelType: modelType,
             isDeid: initialPageData.get('is_deid'),
             isDailySavedExport: initialPageData.get('is_daily_saved_export', true),
             isFeed: initialPageData.get('is_feed', true),
-            isOData: initialPageData.get('is_odata', true),
+            isOData: isOData,
             headers: {
                 my_export_type: initialPageData.get('my_export_type'),
                 shared_export_type: initialPageData.get('shared_export_type'),
