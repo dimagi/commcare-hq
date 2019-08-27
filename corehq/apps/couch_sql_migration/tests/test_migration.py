@@ -956,8 +956,11 @@ class TestLockingQueues(TestCase):
             if location is not None:
                 self.assertEqual(
                     present,
-                    (len(self.queues.queue_by_lock_id[lock_id]) > (location - 1) and
-                        queue_obj_id == self.queues.queue_by_lock_id[lock_id][location]))
+                    (
+                        len(self.queues.queue_by_lock_id[lock_id]) > (location - 1)
+                        and queue_obj_id == self.queues.queue_by_lock_id[lock_id][location]
+                    )
+                )
             else:
                 self.assertEqual(present, queue_obj_id in self.queues.queue_by_lock_id[lock_id])
 

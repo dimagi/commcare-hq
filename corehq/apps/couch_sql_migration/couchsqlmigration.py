@@ -4,7 +4,6 @@ import logging
 import os
 import sys
 import uuid
-from collections import defaultdict
 from datetime import datetime, timedelta
 from itertools import chain
 
