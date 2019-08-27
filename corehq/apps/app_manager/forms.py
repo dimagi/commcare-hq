@@ -14,7 +14,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.toggles import LINKED_DOMAINS
 
-from .dbaccessors import get_all_built_app_ids_and_versions
+from .dbaccessors import get_all_built_app_ids_and_versions, get_app
 from .models import LATEST_APK_VALUE, LATEST_APP_VALUE
 from .util import get_commcare_builds
 
@@ -49,6 +49,16 @@ class CopyApplicationForm(forms.Form):
             self.fields['name'].initial = app.name
         if LINKED_DOMAINS.enabled(self.from_domain):
             fields.append(PrependedText('linked', ''))
+        if app.family_id:
+            family_app = get_app(from_domain, app.family_id)
+            family_name = family_app.name
+            family_link = reverse(
+                'view_app',
+                args=[from_domain, app.family_id]
+            )
+            family_text = f"This app is in the <a href='{family_link}'>{family_name}</a> family."
+        else:
+            family_text = "This app is not in a family."
 
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
@@ -59,6 +69,7 @@ class CopyApplicationForm(forms.Form):
                 *fields
             ),
             crispy.Hidden('app', app.get_id),
+            crispy.HTML(f"<div class='alert alert-info'>{family_text}</div>"),
             hqcrispy.FormActions(
                 StrictButton(_('Copy'), type='button', css_class='btn-primary')
             )
