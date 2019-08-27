@@ -8,7 +8,6 @@ import uuid
 from collections import namedtuple
 from datetime import datetime
 
-import six
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from couchdbkit import ResourceNotFound
@@ -60,7 +59,7 @@ def parse_params(params, location=None):
 
     parsed = {}
     for key, value in params.items():
-        if isinstance(value, six.string_types) and '{{' in value:
+        if isinstance(value, str) and '{{' in value:
             soft_assert_type_text(value)
             template = Template(value)
             value = template.render(today=today, location=location_uuid)
