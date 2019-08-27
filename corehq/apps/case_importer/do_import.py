@@ -138,7 +138,7 @@ class _Importer(object):
 
         try:
             form, cases = submit_case_blocks(
-                [cb.case.as_string().decode('utf-8') for cb in caseblocks],
+                [cb.case.as_text() for cb in caseblocks],
                 self.domain,
                 self.user.username,
                 self.user.user_id,
