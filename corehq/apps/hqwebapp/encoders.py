@@ -1,5 +1,6 @@
 import json
 from decimal import Decimal
+
 from django.utils.encoding import force_text
 from django.utils.functional import Promise
 

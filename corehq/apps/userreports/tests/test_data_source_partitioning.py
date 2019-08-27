@@ -1,5 +1,6 @@
 
 from datetime import datetime
+
 from django.test import TestCase
 
 from corehq.apps.userreports.models import SQLPartition
@@ -10,7 +11,6 @@ from corehq.apps.userreports.tests.utils import (
 )
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.pillows.case import get_case_pillow
-
 
 EXPECTED_UCR_CHILD_TABLE_PREFIX = 'tbl_8e3a5ee0a4309ee52345c2cdcbb1215a_'
 

@@ -1,6 +1,6 @@
-from decimal import Decimal
-import random
 import datetime
+import random
+from decimal import Decimal
 
 from django.conf import settings
 from django.core import mail
@@ -38,7 +38,9 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFee,
     SmsUsageFeeCriteria,
 )
-from corehq.apps.smsbillables.tests.generator import arbitrary_sms_billables_for_domain
+from corehq.apps.smsbillables.tests.generator import (
+    arbitrary_sms_billables_for_domain,
+)
 from corehq.apps.users.models import WebUser
 
 

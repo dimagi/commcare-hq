@@ -7,7 +7,7 @@ from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import DomainAdminAuthentication
 from corehq.util.view_utils import absolute_reverse
 
-from ..models import SQLLocation, LocationType
+from ..models import LocationType, SQLLocation
 
 
 class LocationTypeResource(ModelResource, HqBaseResource):

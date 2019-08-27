@@ -6,7 +6,6 @@ from django.db.models import Count
 from corehq.apps.accounting.utils import get_account_name_from_default_name
 
 
-
 def _make_existing_billing_account_names_unique(apps, schema_editor):
     BillingAccount = apps.get_model('accounting', 'BillingAccount')
 

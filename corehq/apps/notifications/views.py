@@ -1,20 +1,27 @@
-from django.urls import reverse
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.generic import View
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation, JSONResponseException
-
+import six
+from djangular.views.mixins import (
+    JSONResponseException,
+    JSONResponseMixin,
+    allow_remote_invocation,
+)
 from memoized import memoized
 
 from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm
-from corehq.apps.notifications.models import Notification, LastSeenNotification, \
-    IllegalModelStateException, DismissedUINotify
-import six
+from corehq.apps.notifications.models import (
+    DismissedUINotify,
+    IllegalModelStateException,
+    LastSeenNotification,
+    Notification,
+)
 
 
 class NotificationsServiceRMIView(JSONResponseMixin, View):

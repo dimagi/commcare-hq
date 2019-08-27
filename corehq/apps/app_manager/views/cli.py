@@ -1,19 +1,20 @@
-from django.utils.text import slugify
 from django.template.loader import render_to_string
+from django.utils.text import slugify
 
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
+from six.moves import map
 
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.web import json_response
 from soil import FileDownload
 
 from corehq import toggles
-from corehq.apps.hqmedia.tasks import build_application_zip
 from corehq.apps.app_manager.views.utils import get_langs
-from corehq.util.view_utils import absolute_reverse, json_error
-from corehq.util.datadog.gauges import datadog_bucket_timer
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import api_auth
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqmedia.tasks import build_application_zip
+from corehq.util.datadog.gauges import datadog_bucket_timer
+from corehq.util.view_utils import absolute_reverse, json_error
 
 from ..dbaccessors import (
     get_build_doc_by_version,
@@ -22,7 +23,6 @@ from ..dbaccessors import (
     get_latest_released_app_doc,
     wrap_app,
 )
-from six.moves import map
 
 
 @json_error

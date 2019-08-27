@@ -1,11 +1,12 @@
 from jsonobject import DefaultProperty, StringProperty
 
+from dimagi.ext.jsonobject import DictProperty, JsonObject
+
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.util.quickcache import quickcache
-from dimagi.ext.jsonobject import JsonObject, DictProperty
 
 
 @ucr_context_cache(vary_on=('location_id',))

@@ -1,8 +1,9 @@
 import os
 import shutil
+
+import django
 from django.conf import settings
 from django.core.management import BaseCommand
-import django
 
 
 class Command(BaseCommand):

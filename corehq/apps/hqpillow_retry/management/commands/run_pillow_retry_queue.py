@@ -2,16 +2,18 @@
 from datetime import datetime
 from time import sleep
 
-import pytz
 from django import db
 from django.core.management import BaseCommand
+
+import pytz
 from psycopg2._psycopg import InterfaceError
 
-from corehq.apps.change_feed.producer import ChangeProducer
-from corehq.sql_db.util import handle_connection_failure
 from dimagi.utils.logging import notify_exception
 from pillow_retry.api import process_pillow_retry
 from pillow_retry.models import PillowError
+
+from corehq.apps.change_feed.producer import ChangeProducer
+from corehq.sql_db.util import handle_connection_failure
 
 BATCH_SIZE = 10000
 
@@ -56,4 +58,3 @@ class PillowRetryEnqueuingOperation(BaseCommand):
 
 class Command(PillowRetryEnqueuingOperation):
     pass
-

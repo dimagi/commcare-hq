@@ -1,14 +1,20 @@
-from collections import namedtuple
-from django.test import TestCase
 import uuid
+from collections import namedtuple
 
-from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from django.test import TestCase
+
+from six.moves import range
+
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
+from corehq.apps.userreports.reports.data_source import (
+    ConfigurableReportDataSource,
+)
 from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.pillows.case import get_case_pillow
-from six.moves import range
-
 
 ReportDataTestRow = namedtuple('ReportDataTestRow', ['name', 'number', 'sort_key'])
 

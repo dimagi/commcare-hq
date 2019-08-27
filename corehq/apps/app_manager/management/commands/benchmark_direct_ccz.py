@@ -3,10 +3,13 @@ import json
 
 from django.core.management import BaseCommand
 
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.management.commands.benchmark_build_times import Timer
-from corehq.apps.app_manager.views.cli import get_direct_ccz
 from dimagi.utils.decorators.profile import profile
+
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.management.commands.benchmark_build_times import (
+    Timer,
+)
+from corehq.apps.app_manager.views.cli import get_direct_ccz
 
 
 class Command(BaseCommand):

@@ -1,4 +1,5 @@
 from django.conf.urls import url
+
 from corehq.apps.styleguide.examples.simple_crispy_form.views import *
 from corehq.apps.styleguide.views.docs import (
     FormsSimpleCrispyFormExampleView,

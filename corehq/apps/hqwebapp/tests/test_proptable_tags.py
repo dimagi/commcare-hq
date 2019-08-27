@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+
 from corehq.apps.hqwebapp.templatetags.proptable_tags import get_display_data
 
 

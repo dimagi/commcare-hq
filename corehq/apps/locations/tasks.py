@@ -1,28 +1,30 @@
 import logging
 import uuid
 
-from celery.task import task
 from django.conf import settings
 
-from dimagi.utils.couch.database import iter_docs
+from celery.task import task
 
+from dimagi.utils.couch.database import iter_docs
 from soil import DownloadBase
 
-from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
-from corehq.apps.locations.util import dump_locations
 from corehq.apps.commtrack.models import (
-    StockState, sync_supply_point, close_supply_point_case,
+    StockState,
+    close_supply_point_case,
+    sync_supply_point,
 )
 from corehq.apps.es.users import UserES
 from corehq.apps.locations.bulk_management import new_locations_import
+from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import dump_locations
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.tasks import rebuild_indicators_in_place
 from corehq.apps.users.forms import generate_strong_password
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
 from corehq.toggles import LOCATIONS_IN_UCR
-from corehq.util.couch import IterDB, iter_update, DocUpdate
+from corehq.util.couch import DocUpdate, IterDB, iter_update
 from corehq.util.decorators import serial_task
 from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 

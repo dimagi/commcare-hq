@@ -1,6 +1,9 @@
 from django import template
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
+
 import six
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
 
 register = template.Library()
 

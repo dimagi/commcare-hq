@@ -2,7 +2,9 @@
 import ghdiff
 from memoized import memoized
 
-from corehq.apps.translations.app_translations.download import get_bulk_app_sheets_by_name
+from corehq.apps.translations.app_translations.download import (
+    get_bulk_app_sheets_by_name,
+)
 from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
     get_unicode_dicts,

@@ -1,17 +1,21 @@
+from django.conf import settings
 from django.http import HttpResponse
+
 from eulxml.xmlmap import XmlObject
 
-from django.conf import settings
-
+from corehq.apps.app_manager.dbaccessors import (
+    get_app_ids_in_domain,
+    get_latest_released_app_doc,
+    wrap_app,
+)
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    IntegerField,
+    NodeListField,
+    StringField,
+)
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import check_lockout
 from corehq.apps.users.models import CouchUser
-from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_latest_released_app_doc, wrap_app
-from corehq.apps.app_manager.suite_xml.xml_models import (
-    StringField,
-    IntegerField,
-    NodeListField,
-)
 
 
 class App(XmlObject):

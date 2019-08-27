@@ -2,24 +2,30 @@
 from django.conf import settings
 from django.utils.module_loading import import_string
 
+from jsonobject.base import DefaultProperty
+
 from dimagi.ext.jsonobject import (
     BooleanProperty,
+    DictProperty,
     IntegerProperty,
     JsonObject,
     ListProperty,
     StringProperty,
-    DictProperty,
 )
-from jsonobject.base import DefaultProperty
+
 from corehq.apps.userreports.datatypes import DataTypeProperty
-from corehq.apps.userreports.reports.filters.choice_providers import DATA_SOURCE_COLUMN
+from corehq.apps.userreports.reports.filters.choice_providers import (
+    DATA_SOURCE_COLUMN,
+)
 from corehq.apps.userreports.reports.filters.values import (
-    PreFilterValue,
     ChoiceListFilterValue,
     DateFilterValue,
+    LocationDrilldownFilterValue,
+    MultiFieldChoiceListFilterValue,
     NumericFilterValue,
+    PreFilterValue,
     QuarterFilterValue,
-    LocationDrilldownFilterValue, MultiFieldChoiceListFilterValue)
+)
 from corehq.apps.userreports.specs import TypeProperty
 
 

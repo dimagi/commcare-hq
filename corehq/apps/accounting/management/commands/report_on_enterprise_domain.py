@@ -1,22 +1,28 @@
 
+import io
+import re
 from datetime import datetime, timedelta
+
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 from django.template.defaultfilters import linebreaksbr
 from django.urls import reverse
 
 import csv342 as csv
-import io
-import re
 
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.accounting.enterprise import EnterpriseReport
-from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, Subscription
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    Subscription,
+)
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.es import forms as form_es
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.users import \
+    ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_rows,
     get_mobile_user_count,

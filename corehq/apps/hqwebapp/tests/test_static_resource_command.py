@@ -1,11 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import os
 import tempfile
-import yaml
 
 from django.test import SimpleTestCase
-from corehq.apps.hqwebapp.management.commands.resource_static import Command as ResourceStaticCommand
+
+import yaml
+
+from corehq.apps.hqwebapp.management.commands.resource_static import \
+    Command as ResourceStaticCommand
 from get_resource_versions import get_resource_versions
 
 

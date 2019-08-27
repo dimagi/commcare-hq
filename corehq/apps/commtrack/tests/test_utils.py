@@ -1,7 +1,9 @@
 # coding=utf-8
-from django.test import TestCase
 import unittest
-from corehq.apps.commtrack.util import unicode_slug, generate_code
+
+from django.test import TestCase
+
+from corehq.apps.commtrack.util import generate_code, unicode_slug
 
 
 class CommtrackUtilsTest(TestCase):

@@ -9,12 +9,12 @@ import stripe
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
-    Invoice,
     CustomerInvoice,
+    Invoice,
+    LastPayment,
     PaymentRecord,
     PreOrPostPay,
     StripePaymentMethod,
-    LastPayment
 )
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,

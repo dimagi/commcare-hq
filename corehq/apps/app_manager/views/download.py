@@ -1,36 +1,42 @@
 import json
 import re
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
 
-from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
-from django.urls import RegexURLResolver, Resolver404
-from django.http import HttpResponse, Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.urls import RegexURLResolver, Resolver404
 from django.utils.translation import ugettext_lazy as _
 
-from corehq import toggles
+import six
+from couchdbkit import ResourceConflict, ResourceNotFound
+
+from dimagi.utils.web import json_response
+
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
-from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
-    AppManagerException, FormNotFoundException
+from corehq.apps.app_manager.decorators import (
+    safe_cached_download,
+    safe_download,
+)
+from corehq.apps.app_manager.exceptions import (
+    AppManagerException,
+    FormNotFoundException,
+    ModuleNotFoundException,
+)
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.tasks import autogenerate_build
 from corehq.apps.app_manager.util import (
     add_odk_profile_after_build,
     get_latest_enabled_versions_per_profile,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
-from corehq.apps.app_manager.tasks import autogenerate_build
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
-from dimagi.utils.web import json_response
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq import privileges
-import six
-
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
                       "If error persists, please report an issue")

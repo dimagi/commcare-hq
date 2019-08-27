@@ -1,5 +1,9 @@
 from django.contrib import admin
-from corehq.apps.data_interfaces.models import DomainCaseRuleRun, CaseRuleSubmission
+
+from corehq.apps.data_interfaces.models import (
+    CaseRuleSubmission,
+    DomainCaseRuleRun,
+)
 
 
 class DomainCaseRuleRunAdmin(admin.ModelAdmin):

@@ -1,16 +1,15 @@
-from six.moves.urllib.parse import urlencode
-
-from django.utils import translation
-from django.utils.translation import ugettext as _
-from django.utils.translation import pgettext
-from twilio.rest import Client
 from django.contrib.sites.models import Site
 from django.urls import reverse
+from django.utils import translation
+from django.utils.translation import pgettext
+from django.utils.translation import ugettext as _
+
 from requests.compat import getproxies
+from six.moves.urllib.parse import urlencode
 from twilio.http.http_client import TwilioHttpClient
+from twilio.rest import Client
 
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
-
 
 VOICE_LANGUAGES = ('en', 'en-gb', 'es', 'fr', 'it', 'de', 'da-DK', 'de-DE',
                    'en-AU', 'en-CA', 'en-GB', 'en-IN', 'en-US', 'ca-ES',

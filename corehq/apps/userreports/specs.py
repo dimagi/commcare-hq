@@ -1,6 +1,7 @@
 from collections import namedtuple
-from dimagi.ext.jsonobject import StringProperty
 from datetime import datetime
+
+from dimagi.ext.jsonobject import StringProperty
 
 
 def TypeProperty(value):

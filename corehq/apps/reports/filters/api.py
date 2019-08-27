@@ -6,23 +6,22 @@ import logging
 from django.views.generic import View
 
 from braces.views import JSONResponseMixin
+from memoized import memoized
+
+from dimagi.utils.logging import notify_exception
+from phonelog.models import DeviceReportEntry
 
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
-from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.elastic import ESError
-from memoized import memoized
-from dimagi.utils.logging import notify_exception
-
 from corehq.apps.reports.filters.controllers import (
+    CaseListFilterOptionsController,
     EmwfOptionsController,
     MobileWorkersOptionsController,
-    CaseListFilterOptionsController,
-    ReassignCaseOptionsController
+    ReassignCaseOptionsController,
 )
-
-from phonelog.models import DeviceReportEntry
+from corehq.apps.users.analytics import get_search_users_in_domain_es_query
+from corehq.elastic import ESError
 
 logger = logging.getLogger(__name__)
 

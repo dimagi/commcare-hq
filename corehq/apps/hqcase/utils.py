@@ -1,24 +1,29 @@
 import datetime
 import re
 import uuid
-import xml.etree.cElementTree as ET
+import xml.etree.cElementTree as ElementTree
 from xml.etree import cElementTree as ElementTree
 
 from django.core.files.uploadedfile import UploadedFile
 from django.template.loader import render_to_string
 
+import six
+
 from casexml.apps.case import const
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import get_case_xml
+from dimagi.utils.parsing import json_format_datetime
+
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment, CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    get_cached_case_attachment,
+)
+from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.python_compatibility import soft_assert_type_text
-from dimagi.utils.parsing import json_format_datetime
-import six
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'

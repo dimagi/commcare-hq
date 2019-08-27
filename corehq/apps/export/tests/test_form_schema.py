@@ -1,7 +1,8 @@
 import os
-from couchdbkit.exceptions import ResourceConflict
 
 from django.test.testcases import SimpleTestCase
+
+from couchdbkit.exceptions import ResourceConflict
 from fakecouch import FakeCouchDb
 from jsonobject.exceptions import BadValueError
 

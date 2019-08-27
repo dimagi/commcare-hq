@@ -1,8 +1,10 @@
 from django.test import TestCase
 
+from corehq.apps.aggregate_ucrs.importer import (
+    import_aggregation_models_from_spec,
+)
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
 from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
-from corehq.apps.aggregate_ucrs.importer import import_aggregation_models_from_spec
 from corehq.apps.userreports.models import DataSourceConfiguration
 
 

@@ -1,8 +1,9 @@
 import codecs
 import os
 import re
-from django.core.management.base import BaseCommand
+
 from django.conf import settings
+from django.core.management.base import BaseCommand
 
 BOWER_PATH = '../../../../../../bower_components'
 B3_REGEX = r"@\{b3-import-[a-z]+-[a-z]+\}"

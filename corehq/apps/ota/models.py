@@ -3,11 +3,13 @@ from collections import namedtuple
 
 from django.db import models, transaction
 
+import six
+
 from casexml.apps.phone.restore import stream_response
+
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.util.quickcache import quickcache
-import six
 
 
 class DemoUserRestore(models.Model):

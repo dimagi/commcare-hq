@@ -1,8 +1,10 @@
 import base64
 import os
-from datetime import timedelta, datetime
-from corehq.apps.mobile_auth.xml import AuthKeys, KeyRecord, OpenRosaResponse
+from datetime import datetime, timedelta
+
 from django.utils.translation import ugettext as _
+
+from corehq.apps.mobile_auth.xml import AuthKeys, KeyRecord, OpenRosaResponse
 
 
 def generate_aes_key():

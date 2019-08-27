@@ -4,17 +4,17 @@ import itertools
 import re
 from collections import Counter
 
-from six.moves import zip
-
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+
+from six.moves import zip
 
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
-    get_unicode_dicts,
     get_module_from_sheet_name,
+    get_unicode_dicts,
 )
 from corehq.util.itertools import zip_with_gaps
 

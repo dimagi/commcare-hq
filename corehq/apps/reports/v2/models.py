@@ -1,14 +1,13 @@
 
-import six
 import json
-
-from collections import namedtuple
 from abc import ABCMeta, abstractmethod
+from collections import namedtuple
 
-from memoized import memoized
-
-from django.utils.translation import ugettext as _
 from django.core.cache import cache
+from django.utils.translation import ugettext as _
+
+import six
+from memoized import memoized
 
 from corehq.apps.reports.v2.exceptions import (
     EndpointNotFoundError,

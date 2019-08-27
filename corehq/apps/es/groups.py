@@ -15,8 +15,8 @@ For example,
 
 will give you JSON for the first 10 groups in `domain` with names matching `q`.
 """
-from .es_query import HQESQuery
 from . import filters
+from .es_query import HQESQuery
 
 
 class GroupES(HQESQuery):

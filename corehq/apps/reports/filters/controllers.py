@@ -2,14 +2,14 @@
 import json
 
 from memoized import memoized
+from six.moves import map
 
-from corehq.apps.es import UserES, GroupES, groups
+from corehq.apps.es import GroupES, UserES, groups
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.reports.filters.case_list import CaseListFilterUtils
 from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils
 from corehq.apps.reports.util import SimplifiedUserInfo
-from six.moves import map
 
 
 def paginate_options(data_sources, query, start, size):

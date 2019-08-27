@@ -1,13 +1,16 @@
 from django import forms
 from django.contrib.postgres.forms import SimpleArrayField
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy, ugettext as _
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
 from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+
 from corehq.apps.hqwebapp import crispy as hqcrispy
 
-from .models import Notification, NOTIFICATION_TYPES
+from .models import NOTIFICATION_TYPES, Notification
 
 
 class NotificationCreationForm(forms.Form):

@@ -1,12 +1,14 @@
 from datetime import date
+
 from django.core.management import BaseCommand
+
+import six
+from six.moves import map
 
 from corehq.apps.accounting.models import (
     CreditAdjustment,
     CreditAdjustmentReason,
 )
-from six.moves import map
-import six
 
 
 def _make_value_safe_for_csv(value):

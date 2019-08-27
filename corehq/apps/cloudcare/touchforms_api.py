@@ -1,9 +1,10 @@
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+import six
+
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.users.models import CouchUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.python_compatibility import soft_assert_type_text
-import six
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 

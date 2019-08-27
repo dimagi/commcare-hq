@@ -1,11 +1,12 @@
 import uuid
+
 from django.test import TestCase
 from django.test.client import RequestFactory
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.standard.sms import PhoneNumberReport
-from corehq.apps.users.models import WebUser
 from corehq.apps.sms.models import PhoneNumber
+from corehq.apps.users.models import WebUser
 
 
 class PhoneNumberReportTestCase(TestCase):

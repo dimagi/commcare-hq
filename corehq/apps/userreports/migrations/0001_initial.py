@@ -1,12 +1,12 @@
 from django.conf import settings
-
 from django.db import migrations
+
+from dimagi.utils.couch.database import iter_docs
+
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.preindex import get_preindex_plugin
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID
-
 from corehq.util.couch import IterDB
-from dimagi.utils.couch.database import iter_docs
 
 
 def set_default_engine_ids(apps, schema_editor):

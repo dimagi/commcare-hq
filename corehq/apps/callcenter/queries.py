@@ -1,8 +1,8 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
-from sqlalchemy import func, distinct
-from sqlalchemy.sql import operators, and_, or_, label, select
+from sqlalchemy import distinct, func
+from sqlalchemy.sql import and_, label, operators, or_, select
 
 from corehq.apps.callcenter.const import *
 

@@ -1,6 +1,8 @@
-from corehq.apps.smsforms.models import SQLXFormsSession
 from datetime import datetime
+
 from django.core.management.base import BaseCommand
+
+from corehq.apps.smsforms.models import SQLXFormsSession
 
 
 class Command(BaseCommand):

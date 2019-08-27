@@ -3,8 +3,9 @@ FormES
 --------
 """
 from corehq.pillows.mappings import NULL_VALUE
-from .es_query import HQESQuery
+
 from . import filters
+from .es_query import HQESQuery
 
 
 class FormES(HQESQuery):

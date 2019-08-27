@@ -1,9 +1,10 @@
 from kafka.common import OffsetRequestPayload
 
+from couchforms.models import all_known_formlike_doc_types
+
 from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.change_feed.connection import get_simple_kafka_client
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
-from couchforms.models import all_known_formlike_doc_types
 
 CASE = 'case'
 FORM = 'form'

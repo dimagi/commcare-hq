@@ -1,7 +1,9 @@
 from django.test import TestCase
+
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import deprecated_check_user_has_case
 from casexml.apps.case.util import post_case_blocks
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser

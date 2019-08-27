@@ -5,12 +5,16 @@ import tempfile
 import zipfile
 
 from django.test import TestCase
+
 from mock import patch
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.hqmedia.models import CommCareImage
-from corehq.apps.hqmedia.tasks import check_ccz_multimedia_integrity, find_missing_locale_ids_in_ccz
+from corehq.apps.hqmedia.tasks import (
+    check_ccz_multimedia_integrity,
+    find_missing_locale_ids_in_ccz,
+)
 from corehq.apps.hqmedia.views import iter_media_files
 
 

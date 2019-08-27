@@ -2,24 +2,28 @@ import json
 from collections import defaultdict
 
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
 from django.views.generic.edit import FormView
 
+from dimagi.utils.web import json_response
+
 from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.decorators import (
+    no_conflict_require_POST,
+    require_can_edit_apps,
+)
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.apps import edit_app_attr
-
-from dimagi.utils.web import json_response
-from corehq.apps.domain.decorators import (
-    login_and_domain_required,
-)
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps
+from corehq.apps.domain.decorators import login_and_domain_required
 
 
 @require_GET

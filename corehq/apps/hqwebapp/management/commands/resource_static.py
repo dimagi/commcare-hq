@@ -1,13 +1,16 @@
 import hashlib
 import json
 import os
+
+from django.conf import settings
+from django.contrib.staticfiles import finders
+from django.core import cache
+from django.core.management.base import BaseCommand
+
 import six
 import yaml
-from django.core.management.base import BaseCommand
-from django.contrib.staticfiles import finders
-from django.conf import settings
+
 from dimagi.utils import gitinfo
-from django.core import cache
 
 from corehq.util.python_compatibility import soft_assert_type_text
 

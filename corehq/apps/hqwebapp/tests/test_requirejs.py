@@ -1,9 +1,10 @@
-import gevent
 import os
 import re
 import subprocess
 
 from django.test import SimpleTestCase
+
+import gevent
 
 
 class TestRequireJS(SimpleTestCase):

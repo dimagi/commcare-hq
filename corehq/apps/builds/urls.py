@@ -1,5 +1,6 @@
 from django.conf.urls import url
-from .views import EditMenuView, import_build, post, get, get_all
+
+from .views import EditMenuView, get, get_all, import_build, post
 
 urlpatterns = [
     url(r'^edit_menu/$', EditMenuView.as_view(), name=EditMenuView.urlname),

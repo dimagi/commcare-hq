@@ -1,9 +1,11 @@
-from collections import namedtuple
+import logging
 import sys
+from collections import namedtuple
+
 from django.core.management.base import BaseCommand
+
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.domain.models import Domain
-import logging
 
 logger = logging.getLogger('itextlog')
 
@@ -75,4 +77,3 @@ class Command(BaseCommand):
             logger.info('Error getting form {} in app {} from domain {}'.format(
                 error.form, error.app, error.domain
             ))
-

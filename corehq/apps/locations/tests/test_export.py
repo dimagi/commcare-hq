@@ -1,11 +1,15 @@
 from decimal import Decimal
 
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
+from six.moves import zip
+
+from corehq.apps.custom_data_fields.models import (
+    CustomDataField,
+    CustomDataFieldsDefinition,
+)
 
 from ..util import LocationExporter
 from ..views import LocationFieldsView
 from .util import LocationHierarchyTestCase, MockExportWriter
-from six.moves import zip
 
 
 class TestLocationsExport(LocationHierarchyTestCase):

@@ -1,10 +1,21 @@
-from corehq.apps.userreports.const import UCR_SQL_BACKEND, DATA_SOURCE_TYPE_STANDARD
-from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.custom.data_source import ConfigurableReportCustomDataSource
-from corehq.apps.userreports.sql.data_source import ConfigurableReportSqlDataSource
+import six
+
+from corehq.apps.userreports.const import (
+    DATA_SOURCE_TYPE_STANDARD,
+    UCR_SQL_BACKEND,
+)
+from corehq.apps.userreports.custom.data_source import (
+    ConfigurableReportCustomDataSource,
+)
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    get_datasource_config,
+)
+from corehq.apps.userreports.sql.data_source import (
+    ConfigurableReportSqlDataSource,
+)
 from corehq.util.datadog.utils import ucr_load_counter
 from corehq.util.python_compatibility import soft_assert_type_text
-import six
 
 
 class ConfigurableReportDataSource(object):

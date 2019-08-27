@@ -1,17 +1,18 @@
-from django.conf.urls import url, include
+from django.conf.urls import include, url
 
 from corehq.apps.api.urls import CommCareHqApi
 from corehq.apps.zapier.api.v0_5 import (
-    ZapierXFormInstanceResource,
+    ZapierApplicationResource,
+    ZapierCustomActionFieldCaseResource,
     ZapierCustomFieldCaseResource,
     ZapierCustomTriggerFieldFormResource,
-    ZapierCustomActionFieldCaseResource,
-    ZapierApplicationResource)
+    ZapierXFormInstanceResource,
+)
 from corehq.apps.zapier.views import (
     SubscribeView,
     UnsubscribeView,
     ZapierCreateCase,
-    ZapierUpdateCase
+    ZapierUpdateCase,
 )
 
 hq_api = CommCareHqApi(api_name='v0.5')

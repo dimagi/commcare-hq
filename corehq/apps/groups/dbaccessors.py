@@ -4,8 +4,8 @@ from collections import namedtuple
 from django.conf import settings
 
 from corehq.apps.domain.dbaccessors import (
-    get_docs_in_domain_by_class,
     get_doc_ids_in_domain_by_class,
+    get_docs_in_domain_by_class,
 )
 
 

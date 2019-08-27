@@ -1,14 +1,16 @@
 
 from contextlib import contextmanager
 
-from celery import states
-from celery.exceptions import Ignore
 from django.test import TestCase
 from django.utils.dateparse import parse_datetime
+
+from celery import states
+from celery.exceptions import Ignore
 from mock import patch
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
+
 from corehq.apps.case_importer import exceptions
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.tasks import bulk_import_async

@@ -1,8 +1,9 @@
-from mock import patch
-
 from django.test import TestCase
 
+from mock import patch
+
 from casexml.apps.phone.tests.utils import call_fixture_generator
+
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.exceptions import CantSaveException

@@ -1,18 +1,25 @@
 from collections import namedtuple
 from datetime import datetime, time
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
-from corehq.apps.reports_core.exceptions import FilterValueException
-from corehq.apps.userreports.util import localize
-from corehq.util.dates import iso_string_to_date, get_quarter_date_range
 
-from dimagi.utils.dates import DateSpan
-from memoized import memoized
-from django.utils.translation import ugettext, ugettext_lazy as _
 from django.conf import settings
 from django.urls import reverse
+from django.utils.translation import ugettext
+from django.utils.translation import ugettext_lazy as _
+
 import six
+from memoized import memoized
 from six.moves import range
+
+from dimagi.utils.dates import DateSpan
+
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import (
+    load_locs_json,
+    location_hierarchy_config,
+)
+from corehq.apps.reports_core.exceptions import FilterValueException
+from corehq.apps.userreports.util import localize
+from corehq.util.dates import get_quarter_date_range, iso_string_to_date
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
 REQUEST_USER_KEY = 'request_user'

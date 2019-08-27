@@ -1,24 +1,28 @@
 import datetime
-import dateutil
-from couchdbkit import ResourceNotFound
+import json
+
 from django.core import cache
-from django.urls import NoReverseMatch
 from django.template.defaultfilters import yesno
+from django.urls import NoReverseMatch
 from django.utils import html
 from django.utils.translation import ugettext as _
-import json
-from casexml.apps.case.models import CommCareCaseAction
-from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CouchUser
-from corehq.util.dates import iso_string_to_datetime
-from corehq.util.view_utils import absolute_reverse
-from corehq.util.quickcache import quickcache
+
+import dateutil
+from couchdbkit import ResourceNotFound
 from memoized import memoized
+
+from casexml.apps.case.models import CommCareCaseAction
+
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES,
 )
+from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CouchUser
+from corehq.util.dates import iso_string_to_datetime
+from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import absolute_reverse
 
 
 class CaseInfo(object):

@@ -1,8 +1,13 @@
 from django.conf.urls import url
 
 from corehq.apps.groups.views import (
-    add_group, delete_group, undo_delete_group, restore_group, edit_group,
-    update_group_data, update_group_membership,
+    add_group,
+    delete_group,
+    edit_group,
+    restore_group,
+    undo_delete_group,
+    update_group_data,
+    update_group_membership,
 )
 
 urlpatterns = [

@@ -1,15 +1,18 @@
 import hashlib
 import hmac
 import json
-import six
 
+from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
-from django.conf import settings
+
+import six
 
 from corehq.apps.analytics.tasks import (
-    track_clicked_deploy_on_hubspot, track_job_candidate_on_hubspot, HUBSPOT_COOKIE
+    HUBSPOT_COOKIE,
+    track_clicked_deploy_on_hubspot,
+    track_job_candidate_on_hubspot,
 )
 from corehq.apps.analytics.utils import get_meta
 

@@ -5,13 +5,16 @@ from functools import partial
 from django.conf import settings
 
 from casexml.apps.phone.fixtures import FixtureProvider
-from casexml.apps.phone.utils import GLOBAL_USER_ID, get_or_cache_global_fixture
-from corehq.const import OPENROSA_VERSION_MAP
-from corehq.apps.products.models import Product
+from casexml.apps.phone.utils import (
+    GLOBAL_USER_ID,
+    get_or_cache_global_fixture,
+)
+
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
-from corehq.apps.fixtures.utils import get_index_schema_node
-from corehq.apps.products.models import SQLProduct
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
+from corehq.apps.fixtures.utils import get_index_schema_node
+from corehq.apps.products.models import Product, SQLProduct
+from corehq.const import OPENROSA_VERSION_MAP
 
 PRODUCT_FIELDS = [
     'name',

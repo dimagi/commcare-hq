@@ -2,9 +2,11 @@ import base64
 import hashlib
 import hmac
 import json
+
 from django.conf import settings
-from django.test import TestCase, Client, override_settings
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+
 from corehq.apps.users.models import CommCareUser
 from corehq.util.hmac_request import get_hmac_digest
 from corehq.util.test_utils import softer_assert
