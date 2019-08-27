@@ -483,7 +483,8 @@ class GenericReportView(object):
             report_configs=report_configs,
             show_time_notice=self.show_time_notice,
             domain=self.domain,
-            layout_flush_content=self.flush_layout
+            layout_flush_content=self.flush_layout,
+            hasAccessToIcdsDashboardFeatures=self.icds_pre_release_features()
         )
 
     @property
@@ -505,8 +506,7 @@ class GenericReportView(object):
             'emailDefaultSubject': self.rendered_report_title,
             'type': self.dispatcher.prefix,
             'urlRoot': self.url_root,
-            'asyncUrl': async_url,
-            'hasAccessToIcdsDashboardFeatures': self.icds_pre_release_features()
+            'asyncUrl': async_url
         }
 
     def icds_pre_release_features(self):
