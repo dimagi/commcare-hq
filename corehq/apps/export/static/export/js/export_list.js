@@ -122,7 +122,7 @@ hqDefine("export/js/export_list", [
                 } else {
                     kissmetricsAnalytics.track.event("[BI Integration] Clicked Close on Parent Feeds modal", eventData);
                 }
-            }
+            };
         }
 
         self.editExport = function () {
@@ -460,7 +460,7 @@ hqDefine("export/js/export_list", [
         self.filterModalExportId = ko.observable();
         if (options.isOData) {
             self.filterModalExportId.subscribe(function (value) {
-                if(value) {
+                if (value) {
                     kissmetricsAnalytics.track.event("[BI Integration] Clicked Edit Filters button");
                 }
             });

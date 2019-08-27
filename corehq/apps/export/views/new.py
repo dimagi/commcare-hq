@@ -159,10 +159,9 @@ class BaseExportView(BaseProjectDataView):
             else:
                 event_title = "[BI Integration] Clicked Save button for feed creation"
             track_workflow(request.user.username, event_title, {
-                    "Feed Type": export.type,
-                    "Number of additional nodes": num_nodes,
-                }
-            )
+                "Feed Type": export.type,
+                "Number of additional nodes": num_nodes,
+            })
 
         export.save()
         messages.success(
