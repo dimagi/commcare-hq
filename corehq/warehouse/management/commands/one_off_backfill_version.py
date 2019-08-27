@@ -108,6 +108,6 @@ class Command(BaseCommand):
         app_ids = ApplicationDim.objects.filter(
             domain=domain,
             copy_of__isnull=True
-        ).values('application_id').distinct()
-        for app_id in six.itervalues(app_ids):
+        ).values_list('application_id', flat=True).distinct()
+        for app_id in app_ids:
             update_build_version_for_app(domain, app_id, options['check_only'])
