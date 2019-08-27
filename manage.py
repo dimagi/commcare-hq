@@ -189,7 +189,7 @@ if __name__ == "__main__":
         GeventCommand('run_aggregation_query'),
         GeventCommand('send_pillow_retry_queue_through_pillows'),
     )
-    _patch_gevent_if_reqd(sys.argv, GEVENT_COMMANDS)
+    _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 
     init_hq_python_path()
     run_patches()
