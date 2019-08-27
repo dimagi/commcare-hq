@@ -137,7 +137,7 @@
             </div>
           </p>
           <!-- /ko -->
-          <!-- ko if: hasSecondaryOdataFeed -->
+          <!-- ko if: hasAdditionalODataFeeds -->
             <p>
               <a class="btn btn-link btn-sm"
                  data-bind="attr: {href: '#' + id() + 'secondary-odata'}"
@@ -159,7 +159,7 @@
                       </span>
                     </button>
                     <h4 class="modal-title">
-                      {% trans "Secondary Feed Links" %}
+                      {% trans "Additional Feeds" %}
                     </h4>
                   </div>
                   <div class="modal-body">
@@ -177,7 +177,7 @@
                       {% endblocktrans %}
                       <!-- /ko -->
                     </p>
-                    <!-- ko foreach: odataSecondaryFeedUrls -->
+                    <!-- ko foreach: odataAdditionalFeedUrls -->
                     <p>
                       <div class="input-group">
                         <span data-bind="css: {

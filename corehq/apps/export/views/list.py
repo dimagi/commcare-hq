@@ -224,10 +224,10 @@ class ExportListHelper(object):
             'addedToBulk': False,
             'emailedExport': self._get_daily_saved_export_metadata(export),
             'odataUrl': self._get_odata_url(export),
-            'secondaryOdataUrls': self._get_secondary_odata_urls(export),
+            'additionalODataUrls': self._get_additional_odata_urls(export),
         }
 
-    def _get_secondary_odata_urls(self, export):
+    def _get_additional_odata_urls(self, export):
         urls = []
         for table_id, table in enumerate(export.tables):
             if table.selected and table_id > 0:
