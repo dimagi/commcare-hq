@@ -19,6 +19,7 @@ hqDefine("icds_reports/js/base", function () {
                             mprLocationInfo.hide();
                         } else {
                             applyBtn.disableButtonNoSpinner();
+                            mprLocationInfo.show();
                         }
                     }, 0);
                 } else {
