@@ -5114,7 +5114,10 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
     @property
     def table_name(self):
         config_domain = self.config['domain']
-        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, '')
+        doc_id = StaticDataSourceConfiguration.get_doc_id(
+            config_domain,
+            YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT
+        )
         config, _ = get_datasource_config(doc_id, config_domain)
         return get_table_name(config_domain, config.table_id)
 
