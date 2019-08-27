@@ -42,7 +42,7 @@ def update_build_version_for_app(domain, app_id, check_only):
     CHUNK_SIZE = 1000
     fact_chunks = chunked(
         paginated_queryset(
-            ApplicationStatusFact.objects.filter(
+            ApplicationStatusFact.objects.order_by('-id').filter(
                 domain=domain,
                 last_form_app_build_version__isnull=True,
                 app_dim__application_id=app_id
