@@ -885,8 +885,19 @@ class ODataFeedListHelper(ExportListHelper):
     beta_odata_feed_limit = 20
 
     @property
+    def create_export_form(self):
+        form = super(ODataFeedListHelper, self).create_export_form
+        form.fields['model_type'].label = _("Feed Type")
+        form.fields['model_type'].choices = [
+            ('', _("Select field type")),
+            ('case', _('Case')),
+            ('form', _('Form')),
+        ]
+        return form
+
+    @property
     def create_export_form_title(self):
-        return _("Select a model to export to a feed")
+        return _("Select Feed Type")
 
     def _should_appear_in_list(self, export):
         return export['is_odata_config']

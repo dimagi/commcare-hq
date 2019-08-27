@@ -57,7 +57,7 @@
           {% trans 'Edit' %}
         {% else %}
           {% blocktrans %}
-            Copy &amp; Edit
+            Copy &amp; Edit Feed
           {% endblocktrans %}
         {% endif %}
       </th>
@@ -145,7 +145,13 @@
                             },
                             click: sendAnalyticsOpenAdditionalFeeds"
                  data-toggle="modal">
-                {% trans "Show Additional Feeds" %}
+                <i class="fa fa-rss"></i>
+                <!-- ko if: exportType() == 'form' -->
+                  {% trans "Show additional feeds for Repeat Group data." %}
+                <!-- /ko -->
+                <!-- ko if: exportType() == 'case' -->
+                  {% trans "Show additional feeds for linking Parent and Child Cases." %}
+                <!-- /ko -->
               </a>
             </p>
             <div class="modal fade"
@@ -169,14 +175,13 @@
                     <p class="lead">
                       <!-- ko if: exportType() == 'form' -->
                       {% blocktrans %}
-                        Click to copy the links below to add <strong>repeat group</strong>
-                        support:
+                        Click to copy feeds for <strong>Repeat Group</strong> data:
                       {% endblocktrans %}
                       <!-- /ko -->
                       <!-- ko if: exportType() == 'case' -->
                       {% blocktrans %}
-                        Click to copy the links below to add <strong>parent case</strong>
-                        support:
+                        Click to copy feeds for linking <strong>Parent</strong>
+                        and <strong>Child Cases</strong>:
                       {% endblocktrans %}
                       <!-- /ko -->
                     </p>
@@ -584,7 +589,9 @@
                 <div data-bind="if: isOData()">
                   <i class="fa fa-pencil"></i>
                   <span>
-                    {% trans 'Copy Feed' %}
+                    {% blocktrans %}
+                      Copy &amp; Edit Feed
+                    {% endblocktrans %}
                   </span>
                 </div>
               </a>
@@ -625,7 +632,9 @@
               <div data-bind="if: isOData()">
                 <i class="fa fa-pencil"></i>
                 <span>
-                  {% trans 'Copy Feed' %}
+                  {% blocktrans %}
+                    Copy &amp; Edit Feed
+                  {% endblocktrans %}
                 </span>
               </div>
             </a>
