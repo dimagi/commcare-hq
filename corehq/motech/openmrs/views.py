@@ -4,8 +4,14 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy, ugettext as _
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods
+
+from memoized import memoized
+from six.moves import map, range
+
+from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -14,23 +20,21 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
-from corehq.motech.openmrs.models import OpenmrsImporter
-from corehq.motech.openmrs.tasks import import_patients_to_domain
-from corehq.motech.repeaters.models import RepeatRecord
-from corehq.motech.openmrs.openmrs_config import OpenmrsCaseConfig, OpenmrsFormConfig
 from corehq.motech.openmrs.forms import OpenmrsConfigForm, OpenmrsImporterForm
-from corehq.motech.openmrs.models import ColumnMapping
+from corehq.motech.openmrs.models import ColumnMapping, OpenmrsImporter
+from corehq.motech.openmrs.openmrs_config import (
+    OpenmrsCaseConfig,
+    OpenmrsFormConfig,
+)
 from corehq.motech.openmrs.repeater_helpers import (
     get_patient_identifier_types,
     get_person_attribute_types,
 )
-from corehq.motech.requests import Requests
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.openmrs.tasks import import_patients_to_domain
+from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_encrypt
-from memoized import memoized
-from dimagi.utils.web import json_response
-from six.moves import map
-from six.moves import range
 
 
 @login_and_domain_required

@@ -1,16 +1,16 @@
-import csv342 as csv
 import datetime
 import re
 import time
-from mock import MagicMock
 
 from django.core.management.base import BaseCommand
+
+import csv342 as csv
+from mock import MagicMock
+from six.moves import filter, input
 
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from corehq.motech.repeaters.models import Repeater, RepeatRecordAttempt
-from six.moves import input
-from six.moves import filter
 
 
 class Command(BaseCommand):

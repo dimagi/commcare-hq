@@ -1,3 +1,9 @@
+from .repeat_records import (
+    DomainForwardingRepeatRecords,
+    RepeatRecordView,
+    cancel_repeat_record,
+    requeue_repeat_record,
+)
 from .repeaters import (
     AddCaseRepeaterView,
     AddFormRepeaterView,
@@ -11,10 +17,4 @@ from .repeaters import (
     pause_repeater,
     resume_repeater,
     test_repeater,
-)
-from .repeat_records import (
-    DomainForwardingRepeatRecords,
-    RepeatRecordView,
-    cancel_repeat_record,
-    requeue_repeat_record,
 )
