@@ -14,7 +14,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.toggles import LINKED_DOMAINS
 
-from .dbaccessors import get_all_built_app_ids_and_versions
+from .dbaccessors import get_all_built_app_ids_and_versions, get_app
 from .models import LATEST_APK_VALUE, LATEST_APP_VALUE
 from .util import get_commcare_builds
 
