@@ -27,6 +27,13 @@ def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
     if isinstance(datetime_string, datetime.datetime):
         return datetime_string
 
+    if isinstance(datetime_string, datetime.date):
+        return datetime.datetime(
+            datetime_string.year,
+            datetime_string.month,
+            datetime_string.day
+        )
+
     if none_ok:
         if datetime_string is None:
             return None
