@@ -1,7 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime
+
 from dimagi.utils.parsing import json_format_datetime
 
 SohReport = namedtuple('SohReport', 'section_id product_id amount')

@@ -1,6 +1,4 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import logging
 import re
@@ -27,6 +25,7 @@ import six
 COMMANDE_COMBINED = 'commande_combined'
 LIVRAISON_COMBINED = 'livraison_combined'
 OPERATEUR_COMBINED = 'operateur_combined'
+OPERATEUR_COMBINED2 = 'operateur_combined2'
 RAPTURE_COMBINED = 'rapture_combined'
 RECOUVREMENT_COMBINED = 'recouvrement_combined'
 YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR = 'yeksi_naa_reports_visite_de_l_operateur'

@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
+
 from django.conf import settings
 
 from corehq.toggles import was_user_created_after

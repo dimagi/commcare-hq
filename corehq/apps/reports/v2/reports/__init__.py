@@ -1,10 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from corehq.apps.reports.v2.exceptions import ReportNotFoundError
-from corehq.apps.reports.v2.reports import (
-    explore_case_data,
-)
+from corehq.apps.reports.v2.reports import explore_case_data
 
 REPORTS = [
     explore_case_data.ExploreCaseDataReport,

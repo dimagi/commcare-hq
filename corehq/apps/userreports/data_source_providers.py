@@ -1,8 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
-from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
+
 import six
+
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    StaticDataSourceConfiguration,
+)
 
 
 class DataSourceProvider(six.with_metaclass(ABCMeta, object)):

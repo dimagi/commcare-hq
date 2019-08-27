@@ -1,17 +1,19 @@
-from __future__ import unicode_literals
 
-from __future__ import absolute_import
 import os
-import six
 import zipfile
 from collections import Counter
 
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.dump_reload.couch.load import CouchDataLoader, ToggleLoader, DomainLoader
+import six
+
+from corehq.apps.dump_reload.couch.load import (
+    CouchDataLoader,
+    DomainLoader,
+    ToggleLoader,
+)
 from corehq.apps.dump_reload.exceptions import DataExistsException
 from corehq.apps.dump_reload.sql import SqlDataLoader
-
 
 # Domain loader should be first
 LOADERS = [DomainLoader, SqlDataLoader, CouchDataLoader, ToggleLoader]

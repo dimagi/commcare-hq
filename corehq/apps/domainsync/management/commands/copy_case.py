@@ -1,15 +1,16 @@
-from __future__ import print_function
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand, CommandError
+
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
+from couchforms.models import XFormInstance
+
+from corehq.apps.domainsync.management.commands.copy_utils import (
+    copy_postgres_data_for_docs,
+)
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.couch_helpers import OverrideDB
 from corehq.util.couchdb_management import CouchConfig
-from couchforms.models import XFormInstance
 
 
 class Command(BaseCommand):

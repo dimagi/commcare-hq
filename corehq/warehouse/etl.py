@@ -2,8 +2,6 @@
 This files defines ETL objects that all have a common "load" function.
 Each object is meant for transferring one type of data to another type.
 '''
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import os
 
@@ -13,8 +11,6 @@ from django.template import engines
 
 from corehq.sql_db.routers import db_for_read_write
 from corehq.warehouse.utils import django_batch_records
-from corehq.warehouse.models.meta import Batch
-from io import open
 
 
 class BaseETLMixin(object):

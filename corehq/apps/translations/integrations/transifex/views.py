@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from io import BytesIO, open
 from zipfile import ZipFile
@@ -24,8 +23,8 @@ from corehq.apps.translations.forms import (
     AppTranslationsForm,
     ConvertTranslationsForm,
     DownloadAppTranslationsForm,
-    PullResourceForm,
     MigrateTransifexProjectForm,
+    PullResourceForm,
 )
 from corehq.apps.translations.generators import PoFileGenerator, Translation
 from corehq.apps.translations.integrations.transifex.exceptions import (
@@ -40,9 +39,9 @@ from corehq.apps.translations.tasks import (
     backup_project_from_transifex,
     delete_resources_on_transifex,
     email_project_from_hq,
+    migrate_project_on_transifex,
     pull_translation_files_from_transifex,
     push_translation_files_to_transifex,
-    migrate_project_on_transifex,
 )
 from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.util.files import safe_filename_header

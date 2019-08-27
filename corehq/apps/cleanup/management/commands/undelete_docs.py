@@ -1,15 +1,15 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import datetime
 from collections import namedtuple
-from couchdbkit import ResourceNotFound
+from datetime import datetime
+
 from django.core.management.base import BaseCommand
-from dimagi.utils.chunked import chunked
-from corehq.util.couch import send_keys_to_couch, IterDB
-from corehq.util.couchdb_management import couch_config
+
+from couchdbkit import ResourceNotFound
 from six.moves import input
-from io import open
+
+from dimagi.utils.chunked import chunked
+
+from corehq.util.couch import IterDB, send_keys_to_couch
+from corehq.util.couchdb_management import couch_config
 
 Results = namedtuple('Results', ['restored', 'not_found', 'not_deleted'])
 

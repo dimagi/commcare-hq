@@ -1,26 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 
 from django.http import HttpResponse
-from django.http.response import HttpResponseForbidden, HttpResponseBadRequest
+from django.http.response import HttpResponseBadRequest, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-
 from django.views.generic import View
 
 from casexml.apps.case.mock import CaseFactory
+from dimagi.utils.web import json_response
 
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
-from corehq.util.view_utils import get_case_or_404
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP, EventTypes
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
-from corehq.apps.zapier.consts import EventTypes, CASE_TYPE_REPEATER_CLASS_MAP
-from corehq import privileges
-from dimagi.utils.web import json_response
+from corehq.util.view_utils import get_case_or_404
 
 from .models import ZapierSubscription
 

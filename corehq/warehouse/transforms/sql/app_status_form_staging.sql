@@ -44,7 +44,7 @@ SELECT
 	LEFT JOIN {{ application_dim }} as app_dim
 	ON form_staging.app_id = app_dim.application_id
 	LEFT JOIN {{ application_dim }} as build
-	ON form_staging.build_id = app_dim.application_id
+	ON form_staging.build_id = build.application_id
     LEFT JOIN {{ app_status_fact }} as app_status
 	ON app_dim.id = app_status.app_dim_id and user_dim.id = app_status.user_dim_id
 	WHERE form_staging.user_id <> '' and user_dim.doc_type='CommCareUser'

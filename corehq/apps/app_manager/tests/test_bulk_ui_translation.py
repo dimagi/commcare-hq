@@ -1,13 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from distutils.version import StrictVersion
-from django.test import SimpleTestCase
 from io import BytesIO
-from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.ui_translations import \
-    process_ui_translation_upload, get_default_translations_for_download
-from couchexport.export import export_raw
+
+from django.test import SimpleTestCase
+
 import six
+
+from couchexport.export import export_raw
+
+from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.ui_translations import (
+    get_default_translations_for_download,
+    process_ui_translation_upload,
+)
 
 
 class BulkUiTranslation(SimpleTestCase):

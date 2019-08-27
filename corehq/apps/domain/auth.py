@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 import re
 from functools import wraps
@@ -8,15 +6,16 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.views.decorators.debug import sensitive_variables
+
 from tastypie.authentication import ApiKeyAuthentication
 
-from corehq.apps.users.models import CouchUser
-from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
-from corehq.util.hmac_request import validate_request_hmac
 from dimagi.utils.django.request import mutable_querydict
-from python_digest import parse_digest_credentials
 
+from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
+from corehq.apps.users.models import CouchUser
+from corehq.util.hmac_request import validate_request_hmac
 from no_exceptions.exceptions import Http400
+from python_digest import parse_digest_credentials
 
 J2ME = 'j2me'
 ANDROID = 'android'

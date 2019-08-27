@@ -1,36 +1,53 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 import random
 import string
 from datetime import datetime
 
-import six
-from six.moves import range
-
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.modules import to_function
-from dimagi.utils.logging import notify_exception
+import six
+from six.moves import range
 
-from corehq import privileges
-from corehq import toggles
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
+
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.apps.smsbillables.utils import log_smsbillables_error
-from corehq.apps.sms.util import (clean_phone_number, clean_text,
-    get_sms_backend_classes)
-from corehq.apps.sms.models import (OUTGOING, INCOMING,
-    PhoneBlacklist, SMS, SelfRegistrationInvitation, MessagingEvent,
-    SQLMobileBackend, SQLSMSBackend, QueuedSMS, PhoneNumber)
-from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
-    MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
-    MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
+from corehq.apps.sms.messages import (
+    MSG_DUPLICATE_USERNAME,
+    MSG_OPTED_IN,
+    MSG_OPTED_OUT,
+    MSG_REGISTRATION_WELCOME_CASE,
+    MSG_REGISTRATION_WELCOME_MOBILE_WORKER,
+    MSG_USERNAME_TOO_LONG,
+    get_message,
+)
 from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.sms.util import is_contact_active, register_sms_contact, strip_plus
+from corehq.apps.sms.models import (
+    INCOMING,
+    OUTGOING,
+    SMS,
+    MessagingEvent,
+    PhoneBlacklist,
+    PhoneNumber,
+    QueuedSMS,
+    SelfRegistrationInvitation,
+    SQLMobileBackend,
+    SQLSMSBackend,
+)
+from corehq.apps.sms.util import (
+    clean_phone_number,
+    clean_text,
+    get_sms_backend_classes,
+    is_contact_active,
+    register_sms_contact,
+    strip_plus,
+)
+from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.datadog.utils import sms_load_counter

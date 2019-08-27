@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 import uuid
 
-from django.test import Client
-from django.test import TestCase
+from django.test import Client, TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser

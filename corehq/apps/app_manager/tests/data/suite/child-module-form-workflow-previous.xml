@@ -30,7 +30,7 @@
         <command value="'m1'"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
         <datum id="case_id_new_guppy_0" value="uuid()"/>
-        <command value="'m1-f0'"/>
+        <datum id="case_id_guppy" value="instance('commcaresession')/session/data/case_id_guppy"/>
       </create>
     </stack>
   </entry>

@@ -1,9 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from dimagi.ext import jsonobject
-from soil.progress import get_task_status, STATES
-from soil.util import get_task
 import six
+
+from dimagi.ext import jsonobject
+from soil.progress import STATES, get_task_status
+from soil.util import get_task
 
 
 class TaskStatus(jsonobject.StrictJsonObject):

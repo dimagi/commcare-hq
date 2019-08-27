@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 from unittest import SkipTest
-import mock
 
-import requests
 from django.test import SimpleTestCase
+
+import mock
+import requests
 from requests.auth import HTTPDigestAuth
 
 from corehq.apps.app_manager.models import Application

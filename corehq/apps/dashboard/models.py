@@ -1,12 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.urls import reverse, resolve, Resolver404
-from corehq.tabs.uitab import url_is_location_safe
+from django.urls import Resolver404, resolve, reverse
+
+from memoized import memoized
+
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.export.models.new import FormExportInstance, CaseExportInstance
+from corehq.apps.export.models.new import (
+    CaseExportInstance,
+    FormExportInstance,
+)
 from corehq.apps.export.views.utils import ExportsPermissionsManager
 from corehq.apps.saved_reports.models import ReportConfig
-from memoized import memoized
+from corehq.tabs.uitab import url_is_location_safe
 
 
 class Tile(object):

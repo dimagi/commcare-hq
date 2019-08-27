@@ -1,18 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models.query import Q
 
+import six
+from six.moves import input
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.locations.models import LocationFixtureConfiguration
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
+from corehq.apps.userreports.dbaccessors import (
+    get_datasources_for_domain,
+    get_report_configs_for_domain,
+)
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.blobs.mixin import BlobMixin
-from six.moves import input
-import six
 
 types = [
     "feature_flags",

@@ -1,24 +1,28 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 from collections import defaultdict
 from datetime import datetime
-from lxml import etree as ET
 
-from couchdbkit import ResourceNotFound
 from django.core.management import BaseCommand
 
+import six
+from couchdbkit import ResourceNotFound
+from lxml import etree as ET
+
+from dimagi.utils.parsing import json_format_datetime
+
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
-from corehq.apps.app_manager.models import Application, PreloadAction, CaseReferences
+from corehq.apps.app_manager.models import (
+    Application,
+    CaseReferences,
+    PreloadAction,
+)
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import (
-    XForm, SESSION_USERCASE_ID,
+    SESSION_USERCASE_ID,
+    XForm,
     get_add_case_preloads_case_id_xpath,
     get_case_parent_id_xpath,
 )
-from dimagi.utils.parsing import json_format_datetime
-import six
-
 
 logger = logging.getLogger('app_migration')
 

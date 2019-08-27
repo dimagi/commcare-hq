@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import uuid
 
@@ -7,22 +5,22 @@ import six
 
 from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import (
+    AdvancedForm,
     AdvancedModule,
-    Module,
-    UpdateCaseAction,
-    LoadUpdateAction,
-    FormActionCondition,
-    OpenSubCaseAction,
-    OpenCaseAction,
     AdvancedOpenCaseAction,
     Application,
-    AdvancedForm,
     AutoSelectCase,
     CaseIndex,
+    DetailColumn,
+    FormActionCondition,
+    LoadUpdateAction,
+    Module,
+    OpenCaseAction,
+    OpenSubCaseAction,
     PreloadAction,
     ReportModule,
     ShadowModule,
-    DetailColumn,
+    UpdateCaseAction,
 )
 
 

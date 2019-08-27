@@ -1,10 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.db.models.signals import post_save
 
 from casexml.apps.stock import const
 from casexml.apps.stock.models import DocDomainMapping, StockTransaction
 from casexml.apps.stock.signals import get_stock_state_for_transaction
+
 from corehq.apps.products.models import Product
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.quickcache import quickcache

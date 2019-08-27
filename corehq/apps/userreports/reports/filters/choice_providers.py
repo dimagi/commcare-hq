@@ -1,12 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext
-from sqlalchemy import or_
 
+import six
+from sqlalchemy import or_
 from sqlalchemy.exc import ProgrammingError
+
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
@@ -17,7 +17,6 @@ from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
 from corehq.util.soft_assert import soft_assert
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
-import six
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'

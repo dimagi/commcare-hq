@@ -1,9 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from dimagi.ext.couchdbkit import StringProperty, ListProperty
+from dimagi.ext.couchdbkit import ListProperty, StringProperty
+from dimagi.utils.couch.undo import DeleteDocRecord, UndoableDocument
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 
 
 class CommCareCaseGroup(UndoableDocument):

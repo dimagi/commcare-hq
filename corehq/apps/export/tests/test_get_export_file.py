@@ -1,60 +1,58 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
-
 import re
-from django.test import SimpleTestCase
+
 from django.core.cache import cache
+from django.test import SimpleTestCase
+
 from elasticsearch.exceptions import ConnectionError
 from mock import patch
 from openpyxl import load_workbook
+from six.moves import range
 
-from corehq.apps.export.const import (
-    DEID_DATE_TRANSFORM,
-    CASE_NAME_TRANSFORM,
-)
-from corehq.apps.export.export import (
-    get_export_writer,
-    _ExportWriter,
-    write_export_instance,
-    ExportFile,
-    get_export_file,
-)
-from corehq.apps.export.const import (
-    MISSING_VALUE,
-    EMPTY_VALUE,
-)
-from corehq.apps.export.models import (
-    TableConfiguration,
-    ExportColumn,
-    ScalarItem,
-    FormExportInstance,
-    ExportItem,
-    MultipleChoiceItem,
-    SplitExportColumn,
-    CaseExportInstance,
-    PathNode,
-    Option,
-    MAIN_TABLE,
-    StockItem,
-    StockFormExportColumn,
-)
-from corehq.apps.export.tests.util import (
-    new_case,
-    DOMAIN,
-    DEFAULT_CASE_TYPE,
-    get_export_json,
-)
-from corehq.elastic import send_to_elasticsearch, get_es_new
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.files import TransientTempfile
-from corehq.util.test_utils import trap_extra_setup, flag_enabled
 from couchexport.export import get_writer
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from pillowtop.es_utils import initialize_index_and_mapping
-from six.moves import range
+
+from corehq.apps.export.const import (
+    CASE_NAME_TRANSFORM,
+    DEID_DATE_TRANSFORM,
+    EMPTY_VALUE,
+    MISSING_VALUE,
+)
+from corehq.apps.export.export import (
+    ExportFile,
+    _ExportWriter,
+    get_export_file,
+    get_export_writer,
+    write_export_instance,
+)
+from corehq.apps.export.models import (
+    MAIN_TABLE,
+    CaseExportInstance,
+    ExportColumn,
+    ExportItem,
+    FormExportInstance,
+    MultipleChoiceItem,
+    Option,
+    PathNode,
+    ScalarItem,
+    SplitExportColumn,
+    StockFormExportColumn,
+    StockItem,
+    TableConfiguration,
+)
+from corehq.apps.export.tests.util import (
+    DEFAULT_CASE_TYPE,
+    DOMAIN,
+    get_export_json,
+    new_case,
+)
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.files import TransientTempfile
+from corehq.util.test_utils import flag_enabled, trap_extra_setup
 
 
 def assert_instance_gives_results(docs, export_instance, expected_result):

@@ -1,20 +1,30 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
+
 from mock import patch
 
-from corehq.util.test_utils import flag_enabled
-from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
+from casexml.apps.phone.tests.utils import (
+    call_fixture_generator,
+    create_restore_user,
+)
+
 from corehq import toggles
-from corehq.apps.app_manager.fixtures.mobile_ucr import report_fixture_generator
-from corehq.apps.app_manager.models import Application, ReportModule, ReportAppConfig
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.app_manager.fixtures.mobile_ucr import (
+    report_fixture_generator,
+)
+from corehq.apps.app_manager.models import (
+    Application,
+    ReportAppConfig,
+    ReportModule,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.tests.utils import (
-    get_sample_report_config, mock_datasource_config
+    get_sample_report_config,
+    mock_datasource_config,
 )
-from corehq.apps.users.models import UserRole, Permissions
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import Permissions, UserRole
+from corehq.util.test_utils import flag_enabled
 
 
 class AppAwareSyncTests(TestCase):

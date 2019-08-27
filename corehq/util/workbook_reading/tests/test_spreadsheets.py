@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, date, time
 from django.test import SimpleTestCase
 from corehq.util.workbook_reading import (

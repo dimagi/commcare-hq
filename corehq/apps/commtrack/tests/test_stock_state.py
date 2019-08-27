@@ -1,19 +1,24 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import functools
 from datetime import datetime
 from decimal import Decimal
-import functools
 
 from django.test import TestCase
 
-from corehq.apps.commtrack.consumption import recalculate_domain_consumption
-from corehq.apps.commtrack.models import StockState, CommtrackConfig, ConsumptionConfig
-from corehq.apps.commtrack.tests import util
-from corehq.apps.consumption.models import DefaultConsumption
-from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
-from corehq.apps.products.models import Product, SQLProduct
 from casexml.apps.stock.models import DocDomainMapping
 from casexml.apps.stock.tests.base import _stock_report
+
+from corehq.apps.commtrack.consumption import recalculate_domain_consumption
+from corehq.apps.commtrack.models import (
+    CommtrackConfig,
+    ConsumptionConfig,
+    StockState,
+)
+from corehq.apps.commtrack.tests import util
+from corehq.apps.consumption.models import DefaultConsumption
+from corehq.apps.consumption.shortcuts import (
+    set_default_monthly_consumption_for_domain,
+)
+from corehq.apps.products.models import Product, SQLProduct
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 

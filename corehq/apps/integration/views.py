@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-from memoized import memoized
 
 from django.contrib import messages
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.domain.views import BaseAdminProjectSettingsView

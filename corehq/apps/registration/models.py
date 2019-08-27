@@ -1,10 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from dimagi.ext.couchdbkit import Document, StringProperty,\
-    BooleanProperty, DateTimeProperty
 import datetime
-from corehq.apps.domain.models import Domain
+
 from memoized import memoized
+
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    Document,
+    StringProperty,
+)
+
+from corehq.apps.domain.models import Domain
 
 
 class RegistrationRequest(Document):

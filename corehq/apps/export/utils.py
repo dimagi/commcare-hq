@@ -1,14 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
-from couchdbkit import ResourceNotFound
 from django.http import Http404
 
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
-
 import six
+from couchdbkit import ResourceNotFound
 
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.toggles import MESSAGE_LOG_METADATA
 
 

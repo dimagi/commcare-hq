@@ -1,9 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from mock import patch
 from random import randint
 
 from django.test import TestCase
+
+import six
+from mock import patch
 
 from corehq.apps.accounting.tests.generator import init_default_currency
 from corehq.apps.sms.models import SQLMobileBackend
@@ -16,7 +16,6 @@ from corehq.apps.smsbillables.models import (
 from corehq.apps.smsbillables.tests import generator
 from corehq.apps.smsbillables.tests.utils import FakeTwilioMessageFactory
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
-import six
 
 
 class TestUsageFee(TestCase):

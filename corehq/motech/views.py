@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from django.urls import reverse
 from django.utils.decorators import method_decorator

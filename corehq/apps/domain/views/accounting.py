@@ -1,81 +1,112 @@
-from __future__ import absolute_import, unicode_literals
 import datetime
+import json
 from collections import namedtuple
 from decimal import Decimal
-import json
 
-from couchdbkit import ResourceNotFound
-import dateutil
+from django.conf import settings
+from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
-from django.views.generic import View
 from django.db.models import Sum
-from django.conf import settings
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.contrib import messages
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.views.generic import View
 
-from corehq.const import USER_DATE_FORMAT
+import dateutil
+from couchdbkit import ResourceNotFound
+from django_prbac.utils import has_privilege
+from memoized import memoized
+from six.moves import map
+
+from dimagi.utils.web import json_response
+
+from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
-from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
     SubscriptionAdjustmentError,
+)
+from corehq.apps.accounting.forms import (
+    AnnualPlanContactForm,
+    EnterprisePlanContactForm,
+)
+from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
+from corehq.apps.accounting.models import (
+    MINIMUM_SUBSCRIPTION_LENGTH,
+    UNLIMITED_FEATURE_USAGE,
+    BillingAccount,
+    BillingAccountType,
+    BillingRecord,
+    CreditLine,
+    CustomerInvoice,
+    DefaultProductPlan,
+    EntryPoint,
+    Invoice,
+    InvoicePdf,
+    LastPayment,
+    PaymentMethodType,
+    SoftwarePlanEdition,
+    StripePaymentMethod,
+    Subscription,
+    SubscriptionType,
+    WireInvoice,
 )
 from corehq.apps.accounting.payment_handlers import (
     BulkStripePaymentHandler,
     CreditStripePaymentHandler,
     InvoiceStripePaymentHandler,
 )
-from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHandler
-from corehq.apps.accounting.forms import EnterprisePlanContactForm, AnnualPlanContactForm
-from corehq.apps.accounting.utils import (
-    get_change_status, get_privileges, fmt_dollar_amount,
-    quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error, is_downgrade
-)
-from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.users.models import Permissions
-from corehq import privileges
-from django_prbac.utils import has_privilege
-from corehq.apps.accounting.models import (
-    Subscription, CreditLine, SubscriptionType,
-    DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
-    BillingAccountType,
-    Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    EntryPoint, WireInvoice, CustomerInvoice,
-    StripePaymentMethod, LastPayment,
-    UNLIMITED_FEATURE_USAGE, MINIMUM_SUBSCRIPTION_LENGTH
+from corehq.apps.accounting.subscription_changes import (
+    DomainDowngradeStatusHandler,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
-    get_feature_name,
     DESC_BY_EDITION,
+    get_feature_name,
     get_feature_recurring_interval,
 )
-from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
+from corehq.apps.accounting.utils import (
+    fmt_dollar_amount,
+    get_change_status,
+    get_customer_cards,
+    get_privileges,
+    is_downgrade,
+    log_accounting_error,
+    quantize_accounting_decimal,
+)
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    require_superuser,
+)
 from corehq.apps.domain.forms import (
-    ConfirmNewSubscriptionForm, EditBillingAccountInfoForm, ConfirmSubscriptionRenewalForm,
-    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
-    ContractedPartnerForm, DimagiOnlyEnterpriseForm,
+    INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS,
+    AdvancedExtendedTrialForm,
+    ConfirmNewSubscriptionForm,
+    ConfirmSubscriptionRenewalForm,
+    ContractedPartnerForm,
+    DimagiOnlyEnterpriseForm,
+    EditBillingAccountInfoForm,
+    SelectSubscriptionTypeForm,
 )
 from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
-from corehq.apps.domain.views.settings import BaseProjectSettingsView, BaseAdminProjectSettingsView
+from corehq.apps.domain.views.settings import (
+    BaseAdminProjectSettingsView,
+    BaseProjectSettingsView,
+)
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
-from memoized import memoized
-from dimagi.utils.web import json_response
-
 from corehq.apps.users.decorators import require_permission
-from six.moves import map
-
+from corehq.apps.users.models import Permissions
+from corehq.const import USER_DATE_FORMAT
 
 PAYMENT_ERROR_MESSAGES = {
     400: ugettext_lazy('Your request was not formatted properly.'),

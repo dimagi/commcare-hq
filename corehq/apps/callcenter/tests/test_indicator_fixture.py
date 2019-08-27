@@ -1,17 +1,26 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import OrderedDict
-from datetime import datetime, date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from xml.etree import cElementTree as ElementTree
+
+from django.test import SimpleTestCase
+
 import six
+
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from casexml.apps.phone.models import SyncLog, OTARestoreCommCareUser, OTARestoreWebUser
+from casexml.apps.phone.models import (
+    OTARestoreCommCareUser,
+    OTARestoreWebUser,
+    SyncLog,
+)
 from casexml.apps.phone.tests.utils import call_fixture_generator
-from corehq.apps.callcenter.fixturegenerators import gen_fixture, should_sync, \
-    IndicatorsFixturesProvider
+
+from corehq.apps.callcenter.fixturegenerators import (
+    IndicatorsFixturesProvider,
+    gen_fixture,
+    should_sync,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser, WebUser
-from django.test import SimpleTestCase
 
 
 class MockIndicatorSet(object):

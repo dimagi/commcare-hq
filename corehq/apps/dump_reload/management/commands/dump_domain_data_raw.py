@@ -1,21 +1,19 @@
-from __future__ import absolute_import, print_function
 
-from __future__ import unicode_literals
 import functools
 import gzip
 import json
 import os
 import tempfile
-
-import boto3
 from datetime import datetime
 
-from botocore.exceptions import ClientError
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+
+import boto3
+from botocore.exceptions import ClientError
 from s3transfer import S3Transfer
 
-from corehq.apps.es import FormES, CaseES, LedgerES
+from corehq.apps.es import CaseES, FormES, LedgerES
 from corehq.blobs.s3db import is_not_found
 from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.util.log import with_progress_bar

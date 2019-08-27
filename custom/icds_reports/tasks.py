@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 import io
 import logging
@@ -29,6 +28,7 @@ from six.moves import range
 
 from corehq.util.celery_utils import periodic_task_on_envs
 from couchexport.export import export_from_tables
+from couchexport.models import Format
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -337,6 +337,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 for state_id in state_ids:
                     create_mbt_for_month.delay(state_id, first_of_month_string, force_citus)
             chain(
+                icds_aggregation_task.si(date=(date-timedelta(days=2)).strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
+                                         force_citus=force_citus),
+                icds_aggregation_task.si(date=(date-timedelta(days=1)).strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
+                                         force_citus=force_citus),
                 icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
                                          force_citus=force_citus),
                 email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), aggregation_start_time=start_time,
@@ -741,18 +745,96 @@ def _find_stagnant_cases(adapter):
 
 @task(serializer='pickle', queue='icds_dashboard_reports_queue')
 def prepare_excel_reports(config, aggregation_level, include_test, beta, location, domain,
-                          file_format, indicator):
-    if indicator == CHILDREN_EXPORT:
-        data_type = 'Children'
-        excel_data = ChildrenExport(
-            config=config,
-            loc_level=aggregation_level,
-            show_test=include_test,
-            beta=beta
-        ).get_excel_data(location)
-        if beta:
+                          file_format, indicator, force_citus=False):
+    with force_citus_engine(force_citus):
+        if indicator == CHILDREN_EXPORT:
+            data_type = 'Children'
+            excel_data = ChildrenExport(
+                config=config,
+                loc_level=aggregation_level,
+                show_test=include_test,
+                beta=beta
+            ).get_excel_data(location)
+            if beta:
+                if file_format == 'xlsx':
+                    cache_key = create_child_report_excel_file(
+                        excel_data,
+                        data_type,
+                        config['month'].strftime("%B %Y"),
+                        aggregation_level,
+                    )
+                else:
+                    cache_key = create_excel_file(excel_data, data_type, file_format)
+
+        elif indicator == PREGNANT_WOMEN_EXPORT:
+            data_type = 'Pregnant_Women'
+            excel_data = PregnantWomenExport(
+                config=config,
+                loc_level=aggregation_level,
+                show_test=include_test
+            ).get_excel_data(location)
+        elif indicator == DEMOGRAPHICS_EXPORT:
+            data_type = 'Demographics'
+            excel_data = DemographicsExport(
+                config=config,
+                loc_level=aggregation_level,
+                show_test=include_test,
+                beta=beta
+            ).get_excel_data(location)
+        elif indicator == SYSTEM_USAGE_EXPORT:
+            data_type = 'System_Usage'
+            excel_data = SystemUsageExport(
+                config=config,
+                loc_level=aggregation_level,
+                show_test=include_test
+            ).get_excel_data(
+                location,
+                system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
+                system_usage_num_of_days_awc_was_open_formatting=aggregation_level <= 4 and beta,
+            )
+        elif indicator == AWC_INFRASTRUCTURE_EXPORT:
+            data_type = 'AWC_Infrastructure'
+            excel_data = AWCInfrastructureExport(
+                config=config,
+                loc_level=aggregation_level,
+                show_test=include_test,
+                beta=beta,
+            ).get_excel_data(location)
+        elif indicator == BENEFICIARY_LIST_EXPORT:
+            # this report doesn't use this configuration
+            config.pop('aggregation_level', None)
+            data_type = 'Beneficiary_List'
+            excel_data = BeneficiaryExport(
+                config=config,
+                loc_level=aggregation_level,
+                show_test=include_test,
+                beta=beta
+            ).get_excel_data(location)
+        elif indicator == AWW_INCENTIVE_REPORT:
+            today = date.today()
+            data_type = 'AWW_Performance_{}'.format(today.strftime('%Y_%m_%d'))
+            month = config['month'].strftime("%B %Y")
+            state = SQLLocation.objects.get(
+                location_id=config['state_id'], domain=config['domain']
+            ).name
+            district = SQLLocation.objects.get(
+                location_id=config['district_id'], domain=config['domain']
+            ).name if aggregation_level >= 2 else None
+            block = SQLLocation.objects.get(
+                location_id=config['block_id'], domain=config['domain']
+            ).name if aggregation_level == 3 else None
+            cache_key = get_performance_report_blob_key(state, district, block, month, file_format)
+        elif indicator == LS_REPORT_EXPORT:
+            data_type = 'Lady_Supervisor'
+            config['aggregation_level'] = 4  # this report on all levels shows data (row) per sector
+            excel_data = LadySupervisorExport(
+                config=config,
+                loc_level=aggregation_level,
+                show_test=include_test,
+                beta=beta
+            ).get_excel_data(location)
             if file_format == 'xlsx':
-                cache_key = create_child_report_excel_file(
+                cache_key = create_lady_supervisor_excel_file(
                     excel_data,
                     data_type,
                     config['month'].strftime("%B %Y"),
@@ -760,167 +842,91 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 )
             else:
                 cache_key = create_excel_file(excel_data, data_type, file_format)
+        elif indicator == THR_REPORT_EXPORT:
+            loc_level = aggregation_level if location else 0
+            excel_data = TakeHomeRationExport(
+                location=location,
+                month=config['month'],
+                loc_level=loc_level,
+                beta=beta
+            ).get_excel_data()
+            export_info = excel_data[1][1]
+            generated_timestamp = date_parser.parse(export_info[0][1])
+            formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+            data_type = 'THR Report__{}'.format(formatted_timestamp)
 
-    elif indicator == PREGNANT_WOMEN_EXPORT:
-        data_type = 'Pregnant_Women'
-        excel_data = PregnantWomenExport(
-            config=config,
-            loc_level=aggregation_level,
-            show_test=include_test
-        ).get_excel_data(location)
-    elif indicator == DEMOGRAPHICS_EXPORT:
-        data_type = 'Demographics'
-        excel_data = DemographicsExport(
-            config=config,
-            loc_level=aggregation_level,
-            show_test=include_test,
-            beta=beta
-        ).get_excel_data(location)
-    elif indicator == SYSTEM_USAGE_EXPORT:
-        data_type = 'System_Usage'
-        excel_data = SystemUsageExport(
-            config=config,
-            loc_level=aggregation_level,
-            show_test=include_test
-        ).get_excel_data(
-            location,
-            system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
-            system_usage_num_of_days_awc_was_open_formatting=aggregation_level <= 4 and beta,
-        )
-    elif indicator == AWC_INFRASTRUCTURE_EXPORT:
-        data_type = 'AWC_Infrastructure'
-        excel_data = AWCInfrastructureExport(
-            config=config,
-            loc_level=aggregation_level,
-            show_test=include_test,
-            beta=beta,
-        ).get_excel_data(location)
-    elif indicator == BENEFICIARY_LIST_EXPORT:
-        # this report doesn't use this configuration
-        config.pop('aggregation_level', None)
-        data_type = 'Beneficiary_List'
-        excel_data = BeneficiaryExport(
-            config=config,
-            loc_level=aggregation_level,
-            show_test=include_test,
-            beta=beta
-        ).get_excel_data(location)
-    elif indicator == AWW_INCENTIVE_REPORT:
-        today = date.today()
-        data_type = 'AWW_Performance_{}'.format(today.strftime('%Y_%m_%d'))
-        month = config['month'].strftime("%B %Y")
-        state = SQLLocation.objects.get(
-            location_id=config['state_id'], domain=config['domain']
-        ).name
-        district = SQLLocation.objects.get(
-            location_id=config['district_id'], domain=config['domain']
-        ).name if aggregation_level >= 2 else None
-        block = SQLLocation.objects.get(
-            location_id=config['block_id'], domain=config['domain']
-        ).name if aggregation_level == 3 else None
-        cache_key = get_performance_report_blob_key(state, district, block, month, file_format)
-    elif indicator == LS_REPORT_EXPORT:
-        data_type = 'Lady_Supervisor'
-        config['aggregation_level'] = 4  # this report on all levels shows data (row) per sector
-        excel_data = LadySupervisorExport(
-            config=config,
-            loc_level=aggregation_level,
-            show_test=include_test,
-            beta=beta
-        ).get_excel_data(location)
-        if file_format == 'xlsx':
-            cache_key = create_lady_supervisor_excel_file(
-                excel_data,
-                data_type,
-                config['month'].strftime("%B %Y"),
-                aggregation_level,
-            )
-        else:
-            cache_key = create_excel_file(excel_data, data_type, file_format)
-    elif indicator == THR_REPORT_EXPORT:
-        loc_level = aggregation_level if location else 0
-        excel_data = TakeHomeRationExport(
-            location=location,
-            month=config['month'],
-            loc_level=loc_level,
-            beta=beta
-        ).get_excel_data()
-        export_info = excel_data[1][1]
-        generated_timestamp = date_parser.parse(export_info[0][1])
-        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
-        data_type = 'THR Report__{}'.format(formatted_timestamp)
+            if file_format == 'xlsx':
+                cache_key = create_thr_report_excel_file(
+                    excel_data,
+                    data_type,
+                    config['month'].strftime("%B %Y"),
+                    loc_level,
+                )
+            else:
+                cache_key = create_excel_file(excel_data, data_type, file_format)
 
-        if file_format == 'xlsx':
-            cache_key = create_thr_report_excel_file(
-                excel_data,
-                data_type,
-                config['month'].strftime("%B %Y"),
-                loc_level,
-            )
-        else:
-            cache_key = create_excel_file(excel_data, data_type, file_format)
-
-    if (indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT) and
-        (beta is False or indicator !=CHILDREN_EXPORT)):
-        if file_format == 'xlsx' and beta:
-            cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
-        else:
-            cache_key = create_excel_file(excel_data, data_type, file_format)
-    params = {
-        'domain': domain,
-        'uuid': cache_key,
-        'file_format': file_format,
-        'data_type': data_type,
-    }
-    return {
-        'domain': domain,
-        'uuid': cache_key,
-        'file_format': file_format,
-        'data_type': data_type,
-        'link': reverse('icds_download_excel', params=params, absolute=True, kwargs={'domain': domain})
-    }
+        if (indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT) and
+            (beta is False or indicator !=CHILDREN_EXPORT)):
+            if file_format == 'xlsx' and beta:
+                cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
+            else:
+                cache_key = create_excel_file(excel_data, data_type, file_format)
+        params = {
+            'domain': domain,
+            'uuid': cache_key,
+            'file_format': file_format,
+            'data_type': data_type,
+        }
+        return {
+            'domain': domain,
+            'uuid': cache_key,
+            'file_format': file_format,
+            'data_type': data_type,
+            'link': reverse('icds_download_excel', params=params, absolute=True, kwargs={'domain': domain})
+        }
 
 
 @task(serializer='pickle', queue='icds_dashboard_reports_queue')
-def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, year, couch_user):
-    selected_date = date(year, month, 1)
-    report_context = {
-        'reports': [],
-        'user_have_access_to_features': icds_pre_release_features(couch_user),
-    }
+def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, year, couch_user, force_citus=False):
+    with force_citus_engine(force_citus):
+        selected_date = date(year, month, 1)
+        report_context = {
+            'reports': [],
+            'user_have_access_to_features': icds_pre_release_features(couch_user),
+        }
 
-    pdf_files = {}
+        pdf_files = {}
 
-    report_data = ISSNIPMonthlyReport(config={
-        'awc_id': awcs,
-        'month': selected_date,
-        'domain': domain
-    }, icds_feature_flag=icds_pre_release_features(couch_user)).to_pdf_format
+        report_data = ISSNIPMonthlyReport(config={
+            'awc_id': awcs,
+            'month': selected_date,
+            'domain': domain
+        }, icds_feature_flag=icds_pre_release_features(couch_user)).to_pdf_format
 
-    if pdf_format == 'one':
-        report_context['reports'] = report_data
-        cache_key = create_pdf_file(report_context)
-    else:
-        for data in report_data:
-            report_context['reports'] = [data]
-            pdf_hash = create_pdf_file(report_context)
-            pdf_files.update({
-                pdf_hash: data['awc_name']
-            })
-        cache_key = zip_folder(pdf_files)
+        if pdf_format == 'one':
+            report_context['reports'] = report_data
+            cache_key = create_pdf_file(report_context)
+        else:
+            for data in report_data:
+                report_context['reports'] = [data]
+                pdf_hash = create_pdf_file(report_context)
+                pdf_files.update({
+                    pdf_hash: data['awc_name']
+                })
+            cache_key = zip_folder(pdf_files)
 
-    params = {
-        'domain': domain,
-        'uuid': cache_key,
-        'format': pdf_format
-    }
+        params = {
+            'domain': domain,
+            'uuid': cache_key,
+            'format': pdf_format
+        }
 
-    return {
-        'domain': domain,
-        'uuid': cache_key,
-        'format': pdf_format,
-        'link': reverse('icds_download_pdf', params=params, absolute=True, kwargs={'domain': domain})
-    }
+        return {
+            'domain': domain,
+            'uuid': cache_key,
+            'format': pdf_format,
+            'link': reverse('icds_download_pdf', params=params, absolute=True, kwargs={'domain': domain})
+        }
 
 
 @task(serializer='pickle', queue='background_queue')
@@ -1326,3 +1332,42 @@ def _child_health_monthly_aggregation(day):
 
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
+
+
+@task
+def email_location_changes(domain, old_location_blob_id, new_location_blob_id):
+    old_params = {
+        'file_format': Format.UNZIPPED_CSV,
+        'data_type': 'old_location_definitions',
+        'uuid': old_location_blob_id,
+    }
+    new_params = {
+        'file_format': Format.UNZIPPED_CSV,
+        'data_type': 'new_location_definitions',
+        'uuid': new_location_blob_id,
+    }
+    email_content = """
+    Location data has changed. This can mean one or more of the following:
+
+    * Locations were added
+    * A location name was modified
+    * The location hierarchy was modified
+    * A user's name was modified
+
+    To determine the exact change, please find the links to CSV changes below.
+    Each file will only contain information on those AWCs which were added or changed:
+
+    Old location definitions: {old_file_url}
+    New location definitions: {new_file_url}
+
+    NOTE this file contains identifiable data such as name and phone number.
+    IT MAY ONLY BE SHARED CONFIDENTIALLY THROUGH SECURE MEANS.
+    """.format(
+        old_file_url=reverse('icds_download_excel', params=old_params, absolute=True, kwargs={'domain': domain}),
+        new_file_url=reverse('icds_download_excel', params=new_params, absolute=True, kwargs={'domain': domain}),
+    )
+
+    send_HTML_email(
+        '[{}] - ICDS Dashboard Location Table Changed'.format(settings.SERVER_ENVIRONMENT),
+        DASHBOARD_TEAM_EMAILS, email_content,
+    )

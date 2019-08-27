@@ -1,30 +1,42 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import uuid
-
 from datetime import datetime
 
 from django.test import TestCase
+
 from sqlalchemy import Date, Integer, SmallInteger, UnicodeText
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
-from corehq.apps.aggregate_ucrs.aggregations import AGGREGATION_UNIT_CHOICE_WEEK
-from corehq.apps.aggregate_ucrs.importer import import_aggregation_models_from_spec
-from corehq.apps.aggregate_ucrs.ingestion import populate_aggregate_table_data, get_aggregation_start_period, \
-    get_aggregation_end_period
+
+from corehq.apps.aggregate_ucrs.aggregations import (
+    AGGREGATION_UNIT_CHOICE_WEEK,
+)
+from corehq.apps.aggregate_ucrs.importer import (
+    import_aggregation_models_from_spec,
+)
+from corehq.apps.aggregate_ucrs.ingestion import (
+    get_aggregation_end_period,
+    get_aggregation_start_period,
+    populate_aggregate_table_data,
+)
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
 from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.userreports.app_manager.helpers import get_form_data_source, get_case_data_source
+from corehq.apps.userreports.app_manager.helpers import (
+    get_case_data_source,
+    get_form_data_source,
+)
 from corehq.apps.userreports.tasks import _iteratively_build_table
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMetadata
+from corehq.form_processor.utils.xform import (
+    FormSubmissionBuilder,
+    TestFormMetadata,
+)
 
 
 class UCRAggregationTest(TestCase, AggregationBaseTestMixin):

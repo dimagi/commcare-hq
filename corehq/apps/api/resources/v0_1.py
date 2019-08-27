@@ -1,10 +1,11 @@
 # Standard library imports
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 
+import six
 from tastypie import fields
 from tastypie.exceptions import BadRequest
+
+from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.api.couch import UserQuerySetAdapter
 from corehq.apps.api.resources import (
@@ -16,9 +17,7 @@ from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser, WebUser, Permissions
-from dimagi.utils.parsing import string_to_boolean
-import six
+from corehq.apps.users.models import CommCareUser, Permissions, WebUser
 
 TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username', 'format']
 

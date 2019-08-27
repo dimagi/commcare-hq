@@ -1,10 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
+
+from mock import patch
+
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_USERCASE,
-    WORKFLOW_MODULE,
     WORKFLOW_CASE_LIST,
+    WORKFLOW_MODULE,
 )
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -19,7 +20,6 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from mock import patch
 
 
 class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):

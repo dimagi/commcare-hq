@@ -1,7 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from distutils.version import LooseVersion, Version
+
 from django.conf import settings
+
 import six
 
 from corehq.util.python_compatibility import soft_assert_type_text

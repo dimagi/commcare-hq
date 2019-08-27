@@ -1,5 +1,4 @@
 # coding=utf-8
-from __future__ import absolute_import, unicode_literals
 
 import calendar
 import datetime
@@ -12,8 +11,7 @@ import random
 import re
 import types
 import uuid
-from collections import defaultdict, namedtuple, Counter, OrderedDict
-
+from collections import Counter, OrderedDict, defaultdict, namedtuple
 from copy import deepcopy
 from distutils.version import LooseVersion
 from functools import wraps
@@ -25,8 +23,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
-from django.db import models
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import SafeBytes
@@ -45,7 +43,6 @@ from six.moves import filter, map, range
 from six.moves.urllib.parse import urljoin
 from six.moves.urllib.request import urlopen
 
-from corehq.apps.locations.models import SQLLocation
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -86,15 +83,10 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
+    get_build_by_version,
     get_latest_build_doc,
     get_latest_released_app_doc,
-    get_build_by_version,
-)
-from corehq.apps.app_manager.util import (
-    get_latest_app_release_by_location,
-    expire_get_latest_app_release_by_location_cache,
-    is_linked_app,
-    is_remote_app,
+    wrap_app,
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -136,10 +128,14 @@ from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import (
     LatestAppInfo,
     actions_use_usercase,
+    expire_get_latest_app_release_by_location_cache,
     get_and_assert_practice_user_in_domain,
     get_correct_app_class,
+    get_latest_app_release_by_location,
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
+    is_linked_app,
+    is_remote_app,
     is_usercase_in_use,
     module_offers_search,
     save_xform,
@@ -170,6 +166,7 @@ from corehq.apps.linked_domain.applications import (
     get_master_app_version,
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import (
     get_daterange_start_end_dates,
     get_simple_dateranges,
@@ -277,9 +274,6 @@ class IndexedSchema(DocumentSchema):
             and (self.id == other.id)
             and (self._parent == other._parent)
         )
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     class Getter(object):
 
@@ -1185,7 +1179,7 @@ class FormBase(DocumentSchema):
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
-        xform.add_missing_instances(app.domain)
+        xform.add_missing_instances(app)
 
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
@@ -3887,9 +3881,6 @@ class BuildProfile(DocumentSchema):
     def __eq__(self, other):
         return self.langs == other.langs and self.practice_mobile_worker_id == other.practice_mobile_worker_id
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
 
 class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                       CommCareFeatureSupportMixin,
@@ -4416,7 +4407,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             # but check explicitly so as not to change the _id if it exists
             copy._id = uuid.uuid4().hex
 
-        copy.create_build_files()
+        if copy.create_build_files_on_build:
+            copy.create_build_files()
 
         # since this hard to put in a test
         # I'm putting this assert here if copy._id is ever None
@@ -4468,6 +4460,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         for name in other.lazy_list_attachments() or {}:
             if regexp is None or re.match(regexp, name):
                 self.lazy_put_attachment(other.lazy_fetch_attachment(name), name)
+
+    @property
+    @memoized
+    def create_build_files_on_build(self):
+        return not toggles.SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD.enabled(self.domain)
 
     def delete_app(self):
         domain_has_apps.clear(self.domain)
@@ -5610,17 +5607,11 @@ class LinkedApplication(Application):
 def import_app(app_id_or_source, domain, source_properties=None, request=None):
     if isinstance(app_id_or_source, six.string_types):
         soft_assert_type_text(app_id_or_source)
-        app_id = app_id_or_source
-        source = get_app(None, app_id)
-        source_domain = source['domain']
-        source = source.export_json(dump_json=False)
-        report_map = get_static_report_mapping(source_domain, domain)
+        source_app = get_app(None, app_id_or_source)
     else:
-        cls = get_correct_app_class(app_id_or_source)
-        # Don't modify original app source
-        app = cls.wrap(deepcopy(app_id_or_source))
-        source = app.export_json(dump_json=False)
-        report_map = {}
+        source_app = wrap_app(app_id_or_source)
+    source_domain = source_app.domain
+    source = source_app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']
     except KeyError:
@@ -5635,9 +5626,11 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     if 'build_spec' in source:
         del source['build_spec']
     app = cls.from_source(source, domain)
+    app.convert_build_to_app()
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
+    report_map = get_static_report_mapping(source_domain, domain)
     if report_map:
         for module in app.get_report_modules():
             for config in module.report_configs:

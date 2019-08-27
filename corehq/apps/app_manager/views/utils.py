@@ -1,48 +1,47 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import uuid
 from functools import partial
-from six.moves.urllib.parse import urlencode
+
 from django.contrib import messages
-from django.urls import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import Http404, HttpResponseRedirect
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.translation import ugettext as _
+
+import six
+from six.moves.urllib.parse import urlencode
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    wrap_app,
     get_apps_in_domain,
     get_current_app,
+    wrap_app,
 )
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
-    ModuleNotFoundException,
-    FormNotFoundException,
     AppLinkError,
+    FormNotFoundException,
+    ModuleNotFoundException,
     MultimediaMissingError,
 )
 from corehq.apps.app_manager.models import (
     Application,
-    enable_usercase_if_necessary,
     CustomIcon,
+    enable_usercase_if_necessary,
 )
+from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.es import FormES
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.exceptions import (
-    RemoteRequestError,
-    RemoteAuthError,
     ActionNotPermitted,
+    RemoteAuthError,
+    RemoteRequestError,
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
-
-from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.userreports.util import get_static_report_mapping
-import six
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "

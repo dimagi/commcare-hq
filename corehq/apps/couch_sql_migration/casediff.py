@@ -1,18 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import logging
 from collections import defaultdict
 from itertools import chain, count
 
 import gevent
-import gipc
 import six
-from gevent.pool import Pool
 from gevent.event import Event
+from gevent.pool import Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.stock.models import StockReport
+from dimagi.utils.chunked import chunked
+
+import gipc
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.tzmigration.timezonemigration import json_diff
 from corehq.form_processor.backends.couch.dbaccessors import (
@@ -25,7 +25,6 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL,
 )
 from corehq.form_processor.exceptions import MissingFormXml
-from dimagi.utils.chunked import chunked
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .lrudict import LRUDict
@@ -233,6 +232,7 @@ class CaseDiffQueue(object):
                 self.pending_cases = defaultdict(int)
             join(pool)
             if complete:
+                log.info("Diffing cases with unprocessed forms...")
                 to_diff = self.statedb.iter_cases_with_unprocessed_forms()
                 for chunk in chunked(to_diff, self.BATCH_SIZE, list):
                     self._enqueue_cases(chunk)

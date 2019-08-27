@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf.urls import url
 
 from corehq.apps.appstore.views import (
     CommCareExchangeHomeView,
-    ProjectInformationView,
-    DeploymentsView,
     DeploymentInfoView,
+    DeploymentsView,
     MediaFilesView,
-    deployments_api,
+    ProjectInformationView,
     approve_app,
     copy_snapshot,
+    deployments_api,
     import_app,
-    project_image,
     project_documentation_file,
+    project_image,
 )
 
 urlpatterns = [
@@ -36,4 +34,3 @@ urlpatterns = [
     url(r'^(?P<snapshot>[\w\.-]+)/multimedia/$',
         MediaFilesView.as_view(), name=MediaFilesView.urlname),
 ]
-

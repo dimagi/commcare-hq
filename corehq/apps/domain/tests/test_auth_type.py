@@ -1,12 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.test import RequestFactory, SimpleTestCase
+
 import requests
-from django.test import SimpleTestCase, RequestFactory
 
 from no_exceptions.exceptions import Http400
+
 from ..auth import (
-    J2ME,
     ANDROID,
+    J2ME,
     determine_authtype_from_request,
     is_probably_j2me,
 )

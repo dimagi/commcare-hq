@@ -1,12 +1,10 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 
-import csv342 as csv
 import datetime
 
-from couchdbkit.resource import ResourceNotFound
 from django.core.management.base import BaseCommand
+
+import csv342 as csv
+from couchdbkit.resource import ResourceNotFound
 from lxml import etree
 
 from corehq.apps.app_manager.dbaccessors import get_current_app_doc
@@ -14,7 +12,6 @@ from corehq.apps.hqadmin.views.users import AdminRestoreView
 from corehq.apps.ota.views import get_restore_response
 from corehq.apps.users.models import CouchUser
 from corehq.util.dates import get_timestamp_for_filename
-from io import open
 
 
 class Command(BaseCommand):

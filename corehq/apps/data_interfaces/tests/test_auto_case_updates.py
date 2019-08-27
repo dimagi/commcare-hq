@@ -1,46 +1,47 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from contextlib import contextmanager
+from datetime import datetime
+
+from django.test import TestCase, override_settings
+
+from mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
+
+from corehq.apps import hqcase
 from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule,
     AUTO_UPDATE_XMLNS,
-    MatchPropertyDefinition,
-    ClosedParentDefinition,
-    CustomMatchDefinition,
-    UpdateCaseDefinition,
-    CustomActionDefinition,
-    CreateScheduleInstanceActionDefinition,
-    CaseRuleCriteria,
+    AutomaticUpdateRule,
     CaseRuleAction,
-    CaseRuleSubmission,
     CaseRuleActionResult,
-    DomainCaseRuleRun,
+    CaseRuleCriteria,
+    CaseRuleSubmission,
     CaseRuleUndoer,
+    ClosedParentDefinition,
+    CreateScheduleInstanceActionDefinition,
+    CustomActionDefinition,
+    CustomMatchDefinition,
+    DomainCaseRuleRun,
+    MatchPropertyDefinition,
+    UpdateCaseDefinition,
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from corehq.apps.domain.models import Domain
-from datetime import datetime
-
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tests.utils import (
     run_with_all_backends,
-    set_case_property_directly
+    set_case_property_directly,
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.form_processor.signals import sql_case_post_save
-
-from corehq.util.test_utils import set_parent_case as set_actual_parent_case
-from django.test import TestCase, override_settings
-from mock import patch
-
-from corehq.util.context_managers import drop_connected_signals
 from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
-from corehq.apps import hqcase
+from corehq.util.context_managers import drop_connected_signals
+from corehq.util.test_utils import set_parent_case as set_actual_parent_case
 
 
 @contextmanager

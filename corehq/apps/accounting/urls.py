@@ -1,11 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf.urls import url
-from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
+
+from corehq.apps.accounting.dispatcher import (
+    AccountingAdminInterfaceDispatcher,
+)
 from corehq.apps.accounting.views import (
     AccountingSingleOptionResponseView,
+    CustomerInvoicePdfView,
+    CustomerInvoiceSummaryView,
     EditSoftwarePlanView,
     EditSubscriptionView,
+    EnterpriseBillingStatementsView,
     InvoiceSummaryView,
     ManageAccountingAdminsView,
     ManageBillingAccountView,
@@ -15,22 +19,18 @@ from corehq.apps.accounting.views import (
     NewSubscriptionViewNoDefaultDomain,
     TestRenewalEmailView,
     TriggerBookkeeperEmailView,
-    TriggerInvoiceView,
     TriggerCustomerInvoiceView,
+    TriggerInvoiceView,
     ViewSoftwarePlanVersionView,
     WireInvoiceSummaryView,
-    CustomerInvoiceSummaryView,
     accounting_default,
+    edit_enterprise_settings,
     enterprise_dashboard,
     enterprise_dashboard_download,
     enterprise_dashboard_email,
     enterprise_dashboard_total,
     enterprise_settings,
-    edit_enterprise_settings,
-    CustomerInvoicePdfView,
-    EnterpriseBillingStatementsView
 )
-
 
 urlpatterns = [
     url(r'^$', accounting_default, name='accounting_default'),

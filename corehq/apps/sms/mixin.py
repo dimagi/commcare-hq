@@ -1,11 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from dimagi.ext.couchdbkit import *
 import re
-from decimal import Decimal
-from dimagi.utils.couch import CriticalSection
 from collections import namedtuple
+from decimal import Decimal
+
 import six
+
+from dimagi.ext.couchdbkit import *
+from dimagi.utils.couch import CriticalSection
 
 from corehq.util.python_compatibility import soft_assert_type_text
 

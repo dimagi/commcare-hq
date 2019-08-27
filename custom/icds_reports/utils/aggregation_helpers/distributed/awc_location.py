@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import io
 import json
@@ -72,6 +70,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             while current_location['parent_id']:
                 current_location = locations_by_pk[current_location['parent_id']]
                 loc_type = current_location['location_type__code']
+                metadata = json.loads(current_location['metadata'])
                 loc.update({
                     '{}_id'.format(loc_type): current_location['location_id'],
                     '{}_name'.format(loc_type): current_location['name'].replace("\n", ""),
@@ -100,8 +99,6 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             cursor.execute(rollup_query)
 
         self.assert_no_awc_missing_from_new_table(cursor)
-        old_def, new_def = self.generate_diff_of_tables(cursor)
-        # TODO figure what to do with these
 
         cursor.execute(self.delete_old_locations())
         cursor.execute(self.move_data_to_local_table())
@@ -148,47 +145,6 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         num_locations_missing = cursor.fetchone()[0]
         if num_locations_missing:
             raise LocationRemovedException(str(num_locations_missing))
-
-    def generate_diff_of_tables(self, cursor):
-        cursor.execute(
-            """
-            SELECT doc_id
-            FROM "{temporary_tablename}"
-            WHERE aggregation_level = 5
-            EXCEPT
-            SELECT doc_id
-            FROM "{local_tablename}"
-            WHERE aggregation_level = 5
-            """.format(
-                local_tablename=self.local_tablename,
-                temporary_tablename=self.temporary_tablename,
-            )
-        )
-        changed_awc_ids = [row[0] for row in cursor.fetchall()]
-        if not changed_awc_ids:
-            return None, None
-
-        cursor.execute(
-            """
-            SELECT *
-            FROM "{local_tablename}"
-            WHERE aggregation_level = 5 AND doc_id IN %s
-            """.format(
-                tablename=self.local_tablename,
-            ), changed_awc_ids
-        )
-        old_definitions = cursor.fetchall()
-        cursor.execute(
-            """
-            SELECT doc_id
-            FROM "{temporary_tablename}"
-            WHERE aggregation_level = 5 AND doc_id IN %s
-            """.format(
-                tablename=self.temporary_tablename,
-            ), changed_awc_ids
-        )
-        new_definitions = cursor.fetchall()
-        return old_definitions, new_definitions
 
     def move_data_to_local_table(self):
         columns = (

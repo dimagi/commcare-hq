@@ -1,22 +1,25 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import re
 
+from django import forms
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
 from django.shortcuts import redirect
-from django.utils.translation import ugettext as _, ugettext_lazy
-from django import forms
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+import six
+from memoized import memoized
+
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD, REGEX_FIELD_VALIDATION
 
-from memoized import memoized
-
-from .models import (CustomDataFieldsDefinition, CustomDataField,
-                     validate_reserved_words)
-import six
+from .models import (
+    CustomDataField,
+    CustomDataFieldsDefinition,
+    validate_reserved_words,
+)
 
 
 class CustomDataFieldsForm(forms.Form):

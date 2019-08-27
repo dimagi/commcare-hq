@@ -9,12 +9,12 @@ from corehq.apps.es import case_search as case_search_es
     q = (case_search_es.CaseSearchES()
          .domain('testproject')
 """
-from __future__ import absolute_import, unicode_literals
 
 from warnings import warn
 
-import six
 from django.utils.dateparse import parse_date
+
+import six
 
 from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,

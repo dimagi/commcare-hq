@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from .xls import open_xls_workbook
 from .xlsx import open_xlsx_workbook
 from .generic import open_any_workbook

@@ -1,24 +1,25 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import uuid
 
-from mock import patch
 from django.http import HttpRequest
-
 from django.test import TestCase
-from casexml.apps.case.signals import case_post_save
 
-from corehq.apps.userreports import tasks
-from corehq.apps.userreports.dbaccessors import delete_all_report_configs
-from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.apps.userreports.util import get_indicator_adapter
+from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
+
+from corehq.apps.userreports import tasks
+from corehq.apps.userreports.dbaccessors import delete_all_report_configs
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
 from corehq.apps.userreports.reports.view import ConfigurableReportView
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 

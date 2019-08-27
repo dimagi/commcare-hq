@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
+
 from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
-from dimagi.ext.jsonobject import JsonObject, StringProperty, DictProperty
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('indexed_case',

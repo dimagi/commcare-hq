@@ -1,12 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
 
 from corehq.apps.export.models import (
-    InferredSchema,
+    ExportItem,
     InferredExportGroupSchema,
+    InferredSchema,
     PathNode,
-    ExportItem
 )
 
 

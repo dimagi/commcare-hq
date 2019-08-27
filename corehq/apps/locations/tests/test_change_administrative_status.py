@@ -15,14 +15,13 @@ if so:
 otherwise:
     open a new supply point case as normal
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 
-from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from django.test import TestCase
 
-from corehq.apps.commtrack.models import SupplyPointCase, StockState
+from casexml.apps.stock.const import SECTION_TYPE_STOCK
+
+from corehq.apps.commtrack.models import StockState, SupplyPointCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.products.models import SQLProduct
 

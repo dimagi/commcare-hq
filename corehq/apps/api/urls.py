@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from django.conf.urls import include, url
 from django.http import HttpResponseNotFound
@@ -19,8 +18,8 @@ from corehq.apps.api.object_fetch_api import (
 from corehq.apps.api.odata.views import (
     ODataCaseMetadataView,
     ODataCaseServiceView,
-    ODataFormServiceView,
     ODataFormMetadataView,
+    ODataFormServiceView,
 )
 from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
 from corehq.apps.api.resources.v0_5 import (
@@ -33,8 +32,8 @@ from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures.resources.v0_1 import (
     FixtureResource,
     InternalFixtureResource,
-    LookupTableResource,
     LookupTableItemResource,
+    LookupTableResource,
 )
 from corehq.apps.locations import resources as locations
 from corehq.apps.sms.resources import v0_5 as sms_v0_5

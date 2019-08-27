@@ -1,47 +1,42 @@
-# coding: utf-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
 import json
 import math
-import pytz
 import warnings
 
-from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
+from django.utils.translation import ugettext as _
 
-from corehq.apps.users.permissions import get_extra_permissions
-from corehq.util.log import send_HTML_email
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.quickcache import quickcache
-from corehq.apps.reports.const import USER_QUERY_LIMIT
+import pytz
+import six
+from memoized import memoized
+from six.moves import map, range
 
 from couchexport.util import SerializableFunction
 from dimagi.utils.dates import DateSpan
-from memoized import memoized
 from dimagi.utils.web import json_request
 
-from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.reports.const import USER_QUERY_LIMIT
+from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.log import send_HTML_email
+from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import get_timezone_for_user
 
-from .models import HQUserType, TempCommCareUser
 from .analytics.esaccessors import (
     get_all_user_ids_submitted,
     get_username_in_last_form_user_id_submitted,
 )
-import six
-from six.moves import range
-from six.moves import map
+from .models import HQUserType, TempCommCareUser
 
 
 def make_form_couch_key(domain, user_id=Ellipsis):

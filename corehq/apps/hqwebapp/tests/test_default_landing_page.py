@@ -1,16 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.test import Client, TestCase
 from django.urls import reverse
-from django.test import TestCase, Client
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.views import MySavedReportsView
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import UserRole, WebUser, Permissions, CommCareUser
-from corehq.util.test_utils import generate_cases, flag_enabled
-
+from corehq.apps.users.models import (
+    CommCareUser,
+    Permissions,
+    UserRole,
+    WebUser,
+)
+from corehq.util.test_utils import flag_enabled, generate_cases
 
 DOMAIN = 'temerant'
 

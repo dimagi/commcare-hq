@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 WEEK0 = 'week0'
 WEEK1 = 'week1'
 MONTH0 = 'month0'

@@ -1,30 +1,31 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf import settings
+from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
-from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
 from django.views.generic.base import View
 
-from corehq.apps.users.models import AnonymousCouchUser
-from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.modules import to_function
-
+import six
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
+
+from dimagi.utils.decorators.datespan import datespan_in_request
+from dimagi.utils.modules import to_function
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view, track_domain_request
+from corehq.apps.domain.decorators import (
+    cls_to_view,
+    login_and_domain_required,
+    track_domain_request,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.users.models import AnonymousCouchUser
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
-import six
-
 
 datespan_default = datespan_in_request(
     from_param="startdate",

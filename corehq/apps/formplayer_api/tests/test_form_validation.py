@@ -1,9 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import requests_mock
+from django.conf import settings
 from django.test import SimpleTestCase
 
-from django.conf import settings
+import requests_mock
 
 from corehq.apps.formplayer_api import const
 from corehq.apps.formplayer_api.exceptions import FormplayerRequestException

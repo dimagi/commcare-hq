@@ -1,12 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import datetime
 import calendar
+import datetime
 
 from dateutil.relativedelta import relativedelta
-from dimagi.ext.jsonobject import JsonObject
 from jsonobject.base_properties import DefaultProperty
-from corehq.apps.userreports.expressions.getters import transform_date, transform_int
+
+from dimagi.ext.jsonobject import JsonObject
+
+from corehq.apps.userreports.expressions.getters import (
+    transform_date,
+    transform_int,
+)
 from corehq.apps.userreports.specs import TypeProperty
 
 

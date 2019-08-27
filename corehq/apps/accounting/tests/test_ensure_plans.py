@@ -1,18 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from decimal import Decimal
-import six
 
 from django.apps import apps
 
-from corehq.apps.accounting.bootstrap.config.testing import BOOTSTRAP_CONFIG_TESTING
+import six
+
+from corehq.apps.accounting.bootstrap.config.testing import (
+    BOOTSTRAP_CONFIG_TESTING,
+)
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.apps.accounting.models import (
+    UNLIMITED_FEATURE_USAGE,
     DefaultProductPlan,
     FeatureType,
     SoftwarePlanEdition,
-    UNLIMITED_FEATURE_USAGE,
 )
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.utils import clear_plan_version_cache

@@ -1,24 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.test import TestCase
-import mock
-
 import uuid
 from xml.etree import cElementTree as ElementTree
 
+from django.test import TestCase
+
+import mock
+from six.moves import range
+
+from casexml.apps.case.mock import (
+    CaseBlock,
+    CaseFactory,
+    CaseIndex,
+    CaseStructure,
+)
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
-from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.form_processor.tests.utils import run_with_all_backends
-from six.moves import range
 
 
 class RetireUserTestCase(TestCase):

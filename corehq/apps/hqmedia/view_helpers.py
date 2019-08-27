@@ -1,13 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 
 from collections import defaultdict
-from lxml import etree
 
 from django.urls import reverse
 from django.utils.translation import ugettext as _
+
+import six
+from lxml import etree
 
 from corehq.apps.app_manager.views.media_utils import interpolate_media_path
 

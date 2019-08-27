@@ -449,20 +449,41 @@ An example value of Form configs might look like this:
           },
           {
             "doc_type": "ObservationMapping",
-            "concept": "5089AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "concept": "e1e055a2-1d5f-11e0-b929-000c29ad1d07",
             "value": {
-              "form_question": "/data/weight",
-              "doc_type": "FormQuestion"
-            }
+              "form_question": "/data/lost_follow_up/visit_type",
+              "doc_type": "FormQuestionMap",
+              "value_map": {
+                "Search": "e1e20e4c-1d5f-11e0-b929-000c29ad1d07",
+                "Support": "e1e20f5a-1d5f-11e0-b929-000c29ad1d07"
+              }
+            },
+            "case_property": "last_visit_type"
           }
         ]
       }
     ]
 
-This example will use two form question values, "/data/height" and
-"/data/weight". They are sent as values of OpenMRS concepts
-5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA and 5089AAAAAAAAAAAAAAAAAAAAAAAAAAAA
-respectively.
+This example uses two form question values, "/data/height" and
+"/data/lost_follow_up/visit_type". They are sent as values of OpenMRS
+concepts 5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA and
+e1e055a2-1d5f-11e0-b929-000c29ad1d07 respectively.
+
+The OpenMRS concept that corresponds to the form question "/data/height"
+accepts a numeric value.
+
+The concept for "/data/lost_follow_up/visit_type" accepts a discrete set
+of values. For this we use a "FormQuestionMap" to map form question
+values, in this example "Search" and "Support", to their corresponding
+concept UUIDs in OpenMRS.
+
+The "case_property" setting for ObservationMappings is optional. If it
+is set, when Observations are imported from OpenMRS (see
+[Atom Feed Integration](#atom-feed-integration) below) then the given
+case property will be updated with the value from OpenMRS. If the
+ObservationMapping is a "FormQuestionMap" with a "value_map" (like the
+"last_visit_type" example above), then the CommCare case will be updated
+with the CommCare value that corresponds to the OpenMRS value's UUID.
 
 Set the UUIDs of Visit type and Encounter type appropriately according
 to the context of the form in the CommCare app.

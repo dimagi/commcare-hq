@@ -1,7 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import timedelta
+
 from django.utils.translation import ugettext_lazy as _
+
 from corehq.apps.change_feed import topics
 
 REPORT_BUILDER_EVENTS_KEY = 'REPORT_BUILDER_EVENTS_KEY'

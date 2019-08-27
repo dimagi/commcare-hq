@@ -1,12 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import itertools
 from collections import namedtuple
 
-import itertools
-from jsonobject import JsonObject, BooleanProperty, SetProperty, StringProperty, ListProperty, ObjectProperty
+import six
+from jsonobject import (
+    BooleanProperty,
+    JsonObject,
+    ListProperty,
+    ObjectProperty,
+    SetProperty,
+    StringProperty,
+)
 
 from corehq.apps.callcenter import const
-import six
 
 TypeRange = namedtuple('TypeRange', 'type, range_slug')
 

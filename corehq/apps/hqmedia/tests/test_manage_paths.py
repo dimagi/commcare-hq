@@ -1,10 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.test import SimpleTestCase
-
 import json
 import os
 import re
+
+from django.test import SimpleTestCase
 
 from mock import patch
 
@@ -13,10 +11,9 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.hqmedia.view_helpers import (
     download_multimedia_paths_rows,
-    validate_multimedia_paths_rows,
     update_multimedia_paths,
+    validate_multimedia_paths_rows,
 )
-from io import open
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)

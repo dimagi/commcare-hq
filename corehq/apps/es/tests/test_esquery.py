@@ -1,11 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from copy import deepcopy
 from unittest import TestCase
+
 from mock import patch
 
-from corehq.apps.es import filters
-from corehq.apps.es import forms, users
+from corehq.apps.es import filters, forms, users
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT

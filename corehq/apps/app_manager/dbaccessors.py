@@ -1,22 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 from itertools import chain
 
-from couchdbkit.exceptions import DocTypeError, ResourceNotFound
-
-from corehq.apps.app_manager.exceptions import BuildNotFoundException
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.quickcache import quickcache
-from django.http import Http404
 from django.core.cache import cache
+from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.es import AppES
-from corehq.apps.es.aggregations import TermsAggregation, NestedAggregation
-from dimagi.utils.couch.database import iter_docs
 import six
+from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 from six.moves import map
+
+from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
+from corehq.apps.es import AppES
+from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
+from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.util.quickcache import quickcache
 
 AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version', 'comment'])
 
@@ -300,21 +299,35 @@ def get_built_app_ids(domain):
     return [app_id for app_id in app_ids if app_id]
 
 
-def get_built_app_ids_for_app_id(domain, app_id, version=None):
+def get_build_ids_after_version(domain, app_id, version):
     """
-    Returns all the built apps for an application id. If version is specified returns all apps after that
-    version.
+    Returns ids of all an app's builds that are more recent than the given version.
     """
     from .models import Application
     key = [domain, app_id]
-    skip = 1 if version else 0
     results = Application.get_db().view(
         'app_manager/saved_app',
         startkey=key + [version],
         endkey=key + [{}],
         reduce=False,
         include_docs=False,
-        skip=skip
+        skip=1
+    ).all()
+    return [result['id'] for result in results]
+
+
+def get_build_ids(domain, app_id):
+    """
+    Returns all the built apps for an application id, in descending order of time built.
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain, app_id, {}],
+        endkey=[domain, app_id],
+        descending=True,
+        reduce=False,
+        include_docs=False,
     ).all()
     return [result['id'] for result in results]
 

@@ -1,10 +1,8 @@
-from __future__ import absolute_import, unicode_literals, division
 
 import os
 import uuid
 import zipfile
 from datetime import datetime, timedelta
-from io import open
 
 from django.conf import settings
 
@@ -16,6 +14,7 @@ from six.moves import filter, map
 from unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
+from corehq.util.datadog.gauges import datadog_gauge
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
@@ -75,7 +74,6 @@ def _update_calculated_properties():
         get_domains_to_update_es_filter()
     ).fields(["name", "_id"]).run().hits
 
-    all_stats = all_domain_stats()
     for r in results:
         dom = r["name"]
         domain_obj = Domain.get_by_name(dom)
@@ -93,6 +91,41 @@ def _update_calculated_properties():
             send_to_elasticsearch("domains", props, es_merge_update=True)
         except Exception as e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
+
+
+@periodic_task(run_every=timedelta(hours=6), queue='background_queue')
+def run_datadog_user_stats():
+    all_stats = all_domain_stats()
+    datadog_report_user_stats(commcare_users_by_domain=all_stats['commcare_users'])
+
+
+def datadog_report_user_stats(commcare_users_by_domain):
+    commcare_users_by_domain = summarize_user_counts(commcare_users_by_domain, n=50)
+    for domain, user_count in commcare_users_by_domain.items():
+        datadog_gauge('commcare.mobile_workers.count', user_count, tags=[
+            'domain:{}'.format('_other' if domain is () else domain)
+        ])
+
+
+def summarize_user_counts(commcare_users_by_domain, n):
+    """
+    Reduce (domain => user_count) to n entries, with all other entries summed to a single one
+
+    This allows us to report individual domain data to datadog for the domains that matter
+    and report a single number that combines the users for all other domains.
+
+    :param commcare_users_by_domain: the source data
+    :param n: number of domains to reduce the map to
+    :return: (domain => user_count) of top domains
+             with a single entry under () for all other domains
+    """
+    user_counts = sorted((user_count, domain) for domain, user_count in commcare_users_by_domain.items())
+    if n:
+        top_domains, other_domains = user_counts[-n:], user_counts[:-n]
+    else:
+        top_domains, other_domains = [], user_counts[:]
+    other_entry = (sum(user_count for user_count, _ in other_domains), ())
+    return {domain: user_count for user_count, domain in top_domains + [other_entry]}
 
 
 def get_domains_to_update_es_filter():
@@ -131,11 +164,13 @@ def apps_update_calculated_properties():
 
 @task(serializer='pickle', ignore_result=True)
 def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject=None):
+    from corehq.apps.reports.standard.deployments import ApplicationStatusReport
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
     report.rendered_as = 'export'
 
     setattr(report.request, 'REQUEST', {})
+    report_start = datetime.utcnow()
     file = report.excel_response
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
     hash_id = _store_excel_in_blobdb(report_class, file, report.domain)
@@ -143,6 +178,26 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
         _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject=subject)
+
+    report_end = datetime.utcnow()
+    if settings.SERVER_ENVIRONMENT == 'icds' and isinstance(report, ApplicationStatusReport):
+        message = """
+            Duration: {dur},
+            Total rows: {total},
+            Warehouse Enabled: {enabled},
+            User List: {users}
+            """.format(
+            dur=report_end - report_start,
+            total=report.total_records,
+            enabled=report.warehouse,
+            users=recipient_list
+        )
+        send_mail_async.delay(
+            subject="ApplicationStatusReport Download metrics",
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=["{}@{}.com".format("sreddy", "dimagi")]
+        )
 
 
 def _send_email(user, report, hash_id, recipient, subject=None):

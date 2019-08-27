@@ -1,90 +1,118 @@
 # coding=utf-8
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 
-import uuid
-from collections import OrderedDict
 import json
 import logging
+import uuid
+from collections import OrderedDict
 from distutils.version import LooseVersion
 
-from django.utils.safestring import mark_safe
-from lxml import etree
-
+from django.contrib import messages
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    JsonResponse,
+)
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _, gettext_lazy
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.urls import reverse
+from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy
+from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.decorators.http import require_GET
-from django.contrib import messages
 
-from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
-from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
-    handle_media_edits
-from corehq.apps.app_manager.xform import CaseError
-from corehq.apps.case_search.models import case_search_enabled_for_domain
-from corehq.apps.domain.decorators import track_domain_request, LoginAndDomainMixin
-from corehq.apps.domain.models import Domain
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
-from corehq.apps.reports.daterange import get_simple_dateranges
+from lxml import etree
+from six.moves import map
 
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request, json_response
 
-from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs, handle_custom_icon_edits, \
-    clear_xmlns_app_id_cache
 from corehq import toggles
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager import add_ons
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    ParentCasePropertyBuilder,
+)
 from corehq.apps.app_manager.const import (
+    CLAIM_DEFAULT_RELEVANT_CONDITION,
     MOBILE_UCR_VERSION_1,
     USERCASE_TYPE,
-    CLAIM_DEFAULT_RELEVANT_CONDITION,
 )
-from corehq.apps.app_manager.util import (
-    is_valid_case_type,
-    is_usercase_in_use,
-    prefix_usercase_properties,
-    module_offers_search,
-    module_case_hierarchy_has_circular_reference)
-from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
-from corehq.apps.hqmedia.models import ApplicationMediaReference, CommCareMultimedia
-from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
-from corehq.apps.userreports.models import ReportConfiguration, \
-    StaticReportConfiguration
-from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.decorators import (
+    no_conflict_require_POST,
+    require_can_edit_apps,
+    require_deploy_apps,
+)
 from corehq.apps.app_manager.models import (
     AdvancedModule,
+    CaseListForm,
     CaseSearch,
     CaseSearchProperty,
+    DefaultCaseSearchProperty,
     DeleteModuleRecord,
     DetailColumn,
     DetailTab,
+    FixtureSelect,
     FormActionCondition,
     MappingItem,
     Module,
     ModuleNotFoundException,
     OpenCaseAction,
     ParentSelect,
+    ReportAppConfig,
     ReportModule,
     ShadowModule,
     SortElement,
-    ReportAppConfig,
     UpdateCaseAction,
-    FixtureSelect,
-    DefaultCaseSearchProperty,
     get_all_mobile_filter_configs,
     get_auto_filter_configurations,
-    CaseListForm,
 )
-from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps, require_deploy_apps
-from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
-from six.moves import map
+from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
+    get_uuids_by_instance_id,
+)
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.util import (
+    is_usercase_in_use,
+    is_valid_case_type,
+    module_case_hierarchy_has_circular_reference,
+    module_offers_search,
+    prefix_usercase_properties,
+)
+from corehq.apps.app_manager.views.media_utils import (
+    handle_media_edits,
+    process_media_attribute,
+)
+from corehq.apps.app_manager.views.utils import (
+    back_to_main,
+    bail,
+    clear_xmlns_app_id_cache,
+    get_langs,
+    handle_custom_icon_edits,
+)
+from corehq.apps.app_manager.xform import CaseError
+from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
+    track_domain_request,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
+from corehq.apps.hqmedia.models import (
+    ApplicationMediaReference,
+    CommCareMultimedia,
+)
+from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
+from corehq.apps.reports.daterange import get_simple_dateranges
+from corehq.apps.userreports.models import (
+    ReportConfiguration,
+    StaticReportConfiguration,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -279,7 +307,7 @@ def _get_report_module_context(app, module):
             'autoFilterChoices': auto_filter_choices,
             'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
         },
-        'uuids_by_instance_id': get_uuids_by_instance_id(app.domain),
+        'uuids_by_instance_id': get_uuids_by_instance_id(app),
     }
     return context
 
@@ -934,7 +962,6 @@ def edit_report_module(request, domain, app_id, module_unique_id):
         )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
-    get_uuids_by_instance_id.clear(domain)
     return json_response('success')
 
 

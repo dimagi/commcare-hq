@@ -1,22 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import logging
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import HttpResponseRedirect, Http404
+from django.http import Http404, HttpResponseRedirect
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_http_methods
 
+import six
 from memoized import memoized
+from six.moves import map, range
 
-from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.reports.filters.controllers import EmwfOptionsController
+from dimagi.utils.couch import get_redis_lock, release_lock
 from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -28,41 +28,41 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
-from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.locations.tasks import download_locations_async, import_locations_async
+from corehq.apps.locations.tasks import (
+    download_locations_async,
+    import_locations_async,
+)
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.filters.api import EmwfOptionsView
+from corehq.apps.reports.filters.controllers import EmwfOptionsController
+from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
 from corehq.util.python_compatibility import soft_assert_type_text
-from dimagi.utils.couch import get_redis_lock, release_lock
 
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
 from .exceptions import LocationConsistencyError
+from .forms import LocationFormSet, RelatedLocationForm, UsersAtLocationForm
+from .models import LocationType, SQLLocation, filter_for_archived
 from .permissions import (
-    locations_access_required,
     can_edit_location,
+    can_edit_location_types,
     can_edit_or_view_location,
+    locations_access_required,
     require_can_edit_locations,
     require_can_edit_or_view_locations,
     user_can_edit_location_types,
-    can_edit_location_types,
 )
-from .models import LocationType, SQLLocation, filter_for_archived
-from .forms import LocationFormSet, UsersAtLocationForm, RelatedLocationForm
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config
-import six
-from six.moves import map
-from six.moves import range
-
 
 logger = logging.getLogger(__name__)
 

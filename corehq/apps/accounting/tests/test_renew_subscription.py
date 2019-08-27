@@ -1,12 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 
 from corehq.apps.accounting.models import (
-    Subscription,
     BillingAccount,
     DefaultProductPlan,
     SoftwarePlanEdition,
+    Subscription,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest

@@ -1,7 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import six
 import sys
 from collections import defaultdict
@@ -25,8 +21,6 @@ from corehq.util.view_utils import get_request
 from corehq.util.datadog.utils import get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
-from six.moves import range
-from io import open
 
 
 def clean_exception(exception):

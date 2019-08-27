@@ -1,10 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-from memoized import memoized
-from corehq import toggles
 
 from django.db import models
+
+from memoized import memoized
+
+from corehq import toggles
 
 
 class SimprintsIntegration(models.Model):

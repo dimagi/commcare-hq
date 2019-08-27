@@ -1,37 +1,46 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
+from django.utils.functional import cached_property
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
+import six
+from memoized import memoized
+
+from dimagi.utils.couch.loosechange import map_reduce
+
+from corehq.apps.commtrack.models import CommtrackActionConfig, CommtrackConfig
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.analytics.esaccessors import (
     get_wrapped_ledger_values,
     products_with_ledgers,
 )
+from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.data_sources import (
-    StockStatusDataSource, ReportingStatusDataSource,
-    SimplifiedInventoryDataSource, SimplifiedInventoryDataSourceNew
+    ReportingStatusDataSource,
+    SimplifiedInventoryDataSource,
+    SimplifiedInventoryDataSourceNew,
+    StockStatusDataSource,
 )
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig
-from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.reports.graph_models import PieChart
-from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.reports.filters.commtrack import SelectReportingType
-from corehq.form_processor.utils.general import should_use_sql_backend
-from dimagi.utils.couch.loosechange import map_reduce
-from corehq.apps.locations.models import SQLLocation
-from memoized import memoized
-from django.utils.translation import ugettext as _, ugettext_noop
-from django.utils.functional import cached_property
 from corehq.apps.reports.commtrack.util import (
-    get_relevant_supply_point_ids,
+    get_consumption_helper_from_ledger_value,
     get_product_id_name_mapping,
     get_product_ids_for_program,
-    get_consumption_helper_from_ledger_value,
+    get_relevant_supply_point_ids,
 )
-from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
-from corehq.apps.reports.filters.commtrack import AdvancedColumns
-import six
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.filters.commtrack import (
+    AdvancedColumns,
+    SelectReportingType,
+)
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.graph_models import PieChart
+from corehq.apps.reports.standard import (
+    DatespanMixin,
+    ProjectReport,
+    ProjectReportParametersMixin,
+)
+from corehq.form_processor.utils.general import should_use_sql_backend
 
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):

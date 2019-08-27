@@ -1,21 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import functools
 from distutils.version import LooseVersion
 
 from django.utils.translation import ugettext
 
-from corehq.apps.app_manager import id_strings
+import six
 from memoized import memoized
-from corehq.apps.app_manager.util import module_offers_search,\
-    create_temp_sort_column, get_sort_and_sort_only_columns
-import langcodes
+
 import commcare_translations
+import langcodes
+from corehq import toggles
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
+from corehq.apps.app_manager.util import (
+    create_temp_sort_column,
+    get_sort_and_sort_only_columns,
+    module_offers_search,
+)
 from corehq.util.translation import localize
 from langcodes import langs_by_code
-import six
-from corehq import toggles
 
 
 def non_empty_only(dct):

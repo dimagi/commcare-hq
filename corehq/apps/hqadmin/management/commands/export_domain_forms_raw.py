@@ -1,15 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 
-import jsonobject
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from dimagi.ext.jsonobject import JsonObject
+import jsonobject
 import six
-from io import open
+
+from dimagi.ext.jsonobject import JsonObject
+
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 
 class FormMetadata(JsonObject):

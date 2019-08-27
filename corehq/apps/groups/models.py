@@ -1,30 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from six.moves import map
+import re
+from datetime import datetime
 
 from django.conf import settings
 
-from dimagi.ext.couchdbkit import *
-import re
-from dimagi.utils.couch.database import iter_docs
+import six
 from memoized import memoized
+from six.moves import filter, map, range
+
+from dimagi.ext.couchdbkit import *
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.undo import (
+    DELETED_SUFFIX,
+    DeleteDocRecord,
+    UndoableDocument,
+)
+
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.users.models import CouchUser, CommCareUser
-from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
-from datetime import datetime
 from corehq.apps.groups.dbaccessors import (
     get_group_ids_by_domain,
     group_by_domain,
     refresh_group_views,
     stale_group_by_name,
 )
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
-import six
-from six.moves import range
-from six.moves import filter
 
 dt_no_Z_re = re.compile(r'^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 

@@ -1,34 +1,42 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import mock
 import uuid
 from datetime import datetime, timedelta
+
+from django.test import SimpleTestCase, TestCase, override_settings
+
+import mock
+
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xform import get_case_updates
+from dimagi.utils.couch.undo import DELETED_SUFFIX
+from pillowtop.es_utils import initialize_index
+
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.apps.callcenter.sync_user_case import sync_call_center_user_case, sync_usercase
+from corehq.apps.callcenter.sync_user_case import (
+    sync_call_center_user_case,
+    sync_usercase,
+)
 from corehq.apps.callcenter.utils import (
-    is_midnight_for_domain,
-    get_call_center_cases,
     DomainLite,
-    get_call_center_domains)
+    get_call_center_cases,
+    get_call_center_domains,
+    is_midnight_for_domain,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
-from corehq.apps.users.util import format_username
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups
-from django.test import TestCase, SimpleTestCase, override_settings
-
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.util import format_username
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import ensure_index_deleted
-from dimagi.utils.couch.undo import DELETED_SUFFIX
-from pillowtop.es_utils import initialize_index
 
 TEST_DOMAIN = 'cc-util-test'
 CASE_TYPE = 'cc-flw'

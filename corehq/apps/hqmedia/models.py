@@ -1,22 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from copy import copy
 import hashlib
 import json
 import logging
 import mimetypes
+from copy import copy
 from datetime import datetime
 from io import BytesIO
 
-import magic
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.template.defaultfilters import filesizeformat
+from django.urls import reverse
+from django.utils.translation import ugettext as _
 
-from corehq import privileges
-from corehq import toggles
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.hqmedia.exceptions import BadMediaFileException
-from corehq.util.python_compatibility import soft_assert_type_text
+import magic
+import six
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from memoized import memoized
+from PIL import Image
+
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -32,19 +31,17 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
-from memoized import memoized
-from django.urls import reverse
-from django.utils.translation import ugettext as _
-from PIL import Image
 
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.domain import SHARED_DOMAIN
-from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
-from corehq.blobs.mixin import BlobMixin, CODES
-import six
-from io import open
+from corehq.apps.domain.models import LICENSE_LINKS, LICENSES
+from corehq.apps.hqmedia.exceptions import BadMediaFileException
+from corehq.blobs.mixin import CODES, BlobMixin
+from corehq.util.python_compatibility import soft_assert_type_text
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -1017,5 +1014,3 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 has_restored = True
                 del self.archived_media[LOGO_ARCHIVE_KEY][slug]
         return has_restored
-
-

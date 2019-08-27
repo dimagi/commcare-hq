@@ -1,13 +1,13 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import print_function
 from collections import OrderedDict
+from functools import reduce
 
 from django.template.defaultfilters import slugify
 
-from memoized import memoized
+import six
 import sqlagg
+from memoized import memoized
+from six.moves import range, zip
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import RawFilter, SqlFilter
 
@@ -21,11 +21,6 @@ from corehq.apps.reports.datatables import (
 from corehq.apps.reports.util import format_datatables_data
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
 from corehq.util.python_compatibility import soft_assert_type_text
-import six
-from six.moves import zip
-from functools import reduce
-from six.moves import range
-
 from corehq.util.soft_assert import soft_assert
 
 
