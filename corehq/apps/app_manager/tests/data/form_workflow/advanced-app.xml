@@ -1,0 +1,89 @@
+<partial>
+  <entry>
+    <form>http://openrosa.org/formdesigner/AB82ED08-2AD9-4F44-9591-A98FF91C0677</form>
+    <command id="m0-f0">
+      <text>
+        <locale id="forms.m0f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <session>
+      <datum id="case_id_load_household_0" nodeset="instance('casedb')/casedb/case[@case_type='household'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+    </session>
+  </entry>
+  <entry>
+    <form>http://openrosa.org/formdesigner/1E89EFAC-59F5-4CBF-8611-C946C3898BA3</form>
+    <command id="m1-f0">
+      <text>
+        <locale id="forms.m1f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <session>
+      <datum id="case_id_load_household_0" nodeset="instance('casedb')/casedb/case[@case_type='household'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+      <datum id="case_id_load_person_0" nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+    </session>
+  </entry>
+  <entry>
+    <form>http://openrosa.org/formdesigner/d849416ffa584ddfb4466f4a56877172</form>
+    <command id="m1-f1">
+      <text>
+        <locale id="forms.m1f1"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <datum id="case_id_load_household_0" nodeset="instance('casedb')/casedb/case[@case_type='household'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+      <datum id="case_id_load_person_0" nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+      <datum id="case_id_autoload_person2" function="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid]/@case_id"/>
+    </session>
+    <assertions>
+      <assert test="count(instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid]) = 1">
+        <text>
+          <locale id="case_autoload.usercase.case_missing"/>
+        </text>
+      </assert>
+      <assert test="count(instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid]) = 1">
+        <text>
+          <locale id="case_autoload.usercase.case_missing"/>
+        </text>
+      </assert>
+    </assertions>
+  </entry>
+  <entry>
+    <form>http://openrosa.org/formdesigner/bd6d520e3ef74b63a20bfc293c1455d1</form>
+    <command id="m1-f2">
+      <text>
+        <locale id="forms.m1f2"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <datum id="case_id_load_household_0" nodeset="instance('casedb')/casedb/case[@case_type='household'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+      <datum id="case_id_load_person_0" nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+      <datum id="case_id_new_ag_care_0" function="uuid()"/>
+    </session>
+    <stack>
+      <create>
+        <command value="'m0'"/>
+        <command value="'m1'"/>
+        <datum id="case_id_load_household_0" value="instance('commcaresession')/session/data/case_id_load_household_0"/>
+        <datum id="case_id_load_person_0" value="instance('commcaresession')/session/data/case_id_load_person_0"/>
+      </create>
+    </stack>
+  </entry>
+  <entry>
+    <form>http://openrosa.org/formdesigner/E29BC2A0-E505-46F9-8D6D-94B720BAE020</form>
+    <command id="m2-f0">
+      <text>
+        <locale id="forms.m2f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <session>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='ag_care'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
+    </session>
+  </entry>
+</partial>

@@ -1,7 +1,6 @@
 """
 This module deals with data ingestion: populating the aggregate tables from other tables.
 """
-from __future__ import absolute_import, unicode_literals
 from collections import namedtuple
 from datetime import datetime
 

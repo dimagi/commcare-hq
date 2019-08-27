@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.preindex import get_preindex_plugin
 from corehq.util.couch_helpers import paginate_view
 from corehq.util.python_compatibility import soft_assert_type_text

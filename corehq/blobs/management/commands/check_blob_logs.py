@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 import json
 import logging
 
@@ -18,7 +15,6 @@ from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobMetaRef
 from corehq.blobs.util import set_max_connections
 from corehq.util.decorators import change_log_level
-from io import open
 
 
 USAGE = "Usage: ./manage.py check_blob_logs [options] FILE [FILE [FILE]]"

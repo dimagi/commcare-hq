@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import contextlib
 import time
 import sys
@@ -34,7 +31,6 @@ from corehq.apps.export.models.new import (
 )
 from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
 import six
-from io import open
 
 
 class ExportFile(object):

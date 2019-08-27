@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (
     MessageMetadata,

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
 
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data

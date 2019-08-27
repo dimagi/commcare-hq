@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from custom.ewsghana.reminders import REQ_SUBMITTED
 from custom.ewsghana.tests.handlers.utils import EWSScriptTest
 import six

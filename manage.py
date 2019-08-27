@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import attr
 
@@ -149,12 +147,6 @@ def patch_assertItemsEqual():
         unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
 
 
-def patch_pickle_version():
-    # to avoid incompatibility between python 2 and 3
-    import pickle
-    pickle.HIGHEST_PROTOCOL = 2
-
-
 def run_patches():
     # workaround for https://github.com/smore-inc/tinys3/issues/33
     import mimetypes
@@ -163,9 +155,6 @@ def run_patches():
     patch_jsonfield()
 
     patch_assertItemsEqual()
-
-    # After PY3 migration: remove
-    patch_pickle_version()
 
     import django
     _setup_once.setup = django.setup
@@ -194,6 +183,7 @@ if __name__ == "__main__":
         GeventCommand('migrate_domain_from_couch_to_sql', http_adapter_pool_size=32),
         GeventCommand('migrate_multiple_domains_from_couch_to_sql', http_adapter_pool_size=32),
         GeventCommand('run_aggregation_query'),
+        GeventCommand('send_pillow_retry_queue_through_pillows'),
     )
     if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):
         from gevent.monkey import patch_all; patch_all(subprocess=True)

@@ -13,11 +13,7 @@ function setup() {
     rm *.log *.lock || true
 
     scripts/uninstall-requirements.sh
-    if [ "$PYTHON_VERSION" = "py3" ]; then
-        pip install -r requirements-python3/test-requirements.txt
-    else
-        pip install -r requirements/test-requirements.txt
-    fi
+    pip install -r requirements/test-requirements.txt
 
     # compile pyc files
     python -m compileall -q corehq custom submodules testapps *.py

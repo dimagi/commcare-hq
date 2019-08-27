@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 import os
 from xml.sax.saxutils import escape
@@ -44,7 +42,6 @@ from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
 from corehq import toggles
 from memoized import memoized
-from io import open
 
 
 class DetailContributor(SectionContributor):
@@ -474,7 +471,7 @@ def get_instances_for_module(app, module, additional_xpaths=None):
     for detail_id in detail_ids:
         xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
-    instances, _ = get_all_instances_referenced_in_xpaths(app.domain, xpaths)
+    instances, _ = get_all_instances_referenced_in_xpaths(app, xpaths)
     return instances
 
 

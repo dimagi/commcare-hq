@@ -1,7 +1,5 @@
 
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 
 def get_open_case_ids_in_domain(domain, type=None, owner_id=None):

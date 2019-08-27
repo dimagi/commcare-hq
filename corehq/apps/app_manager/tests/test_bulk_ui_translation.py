@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from distutils.version import StrictVersion
 from django.test import SimpleTestCase
 from io import BytesIO

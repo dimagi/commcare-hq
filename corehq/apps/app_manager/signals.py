@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.dispatch.dispatcher import Signal
 
 from corehq.apps.callcenter.app_parser import get_call_center_config_from_app

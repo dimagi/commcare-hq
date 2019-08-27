@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import absolute_import
 from corehq.sql_db.operations import rename_table_indexes
 from django.db import migrations
 

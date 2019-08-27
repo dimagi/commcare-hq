@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from mock import MagicMock, patch
 import os
 import uuid
@@ -27,7 +25,6 @@ from corehq.util.test_utils import trap_extra_setup
 from couchforms.models import XFormInstance
 from pillowtop.es_utils import initialize_index_and_mapping
 from six.moves import range
-from io import open
 
 DOMAIN = "test"
 

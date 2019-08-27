@@ -23,7 +23,6 @@ Where staging.yaml looks as follows:
 
 When not specified, a submodule's trunk and name inherit from the parent
 """
-from __future__ import absolute_import, print_function, unicode_literals
 
 from gevent import monkey
 monkey.patch_all()

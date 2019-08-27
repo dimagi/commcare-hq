@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from datetime import datetime
 from io import BytesIO
@@ -31,7 +29,6 @@ from corehq.sql_db.routers import db_for_read_write
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 from six.moves import range
-from io import open
 
 DOMAIN = 'test-form-accessor'
 

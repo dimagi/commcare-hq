@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
 from custom.icds_reports.const import AGG_CHILD_HEALTH_THR_TABLE

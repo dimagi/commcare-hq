@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import OrderedDict
 from datetime import datetime, date, time, timedelta
 from xml.etree import cElementTree as ElementTree

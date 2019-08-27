@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-from __future__ import absolute_import
 import os
 import uuid
 from base64 import b64encode
@@ -21,7 +19,6 @@ from corehq.util.test_utils import generate_cases, trap_extra_setup
 from dimagi.ext.couchdbkit import Document
 from mock import patch
 import six
-from io import open
 
 
 class BaseTestCase(TestCase):

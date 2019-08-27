@@ -1,6 +1,3 @@
-# encoding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from mock import patch
 import copy
 from django.test import SimpleTestCase

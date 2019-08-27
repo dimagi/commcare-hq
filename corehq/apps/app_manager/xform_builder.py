@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 XFormBuilder is intended to be a simple way to create an XForm, and add
 questions to it.
@@ -19,8 +18,6 @@ seem to be a good fit.
 
 
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 import uuid
 from lxml import etree

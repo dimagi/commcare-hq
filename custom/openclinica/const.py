@@ -1,5 +1,4 @@
 # CommCare case type of OpenClinica study subjects
-from __future__ import unicode_literals
 CC_SUBJECT_CASE_TYPE = 'subject'
 
 # Names of case properties used in report

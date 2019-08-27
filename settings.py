@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import inspect
 from collections import defaultdict
@@ -648,10 +646,6 @@ REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
 SYNC_CASE_FOR_MESSAGING_ON_SAVE = True
-
-PILLOW_RETRY_QUEUE_ENABLED = False
-
-SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
 
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
@@ -1884,12 +1878,14 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'livraison_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined2.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'rapture_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'recouvrement_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_product_consumption.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),

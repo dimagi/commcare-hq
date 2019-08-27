@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from pillowtop.reindexer.change_providers.interface import ChangeProvider
 from corehq.util.queries import paginated_queryset
 

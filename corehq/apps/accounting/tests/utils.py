@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SubscriptionAdjustment, Subscription
 from corehq.apps.accounting.tests import generator
 

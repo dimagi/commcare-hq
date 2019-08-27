@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import json
 
@@ -36,9 +34,6 @@ class Dhis2Repeater(FormRepeater):
             isinstance(other, self.__class__) and
             self.get_id == other.get_id
         )
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def __hash__(self):
         return hash(self.get_id)

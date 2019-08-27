@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf.urls import url, include
 
 from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView, \
@@ -154,3 +152,5 @@ urlpatterns = [
     url(r'^nic_indicators', NICIndicatorAPIView.as_view(), name='nic_indicator_api'),
     url(r'^cas_export', CasDataExport.as_view(), name='cas_export'),
 ]
+
+DASHBOARD_URL_GROUPS = urlpatterns + dashboardurls + maternal_and_child_urls + cas_reach_urls + demographics_urls + awc_infrastructure_urls

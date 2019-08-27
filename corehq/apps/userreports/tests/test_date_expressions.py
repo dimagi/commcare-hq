@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import date, datetime
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import FactoryContext

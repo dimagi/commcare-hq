@@ -15,8 +15,6 @@ For example,
 
 will give you JSON for the first 10 groups in `domain` with names matching `q`.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from .es_query import HQESQuery
 from . import filters
 

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, iter_all_ids_chunked
 

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from corehq.apps.locations.dbaccessors import (
     user_ids_at_locations,

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf.urls import url
 from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, send_dhis2_data, dhis2_edit_config
 from corehq.motech.repeaters.views.repeaters import AddDhis2RepeaterView

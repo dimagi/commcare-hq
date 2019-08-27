@@ -67,9 +67,6 @@ models' attachments to the blob database:
 
 That's it, you're done!
 """
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 import traceback
@@ -77,7 +74,6 @@ from base64 import b64encode
 from contextlib import contextmanager
 from datetime import timedelta
 from tempfile import mkdtemp
-from io import open
 
 import gevent
 import six

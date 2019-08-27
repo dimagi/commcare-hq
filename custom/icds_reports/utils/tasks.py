@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 
 def call_citus_experiment(parameterized_sql, params, data_source="Unknown"):

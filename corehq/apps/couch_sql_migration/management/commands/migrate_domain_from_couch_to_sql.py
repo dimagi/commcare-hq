@@ -1,9 +1,3 @@
-# encoding: utf-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import logging
 import os
 from itertools import groupby
@@ -81,25 +75,41 @@ class Command(BaseCommand):
                 reside on an NFS volume for migration state consistency.
                 Can be set in environment: CCHQ_MIGRATION_STATE_DIR
             """)
-        parser.add_argument('--dry-run', action='store_true', default=False,
+        parser.add_argument('--live',
+            dest="live_migrate", action='store_true', default=False,
             help='''
                 Do migration in a way that will not be seen by
                 `any_migrations_in_progress(...)` so it does not block
                 operations like syncs, form submissions, sms activity,
-                etc. Dry-run migrations cannot be committed.
+                etc. A "live" migration will stop when it encounters a
+                form that has been submitted within an hour of the
+                current time. Live migrations can be resumed after
+                interruption or to top off a previous live migration by
+                processing unmigrated forms that are older than one
+                hour. Migration state must be present in the state
+                directory to resume. A live migration may be followed by
+                a normal (non-live) migration, which will commit the
+                result if all goes well.
+            ''')
+        parser.add_argument('--no-diff-process',
+            dest='diff_process', action='store_false', default=True,
+            help='''
+                Migrate forms and diff cases in the same process. The
+                case diff queue will run in a separate process if this
+                option is not specified.
             ''')
 
     def handle(self, domain, action, **options):
         if should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
-        for opt in ["no_input", "verbose", "state_dir", "dry_run"]:
+        for opt in ["no_input", "verbose", "state_dir", "live_migrate", "diff_process"]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('--no-input only allowed for unit testing')
-        if action != MIGRATE and self.dry_run:
-            raise CommandError("--dry-run only allowed for `MIGRATE`")
+        if action != MIGRATE and self.live_migrate:
+            raise CommandError("--live only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
 
@@ -107,13 +117,22 @@ class Command(BaseCommand):
         getattr(self, "do_" + action)(domain)
 
     def do_MIGRATE(self, domain):
-        path = self.state_dir
-        set_couch_sql_migration_started(domain, self.dry_run)
-        do_couch_to_sql_migration(domain, path, with_progress=not self.no_input)
+        set_couch_sql_migration_started(domain, self.live_migrate)
+        do_couch_to_sql_migration(
+            domain,
+            self.state_dir,
+            with_progress=not self.no_input,
+            live_migrate=self.live_migrate,
+            diff_process=self.diff_process,
+        )
 
-        has_diffs = self.print_stats(domain, short=True, diffs_only=True)
+        if self.live_migrate:
+            print("Live migration completed.")
+            has_diffs = True
+        else:
+            has_diffs = self.print_stats(domain, short=True, diffs_only=True)
         if has_diffs:
-            print("\nRun `diff` or `stats --verbose` for more details.\n")
+            print("\nRun `diff` or `stats [--verbose]` for more details.\n")
 
     def do_reset(self, domain):
         if not self.no_input:

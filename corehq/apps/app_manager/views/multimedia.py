@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.http import Http404, JsonResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _

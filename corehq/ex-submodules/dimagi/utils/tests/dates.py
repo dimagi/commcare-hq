@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, timedelta, date
 from six.moves.urllib.parse import urlencode
 import pytz

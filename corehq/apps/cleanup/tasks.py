@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import json
 from time import time
@@ -24,7 +22,6 @@ from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns imp
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, FormReindexAccessor
 from corehq.sql_db.connections import ConnectionManager, UCR_ENGINE_ID
-from io import open
 
 
 UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME

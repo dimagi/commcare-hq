@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 from dimagi.utils.parsing import json_format_datetime
 

@@ -1,9 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.reports.filters.base import BaseReportFilter
+from custom.icds_reports.utils import icds_pre_release_features
 
 
 class AsyncLocationFilter(BaseReportFilter):
@@ -44,7 +43,9 @@ class AsyncLocationFilter(BaseReportFilter):
             'loc_id': loc_id,
             'locations': self.load_locations_json(loc_id),
             'make_optional': self.make_optional,
-            'hierarchy': self.location_hierarchy_config
+            'hierarchy': self.location_hierarchy_config,
+            'path': self.request.path,
+            'have_access_to_icds_dashboard_features': icds_pre_release_features(user)
         }
 
     @classmethod

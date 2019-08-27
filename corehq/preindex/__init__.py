@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from .preindex_plugins import (
     CouchAppsPreindexPlugin,
     ExtraPreindexPlugin,

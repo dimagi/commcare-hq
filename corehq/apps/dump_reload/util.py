@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 
 
 def get_model_label(model_class):

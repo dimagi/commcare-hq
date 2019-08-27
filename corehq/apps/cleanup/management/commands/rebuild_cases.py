@@ -1,12 +1,8 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 from django.core.management.base import BaseCommand
 
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.models import RebuildWithReason
-from io import open
 
 
 logger = logging.getLogger('rebuild_cases')

@@ -1,0 +1,292 @@
+{
+  "domains": [
+    "test-pna",
+    "ipm-senegal",
+    "testing-ipm-senegal"
+  ],
+  "server_environment": ["production", "pna"],
+  "config": {
+    "table_id": "visite_de_l_operateur_per_product_v2",
+    "display_name": "Visite de l'operateur per product",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "base_item_expression": {
+      "datatype": null,
+      "type": "property_path",
+      "property_path": [
+        "form",
+        "confirmed_products_update",
+        "products_update"
+      ]
+    },
+    "configured_filter": {
+      "operator": "eq",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "type": "boolean_expression",
+      "comment": null,
+      "property_value": "http://openrosa.org/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D"
+    },
+    "configured_indicators": [
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "PPS ID",
+        "datatype": "string",
+        "expression": {
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "location_id"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "pps_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "District ID",
+        "datatype": "string",
+        "expression": {
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "ancestor_location",
+            "location_id": {
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "location_id"
+                ]
+              },
+              "type": "root_doc"
+            },
+            "location_type": {
+              "type": "constant",
+              "constant": "District"
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "district_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "Region ID",
+        "datatype": "string",
+        "expression": {
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "ancestor_location",
+            "location_id": {
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "location_id"
+                ]
+              },
+              "type": "root_doc"
+            },
+            "location_type": {
+              "type": "constant",
+              "constant": "R\u00e9gion"
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "region_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "region_name"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "column_id": "region_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "PPS_name"
+            ]
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "pps_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "district_name"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "column_id": "district_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "date_expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "real_date_repeat"
+            ]
+          },
+          "type": "date"
+        },
+        "column_id": "real_date_repeat"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "product_name"
+          ]
+        },
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "product_name",
+        "is_nullable": true,
+        "type": "expression"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "product_id"
+          ]
+        },
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "product_id",
+        "is_nullable": true,
+        "type": "expression"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "select_programs"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "select_programs"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "question1",
+              "total_stock"
+            ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "total_stock"
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {},
+    "engine_id": "ucr",
+    "disable_destructive_rebuild": false
+  }
+}

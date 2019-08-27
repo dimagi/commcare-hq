@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 import random
@@ -27,7 +25,6 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
 from six.moves import range
-from io import open
 
 
 class CouchDumpLoadTest(TestCase):

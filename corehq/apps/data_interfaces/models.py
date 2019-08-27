@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import jsonfield
 import pytz
 import re
@@ -954,9 +951,6 @@ class CaseRuleActionResult(object):
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     __hash__ = None
 
