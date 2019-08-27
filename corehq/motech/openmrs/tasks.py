@@ -201,8 +201,8 @@ def import_patients_to_domain(domain_name, force=False):
                 location_type = LocationType.objects.get(domain=domain_name, name=importer.location_type_name)
             except LocationType.DoesNotExist:
                 logger.error(
-                    f'No organization level named "{importer.location_type_name}" found in project space '
-                    f'"{domain_name}".'
+                    f'No organization level named "{importer.location_type_name}" '
+                    f'found in project space "{domain_name}".'
                 )
                 continue
             if importer.location_id:
@@ -215,8 +215,9 @@ def import_patients_to_domain(domain_name, force=False):
                 owner = get_one_commcare_user_at_location(domain_name, location.location_id)
                 if not owner:
                     logger.error(
-                        f'Project space "{domain_name}" at location "{location.name}" has no user to own cases '
-                        f'imported from OpenMRS Importer "{importer}"'
+                        f'Project space "{domain_name}" at location '
+                        f'"{location.name}" has no user to own cases imported '
+                        f'from OpenMRS Importer "{importer}"'
                     )
                     continue
                 import_patients_of_owner(requests, importer, domain_name, owner, location)
@@ -225,15 +226,16 @@ def import_patients_to_domain(domain_name, force=False):
                 owner = CommCareUser.get(importer.owner_id)
             except ResourceNotFound:
                 logger.error(
-                    f'Project space "{domain_name}" has no user to own cases imported from OpenMRS Importer '
-                    f'"{importer}"'
+                    f'Project space "{domain_name}" has no user to own cases '
+                    f'imported from OpenMRS Importer "{importer}"'
                 )
                 continue
             import_patients_of_owner(requests, importer, domain_name, owner)
         else:
             logger.error(
-                f'Error importing patients for project space "{domain_name}" from OpenMRS Importer "{importer}": '
-                f'Unable to determine the owner of imported cases without either owner_id or location_type_name'
+                f'Error importing patients for project space "{domain_name}" from '
+                f'OpenMRS Importer "{importer}": Unable to determine the owner of '
+                'imported cases without either owner_id or location_type_name'
             )
             continue
 
