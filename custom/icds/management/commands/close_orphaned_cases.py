@@ -1,7 +1,4 @@
-from __future__ import print_function
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management import BaseCommand
 
 from dimagi.utils.chunked import chunked
@@ -13,7 +10,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from corehq.util.log import with_progress_bar
 import six
-from io import open
 
 
 class Command(BaseCommand):

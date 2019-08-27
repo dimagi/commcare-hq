@@ -1,28 +1,28 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import copy
 import datetime
-import polib
 import tempfile
-
-from memoized import memoized
 from collections import OrderedDict
 
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
+import polib
+from memoized import memoized
+
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.translations.integrations.transifex.client import (
+    TransifexApiClient,
+)
+from corehq.apps.translations.integrations.transifex.const import (
+    SOURCE_LANGUAGE_MAPPING,
+    TRANSIFEX_SLUG_PREFIX_MAPPING,
+)
 from corehq.apps.translations.integrations.transifex.exceptions import (
     InvalidProjectMigration,
     ResourceMissing,
 )
 from corehq.apps.translations.models import TransifexProject
-from corehq.apps.translations.integrations.transifex.client import TransifexApiClient
-from corehq.apps.translations.integrations.transifex.const import (
-    SOURCE_LANGUAGE_MAPPING,
-    TRANSIFEX_SLUG_PREFIX_MAPPING,
-)
 
 
 class ProjectMigrator(object):

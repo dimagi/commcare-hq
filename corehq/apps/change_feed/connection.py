@@ -1,9 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from django.conf import settings
-from kafka.client import KafkaClient
-from kafka.client import SimpleClient
+
+from kafka.client import KafkaClient, SimpleClient
 
 from corehq.util.io import ClosingContextProxy
 

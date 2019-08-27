@@ -97,31 +97,26 @@ Language
     sorting
     Add esquery.iter() method
 """
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import json
 from collections import namedtuple
 from copy import deepcopy
-import json
 
+import six
 from memoized import memoized
 
 from corehq.elastic import (
-    ES_META,
     ES_DEFAULT_INSTANCE,
+    ES_META,
+    SCROLL_PAGE_SIZE_LIMIT,
+    SIZE_LIMIT,
     ESError,
+    ScanResult,
     run_query,
     scroll_query,
-    SIZE_LIMIT,
-    ScanResult,
-    SCROLL_PAGE_SIZE_LIMIT,
 )
 
-from . import aggregations
-from . import filters
-from . import queries
-from .utils import values_list, flatten_field_dict
-import six
+from . import aggregations, filters, queries
+from .utils import flatten_field_dict, values_list
 
 
 class ESQuery(object):

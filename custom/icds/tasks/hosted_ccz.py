@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import six
 import sys
-from io import open
 from celery.task import task
 from django.template.defaultfilters import linebreaksbr
 

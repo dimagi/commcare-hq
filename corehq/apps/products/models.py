@@ -1,27 +1,29 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from decimal import Decimal
-import jsonfield
 
 from django.db import models
 from django.utils.translation import ugettext as _
 
+import jsonfield
+import six
 from couchdbkit.exceptions import ResourceNotFound
+from six.moves import map
+
 from dimagi.ext.couchdbkit import (
-    Document,
-    StringProperty,
-    DecimalProperty,
-    DictProperty,
     BooleanProperty,
     DateTimeProperty,
+    DecimalProperty,
+    DictProperty,
+    Document,
+    StringProperty,
 )
 from dimagi.utils.couch.database import iter_docs
 
 # move these too
-from corehq.apps.commtrack.exceptions import InvalidProductException, DuplicateProductCodeException
-import six
-from six.moves import map
+from corehq.apps.commtrack.exceptions import (
+    DuplicateProductCodeException,
+    InvalidProductException,
+)
 
 
 class Product(Document):

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from custom.ewsghana.handlers import INVALID_MESSAGE, NO_SUPPLY_POINT_MESSAGE
 from custom.ewsghana.tests.handlers.utils import EWSScriptTest
 import six

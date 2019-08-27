@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 
 def get_supply_point_ids_in_domain_by_location(domain):

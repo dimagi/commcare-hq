@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 from copy import copy
 
@@ -9,7 +7,6 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.utils import COUNT
 from corehq.util.test_utils import generate_cases
-
 
 _filter_v1 = {
     'type': 'boolean_expression',

@@ -1,16 +1,13 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.core.management.base import BaseCommand, CommandError
 
 import os
+from datetime import datetime
+
+from django.core.management.base import BaseCommand, CommandError
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import save_xform
-from datetime import datetime
 from corehq.apps.users.models import CouchUser
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
-from io import open
 
 
 class Command(BaseCommand):

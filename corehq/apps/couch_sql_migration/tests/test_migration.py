@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import logging
 import os
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from io import open
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
@@ -25,6 +22,9 @@ from testil import tempdir
 from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
+from pillowtop.reindexer.change_providers.couch import (
+    CouchDomainDocTypeChangeProvider,
+)
 
 from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
     BAD_FORM_PROBLEM_TEMPLATE,
@@ -37,7 +37,7 @@ from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, MISSING
+from corehq.apps.tzmigration.timezonemigration import MISSING, FormJsonDiff
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.backends.sql.dbaccessors import (
@@ -71,13 +71,9 @@ from corehq.util.test_utils import (
     softer_assert,
     trap_extra_setup,
 )
-from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
 from ..asyncforms import get_case_ids
-from ..couchsqlmigration import (
-    MigrationRestricted,
-    sql_form_to_json,
-)
+from ..couchsqlmigration import MigrationRestricted, sql_form_to_json
 from ..diffrule import ANY
 from ..management.commands.migrate_domain_from_couch_to_sql import (
     COMMIT,
@@ -1001,9 +997,6 @@ class Diff(object):
                 and self.new == other.new_value
             )
         return NotImplemented
-
-    def __ne__(self, other):
-        return not (self == other)
 
     __hash__ = None
 

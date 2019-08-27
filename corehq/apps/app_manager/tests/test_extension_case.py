@@ -1,24 +1,29 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.test import SimpleTestCase
+
+from couchdbkit import BadValueError
+from mock import patch
+
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.models import (
-    Application,
-    Module,
-    UpdateCaseAction,
-    OpenSubCaseAction,
-    AdvancedOpenCaseAction,
-    FormActionCondition,
-    CaseIndex,
     AdvancedModule,
+    AdvancedOpenCaseAction,
+    Application,
+    CaseIndex,
+    FormActionCondition,
     LoadUpdateAction,
+    Module,
+    OpenSubCaseAction,
     PreloadAction,
+    UpdateCaseAction,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.xform import CaseBlock, XForm, _make_elem, autoset_owner_id_for_advanced_action
+from corehq.apps.app_manager.xform import (
+    CaseBlock,
+    XForm,
+    _make_elem,
+    autoset_owner_id_for_advanced_action,
+)
 from corehq.apps.app_manager.xpath import session_var
-from couchdbkit import BadValueError
-from django.test import SimpleTestCase
-from mock import patch
 
 
 class ExtCasePropertiesTests(SimpleTestCase, TestXmlMixin):

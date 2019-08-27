@@ -1,7 +1,5 @@
 """Filesystem database for large binary data objects (blobs)
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 from collections import namedtuple
 from hashlib import md5
@@ -11,7 +9,6 @@ from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB
 from corehq.blobs.util import check_safe_key
 from corehq.util.datadog.gauges import datadog_counter
-from io import open
 
 CHUNK_SIZE = 4096
 

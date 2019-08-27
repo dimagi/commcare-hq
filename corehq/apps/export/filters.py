@@ -1,21 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import six
+
 from corehq.apps.es import filters as esfilters
 from corehq.apps.es.cases import (
-    owner,
-    is_closed,
-    opened_range,
-    modified_range,
-    user,
     closed_range,
+    is_closed,
+    modified_range,
     opened_by,
-    owner_type)
+    opened_range,
+    owner,
+    owner_type,
+    user,
+)
 from corehq.apps.es.forms import app, submitted, user_id, user_type
 from corehq.apps.es.sms import received as sms_received
 from corehq.apps.export.esaccessors import get_groups_user_ids
 from corehq.pillows.utils import USER_TYPES
 from corehq.util.python_compatibility import soft_assert_type_text
-import six
 
 
 def _assert_user_types(user_types):

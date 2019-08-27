@@ -1,9 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
+
 from django.http import HttpRequest
 from django.test import TestCase
 from django.test.utils import override_settings
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.users.models import WebUser

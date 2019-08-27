@@ -1,12 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from corehq.apps.sms.api import (
+    MessageMetadata,
+    add_msg_tags,
+    send_sms_with_backend,
+)
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.sms.models import (
-    FORWARD_ALL, FORWARD_BY_KEYWORD, MessagingEvent,
+    FORWARD_ALL,
+    FORWARD_BY_KEYWORD,
     WORKFLOW_FORWARD,
+    MessagingEvent,
 )
-from corehq.apps.sms.api import (send_sms_with_backend, add_msg_tags,
-    MessageMetadata)
 
 
 def forward_sms(msg, domain, verified_number, text, backend_id):

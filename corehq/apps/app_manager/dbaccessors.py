@@ -1,22 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 from itertools import chain
 
-from couchdbkit.exceptions import DocTypeError, ResourceNotFound
-
-from corehq.apps.app_manager.exceptions import BuildNotFoundException
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.quickcache import quickcache
-from django.http import Http404
 from django.core.cache import cache
+from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.es import AppES
-from corehq.apps.es.aggregations import TermsAggregation, NestedAggregation
-from dimagi.utils.couch.database import iter_docs
 import six
+from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 from six.moves import map
+
+from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
+from corehq.apps.es import AppES
+from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
+from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.util.quickcache import quickcache
 
 AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version', 'comment'])
 

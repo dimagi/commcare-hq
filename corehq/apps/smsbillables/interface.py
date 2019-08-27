@@ -1,25 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.db.models.aggregates import Count
+
+from couchexport.models import Format
 from dimagi.utils.dates import DateSpan
+
 from corehq.apps.accounting.filters import DateCreatedFilter
-from corehq.apps.reports.datatables import (
-    DataTablesColumn,
-    DataTablesHeader,
-)
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.sms.models import (
-    INCOMING,
-    OUTGOING,
-)
+from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.smsbillables.filters import (
     CountryCodeFilter,
     DateSentFilter,
     DirectionFilter,
     DomainFilter,
-    HasGatewayFeeFilter,
     GatewayTypeFilter,
+    HasGatewayFeeFilter,
     ShowBillablesFilter,
     SpecificGateway,
 )
@@ -28,7 +23,6 @@ from corehq.apps.smsbillables.models import (
     SmsGatewayFee,
     SmsGatewayFeeCriteria,
 )
-from couchexport.models import Format
 
 
 class SMSBillablesInterface(GenericTabularReport):

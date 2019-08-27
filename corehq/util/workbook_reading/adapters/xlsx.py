@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from contextlib import contextmanager
 from zipfile import BadZipfile
 from datetime import datetime, time
-from io import open
 
 from memoized import memoized
 import openpyxl

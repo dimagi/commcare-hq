@@ -1,19 +1,19 @@
-# encoding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from mock import patch
 import copy
+
 from django.test import SimpleTestCase
+
+from mock import patch
+
+from corehq.apps.app_manager.exceptions import ScheduleError
 from corehq.apps.app_manager.models import (
-    DetailColumn,
     Application,
+    DetailColumn,
+    FormActionCondition,
     FormSchedule,
-    ScheduleVisit,
     SchedulePhase,
     SchedulePhaseForm,
-    FormActionCondition,
+    ScheduleVisit,
 )
-from corehq.apps.app_manager.exceptions import ScheduleError
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 

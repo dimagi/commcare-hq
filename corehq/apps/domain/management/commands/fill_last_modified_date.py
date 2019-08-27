@@ -1,10 +1,8 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 
-from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.domain.models import Domain
 
 
 class Command(BaseCommand):

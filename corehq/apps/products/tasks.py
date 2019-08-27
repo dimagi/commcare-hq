@@ -1,10 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from celery.task import task
-from corehq.apps.products.bulk import import_products
-from corehq.util.workbook_json.excel_importer import SingleExcelImporter, UnknownFileRefException
-
 from django.utils.translation import ugettext as _
+
+from celery.task import task
+
+from corehq.apps.products.bulk import import_products
+from corehq.util.workbook_json.excel_importer import (
+    SingleExcelImporter,
+    UnknownFileRefException,
+)
 
 
 @task(serializer='pickle')

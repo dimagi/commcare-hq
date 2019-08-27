@@ -1,31 +1,28 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
-import six
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
-from corehq.apps.analytics.tasks import (
-    track_user_sign_in_on_hubspot,
-    HUBSPOT_COOKIE,
-    update_hubspot_properties,
-    identify,
-    update_subscription_properties_by_domain, get_subscription_properties_by_user)
-from corehq.apps.analytics.utils import get_meta
-from corehq.apps.registration.views import ProcessRegistrationView
-from corehq.util.decorators import handle_uncaught_exceptions
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.soft_assert import soft_assert
-
 from django.dispatch import receiver
 from django.urls import reverse
 
+import six
 
-from corehq.apps.users.models import CouchUser
 from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
+from corehq.apps.analytics.tasks import (
+    HUBSPOT_COOKIE,
+    get_subscription_properties_by_user,
+    identify,
+    track_user_sign_in_on_hubspot,
+    update_hubspot_properties,
+    update_subscription_properties_by_domain,
+)
+from corehq.apps.analytics.utils import get_instance_string, get_meta
 from corehq.apps.domain.signals import commcare_domain_post_save
+from corehq.apps.registration.views import ProcessRegistrationView
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.signals import couch_user_post_save
-from corehq.apps.analytics.utils import get_instance_string
-
+from corehq.util.decorators import handle_uncaught_exceptions
+from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.util.soft_assert import soft_assert
 
 _no_cookie_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
                                          '{}@{}'.format('biyeun', 'dimagi.com'),

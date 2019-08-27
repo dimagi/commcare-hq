@@ -1,26 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import six
-
 import uuid
 from collections import defaultdict
 from copy import copy
 
+import six
 from celery.task import task
+from six.moves import range
 
-from dimagi.utils.chunked import chunked
 from casexml.apps.case.mock.case_block import IndexAttrs
 from casexml.apps.phone.const import LIVEQUERY
 from casexml.apps.phone.utils import MockDevice
-from corehq.apps.es import CaseSearchES
+from dimagi.utils.chunked import chunked
+from soil import DownloadBase
+
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.es import CaseSearchES
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from soil import DownloadBase
-from six.moves import range
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 
 
 @task(serializer='pickle')

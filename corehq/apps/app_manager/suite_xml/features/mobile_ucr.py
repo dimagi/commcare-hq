@@ -1,19 +1,35 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict
-from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager import models
-from corehq.apps.app_manager.const import MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2
+
+import six
+
+from corehq.apps.app_manager import id_strings, models
+from corehq.apps.app_manager.const import (
+    MOBILE_UCR_MIGRATING_TO_2,
+    MOBILE_UCR_VERSION_2,
+)
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.models import ReportModule, MobileSelectFilter
-from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
-    SessionDatum, Detail, Header, Field, Template, GraphTemplate, Xpath, XpathVariable
-from corehq.apps.reports_core.filters import DynamicChoiceListFilter, ChoiceListFilter
+from corehq.apps.app_manager.models import MobileSelectFilter, ReportModule
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    Command,
+    Detail,
+    Entry,
+    Field,
+    GraphTemplate,
+    Header,
+    Locale,
+    SessionDatum,
+    Template,
+    Text,
+    Xpath,
+    XpathVariable,
+)
+from corehq.apps.reports_core.filters import (
+    ChoiceListFilter,
+    DynamicChoiceListFilter,
+)
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
-import six
-
 
 COLUMN_XPATH_TEMPLATE = "column[@id='{}']"
 COLUMN_XPATH_TEMPLATE_V2 = "{}"

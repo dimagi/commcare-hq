@@ -1,23 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import logging
+from collections import namedtuple
 from itertools import groupby
 
 from django.db import transaction
 from django.utils.translation import ugettext as _
 
-from corehq.form_processor.exceptions import MissingFormXml
-from dimagi.utils.decorators.log_exception import log_exception
-
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockTransaction
+from dimagi.utils.decorators.log_exception import log_exception
+
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
+from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.util.datadog.utils import ledger_load_counter
-
 
 logger = logging.getLogger('commtrack.incoming')
 

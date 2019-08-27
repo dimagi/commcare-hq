@@ -1,15 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
 
-from corehq.apps.users.models import WebUser, CommCareUser
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.util import format_username
+from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
-from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
-
-from corehq.apps.ota.utils import is_permitted_to_restore, get_restore_user
+from corehq.apps.ota.utils import get_restore_user, is_permitted_to_restore
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.util import format_username
 
 
 class RestorePermissionsTest(LocationHierarchyTestCase):

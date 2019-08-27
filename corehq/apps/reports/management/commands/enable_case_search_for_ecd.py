@@ -1,21 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import division
-
-from six.moves import input
 
 from django.core.management import BaseCommand
 from django.db.models import Q
 
-from corehq.apps.accounting.models import (
-    Subscription,
-    SoftwarePlanEdition,
-)
+from six.moves import input
+
+from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import CaseES, CaseSearchES
 from corehq.pillows.case_search import (
-    domains_needing_search_index,
     CaseSearchReindexerFactory,
+    domains_needing_search_index,
 )
 from corehq.toggles import ECD_MIGRATED_DOMAINS, NAMESPACE_DOMAIN
 

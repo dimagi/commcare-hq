@@ -1,23 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import html
 from django.utils.safestring import mark_safe
-from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+
+import six
 from jsonfield import JSONField
+from six.moves import map, range
+
+from dimagi.ext.couchdbkit import *
 
 from corehq.apps.users.models import CommCareUser
 from corehq.util.python_compatibility import soft_assert_type_text
-
-from dimagi.ext.couchdbkit import *
-import six
-from six.moves import range
-from six.moves import map
 
 
 class HQUserType(object):

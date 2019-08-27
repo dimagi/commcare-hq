@@ -1,15 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from django.conf import settings
 
 from corehq.apps.domain_migration_flags.api import (
     MigrationStatus,
     get_migration_status,
-    set_migration_started,
-    set_migration_not_started,
-    set_migration_complete,
     migration_in_progress,
+    set_migration_complete,
+    set_migration_not_started,
+    set_migration_started,
 )
 from corehq.apps.tzmigration.api import set_tz_migration_complete
 

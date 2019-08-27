@@ -1,34 +1,43 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import os
 import json
+import os
+import uuid
 from unittest import SkipTest
 
-from django.test import LiveServerTestCase
 from django.conf import settings
+from django.contrib.sites.models import Site
+from django.test import LiveServerTestCase
+
+from dateutil.parser import parse
 from nose.tools import nottest
 
-from casexml.apps.case.util import post_case_blocks
-from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.accounting.utils import clear_plan_version_cache
-from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from corehq.apps.sms.models import (SMS, SQLMobileBackend, OUTGOING,
-    SQLMobileBackendMapping, PhoneNumber, Keyword, KeywordAction)
-from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.groups.models import Group
-from corehq.apps.app_manager.models import import_app
-from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.util.test_utils import unit_testing_only
-from django.contrib.sites.models import Site
-from dateutil.parser import parse
-import uuid
-from corehq.apps.sms.api import process_username
 from casexml.apps.case.mock import CaseBlock
-from io import open
+from casexml.apps.case.util import post_case_blocks
+
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.app_manager.models import import_app
+from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
+from corehq.apps.sms.api import process_username
+from corehq.apps.sms.models import (
+    OUTGOING,
+    SMS,
+    Keyword,
+    KeywordAction,
+    PhoneNumber,
+    SQLMobileBackend,
+    SQLMobileBackendMapping,
+)
+from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from corehq.util.test_utils import unit_testing_only
 
 
 def time_parser(value):

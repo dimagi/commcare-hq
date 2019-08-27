@@ -1,38 +1,47 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import json
 import socket
 from collections import defaultdict, namedtuple
 
-import requests
 from django.conf import settings
-from django.http import (
-    HttpResponse,
-)
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
+
+import requests
 from requests.exceptions import HTTPError
 
-from corehq.apps.domain.decorators import (
-    require_superuser, require_superuser_or_contractor)
-from corehq.apps.hqadmin.service_checks import run_checks
-from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, \
-    use_nvd3_v3
-from corehq.toggles import any_toggle_enabled, SUPPORT
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.web import json_response
 from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
-from corehq.apps.hqadmin import service_checks, escheck
-from corehq.apps.hqadmin.history import get_recent_changes, download_changes
+from pillowtop.utils import (
+    get_all_pillows_json,
+    get_pillow_config_by_name,
+    get_pillow_json,
+)
+
+from corehq.apps.domain.decorators import (
+    require_superuser,
+    require_superuser_or_contractor,
+)
+from corehq.apps.hqadmin import escheck, service_checks
+from corehq.apps.hqadmin.history import download_changes, get_recent_changes
 from corehq.apps.hqadmin.models import HqDeploy
+from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqadmin.utils import get_celery_stats
-from corehq.apps.hqadmin.views.utils import BaseAdminSectionView, get_hqadmin_base_context
+from corehq.apps.hqadmin.views.utils import (
+    BaseAdminSectionView,
+    get_hqadmin_base_context,
+)
+from corehq.apps.hqwebapp.decorators import (
+    use_datatables,
+    use_jquery_ui,
+    use_nvd3_v3,
+)
+from corehq.toggles import SUPPORT, any_toggle_enabled
 
 
 class SystemInfoView(BaseAdminSectionView):

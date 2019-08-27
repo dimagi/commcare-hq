@@ -1,7 +1,4 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import division
 
 import datetime
 
@@ -40,9 +37,9 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
     @property
     def report_context(self):
         context = {
-            'report': self.get_report_context(),
+            # 'report': self.get_report_context(),
             'title': self.name,
-            'charts': self.charts
+            # 'charts': self.charts
         }
 
         return context

@@ -1,15 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from collections import defaultdict
 from itertools import chain
 
 from memoized import memoized
 
-from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff, MISSING
+from corehq.apps.tzmigration.timezonemigration import (
+    MISSING,
+    FormJsonDiff,
+    is_datetime_string,
+    json_diff,
+)
 
 from .diffrule import Ignore
-
 
 load_ignore_rules = memoized(lambda: {
     'XFormInstance*': [

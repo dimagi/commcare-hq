@@ -1,22 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
-from mock import patch
 
 from django.test import TestCase
 
-from corehq.apps.export.tests.util import assertContainsExportItems
+from mock import patch
+from six.moves import zip
+
 from couchexport.models import Format
 
-from corehq.util.context_managers import drop_connected_signals
-from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.signals import app_post_save
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.models import FormExportDataSchema, FormExportInstance
-from corehq.apps.export.tests.util import get_export_json
-from six.moves import zip
+from corehq.apps.export.tests.util import (
+    assertContainsExportItems,
+    get_export_json,
+)
+from corehq.util.context_managers import drop_connected_signals
 
 
 class TestFormExportSubcases(TestCase, TestXmlMixin):

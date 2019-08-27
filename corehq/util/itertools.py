@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 
 def zip_with_gaps(all_items, some_items, all_items_key=None, some_items_key=None):

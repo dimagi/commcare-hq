@@ -1,19 +1,21 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import re
+from collections import namedtuple
+
+from django.http import Http404
+
+import six
 from couchdbkit import ResourceNotFound
+
+import couchforms
+from couchforms.models import DefaultAuthContext
+
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
-from couchforms.models import DefaultAuthContext
-import couchforms
-from django.http import Http404
-import six
 
 
 def get_submit_url(domain, app_id=None):

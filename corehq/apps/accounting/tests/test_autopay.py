@@ -1,21 +1,29 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.core import mail
+
 import mock
 from django_prbac.models import Role
-
 from stripe import Charge
 from stripe.resource import StripeObject
 
-from django.core import mail
-
 from dimagi.utils.dates import add_months_to_date
 
-from corehq.apps.accounting import utils, tasks
-from corehq.apps.accounting.models import Invoice, StripePaymentMethod, PaymentRecord, SoftwarePlanVersion, \
-    SoftwareProductRate, SoftwarePlan
-from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
+from corehq.apps.accounting import tasks, utils
+from corehq.apps.accounting.models import (
+    Invoice,
+    PaymentRecord,
+    SoftwarePlan,
+    SoftwarePlanVersion,
+    SoftwareProductRate,
+    StripePaymentMethod,
+)
+from corehq.apps.accounting.payment_handlers import (
+    AutoPayInvoicePaymentHandler,
+)
 from corehq.apps.accounting.tests import generator
-from corehq.apps.accounting.tests.generator import FakeStripeCard, FakeStripeCustomer
+from corehq.apps.accounting.tests.generator import (
+    FakeStripeCard,
+    FakeStripeCustomer,
+)
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 
 

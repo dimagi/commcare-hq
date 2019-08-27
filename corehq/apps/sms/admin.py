@@ -1,7 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.contrib import admin
-from corehq.apps.sms.models import QueuedSMS, SMS, PhoneBlacklist, PhoneNumber, SQLMobileBackendMapping
+
+from corehq.apps.sms.models import (
+    SMS,
+    PhoneBlacklist,
+    PhoneNumber,
+    QueuedSMS,
+    SQLMobileBackendMapping,
+)
 
 
 class SMSAdmin(admin.ModelAdmin):

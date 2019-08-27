@@ -1,7 +1,4 @@
-from __future__ import print_function
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management import BaseCommand
 
 from corehq.apps.hqcase.utils import bulk_update_cases
@@ -11,7 +8,6 @@ from corehq.form_processor.models import CommCareCaseSQL
 
 from dimagi.utils.chunked import chunked
 import six
-from io import open
 
 
 class Command(BaseCommand):

@@ -1,10 +1,14 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from decimal import Decimal
-from corehq.apps.consumption.models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT
-from corehq.apps.consumption.const import DAYS_IN_MONTH
+
 from dimagi.utils.couch.cache import cache_core
+
+from corehq.apps.consumption.const import DAYS_IN_MONTH
+from corehq.apps.consumption.models import (
+    TYPE_DOMAIN,
+    TYPE_PRODUCT,
+    TYPE_SUPPLY_POINT,
+    DefaultConsumption,
+)
 
 
 def get_default_monthly_consumption(domain, product_id, location_type, case_id):

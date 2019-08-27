@@ -1,15 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
+from django.conf import settings
+from django.core.mail import mail_admins, send_mail
+
+import six
 from celery.schedules import crontab
 from celery.task import task
-from django.conf import settings
-from django.core.mail import send_mail, mail_admins
+
+from dimagi.utils.logging import notify_exception
 
 from corehq.util.datadog.gauges import datadog_gauge_task
 from corehq.util.log import send_HTML_email
-from dimagi.utils.logging import notify_exception
-import six
 
 
 @task(serializer='pickle', queue="email_queue",

@@ -1,21 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import datetime
 from collections import namedtuple
 
-import dateutil
-from memoized import memoized
 from django.utils.translation import ugettext_lazy
 
+import dateutil
+from memoized import memoized
+
 from corehq.apps.case_search.const import (
-    SPECIAL_CASE_PROPERTIES,
     CASE_COMPUTED_METADATA,
+    SPECIAL_CASE_PROPERTIES,
 )
 from corehq.apps.reports.util import get_report_timezone
-from corehq.apps.reports.v2.models import BaseFilter
 from corehq.apps.reports.v2.exceptions import ColumnFilterNotFound
-
+from corehq.apps.reports.v2.models import BaseFilter
 
 ChoiceMeta = namedtuple('ChoiceMeta', 'title name operator')
 AppliedFilterContext = namedtuple(

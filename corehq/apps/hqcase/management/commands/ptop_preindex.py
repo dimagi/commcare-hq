@@ -1,26 +1,29 @@
-from __future__ import print_function
-from __future__ import absolute_import
 # http://www.gevent.org/gevent.monkey.html#module-gevent.monkey
-from __future__ import unicode_literals
-from gevent import monkey
-monkey.patch_all()
+from datetime import datetime
+
+from django.conf import settings
+from django.core.mail import mail_admins
+from django.core.management.base import BaseCommand
 
 import gevent
 import six
-
-from datetime import datetime
+from gevent import monkey
 from six.moves import map
 
-from django.core.mail import mail_admins
-from django.core.management.base import BaseCommand
-from django.conf import settings
-
-from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import FACTORIES_BY_SLUG
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
+    FACTORIES_BY_SLUG,
+)
 from corehq.elastic import get_es_new
 from corehq.pillows.user import add_demo_user_to_user_index
 from corehq.pillows.utils import get_all_expected_es_indices
 from corehq.util.log import get_traceback_string
 from corehq.util.python_compatibility import soft_assert_type_text
+
+monkey.patch_all()
+
+
+
+
 
 
 def get_reindex_commands(alias_name):

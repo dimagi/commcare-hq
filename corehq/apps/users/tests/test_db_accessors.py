@@ -1,22 +1,26 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
-from corehq.apps.users.models import WebUser, CommCareUser, Permissions, UserRole
-from corehq.apps.users.dbaccessors.all_commcare_users import (
-    get_all_commcare_users_by_domain,
-    get_commcare_users_by_filters,
-    get_user_docs_by_username,
-    delete_all_users,
-    get_all_user_ids,
-    get_deleted_user_by_username,
-    get_all_usernames_by_domain, get_existing_usernames)
-from corehq.apps.users.dbaccessors.couch_users import (
-    get_user_id_by_username,
-)
+
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
-from corehq.apps.users.dbaccessors.all_commcare_users import hard_delete_deleted_users
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    delete_all_users,
+    get_all_commcare_users_by_domain,
+    get_all_user_ids,
+    get_all_usernames_by_domain,
+    get_commcare_users_by_filters,
+    get_deleted_user_by_username,
+    get_existing_usernames,
+    get_user_docs_by_username,
+    hard_delete_deleted_users,
+)
+from corehq.apps.users.dbaccessors.couch_users import get_user_id_by_username
+from corehq.apps.users.models import (
+    CommCareUser,
+    Permissions,
+    UserRole,
+    WebUser,
+)
 
 
 class AllCommCareUsersTest(TestCase):

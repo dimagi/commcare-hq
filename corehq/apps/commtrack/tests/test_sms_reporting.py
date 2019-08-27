@@ -1,9 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from decimal import Decimal
+
 from django.test import TestCase
+
 from casexml.apps.case.tests.util import delete_all_xforms
 from casexml.apps.stock.models import StockReport, StockTransaction
+from couchforms.dbaccessors import get_commtrack_forms
+
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.sms import handle
 from corehq.apps.commtrack.tests import util
@@ -11,8 +13,7 @@ from corehq.apps.products.models import Product
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER, NAMESPACE_DOMAIN
-from couchforms.dbaccessors import get_commtrack_forms
+from corehq.toggles import NAMESPACE_DOMAIN, STOCK_AND_RECEIPT_SMS_HANDLER
 
 
 class SMSTests(TestCase):

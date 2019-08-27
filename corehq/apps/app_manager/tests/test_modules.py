@@ -1,5 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.test import SimpleTestCase
+
+from mock import patch
+
 from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -15,8 +17,6 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
-from django.test import SimpleTestCase
-from mock import patch
 
 
 class ModuleTests(SimpleTestCase):

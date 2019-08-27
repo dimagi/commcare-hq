@@ -1,7 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.sms.models import SMS
 from rest_framework import serializers
+
+from corehq.apps.sms.models import SMS
 
 
 class SMSSerializer(serializers.ModelSerializer):

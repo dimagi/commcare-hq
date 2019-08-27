@@ -1,11 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, timedelta
 
 from django.utils.deprecation import MiddlewareMixin
-from corehq.apps.domain.project_access.models import SuperuserProjectEntryRecord, ENTRY_RECORD_FREQUENCY
-from corehq.util.quickcache import quickcache
+
+from corehq.apps.domain.project_access.models import (
+    ENTRY_RECORD_FREQUENCY,
+    SuperuserProjectEntryRecord,
+)
 from corehq.apps.users.tasks import update_domain_date
+from corehq.util.quickcache import quickcache
 
 
 class ProjectAccessMiddleware(MiddlewareMixin):

@@ -1,6 +1,4 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import json
 import datetime
@@ -1739,8 +1737,8 @@ class TestAWCReport(TestCase):
             {
                 "all": "",
                 "format": "number",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 139,
                 "label": "Registered Households",
                 "frequency": "day",
@@ -1764,9 +1762,9 @@ class TestAWCReport(TestCase):
             )['kpi'][0][1],
             {
                 "all": 5,
-                'color': 'green',
+                'color': 'red',
                 "format": "percent_and_div",
-                "percent": "Data in the previous reporting period was 0",
+                "percent": 0,
                 "value": 1,
                 "label": "Percent Aadhaar-seeded Beneficiaries",
                 "frequency": "day",
@@ -1820,8 +1818,8 @@ class TestAWCReport(TestCase):
             {
                 "all": 2,
                 "format": "percent_and_div",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 2,
                 "label": "Percent pregnant women enrolled for Anganwadi Services",
                 "frequency": "day",
@@ -1846,8 +1844,8 @@ class TestAWCReport(TestCase):
             {
                 "all": 3,
                 "format": "percent_and_div",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 3,
                 "label": "Percent lactating women enrolled for Anganwadi Services",
                 "frequency": "day",
@@ -1980,8 +1978,8 @@ class TestAWCReport(TestCase):
             {
                 "all": "",
                 "format": "number",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 139,
                 "label": "Registered Households",
                 "frequency": "day",
@@ -2005,9 +2003,9 @@ class TestAWCReport(TestCase):
             )['kpi'][0][1],
             {
                 "all": 5,
-                'color': 'green',
+                'color': 'red',
                 "format": "percent_and_div",
-                "percent": "Data in the previous reporting period was 0",
+                "percent": 0,
                 "value": 1,
                 "label": "Percent Aadhaar-seeded Beneficiaries",
                 "frequency": "day",
@@ -2061,8 +2059,8 @@ class TestAWCReport(TestCase):
             {
                 "all": 2,
                 "format": "percent_and_div",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 2,
                 "label": "Percent pregnant women enrolled for Anganwadi Services",
                 "frequency": "day",
@@ -2087,8 +2085,8 @@ class TestAWCReport(TestCase):
             {
                 "all": 3,
                 "format": "percent_and_div",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 3,
                 "label": "Percent lactating women enrolled for Anganwadi Services",
                 "frequency": "day",

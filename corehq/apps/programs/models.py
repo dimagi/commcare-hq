@@ -1,15 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.groups.models import dt_no_Z_re
+from datetime import datetime
+
+from django.utils.translation import ugettext as _
+
 from dimagi.ext.couchdbkit import (
-    Document,
-    StringProperty,
     BooleanProperty,
     DateTimeProperty,
+    Document,
+    StringProperty,
 )
-from datetime import datetime
+
+from corehq.apps.groups.models import dt_no_Z_re
 from corehq.apps.products.models import Product, SQLProduct
-from django.utils.translation import ugettext as _
 
 
 class Program(Document):

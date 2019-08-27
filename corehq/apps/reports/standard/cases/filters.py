@@ -1,11 +1,11 @@
-from __future__ import absolute_import, unicode_literals
 
 import json
 from collections import Counter
 
-import six
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
+
+import six
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,

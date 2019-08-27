@@ -1,23 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf.urls import url
+
 from corehq.apps.hqmedia.views import (
-    DownloadMultimediaZip,
     BulkUploadMultimediaView,
-    ProcessBulkUploadView,
-    MultimediaUploadStatusView,
-    ViewMultimediaFile,
+    DownloadMultimediaZip,
+    ManageMultimediaPathsView,
     MultimediaReferencesView,
-    ProcessImageFileUploadView,
+    MultimediaTranslationsCoverageView,
+    MultimediaUploadStatusView,
     ProcessAudioFileUploadView,
-    ProcessVideoFileUploadView,
+    ProcessBulkUploadView,
+    ProcessDetailPrintTemplateUploadView,
+    ProcessImageFileUploadView,
     ProcessLogoFileUploadView,
     ProcessTextFileUploadView,
-    ProcessDetailPrintTemplateUploadView,
-    RemoveLogoView,
+    ProcessVideoFileUploadView,
     RemoveDetailPrintTemplateView,
-    ManageMultimediaPathsView,
-    MultimediaTranslationsCoverageView,
+    RemoveLogoView,
+    ViewMultimediaFile,
     download_multimedia_paths,
     update_multimedia_paths,
 )

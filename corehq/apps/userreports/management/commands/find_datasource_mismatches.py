@@ -1,19 +1,18 @@
-from __future__ import absolute_import
-from __future__ import print_function
 
-from __future__ import unicode_literals
-import csv342 as csv
 from datetime import datetime
 
-import pytz
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_datetime
 
-from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
+import csv342 as csv
+import pytz
+
+from corehq.apps.change_feed.data_sources import (
+    get_document_store_for_doc_type,
+)
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.util.log import with_progress_bar
-from io import open
 
 
 class Command(BaseCommand):

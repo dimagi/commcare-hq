@@ -1,26 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 
-import six
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
-from django.middleware.csrf import get_token
 from django.http import QueryDict
+from django.middleware.csrf import get_token
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext_lazy as _
+
+import six
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.helper import FormHelper
+from memoized import memoized
+from six.moves import map
 
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
-
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton, InlineField
-from crispy_forms.helper import FormHelper
-
-from memoized import memoized
-from six.moves import map
 
 
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):

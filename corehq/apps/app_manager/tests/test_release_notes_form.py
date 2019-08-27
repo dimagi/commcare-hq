@@ -1,10 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import uuid
 
-from couchdbkit import ResourceNotFound
 from django.test import SimpleTestCase, TestCase
+
+from couchdbkit import ResourceNotFound
 from mock import patch
 
 from corehq.apps.app_manager.models import Module

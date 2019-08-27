@@ -1,19 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import io
 import hashlib
+import io
 import time
 
 from django.test.client import Client
 
-from corehq.apps.domain.models import Domain
+from casexml.apps.case.tests.test_multimedia import BaseCaseMultimediaTest
+from casexml.apps.case.tests.util import (
+    TEST_DOMAIN_NAME,
+    delete_all_cases,
+    delete_all_xforms,
+)
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from casexml.apps.case.tests.test_multimedia import BaseCaseMultimediaTest
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
-
 
 TEST_USER = 'case_attachment@hqtesting.com'
 

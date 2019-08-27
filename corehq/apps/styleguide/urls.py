@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf.urls import include, url
 
 from corehq.apps.styleguide.views import (
@@ -29,5 +27,3 @@ urlpatterns = [
         name=PagesStyleGuideView.urlname),
     url(r'^docs/', include(doc_urlpatterns)),
 ]
-
-

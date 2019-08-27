@@ -1,33 +1,36 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import logging
+import re
+from datetime import datetime
 from decimal import Decimal
+
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.commtrack.models import CommtrackConfig
-from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack import const
-from corehq.apps.sms.api import send_sms_to_verified_number, MessageMetadata
-from corehq import toggles
-from lxml import etree
-import logging
 
-from corehq.form_processor.interfaces.supply import SupplyInterface
+import six
+from lxml import etree
+
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
-from datetime import datetime
-from corehq.apps.commtrack.util import get_supply_point_and_location
-from corehq.apps.commtrack.xmlutil import XML
-from corehq.apps.products.models import Product
-from corehq.apps.users.models import CouchUser
-from corehq.apps.receiverwrapper.util import submit_form_locally
+
+from corehq import toggles
+from corehq.apps.commtrack import const
 from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,
     NotAUserClassError,
     RequisitionsHaveBeenRemoved,
 )
-import re
-from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
-import six
+from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.commtrack.util import get_supply_point_and_location
+from corehq.apps.commtrack.xmlutil import XML
+from corehq.apps.domain.models import Domain
+from corehq.apps.products.models import Product
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.sms.api import MessageMetadata, send_sms_to_verified_number
+from corehq.apps.users.models import CouchUser
+from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.form_processor.parsers.ledgers.helpers import (
+    StockTransactionHelper,
+)
 
 logger = logging.getLogger('commtrack.sms')
 

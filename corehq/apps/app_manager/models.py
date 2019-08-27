@@ -1,5 +1,4 @@
 # coding=utf-8
-from __future__ import absolute_import, unicode_literals
 
 import calendar
 import datetime
@@ -12,8 +11,7 @@ import random
 import re
 import types
 import uuid
-from collections import defaultdict, namedtuple, Counter, OrderedDict
-
+from collections import Counter, OrderedDict, defaultdict, namedtuple
 from copy import deepcopy
 from distutils.version import LooseVersion
 from functools import wraps
@@ -25,8 +23,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
-from django.db import models
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import SafeBytes
@@ -45,7 +43,6 @@ from six.moves import filter, map, range
 from six.moves.urllib.parse import urljoin
 from six.moves.urllib.request import urlopen
 
-from corehq.apps.locations.models import SQLLocation
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -86,16 +83,10 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
+    get_build_by_version,
     get_latest_build_doc,
     get_latest_released_app_doc,
-    get_build_by_version,
     wrap_app,
-)
-from corehq.apps.app_manager.util import (
-    get_latest_app_release_by_location,
-    expire_get_latest_app_release_by_location_cache,
-    is_linked_app,
-    is_remote_app,
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -137,10 +128,14 @@ from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import (
     LatestAppInfo,
     actions_use_usercase,
+    expire_get_latest_app_release_by_location_cache,
     get_and_assert_practice_user_in_domain,
     get_correct_app_class,
+    get_latest_app_release_by_location,
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
+    is_linked_app,
+    is_remote_app,
     is_usercase_in_use,
     module_offers_search,
     save_xform,
@@ -171,6 +166,7 @@ from corehq.apps.linked_domain.applications import (
     get_master_app_version,
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import (
     get_daterange_start_end_dates,
     get_simple_dateranges,
@@ -278,9 +274,6 @@ class IndexedSchema(DocumentSchema):
             and (self.id == other.id)
             and (self._parent == other._parent)
         )
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     class Getter(object):
 
@@ -3887,9 +3880,6 @@ class BuildProfile(DocumentSchema):
 
     def __eq__(self, other):
         return self.langs == other.langs and self.practice_mobile_worker_id == other.practice_mobile_worker_id
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
 
 class ApplicationBase(LazyBlobDoc, SnapshotMixin,

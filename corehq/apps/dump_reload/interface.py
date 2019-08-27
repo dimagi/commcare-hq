@@ -1,12 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import gzip
 import os
+import sys
 import warnings
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
-import sys
 
 
 class DataDumper(six.with_metaclass(ABCMeta)):

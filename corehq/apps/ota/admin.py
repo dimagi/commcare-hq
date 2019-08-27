@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
+
 from .models import DemoUserRestore, MobileRecoveryMeasure
 from .views import get_recovery_measures_cached
 

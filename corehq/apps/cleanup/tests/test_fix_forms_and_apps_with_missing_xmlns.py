@@ -1,15 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from mock import MagicMock, patch
 import os
 import uuid
 
 from django.core.management import call_command
 from django.test import TestCase
+
 from elasticsearch import ConnectionError
+from mock import MagicMock, patch
+from six.moves import range
 from testil import tempdir
 
 from casexml.apps.case.tests.util import delete_all_xforms
+from couchforms.models import XFormInstance
+from pillowtop.es_utils import initialize_index_and_mapping
+
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import TestXmlMixin, delete_all_apps
 from corehq.apps.app_manager.util import get_correct_app_class
@@ -24,10 +27,6 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
-from couchforms.models import XFormInstance
-from pillowtop.es_utils import initialize_index_and_mapping
-from six.moves import range
-from io import open
 
 DOMAIN = "test"
 

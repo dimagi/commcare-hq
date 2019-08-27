@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from datetime import timedelta, datetime, time
 from django.db.models import Q
 from django.db.models.aggregates import Avg

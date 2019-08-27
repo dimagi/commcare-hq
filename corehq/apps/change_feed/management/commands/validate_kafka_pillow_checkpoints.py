@@ -1,13 +1,12 @@
-from __future__ import print_function
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.core.management import BaseCommand
 from django.conf import settings
+from django.core.management import BaseCommand
+
+from pillowtop import get_all_pillow_instances
+
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from corehq.apps.change_feed.topics import validate_offsets
-from pillowtop import get_all_pillow_instances
 
 
 class Command(BaseCommand):

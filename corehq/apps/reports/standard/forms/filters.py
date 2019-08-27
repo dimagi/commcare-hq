@@ -1,9 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.utils.translation import ugettext_lazy
+
+import six
+
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.models import HQToggle
-from django.utils.translation import ugettext_lazy
-import six
 
 
 class SubmitToggle(HQToggle):

@@ -1,18 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 
 from django.test import TestCase
+
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
+
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
+from corehq.motech.repeaters.dbaccessors import (
+    delete_all_repeat_records,
+    delete_all_repeaters,
+)
 from corehq.motech.repeaters.models import RepeatRecord
-
 
 DOMAIN = 'zapier-case-forwarding-tests'
 ZAPIER_CASE_TYPE = 'animal'

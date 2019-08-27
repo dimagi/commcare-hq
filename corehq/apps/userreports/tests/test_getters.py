@@ -1,7 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
-from corehq.apps.userreports.expressions.getters import DictGetter, NestedDictGetter, TransformedGetter
+
+from corehq.apps.userreports.expressions.getters import (
+    DictGetter,
+    NestedDictGetter,
+    TransformedGetter,
+)
 
 
 class Foo(object):

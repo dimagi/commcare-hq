@@ -1,17 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 
 from corehq.apps.accounting.invoicing import (
-    DomainInvoiceFactory,
     CustomerAccountInvoiceFactory,
-    should_create_invoice
+    DomainInvoiceFactory,
+    should_create_invoice,
 )
 from corehq.apps.accounting.models import (
-    DefaultProductPlan,
     BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
     Subscription,
-    SoftwarePlanEdition
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest

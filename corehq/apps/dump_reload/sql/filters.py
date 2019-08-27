@@ -1,9 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
-import six
 from django.db.models import Q
+
+import six
 
 from dimagi.utils.chunked import chunked
 

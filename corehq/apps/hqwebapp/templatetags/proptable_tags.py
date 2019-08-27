@@ -8,32 +8,30 @@ Supports psuedo-tables using dls and real tables.
 
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import collections
 import datetime
-
-from corehq.util.dates import iso_string_to_datetime
-
-from dimagi.ext.jsonobject import DateProperty
-from jsonobject.exceptions import BadValueError
-from dimagi.utils.chunked import chunked
-import pytz
 
 from django import template
 from django.template.defaultfilters import yesno
 from django.template.loader import render_to_string
+from django.utils.html import conditional_escape, escape
 from django.utils.safestring import mark_safe
-from django.utils.html import escape, conditional_escape
+
+import pytz
+import six
+from jsonobject.exceptions import BadValueError
+from six.moves import map, zip_longest
+
+from dimagi.ext.jsonobject import DateProperty
+from dimagi.utils.chunked import chunked
+from dimagi.utils.dates import safe_strftime
+
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
-from corehq.const import USER_DATETIME_FORMAT, USER_DATE_FORMAT
+from corehq.const import USER_DATE_FORMAT, USER_DATETIME_FORMAT
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.timezones.conversions import ServerTime, PhoneTime
-from dimagi.utils.dates import safe_strftime
-import six
-from six.moves import zip_longest
-from six.moves import map
+from corehq.util.timezones.conversions import PhoneTime, ServerTime
 
 register = template.Library()
 

@@ -1,25 +1,29 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.app_manager.exceptions import XFormException, XFormValidationError
+from django.test import SimpleTestCase
+
+from mock import patch
+
+from corehq.apps.app_manager.exceptions import (
+    XFormException,
+    XFormValidationError,
+)
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
     AdvancedOpenCaseAction,
     Application,
+    CaseIndex,
     FormAction,
     FormActionCondition,
     LoadUpdateAction,
     Module,
     OpenCaseAction,
+    OpenSubCaseAction,
     PreloadAction,
     UpdateCaseAction,
-    OpenSubCaseAction,
-    CaseIndex)
-from django.test import SimpleTestCase
+)
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import XForm
-from mock import patch
 
 
 class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):

@@ -1,28 +1,29 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-from mock import patch
 from random import choice, randint
 
 from django.apps import apps
 from django.test import TestCase
+
+import six
+from mock import patch
+from six.moves import range
+
 from corehq import toggles
 from corehq.apps.accounting.tests.generator import init_default_currency
 from corehq.apps.sms.models import SMS, SQLMobileBackend
-from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import bootstrap_usage_fees
+from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import (
+    bootstrap_usage_fees,
+)
 from corehq.apps.smsbillables.models import (
-    add_twilio_gateway_fee,
     SmsBillable,
     SmsGatewayFee,
     SmsGatewayFeeCriteria,
     SmsUsageFee,
-    SmsUsageFeeCriteria
+    SmsUsageFeeCriteria,
+    add_twilio_gateway_fee,
 )
 from corehq.apps.smsbillables.tests import generator
 from corehq.apps.smsbillables.tests.utils import FakeTwilioMessageFactory
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
-import six
-from six.moves import range
 
 
 class TestGatewayFee(TestCase):

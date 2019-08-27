@@ -1,20 +1,31 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-from collections import namedtuple
 import json
-
+from collections import namedtuple
 from datetime import date
-from django.utils.translation import ugettext as _
-from jsonobject.exceptions import BadValueError
-from sqlalchemy import bindparam
-from corehq.apps.reports.datatables import DataTablesColumn
-from corehq.apps.userreports import const
-from corehq.apps.userreports.exceptions import InvalidQueryColumn, BadSpecError
-from corehq.apps.userreports.expressions import ExpressionFactory
 
-from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
-from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
+from django.utils.translation import ugettext as _
+
+import six
+from jsonobject.base import DefaultProperty
+from jsonobject.exceptions import BadValueError
+from memoized import memoized
+from sqlagg import (
+    CountColumn,
+    CountUniqueColumn,
+    MaxColumn,
+    MeanColumn,
+    MinColumn,
+    SumColumn,
+)
+from sqlagg.columns import (
+    ConditionalAggregation,
+    MonthColumn,
+    NonzeroSumColumn,
+    SimpleColumn,
+    SumWhen,
+    YearColumn,
+)
+from sqlalchemy import bindparam
+
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.ext.jsonobject import (
     BooleanProperty,
@@ -25,24 +36,22 @@ from dimagi.ext.jsonobject import (
     ObjectProperty,
     StringProperty,
 )
-from jsonobject.base import DefaultProperty
-from sqlagg import CountUniqueColumn, SumColumn, CountColumn, MinColumn, MaxColumn, MeanColumn
-from sqlagg.columns import (
-    ConditionalAggregation,
-    MonthColumn,
-    NonzeroSumColumn,
-    SimpleColumn,
-    SumWhen,
-    YearColumn,
+
+from corehq.apps.reports.datatables import DataTablesColumn
+from corehq.apps.reports.sqlreport import AggregateColumn, DatabaseColumn
+from corehq.apps.userreports import const
+from corehq.apps.userreports.columns import (
+    ColumnConfig,
+    get_expanded_column_config,
 )
-from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
-from corehq.apps.userreports.columns import ColumnConfig, get_expanded_column_config
+from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
+from corehq.apps.userreports.exceptions import BadSpecError, InvalidQueryColumn
+from corehq.apps.userreports.expressions import ExpressionFactory
+from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
 from corehq.util.python_compatibility import soft_assert_type_text
-from memoized import memoized
-import six
 
 SQLAGG_COLUMN_MAP = {
     const.AGGGREGATION_TYPE_AVG: MeanColumn,

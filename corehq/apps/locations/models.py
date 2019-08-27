@@ -1,25 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
+import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import partial
-import uuid
 
-from django_bulk_update.helper import bulk_update as bulk_update_helper
-
-import jsonfield
 from django.db import models, transaction
 from django.db.models import Q
+
+import jsonfield
+import six
+from django_bulk_update.helper import bulk_update as bulk_update_helper
 from django_cte import CTEQuerySet
 from memoized import memoized
-import six
 
-from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.adjacencylist import AdjListModel, AdjListManager
+from corehq.apps.locations.adjacencylist import AdjListManager, AdjListModel
 from corehq.apps.products.models import SQLProduct
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 
 

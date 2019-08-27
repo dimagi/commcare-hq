@@ -1,11 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from copy import deepcopy
+
 from django.conf import settings
-from mock import patch
 from django.test import SimpleTestCase
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+
+from mock import patch
+
 from dimagi.ext.jsonobject import JsonObject, StringProperty
+
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 
 
 class Super(JsonObject):

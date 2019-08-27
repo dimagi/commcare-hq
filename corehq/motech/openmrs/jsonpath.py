@@ -1,6 +1,4 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 from operator import gt
 
 from jsonpath_rw import JSONPath, Fields
@@ -39,9 +37,6 @@ class Cmp(JSONPath):
             other.operand == self.operand
         )
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     def __hash__(self):
         return hash(str(self))
 
@@ -71,9 +66,6 @@ class WhereNot(JSONPath):
 
     def __eq__(self, other):
         return isinstance(other, WhereNot) and other.left == self.left and other.right == self.right
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def __hash__(self):
         return hash(str(self))

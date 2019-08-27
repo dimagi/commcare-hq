@@ -1,29 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import logging
 import os
-from io import open
 
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
-from corehq.form_processor.utils import should_use_sql_backend
-from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
-from corehq.util.markup import SimpleTableWriter, TableRowFormatter
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
 
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+)
+from corehq.form_processor.utils import should_use_sql_backend
+from corehq.form_processor.utils.general import (
+    clear_local_domain_sql_backend_override,
+)
+from corehq.util.markup import SimpleTableWriter, TableRowFormatter
+
 from ...couchsqlmigration import do_couch_to_sql_migration, setup_logging
-from ...statedb import open_state_db
 from ...progress import (
     couch_sql_migration_in_progress,
     set_couch_sql_migration_complete,
     set_couch_sql_migration_not_started,
     set_couch_sql_migration_started,
 )
+from ...statedb import open_state_db
 from .migrate_domain_from_couch_to_sql import blow_away_migration
 
 log = logging.getLogger(__name__)

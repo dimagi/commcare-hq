@@ -1,19 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from datetime import datetime
-from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy
-from django.utils.functional import cached_property
-from django.shortcuts import redirect
+
+from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.http.response import (
-    HttpResponseForbidden,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
     JsonResponse,
 )
+from django.shortcuts import redirect
+from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
-from django.core.exceptions import ValidationError
-from django.contrib import messages
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
@@ -26,8 +25,8 @@ from corehq.apps.app_manager.models import (
     LatestEnabledBuildProfiles,
 )
 from corehq.apps.domain.forms import (
-    ManageReleasesByLocationForm,
     ManageReleasesByAppProfileForm,
+    ManageReleasesByLocationForm,
 )
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.locations.models import SQLLocation

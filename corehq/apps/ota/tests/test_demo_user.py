@@ -1,17 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseFactory
+
 from corehq.apps.custom_data_fields.models import (
+    COMMCARE_USER_TYPE_DEMO,
     COMMCARE_USER_TYPE_KEY,
-    COMMCARE_USER_TYPE_DEMO
 )
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.ota.utils import turn_off_demo_mode, turn_on_demo_mode
 from corehq.apps.ota.views import get_restore_response
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.ota.utils import turn_on_demo_mode, turn_off_demo_mode
+from corehq.apps.users.models import CommCareUser
 
 
 class TestDemoUser(TestCase):
