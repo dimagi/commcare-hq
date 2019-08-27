@@ -55,8 +55,6 @@ branches:
   - mk/skip-files-build # MK July 6
   #- mk/use-ids-to-validate-translations # July 19
   - revert-24882-jls/compress-mobile-workers-js # Jenny July 24 
-  - jls/add-js-to-sentry # Jenny Aug 7
-  - jls/icds-reports-on-staging # Jenny Aug 20
   - jls/linked-app-multiple-masters-rebased # Jenny Aug 17
   - rn_fix_case_reassign_option_list #Negi Aug 14
   - bmb/bi-schema-updates  # Biyeun Aug 16

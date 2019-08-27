@@ -773,6 +773,8 @@ class SettingsForm(Form):
             group = Group.get(object_id)
             if group.doc_type == 'Group' and group.domain == self._cchq_domain and group.case_sharing:
                 return group
+            elif group.is_deleted():
+                return None
         except ResourceNotFound:
             pass
 

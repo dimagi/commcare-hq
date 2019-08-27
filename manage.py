@@ -30,9 +30,7 @@ def main():
         GeventCommand('run_aggregation_query'),
         GeventCommand('send_pillow_retry_queue_through_pillows'),
     )
-    if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):
-        monkey.patch_all(subprocess=True)
-        patch_psycopg()
+    _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 
     init_hq_python_path()
     run_patches()
@@ -146,6 +144,23 @@ def _setup_once(*args, **kw):
     if not hasattr(_setup_once, "done"):
         _setup_once.done = True
         _setup_once.setup(*args, **kw)
+
+
+def _patch_gevent_if_required(args, gevent_commands):
+    if len(args) <= 1:
+        return
+    for gevent_command in gevent_commands:
+        should_patch = args[1] == gevent_command.command
+        if gevent_command.contains:
+            should_patch = should_patch and gevent_command.contains in ' '.join(args)
+        if should_patch:
+            monkey.patch_all(subprocess=True)
+            patch_psycopg()
+            if gevent_command.http_adapter_pool_size:
+                # requests must be imported after `patch_all()` is called
+                import requests
+                requests.adapters.DEFAULT_POOLSIZE = gevent_command.http_adapter_pool_size
+            break
 
 
 def set_default_settings_path(argv):
