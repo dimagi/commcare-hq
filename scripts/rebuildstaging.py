@@ -212,7 +212,7 @@ def rebuild_staging(config, print_details=True, push=True):
                     cwd=path,
                     branch=branch,
                     name=config.name
-                ), end=' ')
+                ))
                 try:
                     git.merge(branch, '--no-edit')
                 except sh.ErrorReturnCode_1:
@@ -230,7 +230,7 @@ def rebuild_staging(config, print_details=True, push=True):
                     cwd=path,
                     pr=pr,
                     name=config.name
-                ), end=' ')
+                ))
                 try:
                     git.merge(branch, '--no-edit')
                 except sh.ErrorReturnCode_1:
