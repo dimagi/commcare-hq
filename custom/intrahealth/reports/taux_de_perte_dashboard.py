@@ -37,9 +37,9 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
     @property
     def report_context(self):
         context = {
-            'report': self.get_report_context(),
+            # 'report': self.get_report_context(),
             'title': self.name,
-            'charts': self.charts
+            # 'charts': self.charts
         }
 
         return context
