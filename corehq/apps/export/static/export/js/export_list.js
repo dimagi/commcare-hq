@@ -458,6 +458,13 @@ hqDefine("export/js/export_list", [
         // Editing filters for a saved export
         self.selectedExportModelType = ko.observable();
         self.filterModalExportId = ko.observable();
+        if (options.isOData) {
+            self.filterModalExportId.subscribe(function (value) {
+                if(value) {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Edit Filters button");
+                }
+            });
+        }
         self.locationRestrictions = ko.observableArray([]).extend({notify: 'always'});  // List of location names. Export will be restricted to these locations.
         self.formSubmitErrorMessage = ko.observable('');
         self.dateRegex = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
@@ -537,6 +544,13 @@ hqDefine("export/js/export_list", [
                 self.emwfCaseFilter(self.$emwfCaseFilter.val());
                 self.emwfFormFilter(null);
             }
+
+            kissmetricsAnalytics.track.event(
+                "[BI Integration] Clicked Save Filters button",
+                {
+                    "Date Range": self.dateRange(),
+                }
+            );
 
             $.ajax({
                 method: 'POST',
