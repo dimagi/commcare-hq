@@ -254,7 +254,13 @@
                      class="field-include"
                      disabled="disabled" />
               <!--/ko-->
-              <!--ko ifnot: ($root.is_deidentified() && column.item.isCaseName()) -->
+              <!--ko if: $root.isReservedOdataColumn(column, $parentContext.$index()) -->
+              <input type="checkbox"
+                     class="field-include"
+                     checked="checked"
+                     disabled="disabled" />
+              <!--/ko-->
+              <!--ko ifnot: ($root.is_deidentified() && column.item.isCaseName()) || $root.isReservedOdataColumn(column, $parentContext.$index()) -->
               <input type="checkbox"
                      class="field-include export-table-checkbox"
                      data-bind="checked: column.selected" />
@@ -313,11 +319,17 @@
                      class="form-control"
                      data-bind="value: column.customPathString"/>
               <!-- /ko -->
+              <!-- ko if: $root.isReservedOdataColumn(column, $parentContext.$index()) -->
+              <span class="label label-info">
+                {% trans "Required for OData" %}
+              </span>
+              <!-- /ko -->
             </td>
             <td>
               <input class="form-control"
                      type="text"
-                     data-bind="value: column.label" />
+                     data-bind="value: column.label,
+                                disable: $root.isReservedOdataColumn(column, $parentContext.$index())" />
             </td>
           {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
             <td>
