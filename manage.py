@@ -61,7 +61,7 @@ def init_hq_python_path():
     _set_source_root(os.path.join('custom', '_legacy'))
 
 
-def _patch_gevent_if_reqd(args, gevent_commands):
+def _patch_gevent_if_required(args, gevent_commands):
     if len(args) <= 1:
         return
     for gevent_command in gevent_commands:
