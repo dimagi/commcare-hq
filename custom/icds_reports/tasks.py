@@ -337,6 +337,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 for state_id in state_ids:
                     create_mbt_for_month.delay(state_id, first_of_month_string, force_citus)
             chain(
+                icds_aggregation_task.si(date=(date-timedelta(days=2)).strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
+                                         force_citus=force_citus),
+                icds_aggregation_task.si(date=(date-timedelta(days=1)).strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
+                                         force_citus=force_citus),
                 icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
                                          force_citus=force_citus),
                 email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), aggregation_start_time=start_time,
