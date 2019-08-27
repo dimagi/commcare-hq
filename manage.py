@@ -48,18 +48,21 @@ class GeventCommand(object):
     http_adapter_pool_size = attr.ib(default=None)
 
 
-def _should_patch_gevent(args, gevent_commands):
-    should_patch = False
+def _patch_gevent_if_required(args, gevent_commands):
+    if len(args) <= 1:
+        return
     for gevent_command in gevent_commands:
         should_patch = args[1] == gevent_command.command
         if gevent_command.contains:
             should_patch = should_patch and gevent_command.contains in ' '.join(args)
         if should_patch:
+            monkey.patch_all(subprocess=True)
+            patch_psycopg()
             if gevent_command.http_adapter_pool_size:
+                # requests must be imported after `patch_all()` is called
                 import requests
                 requests.adapters.DEFAULT_POOLSIZE = gevent_command.http_adapter_pool_size
             break
-    return should_patch
 
 
 def init_hq_python_path():
@@ -144,23 +147,6 @@ def _setup_once(*args, **kw):
     if not hasattr(_setup_once, "done"):
         _setup_once.done = True
         _setup_once.setup(*args, **kw)
-
-
-def _patch_gevent_if_required(args, gevent_commands):
-    if len(args) <= 1:
-        return
-    for gevent_command in gevent_commands:
-        should_patch = args[1] == gevent_command.command
-        if gevent_command.contains:
-            should_patch = should_patch and gevent_command.contains in ' '.join(args)
-        if should_patch:
-            monkey.patch_all(subprocess=True)
-            patch_psycopg()
-            if gevent_command.http_adapter_pool_size:
-                # requests must be imported after `patch_all()` is called
-                import requests
-                requests.adapters.DEFAULT_POOLSIZE = gevent_command.http_adapter_pool_size
-            break
 
 
 def set_default_settings_path(argv):
