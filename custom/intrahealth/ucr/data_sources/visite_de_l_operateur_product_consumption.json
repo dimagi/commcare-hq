@@ -4,7 +4,7 @@
     "ipm-senegal",
     "testing-ipm-senegal"
   ],
-  "server_environment": ["production", "pna", "changeme"],
+  "server_environment": ["production", "pna"],
   "config": {
     "table_id": "yeksi_naa_reports_consumption",
     "display_name": "Consumption and outstock report",
