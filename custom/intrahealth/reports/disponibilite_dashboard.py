@@ -334,7 +334,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                     product_name = product['product_name']
                     in_ppses = product['in_ppses']
                     all_ppses = product['all_ppses']
-                    percent = (in_ppses / float(all_ppses)) * 100 if all_ppses is not 0 else 0
+                    percent = (in_ppses / float(all_ppses)) * 100 if all_ppses != 0 else 0
                     stocks_to_return.append([
                         product_name,
                         {
@@ -365,7 +365,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                     location_name = location_info['location_name']
                     in_ppses = location_info['in_ppses']
                     all_ppses = location_info['all_ppses']
-                    percent = (in_ppses / float(all_ppses)) * 100 if all_ppses is not 0 else 0
+                    percent = (in_ppses / float(all_ppses)) * 100 if all_ppses != 0 else 0
                     stocks_to_return.append([
                         location_name,
                         {

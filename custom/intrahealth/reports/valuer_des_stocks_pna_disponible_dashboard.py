@@ -301,7 +301,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
             for location_info in sorted_locations_data_values:
                 location_name = location_info['location_name']
                 final_pna_stock_valuation = location_info['final_pna_stock_valuation']
-                pna = final_pna_stock_valuation if final_pna_stock_valuation is not 0 else 0
+                pna = final_pna_stock_valuation if final_pna_stock_valuation != 0 else 0
                 quantities_to_return.append([
                     location_name,
                     {

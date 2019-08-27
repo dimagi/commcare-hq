@@ -140,13 +140,13 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
             nb_pps_enregistres = row['nb_pps_enregistres']
             nb_pps_visites = row['nb_pps_visites']
             couverture = '{:.2f} %'.format((nb_pps_visites / nb_pps_enregistres) * 100) \
-                if nb_pps_enregistres is not 0 else 'pas de données'
+                if nb_pps_enregistres != 0 else 'pas de données'
 
             if row['location_id']:
                 loc = get_location(row['location_id'], domain=self.config['domain'])
                 no_de_pps_aces_donnes_soumies = _locations_per_type(self.config['domain'], 'PPS', loc)
                 soumission = '{:.2f} %'.format((no_de_pps_aces_donnes_soumies / nb_pps_visites) * 100) \
-                    if nb_pps_visites is not 0 else 'pas de données'
+                    if nb_pps_visites != 0 else 'pas de données'
             else:
                 soumission = 'pas de données'
 

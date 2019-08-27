@@ -4732,7 +4732,7 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
         for row in self.get_data():
             id = row['product_id']
 
-            if product_names.get(id, None) is "":
+            if product_names.get(id, None) == "":
                 product_names[id] = row['product_name']
 
         headers = DataTablesHeader(DataTablesColumn(first_row))
@@ -4767,7 +4767,7 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
         product_names = dict((product_id, "") for product_id in self.all_unsorted_products)
         for row in self.get_data():
             id = row['product_id']
-            if product_names.get(id, None) is "":
+            if product_names.get(id, None) == "":
                 product_names[id] = row['product_name']
 
         pn = [key[0] for key in sorted(product_names.items(), key=lambda x: x[1]) if key[1]]
