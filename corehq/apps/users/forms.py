@@ -10,18 +10,15 @@ from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
-# required to translate inside of a mark_safe tag
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import string_concat
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-import six  # Python 3 compatibility
-# Bootstrap 3 Crispy Forms
+import six
 from crispy_forms import bootstrap as twbscrispy
-from crispy_forms import helper as cb3_helper
-from crispy_forms import layout as cb3_layout
+from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout, Submit
@@ -271,7 +268,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
         self.fields['language'].label = ugettext_lazy("My Language")
 
-        self.new_helper = cb3_helper.FormHelper()
+        self.new_helper = FormHelper()
         self.new_helper.form_method = 'POST'
         self.new_helper.form_class = 'form-horizontal'
         self.new_helper.attrs = {
@@ -281,7 +278,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         self.new_helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         basic_fields = [
-            cb3_layout.Div(*username_controls),
+            crispy.Div(*username_controls),
             hqcrispy.Field('first_name'),
             hqcrispy.Field('last_name'),
             hqcrispy.Field('email'),
@@ -289,15 +286,15 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
 
-        self.new_helper.layout = cb3_layout.Layout(
-            cb3_layout.Fieldset(
+        self.new_helper.layout = crispy.Layout(
+            crispy.Fieldset(
                 ugettext_lazy("Basic"),
                 *basic_fields
             ),
-            (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else cb3_layout.Fieldset)(
+            (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else crispy.Fieldset)(
                 ugettext_lazy("Other Options"),
                 hqcrispy.Field('language'),
-                cb3_layout.Div(*api_key_controls),
+                crispy.Div(*api_key_controls),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -939,12 +936,12 @@ class DomainRequestForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(DomainRequestForm, self).__init__(*args, **kwargs)
 
-        self.helper = cb3_helper.FormHelper()
+        self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
         self.helper.show_form_errors = True
-        self.helper.layout = cb3_layout.Layout(
+        self.helper.layout = crispy.Layout(
             hqcrispy.Field('full_name'),
             hqcrispy.Field('email'),
             hqcrispy.Field('domain'),
