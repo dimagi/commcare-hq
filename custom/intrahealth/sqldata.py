@@ -2809,8 +2809,6 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
     @property
     def rows(self):
         records = self.get_data()
-        for r in records:
-            print(r)
 
         if self.loc_id == 'pps_id':
             loc_names, data = self.get_availability_data_per_month_per_pps(records)
@@ -5278,8 +5276,8 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
             for pna in pnas_list:
                 if pna['location_id'] is None:
                     pna['location_id'] = ''
+                    pna['location_name'] = ''
 
-                print(pna['location_id'])
 
             pnas_list = sorted(pnas_list, key=lambda x: x['location_id'])
 
