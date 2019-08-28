@@ -1,6 +1,8 @@
 from io import BytesIO
 import datetime
 
+from django.conf import settings
+
 import pytz
 from sqlagg.filters import EQ, IN, NOT
 from sqlagg.sorting import OrderBy
@@ -9,6 +11,8 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.sqlreport import Column
 
 from corehq.apps.reports.util import get_INFilter_bindparams
+from corehq.sql_db.connections import ICDS_UCR_CITUS_ENGINE_ID, ICDS_UCR_ENGINE_ID
+from corehq.sql_db.routers import forced_citus
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from custom.icds_reports.queries import get_test_state_locations_id
@@ -35,8 +39,6 @@ FILTER_BY_LIST = {
 
 
 class ExportableMixin(object):
-    engine_id = 'icds-ucr'
-
     def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
         self.config = config
         self.loc_level = loc_level
@@ -49,6 +51,13 @@ class ExportableMixin(object):
     @property
     def domain(self):
         return self.config['domain']
+
+    @property
+    def engine_id(self):
+        if forced_citus() or getattr(settings, 'ICDS_USE_CITUS', False):
+            return ICDS_UCR_CITUS_ENGINE_ID
+        else:
+            return ICDS_UCR_ENGINE_ID
 
     @property
     def filters(self):
