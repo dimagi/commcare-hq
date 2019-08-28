@@ -48,7 +48,6 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.exceptions import (
     CaseNotFound,
-    FormEditNotAllowed,
     MissingFormXml,
     NotAllowed,
 )
@@ -754,7 +753,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         clear_local_domain_sql_backend_override(self.domain_name)
         self.assert_backend("couch")
-        with self.assertRaises(FormEditNotAllowed):
+        with self.assertRaises(NotAllowed):
             self.submit_form(make_test_form("test-1", age=30))
 
         self._do_migration_and_assert_flags(self.domain_name)
