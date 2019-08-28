@@ -7,7 +7,6 @@ from functools import wraps
 
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from lxml import etree as ET
 from memoized import memoized
 
@@ -635,11 +634,7 @@ class XForm(WrappedNode):
         self._scheduler_case_updates_populated = False
 
     def __str__(self):
-        text = ET.tostring(self.xml).decode('utf-8') if self.xml is not None else ''
-        if six.PY3:
-            return text
-        else:
-            return text.encode('utf-8')
+        return ET.tostring(self.xml).decode('utf-8') if self.xml is not None else ''
 
     @property
     @raise_if_none("Can't find <model>")

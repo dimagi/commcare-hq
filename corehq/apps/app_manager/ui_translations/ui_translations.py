@@ -6,8 +6,6 @@ from distutils.version import StrictVersion
 
 from django.utils.translation import ugettext as _
 
-from six.moves import range
-
 from couchexport.export import export_raw_to_writer
 
 from commcare_translations import load_translations

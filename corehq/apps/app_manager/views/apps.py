@@ -17,7 +17,6 @@ from django.utils.http import urlencode as django_urlencode
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET
 
-import six
 import urllib3
 from couchdbkit.exceptions import ResourceConflict
 from django_prbac.utils import has_privilege
@@ -546,7 +545,7 @@ def import_app(request, domain):
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        source = decompress([six.unichr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
+        source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
         app = import_app_util(source, domain, {'name': name})

@@ -1,7 +1,5 @@
 from collections import defaultdict
 
-import six
-
 from corehq.apps.app_manager import id_strings, models
 from corehq.apps.app_manager.const import (
     MOBILE_UCR_MIGRATING_TO_2,
@@ -348,7 +346,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                     default_val = "column[@id='{column_id}']"
                 xpath_function = default_val
                 for word, translations in transform['translations'].items():
-                    if isinstance(translations, six.string_types):
+                    if isinstance(translations, str):
                         soft_assert_type_text(translations)
                         # This is a flat mapping, not per-language translations
                         word_eval = "'{}'".format(translations)

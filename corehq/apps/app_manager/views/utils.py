@@ -8,8 +8,6 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from six.moves.urllib.parse import urlencode
-
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_app,

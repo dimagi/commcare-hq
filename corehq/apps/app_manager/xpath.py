@@ -3,8 +3,6 @@ import re
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-import six
-
 from corehq.apps.app_manager.const import (
     SCHEDULE_DATE_CASE_OPENED,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,

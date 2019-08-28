@@ -2,8 +2,6 @@ from collections import defaultdict, namedtuple
 
 from django.utils.translation import ugettext as _
 
-from six.moves import zip_longest
-
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import (

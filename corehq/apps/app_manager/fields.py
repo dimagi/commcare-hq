@@ -9,7 +9,6 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from memoized import memoized
-from six.moves import map
 
 from couchforms.analytics import get_exports_by_form
 

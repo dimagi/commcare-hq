@@ -9,7 +9,6 @@ from django.template.loader import render_to_string
 from django.urls import RegexURLResolver, Resolver404
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from couchdbkit import ResourceConflict, ResourceNotFound
 
 from dimagi.utils.web import json_response
@@ -508,8 +507,6 @@ def source_files(app):
     app_json = json.dumps(
         app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
     )
-    if six.PY2:
-        app_json = app_json.decode('utf-8')
     files.append(
         ("app.json", app_json)
     )

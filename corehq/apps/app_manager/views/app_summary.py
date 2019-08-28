@@ -7,8 +7,6 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
-from six.moves import range
-
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response

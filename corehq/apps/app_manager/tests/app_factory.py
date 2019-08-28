@@ -1,7 +1,4 @@
-
 import uuid
-
-import six
 
 from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import (

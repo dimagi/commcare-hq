@@ -2,7 +2,6 @@ from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
-import six
 from django_prbac.utils import has_privilege
 
 from dimagi.utils.couch.resource_conflict import retry_resource

@@ -4,7 +4,6 @@ import re
 
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from jsonobject.base import DefaultProperty
 
 from dimagi.ext.jsonobject import (

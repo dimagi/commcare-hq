@@ -10,7 +10,6 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET
 
-import six
 from couchdbkit.exceptions import ResourceConflict
 
 from dimagi.utils.logging import notify_exception

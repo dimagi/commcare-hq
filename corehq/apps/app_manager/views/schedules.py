@@ -2,8 +2,6 @@ import json
 
 from django.http import HttpResponseBadRequest
 
-import six
-
 from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.dbaccessors import get_app

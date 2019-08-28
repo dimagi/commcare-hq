@@ -6,7 +6,6 @@ from xml.etree import cElementTree as ElementTree
 from django.test import SimpleTestCase, TestCase
 
 import mock
-import six
 
 from casexml.apps.phone.tests.utils import (
     call_fixture_generator,

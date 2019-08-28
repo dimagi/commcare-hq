@@ -5,9 +5,7 @@ from django.core.cache import cache
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
-from six.moves import map
 
 from dimagi.utils.couch.database import iter_docs
 
@@ -276,7 +274,7 @@ def get_app_ids_in_domain(domain):
 def get_apps_by_id(domain, app_ids):
     from .models import Application
     from corehq.apps.app_manager.util import get_correct_app_class
-    if isinstance(app_ids, six.string_types):
+    if isinstance(app_ids, str):
         soft_assert_type_text(app_ids)
         app_ids = [app_ids]
     docs = iter_docs(Application.get_db(), app_ids)

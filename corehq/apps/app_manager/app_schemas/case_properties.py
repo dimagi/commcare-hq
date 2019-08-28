@@ -2,7 +2,6 @@ import logging
 from collections import defaultdict, deque, namedtuple
 from itertools import chain
 
-import six
 from memoized import memoized
 
 from corehq import toggles

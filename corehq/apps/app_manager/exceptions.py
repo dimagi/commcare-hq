@@ -1,5 +1,4 @@
 import couchdbkit
-import six
 
 from corehq.apps.app_manager.const import APP_V2
 

@@ -1,5 +1,3 @@
-import six
-
 from corehq.apps.app_manager.management.commands.helpers import (
     AppMigrationCommandBase,
 )
@@ -69,7 +67,7 @@ class Command(AppMigrationCommandBase):
         should_save = False
         for media_attr in ('media_image', 'media_audio'):
             old_media = doc.get(media_attr, None)
-            if old_media and isinstance(old_media, six.string_types):
+            if old_media and isinstance(old_media, str):
                 soft_assert_type_text(old_media)
                 doc[media_attr] = {'default': old_media}
                 should_save = True

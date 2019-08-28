@@ -1,4 +1,3 @@
-
 import hashlib
 import itertools
 import json
@@ -21,11 +20,9 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-import six
 from couchdbkit import ResourceNotFound
 from diff_match_patch import diff_match_patch
 from lxml import etree
-from six.moves import zip
 from unidecode import unidecode
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
@@ -227,7 +224,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
         form.actions.load_from_form = old_load_from_form
 
     for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
-        if isinstance(condition.answer, six.string_types):
+        if isinstance(condition.answer, str):
             soft_assert_type_text(condition.answer)
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)

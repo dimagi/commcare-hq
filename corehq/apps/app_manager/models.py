@@ -33,13 +33,11 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 import qrcode
-import six
 from couchdbkit import MultipleResultsFound, ResourceNotFound
 from couchdbkit.exceptions import BadValueError
 from jsonpath_rw import jsonpath, parse
 from lxml import etree
 from memoized import memoized
-from six.moves import filter, map, range
 from six.moves.urllib.parse import urljoin
 from six.moves.urllib.request import urlopen
 
@@ -1411,7 +1409,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
                 # Single-language media was stored in a plain string.
                 # Convert this to a dict, using a dummy key because we
                 # don't know the app's supported or default lang yet.
-                if isinstance(old_media, six.string_types):
+                if isinstance(old_media, str):
                     soft_assert_type_text(old_media)
                     new_media = {'default': old_media}
                     data[media_attr] = new_media
@@ -3500,7 +3498,7 @@ class ReportAppConfig(DocumentSchema):
         # for backwards compatibility with apps that have localized or xpath descriptions
         old_description = doc.get('description')
         if old_description:
-            if isinstance(old_description, six.string_types) and not doc.get('xpath_description'):
+            if isinstance(old_description, str) and not doc.get('xpath_description'):
                 soft_assert_type_text(old_description)
                 doc['xpath_description'] = old_description
             elif isinstance(old_description, dict) and not doc.get('localized_description'):
@@ -4043,7 +4041,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             version, build_number = current_builds.TAG_MAP[data['commcare_tag']]
             data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
             del data['commcare_tag']
-        if "built_with" in data and isinstance(data['built_with'], six.string_types):
+        if "built_with" in data and isinstance(data['built_with'], str):
             soft_assert_type_text(data['built_with'])
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
@@ -5605,7 +5603,7 @@ class LinkedApplication(Application):
 
 
 def import_app(app_id_or_source, domain, source_properties=None, request=None):
-    if isinstance(app_id_or_source, six.string_types):
+    if isinstance(app_id_or_source, str):
         soft_assert_type_text(app_id_or_source)
         source_app = get_app(None, app_id_or_source)
     else:

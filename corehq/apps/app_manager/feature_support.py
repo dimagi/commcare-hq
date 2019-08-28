@@ -2,8 +2,6 @@ from distutils.version import LooseVersion, Version
 
 from django.conf import settings
 
-import six
-
 from corehq.util.python_compatibility import soft_assert_type_text
 
 
@@ -15,8 +13,8 @@ class CommCareFeatureSupportMixin(object):
         if settings.UNIT_TESTING and self.build_version is None:
             return False
         assert isinstance(self.build_version, Version)
-        assert isinstance(minimum_version, six.string_types + (Version,))
-        if isinstance(minimum_version, six.string_types):
+        assert isinstance(minimum_version, str + (Version,))
+        if isinstance(minimum_version, str):
             soft_assert_type_text(minimum_version)
             minimum_version = LooseVersion(minimum_version)
         return self.build_version and self.build_version >= minimum_version
