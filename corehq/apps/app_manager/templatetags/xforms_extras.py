@@ -3,8 +3,6 @@ from django.utils import html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
-import six
-
 register = template.Library()
 
 EMPTY_LABEL = '<span class="label label-info">Empty</span>'
@@ -126,7 +124,7 @@ def _input_trans(template, name, langs=None, allow_blank=True):
                 options['placeholder'] = name[lang] if (allow_blank or name[lang] != '') else placeholder
                 options['lang'] = lang
             break
-    options = {key: html.escapejs(value) for (key, value) in six.iteritems(options)}
+    options = {key: html.escapejs(value) for (key, value) in options.items()}
     return mark_safe(template % options)
 
 

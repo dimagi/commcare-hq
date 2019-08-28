@@ -8,7 +8,6 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-import six
 from six.moves.urllib.parse import urlencode
 
 from corehq import toggles
@@ -172,7 +171,7 @@ def overwrite_app(app, master_build, report_map=None):
     app_json = app.to_json()
     form_ids_by_xmlns = _get_form_ids_by_xmlns(app_json)  # do this before we change the source
 
-    for key, value in six.iteritems(master_json):
+    for key, value in master_json.items():
         if key not in excluded_fields:
             app_json[key] = value
     app_json['version'] = master_json['version']
@@ -260,7 +259,7 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
     apps = get_practice_mode_configured_apps(domain, mobile_worker_id)
     for app in apps:
         unset_user(app)
-        for _, profile in six.iteritems(app.build_profiles):
+        for _, profile in app.build_profiles.items():
             unset_user(profile)
         app.save()
 

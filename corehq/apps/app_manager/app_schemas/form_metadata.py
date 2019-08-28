@@ -1,7 +1,6 @@
 
 from collections import OrderedDict, defaultdict
 
-import six
 from jsonobject import (
     BooleanProperty,
     DictProperty,
@@ -169,12 +168,12 @@ class _AppSummaryFormDataGenerator(object):
                                                    include_groups=True, include_translations=True)
             for question in self._get_question(form.unique_id, raw_question)
         )
-        for path, question in six.iteritems(questions_by_path):
+        for path, question in questions_by_path.items():
             parent = question.group or question.repeat
             if parent:
                 questions_by_path[parent].children.append(question)
 
-        return [question for question in six.itervalues(questions_by_path)
+        return [question for question in questions_by_path.values()
                 if not question.group and not question.repeat]
 
     def _get_question(self, form_unique_id, question):

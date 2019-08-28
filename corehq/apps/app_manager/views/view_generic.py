@@ -231,7 +231,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             'multimedia': {
                 "object_map": app.get_object_map(),
                 'upload_managers': uploaders,
-                'upload_managers_js': {type: u.js_options for type, u in six.iteritems(uploaders)},
+                'upload_managers_js': {type: u.js_options for type, u in uploaders.items()},
             }
         })
         context['module_icon'] = None

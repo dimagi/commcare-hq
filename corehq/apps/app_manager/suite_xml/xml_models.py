@@ -1,4 +1,3 @@
-import six
 from eulxml.xmlmap import (
     IntegerField,
     NodeField,
@@ -612,10 +611,10 @@ class GraphTemplate(Template):
                                     #       figure out why their unquoted colors
                                     #       aren't working.
                                     ConfigurationItem(id=k, xpath_function=v)
-                                    for k, v in six.iteritems(s.config)
+                                    for k, v in s.config.items()
                                 ] + [
                                     ConfigurationItem(id=k, locale_id=locale_series_config(index, k))
-                                    for k, v in sorted(six.iteritems(s.locale_specific_config))
+                                    for k, v in sorted(s.locale_specific_config.items())
                                 ]
                             )
                         )
@@ -626,11 +625,11 @@ class GraphTemplate(Template):
                         [
                             ConfigurationItem(id=k, xpath_function=v)
                             for k, v
-                            in six.iteritems(graph.config)
+                            in graph.config.items()
                         ] + [
                             ConfigurationItem(id=k, locale_id=locale_config(k))
                             for k, v
-                            in six.iteritems(graph.locale_specific_config)
+                            in graph.locale_specific_config.items()
                         ]
                     )
                 ),

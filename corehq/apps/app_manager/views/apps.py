@@ -876,7 +876,7 @@ def edit_app_attr(request, domain, app_id, attr):
 def edit_add_ons(request, domain, app_id):
     app = get_app(domain, app_id)
     current = add_ons.get_dict(request, app)
-    for slug, value in six.iteritems(request.POST):
+    for slug, value in request.POST.items():
         if slug in current:
             app.add_ons[slug] = value == 'on'
     app.save()

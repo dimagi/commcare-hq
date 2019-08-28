@@ -6,7 +6,6 @@ from distutils.version import StrictVersion
 
 from django.utils.translation import ugettext as _
 
-import six
 from six.moves import range
 
 from couchexport.export import export_raw_to_writer
@@ -86,7 +85,7 @@ def build_ui_translation_download_file(app):
     for i, lang in enumerate(app.langs):
         index = i + 1
         trans_dict = app.translations.get(lang, {})
-        for prop, trans in six.iteritems(trans_dict):
+        for prop, trans in trans_dict.items():
             if prop in blacklist:
                 continue
             if prop not in row_dict:

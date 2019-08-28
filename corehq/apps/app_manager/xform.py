@@ -1087,7 +1087,7 @@ class XForm(WrappedNode):
         group_contexts = sorted(group_contexts, reverse=True)
 
         save_to_case_nodes = {}
-        for path, data_node in six.iteritems(leaf_data_nodes):
+        for path, data_node in leaf_data_nodes.items():
             if path not in excluded_paths:
                 bind = self.get_bind(path)
 
@@ -1138,7 +1138,7 @@ class XForm(WrappedNode):
 
                 questions.append(question)
 
-        for path, node_info in six.iteritems(save_to_case_nodes):
+        for path, node_info in save_to_case_nodes.items():
             data_node = node_info['data_node']
             try:
                 case_node = next(data_node.iterancestors('{cx2}case'))

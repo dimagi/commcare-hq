@@ -392,7 +392,7 @@ def download_index(request, domain, app_id):
                 section_name = "m{} - {}".format(
                     module_id,
                     ", ".join(["({}) {}".format(lang, name)
-                               for lang, name in six.iteritems(module.name)])
+                               for lang, name in module.name.items()])
                 )
                 files[section_name].append({
                     'name': file_[0],
@@ -400,7 +400,7 @@ def download_index(request, domain, app_id):
                     'readable_name': "f{} - {}".format(
                         form_id,
                         ", ".join(["({}) {}".format(lang, name)
-                                   for lang, name in six.iteritems(form.name)])
+                                   for lang, name in form.name.items()])
                     ),
                 })
             else:
@@ -429,7 +429,7 @@ def download_index(request, domain, app_id):
 
     return render(request, "app_manager/download_index.html", {
         'app': request.app,
-        'files': OrderedDict(sorted(six.iteritems(files), key=lambda x: x[0] or '')),
+        'files': OrderedDict(sorted(files.items(), key=lambda x: x[0] or '')),
         'supports_j2me': request.app.build_spec.supports_j2me(),
         'enabled_build_profiles': enabled_build_profiles,
         'latest_enabled_build_profiles': latest_enabled_build_profiles,

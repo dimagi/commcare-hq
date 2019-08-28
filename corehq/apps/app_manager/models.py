@@ -1765,7 +1765,7 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
             # for backward compatibility
             # preload only has one reference per question path
             preload = self.actions.load_from_form.preload
-            refs.load = {key: [value] for key, value in six.iteritems(preload)}
+            refs.load = {key: [value] for key, value in preload.items()}
         return refs
 
     @case_references.setter
@@ -1943,7 +1943,7 @@ class DetailColumn(IndexedSchema):
         if to_ret.format == 'enum-image':
             # interpolate icons-paths
             for item in to_ret.enum:
-                for lang, path in six.iteritems(item.value):
+                for lang, path in item.value.items():
                     item.value[lang] = interpolate_media_path(path)
         return to_ret
 
@@ -2545,10 +2545,10 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
         actions = self.actions.actions_meta_by_tag
         by_type = defaultdict(list)
         action_type = []
-        for action_tag, action_meta in six.iteritems(actions):
+        for action_tag, action_meta in actions.items():
             by_type[action_meta.get('type')].append(action_tag)
 
-        for type, tag_list in six.iteritems(by_type):
+        for type, tag_list in by_type.items():
             action_type.append('{} ({})'.format(type, ', '.join(filter(None, tag_list))))
 
         return ' '.join(action_type)
@@ -2670,7 +2670,7 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
         for action in self.actions.get_all_actions():
             case_type = action.case_type
             updates_by_case_type[case_type].update(
-                format_key(*item) for item in six.iteritems(action.case_properties))
+                format_key(*item) for item in action.case_properties.items())
         if self.schedule and self.schedule.enabled and self.source:
             xform = self.wrapped_xform()
             self.add_stuff_to_xform(xform)
@@ -3136,7 +3136,7 @@ class AdvancedModule(ModuleBase):
             except KeyError:
                 self.get_or_create_schedule_phase(anchor)
 
-        deleted_phases_with_forms = [anchor for anchor, phase in six.iteritems(old_phases) if len(phase.forms)]
+        deleted_phases_with_forms = [anchor for anchor, phase in old_phases.items() if len(phase.forms)]
         if deleted_phases_with_forms:
             raise ScheduleError(_("You can't delete phases with anchors "
                                   "{phase_anchors} because they have forms attached to them").format(
@@ -4772,7 +4772,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         latest_build = self.get_latest_build()
         prev_multimedia_map = latest_build.multimedia_map if latest_build else {}
 
-        for path, map_item in six.iteritems(self.multimedia_map):
+        for path, map_item in self.multimedia_map.items():
             prev_map_item = prev_multimedia_map.get(path, None)
             if prev_map_item and prev_map_item.unique_id:
                 # Re-use the id so CommCare knows it's the same resource
@@ -5294,7 +5294,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             del copy_source['unique_id']
 
         if rename:
-            for lang, name in six.iteritems(copy_source['name']):
+            for lang, name in copy_source['name'].items():
                 with override(lang):
                     copy_source['name'][lang] = _('Copy of {name}').format(name=name)
 
@@ -5619,7 +5619,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     finally:
         source['_attachments'] = {}
     if source_properties is not None:
-        for key, value in six.iteritems(source_properties):
+        for key, value in source_properties.items():
             source[key] = value
     cls = get_correct_app_class(source)
     # Allow the wrapper to update to the current default build_spec

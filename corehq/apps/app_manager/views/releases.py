@@ -16,7 +16,6 @@ from django.views.decorators.cache import cache_control
 from django.views.generic import View
 
 import ghdiff
-import six
 from couchdbkit import NoResultFound, ResourceNotFound
 from django_prbac.decorators import requires_privilege
 from django_prbac.utils import has_privilege
@@ -508,7 +507,7 @@ def _get_app_diffs(first_app, second_app):
     """
     file_pairs = _get_file_pairs(first_app, second_app)
     diffs = []
-    for name, files in six.iteritems(file_pairs):
+    for name, files in file_pairs.items():
         diff_html = ghdiff.diff(files[0], files[1], n=4, css=False)
         additions, deletions = _get_change_counts(diff_html)
         if additions == 0 and deletions == 0:
