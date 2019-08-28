@@ -1,4 +1,5 @@
 from collections import defaultdict, namedtuple
+from itertools import zip_longest
 
 from django.utils.translation import ugettext as _
 
