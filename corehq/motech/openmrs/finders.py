@@ -81,9 +81,10 @@ class PatientFinder(DocumentSchema):
             }
 
         if cls is PatientFinder:
-            return {
+            subclass = {
                 sub._doc_type: sub for sub in recurse_subclasses(cls)
-            }[data['doc_type']].wrap(data)
+            }.get(data['doc_type'])
+            return subclass.wrap(data) if subclass else None
         else:
             return super(PatientFinder, cls).wrap(data)
 
