@@ -162,7 +162,7 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(1, len(child.xform_ids))
 
         # simulate parent deletion
-        parent.soft_delete()
+        CaseAccessors(self.domain).soft_delete_cases([parent_id])
 
         # call the remove index task
         remove_indices_from_deleted_cases(self.domain, [parent_id])

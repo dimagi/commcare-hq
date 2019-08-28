@@ -770,11 +770,6 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     def user_id(self, value):
         self.modified_by = value
 
-    def soft_delete(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        CaseAccessorSQL.soft_delete_cases(self.domain, [self.case_id])
-        self.deleted = True
-
     @property
     def is_deleted(self):
         return self.deleted

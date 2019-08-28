@@ -163,9 +163,11 @@ class CaseBugTest(TestCase, TestFileMixin):
         xform, [case] = post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
                 update={'foo': 'bar'}).as_xml()
-        ])
-        case.soft_delete()
+        ], domain="test-domain")
+        cases = CaseAccessors("test-domain")
+        cases.soft_delete_cases([case_id])
 
+        case = cases.get_case(case_id)
         self.assertEqual('bar', case.dynamic_case_properties()['foo'])
         self.assertTrue(case.is_deleted)
 
