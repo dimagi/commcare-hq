@@ -168,13 +168,15 @@ class OpenmrsRepeater(CaseRepeater):
             # be forwarded, drop it.
             return False
 
-        repeaters = [repeater for case in cases for repeater in get_case_location_ancestor_repeaters(case)]
-        if repeaters and self not in repeaters:
-            # This repeater points to the wrong OpenMRS server for this
-            # payload. Let the right repeater handle it.
-            return False
+        if not self.location_id:
+            # If this repeater  does not have a location, all payloads
+            # should go to it.
+            return True
 
-        return True
+        repeaters = [repeater for case in cases for repeater in get_case_location_ancestor_repeaters(case)]
+        # If this repeater points to the wrong OpenMRS server for this
+        # payload then let the right repeater handle it.
+        return self in repeaters
 
     def get_payload(self, repeat_record):
         payload = super(OpenmrsRepeater, self).get_payload(repeat_record)
