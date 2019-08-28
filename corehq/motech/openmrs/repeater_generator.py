@@ -1,6 +1,7 @@
-from corehq.motech.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
-from corehq.motech.openmrs.repeaters import (
-    RegisterOpenmrsPatientRepeater,
+from corehq.motech.openmrs.repeaters import RegisterOpenmrsPatientRepeater
+from corehq.motech.repeaters.repeater_generators import (
+    BasePayloadGenerator,
+    RegisterGenerator,
 )
 
 

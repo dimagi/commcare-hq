@@ -1,11 +1,13 @@
 import json
 from base64 import b64decode, b64encode
 
+from django.conf import settings
+
 import six
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad as crypto_pad, unpad as crypto_unpad
+from Crypto.Util.Padding import pad as crypto_pad
+from Crypto.Util.Padding import unpad as crypto_unpad
 from Crypto.Util.py3compat import bord
-from django.conf import settings
 
 from corehq.util.python_compatibility import soft_assert_type_text
 

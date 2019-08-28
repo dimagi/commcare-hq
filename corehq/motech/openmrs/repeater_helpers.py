@@ -1,17 +1,18 @@
 
-from collections import namedtuple, defaultdict
 import re
+from collections import defaultdict, namedtuple
 
 from lxml import html
-from requests import RequestException
 from six.moves import zip
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import extract_case_blocks
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.openmrs.const import (
@@ -31,8 +32,7 @@ from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.requests import Requests
 from corehq.motech.value_source import CaseTriggerInfo
 from corehq.util.quickcache import quickcache
-from dimagi.utils.logging import notify_exception
-
+from requests import RequestException
 
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
 

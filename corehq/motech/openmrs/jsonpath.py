@@ -1,7 +1,7 @@
 
 from operator import gt
 
-from jsonpath_rw import JSONPath, Fields
+from jsonpath_rw import Fields, JSONPath  # pylint: disable=unused-import,F401
 
 
 class Cmp(JSONPath):

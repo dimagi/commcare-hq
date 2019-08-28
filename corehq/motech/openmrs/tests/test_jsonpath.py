@@ -1,8 +1,8 @@
 import doctest
-from operator import gt, ge, eq
-
+from operator import eq, ge, gt
 from unittest import TestCase
-from jsonpath_rw import Child, Fields, Slice, Union, Where, Root
+
+from jsonpath_rw import Child, Fields, Root, Slice, Union, Where
 
 import corehq.motech.openmrs.jsonpath
 from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
