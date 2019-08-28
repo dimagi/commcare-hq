@@ -277,6 +277,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):
+        NotAllowed.check(domain)
         return _soft_undelete(CommCareCase.get_db(), case_ids)
 
     @staticmethod

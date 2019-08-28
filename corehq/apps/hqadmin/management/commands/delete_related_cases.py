@@ -8,6 +8,7 @@ from six.moves import input
 
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.users.util import cached_owner_id_to_display
+from corehq.form_processor.exceptions import NotAllowed
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -23,6 +24,7 @@ class Command(BaseCommand):
         parser.add_argument('--filename', dest='filename', default='case-delete-info.csv')
 
     def handle(self, domain, case_id, **options):
+        NotAllowed.check(domain)
         case_accessor = CaseAccessors(domain=domain)
         case = case_accessor.get_case(case_id)
         if not case.is_deleted and input('\n'.join([

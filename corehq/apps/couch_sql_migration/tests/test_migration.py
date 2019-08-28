@@ -878,6 +878,37 @@ class MigrationTestCase(BaseMigrationTestCase):
         user.retire()
         user.unretire()
 
+    def test_delete_cases_during_migration(self):
+        from corehq.apps.hqcase.tasks import delete_exploded_cases
+        from corehq.form_processor.backends.couch.processor import FormProcessorCouch
+        from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+        form = self.submit_form(make_test_form("form-1"), timedelta(minutes=-95))
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        with self.assertRaises(NotAllowed):
+            CaseAccessorSQL.hard_delete_cases(self.domain_name, ["test-case"])
+        with self.assertRaises(NotAllowed):
+            FormProcessorSQL.hard_delete_case_and_forms(self.domain_name, None, [form])
+        with self.assertRaises(NotAllowed):
+            CaseAccessors(self.domain_name).soft_undelete_cases(["test-case"])
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.assert_backend("couch")
+        with self.assertRaises(NotAllowed):
+            FormProcessorCouch.hard_delete_case_and_forms(self.domain_name, "non", "sense")
+        with self.assertRaises(NotAllowed):
+            call_command("delete_related_cases", self.domain_name, "test-case")
+        with self.assertRaises(NotAllowed):
+            call_command("purge_forms_and_cases", self.domain_name, "app", "1", "nope")
+        with self.assertRaises(NotAllowed):
+            delete_exploded_cases(self.domain_name, "boom")
+        with self.assertRaises(NotAllowed):
+            CaseAccessors(self.domain_name).soft_undelete_cases(["test-case"])
+
+        self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([])
+
     def test_reset_migration(self):
         now = datetime.utcnow()
         self.submit_form(make_test_form("test-1"), now - timedelta(minutes=95))

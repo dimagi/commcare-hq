@@ -888,6 +888,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
+        NotAllowed.check(domain)
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT hard_delete_cases(%s, %s) as deleted_count', [domain, case_ids])
             results = fetchall_as_namedtuple(cursor)
@@ -1134,6 +1135,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         from corehq.form_processor.change_publishers import publish_case_saved
 
         assert isinstance(case_ids, list)
+        NotAllowed.check(domain)
 
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
