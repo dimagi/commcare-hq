@@ -207,7 +207,7 @@ def get_form_data_schema(request, domain, form_unique_id):
             "Please fix the error to see case properties in this tree")
         )
     except Exception as e:
-        notify_exception(request, message=six.text_type(e))
+        notify_exception(request, message=str(e))
         return HttpResponseBadRequest("schema error, see log for details")
 
     data.extend(

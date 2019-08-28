@@ -35,7 +35,7 @@ def process_ui_translation_upload(app, trans_file):
     try:
         workbook = get_workbook(trans_file)
     except WorkbookJSONError as e:
-        error_properties.append(six.text_type(e))
+        error_properties.append(str(e))
         return trans_dict, error_properties, warnings
 
     commcare_version = get_commcare_version_from_workbook(workbook.wb)

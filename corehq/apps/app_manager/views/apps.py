@@ -638,7 +638,7 @@ def rename_language(request, domain, form_unique_id):
         app.save()
         return HttpResponse(json.dumps({"status": "ok"}))
     except XFormException as e:
-        response = HttpResponse(json.dumps({'status': 'error', 'message': six.text_type(e)}), status=409)
+        response = HttpResponse(json.dumps({'status': 'error', 'message': str(e)}), status=409)
         return response
 
 
@@ -973,7 +973,7 @@ def pull_master_app(request, domain, app_id):
         try:
             update_linked_app(app, request.couch_user.get_id)
         except AppLinkError as e:
-            messages.error(request, six.text_type(e))
+            messages.error(request, str(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
     track_workflow(request.couch_user.username, "Linked domain: master app pulled")

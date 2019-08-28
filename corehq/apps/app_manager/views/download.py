@@ -490,7 +490,7 @@ def download_index_files(app, build_profile_id=None):
     else:
         files = list(app.create_all_files().items())
     files = [
-        (name, build_file if isinstance(build_file, six.text_type) else build_file.decode('utf-8'))
+        (name, build_file if isinstance(build_file, str) else build_file.decode('utf-8'))
         for (name, build_file) in files
     ]
     return sorted(files)

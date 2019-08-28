@@ -157,7 +157,7 @@ class _AppSummaryFormDataGenerator(object):
             form_meta.questions = self._sort_questions_by_group(form)
         except XFormException as exception:
             form_meta.error = {
-                'details': six.text_type(exception),
+                'details': str(exception),
             }
             self.errors.append(form_meta)
         return form_meta

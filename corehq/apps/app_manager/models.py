@@ -732,7 +732,7 @@ class FormSource(object):
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
-        if isinstance(value, six.text_type):
+        if isinstance(value, str):
             value = value.encode('utf-8')
         app.lazy_put_attachment(value, filename)
         form.clear_validation_cache()
@@ -867,7 +867,7 @@ class CaseLoadReference(DocumentSchema):
     """
     _allow_dynamic_properties = False
     path = StringProperty()
-    properties = ListProperty(six.text_type)
+    properties = ListProperty(str)
 
 
 class CaseSaveReference(DocumentSchema):
@@ -877,7 +877,7 @@ class CaseSaveReference(DocumentSchema):
     """
     _allow_dynamic_properties = False
     case_type = StringProperty()
-    properties = ListProperty(six.text_type)
+    properties = ListProperty(str)
     create = BooleanProperty(default=False)
     close = BooleanProperty(default=False)
 
@@ -986,7 +986,7 @@ class FormBase(DocumentSchema):
     """
     form_type = None
 
-    name = DictProperty(six.text_type)
+    name = DictProperty(str)
     name_enum = SchemaListProperty(MappingItem)
     unique_id = StringProperty()
     show_count = BooleanProperty(default=False)
@@ -1208,7 +1208,7 @@ class FormBase(DocumentSchema):
             )
         except XFormException as e:
             raise XFormException(_('Error in form "{}": {}')
-                                 .format(trans(self.name), six.text_type(e)))
+                                 .format(trans(self.name), str(e)))
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1379,7 +1379,7 @@ class CustomIcon(DocumentSchema):
     an xpath expression to be evaluated for example count of cases within.
     """
     form = StringProperty()
-    text = DictProperty(six.text_type)
+    text = DictProperty(str)
     xpath = StringProperty()
 
 
@@ -2154,7 +2154,7 @@ class CaseListForm(NavMenuItemMediaMixin):
 
 
 class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, CommentMixin):
-    name = DictProperty(six.text_type)
+    name = DictProperty(str)
     name_enum = SchemaListProperty(MappingItem)
     unique_id = StringProperty()
     case_type = StringProperty()
@@ -3755,7 +3755,7 @@ class LazyBlobDoc(BlobMixin):
         self = super(LazyBlobDoc, cls).wrap(data)
         if attachments:
             for name, attachment in attachments.items():
-                if isinstance(attachment, six.text_type):
+                if isinstance(attachment, str):
                     attachment = attachment.encode('utf-8')
                 if isinstance(attachment, bytes):
                     info = {"content": attachment}
@@ -3783,7 +3783,7 @@ class LazyBlobDoc(BlobMixin):
                 # TODO - remove try/except sometime after Python 3 migration is complete
                 return None
             if content is not None:
-                if isinstance(content, six.text_type):
+                if isinstance(content, str):
                     return None
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
         return content
@@ -5003,7 +5003,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                     raise XFormException(_('Unable to validate the forms due to a server error. '
                                            'Please try again later.'))
                 except XFormException as e:
-                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), six.text_type(e)))
+                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), str(e)))
         return files
 
     @time_method()

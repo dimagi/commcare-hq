@@ -844,7 +844,7 @@ class Detail(OrderedXmlObject, IdNode):
                 if field.template.text.xpath:
                     for variable in field.template.text.xpath.variables:
                         if variable.xpath:
-                            result.add(six.text_type(variable.xpath.function))
+                            result.add(str(variable.xpath.function))
 
         for detail in self.details:
             result.update(detail.get_all_xpaths())

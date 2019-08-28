@@ -61,7 +61,7 @@ class AppFactory(object):
         module.case_type = case_type
 
         def get_unique_id(module_or_form):
-            return module_or_form if isinstance(module_or_form, six.text_type) else module_or_form.unique_id
+            return module_or_form if isinstance(module_or_form, str) else module_or_form.unique_id
 
         if parent_module:
             module.root_module_id = get_unique_id(parent_module)

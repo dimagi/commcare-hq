@@ -36,14 +36,14 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, esc
         # as value on the input field and is visible in the text box.
         # Ref: https://github.com/dimagi/commcare-hq/pull/16871/commits/14453f4482f6580adc9619a8ad3efb39d5cf37a2
         if lang in name and name[lang] is not None:
-            n = six.text_type(name[lang])
+            n = str(name[lang])
             if escape:
                 n = html.escape(n)
             affix = ("" if langs and lang == langs[0] else tag(lang))
             return affix + n if prefix else n + affix
         # ok, nothing yet... just return anything in name
     for lang, n in sorted(name.items()):
-        n = six.text_type(n)
+        n = str(n)
         if escape:
             n = html.escape(n)
         affix = tag(lang)

@@ -47,7 +47,7 @@ VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio'
 def parse_xml(string):
     # Work around: ValueError: Unicode strings with encoding
     # declaration are not supported.
-    if isinstance(string, six.text_type):
+    if isinstance(string, str):
         string = string.encode("utf-8")
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
@@ -182,7 +182,7 @@ class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):
         if isinstance(xml, bytes):
             xml = xml.decode('utf-8')
-        if isinstance(xml, six.text_type):
+        if isinstance(xml, str):
             self.xml = parse_xml(xml) if xml else None
         else:
             self.xml = xml
@@ -312,7 +312,7 @@ class ItextOutput(object):
         return context.get(self.ref)
 
 
-class ItextValue(six.text_type):
+class ItextValue(str):
 
     def __new__(cls, parts):
         return super(ItextValue, cls).__new__(cls, cls._render(parts))
@@ -595,7 +595,7 @@ def autoset_owner_id_for_advanced_action(action):
 
 
 def validate_xform(domain, source):
-    if isinstance(source, six.text_type):
+    if isinstance(source, str):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
@@ -678,7 +678,7 @@ class XForm(WrappedNode):
     def media_references(self, form, lang=None):
         lang_condition = '[@lang="%s"]' % lang if lang else ''
         nodes = self.itext_node.findall('{f}translation%s/{f}text/{f}value[@form="%s"]' % (lang_condition, form))
-        return list(set([six.text_type(n.text) for n in nodes]))
+        return list(set([str(n.text) for n in nodes]))
 
     @property
     def odk_intents(self):

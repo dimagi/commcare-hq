@@ -129,7 +129,7 @@ def bail(request, domain, app_id, not_found=""):
 
 
 def encode_if_unicode(s):
-    return s.encode('utf-8') if isinstance(s, six.text_type) else s
+    return s.encode('utf-8') if isinstance(s, str) else s
 
 
 def validate_langs(request, existing_langs):
@@ -299,7 +299,7 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
     try:
         update_linked_app(app, user_id)
     except (AppLinkError, MultimediaMissingError) as e:
-        message = six.text_type(e)
+        message = str(e)
     except Exception:
         # Send an email but then crash the process
         # so we know what the error was

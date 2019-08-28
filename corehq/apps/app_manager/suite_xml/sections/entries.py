@@ -2,7 +2,6 @@ from collections import defaultdict, namedtuple
 
 from django.utils.translation import ugettext as _
 
-import six
 from six.moves import zip_longest
 
 from corehq.apps.app_manager import id_strings
@@ -628,7 +627,7 @@ class EntriesHelper(object):
                         )
                     return target
                 except ModuleNotFoundException as e:
-                    raise ParentModuleReferenceError(six.text_type(e))
+                    raise ParentModuleReferenceError(str(e))
             else:
                 if case_type == module.case_type:
                     return module
