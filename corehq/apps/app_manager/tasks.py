@@ -3,11 +3,14 @@ from django.utils.translation import ugettext as _
 from celery.task import task
 from celery.utils.log import get_task_logger
 
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_id, get_auto_generated_built_apps
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_auto_generated_built_apps,
+    get_latest_build_id,
+)
 from corehq.apps.app_manager.exceptions import SavedAppBuildException
 from corehq.apps.users.models import CommCareUser
 from corehq.util.decorators import serial_task
-
 
 logger = get_task_logger(__name__)
 

@@ -1,17 +1,17 @@
 
-from django.urls import reverse
 from django.test import TestCase
 from django.test.client import Client
+from django.urls import reverse
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
-from corehq.apps.app_manager.models import Application
-from corehq.elastic import send_to_elasticsearch, get_es_new
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.elastic import delete_es_index
 from corehq.util.test_utils import flag_enabled
-from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 
 
 class TestPaginateReleases(TestCase):

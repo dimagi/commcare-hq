@@ -3,11 +3,11 @@ from django.test import SimpleTestCase
 from corehq.apps.export.const import USERNAME_TRANSFORM
 from corehq.apps.export.models import (
     DocRow,
-    RowNumberColumn,
-    PathNode,
-    ExportRow,
-    ScalarItem,
     ExportColumn,
+    ExportRow,
+    PathNode,
+    RowNumberColumn,
+    ScalarItem,
     TableConfiguration,
 )
 

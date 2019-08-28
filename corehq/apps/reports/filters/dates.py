@@ -1,10 +1,13 @@
-import json
-from django.utils.translation import ugettext_lazy, ugettext as _
-from corehq.util.dates import iso_string_to_date
-from dimagi.utils.dates import DateSpan
-from corehq.apps.reports.filters.base import BaseReportFilter
 import datetime
-from dimagi.utils.dates import add_months
+import json
+
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from dimagi.utils.dates import DateSpan, add_months
+
+from corehq.apps.reports.filters.base import BaseReportFilter
+from corehq.util.dates import iso_string_to_date
 
 
 class DatespanFilter(BaseReportFilter):

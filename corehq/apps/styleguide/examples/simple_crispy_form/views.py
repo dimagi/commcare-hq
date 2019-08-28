@@ -1,12 +1,17 @@
 from django.contrib import messages
-from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
+from memoized import memoized
+
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq.apps.styleguide.examples.simple_crispy_form.forms import ExampleUserLoginForm
-from memoized import memoized
+from corehq.apps.styleguide.examples.simple_crispy_form.forms import (
+    ExampleUserLoginForm,
+)
 
 
 class BaseSimpleCrispyFormSectionView(BaseSectionPageView):

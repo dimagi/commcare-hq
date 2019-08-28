@@ -1,9 +1,10 @@
-# -*- coding: utf-8 -*-
 
-from django.db import models, migrations
-import corehq.apps.sms.models
-import dimagi.utils.couch.migration
 import django.db.models.deletion
+from django.db import migrations, models
+
+import dimagi.utils.couch.migration
+
+import corehq.apps.sms.models
 
 
 class Migration(migrations.Migration):

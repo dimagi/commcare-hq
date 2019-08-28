@@ -1,11 +1,17 @@
-import csv342 as csv
-from django.core.management import BaseCommand
 import sys
+
+from django.core.management import BaseCommand
+
+import csv342 as csv
+import six
+from six.moves import input
+
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.users.util import cached_owner_id_to_display
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from six.moves import input
-import six
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 
 
 class Command(BaseCommand):

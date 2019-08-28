@@ -3,20 +3,22 @@ import argparse
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
+
 from six.moves import input
 
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.data_pipeline_audit.management.commands.compare_doc_ids import (
-    compare_xforms,
     compare_cases,
+    compare_xforms,
 )
+from corehq.apps.hqcase.utils import resave_case
 from corehq.form_processor.interfaces.dbaccessors import (
-    FormAccessors,
     CaseAccessors,
+    FormAccessors,
 )
 from corehq.form_processor.utils.xform import resave_form
-from corehq.apps.hqcase.utils import resave_case
 from corehq.util.log import with_progress_bar
-from dimagi.utils.chunked import chunked
 
 DATE_FORMAT = "%Y-%m-%d"
 

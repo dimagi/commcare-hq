@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 import json
 import uuid
 from collections import namedtuple

@@ -1,7 +1,8 @@
 from abc import ABCMeta, abstractmethod
 
-import six
 from django.db.models import Q
+
+import six
 
 from dimagi.utils.chunked import chunked
 

@@ -1,8 +1,14 @@
-from collections import namedtuple
-from corehq.apps.app_manager.xpath_validator.config import get_xpath_validator_path
-from corehq.apps.app_manager.xpath_validator.exceptions import XpathValidationError
-from dimagi.utils.subprocess_manager import subprocess_context
 import re
+from collections import namedtuple
+
+from dimagi.utils.subprocess_manager import subprocess_context
+
+from corehq.apps.app_manager.xpath_validator.config import (
+    get_xpath_validator_path,
+)
+from corehq.apps.app_manager.xpath_validator.exceptions import (
+    XpathValidationError,
+)
 
 XpathValidationResponse = namedtuple('XpathValidationResponse', ['is_valid', 'message'])
 

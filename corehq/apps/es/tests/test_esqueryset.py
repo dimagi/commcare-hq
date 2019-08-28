@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from corehq.apps.es.es_query import HQESQuery, ESQuerySet
+from corehq.apps.es.es_query import ESQuerySet, HQESQuery
 from corehq.elastic import ESError
 
 

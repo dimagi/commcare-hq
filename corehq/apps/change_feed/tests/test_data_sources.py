@@ -2,6 +2,8 @@
 from django.test import SimpleTestCase, override_settings
 
 from casexml.apps.phone.document_store import ReadonlySyncLogDocumentStore
+from pillowtop.dao.couch import CouchDocumentStore
+
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
@@ -16,7 +18,6 @@ from corehq.form_processor.document_stores import (
 )
 from corehq.util.exceptions import DatabaseNotFound
 from corehq.util.test_utils import generate_cases
-from pillowtop.dao.couch import CouchDocumentStore
 
 
 class DocumentStoreTests(SimpleTestCase):

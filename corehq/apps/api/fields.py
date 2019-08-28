@@ -3,8 +3,8 @@ Fields for use in Tastypie Resources
 '''
 
 import six
-
 from tastypie.fields import ApiField, CharField
+
 import dimagi.utils.modules
 
 from corehq.util.python_compatibility import soft_assert_type_text
@@ -246,4 +246,3 @@ class ToOneDocumentField(ApiField):
             return None
         else:
             return self.related_resource.full_dehydrate(self.related_resource.build_bundle(obj=hydrated, request=bundle.request)).data
-

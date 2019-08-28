@@ -1,4 +1,5 @@
 from distutils.version import StrictVersion
+
 import openpyxl
 
 KEYWORD_PREFIX = 'CommCareVersion='

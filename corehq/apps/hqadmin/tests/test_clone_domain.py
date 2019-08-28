@@ -1,15 +1,16 @@
 from django.test import TestCase
+
 from mock import patch
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.hqadmin.management.commands.clone_domain import \
+    Command as CloneCommand
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tests.util import setup_locations_and_types
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
-
-from corehq.apps.hqadmin.management.commands.clone_domain import Command as CloneCommand
+from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 
 
 class TestCloneDomain(TestCase):

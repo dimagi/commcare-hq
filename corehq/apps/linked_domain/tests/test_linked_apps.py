@@ -1,24 +1,18 @@
 import os
 import uuid
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.test.testcases import TestCase
+
+from couchdbkit.exceptions import ResourceNotFound
 from mock import patch
 
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import (
     Application,
-    Module,
     LinkedApplication,
+    Module,
     ReportAppConfig,
     ReportModule,
-)
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
-from corehq.apps.linked_domain.exceptions import ActionNotPermitted
-from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
-from corehq.apps.linked_domain.remote_accessors import (
-    _convert_app_from_remote_linking_source,
-    fetch_remote_media,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.utils import (
@@ -27,11 +21,17 @@ from corehq.apps.app_manager.views.utils import (
     update_linked_app,
 )
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
-from corehq.apps.linked_domain.util import (
-    convert_app_for_remote_linking,
-    _get_missing_multimedia,
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+from corehq.apps.linked_domain.exceptions import ActionNotPermitted
+from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
+from corehq.apps.linked_domain.remote_accessors import (
+    _convert_app_from_remote_linking_source,
+    fetch_remote_media,
 )
-
+from corehq.apps.linked_domain.util import (
+    _get_missing_multimedia,
+    convert_app_for_remote_linking,
+)
 from corehq.util.test_utils import flag_enabled, softer_assert
 
 

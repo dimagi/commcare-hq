@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
 
 from django.db import migrations
-
-
 
 
 def confirm_no_data_loss(apps, schema_editor):

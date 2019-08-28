@@ -4,25 +4,25 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
+# Dimagi Dev <devops@dimagi.com>, 2017
 # esoergel, 2018
 # Saket Kanth <skanth@dimagi.com>, 2018
 # Abdel Nasser Iro <abdel.nasser.iro.gigo@millenniumpromise.org>, 2018
 # Kelly Adediha <kadediha@dimagi.com>, 2018
 # Claire_Cravero <ccravero@dimagi.com>, 2018
 # Ismaïla Diene <idiene@dimagi.com>, 2019
-# Dimagi Dev <devops@dimagi.com>, 2019
-# Aissetou Sawadogo <ais107@hotmail.com>, 2019
-# Tyler Wymer <twymer@dimagi.com>, 2019
 # Sarah Sagan <ssagan@dimagi.com>, 2019
+# Tyler Wymer <twymer@dimagi.com>, 2019
+# Aissetou Sawadogo <ais107@hotmail.com>, 2019
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-20 19:20+0000\n"
+"POT-Creation-Date: 2019-08-27 18:49+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Sarah Sagan <ssagan@dimagi.com>, 2019\n"
+"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2019\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -122,7 +122,7 @@ msgid "There was an error saving."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:33
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
@@ -566,15 +566,15 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr "Valeur non reconnue"
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:24
 msgid "Active"
 msgstr "Actif"
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:24
 msgid "Inactive"
 msgstr "Inactif "
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:33
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/sms/static/sms/js/add_gateway.js:11
 msgid "Remove"
@@ -767,7 +767,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:112
 msgid "Module"
-msgstr ""
+msgstr "Module"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:113
 #: corehq/apps/userreports/static/userreports/js/data_source_select.js:10
@@ -780,10 +780,8 @@ msgid "Question"
 msgstr "Question"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:115
-#, fuzzy
-#| msgid "No Name"
 msgid "Name"
-msgstr "Pas de Nom"
+msgstr "Nom"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:116
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
@@ -791,30 +789,22 @@ msgid "Label"
 msgstr "Libellé"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:117
-#, fuzzy
-#| msgid "Question"
 msgid "Question Type"
-msgstr "Question"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:118
-#, fuzzy
-#| msgid "Question Details"
 msgid "Question Value"
-msgstr "Détails de question"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:119
 msgid "Option"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:120
-#, fuzzy
-#| msgid "Calculate Condition"
 msgid "Calculate condition"
-msgstr "Calculer condition"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:121
-#, fuzzy
-#| msgid "Display Condition"
 msgid "Display condition"
 msgstr "Condition d'affichage"
 
@@ -824,10 +814,8 @@ msgid "Required"
 msgstr "requise"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:123
-#, fuzzy
-#| msgid "Question List"
 msgid "Question Comment"
-msgstr "Liste de questions"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:124
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
@@ -845,46 +833,32 @@ msgid "Comment"
 msgstr "Commentaire"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:127
-#, fuzzy
-#| msgid "Filter"
 msgid "Form Filter"
-msgstr "Filtrer"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:128
-#, fuzzy
-#| msgid "Filter"
 msgid "Module Filter"
-msgstr "Filtrer"
+msgstr "Filtre de module"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:132
-#, fuzzy
-#| msgid "Hidden Value"
 msgid "Old Value"
-msgstr "Valeur cachée"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:133
-#, fuzzy
-#| msgid "New Role"
 msgid "New Value"
-msgstr "Nouveau rôle"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:151
-#, fuzzy
-#| msgid "User Properties"
 msgid "Loaded Case Properties"
-msgstr "Propriétés de l'utilisateur"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:152
-#, fuzzy
-#| msgid "User Properties"
 msgid "Saved Case Properties"
-msgstr "Propriétés de l'utilisateur"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:155
-#, fuzzy
-#| msgid "Upload"
 msgid "load"
-msgstr "Uploader"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:156
 msgid "save"
@@ -892,16 +866,12 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:159
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:160
-#, fuzzy
-#| msgid "In Property"
 msgid "Case Property"
-msgstr "Dans la propriété"
+msgstr "Propriété de dossier"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:160
-#, fuzzy
-#| msgid "Case Type"
 msgid "of Case Type"
-msgstr "Type de Dossier"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:363
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js:52
@@ -3875,9 +3845,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "URL"
-#~ msgstr "URL"
-
-#~ msgid "Parameters"
-#~ msgstr "Manejo de Casos"

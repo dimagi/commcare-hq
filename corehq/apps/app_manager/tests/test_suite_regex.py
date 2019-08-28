@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 from django.test import SimpleTestCase
+
 from corehq.apps.app_manager.exceptions import CaseXPathValidationError
 from corehq.apps.app_manager.xpath import (
-    dot_interpolate,
     UserCaseXPath,
+    dot_interpolate,
     interpolate_xpath,
 )
 

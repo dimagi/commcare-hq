@@ -1,16 +1,19 @@
 from django.db import transaction
-from django.http import HttpResponseRedirect, Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+from memoized import memoized
+
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.reminders.forms import KeywordForm, NO_RESPONSE
+from corehq.apps.reminders.forms import NO_RESPONSE, KeywordForm
 from corehq.apps.reminders.util import get_form_list
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.sms.views import BaseMessagingSectionView
-from memoized import memoized
 
 
 class AddStructuredKeywordView(BaseMessagingSectionView):

@@ -1,19 +1,24 @@
 from decimal import Decimal
 
 from django.db import models
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from couchdbkit.exceptions import ResourceNotFound
 
-from corehq.form_processor.change_publishers import publish_ledger_v1_saved
-from dimagi.ext.couchdbkit import *
+import six
+from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
+from six.moves import filter
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.stock.consumption import ConsumptionConfiguration, ConsumptionHelper
+from casexml.apps.stock.consumption import (
+    ConsumptionConfiguration,
+    ConsumptionHelper,
+)
 from casexml.apps.stock.models import DocDomainMapping
 from couchforms.signals import xform_archived, xform_unarchived
+from dimagi.ext.couchdbkit import *
+
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
@@ -21,13 +26,12 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
+from corehq.form_processor.change_publishers import publish_ledger_v1_saved
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
+
 from . import const
 from .const import StockActions
-import six
-from six.moves import filter
-
 
 STOCK_ACTION_ORDER = [
     StockActions.RECEIPTS,

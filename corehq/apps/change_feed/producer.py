@@ -1,7 +1,8 @@
 import json
-import six
 
 from django.conf import settings
+
+import six
 from kafka import KafkaProducer
 
 from corehq.util.soft_assert import soft_assert

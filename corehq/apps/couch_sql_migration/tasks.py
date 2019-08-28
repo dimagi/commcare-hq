@@ -2,7 +2,7 @@
 from celery.schedules import crontab
 from celery.task import periodic_task
 
-from corehq.apps.es import DomainES, filters, aggregations
+from corehq.apps.es import DomainES, aggregations, filters
 from corehq.util.datadog.gauges import datadog_gauge
 
 

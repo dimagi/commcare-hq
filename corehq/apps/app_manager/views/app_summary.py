@@ -25,9 +25,9 @@ from corehq.apps.app_manager.app_schemas.form_metadata import (
 from corehq.apps.app_manager.const import WORKFLOW_FORM
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
+from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import get_langs
-from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView

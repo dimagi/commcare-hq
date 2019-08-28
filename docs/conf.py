@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # CommCareHQ documentation build configuration file, created by
 # sphinx-quickstart on Wed Sep  3 09:42:11 2014.

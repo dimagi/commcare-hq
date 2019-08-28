@@ -1,5 +1,6 @@
-import six
 import uuid
+
+import six
 
 COMMTRACK_USERNAME = 'commtrack-system'
 
@@ -65,4 +66,3 @@ def get_commtrack_user_id(domain):
     return COMMTRACK_USERNAME
 
 USER_LOCATION_OWNER_MAP_TYPE = 'user-owner-mapping-case'
-

@@ -1,9 +1,17 @@
 from django.test import SimpleTestCase
+
+from six.moves import \
+    filter  # keep unused import so py3 conversion scripts don't rewrite file
+
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter, NamedFilter
+from corehq.apps.userreports.filters import (
+    ANDFilter,
+    NamedFilter,
+    NOTFilter,
+    ORFilter,
+)
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import FactoryContext
-from six.moves import filter  # keep unused import so py3 conversion scripts don't rewrite file
 
 
 class PropertyMatchFilterTest(SimpleTestCase):

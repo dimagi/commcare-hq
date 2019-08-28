@@ -1,10 +1,22 @@
 from django.test import TestCase
-from corehq.apps.consumption.shortcuts import (get_default_consumption, set_default_monthly_consumption_for_domain,
-    set_default_consumption_for_product, set_default_consumption_for_supply_point,
-    get_loaded_default_consumption, build_consumption_dict
-)
-from .models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT_TYPE, TYPE_SUPPLY_POINT
+
 from corehq.apps.consumption.const import DAYS_IN_MONTH
+from corehq.apps.consumption.shortcuts import (
+    build_consumption_dict,
+    get_default_consumption,
+    get_loaded_default_consumption,
+    set_default_consumption_for_product,
+    set_default_consumption_for_supply_point,
+    set_default_monthly_consumption_for_domain,
+)
+
+from .models import (
+    TYPE_DOMAIN,
+    TYPE_PRODUCT,
+    TYPE_SUPPLY_POINT,
+    TYPE_SUPPLY_POINT_TYPE,
+    DefaultConsumption,
+)
 
 domain = 'consumption-test'
 product_id = 'test-product'

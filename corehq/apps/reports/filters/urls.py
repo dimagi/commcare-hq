@@ -1,11 +1,10 @@
 from django.conf.urls import url
 
 from .api import (
-    EmwfOptionsView,
-    EmwfOptionsView,
     CaseListFilterOptions,
-    DeviceLogUsers,
     DeviceLogIds,
+    DeviceLogUsers,
+    EmwfOptionsView,
     MobileWorkersOptionsView,
     ReassignCaseOptions,
 )

@@ -1,33 +1,44 @@
 import json
 import re
-from corehq.apps.data_interfaces.models import (
-    CaseRuleCriteria,
-    MatchPropertyDefinition,
-    ClosedParentDefinition,
-    CustomMatchDefinition,
-    CaseRuleAction,
-    UpdateCaseDefinition,
-    CustomActionDefinition,
-)
-from corehq.apps.hqwebapp.crispy import HQFormHelper
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from couchdbkit import ResourceNotFound
 
-from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
-from memoized import memoized
-from django.db import transaction
 from django import forms
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Field, HTML, Div, Fieldset
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.util.python_compatibility import soft_assert_type_text
-from dimagi.utils.django.fields import TrimmedCharField
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
 import six
+from couchdbkit import ResourceNotFound
+from crispy_forms.bootstrap import (
+    FieldWithButtons,
+    FormActions,
+    InlineField,
+    StrictButton,
+)
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
+from memoized import memoized
+
+from dimagi.utils.django.fields import TrimmedCharField
+
+from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.data_interfaces.models import (
+    CaseRuleAction,
+    CaseRuleCriteria,
+    ClosedParentDefinition,
+    CustomActionDefinition,
+    CustomMatchDefinition,
+    MatchPropertyDefinition,
+    UpdateCaseDefinition,
+)
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
+from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def true_or_false(value):

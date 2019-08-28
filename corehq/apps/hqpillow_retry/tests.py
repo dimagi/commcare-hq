@@ -1,8 +1,12 @@
 import datetime
+
 from django.test import TestCase
+
 from pillow_retry.models import PillowError
-from corehq.apps.hqpillow_retry.management.commands.run_pillow_retry_queue import \
-    PillowRetryEnqueuingOperation
+
+from corehq.apps.hqpillow_retry.management.commands.run_pillow_retry_queue import (
+    PillowRetryEnqueuingOperation,
+)
 
 
 class PillowRetryEnqueuingOperationTest(TestCase):

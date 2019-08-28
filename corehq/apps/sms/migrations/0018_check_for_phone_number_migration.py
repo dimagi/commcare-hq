@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
 from django.db import migrations
 
-from corehq.apps.sms.migration_status import assert_phone_number_migration_complete
+from corehq.apps.sms.migration_status import (
+    assert_phone_number_migration_complete,
+)
 
 
 def noop(*args, **kwargs):

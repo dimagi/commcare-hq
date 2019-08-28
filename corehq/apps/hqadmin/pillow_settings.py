@@ -1,5 +1,5 @@
-from copy import deepcopy
 import json
+from copy import deepcopy
 
 
 def _get_pillow_configs_from_settings_dict(pillows_by_group):

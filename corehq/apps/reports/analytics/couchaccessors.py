@@ -1,11 +1,13 @@
 from collections import namedtuple
+
+import six
 from jsonobject import DefaultProperty
+
 from casexml.apps.stock.models import StockTransaction
+from dimagi.ext import jsonobject
+
 from corehq.apps.app_manager.models import Application
 from corehq.util.couch import stale_ok
-from dimagi.ext import jsonobject
-import six
-
 
 SimpleFormInfo = namedtuple('FormInfo', ['app_id', 'xmlns'])
 

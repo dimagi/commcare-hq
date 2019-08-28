@@ -1,15 +1,18 @@
-# coding: utf-8
 
-import mock
 import xml.etree.cElementTree as ET
+
 from django.test import SimpleTestCase
 
-from corehq.apps.builds.models import BuildSpec
-from corehq.util.test_utils import flag_enabled
+import mock
 
-from corehq.apps.app_manager.commcare_settings import get_commcare_settings_lookup, get_custom_commcare_settings
+from corehq.apps.app_manager.commcare_settings import (
+    get_commcare_settings_lookup,
+    get_custom_commcare_settings,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.builds.models import BuildSpec
+from corehq.util.test_utils import flag_enabled
 
 
 @flag_enabled('CUSTOM_PROPERTIES')

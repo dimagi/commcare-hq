@@ -1,8 +1,11 @@
 import datetime
 from collections import namedtuple
 from contextlib import contextmanager
+
 from django.test import SimpleTestCase, TestCase
+
 from mock import Mock, patch
+
 from corehq.apps.app_manager.models import (
     AncestorLocationTypeFilter,
     CustomMonthFilter,
@@ -10,16 +13,19 @@ from corehq.apps.app_manager.models import (
     _filter_by_case_sharing_group_id,
     _filter_by_location_id,
     _filter_by_parent_location_id,
-    _filter_by_username,
     _filter_by_user_id,
+    _filter_by_username,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.reports_core.filters import Choice, DynamicChoiceListFilter
-from corehq.apps.userreports.reports.filters.choice_providers import DataSourceColumnChoiceProvider
-from corehq.apps.userreports.reports.filters.values import dynamic_choice_list_url
+from corehq.apps.userreports.reports.filters.choice_providers import (
+    DataSourceColumnChoiceProvider,
+)
+from corehq.apps.userreports.reports.filters.values import (
+    dynamic_choice_list_url,
+)
 from corehq.apps.users.models import CommCareUser
-
 
 Date = namedtuple('Date', ('year', 'month', 'day'))
 

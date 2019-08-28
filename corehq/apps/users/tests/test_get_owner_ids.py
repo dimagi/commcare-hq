@@ -1,4 +1,5 @@
 from django.test import TestCase
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser

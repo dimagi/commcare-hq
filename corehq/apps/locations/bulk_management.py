@@ -9,25 +9,32 @@ import copy
 from collections import Counter, defaultdict
 from decimal import Decimal, InvalidOperation
 
-from attr import attrs, attrib
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.functional import cached_property
-from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
+from django.utils.translation import string_concat
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+import six
+from attr import attrib, attrs
 from memoized import memoized
 
-from corehq.apps.domain.models import Domain
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
 
+from corehq.apps.domain.models import Domain
+
 from .const import (
-    LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE,
-    LOCATION_SHEET_HEADERS_OPTIONAL, LOCATION_SHEET_HEADERS_BASE)
-from .models import SQLLocation, LocationType
+    LOCATION_SHEET_HEADERS,
+    LOCATION_SHEET_HEADERS_BASE,
+    LOCATION_SHEET_HEADERS_OPTIONAL,
+    LOCATION_TYPE_SHEET_HEADERS,
+    ROOT_LOCATION_TYPE,
+)
+from .models import LocationType, SQLLocation
 from .tree_utils import BadParentError, CycleError, assert_no_cycles
 from .util import get_location_data_model
-
-import six
 
 
 class LocationExcelSheetError(Exception):

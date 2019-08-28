@@ -1,9 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 from django.test import TestCase
+
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import make_location, LocationType
+from corehq.apps.locations.models import LocationType, make_location
 
 
 class SiteCodeTest(TestCase):

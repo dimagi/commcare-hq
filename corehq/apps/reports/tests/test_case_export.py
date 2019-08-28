@@ -1,6 +1,7 @@
 from django.test import TestCase
+
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.util import case_users_filter, case_group_filter
+from corehq.apps.reports.util import case_group_filter, case_users_filter
 from corehq.apps.users.models import CommCareUser
 
 

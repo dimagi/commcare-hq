@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
-from corehq.sql_db.operations import rename_table_indexes
 from django.db import migrations
+
+from corehq.sql_db.operations import rename_table_indexes
 
 
 class Migration(migrations.Migration):

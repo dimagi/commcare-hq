@@ -1,9 +1,10 @@
-from mock import patch, Mock
 import os
 
 from django.http import HttpResponse
 from django.test import SimpleTestCase
+
 from lxml import etree
+from mock import Mock, patch
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.hqadmin.views.users import AdminRestoreView

@@ -11,7 +11,6 @@ from corehq.apps.hqadmin.views.operations import (
     mass_email,
 )
 from corehq.apps.hqadmin.views.reports import (
-    DimagisphereView,
     DownloadGIRView,
     DownloadMALTView,
     top_five_projects_by_country,
@@ -70,9 +69,6 @@ urlpatterns = [
     url(r'^download_malt/$',
         DownloadMALTView.as_view(), name=DownloadMALTView.urlname),
     url(r'^download_gir', DownloadGIRView.as_view(), name=DownloadGIRView.urlname),
-    url(r'^dimagisphere/$',
-        require_superuser(DimagisphereView.as_view(template_name='hqadmin/dimagisphere/form_feed.html')),
-        name='dimagisphere'),
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
     url(r'^top_five_projects_by_country/$', top_five_projects_by_country, name='top_five_projects_by_country'),

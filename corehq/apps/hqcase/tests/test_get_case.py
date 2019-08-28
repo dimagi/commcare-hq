@@ -1,9 +1,14 @@
 from django.test import TestCase
+
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.tests.util import delete_all_cases
+
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id, get_case_id_by_domain_hq_user_id
+from corehq.apps.hqcase.utils import (
+    get_case_by_domain_hq_user_id,
+    get_case_id_by_domain_hq_user_id,
+)
 from corehq.apps.users.models import CommCareUser
 
 

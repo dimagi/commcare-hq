@@ -27,5 +27,3 @@ urlpatterns = [
         name=PagesStyleGuideView.urlname),
     url(r'^docs/', include(doc_urlpatterns)),
 ]
-
-

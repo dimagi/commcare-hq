@@ -1,11 +1,17 @@
 import datetime
 import time
-from mock import patch
+
 from django.test import SimpleTestCase, TestCase
+
 from jsonobject.exceptions import BadValueError
+from mock import patch
+
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
+from corehq.apps.userreports.tests.utils import (
+    get_sample_data_source,
+    get_sample_doc_and_indicators,
+)
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
 

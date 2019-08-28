@@ -1,13 +1,15 @@
-from xml.etree import cElementTree as ElementTree
 from datetime import datetime
+from xml.etree import cElementTree as ElementTree
+
 import pytz
+import six
 
 from casexml.apps.phone.fixtures import FixtureProvider
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.logging import notify_exception
-import six
 
 utc = pytz.utc
 

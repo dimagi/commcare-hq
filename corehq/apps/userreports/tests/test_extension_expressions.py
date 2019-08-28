@@ -1,7 +1,10 @@
 import uuid
+
 from django.test import TestCase
-from casexml.apps.case.mock import CaseStructure, CaseFactory, CaseIndex
+
+from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.form_processor.tests.utils import run_with_all_backends

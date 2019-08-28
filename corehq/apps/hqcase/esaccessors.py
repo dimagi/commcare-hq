@@ -1,6 +1,7 @@
+import six
+
 from corehq.apps.es.cases import CaseES
 from corehq.util.python_compatibility import soft_assert_type_text
-import six
 
 
 def scroll_case_ids_by_domain_and_case_type(domain, case_type, chunk_size=100):

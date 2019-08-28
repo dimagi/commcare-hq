@@ -2,27 +2,43 @@ import hashlib
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
+
+import six
 from jsonobject.base_properties import DefaultProperty
 from simpleeval import InvalidExpression
-import six
 
+from dimagi.ext.jsonobject import (
+    DictProperty,
+    JsonObject,
+    ListProperty,
+    StringProperty,
+)
+from pillowtop.dao.exceptions import DocumentNotFoundError
+
+from corehq.apps.change_feed.data_sources import (
+    get_document_store_for_doc_type,
+)
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
-from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX, NAMED_EXPRESSION_PREFIX
+from corehq.apps.userreports.const import (
+    NAMED_EXPRESSION_PREFIX,
+    XFORM_CACHE_KEY_PREFIX,
+)
+from corehq.apps.userreports.datatypes import DataTypeProperty
 from corehq.apps.userreports.decorators import ucr_context_cache
-from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.expressions.getters import (
+    safe_recursive_lookup,
+    transform_from_datatype,
+)
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
+from corehq.apps.userreports.specs import EvaluationContext, TypeProperty
+from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.couch import get_db_by_doc_type
-from corehq.apps.userreports.expressions.getters import transform_from_datatype, safe_recursive_lookup
-from corehq.apps.userreports.datatypes import DataTypeProperty
-from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
-from corehq.apps.userreports.util import add_tabbed_text
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.util.couch import get_db_by_doc_type
 from corehq.util.python_compatibility import soft_assert_type_text
-from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
-from pillowtop.dao.exceptions import DocumentNotFoundError
+
 from .utils import eval_statements
 
 

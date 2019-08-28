@@ -19,7 +19,13 @@
         </key_record>
     </auth_keys>
 """
-from eulxml.xmlmap import XmlObject, StringField, DateTimeField, NodeListField, NodeField
+from eulxml.xmlmap import (
+    DateTimeField,
+    NodeField,
+    NodeListField,
+    StringField,
+    XmlObject,
+)
 
 
 def CustomDateTimeField(*args, **kwargs):

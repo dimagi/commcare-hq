@@ -1,9 +1,10 @@
 import logging
+
 from django.core.management import BaseCommand, call_command
 
-from corehq.apps.es.apps import AppES
 import six
 
+from corehq.apps.es.apps import AppES
 
 logger = logging.getLogger('app_migration')
 

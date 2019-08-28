@@ -1,10 +1,11 @@
+import datetime
 import json
 import os
-import datetime
+
 from django.test import SimpleTestCase, TestCase
+
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-
 
 DOC_ID = 'repeat-id'
 DAY_OF_WEEK = 'monday'

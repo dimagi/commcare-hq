@@ -1,4 +1,5 @@
 from django.conf.urls import url
+
 from . import views
 
 # these are included by the userreports urls

@@ -1,10 +1,10 @@
 from django.conf.urls import url
 
 from corehq.apps.dashboard.views import (
+    DomainDashboardView,
     dashboard_default,
     dashboard_tile,
     dashboard_tile_total,
-    DomainDashboardView,
 )
 
 urlpatterns = [

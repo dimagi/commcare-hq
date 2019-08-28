@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 
 from django.db import migrations
 
-from corehq.apps.smsbillables.management.commands.bootstrap_smsgh_gateway import \
-    bootstrap_smsgh_gateway
-
+from corehq.apps.smsbillables.management.commands.bootstrap_smsgh_gateway import (
+    bootstrap_smsgh_gateway,
+)
 
 
 def create_smsgh_rates(apps, schema_editor):

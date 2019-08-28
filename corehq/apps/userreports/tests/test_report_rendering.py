@@ -1,9 +1,8 @@
-# coding: utf-8
 
 from django.test import SimpleTestCase
 
-from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.reports.util import ReportExport
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 
 
 class VeryFakeReportExport(ReportExport):

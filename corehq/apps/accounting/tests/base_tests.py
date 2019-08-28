@@ -1,4 +1,5 @@
 from django.test import TestCase
+
 from django_prbac.models import Role
 
 from corehq.apps.accounting.tests import generator

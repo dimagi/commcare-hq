@@ -3,6 +3,7 @@ import os
 from django.core.management.base import BaseCommand
 
 from couchdbkit.exceptions import ResourceNotFound
+
 from dimagi.utils.couch.database import get_db
 
 

@@ -1,4 +1,3 @@
-# coding: utf-8
 from django.utils.translation import ugettext_noop
 
 messages_to_override = [

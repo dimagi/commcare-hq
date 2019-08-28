@@ -1,34 +1,39 @@
 import datetime
-import logging
-import json
 import io
+import json
+import logging
 
-import dateutil
 from django.conf import settings
-from django.template.loader import render_to_string
-from django.utils.decorators import method_decorator
-from django.urls import reverse
+from django.contrib import messages
 from django.http import Http404
 from django.shortcuts import redirect
-from django.contrib import messages
-from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
-from corehq.apps.linked_domain.dbaccessors import is_linked_domain
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
-from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.forms import (
-    SnapshotSettingsForm,
-    SnapshotApplicationForm,
-    SnapshotFixtureForm,
-)
-from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views.settings import BaseProjectSettingsView, BaseAdminProjectSettingsView
+import dateutil
 from memoized import memoized
+from PIL import Image
+
 from dimagi.utils.web import get_ip, get_site_domain
 
+from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.forms import (
+    SnapshotApplicationForm,
+    SnapshotFixtureForm,
+    SnapshotSettingsForm,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views.settings import (
+    BaseAdminProjectSettingsView,
+    BaseProjectSettingsView,
+)
+from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 
 
 def _publish_snapshot(request, domain, published_snapshot=None):

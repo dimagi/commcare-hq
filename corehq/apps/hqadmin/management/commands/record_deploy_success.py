@@ -1,16 +1,19 @@
 import json
-from datadog import api as datadog_api
-import requests
-from django.core.management import call_command
-from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
-from django.core.management.base import BaseCommand
-from corehq.apps.hqadmin.models import HqDeploy
 from datetime import datetime, timedelta
+
 from django.conf import settings
-from corehq.util.log import send_HTML_email
+from django.core.management import call_command
+from django.core.management.base import BaseCommand
+
+import requests
+from datadog import api as datadog_api
 
 from dimagi.utils.parsing import json_format_datetime
 from pillow_retry.models import PillowError
+
+from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
+from corehq.apps.hqadmin.models import HqDeploy
+from corehq.util.log import send_HTML_email
 
 STYLE_MARKDOWN = 'markdown'
 DASHBOARD_URL = 'https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef'

@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 
 from django.db import migrations
 
-from corehq.apps.smsbillables.management.commands.bootstrap_apposit_gateway import bootstrap_apposit_gateway
-
+from corehq.apps.smsbillables.management.commands.bootstrap_apposit_gateway import (
+    bootstrap_apposit_gateway,
+)
 
 
 def create_apposit_rates(apps, schema_editor):

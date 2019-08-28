@@ -1,24 +1,31 @@
+import re
 import uuid
+from calendar import monthrange
 from collections import namedtuple
+from datetime import date, timedelta
 from xml.etree import cElementTree as ElementTree
+
+from django.utils.text import slugify
+from django.utils.translation import ugettext as _
+
+import six
+from unidecode import unidecode
+
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from corehq import toggles, feature_previews
+
+from corehq import feature_previews, toggles
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase, CommtrackActionConfig
+from corehq.apps.commtrack.models import (
+    CommtrackActionConfig,
+    CommtrackConfig,
+    SupplyPointCase,
+)
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
-from datetime import date, timedelta
-from calendar import monthrange
-from corehq.apps.hqcase.utils import submit_case_blocks
-from casexml.apps.case.mock import CaseBlock
-from django.utils.text import slugify
-from unidecode import unidecode
-from django.utils.translation import ugettext as _
-import re
-
 from corehq.form_processor.utils.general import should_use_sql_backend
-import six
 
 CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 

@@ -1,6 +1,7 @@
 import json
 
 from django.urls import reverse
+
 from six.moves.urllib.parse import quote
 
 

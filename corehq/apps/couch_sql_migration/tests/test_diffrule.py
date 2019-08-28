@@ -1,7 +1,7 @@
 
 from testil import assert_raises
 
-from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, MISSING
+from corehq.apps.tzmigration.timezonemigration import MISSING, FormJsonDiff
 
 from ..diffrule import ANY, Ignore
 

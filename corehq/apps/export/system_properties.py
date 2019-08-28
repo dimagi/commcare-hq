@@ -1,35 +1,37 @@
 from django.utils.translation import ugettext_noop as _
 
 from corehq.apps.export.const import (
-    PROPERTY_TAG_ROW,
-    PROPERTY_TAG_INFO,
-    PROPERTY_TAG_APP,
-    PROPERTY_TAG_SERVER,
-    PROPERTY_TAG_CASE,
-    PROPERTY_TAG_STOCK,
+    CASE_ID_TO_LINK,
     CASE_NAME_TRANSFORM,
     CASE_OR_USER_ID_TRANSFORM,
     DOC_TYPE_TRANSFORM,
+    FORM_ID_TO_LINK,
     OWNER_ID_TRANSFORM,
+    PROPERTY_TAG_APP,
+    PROPERTY_TAG_CASE,
+    PROPERTY_TAG_INFO,
+    PROPERTY_TAG_NONE,
+    PROPERTY_TAG_ROW,
+    PROPERTY_TAG_SERVER,
+    PROPERTY_TAG_STOCK,
     USERNAME_TRANSFORM,
     WORKFLOW_TRANSFORM,
-    PROPERTY_TAG_NONE,
-    CASE_ID_TO_LINK,
-    FORM_ID_TO_LINK,
 )
 from corehq.apps.export.models import (
     ExportColumn,
     ExportItem,
-    PathNode,
-    StockExportColumn,
-    RowNumberColumn,
-    SplitGPSExportColumn,
     GeopointItem,
+    PathNode,
+    RowNumberColumn,
     ScalarItem,
+    SplitGPSExportColumn,
+    StockExportColumn,
 )
-
 # System properties to be displayed above the form questions
-from corehq.apps.userreports.datatypes import DATA_TYPE_DATETIME, DATA_TYPE_STRING
+from corehq.apps.userreports.datatypes import (
+    DATA_TYPE_DATETIME,
+    DATA_TYPE_STRING,
+)
 
 TOP_MAIN_FORM_TABLE_PROPERTIES = [
     RowNumberColumn(

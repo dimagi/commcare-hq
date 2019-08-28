@@ -1,22 +1,26 @@
-from datetime import datetime, date, time
-from decimal import Decimal
 import json
 import os
-import uuid
 import re
+import uuid
+from datetime import date, datetime, time
+from decimal import Decimal
+
 import six
 import sqlalchemy
-
 from mock import patch
 from six.moves import zip
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.app_manager.xform_builder import XFormBuilder
-from corehq.apps.change_feed import data_sources
-from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.sql_db.connections import connection_manager
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
+
+from corehq.apps.app_manager.xform_builder import XFormBuilder
+from corehq.apps.change_feed import data_sources
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
+from corehq.sql_db.connections import connection_manager
 
 
 def get_sample_report_config():

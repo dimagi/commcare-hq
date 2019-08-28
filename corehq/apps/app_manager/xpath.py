@@ -1,22 +1,25 @@
 import re
+
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+import six
+
 from corehq.apps.app_manager.const import (
-    USERCASE_TYPE,
-    SCHEDULE_PHASE,
-    SCHEDULE_LAST_VISIT,
-    SCHEDULE_LAST_VISIT_DATE,
-    SCHEDULE_TERMINATED,
-    SCHEDULE_MAX_DATE,
     SCHEDULE_DATE_CASE_OPENED,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
+    SCHEDULE_LAST_VISIT,
+    SCHEDULE_LAST_VISIT_DATE,
+    SCHEDULE_MAX_DATE,
+    SCHEDULE_PHASE,
+    SCHEDULE_TERMINATED,
+    USERCASE_TYPE,
 )
 from corehq.apps.app_manager.exceptions import (
     CaseXPathValidationError,
     LocationXpathValidationError,
     ScheduleError,
 )
-from django.utils.translation import ugettext as _, ugettext_lazy
-import six
-
 
 # Note that this may match strings that do not need interpolation, such as "blah == 'ellipsis...'",
 # but it should not miss any strings that do need interpolation.

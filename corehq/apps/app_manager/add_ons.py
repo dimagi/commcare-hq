@@ -1,15 +1,14 @@
 from datetime import datetime
-from django_prbac.utils import has_privilege as prbac_has_privilege
+
 from django.utils.translation import ugettext_lazy as _
+
+from django_prbac.utils import has_privilege as prbac_has_privilege
 
 from corehq import feature_previews, toggles
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
-from corehq.apps.app_manager.models import Module, AdvancedModule, ShadowModule
+from corehq.apps.app_manager.models import AdvancedModule, Module, ShadowModule
 from corehq.apps.domain.models import Domain
-from corehq.privileges import (
-    LOOKUP_TABLES,
-    CHILD_CASES,
-)
+from corehq.privileges import CHILD_CASES, LOOKUP_TABLES
 
 
 # Similar to feature flags and/or feature previews, but specific to an individual application

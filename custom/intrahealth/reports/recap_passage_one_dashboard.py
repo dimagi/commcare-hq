@@ -7,7 +7,8 @@ from django.utils.functional import cached_property
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
-from custom.intrahealth.filters import DateRangeFilter, YeksiNaaLocationFilter, ProgramFilter
+from custom.intrahealth.filters import DateRangeFilter, RecapPassageOneProgramFilter, \
+    YeksiRecapPassageNaaLocationFilter
 from custom.intrahealth.sqldata import RecapPassageOneData
 from dimagi.utils.dates import force_to_date
 
@@ -17,12 +18,38 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
     comment = 'recap passage 1'
     name = 'Recap Passage 1'
     default_rows = 10
+    exportable = True
 
     report_template_path = 'yeksi_naa/recap_passage.html'
 
     @property
+    def export_table(self):
+        report = [
+            [
+                'Recap Passage 1',
+                [],
+            ]
+        ]
+        rows, headers_objects = self.calculate_table()
+        headers = [x.html for x in headers_objects]
+        report[0][1].append(headers)
+
+        for row in rows:
+            location_name = row[0]
+            row_to_return = [location_name]
+
+            rows_length = len(row)
+            for r in range(1, rows_length):
+                value = row[r]
+                row_to_return.append(value)
+
+            report[0][1].append(row_to_return)
+
+        return report
+
+    @property
     def fields(self):
-        return [DateRangeFilter, ProgramFilter, YeksiNaaLocationFilter]
+        return [DateRangeFilter, RecapPassageOneProgramFilter, YeksiRecapPassageNaaLocationFilter]
 
     @cached_property
     def rendered_report_title(self):

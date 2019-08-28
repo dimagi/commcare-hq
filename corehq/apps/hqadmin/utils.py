@@ -3,13 +3,15 @@ from importlib import import_module
 from itertools import groupby
 
 from django.conf import settings
-from django.contrib.auth import get_user_model, SESSION_KEY
+from django.contrib.auth import SESSION_KEY, get_user_model
 from django.utils.safestring import mark_safe
+
 import requests
+from six.moves import filter
+
+from pillowtop.utils import force_seq_int
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
-from pillowtop.utils import force_seq_int
-from six.moves import filter
 
 EPSILON = 10000000
 

@@ -1,5 +1,8 @@
-from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET
-
+from corehq.apps.app_manager.const import (
+    AMPLIFIES_NO,
+    AMPLIFIES_NOT_SET,
+    AMPLIFIES_YES,
+)
 
 YES = True
 NO = False

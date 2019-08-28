@@ -3,7 +3,6 @@ from django.utils.translation import ugettext as _
 
 from dimagi.utils.couch import CriticalSection
 
-
 PROPERTY_TYPE_CHOICES = (
     ('date', _('Date')),
     ('plain', _('Plain')),

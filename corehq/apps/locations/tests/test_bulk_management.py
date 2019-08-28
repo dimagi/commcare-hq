@@ -1,12 +1,17 @@
-# coding: utf-8
 from collections import defaultdict
 from decimal import Decimal
 
 from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
-from mock import patch, Mock
 
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
+import six
+from mock import Mock, patch
+from six.moves import range
+
+from corehq.apps.custom_data_fields.models import (
+    CustomDataField,
+    CustomDataFieldsDefinition,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.util.workbook_json.excel import IteratorJSONReader
@@ -24,11 +29,12 @@ from ..bulk_management import (
 from ..const import ROOT_LOCATION_TYPE
 from ..models import SQLLocation
 from ..tree_utils import TreeError, assert_no_cycles
-from ..util import get_location_data_model, LocationExporter
-from .util import LocationHierarchyPerTest, restrict_user_by_location, MockExportWriter
-
-import six
-from six.moves import range
+from ..util import LocationExporter, get_location_data_model
+from .util import (
+    LocationHierarchyPerTest,
+    MockExportWriter,
+    restrict_user_by_location,
+)
 
 # These example types and trees mirror the information available in the upload files
 

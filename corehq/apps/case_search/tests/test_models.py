@@ -1,6 +1,11 @@
-from corehq.apps.case_search.models import disable_case_search, enable_case_search
 from django.test import TestCase
+
 from mock import call, patch
+
+from corehq.apps.case_search.models import (
+    disable_case_search,
+    enable_case_search,
+)
 
 
 class TestCaseSearch(TestCase):

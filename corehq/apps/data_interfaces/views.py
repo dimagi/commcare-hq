@@ -1,64 +1,84 @@
-import csv342 as csv
 import io
 import json
 import uuid
 
-import six
-from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
+from django.db import transaction
+from django.http import (
+    Http404,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    HttpResponseServerError,
+)
+from django.shortcuts import render
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_GET
+
+import csv342 as csv
+import six
+from couchdbkit import ResourceNotFound
+from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from memoized import memoized
+from six.moves import map
+
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
-    get_number_of_case_groups_in_domain
-from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.hqwebapp.models import PageInfoContext
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
-
-from corehq.apps.reports.v2.reports.explore_case_data import (
-    ExploreCaseDataReport,
+from corehq.apps.casegroups.dbaccessors import (
+    get_case_groups_in_domain,
+    get_number_of_case_groups_in_domain,
 )
-from corehq.apps.users.permissions import can_download_data_files
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
-from corehq.util.timezones.conversions import ServerTime
-from corehq.util.timezones.utils import get_timezone_for_user
-from django.utils.decorators import method_decorator
-from corehq.apps.data_interfaces.tasks import bulk_upload_cases_to_group, bulk_form_management_async
-from corehq.apps.data_interfaces.forms import (
-    AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
-    CaseUpdateRuleForm, CaseRuleCriteriaForm,
-    CaseRuleActionsForm)
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.data_interfaces.dispatcher import (
     EditDataInterfaceDispatcher,
     require_can_edit_data,
 )
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.data_interfaces.forms import (
+    AddCaseGroupForm,
+    AddCaseToGroupForm,
+    CaseRuleActionsForm,
+    CaseRuleCriteriaForm,
+    CaseUpdateRuleForm,
+    UpdateCaseGroupForm,
+)
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.tasks import (
+    bulk_form_management_async,
+    bulk_upload_cases_to_group,
+)
+from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.models import PageInfoContext
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.hqwebapp.views import (
+    CRUDPaginatedViewMixin,
+    PaginatedItemException,
+)
+from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.v2.reports.explore_case_data import (
+    ExploreCaseDataReport,
+)
 from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.apps.users.permissions import can_download_data_files
 from corehq.const import SERVER_DATETIME_FORMAT
-from .dispatcher import require_form_management_privilege
-from .interfaces import FormManagementMode, BulkFormManagementInterface
-from django.db import transaction
-from django.urls import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseServerError, HttpResponseBadRequest
-from django.shortcuts import render
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-from memoized import memoized
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from no_exceptions.exceptions import Http403
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
-from six.moves import map
+
+from .dispatcher import require_form_management_privilege
+from .interfaces import BulkFormManagementInterface, FormManagementMode
 
 
 @login_and_domain_required

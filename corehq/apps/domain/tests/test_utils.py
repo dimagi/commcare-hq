@@ -1,4 +1,5 @@
 from django.test import TestCase
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import guess_domain_language

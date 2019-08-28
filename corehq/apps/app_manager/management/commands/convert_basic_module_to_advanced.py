@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.app_manager.dbaccessors import get_current_app, get_latest_build_version
+from corehq.apps.app_manager.dbaccessors import (
+    get_current_app,
+    get_latest_build_version,
+)
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,

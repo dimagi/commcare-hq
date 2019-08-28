@@ -1,12 +1,25 @@
 import json
 import warnings
+
 from django.utils.translation import ugettext as _
+
 from jsonobject.exceptions import BadValueError, WrappingAttributeError
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.filters.specs import (PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec,
-    BooleanExpressionFilterSpec)
+
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter, SinglePropertyValueFilter, NamedFilter
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.filters import (
+    ANDFilter,
+    NamedFilter,
+    NOTFilter,
+    ORFilter,
+    SinglePropertyValueFilter,
+)
+from corehq.apps.userreports.filters.specs import (
+    BooleanExpressionFilterSpec,
+    NamedFilterSpec,
+    NotFilterSpec,
+    PropertyMatchFilterSpec,
+)
 from corehq.apps.userreports.operators import equal, get_operator
 
 

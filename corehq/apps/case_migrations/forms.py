@@ -2,8 +2,9 @@
 from django import forms
 from django.utils.translation import ugettext as _
 
-from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+
 from corehq.apps.hqwebapp import crispy as hqcrispy
 
 

@@ -3,19 +3,23 @@
 import re
 from collections import OrderedDict
 
-import six
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 
+import six
+
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ReportModule
-from corehq.apps.app_manager.xform import ItextValue, ItextOutput
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
+from corehq.apps.app_manager.xform import ItextOutput, ItextValue
 from corehq.apps.translations.app_translations.utils import (
     get_form_sheet_name,
     get_menu_row,
     get_module_sheet_name,
     get_modules_and_forms_row,
+)
+from corehq.apps.translations.const import (
+    MODULES_AND_FORMS_SHEET_NAME,
+    SINGLE_SHEET_NAME,
 )
 from corehq.apps.translations.generators import EligibleForTransifexChecker
 

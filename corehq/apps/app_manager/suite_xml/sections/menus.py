@@ -1,8 +1,18 @@
+from memoized import memoized
+
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import (ScheduleError, CaseXPathValidationError,
-    UserCaseXPathValidationError)
-from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
-from corehq.apps.app_manager.suite_xml.utils import get_module_enum_text, get_module_locale_id
+from corehq.apps.app_manager.exceptions import (
+    CaseXPathValidationError,
+    ScheduleError,
+    UserCaseXPathValidationError,
+)
+from corehq.apps.app_manager.suite_xml.contributors import (
+    SuiteContributorByModule,
+)
+from corehq.apps.app_manager.suite_xml.utils import (
+    get_module_enum_text,
+    get_module_locale_id,
+)
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     LocalizedMenu,
@@ -13,9 +23,12 @@ from corehq.apps.app_manager.util import (
     xpath_references_case,
     xpath_references_user_case,
 )
-from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
-    QualifiedScheduleFormXPath)
-from memoized import memoized
+from corehq.apps.app_manager.xpath import (
+    CaseIDXPath,
+    QualifiedScheduleFormXPath,
+    interpolate_xpath,
+    session_var,
+)
 
 
 class MenuContributor(SuiteContributorByModule):

@@ -1,11 +1,12 @@
 
-import csv342 as csv
 import os
 import shutil
 import tempfile
 import zipfile
 
 from django.core.management.base import BaseCommand, CommandError
+
+import csv342 as csv
 
 
 class Command(BaseCommand):

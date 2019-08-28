@@ -1,13 +1,14 @@
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout
+import json
+
 from django import forms
 from django.utils.translation import ugettext_noop
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout
 
-from corehq.apps.programs.models import Program
-from corehq.apps.products.models import SQLProduct
 from corehq.apps.commtrack.util import all_sms_codes
-import json
+from corehq.apps.products.models import SQLProduct
+from corehq.apps.programs.models import Program
 
 
 class CurrencyField(forms.DecimalField):
