@@ -160,7 +160,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
                 location_id = pna['location_id']
                 location_name = pna['location_name']
                 products = sorted(pna['products'], key=lambda x: x['product_name'])
-                if location_id in added_locations:
+                if location_id in added_locations and locations_with_products.get(location_name) is not None:
                     length = len(locations_with_products[location_name])
                     for r in range(0, length):
                         product_for_location = locations_with_products[location_name][r]

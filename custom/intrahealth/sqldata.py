@@ -5275,6 +5275,12 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
                     pnas_list.append(data_dict)
                     added_products_for_locations[location_id] = [product_data]
 
+            for pna in pnas_list:
+                if pna['location_id'] is None:
+                    pna['location_id'] = ''
+
+                print(pna['location_id'])
+
             pnas_list = sorted(pnas_list, key=lambda x: x['location_id'])
 
             for pna in pnas_list:
