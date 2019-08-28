@@ -88,6 +88,16 @@ def change_meta_from_doc_meta_and_document(doc_meta, document, data_source_type,
     )
 
 
+def change_meta_from_hard_delete(document, data_source_type, data_source_name):
+    return ChangeMeta(
+        document_id=document['_id'],
+        document_rev=document.get('_rev', None),
+        data_source_type=data_source_type,
+        data_source_name=data_source_name,
+        is_deletion=True,
+    )
+
+
 def _get_domain(document):
     return document.get('domain', None)
 
