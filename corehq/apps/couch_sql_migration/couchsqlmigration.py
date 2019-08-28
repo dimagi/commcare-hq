@@ -346,6 +346,7 @@ class CouchSqlDomainMigrator(object):
         self.errors_with_normal_doc_type = []
         self.forms_that_touch_cases_without_actions = set()
         self._id_map = {}
+        self._id_map_filename = os.path.join(state_dir, f'id_map_{src_domain}-{dst_domain}.txt')
 
     def same_domain(self):
         """
@@ -480,8 +481,7 @@ class CouchSqlDomainMigrator(object):
         self._dump_id_map()
 
     def _dump_id_map(self):
-        filename = ID_MAP_FILE.format(domain=self.dst_domain)
-        with open(filename, 'w') as f:
+        with open(self._id_map_filename, 'w') as f:
             f.write('ID Map\n'
                     '------\n')
             for src, dst in six.iteritems(self._id_map):
