@@ -65,9 +65,5 @@ class ProgramsTest(TestCase):
         self.assertEqual(3, self.default_program.get_products_count())
         self.assertEqual(
             self.default_program._id,
-            Product.get(self.products[0]._id).program_id
-        )
-        self.assertEqual(
-            self.default_program._id,
             SQLProduct.objects.get(product_id=self.products[0]._id).program_id
         )

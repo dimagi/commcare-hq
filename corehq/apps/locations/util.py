@@ -25,7 +25,7 @@ from corehq.apps.locations.const import (
     LOCATION_TYPE_SHEET_HEADERS,
 )
 from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.blobs import CODES, get_blob_db
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.files import safe_filename_header
@@ -152,7 +152,7 @@ class LocationExporter(object):
             self.domain_obj.commtrack_settings.individual_consumption_defaults
         ):
             # we'll be needing these, so init 'em:
-            self.products = Product.by_domain(self.domain)
+            self.products = SQLProduct.objects.filter(domain=self.domain)
             self.product_codes = [p.code for p in self.products]
             self.supply_point_map = get_supply_point_ids_in_domain_by_location(
                 self.domain)
@@ -181,7 +181,7 @@ class LocationExporter(object):
             p.code: get_loaded_default_monthly_consumption(
                 self.consumption_dict,
                 self.domain,
-                p._id,
+                p.product_id,
                 loc.location_type_name,
                 sp_id
             ) or ''
