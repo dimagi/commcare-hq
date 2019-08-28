@@ -24,7 +24,6 @@ from corehq.apps.case_search.const import (
     SYSTEM_PROPERTIES,
     VALUE,
 )
-from corehq.apps.es.aggregations import BucketResult, TermsAggregation
 from corehq.apps.es.cases import CaseES, owner
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 

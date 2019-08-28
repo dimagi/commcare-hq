@@ -12,7 +12,7 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 import jsonfield
 from memoized import memoized
 
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import Document, StringProperty
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.dbaccessors import get_app

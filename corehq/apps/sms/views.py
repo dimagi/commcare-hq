@@ -137,7 +137,6 @@ from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.util import show_messaging_dashboard
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import get_single_worksheet

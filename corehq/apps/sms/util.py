@@ -72,8 +72,8 @@ def clean_phone_number(text):
 
 def validate_phone_number(phone_number, error_message=None):
     if (
-        not isinstance(phone_number, str) or
-        not phone_number_plus_re.match(phone_number)
+        not isinstance(phone_number, str)
+        or not phone_number_plus_re.match(phone_number)
     ):
         error_message = error_message or _("Invalid phone number format.")
         raise ValidationError(error_message)

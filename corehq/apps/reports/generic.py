@@ -17,7 +17,6 @@ from django.template.loader import render_to_string
 from django.urls import NoReverseMatch
 from django.utils.translation import ugettext
 
-import pytz
 from celery.utils.log import get_task_logger
 from memoized import memoized
 
@@ -42,7 +41,6 @@ from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.util import DatatablesParams, get_report_timezone
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
-from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
 
 from corehq import toggles

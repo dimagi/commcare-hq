@@ -93,10 +93,11 @@ def get_modules_and_forms_row(row_type, sheet_name, languages, media_image, medi
     assert isinstance(media_audio, list)
     assert isinstance(unique_id, str), type(unique_id)
 
-    return [item if item is not None else "" for item in
-            ([row_type, sheet_name] +
-             get_menu_row(languages, media_image, media_audio) +
-             [unique_id])]
+    return [item if item is not None else ""
+            for item in (
+                [row_type, sheet_name]
+                + get_menu_row(languages, media_image, media_audio)
+                + [unique_id])]
 
 
 def get_menu_row(languages, media_image, media_audio):

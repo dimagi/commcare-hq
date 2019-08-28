@@ -44,7 +44,6 @@ from django.views.generic.base import View
 
 import httpagentparser
 from couchdbkit import ResourceNotFound
-from djangular.views.mixins import JSONResponseMixin
 from memoized import memoized
 from urllib.parse import urlparse
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm

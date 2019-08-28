@@ -179,8 +179,8 @@ class MyAccountSettingsView(BaseMyAccountView):
 
     def phone_number_is_valid(self):
         return (
-            isinstance(self.phone_number, str) and
-            re.compile(r'^\d+$').match(self.phone_number) is not None
+            isinstance(self.phone_number, str)
+            and re.compile(r'^\d+$').match(self.phone_number) is not None
         )
 
     def process_add_phone_number(self):

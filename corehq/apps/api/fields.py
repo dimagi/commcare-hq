@@ -22,7 +22,8 @@ class AttributeOrCallable(object):
 
     def __call__(self, v):
         if isinstance(self.attribute, str):
-            accessor = lambda v: getattr(v, self.attribute)
+            def accessor(v):
+                return getattr(v, self.attribute)
         else:
             accessor = self.attribute
 

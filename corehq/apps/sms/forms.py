@@ -626,8 +626,7 @@ class SettingsForm(Form):
         current_values = {}
         for field_name in self.fields.keys():
             value = self[field_name].value()
-            if field_name in ["restricted_sms_times_json",
-                "sms_conversation_times_json"]:
+            if field_name in ["restricted_sms_times_json", "sms_conversation_times_json"]:
                 if isinstance(value, str):
                     current_values[field_name] = json.loads(value)
                 else:

@@ -17,7 +17,7 @@ class WisePillDeviceEvent(Document):
     data = StringProperty()
     received_on = DateTimeProperty()
     # Document _id of the case representing the device that sent this data in
-    case_id = StringProperty()  
+    case_id = StringProperty()
     processed = BooleanProperty()
 
     @property

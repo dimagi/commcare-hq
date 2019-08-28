@@ -103,13 +103,13 @@ class Constant(object):
         return self.message
 
 
-SCALAR_NEVER_WAS = settings.COUCHEXPORT_SCALAR_NEVER_WAS \
-                    if hasattr(settings, "COUCHEXPORT_SCALAR_NEVER_WAS") \
-                    else "---"
+SCALAR_NEVER_WAS = (settings.COUCHEXPORT_SCALAR_NEVER_WAS
+    if hasattr(settings, "COUCHEXPORT_SCALAR_NEVER_WAS")
+    else "---")
 
-LIST_NEVER_WAS = settings.COUCHEXPORT_LIST_NEVER_WAS \
-                    if hasattr(settings, "COUCHEXPORT_LIST_NEVER_WAS") \
-                    else "this list never existed"
+LIST_NEVER_WAS = (settings.COUCHEXPORT_LIST_NEVER_WAS
+    if hasattr(settings, "COUCHEXPORT_LIST_NEVER_WAS")
+    else "this list never existed")
 
 scalar_never_was = Constant(SCALAR_NEVER_WAS)
 list_never_was = Constant(LIST_NEVER_WAS)
@@ -127,6 +127,7 @@ def render_never_was(schema):
         return list_never_was
     else:
         return scalar_never_was
+
 
 unknown_type = None
 
@@ -359,8 +360,7 @@ def _format_tables(tables, id_label='id', separator='.', include_headers=True,
             id_key = [id_label]
             id_len = len(list(table)[0])  # this is a proxy for the complexity of the ID
             if id_len > 1:
-                id_key += ["{id}__{count}".format(id=id_label, count=i) \
-                           for i in range(id_len)]
+                id_key += ["{id}__{count}".format(id=id_label, count=i) for i in range(id_len)]
             header_vals = [separator.join(key) for key in keys]
             new_table.append(FormattedRow(header_vals, id_key, separator,
                                           is_header_row=True))

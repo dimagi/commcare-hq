@@ -33,9 +33,7 @@ from corehq.apps.sms.models import Keyword
 from .models import (
     METHOD_SMS,
     METHOD_SMS_SURVEY,
-    RECIPIENT_CASE,
     RECIPIENT_OWNER,
-    RECIPIENT_SURVEY_SAMPLE,
     RECIPIENT_USER_GROUP,
 )
 
@@ -101,7 +99,7 @@ class RecordListWidget(Widget):
         if len(data_dict) > 0:
             for key in sorted(data_dict[input_name]):
                 data_list.append(data_dict[input_name][key])
-        
+
         return data_list
 
     def render(self, name, value, attrs=None):

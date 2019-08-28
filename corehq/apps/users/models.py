@@ -408,6 +408,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
     def preset_permissions_names(cls):
         return {details['name'] for role, details in PERMISSIONS_PRESETS.items()}
 
+
 PERMISSIONS_PRESETS = {
     'edit-apps': {
         'name': 'App Editor',

@@ -92,9 +92,9 @@ class Command(BaseCommand):
 
         This may take a while, so don't deploy until all these have reported finishing.
             """ % (
-                settings.EMAIL_SUBJECT_PREFIX,
-                '\n\t'.join(map(str, indices_needing_reindex))
-            )
+            settings.EMAIL_SUBJECT_PREFIX,
+            '\n\t'.join(map(str, indices_needing_reindex))
+        )
 
         mail_admins("Pillow preindexing starting", preindex_message)
         start = datetime.utcnow()

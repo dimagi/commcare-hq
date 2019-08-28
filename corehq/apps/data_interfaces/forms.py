@@ -12,7 +12,6 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import (
     FieldWithButtons,
-    FormActions,
     InlineField,
     StrictButton,
 )

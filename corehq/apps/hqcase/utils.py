@@ -1,25 +1,17 @@
 import datetime
-import re
 import uuid
-import xml.etree.cElementTree as ElementTree
 from xml.etree import cElementTree as ElementTree
 
-from django.core.files.uploadedfile import UploadedFile
 from django.template.loader import render_to_string
 
-from casexml.apps.case import const
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.phone.xml import get_case_xml
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    get_cached_case_attachment,
-)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import should_use_sql_backend
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
@@ -159,40 +151,6 @@ def get_case_by_identifier(domain, identifier):
         pass
 
     return None
-
-
-def _process_case_block(domain, case_block, attachments, old_case_id):
-    def get_namespace(element):
-        m = re.match(r'\{.*\}', element.tag)
-        return m.group(0)[1:-1] if m else ''
-
-    def local_attachment(attachment, old_case_id, tag):
-        mime = attachment['server_mime']
-        size = attachment['attachment_size']
-        src = attachment['attachment_src']
-        cached_attachment = get_cached_case_attachment(domain, old_case_id, tag)
-        attachment_meta, attachment_stream = cached_attachment.get()
-        return UploadedFile(attachment_stream, src, size=size, content_type=mime)
-
-    # Remove namespace because it makes looking up tags a pain
-    root = ET.fromstring(case_block)
-    xmlns = get_namespace(root)
-    case_block = re.sub(' xmlns="[^"]+"', '', case_block, count=1)
-
-    root = ET.fromstring(case_block)
-    tag = "attachment"
-    xml_attachments = root.find(tag)
-    ret_attachments = {}
-
-    if xml_attachments:
-        for attach in xml_attachments:
-            attach.attrib['from'] = 'local'
-            attach.attrib['src'] = attachments[attach.tag]['attachment_src']
-            ret_attachments[attach.attrib['src']] = local_attachment(attachments[attach.tag], old_case_id, attach.tag)
-
-    # Add namespace back in without { } added by ET
-    root.attrib['xmlns'] = xmlns
-    return ET.tostring(root), ret_attachments
 
 
 def submit_case_block_from_template(domain, template, context, xmlns=None,

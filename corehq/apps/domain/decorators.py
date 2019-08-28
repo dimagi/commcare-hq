@@ -515,17 +515,17 @@ def track_domain_request(calculated_prop):
             if 'domain' in kwargs:
                 domain = kwargs['domain']
             elif (
-                    len(args) > 2 and
-                    isinstance(args[0], View) and
-                    isinstance(args[1], HttpRequest) and
-                    isinstance(args[2], str)
+                len(args) > 2
+                and isinstance(args[0], View)
+                and isinstance(args[1], HttpRequest)
+                and isinstance(args[2], str)
             ):
                 # class-based view; args == (self, request, domain, ...)
                 domain = args[2]
             elif (
-                    len(args) > 1 and
-                    isinstance(args[0], HttpRequest) and
-                    isinstance(args[1], str)
+                len(args) > 1
+                and isinstance(args[0], HttpRequest)
+                and isinstance(args[1], str)
             ):
                 # view function; args == (request, domain, ...)
                 domain = args[1]

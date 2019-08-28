@@ -86,15 +86,11 @@ AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 def _try_date_conversion(date_or_string):
     if isinstance(date_or_string, bytes):
         date_or_string = date_or_string.decode('utf-8')
-    if (
-        isinstance(date_or_string, str) and
-        ALLOWED_DATE_REGEX.match(date_or_string)
-    ):
+    if isinstance(date_or_string, str) and ALLOWED_DATE_REGEX.match(date_or_string):
         try:
             return parse(date_or_string)
         except ValueError:
             pass
-
     return date_or_string
 
 

@@ -1,8 +1,3 @@
-import hashlib
-import json
-
-from django.core.serializers.json import DjangoJSONEncoder
-
 from jsonobject.base_properties import DefaultProperty
 from simpleeval import InvalidExpression
 

@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_noop
 
 from jsonfield import JSONField
 
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import IntegerProperty
 
 from corehq.apps.users.models import CommCareUser
 
@@ -80,7 +80,7 @@ class HQToggle(object):
 
     def __repr__(self):
         return "%(klass)s[%(type)s:%(show)s:%(name)s]" % dict(
-            klass = self.__class__.__name__,
+            klass=self.__class__.__name__,
             type=self.type,
             name=self.name,
             show=self.show

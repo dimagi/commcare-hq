@@ -1,5 +1,3 @@
-from dimagi.utils.couch import CriticalSection
-
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms import messages

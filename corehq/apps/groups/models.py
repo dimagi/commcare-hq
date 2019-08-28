@@ -5,7 +5,14 @@ from django.conf import settings
 
 from memoized import memoized
 
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DictProperty,
+    ListProperty,
+    SetProperty,
+    StringProperty,
+)
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import (
     DELETED_SUFFIX,
@@ -273,7 +280,8 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
     def user_in_group(cls, user_id, group_id):
         if not user_id or not group_id:
             return False
-        c = cls.get_db().view('groups/by_user',
+        c = cls.get_db().view(
+            'groups/by_user',
             key=user_id,
             startkey_docid=group_id,
             endkey_docid=group_id

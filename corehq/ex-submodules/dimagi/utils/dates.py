@@ -1,7 +1,6 @@
 import datetime
 from calendar import month_name
 from django.utils.translation import ugettext_lazy as _
-import logging
 
 try:
     # < 3.0
