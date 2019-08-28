@@ -11,8 +11,6 @@ from functools import partial
 from operator import eq
 from pprint import pformat
 
-import six
-
 from dimagi.ext.couchdbkit import (
     DecimalProperty,
     DocumentSchema,
@@ -77,7 +75,7 @@ class PatientFinder(DocumentSchema):
             data['create_missing'] = {
                 'doc_type': 'ConstantString',
                 'external_data_type': OPENMRS_DATA_TYPE_BOOLEAN,
-                'value': six.text_type(data['create_missing'])
+                'value': str(data['create_missing'])
             }
 
         if cls is PatientFinder:
@@ -218,7 +216,7 @@ class WeightedPropertyPatientFinder(PatientFinder):
                 case.name, case.get_id, pformat(patient, indent=2),
             )
             return [patient]
-        patients_scores = sorted(six.itervalues(candidates), key=lambda candidate: candidate.score, reverse=True)
+        patients_scores = sorted(candidates.values(), key=lambda candidate: candidate.score, reverse=True)
         if patients_scores[0].score / patients_scores[1].score > 1 + self.confidence_margin:
             # There is more than a `confidence_margin` difference
             # (defaults to 10%) in score between the best-ranked
