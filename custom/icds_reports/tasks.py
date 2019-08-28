@@ -399,9 +399,6 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             'aggregate_awc_daily': aggregate_awc_daily,
         }[func_name]
 
-        if six.PY2 and isinstance(date, bytes):
-            date = date.decode('utf-8')
-
         db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
         if not db_alias:
             return
@@ -446,9 +443,6 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
             '_agg_beneficiary_form': _agg_beneficiary_form,
             '_agg_thr_table': _agg_thr_table
         }[func_name]
-
-        if six.PY2 and isinstance(date, bytes):
-            date = date.decode('utf-8')
 
         db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
         if not db_alias:
@@ -675,8 +669,6 @@ def _agg_thr_table(state_id, day):
 def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=False):
     aggregation_start_time = aggregation_start_time.astimezone(INDIA_TIMEZONE)
     aggregation_finish_time = datetime.now(INDIA_TIMEZONE)
-    if six.PY2 and isinstance(aggregation_date, bytes):
-        aggregation_date = aggregation_date.decode('utf-8')
 
     # temporary soft assert to verify it's completing
     if not settings.UNIT_TESTING:

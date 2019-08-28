@@ -11,9 +11,7 @@ from django.utils import html, safestring
 from django.utils.translation import ugettext as _
 
 import pytz
-import six
 from memoized import memoized
-from six.moves import map, range
 
 from couchexport.util import SerializableFunction
 from dimagi.utils.dates import DateSpan
@@ -161,7 +159,7 @@ def namedtupledict(name, fields):
     cls = namedtuple(name, fields)
 
     def __getitem__(self, item):
-        if isinstance(item, six.string_types):
+        if isinstance(item, str):
             soft_assert_type_text(item)
             warnings.warn(
                 "namedtuple fields should be accessed as attributes",
@@ -184,7 +182,7 @@ def namedtupledict(name, fields):
 
 
 class SimplifiedUserInfo(
-        namedtupledict(b'SimplifiedUserInfo' if six.PY2 else 'SimplifiedUserInfo', (
+        namedtupledict('SimplifiedUserInfo', (
             'user_id',
             'username_in_report',
             'raw_username',

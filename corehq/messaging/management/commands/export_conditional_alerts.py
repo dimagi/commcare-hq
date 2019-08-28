@@ -66,14 +66,6 @@ class SimpleSMSAlertSchedule(jsonobject.JsonObject):
     extra_options = jsonobject.ObjectProperty(ExtraSchedulingOptions)
 
 
-def open_for_json_write(path):
-    # json.dumps returns bytes in python2, but unicode in python3
-    if six.PY2:
-        return open(path, 'wb')
-
-    return open(path, 'w', encoding='utf-8')
-
-
 class Command(BaseCommand):
     help = "Export conditional alerts to file."
 
@@ -253,7 +245,7 @@ class Command(BaseCommand):
                 'schedule': json_schedule.to_json(),
             }))
 
-        with open_for_json_write('conditional_alerts_for_%s.txt' % domain) as f:
+        with open('conditional_alerts_for_%s.txt' % domain, 'w', encoding='utf-8') as f:
             for line in result:
                 f.write(line)
                 f.write('\n')

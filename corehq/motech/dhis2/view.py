@@ -8,9 +8,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods, require_POST
 
-import six
 from memoized import memoized
-from six.moves import map, range
 
 from dimagi.utils.web import json_response
 
@@ -163,8 +161,6 @@ def dhis2_edit_config(request, domain, repeater_id):
         form_configs = json.dumps([
             form_config.to_json() for form_config in repeater.dhis2_config.form_configs
         ])
-        if six.PY2:
-            form_configs = form_configs.decode('utf-8')
         form = Dhis2ConfigForm(
             data={
                 'form_configs': form_configs,
