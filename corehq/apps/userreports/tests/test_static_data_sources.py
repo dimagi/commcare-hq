@@ -20,7 +20,7 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
     @classmethod
     def setUpClass(cls):
         super(TestStaticDataSource, cls).setUpClass()
-        with patch('corehq.apps.callcenter.utils.get_call_center_domains',
+        with patch('corehq.apps.callcenter.data_source.get_call_center_domains',
                    MagicMock(return_value=[domain_lite('cc1')])):
             cls.configs = list(StaticDataSourceConfiguration.all())
 
