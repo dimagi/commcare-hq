@@ -17,9 +17,9 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 
 class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
-    slug = 'valeur_des_stocks_pna_disponible_report'
-    comment = 'Valeur des stocks PNA disponible'
-    name = 'Valeur des stocks PNA disponible'
+    slug = 'taux_des_stocks_pna_disponible_par_produit_report'
+    comment = 'Valeur des stocks PNA disponible (chaque produit)'
+    name = 'Taux des stocks PNA disponible par Produit'
     default_rows = 10
     exportable = True
 
@@ -29,7 +29,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
     def export_table(self):
         report = [
             [
-                'Valuer des stocks PNA disponible',
+                self.name,
                 [],
             ]
         ]
@@ -69,13 +69,13 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
 
     @property
     def report_context(self):
-        context = {
-            'report': self.get_report_context(),
-            'title': self.name,
-            'charts': self.charts if not self.needs_filters else None
-        }
-
-        return context
+        if not self.needs_filters:
+            return {
+                'report': self.get_report_context(),
+                'charts': self.charts,
+                'title': self.name
+            }
+        return {}
 
     @property
     def selected_location(self):
@@ -135,16 +135,16 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
             rows = self.calculate_rows()
             headers = self.headers
 
-        context = dict(
-            report_table=dict(
-                title=self.name,
-                slug=self.slug,
-                comment=self.comment,
-                headers=headers,
-                rows=rows,
-                default_rows=self.default_rows,
-            )
-        )
+        context = {
+            'report_table': {
+                'title': self.name,
+                'slug': self.slug,
+                'comment': self.comment,
+                'headers': headers,
+                'rows': rows,
+                'default_rows': self.default_rows,
+            }
+        }
 
         return context
 
@@ -330,9 +330,9 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
 
     @property
     def config(self):
-        config = dict(
-            domain=self.domain,
-        )
+        config = {
+            'domain': self.domain,
+        }
         if self.request.GET.get('startdate'):
             startdate = force_to_date(self.request.GET.get('startdate'))
         else:

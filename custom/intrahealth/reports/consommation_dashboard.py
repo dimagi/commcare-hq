@@ -17,8 +17,8 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 
 class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
-    name = "Consommation"
-    slug = 'consommation_report'
+    name = "Consommation par Produit"
+    slug = 'consommation_par_produit_report'
     comment = 'Consommation de la gamme par produit'
     default_rows = 10
     exportable = True
@@ -29,7 +29,7 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
     def export_table(self):
         report = [
             [
-                'Consommation',
+                self.name,
                 [],
             ]
         ]
@@ -69,13 +69,13 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
 
     @property
     def report_context(self):
-        context = {
-            'report': self.get_report_context(),
-            'title': self.name,
-            'charts': self.charts if not self.needs_filters else None
-        }
-
-        return context
+        if not self.needs_filters:
+            return {
+                'report': self.get_report_context(),
+                'charts': self.charts,
+                'title': self.name
+            }
+        return {}
 
     @property
     def selected_location(self):
@@ -133,16 +133,16 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
             rows = self.calculate_rows()
             headers = self.headers
 
-        context = dict(
-            report_table=dict(
-                title=self.name,
-                slug=self.slug,
-                comment=self.comment,
-                headers=headers,
-                rows=rows,
-                default_rows=self.default_rows,
-            )
-        )
+        context = {
+            'report_table': {
+                'title': self.name,
+                'slug': self.slug,
+                'comment': self.comment,
+                'headers': headers,
+                'rows': rows,
+                'default_rows': self.default_rows,
+            }
+        }
 
         return context
 
@@ -307,9 +307,9 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
 
     @property
     def config(self):
-        config = dict(
-            domain=self.domain,
-        )
+        config = {
+            'domain': self.domain,
+        }
         if self.request.GET.get('startdate'):
             startdate = force_to_date(self.request.GET.get('startdate'))
         else:

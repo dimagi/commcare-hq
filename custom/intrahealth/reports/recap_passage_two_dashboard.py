@@ -4,6 +4,7 @@ import datetime
 
 from django.utils.functional import cached_property
 
+from corehq.apps.reports.datatables import DataTablesColumn
 from custom.intrahealth.filters import DateRangeFilter, RecapPassageTwoProgramFilter, \
     YeksiRecapPassageNaaLocationFilter
 from custom.intrahealth.reports.utils import YeksiNaaMonthYearMixin
@@ -23,14 +24,15 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
     report_template_path = "intrahealth/multi_report.html"
 
     @property
-    def export_table(self):
-        report = [
-            [
-                'Recap Passage 2',
-                [],
-            ]
-        ]
+    def export_format(self):
+        return 'xlsx'
 
+    @property
+    def export_table(self):
+        report = []
+
+        table_names = ['Recapitulatif Facturation', 'Consommations Facturables',
+                       'Consommation Réelle', 'Livraison Total Effectuées', 'Stock Disponible Utilisable']
         table_provider = RecapPassageTwoTables(config=self.config)
         data = [
             table_provider.sumup_context,
@@ -40,37 +42,26 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
             table_provider.display_total_stock_context,
         ]
 
-        headers = []
-        for d in data:
-            to_add = []
-            for header in d['headers']:
-                try:
-                    to_add.append(header.html)
-                except AttributeError:
-                    to_add.append(header)
-            headers.append(to_add)
+        for table in data:
+            headers = []
+            for table_header in table['headers']:
+                if isinstance(table_header, DataTablesColumn):
+                    headers.append(table_header.html)
+                else:
+                    headers.append(table_header)
 
-        rows = []
-        for d in data:
-            to_add = []
-            for row in d['rows']:
-                try:
-                    to_add.append(row.html)
-                except AttributeError:
-                    to_add.append(row)
-            rows.append(to_add)
+            rows = [headers]
+            for table_content in table['rows']:
+                next_export_row = []
+                for cell in table_content:
+                    if isinstance(cell, dict):
+                        next_export_row.append(cell['html'])
+                    else:
+                        next_export_row.append(cell)
 
-        length = len(headers)
-        for r in range(0, length):
-            header = headers[r]
-            row = rows[r]
-            report[0][1].append(header)
-            for one_row in row:
-                if one_row is not None:
-                    report[0][1].append(one_row)
-
-            if r != length - 1:
-                report[0][1].append([])
+                rows.append(next_export_row)
+            next_report = [table_names.pop(0), rows]
+            report.append(next_report)
 
         return report
 
@@ -96,23 +87,23 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
     def get_report_context(self, table_context):
         self.data_source = table_context
         if self.needs_filters:
-            context = dict(
-                report_table=dict(
-                    rows=[],
-                    headers=[]
-                )
-            )
+            context = {
+                'report_table': {
+                    'rows': [],
+                    'headers': []
+                }
+            }
         else:
-            context = dict(
-                report_table=table_context
-            )
+            context = {
+                'report_table': table_context
+            }
         return context
 
     @property
     def config(self):
-        config = dict(
-            domain=self.domain,
-        )
+        config = {
+            'domain': self.domain,
+        }
         if self.request.GET.get('startdate'):
             startdate = force_to_date(self.request.GET.get('startdate'))
         else:
