@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod, abstractproperty
 import six
 from casexml.apps.case.exceptions import IllegalCaseId

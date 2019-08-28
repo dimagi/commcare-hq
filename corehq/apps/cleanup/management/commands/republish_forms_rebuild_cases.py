@@ -1,7 +1,5 @@
-from __future__ import absolute_import, print_function, unicode_literals
 
 import logging
-from io import open
 
 from django.core.management.base import BaseCommand
 

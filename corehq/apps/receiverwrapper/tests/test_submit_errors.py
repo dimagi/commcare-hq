@@ -1,6 +1,3 @@
-# coding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import contextlib
 
 from django.db.utils import InternalError
@@ -24,7 +21,6 @@ from couchforms.models import UnfinishedSubmissionStub
 from couchforms.openrosa_response import ResponseNature
 from dimagi.utils.post import tmpfile
 from couchforms.signals import successful_form_received
-from io import open
 
 
 class SubmissionErrorTest(TestCase, TestFileMixin):

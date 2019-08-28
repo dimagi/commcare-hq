@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from io import BytesIO
 from django.http.response import HttpResponseServerError

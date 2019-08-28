@@ -1,8 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from corehq.apps.builds.jadjar import sign_jar
-from io import open
 
 
 class Command(BaseCommand):

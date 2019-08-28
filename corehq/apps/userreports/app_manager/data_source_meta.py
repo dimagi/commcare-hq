@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 from abc import ABCMeta, abstractmethod
 import six
 from django.utils.translation import ugettext_lazy as _

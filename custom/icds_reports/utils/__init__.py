@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-from __future__ import unicode_literals
 import json
 import os
 import string
@@ -49,8 +47,7 @@ from django.db.utils import OperationalError
 import six
 import uuid
 from six.moves import range
-from sqlagg.filters import EQ, NOT, AND
-from io import open
+from sqlagg.filters import EQ, NOT
 from pillowtop.models import KafkaCheckpoint
 from six.moves import zip
 
@@ -272,6 +269,10 @@ class ICDSMixin(object):
                 elif column_agg_func == 'avg':
                     values = [x.get(column_name, 0) for x in report_data]
                     column_data = sum(values) / (len(values) or 1)
+                elif column_agg_func == 'last_value':
+                    group_by = column['group_by']
+                    awc_mapping = {x.get(group_by): x.get(column_name, 0) for x in report_data}
+                    column_data = sum(awc_mapping.values())
                 column_display = column_name if 'column_in_report' not in column else column['column_in_report']
                 data.update({
                     column_display: data.get(column_display, 0) + column_data

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 from collections import namedtuple
 from contextlib import contextmanager
@@ -327,7 +325,7 @@ class AutoFilterTests(TestCase):
         self.assertEqual(ancestor_state_value, ui_filter.default_value())
 
 
-class NumericFilterTests(TestCase):
+class NumericFilterTests(SimpleTestCase):
 
     def test_numeric_filter(self):
         self.assertEqual(

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.sms.models import QueuedSMS
 from corehq.messaging.smsbackends.airtel_tcl.exceptions import AirtelTCLError, InvalidDestinationNumber
 from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend

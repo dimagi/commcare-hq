@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from eulxml.xmlmap import (
     IntegerField, NodeField, NodeListField,
     SimpleBooleanField, StringField, XmlObject,
@@ -343,9 +341,6 @@ class Instance(IdNode, OrderedXmlObject):
 
     def __eq__(self, other):
         return self.src == other.src and self.id == other.id
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def __hash__(self):
         return hash((self.src, self.id))

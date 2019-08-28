@@ -6,8 +6,6 @@ Use the nose syntax for python tests
 When you save a .js file, the js tests run,
 When you save a .py file, the python tests run.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 from subprocess import Popen
 from sniffer.api import runnable, select_runnable, file_validator

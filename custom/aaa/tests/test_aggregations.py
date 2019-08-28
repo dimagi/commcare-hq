@@ -1,10 +1,8 @@
-from __future__ import absolute_import, unicode_literals
 
 import os
 import re
 from datetime import date, time
 from decimal import Decimal
-from io import open
 
 from django.test.utils import override_settings
 

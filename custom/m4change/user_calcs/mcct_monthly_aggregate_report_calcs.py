@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import fluff
 from custom.m4change.constants import BOOKED_AND_UNBOOKED_DELIVERY_FORMS, FOLLOW_UP_FORMS, BOOKING_FORMS, \
     IMMUNIZATION_FORMS, BOOKING_AND_FOLLOW_UP_FORMS

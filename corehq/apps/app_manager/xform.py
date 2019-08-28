@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
@@ -267,9 +265,6 @@ class ItextNodeGroup(object):
                 return False
 
         return True
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def __hash__(self):
         return hash(''.join(["{0}{1}".format(n.lang, n.rendered_values) for n in self.nodes.values()]))
@@ -813,12 +808,12 @@ class XForm(WrappedNode):
                 if key.startswith(vellum_ns):
                     del node.attrib[key]
 
-    def add_missing_instances(self, domain):
+    def add_missing_instances(self, app):
         from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
         instance_declarations = self._get_instance_ids()
         missing_unknown_instances = set()
         instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(
-            domain, [self.render().decode('utf-8')])
+            app, [self.render().decode('utf-8')])
         for instance_id in unknown_instance_ids:
             if instance_id not in instance_declarations:
                 missing_unknown_instances.add(instance_id)

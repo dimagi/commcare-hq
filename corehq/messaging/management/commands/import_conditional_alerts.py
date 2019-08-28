@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     MatchPropertyDefinition,
@@ -24,7 +20,6 @@ from corehq.messaging.scheduling.models import (
 from corehq.messaging.tasks import initiate_messaging_rule_run
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from io import open
 import json
 import six
 

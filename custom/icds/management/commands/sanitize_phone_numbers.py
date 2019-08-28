@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import csv342 as csv
 import six
@@ -11,7 +9,6 @@ from datetime import (
     date,
     timedelta,
 )
-from io import open
 from xml.etree import cElementTree as ElementTree
 
 from django.core.management.base import BaseCommand

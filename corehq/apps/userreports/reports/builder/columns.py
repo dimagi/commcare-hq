@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from corehq.apps.userreports.datatypes import NUMERIC_TYPE_CHOICES
 from corehq.apps.userreports.reports.builder import (

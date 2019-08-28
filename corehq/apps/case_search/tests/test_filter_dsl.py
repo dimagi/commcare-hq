@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from django.test import SimpleTestCase, TestCase
 from elasticsearch.exceptions import ConnectionError

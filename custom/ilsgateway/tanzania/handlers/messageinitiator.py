@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 

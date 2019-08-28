@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.es.cases import CaseES
 from corehq.util.python_compatibility import soft_assert_type_text
 import six

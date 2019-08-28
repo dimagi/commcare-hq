@@ -1,6 +1,3 @@
-# coding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from decimal import Decimal
 
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField

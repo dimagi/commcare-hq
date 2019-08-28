@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, CaseIndexItem
 from corehq.apps.export.system_properties import BOTTOM_MAIN_FORM_TABLE_PROPERTIES, MAIN_CASE_TABLE_PROPERTIES

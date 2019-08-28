@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from functools import wraps
 from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required

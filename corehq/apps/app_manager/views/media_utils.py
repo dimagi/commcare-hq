@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 
 
 def process_media_attribute(attribute, resp, val):

@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 import copy
 
 from django.views.decorators.http import require_GET

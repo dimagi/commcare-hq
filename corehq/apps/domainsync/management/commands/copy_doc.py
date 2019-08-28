@@ -1,12 +1,8 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 from couchdbkit import Database
 from dimagi.utils.couch.database import get_db
 from django.core.management.base import BaseCommand
 from corehq.apps.domainsync.config import DocumentTransform, save
-from io import open
 
 
 class Command(BaseCommand):

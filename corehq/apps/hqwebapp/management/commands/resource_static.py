@@ -1,5 +1,3 @@
-from __future__ import absolute_import, print_function
-from __future__ import unicode_literals
 import hashlib
 import json
 import os
@@ -10,7 +8,6 @@ from django.contrib.staticfiles import finders
 from django.conf import settings
 from dimagi.utils import gitinfo
 from django.core import cache
-from io import open
 
 from corehq.util.python_compatibility import soft_assert_type_text
 
@@ -36,13 +33,15 @@ class Command(BaseCommand):
         print("Current commit SHA: %s" % sha)
         return sha
 
-    def output_resources(self, resources, overwrite=True):
+    def output_resources(self, resources, overwrite=True, path=None):
         if not overwrite:
             from get_resource_versions import get_resource_versions
-            old_resources = get_resource_versions()
+            old_resources = get_resource_versions(path=path)
             old_resources.update(resources)
             resources = old_resources
-        with open(os.path.join(self.root_dir, 'resource_versions.yaml'), 'w') as fout:
+        if not path:
+            path = os.path.join(self.root_dir, 'resource_versions.yaml')
+        with open(path, 'w') as fout:
             fout.write(yaml.dump([{'name': name, 'version': version}
                                   for name, version in resources.items()]))
 

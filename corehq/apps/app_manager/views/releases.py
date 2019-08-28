@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import division
 import json
 import uuid
 from math import ceil
@@ -50,7 +47,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_cached,
-    get_built_app_ids_for_app_id,
+    get_build_ids,
     get_current_app_version,
     get_latest_build_id,
     get_latest_build_version,
@@ -128,7 +125,7 @@ def paginate_releases(request, domain, app_id):
     if not bool(only_show_released or query):
         # If user is limiting builds by released status or build comment, it's much
         # harder to be performant with couch. So if they're not doing so, take shortcuts.
-        total_apps = len(get_built_app_ids_for_app_id(domain, app_id))
+        total_apps = len(get_build_ids(domain, app_id))
         saved_apps = _get_batch(skip=skip)
     else:
         app_es = (
@@ -280,7 +277,7 @@ def release_build(request, domain, app_id, saved_app_id):
 def save_copy(request, domain, app_id):
     """
     Saves a copy of the app to a new doc.
-    See VersionedDoc.save_copy
+    See ApplicationBase.save_copy
 
     """
     track_built_app_on_hubspot.delay(request.couch_user)
@@ -356,7 +353,7 @@ def _track_build_for_app_preview(domain, couch_user, app_id, message):
 def revert_to_copy(request, domain, app_id):
     """
     Copies a saved doc back to the original.
-    See VersionedDoc.revert_to_copy
+    See ApplicationBase.revert_to_copy
 
     """
     app = get_app(domain, app_id)
@@ -395,7 +392,7 @@ def revert_to_copy(request, domain, app_id):
 def delete_copy(request, domain, app_id):
     """
     Deletes a saved copy permanently from the database.
-    See VersionedDoc.delete_copy
+    See ApplicationBase.delete_copy
 
     """
     app = get_app(domain, app_id)

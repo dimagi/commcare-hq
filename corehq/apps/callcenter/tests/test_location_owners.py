@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.callcenter.sync_user_case import sync_call_center_user_case

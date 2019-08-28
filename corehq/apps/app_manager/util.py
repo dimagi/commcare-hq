@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import json
 import os
@@ -9,7 +7,6 @@ import logging
 import yaml
 from collections import OrderedDict, namedtuple
 from copy import deepcopy
-from io import open
 
 
 from couchdbkit import ResourceNotFound

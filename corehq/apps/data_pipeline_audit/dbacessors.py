@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import Counter
 from datetime import date, timedelta
 from django.db.models import Count

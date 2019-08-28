@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from collections import defaultdict
 from itertools import chain
@@ -129,6 +127,7 @@ load_ignore_rules = memoized(lambda: {
         ignore_renamed('@date_modified', 'modified_on'),
     ],
     'CommCareCase-Deleted': [
+        Ignore('type', 'modified_on', old=None),
         Ignore('missing', '-deletion_id', old=MISSING, new=None),
         Ignore('missing', 'deletion_id', old=MISSING, new=None),
         Ignore('complex', ('-deletion_id', 'deletion_id'), old=MISSING, new=None),

@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 
 from corehq.apps.hqadmin.views.data import (
     doc_in_es,
@@ -11,7 +10,6 @@ from corehq.apps.hqadmin.views.operations import (
     ReprocessMessagingCaseUpdatesView,
 )
 from corehq.apps.hqadmin.views.reports import (
-    DimagisphereView,
     DownloadGIRView,
     DownloadMALTView,
     admin_reports_stats_data,

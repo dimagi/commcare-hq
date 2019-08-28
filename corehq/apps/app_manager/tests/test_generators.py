@@ -1,9 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import os
-from io import open
 
 import polib
 from django.test.testcases import SimpleTestCase

@@ -91,34 +91,32 @@ hqDefine("app_manager/js/forms/form_view", function () {
             $('#form-filter').koApplyBindings(formFilterModel());
         }
 
-        if (initialPageData('allow_form_workflow')) {
-            var FormWorkflow = hqImport('app_manager/js/forms/form_workflow').FormWorkflow;
-            var labels = {};
-            labels[FormWorkflow.Values.DEFAULT] = gettext("Home Screen");
-            labels[FormWorkflow.Values.ROOT] = gettext("First Menu");
-            if (initialPageData('module_name')) {
-                labels[FormWorkflow.Values.MODULE] = gettext("Menu: ") + initialPageData('module_name');
-            }
-            if (initialPageData('root_module_name')) {
-                labels[FormWorkflow.Values.PARENT_MODULE] = gettext("Parent Menu: ") + initialPageData('root_module_name');
-            }
-            labels[FormWorkflow.Values.PREVIOUS_SCREEN] = gettext("Previous Screen");
-
-            var options = {
-                labels: labels,
-                workflow: initialPageData('post_form_workflow'),
-                workflow_fallback: initialPageData('post_form_workflow_fallback'),
-            };
-
-            if (hqImport('hqwebapp/js/toggles').toggleEnabled('FORM_LINK_WORKFLOW') || initialPageData('uses_form_workflow')) {
-                labels[FormWorkflow.Values.FORM] = gettext("Link to other form");
-                options.forms = initialPageData('linkable_forms');
-                options.formLinks = initialPageData('form_links');
-                options.formDatumsUrl = hqImport('hqwebapp/js/initial_page_data').reverse('get_form_datums');
-            }
-
-            $('#form-workflow').koApplyBindings(new FormWorkflow(options));
+        var FormWorkflow = hqImport('app_manager/js/forms/form_workflow').FormWorkflow;
+        var labels = {};
+        labels[FormWorkflow.Values.DEFAULT] = gettext("Home Screen");
+        labels[FormWorkflow.Values.ROOT] = gettext("First Menu");
+        if (initialPageData('module_name')) {
+            labels[FormWorkflow.Values.MODULE] = gettext("Menu: ") + initialPageData('module_name');
         }
+        if (initialPageData('root_module_name')) {
+            labels[FormWorkflow.Values.PARENT_MODULE] = gettext("Parent Menu: ") + initialPageData('root_module_name');
+        }
+        labels[FormWorkflow.Values.PREVIOUS_SCREEN] = gettext("Previous Screen");
+
+        var options = {
+            labels: labels,
+            workflow: initialPageData('post_form_workflow'),
+            workflow_fallback: initialPageData('post_form_workflow_fallback'),
+        };
+
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('FORM_LINK_WORKFLOW') || initialPageData('uses_form_workflow')) {
+            labels[FormWorkflow.Values.FORM] = gettext("Link to other form");
+            options.forms = initialPageData('linkable_forms');
+            options.formLinks = initialPageData('form_links');
+            options.formDatumsUrl = hqImport('hqwebapp/js/initial_page_data').reverse('get_form_datums');
+        }
+
+        $('#form-workflow').koApplyBindings(new FormWorkflow(options));
 
         // Settings > Advanced
         $('#auto-gps-capture').koApplyBindings({

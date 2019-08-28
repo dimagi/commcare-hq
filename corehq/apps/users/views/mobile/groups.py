@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib import messages
 from django.urls import reverse

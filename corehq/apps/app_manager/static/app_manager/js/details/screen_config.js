@@ -705,7 +705,11 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         }
                     });
                     if (column.original.hasAutocomplete) {
-                        column.field.setOptions(self.properties);
+                        var options = self.properties;
+                        if (column.original.field && !_.contains(column.original.field)) {
+                            options = [column.original.field].concat(options);
+                        }
+                        column.field.setOptions(options);
                         column.field.val(column.original.field);
                         column.field.observableVal(column.original.field);
                         module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, self.properties);
