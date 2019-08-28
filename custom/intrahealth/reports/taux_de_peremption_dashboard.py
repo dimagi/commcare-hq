@@ -16,9 +16,9 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 
 class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
-    slug = 'taux_de_peremption_report'
+    slug = 'taux_de_peremption_par_produit_report'
     comment = 'valeur péremption sur valeur totale'
-    name = 'Taux de Péremption'
+    name = 'Taux de Péremption par Produit'
     default_rows = 10
     exportable = True
 
@@ -28,7 +28,7 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
     def export_table(self):
         report = [
             [
-                'Taux de Péremption',
+                self.name,
                 [],
             ]
         ]
@@ -64,13 +64,13 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
 
     @property
     def report_context(self):
-        context = {
-            'report': self.get_report_context(),
-            'title': self.name,
-            'charts': self.charts if not self.needs_filters else None
-        }
-
-        return context
+        if not self.needs_filters:
+            return {
+                'report': self.get_report_context(),
+                'charts': self.charts,
+                'title': self.name
+            }
+        return {}
 
     @property
     def selected_location(self):
@@ -104,16 +104,16 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
             rows = self.calculate_rows()
             headers = self.headers
 
-        context = dict(
-            report_table=dict(
-                title=self.name,
-                slug=self.slug,
-                comment=self.comment,
-                headers=headers,
-                rows=rows,
-                default_rows=self.default_rows,
-            )
-        )
+        context = {
+            'report_table': {
+                'title': self.name,
+                'slug': self.slug,
+                'comment': self.comment,
+                'headers': headers,
+                'rows': rows,
+                'default_rows': self.default_rows,
+            }
+        }
 
         return context
 
@@ -156,9 +156,9 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
 
     @property
     def config(self):
-        config = dict(
-            domain=self.domain,
-        )
+        config = {
+            'domain': self.domain,
+        }
         if self.request.GET.get('startdate'):
             startdate = force_to_date(self.request.GET.get('startdate'))
         else:

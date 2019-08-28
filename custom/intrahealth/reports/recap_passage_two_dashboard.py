@@ -87,23 +87,23 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
     def get_report_context(self, table_context):
         self.data_source = table_context
         if self.needs_filters:
-            context = dict(
-                report_table=dict(
-                    rows=[],
-                    headers=[]
-                )
-            )
+            context = {
+                'report_table': {
+                    'rows': [],
+                    'headers': []
+                }
+            }
         else:
-            context = dict(
-                report_table=table_context
-            )
+            context = {
+                'report_table': table_context
+            }
         return context
 
     @property
     def config(self):
-        config = dict(
-            domain=self.domain,
-        )
+        config = {
+            'domain': self.domain,
+        }
         if self.request.GET.get('startdate'):
             startdate = force_to_date(self.request.GET.get('startdate'))
         else:

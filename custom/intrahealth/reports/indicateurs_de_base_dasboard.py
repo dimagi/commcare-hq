@@ -12,9 +12,9 @@ from custom.intrahealth.sqldata import IndicateursDeBaseData
 
 
 class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
-    slug = 'indicateurs_de_base'
-    comment = 'indicateurs de base'
-    name = 'Indicateurs de Base'
+    slug = 'planning_couverture_soumission_report'
+    comment = 'Planning - Couverture - Soumission'
+    name = 'Planning - Couverture - Soumission'
     default_rows = 10
     exportable = True
 
@@ -24,7 +24,7 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
     def export_table(self):
         report = [
             [
-                'Indicateurs de Base',
+                self.name,
                 [],
             ]
         ]
@@ -33,6 +33,7 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
             'Date effective de livraison',
             'Nombre de PPS enregistrés',
             'Nombre de PPS visités',
+            'Nombre de PPS données soumises',
             'Taux de couverture',
             'Taux de soumission',
         ]
@@ -67,12 +68,12 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
 
     @property
     def report_context(self):
-        context = {
-            'report': self.get_report_context(),
-            'title': self.name
-        }
-
-        return context
+        if not self.needs_filters:
+            return {
+                'report': self.get_report_context(),
+                'title': self.name
+            }
+        return {}
 
     @property
     def selected_location(self):
@@ -99,6 +100,7 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
             DataTablesColumn('Date effective de livraison'),
             DataTablesColumn('Nombre de PPS enregistrés'),
             DataTablesColumn('Nombre de PPS visités'),
+            DataTablesColumn('Nombre de PPS données soumises'),
             DataTablesColumn('Taux de couverture'),
             DataTablesColumn('Taux de soumission')
         )
@@ -113,16 +115,16 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
             rows = self.calculate_rows()
             headers = self.headers
 
-        context = dict(
-            report_table=dict(
-                title=self.name,
-                slug=self.slug,
-                comment=self.comment,
-                headers=headers,
-                rows=rows,
-                default_rows=self.default_rows,
-            )
-        )
+        context = {
+            'report_table': {
+                'title': self.name,
+                'slug': self.slug,
+                'comment': self.comment,
+                'headers': headers,
+                'rows': rows,
+                'default_rows': self.default_rows,
+            }
+        }
 
         return context
 
@@ -148,9 +150,13 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
                 soumission = '{:.2f} %'.format((no_de_pps_aces_donnes_soumies / nb_pps_visites) * 100) \
                     if nb_pps_visites != 0 else 'pas de données'
             else:
+                no_de_pps_aces_donnes_soumies = 'pas de données'
                 soumission = 'pas de données'
 
-            columns_for_location = [date, nb_pps_enregistres, nb_pps_visites, couverture, soumission]
+            columns_for_location = [
+                date, nb_pps_enregistres, nb_pps_visites,
+                no_de_pps_aces_donnes_soumies, couverture, soumission
+            ]
             rows_to_return.append([
                 location_name,
             ])
@@ -165,9 +171,9 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
 
     @property
     def config(self):
-        config = dict(
-            domain=self.domain,
-        )
+        config = {
+            'domain': self.domain,
+        }
         config['month'] = self.request.GET.get('month')
         config['year'] = self.request.GET.get('year')
         config['product_program'] = self.request.GET.get('product_program')
