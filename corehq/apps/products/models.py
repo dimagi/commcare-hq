@@ -334,3 +334,28 @@ class SQLProduct(models.Model):
 
     class Meta(object):
         app_label = 'products'
+
+    def to_dict(self):
+        from corehq.apps.commtrack.util import encode_if_needed
+        product_dict = {}
+
+        product_dict['id'] = self.product_id
+        product_dict['product_id'] = self.code  # This seems wrong
+
+        for attr in PRODUCT_EXPORT_ATTRS:
+            real_attr = attr[0] if isinstance(attr, tuple) else attr
+            product_dict[real_attr] = encode_if_needed(
+                getattr(self, real_attr)
+            )
+
+        return product_dict
+
+
+PRODUCT_EXPORT_ATTRS = [
+    ('name', six.text_type),
+    ('unit', six.text_type),
+    'description',
+    'category',
+    ('program_id', str),
+    ('cost', lambda a: Decimal(a) if a else None),
+]

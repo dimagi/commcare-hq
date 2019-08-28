@@ -368,20 +368,13 @@ def download_products(request, domain):
         model_data = {}
         uncategorized_data = {}
 
-        for prop, val in six.iteritems(product.product_data):
+        for prop, val in product.product_data.items():
             if prop in product_data_fields:
                 model_data['data: ' + prop] = encode_if_needed(val)
             else:
                 uncategorized_data['uncategorized_data: ' + prop] = encode_if_needed(val)
 
         return model_data, uncategorized_data
-
-    def _get_products(domain):
-        product_ids = SQLProduct.objects.filter(domain=domain).product_ids()
-        for p_doc in iter_docs(Product.get_db(), product_ids):
-            # filter out archived products from export
-            if not ('is_archived' in p_doc and p_doc['is_archived']):
-                yield Product.wrap(p_doc)
 
     def _build_row(keys, product):
         row = []
@@ -408,7 +401,12 @@ def download_products(request, domain):
     uncategorized_data = set()
     products = []
 
-    for product in _get_products(domain):
+    sql_products = (
+        SQLProduct.objects
+        .filter(domain=domain, is_archived=False)
+    )
+
+    for product in sql_products:
         product_dict = product.to_dict()
 
         product_model, product_uncategorized = _parse_custom_properties(product)
