@@ -236,7 +236,10 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         assert isinstance(info, CaseTriggerInfo)
         patient = get_patient(requests, domain, info, openmrs_config)
         if patient is None:
-            warnings.append(f"CommCare case '{info.case_id}' was not found in OpenMRS.")
+            warnings.append(
+                f"CommCare case '{info.case_id}' was not matched to a "
+                f"patient in OpenMRS instance '{requests.base_url}'."
+            )
             continue
 
         # case_trigger_infos are info about all of the cases
