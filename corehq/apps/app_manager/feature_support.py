@@ -13,7 +13,7 @@ class CommCareFeatureSupportMixin(object):
         if settings.UNIT_TESTING and self.build_version is None:
             return False
         assert isinstance(self.build_version, Version)
-        assert isinstance(minimum_version, str + (Version,))
+        assert isinstance(minimum_version, (str, Version))
         if isinstance(minimum_version, str):
             soft_assert_type_text(minimum_version)
             minimum_version = LooseVersion(minimum_version)
