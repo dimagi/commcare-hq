@@ -27,7 +27,7 @@ class LedgerPillowTestCouch(TestCase):
     @classmethod
     def setUpClass(cls):
         super(LedgerPillowTestCouch, cls).setUpClass()
-        from corehq.apps.commtrack.helpers import make_product
+        from corehq.apps.commtrack.tests.util import make_product
         product = make_product(cls.domain, 'Product A', 'prod_a')
         cls.product_id = product._id
 

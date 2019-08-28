@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 
 from casexml.apps.case.mock import CaseFactory, CaseBlock
-from corehq.apps.commtrack.helpers import make_product
+from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.document_stores import LedgerV1DocumentStore

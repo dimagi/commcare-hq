@@ -30,7 +30,7 @@ from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
     BAD_FORM_PROBLEM_TEMPLATE,
     FIXED_FORM_PROBLEM_TEMPLATE,
 )
-from corehq.apps.commtrack.helpers import make_product
+from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain_migration_flags.models import DomainMigrationProgress

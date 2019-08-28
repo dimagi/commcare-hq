@@ -5,10 +5,10 @@ from django.test import TestCase
 
 from dimagi.utils.parsing import json_format_datetime
 
-from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import (
     get_single_balance_block,
     get_single_transfer_block,
+    make_product,
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally

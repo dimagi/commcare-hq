@@ -1,7 +1,9 @@
 from django.test import TestCase
 
-from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.commtrack.tests.util import bootstrap_location_types
+from corehq.apps.commtrack.tests.util import (
+    bootstrap_location_types,
+    make_product,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.products.models import SQLProduct
 
