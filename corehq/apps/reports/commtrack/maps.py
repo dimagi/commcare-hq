@@ -2,7 +2,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 
 from corehq.apps.hqwebapp.decorators import use_maps
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
 
@@ -53,15 +53,16 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
             'category': 'Current Stock Status',
         }
 
-        products = sorted(
-            Product.by_domain(self.domain),
-            key=lambda p: p.name
+        products = (
+            SQLProduct.objects
+            .filter(domain=self.domain)
+            .order_by('name')
         )
-
         if self.program_id:
-            products = [c for c in products if c.program_id == self.program_id]
+            products = products.filter(program_id=self.program_id)
+
         for p in products:
-            col_id = lambda c: '%s-%s' % (p._id, c)
+            col_id = lambda c: '%s-%s' % (p.product_id, c)
 
             product_cols = []
             for c in ('category', 'current_stock', 'months_remaining', 'consumption'):
@@ -114,9 +115,9 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
                 product_metrics.append(metric)
 
                 conf['numeric_format'][col_id(c)] = {
-                    'current_stock': "return x + ' %s'" % (p.unit or 'unit'),
+                    'current_stock': "return x + ' %s'" % (p.units or 'unit'),
                     'months_remaining': "return (Math.round(10 * x) / 10) + (x == 1 ? ' month' : ' months')",
-                    'consumption': "return (Math.round(10 * x) / 10) + ' %s / month'" % (p.unit or 'unit'),
+                    'consumption': "return (Math.round(10 * x) / 10) + ' %s / month'" % (p.units or 'unit'),
                 }[c]
 
             conf['metrics'].append({
