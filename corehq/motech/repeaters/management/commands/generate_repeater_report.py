@@ -1,8 +1,8 @@
 from datetime import datetime
+import csv
 
 from django.core.management.base import BaseCommand, CommandError
 
-import csv342 as csv
 from couchdbkit import ResourceNotFound
 from openpyxl import Workbook
 from six.moves import range

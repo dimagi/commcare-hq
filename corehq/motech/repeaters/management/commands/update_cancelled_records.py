@@ -1,10 +1,10 @@
+import csv
 import datetime
 import re
 import time
 
 from django.core.management.base import BaseCommand
 
-import csv342 as csv
 from mock import MagicMock
 from six.moves import filter, input
 

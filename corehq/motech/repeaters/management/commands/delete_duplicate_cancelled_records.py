@@ -1,9 +1,9 @@
+import csv
 import datetime
 from collections import defaultdict
 
 from django.core.management.base import BaseCommand
 
-import csv342 as csv
 from memoized import memoized
 from six.moves import input
 

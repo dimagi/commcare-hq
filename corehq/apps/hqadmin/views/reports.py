@@ -10,7 +10,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.generic import TemplateView
 
-import csv342 as csv
+import csv
 import six
 import six.moves.html_parser
 
