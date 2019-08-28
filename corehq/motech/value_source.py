@@ -47,11 +47,11 @@ class ValueSource(DocumentSchema):
 
     def __eq__(self, other):
         return (
-            isinstance(other, ValueSource) and
-            self.doc_type == other.doc_type and
-            self.external_data_type == other.external_data_type and
-            self.commcare_data_type == other.commcare_data_type and
-            self.direction == other.direction
+            isinstance(other, ValueSource)
+            and self.doc_type == other.doc_type
+            and self.external_data_type == other.external_data_type
+            and self.commcare_data_type == other.commcare_data_type
+            and self.direction == other.direction
         )
 
     @classmethod
