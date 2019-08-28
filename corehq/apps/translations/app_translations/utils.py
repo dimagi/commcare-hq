@@ -2,8 +2,6 @@
 
 from django.utils.translation import ugettext as _
 
-import six
-
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
@@ -13,7 +11,6 @@ from corehq.apps.translations.const import (
     SINGLE_SHEET_NAME,
 )
 from corehq.apps.translations.generators import EligibleForTransifexChecker
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def get_bulk_app_sheet_headers(app, lang=None, eligible_for_transifex_only=False, by_id=False):
@@ -94,8 +91,7 @@ def get_modules_and_forms_row(row_type, sheet_name, languages, media_image, medi
     assert isinstance(languages, list)
     assert isinstance(media_image, list)
     assert isinstance(media_audio, list)
-    assert isinstance(unique_id, six.string_types)
-    soft_assert_type_text(unique_id)
+    assert isinstance(unique_id, str), type(unique_id)
 
     return [item if item is not None else "" for item in
             ([row_type, sheet_name] +
@@ -190,11 +186,11 @@ def get_unicode_dicts(iterable):
 
     """
     def none_or_unicode(val):
-        return six.text_type(val) if val is not None else val
+        return str(val) if val is not None else val
 
     rows = []
     for row in iterable:
-        rows.append({six.text_type(k): none_or_unicode(v) for k, v in six.iteritems(row)})
+        rows.append({str(k): none_or_unicode(v) for k, v in row.items()})
     return rows
 
 

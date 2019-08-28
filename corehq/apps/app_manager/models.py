@@ -33,15 +33,13 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 import qrcode
-import six
 from couchdbkit import MultipleResultsFound, ResourceNotFound
 from couchdbkit.exceptions import BadValueError
 from jsonpath_rw import jsonpath, parse
 from lxml import etree
 from memoized import memoized
-from six.moves import filter, map, range
-from six.moves.urllib.parse import urljoin
-from six.moves.urllib.request import urlopen
+from urllib.parse import urljoin
+from urllib.request import urlopen
 
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -181,7 +179,6 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.util import bitly, view_utils
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext, time_method
@@ -732,7 +729,7 @@ class FormSource(object):
         unique_id = form.get_unique_id()
         app = form.get_app()
         filename = "%s.xml" % unique_id
-        if isinstance(value, six.text_type):
+        if isinstance(value, str):
             value = value.encode('utf-8')
         app.lazy_put_attachment(value, filename)
         form.clear_validation_cache()
@@ -867,7 +864,7 @@ class CaseLoadReference(DocumentSchema):
     """
     _allow_dynamic_properties = False
     path = StringProperty()
-    properties = ListProperty(six.text_type)
+    properties = ListProperty(str)
 
 
 class CaseSaveReference(DocumentSchema):
@@ -877,7 +874,7 @@ class CaseSaveReference(DocumentSchema):
     """
     _allow_dynamic_properties = False
     case_type = StringProperty()
-    properties = ListProperty(six.text_type)
+    properties = ListProperty(str)
     create = BooleanProperty(default=False)
     close = BooleanProperty(default=False)
 
@@ -986,7 +983,7 @@ class FormBase(DocumentSchema):
     """
     form_type = None
 
-    name = DictProperty(six.text_type)
+    name = DictProperty(str)
     name_enum = SchemaListProperty(MappingItem)
     unique_id = StringProperty()
     show_count = BooleanProperty(default=False)
@@ -1207,8 +1204,7 @@ class FormBase(DocumentSchema):
                 include_translations=include_translations,
             )
         except XFormException as e:
-            raise XFormException(_('Error in form "{}": {}')
-                                 .format(trans(self.name), six.text_type(e)))
+            raise XFormException(_('Error in form "{}": {}').format(trans(self.name), e))
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1379,7 +1375,7 @@ class CustomIcon(DocumentSchema):
     an xpath expression to be evaluated for example count of cases within.
     """
     form = StringProperty()
-    text = DictProperty(six.text_type)
+    text = DictProperty(str)
     xpath = StringProperty()
 
 
@@ -1411,8 +1407,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
                 # Single-language media was stored in a plain string.
                 # Convert this to a dict, using a dummy key because we
                 # don't know the app's supported or default lang yet.
-                if isinstance(old_media, six.string_types):
-                    soft_assert_type_text(old_media)
+                if isinstance(old_media, str):
                     new_media = {'default': old_media}
                     data[media_attr] = new_media
                 elif isinstance(old_media, dict):
@@ -1765,7 +1760,7 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
             # for backward compatibility
             # preload only has one reference per question path
             preload = self.actions.load_from_form.preload
-            refs.load = {key: [value] for key, value in six.iteritems(preload)}
+            refs.load = {key: [value] for key, value in preload.items()}
         return refs
 
     @case_references.setter
@@ -1943,7 +1938,7 @@ class DetailColumn(IndexedSchema):
         if to_ret.format == 'enum-image':
             # interpolate icons-paths
             for item in to_ret.enum:
-                for lang, path in six.iteritems(item.value):
+                for lang, path in item.value.items():
                     item.value[lang] = interpolate_media_path(path)
         return to_ret
 
@@ -2154,7 +2149,7 @@ class CaseListForm(NavMenuItemMediaMixin):
 
 
 class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, CommentMixin):
-    name = DictProperty(six.text_type)
+    name = DictProperty(str)
     name_enum = SchemaListProperty(MappingItem)
     unique_id = StringProperty()
     case_type = StringProperty()
@@ -2545,10 +2540,10 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
         actions = self.actions.actions_meta_by_tag
         by_type = defaultdict(list)
         action_type = []
-        for action_tag, action_meta in six.iteritems(actions):
+        for action_tag, action_meta in actions.items():
             by_type[action_meta.get('type')].append(action_tag)
 
-        for type, tag_list in six.iteritems(by_type):
+        for type, tag_list in by_type.items():
             action_type.append('{} ({})'.format(type, ', '.join(filter(None, tag_list))))
 
         return ' '.join(action_type)
@@ -2670,7 +2665,7 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
         for action in self.actions.get_all_actions():
             case_type = action.case_type
             updates_by_case_type[case_type].update(
-                format_key(*item) for item in six.iteritems(action.case_properties))
+                format_key(*item) for item in action.case_properties.items())
         if self.schedule and self.schedule.enabled and self.source:
             xform = self.wrapped_xform()
             self.add_stuff_to_xform(xform)
@@ -3136,7 +3131,7 @@ class AdvancedModule(ModuleBase):
             except KeyError:
                 self.get_or_create_schedule_phase(anchor)
 
-        deleted_phases_with_forms = [anchor for anchor, phase in six.iteritems(old_phases) if len(phase.forms)]
+        deleted_phases_with_forms = [anchor for anchor, phase in old_phases.items() if len(phase.forms)]
         if deleted_phases_with_forms:
             raise ScheduleError(_("You can't delete phases with anchors "
                                   "{phase_anchors} because they have forms attached to them").format(
@@ -3500,8 +3495,7 @@ class ReportAppConfig(DocumentSchema):
         # for backwards compatibility with apps that have localized or xpath descriptions
         old_description = doc.get('description')
         if old_description:
-            if isinstance(old_description, six.string_types) and not doc.get('xpath_description'):
-                soft_assert_type_text(old_description)
+            if isinstance(old_description, str) and not doc.get('xpath_description'):
                 doc['xpath_description'] = old_description
             elif isinstance(old_description, dict) and not doc.get('localized_description'):
                 doc['localized_description'] = old_description
@@ -3755,7 +3749,7 @@ class LazyBlobDoc(BlobMixin):
         self = super(LazyBlobDoc, cls).wrap(data)
         if attachments:
             for name, attachment in attachments.items():
-                if isinstance(attachment, six.text_type):
+                if isinstance(attachment, str):
                     attachment = attachment.encode('utf-8')
                 if isinstance(attachment, bytes):
                     info = {"content": attachment}
@@ -3783,7 +3777,7 @@ class LazyBlobDoc(BlobMixin):
                 # TODO - remove try/except sometime after Python 3 migration is complete
                 return None
             if content is not None:
-                if isinstance(content, six.text_type):
+                if isinstance(content, str):
                     return None
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
         return content
@@ -4043,8 +4037,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             version, build_number = current_builds.TAG_MAP[data['commcare_tag']]
             data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
             del data['commcare_tag']
-        if "built_with" in data and isinstance(data['built_with'], six.string_types):
-            soft_assert_type_text(data['built_with'])
+        if "built_with" in data and isinstance(data['built_with'], str):
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
         if 'native_input' in data:
@@ -4772,7 +4765,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         latest_build = self.get_latest_build()
         prev_multimedia_map = latest_build.multimedia_map if latest_build else {}
 
-        for path, map_item in six.iteritems(self.multimedia_map):
+        for path, map_item in self.multimedia_map.items():
             prev_map_item = prev_multimedia_map.get(path, None)
             if prev_map_item and prev_map_item.unique_id:
                 # Re-use the id so CommCare knows it's the same resource
@@ -5003,7 +4996,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                     raise XFormException(_('Unable to validate the forms due to a server error. '
                                            'Please try again later.'))
                 except XFormException as e:
-                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), six.text_type(e)))
+                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), e))
         return files
 
     @time_method()
@@ -5294,7 +5287,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             del copy_source['unique_id']
 
         if rename:
-            for lang, name in six.iteritems(copy_source['name']):
+            for lang, name in copy_source['name'].items():
                 with override(lang):
                     copy_source['name'][lang] = _('Copy of {name}').format(name=name)
 
@@ -5605,8 +5598,7 @@ class LinkedApplication(Application):
 
 
 def import_app(app_id_or_source, domain, source_properties=None, request=None):
-    if isinstance(app_id_or_source, six.string_types):
-        soft_assert_type_text(app_id_or_source)
+    if isinstance(app_id_or_source, str):
         source_app = get_app(None, app_id_or_source)
     else:
         source_app = wrap_app(app_id_or_source)
@@ -5619,7 +5611,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     finally:
         source['_attachments'] = {}
     if source_properties is not None:
-        for key, value in six.iteritems(source_properties):
+        for key, value in source_properties.items():
             source[key] = value
     cls = get_correct_app_class(source)
     # Allow the wrapper to update to the current default build_spec

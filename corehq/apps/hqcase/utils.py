@@ -7,8 +7,6 @@ from xml.etree import cElementTree as ElementTree
 from django.core.files.uploadedfile import UploadedFile
 from django.template.loader import render_to_string
 
-import six
-
 from casexml.apps.case import const
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -23,7 +21,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     get_cached_case_attachment,
 )
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.util.python_compatibility import soft_assert_type_text
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
@@ -61,9 +58,8 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
     """
     attachments = attachments or {}
     now = json_format_datetime(datetime.datetime.utcnow())
-    if not isinstance(case_blocks, six.string_types):
+    if not isinstance(case_blocks, str):
         case_blocks = ''.join(case_blocks)
-    soft_assert_type_text(case_blocks)
     form_id = form_id or uuid.uuid4().hex
     form_xml = render_to_string('hqcase/xml/case_block.xml', {
         'xmlns': xmlns or SYSTEM_FORM_XMLNS,

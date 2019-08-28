@@ -21,7 +21,6 @@ from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 from django.views import View
 
-import six
 from django_otp import match_token
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -54,7 +53,6 @@ from corehq.toggles import (
     PUBLISH_CUSTOM_REPORTS,
     TWO_FACTOR_SUPERUSER_ROLLOUT,
 )
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 from django_digest.decorators import httpdigest
 
@@ -520,17 +518,15 @@ def track_domain_request(calculated_prop):
                     len(args) > 2 and
                     isinstance(args[0], View) and
                     isinstance(args[1], HttpRequest) and
-                    isinstance(args[2], six.string_types)
+                    isinstance(args[2], str)
             ):
-                soft_assert_type_text(args[2])
                 # class-based view; args == (self, request, domain, ...)
                 domain = args[2]
             elif (
                     len(args) > 1 and
                     isinstance(args[0], HttpRequest) and
-                    isinstance(args[1], six.string_types)
+                    isinstance(args[1], str)
             ):
-                soft_assert_type_text(args[1])
                 # view function; args == (request, domain, ...)
                 domain = args[1]
             else:

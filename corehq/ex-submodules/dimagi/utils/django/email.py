@@ -5,8 +5,6 @@ from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
 from django.utils.translation import ugettext as _
 
-import six
-
 NO_HTML_EMAIL_MESSAGE = """
 Your email client is trying to display the plaintext version of an email that
 is only supported in HTML. Please set your email client to display this message
@@ -22,18 +20,15 @@ LARGE_FILE_SIZE_ERROR_CODES = [LARGE_FILE_SIZE_ERROR_CODE, LARGE_FILE_SIZE_ERROR
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
                     file_attachments=None, bcc=None, smtp_exception_skip_list=None):
-    from corehq.util.python_compatibility import soft_assert_type_text
-    if isinstance(recipient, six.string_types):
-        soft_assert_type_text(recipient)
-    recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
+    recipient = list(recipient) if not isinstance(recipient, (str, bytes)) else [recipient]
 
-    if not isinstance(html_content, six.text_type):
+    if not isinstance(html_content, str):
         html_content = html_content.decode('utf-8')
 
     if not text_content:
         text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
                                NO_HTML_EMAIL_MESSAGE)
-    elif not isinstance(text_content, six.text_type):
+    elif not isinstance(text_content, str):
         text_content = text_content.decode('utf-8')
 
     from_header = {'From': email_from}  # From-header

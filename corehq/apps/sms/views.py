@@ -24,7 +24,6 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
-import six
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
@@ -137,7 +136,6 @@ from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.util import show_messaging_dashboard
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime, UserTime
@@ -1836,9 +1834,8 @@ def upload_sms_translations(request, domain):
                         msg_id = row["property"]
                         if msg_id in msg_ids:
                             val = row[lang]
-                            if not isinstance(val, six.string_types):
-                                val = six.text_type(val)
-                            soft_assert_type_text(val)
+                            if not isinstance(val, str):
+                                val = str(val)
                             val = val.strip()
                             result[lang][msg_id] = val
 

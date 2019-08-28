@@ -4,9 +4,6 @@ from corehq.apps.app_manager.dbaccessors import get_latest_build_id, get_latest_
 from corehq.apps.domain.models import Domain
 from datetime import timedelta
 from pytz import timezone
-import six
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 EMPTY_FIELD = "---"
 SUCCEED_DOMAIN = 'succeed'
@@ -79,8 +76,7 @@ def format_date(date_string, OUTPUT_FORMAT, localize=None):
             or isinstance(date_string, (int, float)):
         return ''
 
-    if isinstance(date_string, six.string_types):
-        soft_assert_type_text(date_string)
+    if isinstance(date_string, str):
         try:
             date_string = dateutil.parser.parse(date_string)
         except (AttributeError, ValueError):

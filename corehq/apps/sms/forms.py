@@ -11,7 +11,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-import six
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -42,7 +41,6 @@ from corehq.apps.sms.util import (
     validate_phone_number,
 )
 from corehq.apps.users.models import CommCareUser
-from corehq.util.python_compatibility import soft_assert_type_text
 
 FORWARDING_CHOICES = (
     (FORWARD_ALL, ugettext_noop("All messages")),
@@ -630,8 +628,7 @@ class SettingsForm(Form):
             value = self[field_name].value()
             if field_name in ["restricted_sms_times_json",
                 "sms_conversation_times_json"]:
-                if isinstance(value, six.string_types):
-                    soft_assert_type_text(value)
+                if isinstance(value, str):
                     current_values[field_name] = json.loads(value)
                 else:
                     current_values[field_name] = value

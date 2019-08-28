@@ -16,7 +16,6 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
 import qrcode
-import six
 from memoized import memoized
 from tastypie.models import ApiKey
 from two_factor.models import PhoneDevice
@@ -58,7 +57,6 @@ from corehq.mobile_flags import (
     ADVANCED_SETTINGS_ACCESS,
     MULTIPLE_APPS_UNLIMITED,
 )
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 
 
@@ -180,10 +178,8 @@ class MyAccountSettingsView(BaseMyAccountView):
         }
 
     def phone_number_is_valid(self):
-        if isinstance(self.phone_number, six.string_types):
-            soft_assert_type_text(self.phone_number)
         return (
-            isinstance(self.phone_number, six.string_types) and
+            isinstance(self.phone_number, str) and
             re.compile(r'^\d+$').match(self.phone_number) is not None
         )
 

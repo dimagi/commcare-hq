@@ -43,12 +43,10 @@ from django.views.generic import TemplateView
 from django.views.generic.base import View
 
 import httpagentparser
-import six
 from couchdbkit import ResourceNotFound
 from djangular.views.mixins import JSONResponseMixin
 from memoized import memoized
-from six.moves import range
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
@@ -111,7 +109,6 @@ from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.view_utils import reverse
 from no_exceptions.exceptions import Http403
 
@@ -129,19 +126,8 @@ def format_traceback_the_way_python_does(type, exc, tb):
       File "<stdin>", line 2, in <module>
     NameError: name 'name' is not defined
     """
-
-    if six.PY3:
-        exc_message = six.text_type(exc)
-    else:
-        exc_message = exc.message
-        if isinstance(exc_message, bytes):
-            exc_message = exc_message.decode('utf-8')
-
-    return 'Traceback (most recent call last):\n{}{}: {}'.format(
-        ''.join(traceback.format_tb(tb)),
-        type.__name__,
-        exc_message
-    )
+    tb = ''.join(traceback.format_tb(tb))
+    return f'Traceback (most recent call last):\n{tb}{type.__name__}: {exc}'
 
 
 def server_error(request, template_name='500.html'):
@@ -394,8 +380,7 @@ def _login(req, domain_name):
     template_name = 'login_and_password/login.html'
     custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
     if custom_landing_page:
-        if isinstance(custom_landing_page, six.string_types):
-            soft_assert_type_text(custom_landing_page)
+        if isinstance(custom_landing_page, str):
             template_name = custom_landing_page
         else:
             template_name = custom_landing_page.get(req.get_host())
@@ -1180,7 +1165,7 @@ class MaintenanceAlertsView(BasePageView):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
         return {
             'alerts': [{
-                'created': six.text_type(alert.created),
+                'created': str(alert.created),
                 'active': alert.active,
                 'html': alert.html,
                 'id': alert.id,

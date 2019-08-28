@@ -3,13 +3,10 @@ from base64 import b64decode, b64encode
 
 from django.conf import settings
 
-import six
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad as crypto_pad
 from Crypto.Util.Padding import unpad as crypto_unpad
 from Crypto.Util.py3compat import bord
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 AES_BLOCK_SIZE = 16
 AES_KEY_MAX_LEN = 32  # AES key must be either 16, 24, or 32 bytes long
@@ -121,9 +118,7 @@ def pformat_json(data):
     if data is None:
         return ''
     try:
-        if isinstance(data, six.string_types):
-            soft_assert_type_text(data)
-        json_data = json.loads(data) if isinstance(data, six.string_types) else data
+        json_data = json.loads(data) if isinstance(data, str) else data
         return json.dumps(json_data, indent=2, sort_keys=True)
     except ValueError:
         return data

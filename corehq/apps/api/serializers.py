@@ -7,12 +7,9 @@ from django.utils.encoding import force_text
 
 # External imports
 import defusedxml.lxml as lxml
-import six
 from lxml.etree import Element
 from tastypie.bundle import Bundle
 from tastypie.serializers import Serializer, get_type_string
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 class CommCareCaseSerializer(Serializer):
@@ -58,7 +55,7 @@ class CommCareCaseSerializer(Serializer):
             else:
                 element = Element(name or 'object')
                 element.set('type', 'hash')
-            for (key, value) in six.iteritems(data):
+            for (key, value) in data.items():
                 element.append(self.to_etree(value, options, name=key, depth=depth+1))
         elif isinstance(data, Bundle):
             element = self.bundle_to_etree(data) # <--------------- this is the part that is changed from https://github.com/toastdriven/django-tastypie/blob/master/tastypie/serializers.py
@@ -88,7 +85,7 @@ class CommCareCaseSerializer(Serializer):
                 element.set('type', get_type_string(simple_data))
 
             if data_type != 'null':
-                if isinstance(simple_data, six.text_type):
+                if isinstance(simple_data, str):
                     element.text = simple_data
                 else:
                     element.text = force_text(simple_data)
@@ -99,8 +96,7 @@ class CommCareCaseSerializer(Serializer):
 class CustomXMLSerializer(Serializer):
 
     def to_etree(self, data, options=None, name=None, depth=0):
-        if isinstance(name, six.string_types):
-            soft_assert_type_text(name)
+        if isinstance(name, str):
             # need to strip any whitespace from xml tag names
             name = name.strip()
         etree = super(CustomXMLSerializer, self).to_etree(data, options, name, depth)

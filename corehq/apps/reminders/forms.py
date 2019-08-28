@@ -14,7 +14,6 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-import six
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField
@@ -30,7 +29,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.sms.models import Keyword
-from corehq.util.python_compatibility import soft_assert_type_text
 
 from .models import (
     METHOD_SMS,
@@ -65,10 +63,8 @@ def validate_time(value):
         return value
     error_msg = _("Please enter a valid time from 00:00 to 23:59.")
     time_regex = re.compile(r"^\d{1,2}:\d\d(:\d\d){0,1}$")
-    if not isinstance(value, six.string_types) or time_regex.match(value) is None:
+    if not isinstance(value, str) or time_regex.match(value) is None:
         raise ValidationError(error_msg)
-    if isinstance(value, six.string_types):
-        soft_assert_type_text(value)
     try:
         return parse(value).time()
     except Exception:
@@ -103,7 +99,7 @@ class RecordListWidget(Widget):
         data_dict = DotExpandedDict(raw)
         data_list = []
         if len(data_dict) > 0:
-            for key in sorted(six.iterkeys(data_dict[input_name])):
+            for key in sorted(data_dict[input_name]):
                 data_list.append(data_dict[input_name][key])
         
         return data_list

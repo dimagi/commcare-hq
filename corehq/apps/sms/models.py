@@ -10,7 +10,6 @@ from django.http import Http404
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
 import jsonfield
-import six
 from memoized import memoized
 
 from dimagi.ext.couchdbkit import *
@@ -38,7 +37,6 @@ from corehq.apps.users.models import CouchUser
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
@@ -617,9 +615,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @property
     def backend(self):
         from corehq.apps.sms.util import clean_phone_number
-        if isinstance(self.backend_id, six.string_types):
-            soft_assert_type_text(self.backend_id)
-        backend_id = self.backend_id.strip() if isinstance(self.backend_id, six.string_types) else None
+        backend_id = self.backend_id.strip() if isinstance(self.backend_id, str) else None
         if backend_id:
             return SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
@@ -1864,7 +1860,6 @@ class ActiveMobileBackendManager(models.Manager):
         return super(ActiveMobileBackendManager, self).get_queryset().filter(deleted=False)
 
 
-@six.python_2_unicode_compatible
 class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     SMS = 'SMS'
     IVR = 'IVR'
@@ -2319,7 +2314,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         the rest untouched.
         """
         result = self.get_extra_fields()
-        for k, v in six.iteritems(kwargs):
+        for k, v in kwargs.items():
             if k not in self.get_available_extra_fields():
                 raise Exception("Field %s is not an available extra field for %s"
                     % (k, self.__class__.__name__))
