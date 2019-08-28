@@ -149,9 +149,12 @@ class BaseExportView(BaseProjectDataView):
         if export.is_odata_config:
             for table_id, table in enumerate(export.tables):
                 for column in table.columns:
-                    if (column.label == 'formid' or column.label == 'caseid'
-                        or (column.label == 'number'
-                            and table_id > 0 and table.selected)):
+                    is_reserved_number = (
+                        column.label == 'number' and table_id > 0 and table.selected
+                    )
+                    if (column.label == 'formid'
+                            or column.label == 'caseid'
+                            or is_reserved_number):
                         column.selected = True
             num_nodes = sum([1 for table in export.tables[1:] if table.selected])
             if hasattr(self, 'is_copy') and self.is_copy:
