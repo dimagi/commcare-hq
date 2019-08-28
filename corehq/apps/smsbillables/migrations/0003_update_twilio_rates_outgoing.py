@@ -2,8 +2,6 @@
 from django.db import migrations
 
 
-
-
 def noop(*args, **kwargs):
     pass
 

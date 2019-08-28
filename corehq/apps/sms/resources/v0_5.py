@@ -1,5 +1,13 @@
 import json
 from collections import namedtuple
+
+from django.http import Http404, HttpResponse
+
+import six
+from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.validation import Validation
+
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
@@ -9,11 +17,6 @@ from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.users.models import Permissions
 from corehq.util.python_compatibility import soft_assert_type_text
-from corehq import privileges
-from django.http import HttpResponse, Http404
-from tastypie.exceptions import ImmediateHttpResponse
-from tastypie.validation import Validation
-import six
 
 FieldDefinition = namedtuple('FieldDefinition', 'name required type')
 

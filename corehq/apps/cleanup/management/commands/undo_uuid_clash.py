@@ -2,23 +2,38 @@
 from collections import defaultdict
 from datetime import datetime
 
-import six
 from django.core.management.base import BaseCommand
 
+import six
+
 from casexml.apps.case.xform import get_case_updates
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.commtrack.processing import process_stock
 from corehq.apps.domain.dbaccessors import iter_domains
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+    LedgerAccessorSQL,
+)
 from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, RebuildWithReason, CaseTransaction, \
-    LedgerTransaction
-from corehq.sql_db.util import (
-    split_list_by_db_partition, new_id_in_same_dbalias, get_db_aliases_for_partitioned_query
+from corehq.form_processor.backends.sql.update_strategy import (
+    SqlCaseUpdateStrategy,
 )
-from dimagi.utils.chunked import chunked
+from corehq.form_processor.models import (
+    CaseTransaction,
+    LedgerTransaction,
+    RebuildWithReason,
+    XFormInstanceSQL,
+    XFormOperationSQL,
+)
+from corehq.sql_db.util import (
+    get_db_aliases_for_partitioned_query,
+    new_id_in_same_dbalias,
+    split_list_by_db_partition,
+)
 
 
 def get_forms_to_reprocess(form_ids):

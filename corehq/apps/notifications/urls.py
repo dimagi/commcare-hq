@@ -1,5 +1,9 @@
 from django.conf.urls import url
-from corehq.apps.notifications.views import NotificationsServiceRMIView, ManageNotificationView
+
+from corehq.apps.notifications.views import (
+    ManageNotificationView,
+    NotificationsServiceRMIView,
+)
 
 urlpatterns = [
     url(r"^service/$",

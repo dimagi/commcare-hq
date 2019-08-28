@@ -1,5 +1,8 @@
 from django.test import SimpleTestCase
-from corehq.apps.reports.tasks import _convert_legacy_indices_to_export_properties
+
+from corehq.apps.reports.tasks import (
+    _convert_legacy_indices_to_export_properties,
+)
 from corehq.util.test_utils import generate_cases
 
 

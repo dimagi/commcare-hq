@@ -12,8 +12,9 @@ from corehq.apps.es import case_search as case_search_es
 
 from warnings import warn
 
-import six
 from django.utils.dateparse import parse_date
+
+import six
 
 from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,

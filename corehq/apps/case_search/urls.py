@@ -1,4 +1,5 @@
 from django.conf.urls import url
+
 from corehq.apps.case_search.views import CaseSearchView
 
 urlpatterns = [

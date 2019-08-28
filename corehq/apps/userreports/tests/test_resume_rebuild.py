@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.tests.utils import get_sample_data_source
 

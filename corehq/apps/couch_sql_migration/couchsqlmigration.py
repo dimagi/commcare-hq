@@ -3,9 +3,14 @@ import os
 import sys
 from datetime import datetime, timedelta
 
+from django.conf import settings
+from django.db.utils import IntegrityError
+
 import attr
 import gevent
 import six
+from gevent.pool import Pool
+
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import (
     CaseProcessingResult,
@@ -13,13 +18,20 @@ from casexml.apps.case.xform import (
     get_case_updates,
 )
 from casexml.apps.case.xml.parser import CaseNoopAction
-from django.conf import settings
-from django.db.utils import IntegrityError
-from gevent.pool import Pool
+from couchforms.models import XFormInstance, all_known_formlike_doc_types
+from couchforms.models import doc_types as form_doc_types
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT
+from pillowtop.reindexer.change_providers.couch import (
+    CouchDomainDocTypeChangeProvider,
+)
 
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
-from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
+from corehq.apps.tzmigration.api import (
+    force_phone_timezones_should_be_processed,
+)
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import (
@@ -28,7 +40,10 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound, MissingFormXml
-from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
+from corehq.form_processor.interfaces.processor import (
+    FormProcessorInterface,
+    ProcessedForms,
+)
 from corehq.form_processor.models import (
     CaseAttachmentSQL,
     CaseTransaction,
@@ -49,10 +64,7 @@ from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
     set_local_domain_sql_backend_override,
 )
-from corehq.toggles import (
-    COUCH_SQL_MIGRATION_BLACKLIST,
-    NAMESPACE_DOMAIN,
-)
+from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.util import cache_utils
 from corehq.util.couch_helpers import NoSkipArgsProvider
 from corehq.util.datadog.gauges import datadog_counter
@@ -64,11 +76,6 @@ from corehq.util.pagination import (
     StopToResume,
 )
 from corehq.util.timer import TimingContext
-from couchforms.models import XFormInstance, all_known_formlike_doc_types
-from couchforms.models import doc_types as form_doc_types
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
 from .asyncforms import AsyncFormProcessor
 from .casediff import CaseDiffProcess, CaseDiffQueue

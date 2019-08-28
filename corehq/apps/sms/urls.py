@@ -1,30 +1,39 @@
-from django.conf.urls import url, include
+from django.conf.urls import include, url
+
 from corehq.apps.sms.views import (
-    DomainSmsGatewayListView,
-    SubscribeSMSView,
     AddDomainGatewayView,
-    EditDomainGatewayView,
-    SMSSettingsView,
-    ManageRegistrationInvitationsView,
-    InvitationAppInfoView,
-    GlobalSmsGatewayListView,
+    AddForwardingRuleView,
     AddGlobalGatewayView,
+    ChatLastReadMessage,
+    ChatMessageHistory,
+    ChatOverSMSView,
+    ComposeMessageView,
+    DomainSmsGatewayListView,
+    EditDomainGatewayView,
+    EditForwardingRuleView,
     EditGlobalGatewayView,
     GlobalBackendMap,
-    ComposeMessageView,
-    SMSLanguagesView,
-    ChatMessageHistory,
-    ChatLastReadMessage,
-    ChatOverSMSView,
+    GlobalSmsGatewayListView,
+    InvitationAppInfoView,
     ListForwardingRulesView,
-    AddForwardingRuleView,
-    EditForwardingRuleView,
+    ManageRegistrationInvitationsView,
+    SMSLanguagesView,
+    SMSSettingsView,
+    SubscribeSMSView,
     TestSMSMessageView,
-    default, send_to_recipients, api_send_sms, delete_forwarding_rule, chat_contact_list, chat, edit_sms_languages,
-    download_sms_translations, upload_sms_translations)
+    api_send_sms,
+    chat,
+    chat_contact_list,
+    default,
+    delete_forwarding_rule,
+    download_sms_translations,
+    edit_sms_languages,
+    send_to_recipients,
+    upload_sms_translations,
+)
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
-from corehq.messaging.smsbackends.telerivet.urls import domain_specific as telerivet_urls
-
+from corehq.messaging.smsbackends.telerivet.urls import \
+    domain_specific as telerivet_urls
 
 urlpatterns = [
     url(r'^$', default, name='sms_default'),

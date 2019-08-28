@@ -1,37 +1,47 @@
 import copy
 
-from django.views.decorators.http import require_GET
-from django.views.generic import View
 from django.conf import settings
-from django.template.loader import render_to_string
-from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
-from django.urls import reverse
+from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
-from django.contrib import messages
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+from django.views.decorators.http import require_GET
+from django.views.generic import View
 
-from corehq import toggles
-from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from memoized import memoized
+
+from dimagi.utils.web import get_ip, json_request, json_response
+
+from corehq import feature_previews, privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.toggle_ui.views import ToggleEditView
-from corehq.apps.users.models import CouchUser
-from dimagi.utils.web import json_request
-from corehq import privileges, feature_previews
-from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
+from corehq.apps.domain.calculations import (
+    CALC_FNS,
+    CALC_ORDER,
+    CALCS,
+    dom_calc,
+)
 from corehq.apps.domain.decorators import (
-    domain_admin_required, login_required, require_superuser, login_and_domain_required
+    domain_admin_required,
+    login_and_domain_required,
+    login_required,
+    require_superuser,
 )
 from corehq.apps.domain.forms import DomainInternalForm, TransferDomainForm
 from corehq.apps.domain.models import Domain, TransferDomainRequest
-from corehq.apps.domain.views.settings import BaseProjectSettingsView, BaseAdminProjectSettingsView
+from corehq.apps.domain.views.settings import (
+    BaseAdminProjectSettingsView,
+    BaseProjectSettingsView,
+)
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
-from memoized import memoized
-from dimagi.utils.web import get_ip, json_response
-
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.toggle_ui.views import ToggleEditView
+from corehq.apps.users.models import CouchUser
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):

@@ -3,17 +3,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-# Translators:
-# Dimagi Dev <devops@dimagi.com>, 2019
-#
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-20 19:20+0000\n"
+"POT-Creation-Date: 2019-08-27 18:49+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2019\n"
 "Language-Team: Swahili (https://www.transifex.com/dimagi/teams/9388/sw/)\n"
 "Language: sw\n"
 "MIME-Version: 1.0\n"
@@ -113,7 +109,7 @@ msgid "There was an error saving."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:33
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
@@ -550,15 +546,15 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:24
 msgid "Active"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:24
 msgid "Inactive"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:33
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/sms/static/sms/js/add_gateway.js:11
 msgid "Remove"
@@ -3803,6 +3799,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "Parameters"
-#~ msgstr "Manejo de Casos"

@@ -2,7 +2,10 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
-from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
+from corehq.apps.smsbillables.models import (
+    SmsGatewayFee,
+    SmsGatewayFeeCriteria,
+)
 from corehq.apps.smsbillables.utils import log_smsbillables_info
 from corehq.messaging.smsbackends.unicel.models import SQLUnicelBackend
 

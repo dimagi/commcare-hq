@@ -2,8 +2,10 @@ from django.http import HttpRequest
 from django.test import TestCase
 
 from corehq.apps.userreports.exceptions import UserReportsError
-from corehq.apps.userreports.models import DataSourceConfiguration, \
-    ReportConfiguration
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin

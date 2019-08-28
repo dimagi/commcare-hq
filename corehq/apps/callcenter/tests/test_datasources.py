@@ -1,8 +1,11 @@
 
 from django.test.testcases import SimpleTestCase
+
 from mock import patch
 
-from corehq.apps.callcenter.data_source import call_center_data_source_configuration_provider
+from corehq.apps.callcenter.data_source import (
+    call_center_data_source_configuration_provider,
+)
 from corehq.apps.callcenter.utils import DomainLite
 from corehq.util.test_utils import generate_cases
 

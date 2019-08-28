@@ -1,14 +1,18 @@
 from casexml.apps.case.models import CommCareCase
+from pillowtop.checkpoints.manager import (
+    PillowCheckpoint,
+    PillowCheckpointEventHandler,
+)
+from pillowtop.feed.couch import CouchChangeFeed, populate_change_metadata
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors import PillowProcessor
+
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couchdb_management import couch_config
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.feed.couch import CouchChangeFeed, populate_change_metadata
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import PillowProcessor
 
 
 class KafkaProcessor(PillowProcessor):

@@ -1,64 +1,86 @@
 import json
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
-from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
-    JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_page
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.views.generic.base import TemplateView
 
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
 from couchdbkit import ResourceConflict
+from six.moves import filter, map
 
 from casexml.apps.phone.fixtures import generator
-from corehq.apps.users.util import format_username
 from dimagi.utils.parsing import string_to_boolean
-from dimagi.utils.web import json_response, get_url_base
-from xml2json.lib import xml2json
+from dimagi.utils.web import get_url_base, json_response
 
-from corehq import toggles, privileges
-from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import (
+    requires_privilege_for_commcare_user,
+    requires_privilege_with_fallback,
+)
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.app_manager.dbaccessors import (
-    get_latest_build_doc,
-    get_latest_released_app_doc,
+    get_app,
     get_app_ids_in_domain,
     get_current_app,
     get_current_app_doc,
+    get_latest_build_doc,
+    get_latest_released_app_doc,
 )
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
+from corehq.apps.app_manager.exceptions import (
+    FormNotFoundException,
+    ModuleNotFoundException,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_cloudcare_session_data
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.cloudcare.const import (
+    PREVIEW_APP_ENVIRONMENT,
+    WEB_APPS_ENVIRONMENT,
+)
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
+from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
-from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT, PREVIEW_APP_ENVIRONMENT
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
+from corehq.apps.domain.decorators import (
+    domain_admin_required,
+    login_and_domain_required,
+    login_or_digest_ex,
+)
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.formdetails import readable
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
-    use_legacy_jquery,
     use_jquery_ui,
+    use_legacy_jquery,
 )
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_edit_commcare_users
+from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.exceptions import XFormNotFound
-from six.moves import filter
-from six.moves import map
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from xml2json.lib import xml2json
 
 
 @require_cloudcare_access

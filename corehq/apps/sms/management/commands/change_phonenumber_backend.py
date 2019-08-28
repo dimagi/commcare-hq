@@ -1,10 +1,10 @@
 import os
 import sys
-
 from collections import defaultdict
 
-import csv342 as csv
 from django.core.management.base import BaseCommand
+
+import csv
 from six.moves import input
 
 from corehq.util.log import with_progress_bar

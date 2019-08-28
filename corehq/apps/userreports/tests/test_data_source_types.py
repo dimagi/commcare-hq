@@ -1,4 +1,7 @@
-from corehq.apps.userreports.const import DATA_SOURCE_TYPE_AGGREGATE, DATA_SOURCE_TYPE_STANDARD
+from corehq.apps.userreports.const import (
+    DATA_SOURCE_TYPE_AGGREGATE,
+    DATA_SOURCE_TYPE_STANDARD,
+)
 from corehq.apps.userreports.models import guess_data_source_type
 from corehq.util.test_utils import generate_cases
 

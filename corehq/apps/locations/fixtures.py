@@ -5,14 +5,18 @@ from xml.etree.cElementTree import Element, SubElement
 
 from django.contrib.postgres.fields.array import ArrayField
 from django.db.models import IntegerField, Q
+
+import six
 from django_cte import With
 from django_cte.raw import raw_cte_sql
-import six
 
 from casexml.apps.phone.fixtures import FixtureProvider
+
 from corehq import toggles
 from corehq.apps.app_manager.const import (
-    DEFAULT_LOCATION_FIXTURE_OPTION, SYNC_FLAT_FIXTURES, SYNC_HIERARCHICAL_FIXTURE
+    DEFAULT_LOCATION_FIXTURE_OPTION,
+    SYNC_FLAT_FIXTURES,
+    SYNC_HIERARCHICAL_FIXTURE,
 )
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.fixtures.utils import get_index_schema_node

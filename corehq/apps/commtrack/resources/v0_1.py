@@ -1,10 +1,10 @@
 from tastypie import fields
 
+from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import DomainAdminAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.products.models import Product
 from corehq.apps.api.util import get_object_or_not_exist
-from corehq.apps.api.resources import HqBaseResource
+from corehq.apps.products.models import Product
 
 
 """

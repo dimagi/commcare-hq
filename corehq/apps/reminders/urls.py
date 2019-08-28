@@ -1,11 +1,11 @@
 from django.conf.urls import url
 
 from corehq.apps.reminders.views import (
-    KeywordsListView,
-    AddStructuredKeywordView,
-    EditStructuredKeywordView,
     AddNormalKeywordView,
+    AddStructuredKeywordView,
     EditNormalKeywordView,
+    EditStructuredKeywordView,
+    KeywordsListView,
 )
 
 urlpatterns = [

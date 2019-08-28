@@ -1,9 +1,11 @@
 
+import six
+
+from casexml.apps.case.models import CommCareCase
+from dimagi.utils.couch.database import iter_docs
+
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert.api import soft_assert
-from dimagi.utils.couch.database import iter_docs
-from casexml.apps.case.models import CommCareCase
-import six
 
 
 def get_case_ids_in_domain(domain, type=None):

@@ -1,4 +1,4 @@
-import csv342 as csv
+import csv
 
 from datetime import datetime
 

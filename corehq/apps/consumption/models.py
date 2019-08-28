@@ -1,6 +1,6 @@
-from dimagi.ext.couchdbkit import Document, StringProperty, DecimalProperty
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from dimagi.ext.couchdbkit import DecimalProperty, Document, StringProperty
 
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 
 TYPE_DOMAIN = 'domain'
 TYPE_PRODUCT = 'product'

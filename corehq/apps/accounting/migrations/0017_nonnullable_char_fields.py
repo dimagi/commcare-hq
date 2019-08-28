@@ -3,8 +3,6 @@
 from django.db import migrations
 
 
-
-
 def _assign_default_values(apps, schema_editor):
     Subscription = apps.get_model('accounting', 'Subscription')
     Subscription.objects.filter(

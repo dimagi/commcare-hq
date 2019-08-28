@@ -3,15 +3,19 @@ from collections import Counter
 import dateutil
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps import es
-from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type, get_doc_ids_in_domain_by_type
-from corehq.apps.es import aggregations
-from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
-from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import all_known_formlike_doc_types
+
+from corehq.apps import es
+from corehq.apps.domain.dbaccessors import (
+    get_doc_count_in_domain_by_type,
+    get_doc_ids_in_domain_by_type,
+)
+from corehq.apps.es import aggregations
+from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
 def get_es_counts_by_doc_type(domain, es_indices=None, extra_filters=None):

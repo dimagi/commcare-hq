@@ -1,4 +1,4 @@
-import csv342 as csv
+import csv
 import re
 from datetime import datetime, timedelta
 

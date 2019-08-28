@@ -1,6 +1,8 @@
 # coding=utf-8
 from django.test import SimpleTestCase
-from mock import patch, Mock
+
+from mock import Mock, patch
+
 from corehq.apps.app_manager.views.notifications import notify_event
 
 

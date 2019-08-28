@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from django.test import SimpleTestCase
 
 from corehq.apps.aggregate_ucrs.date_utils import Month, Week

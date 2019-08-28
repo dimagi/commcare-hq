@@ -1,14 +1,17 @@
 from datetime import datetime, time
+
 from django import test as unittest
 from django.test.client import RequestFactory
+
+from dimagi.utils.dates import DateSpan
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.sql_db.connections import Session
 from corehq.util.dates import iso_string_to_date
-from dimagi.utils.dates import DateSpan
 
 from .sql_fixture import load_data
-from .sql_reports import test_report, UserTestReport, RegionTestReport
+from .sql_reports import RegionTestReport, UserTestReport, test_report
 
 DOMAIN = "test"
 

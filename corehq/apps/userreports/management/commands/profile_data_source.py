@@ -3,7 +3,9 @@ import pstats
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
+from corehq.apps.change_feed.data_sources import (
+    get_document_store_for_doc_type,
+)
 from corehq.apps.userreports.models import get_datasource_config
 
 

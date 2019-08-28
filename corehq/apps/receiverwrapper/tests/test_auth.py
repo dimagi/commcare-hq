@@ -1,20 +1,23 @@
+import os
 import uuid
+
+from django.test import TestCase
 from django.urls import reverse
+
 from six.moves.urllib.parse import urlencode
 
+from couchforms import openrosa_response
+
+import django_digest.test
+from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
+from corehq.apps.receiverwrapper.views import secure_post
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.submission_post import SubmissionPost
-import django_digest.test
-from django.test import TestCase
-import os
-from corehq.apps.app_manager.models import Application
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.receiverwrapper.views import secure_post
-from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
-from couchforms import openrosa_response
+from corehq.form_processor.tests.utils import use_sql_backend
 
 
 class FakeFile(object):

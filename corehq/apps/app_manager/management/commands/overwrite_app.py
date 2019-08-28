@@ -2,8 +2,12 @@
 from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 
-from corehq.apps.app_manager.dbaccessors import get_current_app, get_build_doc_by_version, \
-    get_latest_released_app_doc, wrap_app
+from corehq.apps.app_manager.dbaccessors import (
+    get_build_doc_by_version,
+    get_current_app,
+    get_latest_released_app_doc,
+    wrap_app,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.views.utils import overwrite_app
 from corehq.apps.userreports.util import get_static_report_mapping

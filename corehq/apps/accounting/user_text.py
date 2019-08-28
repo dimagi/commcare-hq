@@ -1,8 +1,6 @@
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.accounting.models import (
-    FeatureType,
-    SoftwarePlanEdition
-)
+
+from corehq.apps.accounting.models import FeatureType, SoftwarePlanEdition
 
 DESC_BY_EDITION = {
     SoftwarePlanEdition.COMMUNITY: {

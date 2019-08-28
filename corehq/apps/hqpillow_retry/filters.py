@@ -1,8 +1,11 @@
 from collections import defaultdict
+
 from django.db.models.aggregates import Count
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
 from django.utils.translation import ugettext_noop as _
+
 from pillow_retry.models import PillowError
+
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
 
 
 class PillowErrorFilter(BaseDrilldownOptionFilter):

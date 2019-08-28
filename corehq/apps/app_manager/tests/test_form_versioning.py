@@ -1,11 +1,17 @@
-from django.test.testcases import TestCase, SimpleTestCase
+from django.test.testcases import SimpleTestCase, TestCase
+
 from mock import patch
 
+from corehq.apps.app_manager.models import (
+    Application,
+    Form,
+    FormLink,
+    Module,
+    import_app,
+)
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
-from corehq.apps.app_manager.models import Application, Module, Form, import_app, FormLink
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.builds.models import BuildSpec
-
 
 BLANK_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">

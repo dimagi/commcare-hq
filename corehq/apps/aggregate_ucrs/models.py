@@ -1,15 +1,29 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+
 from jsonfield import JSONField
 from memoized import memoized
 
-from corehq.apps.aggregate_ucrs.aggregations import AGGREGATION_UNIT_CHOICE_MONTH, AGGREGATION_UNIT_CHOICE_WEEK
-from corehq.apps.aggregate_ucrs.column_specs import PRIMARY_COLUMN_TYPE_CHOICES, PrimaryColumnAdapter, \
-    SecondaryColumnAdapter, SECONDARY_COLUMN_TYPE_CHOICES, IdColumnAdapter, MonthColumnAdapter, WeekColumnAdapter
-from corehq.apps.userreports.models import get_datasource_config, SQLSettings, AbstractUCRDataSource
+from corehq.apps.aggregate_ucrs.aggregations import (
+    AGGREGATION_UNIT_CHOICE_MONTH,
+    AGGREGATION_UNIT_CHOICE_WEEK,
+)
+from corehq.apps.aggregate_ucrs.column_specs import (
+    PRIMARY_COLUMN_TYPE_CHOICES,
+    SECONDARY_COLUMN_TYPE_CHOICES,
+    IdColumnAdapter,
+    MonthColumnAdapter,
+    PrimaryColumnAdapter,
+    SecondaryColumnAdapter,
+    WeekColumnAdapter,
+)
+from corehq.apps.userreports.models import (
+    AbstractUCRDataSource,
+    SQLSettings,
+    get_datasource_config,
+)
 from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.sql_db.connections import UCR_ENGINE_ID
-
 
 MAX_COLUMN_NAME_LENGTH = MAX_TABLE_NAME_LENGTH = 63
 

@@ -1,12 +1,12 @@
-import csv342 as csv
-
 from django.core.management.base import BaseCommand, CommandError
+
+import csv
+
 from corehq import toggles
-from corehq.apps.app_manager.models import Domain
+from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
+from corehq.apps.app_manager.models import Application, Domain
 from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.toggles import NAMESPACE_DOMAIN
-from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
-from corehq.apps.app_manager.models import Application
 
 
 class Command(BaseCommand):

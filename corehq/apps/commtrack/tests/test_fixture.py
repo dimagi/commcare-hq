@@ -5,19 +5,21 @@ from xml.etree import cElementTree as ElementTree
 
 from django.test import TestCase
 
+from six.moves import range
+
 from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
 from casexml.apps.phone.tests.utils import (
     call_fixture_generator,
     create_restore_user,
     deprecated_generate_restore_payload,
 )
+
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.programs.fixtures import program_fixture_generator
+from corehq.apps.commtrack.tests import util
 from corehq.apps.products.fixtures import product_fixture_generator
 from corehq.apps.products.models import Product
+from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.programs.models import Program
-from corehq.apps.commtrack.tests import util
-from six.moves import range
 
 
 class FixtureTest(TestCase, TestXmlMixin):

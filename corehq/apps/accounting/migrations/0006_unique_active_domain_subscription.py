@@ -2,7 +2,6 @@
 
 from django.db import migrations
 
-
 from corehq.util.django_migrations import add_if_not_exists_raw
 
 

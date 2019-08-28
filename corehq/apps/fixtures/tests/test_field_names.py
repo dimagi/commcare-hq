@@ -1,11 +1,16 @@
 from xml.etree import cElementTree as ElementTree
 
-from django.test import TestCase, SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, \
-    FixtureTypeField, \
-    FixtureItemField, FieldList
+
+from corehq.apps.fixtures.models import (
+    FieldList,
+    FixtureDataItem,
+    FixtureDataType,
+    FixtureItemField,
+    FixtureTypeField,
+)
 from corehq.apps.fixtures.utils import is_identifier_invalid
 
 

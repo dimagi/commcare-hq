@@ -1,13 +1,14 @@
+from django.test import SimpleTestCase
+
 from mock import patch
 
-from corehq.apps.app_manager.tests.app_factory import AppFactory
-from django.test import SimpleTestCase
+from corehq.apps.app_manager.const import WORKFLOW_PREVIOUS
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Module,
     PreloadAction,
 )
-from corehq.apps.app_manager.const import WORKFLOW_PREVIOUS
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 DOMAIN = 'domain'

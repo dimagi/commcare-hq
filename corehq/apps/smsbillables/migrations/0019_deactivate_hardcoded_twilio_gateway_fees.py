@@ -5,7 +5,6 @@ from django.db import migrations
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 
 
-
 def deactivate_hardcoded_twilio_gateway_fees(apps, schema_editor):
     SmsGatewayFeeCriteria = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria')
 

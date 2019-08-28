@@ -1,12 +1,12 @@
-from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
-
-from corehq.apps.domain.models import Domain
-from corehq.apps.app_manager.models import Application, Module
-from corehq.util.view_utils import reverse
+from django.core.management.base import BaseCommand, CommandError
 
 from couchdbkit import ResourceNotFound
 from six.moves import range
+
+from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.domain.models import Domain
+from corehq.util.view_utils import reverse
 
 
 class Command(BaseCommand):

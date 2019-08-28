@@ -1,18 +1,21 @@
 import json
+
+from memoized import memoized
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 from tastypie.resources import Resource
 
+from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import LoginAndDomainAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import object_does_not_exist
-from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import (
-    location_safe, LOCATION_ACCESS_DENIED)
+    LOCATION_ACCESS_DENIED,
+    location_safe,
+)
 from corehq.apps.users.models import WebUser
 from corehq.util.quickcache import quickcache
-from memoized import memoized
 
 from ..models import SQLLocation
 from ..permissions import user_can_access_location_id

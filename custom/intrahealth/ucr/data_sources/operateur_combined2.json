@@ -1644,75 +1644,6 @@
             "datatype": null,
             "type": "property_path",
             "property_path": [
-              "adjusted_monthly_consumption"
-            ]
-          },
-          "type": "conditional",
-          "expression_if_false": {
-            "test": {
-              "comment": null,
-              "type": "named",
-              "name": "is_not_v2.0"
-            },
-            "expression_if_true": {
-              "test": {
-                "comment": null,
-                "type": "named",
-                "name": "is_not_v2.1"
-              },
-              "expression_if_true": {
-                "datatype": null,
-                "type": "property_path",
-                "property_path": [
-                  "question4",
-                  "adjusted_monthly_consumption"
-                ]
-              },
-              "type": "conditional",
-              "expression_if_false": {
-                "datatype": null,
-                "type": "property_path",
-                "property_path": [
-                  "is_relevant",
-                  "product_confirmed_info",
-                  "question4",
-                  "adjusted_monthly_consumption"
-                ]
-              }
-            },
-            "type": "conditional",
-            "expression_if_false": {
-              "datatype": null,
-              "type": "property_path",
-              "property_path": [
-                "is-relevant",
-                "question4",
-                "adjusted_monthly_consumption"
-              ]
-            }
-          }
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "adjusted_monthly_consumption"
-      },
-        {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "integer",
-        "expression": {
-          "test": {
-            "comment": null,
-            "type": "named",
-            "name": "is_v1"
-          },
-          "expression_if_true": {
-            "datatype": null,
-            "type": "property_path",
-            "property_path": [
               "pps_stock_new"
             ]
           },
@@ -1765,6 +1696,76 @@
         "column_id": "pps_stock_new"
       },
 
+
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "expression": {
+            "datatype": "integer",
+            "type": "property_path",
+            "property_path": [
+                "form",
+                "confirmed_products_update",
+                "products_update",
+                "question4",
+              "adjusted_monthly_consumption"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "column_id": "adjusted_monthly_consumption"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "expression": {
+            "datatype": "integer",
+            "type": "property_path",
+            "property_path": [
+                "form",
+              "delivery_amt_owed"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "column_id": "delivery_amt_owed"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "expression": {
+            "datatype": "integer",
+            "type": "property_path",
+            "property_path": [
+                "form",
+              "delivery_total_margin"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "column_id": "delivery_total_margin"
+      },
 
 
 

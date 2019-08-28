@@ -1,4 +1,5 @@
 from collections import namedtuple
+
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 

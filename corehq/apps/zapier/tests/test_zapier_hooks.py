@@ -1,16 +1,15 @@
 import json
 
-from django.urls import reverse
 from django.test.testcases import TestCase
+from django.urls import reverse
 
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
-from corehq.motech.repeaters.models import FormRepeater, CreateCaseRepeater
-from corehq.apps.zapier.consts import EventTypes, CASE_TYPE_REPEATER_CLASS_MAP
-from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
+from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP, EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
-
+from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
+from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
+from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
+from corehq.motech.repeaters.models import CreateCaseRepeater, FormRepeater
 
 ZAPIER_URL = "https://zapier.com/hooks/standard/1387607/5ccf35a5a1944fc9bfdd2c94c28c9885/"
 TEST_DOMAIN = 'test-domain'

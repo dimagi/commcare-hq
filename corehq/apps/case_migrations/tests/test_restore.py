@@ -1,7 +1,10 @@
 import uuid
+
 from django.test import TestCase
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+
 from casexml.apps.case.const import CASE_INDEX_CHILD
+from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from ..views import get_case_hierarchy_for_restore

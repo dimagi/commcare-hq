@@ -1,12 +1,15 @@
-import xlrd
-
 from django.core.management.base import BaseCommand
 
+import xlrd
+
 from corehq.apps.accounting.models import Currency
+from corehq.apps.sms.models import OUTGOING
+from corehq.apps.smsbillables.models import (
+    SmsGatewayFee,
+    SmsGatewayFeeCriteria,
+)
 from corehq.apps.smsbillables.utils import log_smsbillables_info
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
-from corehq.apps.sms.models import OUTGOING
-from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 
 
 def bootstrap_mach_gateway(apps):

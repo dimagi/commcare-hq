@@ -1,7 +1,10 @@
 import datetime
+
 from django.core.management.base import BaseCommand
-from corehq.motech.repeaters.models import RepeatRecord
+
 from dimagi.utils.post import simple_post
+
+from corehq.motech.repeaters.models import RepeatRecord
 
 
 class Command(BaseCommand):

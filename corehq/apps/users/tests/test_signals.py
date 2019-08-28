@@ -1,23 +1,25 @@
 import uuid
 
 from django.test import SimpleTestCase
+
 from elasticsearch.exceptions import ConnectionError
-from mock import patch, MagicMock
+from mock import MagicMock, patch
+
+from dimagi.utils.couch.undo import DELETED_SUFFIX
+# Also, you need to patch the path to the function in the file where the signal
+# handler uses it, not where it's actually defined.  That's quite a gotcha.
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.reports.analytics.esaccessors import get_user_stubs
 from corehq.elastic import doc_exists_in_es, get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.test_utils import trap_extra_setup, mock_out_couch
-from dimagi.utils.couch.undo import DELETED_SUFFIX
+from corehq.util.test_utils import mock_out_couch, trap_extra_setup
 
 from ..models import CommCareUser, WebUser
 
 # Note that you can't directly patch the signal handler, as that code has
 # already been called.  It's easier to patch something that the handler calls.
 
-# Also, you need to patch the path to the function in the file where the signal
-# handler uses it, not where it's actually defined.  That's quite a gotcha.
-from pillowtop.es_utils import initialize_index_and_mapping
 
 
 @mock_out_couch()

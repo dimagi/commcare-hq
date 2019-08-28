@@ -1,5 +1,5 @@
-from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.apps.es.fake.es_query_fake import HQESQueryFake
+from corehq.pillows.user import transform_user_for_elasticsearch
 
 
 class UserESFake(HQESQueryFake):

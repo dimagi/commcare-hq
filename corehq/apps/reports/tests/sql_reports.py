@@ -1,16 +1,16 @@
 # coding=utf-8
 from numbers import Number
-from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
-from corehq.apps.reports.util import format_datatables_data
+
 from memoized import memoized
-
 from nose.tools import nottest
-
 from sqlagg import *
 from sqlagg.columns import *
 
-from ..sqlreport import SqlTabularReport, DatabaseColumn, AggregateColumn
+from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from corehq.apps.reports.util import format_datatables_data
+
+from ..sqlreport import AggregateColumn, DatabaseColumn, SqlTabularReport
 
 
 def combine_indicator(num, denom):

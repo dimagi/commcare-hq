@@ -1,10 +1,12 @@
+from django.core.cache import cache
+
 from couchdbkit import (
     BooleanProperty,
     DocumentSchema,
     ResourceNotFound,
     StringProperty,
 )
-from django.core.cache import cache
+
 from corehq.apps.domain.models import Domain
 
 

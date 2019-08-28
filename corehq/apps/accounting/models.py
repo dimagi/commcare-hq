@@ -1,27 +1,32 @@
 import datetime
-from decimal import Decimal
 import itertools
+from decimal import Decimal
 from io import BytesIO
 from tempfile import NamedTemporaryFile
 
-
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
-from django.contrib.postgres.fields import ArrayField
 from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils.translation import ugettext_lazy as _
-from django_prbac.models import Role
 
 import jsonfield
+import six
 import stripe
-
-from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
+from django_prbac.models import Role
 from memoized import memoized
+
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    SafeSaveDocument,
+    StringProperty,
+)
 from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.emails import send_subscription_change_alert
@@ -43,8 +48,8 @@ from corehq.apps.accounting.subscription_changes import (
     DomainUpgradeActionHandler,
 )
 from corehq.apps.accounting.utils import (
-    ensure_domain_instance,
     EXCHANGE_RATE_DECIMAL_PLACES,
+    ensure_domain_instance,
     fmt_dollar_amount,
     get_account_name_from_default_name,
     get_address_from_invoice,
@@ -60,15 +65,14 @@ from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
-from corehq.blobs.mixin import BlobMixin, CODES
+from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
+from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
-from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
-import six
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 

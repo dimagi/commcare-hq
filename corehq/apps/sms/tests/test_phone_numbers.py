@@ -1,20 +1,29 @@
+from datetime import datetime, timedelta
+
+from django.test import TestCase
+
+from mock import patch
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import PhoneNumberInUseException
-from corehq.apps.sms.models import (SQLMobileBackend, SQLMobileBackendMapping,
-    PhoneNumber)
-from corehq.apps.sms.tasks import delete_phone_numbers_for_owners, sync_case_phone_number
+from corehq.apps.sms.models import (
+    PhoneNumber,
+    SQLMobileBackend,
+    SQLMobileBackendMapping,
+)
+from corehq.apps.sms.tasks import (
+    delete_phone_numbers_for_owners,
+    sync_case_phone_number,
+)
 from corehq.apps.sms.tests.util import delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from datetime import datetime, timedelta
-from django.test import TestCase
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.util.test_utils import create_test_case
-from mock import patch
 
 
 class PhoneNumberCacheClearTestCase(TestCase):

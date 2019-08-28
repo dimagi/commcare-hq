@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+
 from corehq.apps.users.custom_data import _get_invalid_user_data_fields
 from corehq.apps.users.models import CommCareUser
 

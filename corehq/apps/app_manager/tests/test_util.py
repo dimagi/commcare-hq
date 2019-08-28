@@ -2,11 +2,7 @@
 from django.http import Http404
 from django.test.testcases import TestCase
 
-from corehq.apps.app_manager.models import (
-    AdvancedModule,
-    Application,
-    Module,
-)
+from corehq.apps.app_manager.models import AdvancedModule, Application, Module
 from corehq.apps.app_manager.util import LatestAppInfo
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 from corehq.apps.domain.models import Domain

@@ -1,6 +1,8 @@
 import datetime
-import architect
+
 from django.db import models
+
+import architect
 
 ENTRY_RECORD_FREQUENCY = datetime.timedelta(hours=6)
 

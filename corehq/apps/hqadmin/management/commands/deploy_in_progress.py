@@ -1,5 +1,6 @@
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from django.core.management.base import BaseCommand
+
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 DEPLOY_IN_PROGRESS_FLAG = 'deploy_in_progress'
 

@@ -2,16 +2,21 @@ import os
 
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.models import ReportModule, ReportAppConfig
-from corehq.apps.callcenter.app_parser import (
-    parse_indicator, ParsedIndicator, get_call_center_config_from_app,
-    _get_indicators_used_in_modules, _get_indicators_used_in_forms
-)
+from corehq.apps.app_manager.models import ReportAppConfig, ReportModule
 from corehq.apps.callcenter import const
-from corehq.apps.callcenter.tests.test_models import get_indicator_slugs_from_config
-from corehq.apps.domain.models import Domain, CallCenterProperties
+from corehq.apps.callcenter.app_parser import (
+    ParsedIndicator,
+    _get_indicators_used_in_forms,
+    _get_indicators_used_in_modules,
+    get_call_center_config_from_app,
+    parse_indicator,
+)
 from corehq.apps.callcenter.fixturegenerators import IndicatorsFixturesProvider
-from corehq.util.test_utils import generate_cases, TestFileMixin
+from corehq.apps.callcenter.tests.test_models import (
+    get_indicator_slugs_from_config,
+)
+from corehq.apps.domain.models import CallCenterProperties, Domain
+from corehq.util.test_utils import TestFileMixin, generate_cases
 
 
 class TestUseFixturesConfig(SimpleTestCase):

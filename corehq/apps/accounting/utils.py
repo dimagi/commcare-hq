@@ -1,13 +1,14 @@
-from collections import defaultdict, namedtuple
 import datetime
 import logging
+from collections import defaultdict, namedtuple
 
-import six
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from django_prbac.models import Role, UserRole, Grant
+import six
+from django_prbac.models import Grant, Role, UserRole
+
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 
@@ -19,7 +20,6 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-
 
 logger = logging.getLogger('accounting')
 

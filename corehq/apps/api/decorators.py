@@ -1,6 +1,8 @@
 import base64
-from corehq.apps.api.models import ApiUser
+
 from django.http import HttpResponse
+
+from corehq.apps.api.models import ApiUser
 
 
 def api_user_basic_auth(permission, realm=''):

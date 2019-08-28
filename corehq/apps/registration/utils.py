@@ -1,31 +1,43 @@
 
 import logging
-
-from django.db import transaction
-from django.utils.translation import ugettext
 import uuid
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
+
+from django.conf import settings
+from django.db import transaction
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext
+
 from celery import chord
+
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.couch.database import get_safe_write_kwargs
+from dimagi.utils.name_to_url import name_to_url
+from dimagi.utils.web import get_ip, get_site_domain, get_url_base
+
 from corehq.apps.accounting.models import (
-    SoftwarePlanEdition, DefaultProductPlan, BillingAccount, BillingContactInfo,
-    BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
-    SubscriptionType, PreOrPostPay,
     DEFAULT_ACCOUNT_FORMAT,
+    BillingAccount,
+    BillingAccountType,
+    BillingContactInfo,
+    Currency,
+    DefaultProductPlan,
+    PreOrPostPay,
+    SoftwarePlanEdition,
+    Subscription,
+    SubscriptionAdjustmentMethod,
+    SubscriptionType,
 )
 from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
+from corehq.apps.analytics.tasks import (
+    HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID,
+    send_hubspot_form,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.tasks import send_domain_registration_email
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.name_to_url import name_to_url
-from dimagi.utils.web import get_ip, get_url_base, get_site_domain
-from django.conf import settings
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser, CouchUser, UserRole
-from corehq.apps.hqwebapp.tasks import send_html_email_async
-from dimagi.utils.couch.database import get_safe_write_kwargs
-from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID
+from corehq.apps.users.models import CouchUser, UserRole, WebUser
 from corehq.util.view_utils import absolute_reverse
 
 APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']

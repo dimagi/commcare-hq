@@ -1,6 +1,7 @@
 
-import attr
 from django.test import SimpleTestCase
+
+import attr
 
 from ..asyncforms import PartiallyLockingQueue
 

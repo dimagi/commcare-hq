@@ -38,10 +38,7 @@ from corehq.apps.translations.app_translations.utils import (
 from corehq.apps.translations.utils import (
     update_app_translations_from_trans_dict,
 )
-from corehq.util.workbook_json.excel import (
-    WorkbookJSONError,
-    get_workbook,
-)
+from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
 
 @no_conflict_require_POST

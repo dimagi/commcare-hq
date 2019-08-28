@@ -6,7 +6,6 @@ from django.db import migrations
 from corehq.privileges import LOGIN_AS
 
 
-
 def _grandfather_login_as(apps, schema_editor):
     call_command(
         'cchq_prbac_grandfather_privs',

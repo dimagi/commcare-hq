@@ -9,14 +9,14 @@ from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from couchexport.models import Format
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
@@ -51,7 +51,10 @@ from corehq.apps.export.tasks import (
     get_saved_export_task_status,
     rebuild_saved_export,
 )
-from corehq.apps.export.views.edit import EditExportDescription, EditExportNameView
+from corehq.apps.export.views.edit import (
+    EditExportDescription,
+    EditExportNameView,
+)
 from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     user_can_view_deid_exports,
@@ -69,6 +72,7 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     has_permission_to_view_report,
 )
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse

@@ -3,8 +3,6 @@
 from django.db import migrations, models
 
 
-
-
 def _product_type_to_is_product(apps, schema_editor):
     CreditLine = apps.get_model('accounting', 'CreditLine')
     assert {pt['product_type'] for pt in CreditLine.objects.values('product_type').distinct()} <= set(['', None])

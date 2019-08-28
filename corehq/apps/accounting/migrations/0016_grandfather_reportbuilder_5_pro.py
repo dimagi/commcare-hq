@@ -6,7 +6,6 @@ from django.db import migrations
 from corehq.privileges import REPORT_BUILDER_5
 
 
-
 def _grandfather_reportbuilder_5_pro(apps, schema_editor):
     call_command(
         'cchq_prbac_grandfather_privs',

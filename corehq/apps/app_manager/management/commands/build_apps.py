@@ -1,9 +1,12 @@
 import contextlib
 import json
-import time
-from django.core.management.base import BaseCommand
-from lxml import etree
 import os
+import time
+
+from django.core.management.base import BaseCommand
+
+from lxml import etree
+
 from corehq.apps.app_manager.dbaccessors import wrap_app
 
 try:

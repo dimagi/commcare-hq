@@ -1,4 +1,5 @@
 from django.conf.urls import url
+
 from corehq.apps.hqpillow_retry.views import EditPillowError
 
 urlpatterns = [

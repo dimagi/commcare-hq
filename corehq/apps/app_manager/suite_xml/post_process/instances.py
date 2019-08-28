@@ -1,13 +1,15 @@
-from collections import defaultdict
 import re
+from collections import defaultdict
+
 from django.utils.translation import ugettext as _
+
+import six
+from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
-from memoized import memoized
-import six
 
 
 class EntryInstances(PostProcessor):

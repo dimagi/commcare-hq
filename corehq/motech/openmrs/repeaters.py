@@ -1,9 +1,40 @@
 import json
 from collections import defaultdict
-
-import six
 from itertools import chain
 
+from django.urls import reverse
+from django.utils.functional import cached_property
+from django.utils.translation import ugettext_lazy as _
+
+import six
+from memoized import memoized
+
+from casexml.apps.case.xform import extract_case_blocks
+from couchforms.signals import successful_form_received
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DocumentSchema,
+    SchemaDictProperty,
+    SchemaProperty,
+    StringProperty,
+)
+
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.motech.const import DIRECTION_IMPORT
+from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT, XMLNS_OPENMRS
+from corehq.motech.openmrs.logger import logger
+from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
+from corehq.motech.openmrs.repeater_helpers import (
+    OpenmrsResponse,
+    get_case_location_ancestor_repeaters,
+    get_patient,
+    get_relevant_case_updates_from_form_json,
+)
+from corehq.motech.openmrs.workflow import execute_workflow
 from corehq.motech.openmrs.workflow_tasks import (
     CreatePersonAddressTask,
     CreateVisitsEncountersObsTask,
@@ -13,41 +44,18 @@ from corehq.motech.openmrs.workflow_tasks import (
     UpdatePersonNameTask,
     UpdatePersonPropertiesTask,
 )
-from corehq.motech.openmrs.logger import logger
-from corehq.motech.openmrs.workflow import execute_workflow
-from corehq.motech.utils import pformat_json
-
-from dimagi.ext.couchdbkit import (
-    BooleanProperty,
-    DateTimeProperty,
-    DocumentSchema,
-    SchemaDictProperty,
-    SchemaProperty,
-    StringProperty,
-)
-from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
-from django.urls import reverse
-
-from corehq.motech.const import DIRECTION_IMPORT
-from casexml.apps.case.xform import extract_case_blocks
 from corehq.motech.repeaters.models import CaseRepeater
-from corehq.motech.repeaters.repeater_generators import FormRepeaterJsonPayloadGenerator
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.toggles import OPENMRS_INTEGRATION
-from corehq.motech.repeaters.signals import create_repeat_records
-from couchforms.signals import successful_form_received
-from corehq.motech.openmrs.const import XMLNS_OPENMRS, ATOM_FEED_NAME_PATIENT
-from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
-from corehq.motech.openmrs.repeater_helpers import (
-    get_relevant_case_updates_from_form_json,
-    get_case_location_ancestor_repeaters,
-    get_patient,
-    OpenmrsResponse,
+from corehq.motech.repeaters.repeater_generators import (
+    FormRepeaterJsonPayloadGenerator,
 )
+from corehq.motech.repeaters.signals import create_repeat_records
 from corehq.motech.requests import Requests
-from corehq.motech.value_source import get_form_question_values, CaseTriggerInfo
-from memoized import memoized
+from corehq.motech.utils import pformat_json
+from corehq.motech.value_source import (
+    CaseTriggerInfo,
+    get_form_question_values,
+)
+from corehq.toggles import OPENMRS_INTEGRATION
 
 
 class AtomFeedStatus(DocumentSchema):

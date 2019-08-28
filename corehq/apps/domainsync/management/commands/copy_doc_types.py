@@ -1,6 +1,7 @@
 import logging
 
 from django.core.management.base import BaseCommand
+
 from couchdbkit.client import Database
 
 logger = logging.getLogger(__name__)

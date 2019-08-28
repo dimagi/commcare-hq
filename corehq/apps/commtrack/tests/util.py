@@ -1,5 +1,6 @@
-import six
 from datetime import datetime
+
+import six
 from lxml import etree
 
 from casexml.apps.phone.utils import MockDevice
@@ -9,18 +10,18 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import make_location, LocationType
+from corehq.apps.locations.models import LocationType, make_location
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
+from corehq.form_processor.parsers.ledgers.helpers import (
+    StockTransactionHelper,
+)
 from corehq.util.decorators import require_debug_true
 
 from ..const import StockActions
 from ..sms import to_instance
-from ..util import (get_or_create_default_program,
-                    get_supply_point_and_location)
-
+from ..util import get_or_create_default_program, get_supply_point_and_location
 
 TEST_DOMAIN = 'commtrack-test'
 TEST_LOCATION_TYPE = 'outlet'

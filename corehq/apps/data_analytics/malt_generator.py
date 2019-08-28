@@ -1,23 +1,26 @@
 import logging
-
 from collections import namedtuple
-from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.data_analytics.esaccessors import get_app_submission_breakdown_es
-from corehq.apps.data_analytics.models import MALTRow
-from corehq.apps.data_analytics.const import AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET
-from corehq.apps.domain.models import Domain
-from corehq.const import MISSING_APP_ID
-from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_rows
-from corehq.apps.users.models import CouchUser
-from corehq.util.quickcache import quickcache
 
 from django.db import IntegrityError
 from django.http.response import Http404
 
-from dimagi.utils.chunked import chunked
 import six
+
+from dimagi.utils.chunked import chunked
+
+from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.data_analytics.const import AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET
+from corehq.apps.data_analytics.esaccessors import (
+    get_app_submission_breakdown_es,
+)
+from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_rows
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
+from corehq.const import MISSING_APP_ID
+from corehq.util.quickcache import quickcache
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

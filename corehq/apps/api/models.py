@@ -2,18 +2,23 @@ import os
 from collections import defaultdict
 from functools import wraps
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.http import HttpResponse
 
-from corehq.apps.api.resources import DictObject
-from corehq.form_processor.abstract_models import CaseToXMLMixin
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+import six
+from couchdbkit.exceptions import ResourceNotFound
+from six.moves import filter
+
 from couchforms import const
 from dimagi.ext.couchdbkit import *
-import six
-from six.moves import filter
+
+from corehq.apps.api.resources import DictObject
+from corehq.form_processor.abstract_models import CaseToXMLMixin
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
