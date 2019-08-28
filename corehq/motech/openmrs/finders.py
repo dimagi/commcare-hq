@@ -73,8 +73,7 @@ class PatientFinder(DocumentSchema):
 
     @classmethod
     def wrap(cls, data):
-
-        if 'create_missing' in data and data['create_missing'] in (True, False):
+        if 'create_missing' in data and isinstance(data['create_missing'], bool):
             data['create_missing'] = {
                 'doc_type': 'ConstantString',
                 'external_data_type': OPENMRS_DATA_TYPE_BOOLEAN,
