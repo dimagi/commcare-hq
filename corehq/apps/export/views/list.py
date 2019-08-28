@@ -885,7 +885,7 @@ class ODataFeedListHelper(ExportListHelper):
     form_or_case = None
     is_deid = False
     include_saved_filters = True
-    beta_odata_feed_limit = 20
+    beta_odata_feed_limit = 10
 
     @property
     def create_export_form(self):
