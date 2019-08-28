@@ -17,9 +17,9 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 
 class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
-    slug = 'taux_des_stocks_pna_disponible_par_produit_report'
+    slug = 'valeur_des_stocks_pna_disponible_report'
     comment = 'Valeur des stocks PNA disponible (chaque produit)'
-    name = 'Taux des stocks PNA disponible par Produit'
+    name = 'Valeur des stocks PNA disponible'
     default_rows = 10
     exportable = True
 
