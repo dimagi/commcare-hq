@@ -238,7 +238,7 @@ class RecapPassageTwoProgramFilter(BaseReportFilter):
     slug = 'program'
     label = "Programme"
     included_programs = [
-        'VIH', 'TUBERCULOSE', 'PRODUITS ESSENTIELS 3'
+        'VIH', 'TUBERCULOSE', 'PRODUITS ESSENTIELS 3',
         'PRODUITS ESSENTIELS 4', 'PRODUITS ESSENTIELS 5',
         'PRODUITS ESSENTIELS 6',
         'TEST PROGRAM'
