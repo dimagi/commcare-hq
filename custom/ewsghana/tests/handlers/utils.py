@@ -104,11 +104,6 @@ class EWSScriptTest(EWSTestCase, TestScript):
         )
         stock_transaction.save()
 
-    def setUp(self):
-        super(EWSScriptTest, self).setUp()
-        Product.get_by_code(TEST_DOMAIN, 'mc')
-        Product.get_by_code(TEST_DOMAIN, 'lf')
-
     def tearDown(self):
         StockTransaction.objects.all().delete()
         StockReport.objects.all().delete()

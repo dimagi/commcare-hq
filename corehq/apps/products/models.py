@@ -154,17 +154,6 @@ class Product(Document):
             clear_fixture_cache(domain, prefix)
 
     @classmethod
-    def get_by_code(cls, domain, code):
-        if not code:
-            return None
-        try:
-            sql_product = SQLProduct.objects.get(domain=domain, code__iexact=code)
-        except SQLProduct.DoesNotExist:
-            return None
-        else:
-            return cls.get(sql_product.product_id)
-
-    @classmethod
     def by_domain(cls, domain, wrap=True, include_archived=False):
         queryset = SQLProduct.objects.filter(domain=domain)
         if not include_archived:
@@ -196,15 +185,6 @@ class Product(Document):
             )
 
         return product_dict
-
-    def custom_property_dict(self):
-        from corehq.apps.commtrack.util import encode_if_needed
-        property_dict = {}
-
-        for prop, val in six.iteritems(self.product_data):
-            property_dict['data: ' + prop] = encode_if_needed(val)
-
-        return property_dict
 
     def archive(self):
         """
