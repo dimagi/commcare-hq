@@ -77,5 +77,15 @@ class MissingFormXml(Exception):
     pass
 
 
+class DeleteNotAllowed(Exception):
+
+    @classmethod
+    def check(cls, domain):
+        from corehq.apps.couch_sql_migration.progress import \
+            couch_sql_migration_in_progress
+        if couch_sql_migration_in_progress(domain):
+            raise cls("couch-to-SQL migration in progress")
+
+
 class FormEditNotAllowed(Exception):
     pass

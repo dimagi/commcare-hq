@@ -34,7 +34,9 @@ from corehq.form_processor.exceptions import (
     AttachmentNotFound,
     CaseSaveError,
     LedgerSaveError,
-    LedgerValueNotFound)
+    LedgerValueNotFound,
+    NotAllowed,
+)
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor,
     AbstractFormAccessor,
@@ -498,6 +500,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def hard_delete_forms(domain, form_ids, delete_attachments=True):
         assert isinstance(form_ids, list)
+        NotAllowed.check(domain)
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
@@ -527,6 +530,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         from corehq.form_processor.change_publishers import publish_form_saved
 
         assert isinstance(form_ids, list)
+        NotAllowed.check(domain)
         problem = 'Restored on {}'.format(datetime.utcnow())
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
@@ -559,6 +563,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         from corehq.form_processor.change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
+        NotAllowed.check(domain)
         deletion_date = deletion_date or datetime.utcnow()
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(

@@ -50,6 +50,7 @@ from corehq.form_processor.exceptions import (
     CaseNotFound,
     FormEditNotAllowed,
     MissingFormXml,
+    NotAllowed,
 )
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -820,6 +821,37 @@ class MigrationTestCase(BaseMigrationTestCase):
         if data.get("@xmlns", "") == SYSTEM_ACTION_XMLNS:
             return f"{data['name']} {json.loads(data['args'])[0]}"
         return form.form_id
+
+    def test_migrate_deleted_form_after_live_migration(self):
+        self.submit_form(make_test_form("form-1"), timedelta(minutes=-95))
+        self.submit_form(make_test_form("form-2"), timedelta(minutes=-90)).soft_delete()
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        with self.assertRaises(NotAllowed):
+            FormAccessors(self.domain_name).get_form("form-1").soft_delete()
+        with self.assertRaises(NotAllowed):
+            FormAccessorSQL.hard_delete_forms(self.domain_name, ["form-1"])
+        with self.assertRaises(NotAllowed):
+            FormAccessors(self.domain_name).soft_undelete_forms(["form-2"])
+        self.assertEqual(self._get_form_ids(), {"form-1"})
+        deleted = FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain_name)
+        self.assertEqual(set(deleted), {"form-2"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.assert_backend("couch")
+        with self.assertRaises(NotAllowed):
+            FormAccessors(self.domain_name).get_form("form-1").soft_delete()
+        with self.assertRaises(NotAllowed):
+            FormAccessors(self.domain_name).soft_undelete_forms(["form-2"])
+
+        self._do_migration_and_assert_flags(self.domain_name)
+        deleted = FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain_name)
+        self.assertEqual(set(deleted), {"form-2"})
+        self.assertEqual(self._get_form_ids(), {"form-1"})
+        self.assertEqual(self._get_case_ids("CommCareCase"), {"test-case"})
+        self._compare_diffs([])
 
     def test_reset_migration(self):
         now = datetime.utcnow()

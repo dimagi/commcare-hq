@@ -30,7 +30,11 @@ from lxml.etree import XMLSyntaxError
 
 from corehq.blobs.mixin import DeferredBlobMixin, CODES
 from corehq.form_processor.abstract_models import AbstractXFormInstance
-from corehq.form_processor.exceptions import XFormNotFound, MissingFormXml
+from corehq.form_processor.exceptions import (
+    MissingFormXml,
+    NotAllowed,
+    XFormNotFound,
+)
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils import clean_metadata
 
@@ -272,6 +276,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
         return safe_index(self, path.split("/"))
 
     def soft_delete(self):
+        NotAllowed.check(self.domain)
         self.doc_type += DELETED_SUFFIX
         self.save()
 
