@@ -852,6 +852,32 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_case_ids("CommCareCase"), {"test-case"})
         self._compare_diffs([])
 
+    def test_delete_user_during_migration(self):
+        from corehq.apps.users.models import CommCareUser
+        user = CommCareUser.create(self.domain_name, "mobile-user", "123")
+        # NOTE user is deleted when domain is deleted in tearDown
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        with self.assertRaises(NotAllowed):
+            user.retire()
+        with self.assertRaises(NotAllowed):
+            user.unretire()
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.assert_backend("couch")
+        with self.assertRaises(NotAllowed):
+            user.retire()
+        with self.assertRaises(NotAllowed):
+            user.unretire()
+
+        self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(action=COMMIT)
+        user.retire()
+        user.unretire()
+
     def test_reset_migration(self):
         now = datetime.utcnow()
         self.submit_form(make_test_form("test-1"), now - timedelta(minutes=95))
