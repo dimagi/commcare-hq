@@ -9,7 +9,7 @@ from couchforms.dbaccessors import get_commtrack_forms
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.sms import handle
 from corehq.apps.commtrack.tests import util
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -26,7 +26,6 @@ class SMSTests(TestCase):
         cls.domain = util.bootstrap_domain(util.TEST_DOMAIN)
         util.bootstrap_location_types(cls.domain.name)
         util.bootstrap_products(cls.domain.name)
-        cls.products = sorted(Product.by_domain(cls.domain.name), key=lambda p: p._id)
         cls.loc = util.make_loc('loc1')
         cls.sp = cls.loc.linked_supply_point()
         cls.users = [util.bootstrap_user(cls, **user_def) for user_def in cls.user_definitions]
@@ -47,11 +46,11 @@ class SMSTests(TestCase):
         if not case_id:
             case_id = self.sp.case_id
 
-        [product] = [p for p in self.products if p.code_ == code]
+        product = SQLProduct.objbects.get(domain=self.domain.name, code=code)
 
         try:
             state = StockState.objects.get(
-                product_id=product._id,
+                product_id=product.product_id,
                 case_id=case_id,
                 section_id=section_id
             )
@@ -91,8 +90,8 @@ class StockReportTest(SMSTests):
         self.assertEqual(3, report.stocktransaction_set.count())
 
         for code, amt in amounts.items():
-            [product] = [p for p in self.products if p.code_ == code]
-            trans = StockTransaction.objects.get(product_id=product._id)
+            product = SQLProduct.objbects.get(domain=self.domain.name, code=code)
+            trans = StockTransaction.objects.get(product_id=product.product_id)
             self.assertEqual(self.sp.case_id, trans.case_id)
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
@@ -115,8 +114,8 @@ class StockReportTest(SMSTests):
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
         for code, amt in amounts.items():
-            [product] = [p for p in self.products if p.code_ == code]
-            trans = StockTransaction.objects.get(product_id=product._id)
+            product = SQLProduct.objbects.get(domain=self.domain.name, code=code)
+            trans = StockTransaction.objects.get(product_id=product.product_id)
             self.assertEqual(self.sp.case_id, trans.case_id)
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)

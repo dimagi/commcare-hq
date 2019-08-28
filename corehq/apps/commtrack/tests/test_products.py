@@ -24,25 +24,22 @@ class ProductsTest(TestCase):
     def test_archive(self):
         bootstrap_products(self.domain)
         products = sorted(Product.by_domain(self.domain), key=lambda p: p._id)
-        original_list = Product.by_domain(self.domain, wrap=False)
+        original_number_products = SQLProduct.objects.filter(domain=self.domain).count()
 
         products[0].archive()
 
-        new_list = Product.by_domain(self.domain, wrap=False)
+        new_list = SQLProduct.objects.filter(domain=self.domain).values_list('product_id', flat=True)
 
         self.assertTrue(
-            products[0]._id not in [p['_id'] for p in new_list],
+            products[0]._id not in new_list,
             "Archived product still returned by Product.by_domain()"
         )
 
-        self.assertEqual(
-            len(new_list),
-            len(original_list) - 1
-        )
+        self.assertEqual(len(new_list), original_number_products - 1)
 
         self.assertEqual(
-            len(Product.by_domain(self.domain, wrap=False, include_archived=True)),
-            len(original_list)
+            SQLProduct.objects.filter(domain=self.domain).count(),
+            original_number_products
         )
 
         self.assertEqual(
@@ -53,8 +50,8 @@ class ProductsTest(TestCase):
         products[0].unarchive()
 
         self.assertEqual(
-            len(original_list),
-            len(Product.by_domain(self.domain, wrap=False))
+            original_number_products,
+            SQLProduct.objects.filter(domain=self.domain).count(),
         )
 
     def test_sync(self):
