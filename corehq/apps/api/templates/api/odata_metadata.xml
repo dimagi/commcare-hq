@@ -2,32 +2,17 @@
 <edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
     <edmx:DataServices>
         <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="CommCare">
-            {% for case_type, properties in case_type_to_properties.items %}
-            <EntityType Name="{{ case_type }}" >
+            <EntityType Name="feed" >
                 <Key>
-                    <PropertyRef Name="case_id" />
+                    <PropertyRef Name="{{ primary_key }}" />
                 </Key>
-                <Property Name="case_id" Type="Edm.String" Nullable="false"/>
-                <Property Name="closed" Type="Edm.Boolean" />
-                <Property Name="domain" Type="Edm.String" Nullable="false"/>
-                <Property Name="date_closed" Type="Edm.DateTimeOffset" />
-                <Property Name="date_modified" Type="Edm.DateTimeOffset" />
-                <Property Name="opened_by" Type="Edm.String" />
-                <Property Name="server_date_modified" Type="Edm.DateTimeOffset" />
-                <Property Name="server_date_opened" Type="Edm.DateTimeOffset" />
-                <Property Name="user_id" Type="Edm.String" />
-                <!-- todo: this isn't working - may be a tableau limitation on list properties -->
-                <Property Name="xform_ids" Type="Collection(Edm.String)" />
-                {% for property in properties %}
-                <Property Name="{{ property }}" Type="Edm.String" />
+                {% for field in fields %}
+                <Property Name="{{ field.name }}" Type="{{ field.odata_type }}" />
                 {% endfor %}
             </EntityType>
-            {% endfor %}
 
             <EntityContainer Name="Container" >
-                {% for case_type in case_type_to_properties %}
-                <EntitySet Name="{{ case_type }}" EntityType="CommCare.{{ case_type }}"/>
-                {% endfor %}
+                <EntitySet Name="feed" EntityType="CommCare.feed"/>
             </EntityContainer>
         </Schema>
     </edmx:DataServices>

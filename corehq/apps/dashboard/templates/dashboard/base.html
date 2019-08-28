@@ -193,5 +193,23 @@
       </p>
     </div>
   {% endif %}
+  {% if request|ui_notify_enabled:"BI_PREVIEW_UPDATE" and request|feature_preview_enabled:"BI_INTEGRATION_PREVIEW" %}
+    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+         style="position: absolute; width: 200px;"
+         data-target="#ProjectDataTab"
+         data-slug="{{ "ECD_PREVIEW_UPDATE"|ui_notify_slug }}"
+         role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <p class="lead">
+        {% blocktrans %}
+          Impress your stakeholders with powerful data insights and
+          visualizations. Check out our new and most direct integration
+          with PowerBi and Tableau!
+        {% endblocktrans %}
+      </p>
+    </div>
+  {% endif %}
 {% endblock %}
 
