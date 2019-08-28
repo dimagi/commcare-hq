@@ -10,7 +10,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack.models import CommtrackActionConfig, CommtrackConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.analytics.esaccessors import (
     get_wrapped_ledger_values,
     products_with_ledgers,
@@ -53,15 +53,6 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
     @memoized
     def config(self):
         return CommtrackConfig.for_domain(self.domain)
-
-    @property
-    @memoized
-    def products(self):
-        prods = Product.by_domain(self.domain, wrap=False)
-        return sorted(prods, key=lambda p: p['name'])
-
-    def ordered_products(self, ordering):
-        return sorted(self.products, key=lambda p: (0, ordering.index(p['name'])) if p['name'] in ordering else (1, p['name']))
 
     @property
     def actions(self):

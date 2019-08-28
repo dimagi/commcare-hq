@@ -35,6 +35,13 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
         )
 
     @property
+    @memoized
+    def active_product(self):
+        product_id = self.config.get('product_id')
+        if product_id:
+            return SQLProduct.objects.get(domain=self.domain, product_id=product_id)
+
+    @property
     def locations(self):
         locations = self.active_location.get_descendants(
             include_self=True
@@ -57,10 +64,9 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
 
     def get_data(self):
         if self.active_product:
-            sql_product = SQLProduct.objects.get(product_id=self.active_product.get_id)
             filtered_locations = [
                 location for location in self.locations
-                if sql_product in location.products
+                if self.active_product in location.products
             ]
         else:
             filtered_locations = []
@@ -69,7 +75,7 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
                 stock_states = StockState.objects.filter(
                     case_id=location.supply_point_id,
                     section_id=STOCK_SECTION_TYPE,
-                    product_id=self.active_product.get_id
+                    product_id=self.active_product.product_id
                 ).order_by('-last_modified_date')
             else:
                 stock_states = None

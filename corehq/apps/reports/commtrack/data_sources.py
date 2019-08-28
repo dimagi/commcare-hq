@@ -17,7 +17,6 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import Product
 from corehq.apps.reports.analytics.couchaccessors import (
     get_ledger_values_for_case_as_of,
 )
@@ -80,13 +79,6 @@ class CommtrackDataSourceMixin(object):
     def active_location(self):
         loc_id = self.config.get('location_id')
         return SQLLocation.objects.get_or_None(domain=self.domain, location_id=loc_id)
-
-    @property
-    @memoized
-    def active_product(self):
-        prod_id = self.config.get('product_id')
-        if prod_id:
-            return Product.get(prod_id)
 
     @property
     @memoized
