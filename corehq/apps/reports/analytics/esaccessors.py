@@ -54,9 +54,9 @@ def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_a
             TermsAggregation('user_id', 'form.meta.userID').aggregation(
                 TopHitsAggregation(
                     'top_hits_last_form_submissions',
-                    'form.meta.timeEnd',
+                    'received_on',
                     is_ascending=False,
-                    include='form.meta.timeEnd',
+                    include='received_on',
                 )
             )
         )
@@ -67,7 +67,7 @@ def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_a
     buckets_dict = aggregations.user_id.buckets_dict
     result = {}
     for user_id, bucket in six.iteritems(buckets_dict):
-        result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['form']['meta']['timeEnd'])
+        result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['received_on'])
     return result
 
 
