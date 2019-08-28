@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext_noop as _
 
-
 # this is just here to mark some strings from settings for translation
 # in a safer way.
 # there is almost certainly a smarter way to do this.

@@ -1,5 +1,7 @@
 import json
+
 from django import forms
+
 import six
 
 from corehq.util.python_compatibility import soft_assert_type_text

@@ -1,9 +1,12 @@
 import logging
 
-from couchdbkit.exceptions import BulkSaveError
-from corehq.util.couch import categorize_bulk_save_errors
-from dimagi.utils.couch.database import get_db
 from django.core.management.base import BaseCommand
+
+from couchdbkit.exceptions import BulkSaveError
+
+from dimagi.utils.couch.database import get_db
+
+from corehq.util.couch import categorize_bulk_save_errors
 
 logger = logging.getLogger(__name__)
 

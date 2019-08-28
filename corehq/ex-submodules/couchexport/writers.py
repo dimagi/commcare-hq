@@ -6,7 +6,7 @@ import os
 import re
 import tempfile
 import zipfile
-import csv342 as csv
+import csv
 import json
 import bz2
 from collections import OrderedDict

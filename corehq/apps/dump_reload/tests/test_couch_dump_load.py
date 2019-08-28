@@ -2,29 +2,33 @@ import json
 import os
 import random
 import uuid
-from io import BytesIO
 from collections import Counter
+from io import BytesIO
+
+from django.test import SimpleTestCase, TestCase
 
 from couchdbkit.exceptions import ResourceNotFound
-from django.test import SimpleTestCase
-from django.test import TestCase
 from mock import Mock
+from six.moves import range
+
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.dump_reload.couch import CouchDataDumper
-from corehq.apps.dump_reload.couch import CouchDataLoader
-from corehq.apps.dump_reload.couch.dump import get_doc_ids_to_dump, ToggleDumper, DOC_PROVIDERS
+from corehq.apps.dump_reload.couch import CouchDataDumper, CouchDataLoader
+from corehq.apps.dump_reload.couch.dump import (
+    DOC_PROVIDERS,
+    ToggleDumper,
+    get_doc_ids_to_dump,
+)
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider
 from corehq.apps.dump_reload.couch.load import ToggleLoader
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.apps.userreports.const import VALID_REFERENCED_DOC_TYPES
-from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles
 from corehq.util.couch import get_document_class_by_doc_type
 from corehq.util.test_utils import mock_out_couch
-from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.bulk import get_docs
-from dimagi.utils.couch.database import iter_docs
-from six.moves import range
 
 
 class CouchDumpLoadTest(TestCase):

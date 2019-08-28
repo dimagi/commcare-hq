@@ -1,9 +1,9 @@
-import random
 import logging
+import random
+
 from django.core.cache import cache
 
 from memoized import memoized
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel('DEBUG')

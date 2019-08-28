@@ -1,6 +1,11 @@
-from casexml.apps.stock.models import StockReport, StockTransaction, DocDomainMapping
-from corehq.apps.products.models import SQLProduct
+from casexml.apps.stock.models import (
+    DocDomainMapping,
+    StockReport,
+    StockTransaction,
+)
 from phonelog.models import DeviceReportEntry
+
+from corehq.apps.products.models import SQLProduct
 
 
 def copy_postgres_data_for_docs(remote_postgres_slug, doc_ids, simulate=False):
@@ -33,4 +38,3 @@ def copy_postgres_data_for_docs(remote_postgres_slug, doc_ids, simulate=False):
                 # this can cause primary key conflicts to overwrite local data I think. Oh well?
                 item.save(using='default')
                 print('Synced {}/{} {}'.format(i + 1, count, model.__name__))
-

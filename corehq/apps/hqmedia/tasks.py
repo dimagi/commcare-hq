@@ -7,13 +7,13 @@ import tempfile
 import zipfile
 from wsgiref.util import FileWrapper
 
-from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
 from celery.task import task
 from celery.utils.log import get_task_logger
 
+from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.util import expose_cached_download, expose_file_download
 

@@ -1,9 +1,11 @@
-import pytz
 from django.template.loader import render_to_string
-from memoized import memoized
 # For translations
 from django.utils.translation import ugettext_noop
-from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS, CSS_FIELD_CLASS
+
+import pytz
+from memoized import memoized
+
+from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS, CSS_LABEL_CLASS
 
 
 class BaseReportFilter(object):

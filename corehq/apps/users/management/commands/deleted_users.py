@@ -6,7 +6,9 @@ from django.core.management import BaseCommand
 
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
-from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_mobile_user_ids,
+)
 from corehq.apps.users.models import CommCareUser
 
 

@@ -1,7 +1,8 @@
 from collections import namedtuple
-from django.utils.translation import ugettext as _
-from corehq.apps.locations.models import SQLLocation
 
+from django.utils.translation import ugettext as _
+
+from corehq.apps.locations.models import SQLLocation
 
 LocationCache = namedtuple("LocationCache", "is_error location message")
 

@@ -1,14 +1,17 @@
-from collections import namedtuple
 import os
-import six
-from tempfile import mkstemp
 import uuid
+from collections import namedtuple
+from tempfile import mkstemp
+
 from django.core.cache import caches
+
+import six
+from memoized import memoized
+
 from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.util import random_url_id
 from corehq.util.files import file_extention_from_filename
-from memoized import memoized
 
 BUCKET = 'case_importer'
 

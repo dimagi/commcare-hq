@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
+
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 
 
 class SyncWebUserTestCase(TestCase):

@@ -1,6 +1,8 @@
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.translation import localize
-from django.utils.translation import ugettext as _, ugettext_noop
 
 MSG_MULTIPLE_SESSIONS = "sms.survey.restart"
 MSG_TOUCHFORMS_DOWN = "sms.survey.temporarilydown"

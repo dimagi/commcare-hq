@@ -1,6 +1,8 @@
 from abc import ABCMeta, abstractmethod
-import six
+
 from django.utils.translation import ugettext_lazy as _
+
+import six
 
 from corehq.apps.app_manager.models import Form
 from corehq.apps.app_manager.xform import XForm

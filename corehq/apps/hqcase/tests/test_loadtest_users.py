@@ -1,9 +1,13 @@
 from django.test import TestCase
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.tests.util import extract_caseblocks_from_xml
+
+from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+from casexml.apps.case.tests.util import (
+    delete_all_cases,
+    extract_caseblocks_from_xml,
+)
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import run_with_all_backends

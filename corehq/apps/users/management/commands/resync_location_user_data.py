@@ -1,7 +1,9 @@
+from django.core.management.base import BaseCommand
+
+from dimagi.utils.couch.database import iter_docs
+
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.couch.database import iter_docs
-from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):

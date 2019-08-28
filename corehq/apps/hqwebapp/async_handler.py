@@ -1,6 +1,6 @@
 import json
 
-from django.http import HttpResponse, HttpRequest
+from django.http import HttpRequest, HttpResponse
 from django.utils.functional import cached_property
 
 import six

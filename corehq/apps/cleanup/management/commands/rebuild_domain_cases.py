@@ -1,6 +1,9 @@
 import logging
+
 from django.core.management.base import BaseCommand, CommandError
+
 from casexml.apps.case.cleanup import rebuild_case_from_forms
+
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.utils import should_use_sql_backend

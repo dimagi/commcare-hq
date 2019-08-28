@@ -20,8 +20,8 @@ from sqlalchemy import (
     or_,
 )
 
-
-from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
+from corehq.apps.tzmigration.planning import Base, DiffDB
+from corehq.apps.tzmigration.planning import PlanningDiff as Diff
 
 
 def init_state_db(domain, state_dir):

@@ -1,6 +1,7 @@
-from corehq.preindex import ExtraPreindexPlugin
 from django.apps import AppConfig
 from django.conf import settings
+
+from corehq.preindex import ExtraPreindexPlugin
 
 
 class AppManagerAppConfig(AppConfig):

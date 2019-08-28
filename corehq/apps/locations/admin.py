@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import SQLLocation, LocationType, LocationRelation
+
+from .models import LocationRelation, LocationType, SQLLocation
 
 
 class LocationTypeAdmin(admin.ModelAdmin):

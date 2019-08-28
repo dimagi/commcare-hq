@@ -1,9 +1,10 @@
+from couchdbkit.exceptions import ResourceNotFound
+
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.messaging.scheduling.custom_recipients import (
     host_case_owner_location_from_case,
     host_case_owner_location_parent_from_case,
 )
-from corehq.form_processor.exceptions import CaseNotFound
-from couchdbkit.exceptions import ResourceNotFound
 
 
 def host_case_owner_location(handler, reminder):

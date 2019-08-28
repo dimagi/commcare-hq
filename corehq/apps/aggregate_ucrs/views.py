@@ -9,10 +9,16 @@ from django.utils.translation import ugettext_lazy
 from corehq import toggles
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
 from corehq.apps.aggregate_ucrs.tasks import populate_aggregate_table_data_task
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    login_or_basic,
+)
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.apps.userreports.views import BaseUserConfigReportsView, swallow_programming_errors, \
-    export_sql_adapter_view
+from corehq.apps.userreports.views import (
+    BaseUserConfigReportsView,
+    export_sql_adapter_view,
+    swallow_programming_errors,
+)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 

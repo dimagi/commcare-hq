@@ -1,10 +1,13 @@
 import json
-import requests
 from collections import defaultdict
-from django.core.management.base import BaseCommand
+
 from django.conf import settings
-from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
+from django.core.management.base import BaseCommand
+
+import requests
 from jsonobject.base import DefaultProperty
+
+from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty
 
 # This command relies on a properly formatted json spec in order to run.
 # Here is an example of a spec:

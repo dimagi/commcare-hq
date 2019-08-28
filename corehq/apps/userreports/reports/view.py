@@ -1,77 +1,89 @@
 import json
+from contextlib import closing, contextmanager
 from io import BytesIO
-from contextlib import contextmanager, closing
 
-from django.http.response import HttpResponseServerError
-from django.shortcuts import redirect, render
-
-from corehq.apps.domain.decorators import track_domain_request
-from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.reports.util import DatatablesParams
-from corehq.apps.reports_core.filters import Choice, PreFilter
-from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
-from corehq.apps.hqwebapp.decorators import (
-    use_daterangepicker,
-    use_jquery_ui,
-    use_nvd3,
-    use_datatables,
-)
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
-    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
-from corehq.apps.userreports.tasks import export_ucr_async
-
-from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
-from dimagi.utils.dates import DateSpan
-from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
-from django.http import HttpRequest, HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.http import (
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
+from django.http.response import HttpResponseServerError
+from django.shortcuts import redirect, render
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
+import six
 from braces.views import JSONResponseMixin
-from corehq.apps.locations.permissions import conditionally_location_safe
-from corehq.apps.reports.dispatcher import (
-    ReportDispatcher,
-)
-from corehq.apps.saved_reports.models import ReportConfig
-from corehq.apps.reports_core.exceptions import FilterException
-from corehq.apps.userreports.exceptions import (
-    BadSpecError,
-    UserReportsError,
-    TableNotFoundWarning,
-    UserReportsFilterError,
-    DataSourceConfigurationNotFoundError)
-from corehq.apps.userreports.models import (
-    CUSTOM_REPORT_PREFIX,
-    StaticReportConfiguration,
-    ReportConfiguration,
-    report_config_id_is_static,
-)
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
-from corehq.apps.userreports.reports.util import (
-    ReportExport,
-    has_location_filter,
-)
-from corehq.apps.userreports.util import (
-    default_language,
-    has_report_builder_trial,
-    has_report_builder_access,
-    can_edit_report,
-    get_ucr_class_name)
-from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
-    DocumentNotFound
-from corehq.util.view_utils import reverse
-from couchexport.models import Format
 from memoized import memoized
 
+from couchexport.models import Format
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_request
-from no_exceptions.exceptions import Http403
-
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 
+from corehq.apps.domain.decorators import track_domain_request
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
+from corehq.apps.hqwebapp.decorators import (
+    use_datatables,
+    use_daterangepicker,
+    use_jquery_ui,
+    use_nvd3,
+)
+from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
-import six
+from corehq.apps.reports.dispatcher import ReportDispatcher
+from corehq.apps.reports.util import DatatablesParams
+from corehq.apps.reports_core.exceptions import FilterException
+from corehq.apps.reports_core.filters import Choice, PreFilter
+from corehq.apps.saved_reports.models import ReportConfig
+from corehq.apps.userreports.const import (
+    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    REPORT_BUILDER_EVENTS_KEY,
+)
+from corehq.apps.userreports.exceptions import (
+    BadSpecError,
+    DataSourceConfigurationNotFoundError,
+    TableNotFoundWarning,
+    UserReportsError,
+    UserReportsFilterError,
+)
+from corehq.apps.userreports.models import (
+    CUSTOM_REPORT_PREFIX,
+    ReportConfiguration,
+    StaticReportConfiguration,
+    report_config_id_is_static,
+)
+from corehq.apps.userreports.reports.data_source import (
+    ConfigurableReportDataSource,
+)
+from corehq.apps.userreports.reports.util import (
+    ReportExport,
+    has_location_filter,
+)
+from corehq.apps.userreports.tasks import export_ucr_async
+from corehq.apps.userreports.util import (
+    can_edit_report,
+    default_language,
+    get_ucr_class_name,
+    has_report_builder_access,
+    has_report_builder_trial,
+)
+from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
+from corehq.util.couch import (
+    DocumentNotFound,
+    get_document_or_404,
+    get_document_or_not_found,
+)
+from corehq.util.view_utils import reverse
+from no_exceptions.exceptions import Http403
 
 
 def get_filter_values(filters, request_dict, user=None):

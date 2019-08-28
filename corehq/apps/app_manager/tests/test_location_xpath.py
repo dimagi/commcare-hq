@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+
 from corehq.apps.app_manager.exceptions import LocationXpathValidationError
 from corehq.apps.app_manager.xpath import LocationXpath
 

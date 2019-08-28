@@ -5,9 +5,12 @@ from datetime import datetime
 
 from django.db.models import Q
 
-from corehq.apps.domain_migration_flags.exceptions import DomainMigrationProgressError
+from corehq.apps.domain_migration_flags.exceptions import (
+    DomainMigrationProgressError,
+)
 from corehq.toggles import DATA_MIGRATION
 from corehq.util.quickcache import quickcache
+
 from .models import DomainMigrationProgress, MigrationStatus
 
 log = logging.getLogger(__name__)

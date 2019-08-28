@@ -3,8 +3,6 @@
 from django.db import migrations, models
 
 
-
-
 def _copy_product_name_to_product_rate_name(apps, schema_editor):
     SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
     for product_rate in SoftwareProductRate.objects.all():

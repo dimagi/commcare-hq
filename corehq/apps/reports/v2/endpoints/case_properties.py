@@ -1,16 +1,16 @@
 
 import json
 
-from memoized import memoized
-
 from django.utils.translation import ugettext as _
+
+from memoized import memoized
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties_for_case_type,
 )
 from corehq.apps.case_search.const import (
-    SPECIAL_CASE_PROPERTIES,
     CASE_COMPUTED_METADATA,
+    SPECIAL_CASE_PROPERTIES,
 )
 from corehq.apps.reports.standard.cases.filters import (
     get_flattened_case_properties,

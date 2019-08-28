@@ -1,10 +1,10 @@
 
 import logging
-import six
 from itertools import chain
 
 from django.utils.translation import ugettext_lazy as _
 
+import six
 
 LOG_LEVEL_CHOICES = (
     (99, 'Disable logging'),

@@ -1,10 +1,19 @@
 from django.conf.urls import url
 
 from corehq.apps.app_manager.views import (
-    download_index, download_suite, download_media_suite, download_profile,
-    download_media_profile, download_odk_profile, download_odk_media_profile,
-    download_app_strings, download_xform, download_jad, download_raw_jar,
-    download_jar, download_practice_user_restore
+    download_app_strings,
+    download_index,
+    download_jad,
+    download_jar,
+    download_media_profile,
+    download_media_suite,
+    download_odk_media_profile,
+    download_odk_profile,
+    download_practice_user_restore,
+    download_profile,
+    download_raw_jar,
+    download_suite,
+    download_xform,
 )
 
 urlpatterns = [

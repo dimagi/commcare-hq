@@ -2,9 +2,9 @@
 
 from django.db import migrations
 
-from corehq.apps.smsbillables.management.commands.deactivate_grapevine_instance_fee_criteria import \
-    deactivate_grapevine_instance_fee_criteria
-
+from corehq.apps.smsbillables.management.commands.deactivate_grapevine_instance_fee_criteria import (
+    deactivate_grapevine_instance_fee_criteria,
+)
 
 
 def deactivate_grapevine_instance_fees(apps, schema_editor):

@@ -2,9 +2,9 @@
 
 from django.db import migrations
 
-from corehq.apps.accounting.bootstrap.config.report_builder_v0 import BOOTSTRAP_CONFIG as report_builder_config
+from corehq.apps.accounting.bootstrap.config.report_builder_v0 import \
+    BOOTSTRAP_CONFIG as report_builder_config
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
-
 
 
 def _cchq_software_plan_update(apps, schema_editor):

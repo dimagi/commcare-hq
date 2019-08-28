@@ -1,10 +1,10 @@
 from django.test import SimpleTestCase
 
 from corehq.apps.export.models import (
-    InferredSchema,
+    ExportItem,
     InferredExportGroupSchema,
+    InferredSchema,
     PathNode,
-    ExportItem
 )
 
 

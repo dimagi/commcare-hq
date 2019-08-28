@@ -1,7 +1,9 @@
 from django import template
+
 import pytz
-from corehq.util.timezones.conversions import ServerTime
 import six
+
+from corehq.util.timezones.conversions import ServerTime
 
 register = template.Library()
 

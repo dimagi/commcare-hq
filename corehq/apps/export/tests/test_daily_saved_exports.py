@@ -1,7 +1,8 @@
 from django.test import TestCase
-from mock import patch, MagicMock
 
-from corehq.apps.export.models import FormExportInstance, CaseExportInstance
+from mock import MagicMock, patch
+
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.export.tasks import saved_exports
 
 

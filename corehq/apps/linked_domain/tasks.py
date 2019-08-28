@@ -1,7 +1,9 @@
 
 from celery.task import task
 
-from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app_and_notify
+from corehq.apps.linked_domain.util import (
+    pull_missing_multimedia_for_app_and_notify,
+)
 
 
 @task(queue='background_queue')

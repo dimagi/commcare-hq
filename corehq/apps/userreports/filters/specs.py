@@ -1,12 +1,22 @@
 
-from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
-from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
+from django.utils.translation import ugettext as _
+
 from jsonobject.base import DefaultProperty
+
+from dimagi.ext.jsonobject import (
+    DictProperty,
+    JsonObject,
+    ListProperty,
+    StringProperty,
+)
+
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.expressions.getters import getter_from_property_reference
+from corehq.apps.userreports.expressions.getters import (
+    getter_from_property_reference,
+)
+from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.operators import OPERATORS
 from corehq.apps.userreports.specs import TypeProperty
-from django.utils.translation import ugettext as _
 
 
 class BaseFilterSpec(JsonObject):

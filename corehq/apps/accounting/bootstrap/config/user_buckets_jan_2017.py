@@ -1,9 +1,6 @@
 from decimal import Decimal
 
-from corehq.apps.accounting.models import (
-    FeatureType,
-    SoftwarePlanEdition,
-)
+from corehq.apps.accounting.models import FeatureType, SoftwarePlanEdition
 
 BOOTSTRAP_CONFIG = {
     (SoftwarePlanEdition.COMMUNITY, False, False): {

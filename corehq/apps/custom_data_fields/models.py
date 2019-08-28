@@ -1,15 +1,23 @@
 import re
-from dimagi.ext.couchdbkit import (Document, StringProperty,
-    BooleanProperty, SchemaListProperty, StringListProperty)
-from dimagi.ext.jsonobject import JsonObject
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 
-from .dbaccessors import get_by_domain_and_type
 import six
 from six.moves import filter
 
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    Document,
+    SchemaListProperty,
+    StringListProperty,
+    StringProperty,
+)
+from dimagi.ext.jsonobject import JsonObject
+
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+
+from .dbaccessors import get_by_domain_and_type
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # If mobile-worker is demo, this will be set to value 'demo'

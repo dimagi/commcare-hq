@@ -1,12 +1,16 @@
 # Use modern Python
 
+import six
+
 from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,
     SoftwarePlanVisibility,
 )
-from corehq.apps.accounting.utils import log_accounting_error, log_accounting_info
-import six
+from corehq.apps.accounting.utils import (
+    log_accounting_error,
+    log_accounting_info,
+)
 
 FEATURE_TYPES = [
     FeatureType.USER,

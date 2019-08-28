@@ -1,10 +1,11 @@
 import os
+
 from django.test import SimpleTestCase
 
+from corehq.apps.app_manager.xform import XForm
+from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.reports.tasks import summarize_user_counts
 from corehq.apps.reports.util import validate_xform_for_edit
-from corehq.apps.reports.exceptions import EditFormValidationError
-from corehq.apps.app_manager.xform import XForm
 from corehq.util.test_utils import TestFileMixin
 
 DOMAIN = 'test_domain'

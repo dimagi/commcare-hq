@@ -104,6 +104,36 @@ class YeksiNaaLocationFilter(AsyncLocationFilter):
         }
 
 
+class IndicateursDeBaseLocationFilter(AsyncLocationFilter):
+    label = ugettext_noop("Location")
+    slug = "yeksi_naa_location_async"
+    template = 'yeksi_naa/location_filter.html'
+
+    @property
+    def filter_context(self):
+        api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
+                                                        'resource_name': 'location_internal',
+                                                        'api_name': 'v0.5'})
+        selected_loc_id = self.request.GET.get('location_id')
+        locations = load_locs_json(self.domain, selected_loc_id)
+
+        to_return = {
+            'api_root': api_root,
+            'control_name': self.label,
+            'control_slug': self.slug,
+            'loc_id': selected_loc_id if selected_loc_id else '',
+            'locations': json.dumps(locations),
+            'hierarchy': [loc for loc in location_hierarchy_config(self.domain)],
+        }
+        to_return['hierarchy'].pop(1)
+
+        return to_return
+
+
+class YeksiRecapPassageNaaLocationFilter(YeksiNaaLocationFilter):
+    template = 'yeksi_naa/recap_passage_location_filter.html'
+
+
 class YeksiNaaLocationFilter2(LocationFilter):
     template = 'yeksi_naa/location_filter.html'
 
@@ -169,6 +199,72 @@ class ProgramFilter(BaseReportFilter):
             'programs': self.program(),
             'chosen_program': self.request.GET.get('program', ''),
         }
+
+
+class RecapPassageOneProgramFilter(BaseReportFilter):
+    template = "yeksi_naa/program_filter.html"
+    slug = 'program'
+    label = "Programme"
+    included_programs = [
+        'PALUDISME', 'PLANIFICATION FAMILIALE', 'IMPORTANCE VITALE 1',
+        'PRODUITS ESSENTIELS 1', 'PRODUITS ESSENTIELS 2',
+        'TEST PROGRAM'
+    ]
+
+    def program(self):
+        program_filter = [{
+            'name': 'All',
+            'value': "",
+        }]
+        programs = ProgramData(config={'domain': self.domain}).rows
+        for program in programs:
+            if program[1].upper() in self.included_programs:
+                program_filter.append({
+                    'name': program[1],
+                    'value': program[0],
+                })
+        return program_filter
+
+    @property
+    def filter_context(self):
+        return {
+            'programs': self.program(),
+            'chosen_program': self.request.GET.get('program', ''),
+        }
+
+
+class RecapPassageTwoProgramFilter(BaseReportFilter):
+    template = "yeksi_naa/program_filter.html"
+    slug = 'program'
+    label = "Programme"
+    included_programs = [
+        'VIH', 'TUBERCULOSE', 'PRODUITS ESSENTIELS 3'
+        'PRODUITS ESSENTIELS 4', 'PRODUITS ESSENTIELS 5',
+        'PRODUITS ESSENTIELS 6',
+        'TEST PROGRAM'
+    ]
+
+    def program(self):
+        program_filter = [{
+            'name': 'All',
+            'value': "",
+        }]
+        programs = ProgramData(config={'domain': self.domain}).rows
+        for program in programs:
+            if program[1].upper() in self.included_programs:
+                program_filter.append({
+                    'name': program[1],
+                    'value': program[0],
+                })
+        return program_filter
+
+    @property
+    def filter_context(self):
+        return {
+            'programs': self.program(),
+            'chosen_program': self.request.GET.get('program', ''),
+        }
+
 
 
 class ProgramsAndProductsFilter(BaseDrilldownOptionFilter):

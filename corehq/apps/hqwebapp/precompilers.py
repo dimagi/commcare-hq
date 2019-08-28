@@ -24,4 +24,3 @@ class LessFilter(CompilerFilter):
         content = super(LessFilter, self).input(**kwargs)
         # process absolute file paths
         return CssAbsoluteFilter(content).input(**kwargs)
-

@@ -1,11 +1,17 @@
 
-import six
 from django.test import TestCase
-from corehq.apps.commtrack.tests.util import bootstrap_domain, bootstrap_products, TEST_DOMAIN
-from corehq.apps.programs.models import Program
-from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.commtrack.util import make_program
+
+import six
 from couchdbkit import ResourceNotFound
+
+from corehq.apps.commtrack.tests.util import (
+    TEST_DOMAIN,
+    bootstrap_domain,
+    bootstrap_products,
+)
+from corehq.apps.commtrack.util import make_program
+from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.programs.models import Program
 
 
 class ProgramsTest(TestCase):

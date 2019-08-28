@@ -1,0 +1,187 @@
+{
+  "domains": [
+    "test-pna",
+    "ipm-senegal",
+    "testing-ipm-senegal"
+  ],
+  "server_environment": ["production", "pna"],
+  "config": {
+    "table_id": "indicateurs_de_base",
+    "display_name": "Indicateurs de Base",
+    "referenced_doc_type": "CommCareCase",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "type"
+      },
+      "type": "boolean_expression",
+      "comment": null,
+      "property_value": "planning"
+    },
+    "configured_indicators": [
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "District ID",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "district_id"
+            ]
+          }
+        },
+        "column_id": "district_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "Region ID",
+        "datatype": "string",
+        "expression": {
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "ancestor_location",
+            "location_id": {
+              "expression": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "district_id"
+              ]
+            },
+              "type": "root_doc"
+            },
+            "location_type": {
+              "type": "constant",
+              "constant": "Region"
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "region_id"
+      },
+        {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "district_name"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "type": "expression",
+        "column_id": "district_name"
+      },
+        {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "region_name"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "type": "expression",
+        "column_id": "region_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "date_prevue_livraison_debut"
+          ]
+        },
+        "datatype": "date",
+        "is_primary_key": false,
+        "column_id": "date_prevue_livraison_debut",
+        "is_nullable": true,
+        "type": "expression"
+      }, {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "date_prevue_livraison_fin"
+          ]
+        },
+        "datatype": "date",
+        "is_primary_key": false,
+        "column_id": "date_prevue_livraison_fin",
+        "is_nullable": true,
+        "type": "expression"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "nb_pps_enregistres"
+          ]
+        },
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "nb_pps_enregistres",
+        "is_nullable": true,
+        "type": "expression"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "nb_pps_visites"
+          ]
+        },
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "nb_pps_visites",
+        "is_nullable": true,
+        "type": "expression"
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {},
+    "engine_id": "ucr",
+    "disable_destructive_rebuild": false
+  }
+}

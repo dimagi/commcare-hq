@@ -1,6 +1,10 @@
 from django.test import TestCase
 
-from corehq.apps.commtrack.tests.util import make_loc, bootstrap_domain, bootstrap_location_types
+from corehq.apps.commtrack.tests.util import (
+    bootstrap_domain,
+    bootstrap_location_types,
+    make_loc,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser

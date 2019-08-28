@@ -3,18 +3,20 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
+
+from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+
 from corehq import toggles
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
-from corehq.apps.userreports.models import guess_data_source_type
-from corehq.apps.userreports.ui import help_text
-from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
-from corehq.apps.userreports.util import get_table_name
-from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
+from corehq.apps.userreports.models import guess_data_source_type
+from corehq.apps.userreports.ui import help_text
+from corehq.apps.userreports.ui.fields import JsonField, ReportDataSourceField
+from corehq.apps.userreports.util import get_table_name
 
 
 class DocumentFormBase(forms.Form):

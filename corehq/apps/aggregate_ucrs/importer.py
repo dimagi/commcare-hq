@@ -4,8 +4,13 @@ from their config specifications.
 """
 from uuid import UUID
 
-from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition, PrimaryColumn, SecondaryTableDefinition, \
-    SecondaryColumn, TimeAggregationDefinition
+from corehq.apps.aggregate_ucrs.models import (
+    AggregateTableDefinition,
+    PrimaryColumn,
+    SecondaryColumn,
+    SecondaryTableDefinition,
+    TimeAggregationDefinition,
+)
 
 
 def import_aggregation_models_from_spec(spec):

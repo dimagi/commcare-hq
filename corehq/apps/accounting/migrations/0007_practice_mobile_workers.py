@@ -2,8 +2,9 @@
 
 from django.db import migrations
 
-from corehq.apps.hqadmin.management.commands.cchq_prbac_bootstrap import cchq_prbac_bootstrap
-
+from corehq.apps.hqadmin.management.commands.cchq_prbac_bootstrap import (
+    cchq_prbac_bootstrap,
+)
 
 
 class Migration(migrations.Migration):

@@ -1,9 +1,14 @@
 from django.conf.urls import url
-from corehq.apps.ota.views import (
-    restore, search, claim, heartbeat, get_next_id, recovery_measures,
-)
-from corehq.apps.hqadmin.views.users import DomainAdminRestoreView
 
+from corehq.apps.hqadmin.views.users import DomainAdminRestoreView
+from corehq.apps.ota.views import (
+    claim,
+    get_next_id,
+    heartbeat,
+    recovery_measures,
+    restore,
+    search,
+)
 
 urlpatterns = [
     url(r'^restore/$', restore, name='ota_restore'),

@@ -2,8 +2,8 @@
 SMSES
 --------
 """
-from .es_query import HQESQuery
 from . import filters
+from .es_query import HQESQuery
 
 
 class SMSES(HQESQuery):

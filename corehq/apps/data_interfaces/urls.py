@@ -1,20 +1,21 @@
 from django.conf.urls import include, url
+
 from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
 from corehq.apps.data_interfaces.views import (
-    CaseGroupListView,
-    CaseGroupCaseManagementView,
-    XFormManagementView,
-    XFormManagementStatusView,
-    AutomaticUpdateRuleListView,
-    xform_management_job_poll,
-    default,
     AddCaseRuleView,
+    AutomaticUpdateRuleListView,
+    CaseGroupCaseManagementView,
+    CaseGroupListView,
     EditCaseRuleView,
-    find_by_id,
     ExploreCaseDataView,
+    XFormManagementStatusView,
+    XFormManagementView,
+    default,
+    find_by_id,
+    xform_management_job_poll,
 )
-from .interfaces import FormManagementMode
 
+from .interfaces import FormManagementMode
 
 edit_data_urls = [
     url(r'^xform_management/$', XFormManagementView.as_view(), name=XFormManagementView.urlname),

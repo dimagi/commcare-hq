@@ -10,8 +10,9 @@ are available, and put 'em here if you end up using any of 'em.
 
 .. _`query_docs`: https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-queries.html
 """
-from .filters import range_filter, date_range
 import re
+
+from .filters import date_range, range_filter
 
 MUST = "must"
 MUST_NOT = "must_not"

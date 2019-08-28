@@ -1,7 +1,11 @@
 import os
-from couchdbkit import Database
-from dimagi.utils.couch.database import get_db
+
 from django.core.management.base import BaseCommand
+
+from couchdbkit import Database
+
+from dimagi.utils.couch.database import get_db
+
 from corehq.apps.domainsync.config import DocumentTransform, save
 
 

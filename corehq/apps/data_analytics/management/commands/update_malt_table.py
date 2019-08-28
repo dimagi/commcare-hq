@@ -1,9 +1,10 @@
 from django.core.management.base import BaseCommand
 
-from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
+import dateutil
+
 from dimagi.utils.dates import DateSpan
 
-import dateutil
+from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 
 
 class Command(BaseCommand):

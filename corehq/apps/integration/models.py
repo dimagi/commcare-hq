@@ -1,8 +1,9 @@
 
-from memoized import memoized
-from corehq import toggles
-
 from django.db import models
+
+from memoized import memoized
+
+from corehq import toggles
 
 
 class SimprintsIntegration(models.Model):

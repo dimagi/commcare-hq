@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.util.test_utils import flag_enabled

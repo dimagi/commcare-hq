@@ -2,7 +2,6 @@
 
 from django.db import migrations, models
 
-
 from pillowtop.utils import safe_force_seq_int
 
 

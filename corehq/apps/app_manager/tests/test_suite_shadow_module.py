@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+
 from corehq.apps.app_manager.models import Application, Module, ShadowModule
 from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin
 

@@ -1,28 +1,29 @@
 import uuid
 
 from django.test import SimpleTestCase
+
 from elasticsearch.exceptions import ConnectionError
 
+from pillowtop.es_utils import initialize_index_and_mapping
+
 from corehq.apps.export.esaccessors import get_case_export_base_query
-from corehq.apps.export.export import (
-    get_export_documents,
-)
+from corehq.apps.export.export import get_export_documents
 from corehq.apps.export.filters import (
+    OR,
+    FormSubmittedByFilter,
     GroupOwnerFilter,
     IsClosedFilter,
     OwnerFilter,
-    OR,
-    FormSubmittedByFilter,
 )
 from corehq.apps.export.models.new import (
     CaseExportInstance,
-    FormExportInstance)
+    FormExportInstance,
+)
 from corehq.apps.export.tests.util import (
-
-    DEFAULT_USER,
-    DEFAULT_CASE_TYPE,
-    DEFAULT_XMLNS,
     DEFAULT_APP_ID,
+    DEFAULT_CASE_TYPE,
+    DEFAULT_USER,
+    DEFAULT_XMLNS,
     DOMAIN,
     new_case,
     new_form,
@@ -34,7 +35,6 @@ from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
-from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class ExportFilterTest(SimpleTestCase):

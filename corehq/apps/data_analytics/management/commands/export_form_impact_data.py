@@ -1,18 +1,18 @@
-import csv342 as csv
 from collections import defaultdict
 
+from django.core.management.base import BaseCommand
+
+import csv
 import dateutil
+import six
 from dateutil.relativedelta import relativedelta
 
-from django.core.management.base import BaseCommand
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.data_analytics.esaccessors import get_forms_for_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.log import with_progress_bar
-
-from dimagi.utils.chunked import chunked
-import six
 
 
 class Command(BaseCommand):

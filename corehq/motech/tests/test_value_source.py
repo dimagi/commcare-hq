@@ -1,5 +1,7 @@
 import doctest
+
 from django.test import SimpleTestCase
+
 import corehq.motech.value_source
 
 

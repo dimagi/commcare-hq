@@ -1,6 +1,8 @@
-from django.test import SimpleTestCase
-from corehq.apps.app_manager.models import _parse_xml
 import os
+
+from django.test import SimpleTestCase
+
+from corehq.apps.app_manager.models import _parse_xml
 
 
 class XMLParsingTest(SimpleTestCase):

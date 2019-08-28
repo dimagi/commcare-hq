@@ -1,7 +1,8 @@
-from corehq.util.mixin import UUIDGeneratorMixin
-from corehq.apps.sms.mixin import UnrecognizedBackendException
-from corehq.apps.sms.models import SQLMobileBackend, Log, OUTGOING
 from django.db import models
+
+from corehq.apps.sms.mixin import UnrecognizedBackendException
+from corehq.apps.sms.models import OUTGOING, Log, SQLMobileBackend
+from corehq.util.mixin import UUIDGeneratorMixin
 
 
 class SQLIVRBackend(SQLMobileBackend):

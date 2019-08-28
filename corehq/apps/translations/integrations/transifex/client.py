@@ -5,12 +5,14 @@ import tempfile
 
 import polib
 import requests
-from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
 from memoized import memoized
 
 from corehq.apps.translations.integrations.transifex.const import (
     API_USER,
     SOURCE_LANGUAGE_MAPPING,
+)
+from corehq.apps.translations.integrations.transifex.exceptions import (
+    ResourceMissing,
 )
 
 

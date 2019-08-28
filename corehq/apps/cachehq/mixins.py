@@ -1,9 +1,13 @@
 import logging
+
 from django.conf import settings
+
 from couchdbkit import ResourceNotFound
+
+from dimagi.utils.couch.cache import cache_core
+
 from corehq.apps.cachehq.invalidate import invalidate_document
 from corehq.util.quickcache import quickcache
-from dimagi.utils.couch.cache import cache_core
 
 
 class _InvalidateCacheMixin(object):

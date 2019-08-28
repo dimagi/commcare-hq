@@ -2,6 +2,7 @@ import json
 import uuid
 
 from django.test import TestCase
+
 from tastypie.models import ApiKey
 
 from corehq.apps.domain.shortcuts import create_domain

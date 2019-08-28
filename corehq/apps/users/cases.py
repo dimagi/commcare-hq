@@ -2,9 +2,10 @@
 import numbers
 
 from couchdbkit import ResourceNotFound
+
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 
 
 def user_db():

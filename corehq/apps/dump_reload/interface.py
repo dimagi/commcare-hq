@@ -1,10 +1,10 @@
 import gzip
 import os
+import sys
 import warnings
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
-import sys
 
 
 class DataDumper(six.with_metaclass(ABCMeta)):

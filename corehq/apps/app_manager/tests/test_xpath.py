@@ -1,5 +1,11 @@
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.xpath import XPath, CaseSelectionXPath, LedgerdbXpath, CaseTypeXpath
+
+from corehq.apps.app_manager.xpath import (
+    CaseSelectionXPath,
+    CaseTypeXpath,
+    LedgerdbXpath,
+    XPath,
+)
 
 
 class XPathTest(SimpleTestCase):

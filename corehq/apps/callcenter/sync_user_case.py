@@ -1,17 +1,20 @@
+import uuid
 from collections import namedtuple
+from xml.etree import cElementTree as ElementTree
+
+from django.core.cache import cache
+
 import six
 
 from casexml.apps.case.mock import CaseBlock
-import uuid
-from xml.etree import cElementTree as ElementTree
+from dimagi.utils.couch import CriticalSection
+
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
+from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from dimagi.utils.couch import CriticalSection
-from django.core.cache import cache
 
 
 class _UserCaseHelper(object):

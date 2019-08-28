@@ -1,10 +1,13 @@
 from collections import defaultdict
-from couchdbkit import Database
 
 from django.core.management.base import BaseCommand
-from corehq.preindex.accessors import get_preindex_designs
-from dimagi.utils.couch.database import get_design_docs
+
+from couchdbkit import Database
 from six.moves import input
+
+from dimagi.utils.couch.database import get_design_docs
+
+from corehq.preindex.accessors import get_preindex_designs
 
 
 class Command(BaseCommand):

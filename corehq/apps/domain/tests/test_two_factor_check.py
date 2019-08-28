@@ -1,12 +1,19 @@
-from django.test import TestCase, RequestFactory
-from corehq.util.test_utils import flag_enabled
-from corehq.apps.users.models import CouchUser
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.domain.models import Domain
-from corehq.apps.domain.decorators import _two_factor_required, two_factor_check, OTP_AUTH_FAIL_RESPONSE
-from mock import mock, Mock
 import json
+
+from django.test import RequestFactory, TestCase
+
 import six
+from mock import Mock, mock
+
+from corehq.apps.domain.decorators import (
+    OTP_AUTH_FAIL_RESPONSE,
+    _two_factor_required,
+    two_factor_check,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import CouchUser
+from corehq.util.test_utils import flag_enabled
 
 
 class TestTwoFactorCheck(TestCase):

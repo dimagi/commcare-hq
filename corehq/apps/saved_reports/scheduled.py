@@ -3,10 +3,13 @@ from datetime import datetime, timedelta
 
 from django.db import transaction
 
-from corehq.apps.saved_reports.models import ReportNotification, ScheduledReportsCheckpoint
-from corehq.util.soft_assert import soft_assert
 from six.moves import range
 
+from corehq.apps.saved_reports.models import (
+    ReportNotification,
+    ScheduledReportsCheckpoint,
+)
+from corehq.util.soft_assert import soft_assert
 
 _soft_assert = soft_assert(
     to='{}@{}'.format('supportteam', 'dimagi.com'),

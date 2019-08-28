@@ -2,9 +2,8 @@
 AppES
 -----
 """
+from . import filters, queries
 from .es_query import HQESQuery
-from . import filters
-from . import queries
 
 
 class AppES(HQESQuery):

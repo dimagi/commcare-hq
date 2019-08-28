@@ -1,16 +1,17 @@
 
 import json
 
-from django.urls import reverse
+from django.contrib.messages import get_messages
 from django.test import Client, TestCase
+from django.urls import reverse
+
+import mock
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.exceptions import LocationConsistencyError
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.views import LocationTypesView
 from corehq.apps.users.models import WebUser
-from django.contrib.messages import get_messages
-import mock
-
 
 OTHER_DETAILS = {
     'expand_from': None,

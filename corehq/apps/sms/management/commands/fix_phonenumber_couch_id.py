@@ -1,5 +1,6 @@
-from corehq.apps.sms.models import PhoneNumber
 from django.core.management.base import BaseCommand
+
+from corehq.apps.sms.models import PhoneNumber
 
 
 class Command(BaseCommand):

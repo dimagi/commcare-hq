@@ -1,9 +1,10 @@
 from django.core.management.base import BaseCommand
 
-from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
+import dateutil
+
 from dimagi.utils.dates import DateSpan
 
-import dateutil
+from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
 
 
 class Command(BaseCommand):

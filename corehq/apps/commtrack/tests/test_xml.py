@@ -1,51 +1,70 @@
+import os
+import random
+import uuid
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.db.models import Q
 from django.test import TestCase
 from django.test.utils import override_settings
+
 from lxml import etree
-import os
-import random
-import uuid
-from datetime import datetime, timedelta
+
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.tests.util import (
+    check_xml_line_by_line,
+    deprecated_check_user_has_case,
+)
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
-from casexml.apps.phone.tests.utils import deprecated_synclog_id_from_restore_payload
-from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig
+from casexml.apps.phone.tests.utils import (
+    deprecated_synclog_id_from_restore_payload,
+)
+from casexml.apps.stock import const as stockconst
+from casexml.apps.stock.models import StockReport, StockTransaction
+from dimagi.utils.parsing import json_format_date, json_format_datetime
+
+from corehq.apps.commtrack import const
+from corehq.apps.commtrack.const import DAYS_IN_MONTH
+from corehq.apps.commtrack.models import (
+    CommtrackConfig,
+    ConsumptionConfig,
+    StockRestoreConfig,
+)
+from corehq.apps.commtrack.tests import util
+from corehq.apps.commtrack.tests.data.balances import (
+    SohReport,
+    balance_enumerated,
+    balance_first,
+    balance_ota_block,
+    balance_submission,
+    products_xml,
+    receipts_enumerated,
+    submission_wrap,
+    transfer_both,
+    transfer_dest_only,
+    transfer_first,
+    transfer_source_only,
+)
+from corehq.apps.commtrack.tests.util import make_loc
+from corehq.apps.consumption.shortcuts import (
+    set_default_monthly_consumption_for_domain,
+)
 from corehq.apps.domain.models import Domain
-from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
+from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, FormAccessors, CaseAccessors
+from corehq.apps.products.models import Product
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+    LedgerAccessors,
+)
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
-from dimagi.utils.parsing import json_format_datetime, json_format_date
-from casexml.apps.stock import const as stockconst
-from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import CommtrackConfig
-from corehq.apps.commtrack.tests import util
-from casexml.apps.case.tests.util import check_xml_line_by_line, deprecated_check_user_has_case
-from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.commtrack.tests.util import make_loc
-from corehq.apps.commtrack.const import DAYS_IN_MONTH
-from corehq.apps.commtrack.tests.data.balances import (
-    balance_ota_block,
-    submission_wrap,
-    balance_submission,
-    transfer_dest_only,
-    transfer_source_only,
-    transfer_both,
-    balance_first,
-    transfer_first,
-    receipts_enumerated,
-    balance_enumerated,
-    products_xml, SohReport)
-from corehq.apps.groups.models import Group
-from corehq.apps.products.models import Product
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 

@@ -1,6 +1,9 @@
 from collections import namedtuple
+
 from django.urls import reverse
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
 from corehq import toggles
 
 

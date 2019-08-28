@@ -4,7 +4,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2019
+# Dimagi Dev <devops@dimagi.com>, 2017
 # Gladys Teos <info@enestranslations.com>, 2019
 #
 #, fuzzy
@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-20 19:20+0000\n"
+"POT-Creation-Date: 2019-08-27 18:49+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -114,7 +114,7 @@ msgid "There was an error saving."
 msgstr "Ocurrió un error al guardar."
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:33
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
@@ -560,15 +560,15 @@ msgstr "Este formulario ya no existe o tiene un tipo de caso diferente"
 msgid "Unrecognized value"
 msgstr "Valor no reconocido"
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:24
 msgid "Active"
 msgstr "Activo"
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:24
 msgid "Inactive"
 msgstr "Inactivo"
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:33
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/sms/static/sms/js/add_gateway.js:11
 msgid "Remove"
@@ -758,7 +758,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:112
 msgid "Module"
-msgstr ""
+msgstr "Módulo"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:113
 #: corehq/apps/userreports/static/userreports/js/data_source_select.js:10
@@ -771,10 +771,8 @@ msgid "Question"
 msgstr "Pregunta"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:115
-#, fuzzy
-#| msgid "No Name"
 msgid "Name"
-msgstr "No hay Nombre"
+msgstr "Nombre"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:116
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
@@ -782,32 +780,24 @@ msgid "Label"
 msgstr "Etiqueta"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:117
-#, fuzzy
-#| msgid "Question"
 msgid "Question Type"
-msgstr "Pregunta"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:118
-#, fuzzy
-#| msgid "Question Details"
 msgid "Question Value"
-msgstr "Detalles de Preguntas"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:119
 msgid "Option"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:120
-#, fuzzy
-#| msgid "Calculate Condition"
 msgid "Calculate condition"
-msgstr "Condición de Calculo"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:121
-#, fuzzy
-#| msgid "Display Condition"
 msgid "Display condition"
-msgstr "Condición de Visualización"
+msgstr "Condición de visualización"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:122
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
@@ -815,10 +805,8 @@ msgid "Required"
 msgstr "Obligatorio"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:123
-#, fuzzy
-#| msgid "Question List"
 msgid "Question Comment"
-msgstr "Lista de Preguntas"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:124
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
@@ -836,46 +824,32 @@ msgid "Comment"
 msgstr "Comentario"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:127
-#, fuzzy
-#| msgid "Filter"
 msgid "Form Filter"
-msgstr "Filtrar"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:128
-#, fuzzy
-#| msgid "Filter"
 msgid "Module Filter"
-msgstr "Filtrar"
+msgstr "Filtro de Módulo"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:132
-#, fuzzy
-#| msgid "Hidden Value"
 msgid "Old Value"
-msgstr "Valor Oculto"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:133
-#, fuzzy
-#| msgid "New Role"
 msgid "New Value"
-msgstr "Nuevo Rol"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:151
-#, fuzzy
-#| msgid "User Properties"
 msgid "Loaded Case Properties"
-msgstr "Propiedades del Usuario"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:152
-#, fuzzy
-#| msgid "User Properties"
 msgid "Saved Case Properties"
-msgstr "Propiedades del Usuario"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:155
-#, fuzzy
-#| msgid "Upload"
 msgid "load"
-msgstr "Cargar"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:156
 msgid "save"
@@ -883,16 +857,12 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:159
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:160
-#, fuzzy
-#| msgid "In Property"
 msgid "Case Property"
-msgstr "En Propiedad"
+msgstr "Propiedad del Caso"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:160
-#, fuzzy
-#| msgid "Case Type"
 msgid "of Case Type"
-msgstr "Tipo de Caso"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:363
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js:52
@@ -4027,9 +3997,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "URL"
-#~ msgstr "URL"
-
-#~ msgid "Parameters"
-#~ msgstr "Manejo de Casos"
