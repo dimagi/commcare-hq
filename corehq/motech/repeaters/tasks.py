@@ -1,20 +1,24 @@
 
 from datetime import datetime, timedelta
 
+from django.conf import settings
+
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
-from django.conf import settings
+
+from dimagi.utils.couch import get_redis_lock
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
-    RECORD_PENDING_STATE,
     RECORD_FAILURE_STATE,
+    RECORD_PENDING_STATE,
 )
 from corehq.motech.repeaters.dbaccessors import (
-    iterate_repeat_records,
     get_overdue_repeat_record_count,
+    iterate_repeat_records,
 )
 from corehq.util.datadog.gauges import (
     datadog_bucket_timer,
@@ -23,9 +27,6 @@ from corehq.util.datadog.gauges import (
 )
 from corehq.util.datadog.utils import make_buckets_from_timedeltas
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.couch import get_redis_lock
-from dimagi.utils.couch.undo import DELETED_SUFFIX
-
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),

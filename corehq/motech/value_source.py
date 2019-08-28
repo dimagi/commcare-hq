@@ -1,26 +1,21 @@
 
 from collections import namedtuple
 
-from dimagi.ext.couchdbkit import DocumentSchema
+from dimagi.ext.couchdbkit import DictProperty, DocumentSchema, StringProperty
 
-from corehq.motech.serializers import serializers
-from corehq.motech.const import (
+from corehq.motech.const import (  # pylint: disable=unused-import,F401; (F401 = flake8 "'%s' imported but unused"); Used in ValueSource.check_direction doctest; pylint: enable=unused-import,F401
     COMMCARE_DATA_TYPES,
     DATA_TYPE_UNKNOWN,
-    DIRECTIONS,
+    DIRECTION_BOTH,
     # pylint: disable=unused-import,F401
     # (F401 = flake8 "'%s' imported but unused")
     # Used in ValueSource.check_direction doctest
-    DIRECTION_IMPORT,
     DIRECTION_EXPORT,
+    DIRECTION_IMPORT,
     # pylint: enable=unused-import,F401
-    DIRECTION_BOTH,
+    DIRECTIONS,
 )
-from dimagi.ext.couchdbkit import (
-    DictProperty,
-    StringProperty
-)
-
+from corehq.motech.serializers import serializers
 
 CaseTriggerInfo = namedtuple('CaseTriggerInfo',
                              ['case_id', 'updates', 'created', 'closed', 'extra_fields', 'form_question_values'])

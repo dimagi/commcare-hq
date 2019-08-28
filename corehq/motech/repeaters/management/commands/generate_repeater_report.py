@@ -1,13 +1,18 @@
 from datetime import datetime
-from openpyxl import Workbook
 import csv
-from couchdbkit import ResourceNotFound
 
 from django.core.management.base import BaseCommand, CommandError
-from corehq.util.log import with_progress_bar
-from corehq.motech.repeaters.models import RepeatRecord
-from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
+
+from couchdbkit import ResourceNotFound
+from openpyxl import Workbook
 from six.moves import range
+
+from corehq.motech.repeaters.dbaccessors import (
+    get_repeat_record_count,
+    iter_repeat_records_by_domain,
+)
+from corehq.motech.repeaters.models import RepeatRecord
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):

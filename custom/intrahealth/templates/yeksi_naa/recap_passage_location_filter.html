@@ -1,0 +1,57 @@
+{% load hq_shared_tags %}
+
+<label class="control-label {{ css_label_class }}">{{ control_name }}</label>
+<div class="{{ css_field_class }}">
+    <div data-bind="foreach: selected_path" id="recap-passage-locations-filter" style="display: inline-block;">
+        <div style="display: block">
+            <div style="display: inline-block; width: 70px"><span
+                    data-bind="text: depth === 0 ? 'Région' : (depth === 1 ? 'District' : 'PPS')"></span></div>
+            <div style="display: inline-block">
+                <select class="form-control"
+                        data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>
+            </div>
+        </div>
+    </div>
+    <img id="loc_ajax" src="{% static 'formplayer/img/loading_small.gif' %}" style="display: none;">
+</div>
+<input name="location_id" type="hidden" data-bind="value: selected_locid"/>
+
+<script>
+    $.when(
+        $.getScript("{% static 'locations/js/location_drilldown.js' %}")
+    ).done(function () {
+        var locs = {{ locations|safe }};
+        var selected = '{{ loc_id }}';
+        var hierarchy = {{ hierarchy|JSON }};
+        var location_url = '{{ api_root }}';
+
+        var model = hqImport('locations/js/location_drilldown').locationSelectViewModel({
+            "hierarchy": hierarchy,
+            "default_caption": false,
+            "auto_drill": true,
+            "loc_filter": false,
+            "loc_url": location_url,
+            "func": hqImport('locations/js/location_drilldown').locationModel,
+            "required": 0,
+        });
+
+        $('#group_{{ control_slug }}').koApplyBindings(model);
+        model.load(locs, selected);
+
+        var applyBtn = $('#apply-filters');
+        applyBtn.disableButtonNoSpinner();
+
+        $('#paramSelectorForm fieldset').on('change apply', function () {
+            if ($('#recap-passage-locations-filter').children().length === 3) {
+                $('#apply-filters')
+                    .button('reset')
+                    .addClass('btn-primary')
+                    .removeClass('disabled')
+                    .prop('disabled', false);
+            } else {
+                $('#apply-filters').disableButtonNoSpinner();
+            }
+        });
+    });
+
+</script>
