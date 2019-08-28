@@ -790,29 +790,32 @@ def edit_app_attr(request, domain, app_id, attr):
 
     resp = {"update": {}}
     # For either type of app
-    always_allowed = lambda x: True
+
+    def _always_allowed(x):
+        return True
+
     easy_attrs = (
-        ('build_spec', BuildSpec.from_string, always_allowed),
-        ('practice_mobile_worker_id', None, always_allowed),
+        ('build_spec', BuildSpec.from_string, _always_allowed),
+        ('practice_mobile_worker_id', None, _always_allowed),
         ('case_sharing', None, lambda x: can_use_case_sharing or getattr(app, x)),
-        ('cloudcare_enabled', None, always_allowed),
-        ('manage_urls', None, always_allowed),
-        ('name', None, always_allowed),
-        ('platform', None, always_allowed),
-        ('recipients', None, always_allowed),
-        ('text_input', None, always_allowed),
-        ('use_custom_suite', None, always_allowed),
-        ('secure_submissions', None, always_allowed),
-        ('translation_strategy', None, always_allowed),
-        ('auto_gps_capture', None, always_allowed),
-        ('use_grid_menus', None, always_allowed),
-        ('grid_form_menus', None, always_allowed),
-        ('target_commcare_flavor', None, always_allowed),
-        ('comment', None, always_allowed),
-        ('custom_base_url', None, always_allowed),
-        ('use_j2me_endpoint', None, always_allowed),
-        ('mobile_ucr_restore_version', None, always_allowed),
-        ('location_fixture_restore', None, always_allowed),
+        ('cloudcare_enabled', None, _always_allowed),
+        ('manage_urls', None, _always_allowed),
+        ('name', None, _always_allowed),
+        ('platform', None, _always_allowed),
+        ('recipients', None, _always_allowed),
+        ('text_input', None, _always_allowed),
+        ('use_custom_suite', None, _always_allowed),
+        ('secure_submissions', None, _always_allowed),
+        ('translation_strategy', None, _always_allowed),
+        ('auto_gps_capture', None, _always_allowed),
+        ('use_grid_menus', None, _always_allowed),
+        ('grid_form_menus', None, _always_allowed),
+        ('target_commcare_flavor', None, _always_allowed),
+        ('comment', None, _always_allowed),
+        ('custom_base_url', None, _always_allowed),
+        ('use_j2me_endpoint', None, _always_allowed),
+        ('mobile_ucr_restore_version', None, _always_allowed),
+        ('location_fixture_restore', None, _always_allowed),
     )
     for attribute, transformation, can_set_attr in easy_attrs:
         if should_edit(attribute):
