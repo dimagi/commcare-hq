@@ -99,8 +99,9 @@ class CaseDiffQueue(object):
         """
         log.debug("update: cases=%s form=%s", case_ids, form_id)
         pending = self.pending_cases
+        increment = 0 if form_id is None else 1
         for case_id in case_ids:
-            pending[case_id] += 1
+            pending[case_id] += increment
             if len(pending) >= self.BATCH_SIZE:
                 self._async_enqueue_or_load(pending)
                 pending = self.pending_cases = defaultdict(int)
