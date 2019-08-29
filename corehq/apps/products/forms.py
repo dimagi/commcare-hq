@@ -66,7 +66,7 @@ class ProductForm(forms.Form):
         name = self.cleaned_data['name']
 
         num_other_products_with_name = (
-            SQLProduct.objects
+            SQLProduct.active_objects
             .filter(domain=self.product.domain, name=name)
             .exclude(product_id=self.product._id)
         ).count()

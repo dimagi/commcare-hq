@@ -34,7 +34,7 @@ def all_sms_codes(domain):
     config = CommtrackConfig.for_domain(domain)
 
     actions = {action.keyword: action for action in config.actions}
-    products = {p.code: p for p in SQLProduct.by_domain(domain)}
+    products = {p.code: p for p in SQLProduct.active_objects.filter(domain=domain)}
 
     ret = {}
     for action_key, action in actions.items():

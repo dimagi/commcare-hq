@@ -18,7 +18,7 @@ def recalculate_domain_consumption(domain):
         domain_name=domain,
         doc_type='CommCareCase',
     ).values_list('doc_id', flat=True)
-    product_ids = SQLProduct.objects.filter(domain=domain).product_ids()
+    product_ids = SQLProduct.active_objects.filter(domain=domain).product_ids()
     for supply_point_id in found_doc_ids:
         for product_id in product_ids:
             try:
