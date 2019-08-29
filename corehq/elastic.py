@@ -45,9 +45,8 @@ class ESJSONSerializer(object):
 
     def dumps(self, data):
         # don't serialize strings
-        if isinstance(data, (str, bytes)):
+        if isinstance(data, str):
             return data
-
         try:
             return json.dumps(data, cls=CommCareJSONEncoder)
         except (ValueError, TypeError) as e:

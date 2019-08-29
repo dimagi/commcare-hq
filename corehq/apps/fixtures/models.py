@@ -206,7 +206,7 @@ class FixtureDataItem(Document):
                 break
             fields_dict[field] = {
                 "field_list": [{
-                    'field_value': str(field_val) if not isinstance(field_val, (str, bytes)) else field_val,
+                    'field_value': str(field_val) if not isinstance(field_val, str) else field_val,
                     'properties': {}
                 }]
             }

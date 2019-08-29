@@ -128,7 +128,7 @@ class BaseUserSelfRegistrationValidation(Validation):
                 )
 
             self._validate_toplevel_fields(user_info, [
-                FieldDefinition('phone_number', True, (str, bytes)),
+                FieldDefinition('phone_number', True, str),
                 FieldDefinition('custom_user_data', False, dict),
             ])
 
@@ -151,11 +151,11 @@ class UserSelfRegistrationValidation(BaseUserSelfRegistrationValidation):
 
         try:
             self._validate_toplevel_fields(bundle.data, [
-                FieldDefinition('app_id', True, (str, bytes)),
+                FieldDefinition('app_id', True, str),
                 FieldDefinition('users', True, list),
                 FieldDefinition('android_only', False, bool),
                 FieldDefinition('require_email', False, bool),
-                FieldDefinition('custom_registration_message', False, (str, bytes)),
+                FieldDefinition('custom_registration_message', False, str),
             ])
 
             self._validate_app_id(request.domain, bundle.data['app_id'])
@@ -174,9 +174,9 @@ class UserSelfRegistrationReinstallValidation(BaseUserSelfRegistrationValidation
 
         try:
             self._validate_toplevel_fields(bundle.data, [
-                FieldDefinition('app_id', True, (str, bytes)),
+                FieldDefinition('app_id', True, str),
                 FieldDefinition('users', True, list),
-                FieldDefinition('reinstall_message', False, (str, bytes)),
+                FieldDefinition('reinstall_message', False, str),
             ])
 
             self._validate_app_id(request.domain, bundle.data['app_id'])

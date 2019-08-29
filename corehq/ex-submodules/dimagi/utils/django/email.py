@@ -20,7 +20,7 @@ LARGE_FILE_SIZE_ERROR_CODES = [LARGE_FILE_SIZE_ERROR_CODE, LARGE_FILE_SIZE_ERROR
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
                     file_attachments=None, bcc=None, smtp_exception_skip_list=None):
-    recipient = list(recipient) if not isinstance(recipient, (str, bytes)) else [recipient]
+    recipient = list(recipient) if not isinstance(recipient, str) else [recipient]
 
     if not isinstance(html_content, str):
         html_content = html_content.decode('utf-8')

@@ -3,7 +3,7 @@ import tempfile
 
 
 def Temp(tmp):
-    cls = PathTemp if isinstance(tmp, (str, bytes)) else StringIOTemp
+    cls = PathTemp if isinstance(tmp, str) else StringIOTemp
     return cls(tmp)
 
 
