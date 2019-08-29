@@ -193,6 +193,9 @@ def update_id(id_map, caseblock_or_meta, prop, form_root, base_path,
 
     # The easy part: Update the caseblock
     old_id = caseblock_or_meta[prop]
+    if not old_id:
+        # Property has no value. Nothing to map.
+        return
     new_id = id_map[old_id]
     caseblock_or_meta[prop] = new_id
 
