@@ -514,7 +514,8 @@ def _upload_fixture_api(request, domain):
                     domain,
                     download_id,
                     replace,
-                    skip_orm
+                    skip_orm,
+                    user_email=email
                 )
                 file_ref.set_task(task)
 
