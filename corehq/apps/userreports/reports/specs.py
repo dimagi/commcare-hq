@@ -4,7 +4,6 @@ from datetime import date
 
 from django.utils.translation import ugettext as _
 
-import six
 from jsonobject.base import DefaultProperty
 from jsonobject.exceptions import BadValueError
 from memoized import memoized
@@ -51,7 +50,6 @@ from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
-from corehq.util.python_compatibility import soft_assert_type_text
 
 SQLAGG_COLUMN_MAP = {
     const.AGGGREGATION_TYPE_AVG: MeanColumn,
@@ -526,8 +524,7 @@ class MultibarChartSpec(ChartSpec):
     def wrap(cls, obj):
         def _convert_columns_to_properly_dicts(cols):
             for column in cols:
-                if isinstance(column, six.string_types):
-                    soft_assert_type_text(column)
+                if isinstance(column, str):
                     yield {'column_id': column, 'display': column}
                 else:
                     yield column

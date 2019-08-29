@@ -1,8 +1,6 @@
 import datetime
 from calendar import month_name
 from django.utils.translation import ugettext_lazy as _
-import logging
-import six
 
 try:
     # < 3.0
@@ -24,9 +22,7 @@ def force_to_date(val):
         return val.date()
     elif isinstance(val, datetime.date):
         return val
-    elif isinstance(val, six.string_types):
-        from corehq.util.python_compatibility import soft_assert_type_text
-        soft_assert_type_text(val)
+    elif isinstance(val, str):
         return string_to_datetime(val).date()
     else:
         raise ValueError("object must be date or datetime!")
@@ -40,9 +36,7 @@ def force_to_datetime(val):
         return val
     elif isinstance(val, datetime.date):
         return datetime.datetime.combine(val, datetime.time())
-    elif isinstance(val, six.string_types):
-        from corehq.util.python_compatibility import soft_assert_type_text
-        soft_assert_type_text(val)
+    elif isinstance(val, str):
         return string_to_datetime(val)
     else:
         raise ValueError("object must be date or datetime!")

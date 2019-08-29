@@ -36,11 +36,9 @@ from django.views.generic.base import TemplateView
 
 import csv
 import pytz
-import six
 from couchdbkit.exceptions import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
-from six.moves import range, zip
 
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import close_case, rebuild_case_from_forms
@@ -151,7 +149,6 @@ from corehq.motech.repeaters.dbaccessors import (
 )
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.couch import get_document_or_404
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import (
     get_timezone_for_request,
@@ -708,7 +705,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             try:
                 self.report_notification.update_attributes(list(self.scheduled_report_form.cleaned_data.items()))
             except ValidationError as err:
-                kwargs['error'] = six.text_type(err)
+                kwargs['error'] = str(err)
                 messages.error(request, ugettext_lazy(kwargs['error']))
                 return self.get(request, *args, **kwargs)
             time_difference = get_timezone_difference(self.domain)
@@ -1990,7 +1987,7 @@ def _get_data_cleaning_updates(request, old_properties):
         else:
             return val_or_dict
 
-    for prop, value in six.iteritems(properties):
+    for prop, value in properties.items():
         if prop not in old_properties or _get_value(old_properties[prop]) != value:
             updates[prop] = value
     return updates
@@ -2037,11 +2034,9 @@ def resave_form_view(request, domain, instance_id):
 
 # Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
-    if isinstance(end, six.string_types):
-        soft_assert_type_text(end)
+    if isinstance(end, str):
         end = parse_date(end)
-    if isinstance(start, six.string_types):
-        soft_assert_type_text(start)
+    if isinstance(start, str):
         start = parse_date(start)
     if not end:
         end = datetime.utcnow()

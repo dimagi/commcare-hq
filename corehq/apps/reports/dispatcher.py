@@ -5,7 +5,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
 from django.views.generic.base import View
 
-import six
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 
@@ -24,7 +23,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.users.models import AnonymousCouchUser
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 
 datespan_default = datespan_in_request(
@@ -54,10 +52,8 @@ class ReportDispatcher(View):
     map_name = None
 
     def __init__(self, **kwargs):
-        if not self.map_name or not isinstance(self.map_name, six.string_types):
+        if not self.map_name or not isinstance(self.map_name, str):
             raise NotImplementedError("Class property 'map_name' must be a string, and not empty.")
-        if isinstance(self.map_name, six.string_types):
-            soft_assert_type_text(self.map_name)
         super(ReportDispatcher, self).__init__(**kwargs)
 
     @property
@@ -95,7 +91,7 @@ class ReportDispatcher(View):
         if module_name is None:
             custom_reports = ()
         else:
-            module = __import__(module_name, fromlist=['reports' if six.PY3 else b'reports'])
+            module = __import__(module_name, fromlist=['reports'])
             if hasattr(module, 'reports'):
                 reports = getattr(module, 'reports')
                 custom_reports = process(getattr(reports, attr_name, ()))

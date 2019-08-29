@@ -17,10 +17,6 @@ from pact.enums import (
     REGIMEN_CHOICES,
 )
 from pact.regimen import regimen_string_from_doc
-import six
-from six.moves import range
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def make_uuid():
@@ -419,7 +415,6 @@ class CDotWeeklySchedule(OldDocument):
 ADDENDUM_NOTE_STRING = "[AddendumEntry]"
 
 
-@six.python_2_unicode_compatible
 class CObservation(OldDocument):
     doc_id = StringProperty()
     patient = StringProperty()  # case id
@@ -459,8 +454,7 @@ class CObservation(OldDocument):
         ints = ['dose_number', 'total_doses', 'day_index', 'day_slot']
         for prop_name in ints:
             val = obj.get(prop_name)
-            if val and isinstance(val, six.string_types):
-                soft_assert_type_text(val)
+            if val and isinstance(val, str):
                 obj[prop_name] = int(val)
         return super(CObservation, cls).wrap(obj)
 

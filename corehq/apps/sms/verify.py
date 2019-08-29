@@ -1,7 +1,3 @@
-import six
-
-from dimagi.utils.couch import CriticalSection
-
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms import messages
@@ -17,7 +13,6 @@ from corehq.apps.sms.models import (
     SQLMobileBackend,
 )
 from corehq.apps.users.models import CommCareUser
-from corehq.util.python_compatibility import soft_assert_type_text
 
 VERIFICATION__ALREADY_IN_USE = 1
 VERIFICATION__ALREADY_VERIFIED = 2
@@ -147,9 +142,8 @@ def process_verification(v, msg, verification_keywords=None, create_subevent_for
 
 
 def verification_response_ok(text, verification_keywords):
-    if not isinstance(text, six.string_types):
+    if not isinstance(text, str):
         return False
-    soft_assert_type_text(text)
 
     text = text.lower()
     return any([keyword in text for keyword in verification_keywords])
