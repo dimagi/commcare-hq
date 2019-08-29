@@ -76,8 +76,12 @@
     <div class="row">
       <div class="col-xs-12">
 
-        {% if is_saas_environment %}
+        {% if is_saas_environment and not is_new_trial_experience %}
           {% include 'registration/partials/start_options.html' %}
+        {% endif %}
+
+        {% if is_saas_environment and is_new_trial_experience %}
+          {% include 'registration/partials/choose_your_plan.html' %}
         {% endif %}
 
         <div id="registration-form-container"
