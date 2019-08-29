@@ -1,6 +1,4 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -10,7 +8,7 @@ from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_e
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestLactatingEnrolledWomen(TestCase):
 
     def test_chart_data(self):

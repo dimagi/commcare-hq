@@ -1,30 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from six.moves import map
+import re
+from datetime import datetime
 
 from django.conf import settings
 
-from dimagi.ext.couchdbkit import *
-import re
-from dimagi.utils.couch.database import iter_docs
+import six
 from memoized import memoized
+from six.moves import filter, map, range
+
+from dimagi.ext.couchdbkit import *
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.undo import (
+    DELETED_SUFFIX,
+    DeleteDocRecord,
+    UndoableDocument,
+)
+
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.users.models import CouchUser, CommCareUser
-from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
-from datetime import datetime
 from corehq.apps.groups.dbaccessors import (
     get_group_ids_by_domain,
     group_by_domain,
     refresh_group_views,
     stale_group_by_name,
 )
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
-import six
-from six.moves import range
-from six.moves import filter
 
 dt_no_Z_re = re.compile(r'^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 
@@ -227,16 +229,10 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
             return result
 
     @classmethod
-    def by_user(cls, user_or_user_id, wrap=True, include_names=False):
-        try:
-            user_id = user_or_user_id.user_id
-        except AttributeError:
-            user_id = user_or_user_id
+    def by_user_id(cls, user_id, wrap=True):
         results = cls.view('groups/by_user', key=user_id, include_docs=wrap)
         if wrap:
             return results
-        if include_names:
-            return [dict(group_id=r['id'], name=r['value'][1]) for r in results]
         else:
             return [r['id'] for r in results]
 

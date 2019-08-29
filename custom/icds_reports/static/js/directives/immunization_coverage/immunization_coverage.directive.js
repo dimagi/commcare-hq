@@ -21,7 +21,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.filters = ['age', 'ageServiceDeliveryDashboard'];
+    vm.filters = ['age'];
     vm.rightLegend = {
         info: 'Of the total number of children enrolled for Anganwadi Services who are over a year old, the percentage of children who have received the complete immunization as per the National Immunization Schedule of India that is required by age 1.<br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
     };

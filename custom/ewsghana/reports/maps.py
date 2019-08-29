@@ -1,11 +1,8 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from corehq.apps.commtrack.models import StockState, CommtrackConfig
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.data_sources import StockStatusBySupplyPointDataSource
 from corehq.apps.reports.commtrack.maps import StockStatusMapReport
@@ -183,7 +180,9 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
 
     @property
     def product(self):
-        return Product.get(self.request_params['product_id']) if 'product_id' in self.request_params else None
+        if 'product_id' in self.request_params:
+            return SQLProduct.objects.get(product_id=self.request_params['product_id'])
+        return None
 
     @property
     def display_config(self):

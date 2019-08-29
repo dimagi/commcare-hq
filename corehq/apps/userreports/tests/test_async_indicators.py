@@ -1,19 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+
+import uuid
+
+from django.test import SimpleTestCase, TestCase
 
 import mock
-import uuid
-from django.test import SimpleTestCase, TestCase
+import six
+from six.moves import range
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
-from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator
-from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
-from corehq.apps.userreports.tests.utils import load_data_from_db
+from corehq.apps.userreports.models import (
+    AsyncIndicator,
+    DataSourceConfiguration,
+)
 from corehq.apps.userreports.tasks import build_async_indicators
-from six.moves import range
-
-import six
+from corehq.apps.userreports.tests.utils import load_data_from_db
+from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 
 
 class RunAsynchronousTest(SimpleTestCase):

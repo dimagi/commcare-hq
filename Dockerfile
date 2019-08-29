@@ -1,5 +1,4 @@
-# When changing this file, also update Dockerfile-py3
-FROM python:2.7-jessie
+FROM python:3.6-jessie
 MAINTAINER Dimagi <devops@dimagi.com>
 
 ENV PYTHONUNBUFFERED=1 \

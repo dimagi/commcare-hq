@@ -1,22 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from datetime import date
-from six.moves.urllib.parse import urlencode
 
-from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.urls import reverse
-from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+import six
+from couchdbkit import ResourceNotFound
+from memoized import memoized
+from six.moves.urllib.parse import urlencode
 
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import apply_update
 from dimagi.utils.couch.resource_conflict import retry_resource
-from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
 
@@ -30,9 +31,11 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
-from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
-import six
-
+from corehq.elastic import (
+    es_query,
+    fill_mapping_with_facets,
+    parse_args_for_es,
+)
 
 SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact', 'is_starter_app']
 DEPLOYMENT_FACETS = ['deployment.region']

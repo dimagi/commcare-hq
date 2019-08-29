@@ -1,13 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import six
 from eulxml.xmlmap import (
-    IntegerField, NodeField, NodeListField,
-    SimpleBooleanField, StringField, XmlObject,
+    IntegerField,
+    NodeField,
+    NodeListField,
+    SimpleBooleanField,
+    StringField,
+    XmlObject,
     load_xmlobject_from_string,
 )
 from lxml import etree
+
 from corehq.apps.app_manager.exceptions import UnknownInstanceError
-import six
 
 
 class XPathField(StringField):
@@ -343,9 +346,6 @@ class Instance(IdNode, OrderedXmlObject):
 
     def __eq__(self, other):
         return self.src == other.src and self.id == other.id
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def __hash__(self):
         return hash((self.src, self.id))

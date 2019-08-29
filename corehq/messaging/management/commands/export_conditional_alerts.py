@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     MatchPropertyDefinition,
@@ -16,7 +12,6 @@ from corehq.messaging.scheduling.models import (
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
 from django.core.management.base import BaseCommand, CommandError
-from io import open
 import copy
 import json
 import jsonobject

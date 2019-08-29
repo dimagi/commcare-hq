@@ -1,10 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
-from django.views.generic import ListView, DetailView
+from django.views.generic import DetailView, ListView
+
 from memoized import memoized
 
 from corehq.apps.domain.views.settings import BaseProjectSettingsView

@@ -1,16 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import six
+
 from dimagi.utils.couch import CriticalSection
+
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
-    MessageMetadata)
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms import messages
-from corehq.apps.sms.mixin import apply_leniency, PhoneNumberInUseException
-from corehq.apps.sms.models import MessagingEvent, SQLMobileBackend, PhoneNumber
+from corehq.apps.sms.api import (
+    MessageMetadata,
+    send_sms,
+    send_sms_to_verified_number,
+)
+from corehq.apps.sms.mixin import PhoneNumberInUseException, apply_leniency
+from corehq.apps.sms.models import (
+    MessagingEvent,
+    PhoneNumber,
+    SQLMobileBackend,
+)
+from corehq.apps.users.models import CommCareUser
 from corehq.util.python_compatibility import soft_assert_type_text
-import six
 
 VERIFICATION__ALREADY_IN_USE = 1
 VERIFICATION__ALREADY_VERIFIED = 2

@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from couchdbkit import ResourceNotFound
 from tastypie import fields as tp_f

@@ -1,81 +1,89 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 import logging
 import re
+from datetime import datetime
 from uuid import uuid4
+from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _, override as override_language, ugettext_noop
+from django.utils.translation import override as override_language
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
+import six
+from couchdbkit import MultipleResultsFound, ResourceNotFound
+from couchdbkit.exceptions import BadValueError, ResourceConflict
+from dateutil.relativedelta import relativedelta
+from memoized import memoized
+from six.moves import map, range
+
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
-from corehq import toggles
-from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
-from corehq.apps.users.permissions import EXPORT_PERMISSIONS
-from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.sql_db.routers import db_for_read_write
-from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.ext.couchdbkit import (
-    StringProperty,
-    IntegerProperty,
-    DateTimeProperty,
-    SchemaListProperty,
-    DocumentSchema,
     BooleanProperty,
-    StringListProperty,
-    ListProperty,
-    SchemaProperty,
+    DateProperty,
+    DateTimeProperty,
     DictProperty,
     Document,
-    DateProperty
+    DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringListProperty,
+    StringProperty,
 )
-from couchdbkit import ResourceNotFound, MultipleResultsFound
-from corehq.util.dates import get_timestamp
-from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
-from dimagi.utils.logging import notify_exception, log_signal_errors
-
-from memoized import memoized
+from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
+from dimagi.utils.dates import force_to_datetime
+from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
-from corehq.util.quickcache import quickcache
-from casexml.apps.case.mock import CaseBlock
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
+from dimagi.utils.web import get_site_domain
+
+from corehq import toggles
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers, guess_domain_language
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain, LicenseAgreement
+from corehq.apps.domain.shortcuts import create_user
+from corehq.apps.domain.utils import (
+    domain_restricts_superusers,
+    guess_domain_language,
+    normalize_domain_name,
+)
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
+from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
+from corehq.apps.users.permissions import EXPORT_PERMISSIONS
+from corehq.apps.users.tasks import (
+    tag_cases_as_deleted_and_remove_indices,
+    tag_forms_as_deleted_rebuild_associated_cases,
+    tag_system_forms_as_deleted,
+    undelete_system_forms,
+)
 from corehq.apps.users.util import (
+    filter_by_app,
     user_display_string,
     user_location_data,
     username_to_user_id,
-    filter_by_app
 )
-from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
-    tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted, \
-    undelete_system_forms
-from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
-from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
-from corehq.apps.hqwebapp.tasks import send_html_email_async
-from dimagi.utils.dates import force_to_datetime
-from xml.etree import cElementTree as ElementTree
-
-from couchdbkit.exceptions import ResourceConflict, BadValueError
-
-from dimagi.utils.web import get_site_domain
-import six
-from six.moves import range
-from six.moves import map
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.sql_db.routers import db_for_read_write
+from corehq.util.dates import get_timestamp
+from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import absolute_reverse
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -205,9 +213,6 @@ class Permissions(DocumentSchema):
             if self._getattr(name) != other._getattr(name):
                 return False
         return True
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     @classmethod
     def max(cls):
@@ -934,9 +939,6 @@ class DeviceIdLastUsed(DocumentSchema):
 
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
 
 class LastSubmission(DocumentSchema):
@@ -1868,12 +1870,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self._id
         ))
 
-        groups += [group for group in Group.by_user(self) if group.case_sharing]
+        groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
         return groups
 
     def get_reporting_groups(self):
         from corehq.apps.groups.models import Group
-        return [group for group in Group.by_user(self) if group.reporting]
+        return [group for group in Group.by_user_id(self._id) if group.reporting]
 
     @classmethod
     def cannot_share(cls, domain, limit=None, skip=0):
@@ -1894,7 +1896,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
-        return Group.by_user(self, wrap=False)
+        return Group.by_user_id(self._id, wrap=False)
 
     def set_groups(self, group_ids):
         from corehq.apps.groups.models import Group
@@ -1940,9 +1942,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return None
 
     def get_location_ids(self, domain):
+        # domain arg included here for compatibility with WebUser
         return self.assigned_location_ids
 
     def get_sql_locations(self, domain):
+        # domain arg included here for compatibility with WebUser
         from corehq.apps.locations.models import SQLLocation
         if self.assigned_location_ids:
             return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)

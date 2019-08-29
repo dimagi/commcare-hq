@@ -1,9 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
+
 from django.test import TestCase
+
 from corehq.apps.sms.api import create_billable_for_sms
-from corehq.apps.sms.models import SMS, OUTGOING
+from corehq.apps.sms.models import OUTGOING, SMS
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 

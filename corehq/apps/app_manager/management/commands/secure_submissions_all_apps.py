@@ -1,9 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from distutils.version import LooseVersion
 
 from django.core.management import BaseCommand
+
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.builds.utils import get_default_build_spec

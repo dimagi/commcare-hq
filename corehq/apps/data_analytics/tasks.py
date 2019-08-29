@@ -1,15 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import datetime
+
+from django.conf import settings
+
 from celery.schedules import crontab
 from celery.task import periodic_task
 from celery.utils.log import get_task_logger
-import datetime
 
-from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
-from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
 from dimagi.utils.dates import DateSpan
+
+from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
+from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from corehq.util.log import send_HTML_email
-from django.conf import settings
+from corehq.util.soft_assert import soft_assert
 
 logger = get_task_logger(__name__)
 
@@ -57,8 +59,13 @@ def build_last_month_GIR():
         return DateSpan.from_month(last_month.month, last_month.year)
 
     last_month = _last_month_datespan()
-    generator = GIRTableGenerator([last_month])
-    generator.build_table()
+    try:
+        generator = GIRTableGenerator([last_month])
+        generator.build_table()
+    except Exception as e:
+        soft_assert(to=[settings.DATA_EMAIL], send_to_ops=False)(False, "Error in his month's GIR generation")
+        # pass it so it gets logged in celery as an error as well
+        raise e
 
     message = 'Global impact report generation for month {} is now ready. To download go to' \
               ' http://www.commcarehq.org/hq/admin/download_gir/'.format(
@@ -70,4 +77,3 @@ def build_last_month_GIR():
         message,
         text_content=message
     )
-

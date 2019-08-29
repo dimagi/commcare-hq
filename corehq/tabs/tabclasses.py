@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from django.conf import settings
 from django.http import Http404
@@ -17,12 +15,14 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_trial, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
+from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.utils import user_has_custom_top_menu
-from corehq.apps.domain.views.releases import ManageReleases
-from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
-    CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
-    DeviceLogSoftAssertReport, UserAuditReport
+from corehq.apps.domain.views.releases import (
+    ManageReleasesByLocation,
+    ManageReleasesByAppProfile,
+)
+from corehq.apps.hqadmin.reports import DeviceLogSoftAssertReport, UserAuditReport
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.linked_domain.dbaccessors import is_linked_domain
@@ -49,6 +49,7 @@ from corehq.apps.users.permissions import (
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
+    BI_INTEGRATION_PREVIEW,
 )
 from corehq.messaging.scheduling.views import (
     MessagingDashboardView,
@@ -280,7 +281,7 @@ class SetupTab(UITab):
                 ) for item in dropdown_items
             ] + [
                 dropdown_dict(None, is_divider=True),
-                dropdown_dict(_("View All"), url=ProductListView.urlname),
+                dropdown_dict(_("View All"), url=reverse(ProductListView.urlname, args=[self.domain])),
             ]
 
         return []
@@ -629,6 +630,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     "title": _(DailySavedExportListView.page_title),
                     "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-calendar',
                     "show_in_dropdown": True,
                     "subpages": [_f for _f in [
                         {
@@ -653,6 +655,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DailySavedExportListView.page_title),
                     'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-calendar',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
@@ -680,6 +683,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-dashboard',
                     'show_in_dropdown': True,
                     'subpages': subpages
                 })
@@ -687,10 +691,11 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-dashboard',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
-            if toggles.ODATA.enabled(self.domain):
+            if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
                 subpages = [
                     {
                         'title': _(CreateODataCaseFeedView.page_title),
@@ -712,7 +717,8 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(ODataFeedListView.page_title),
                     'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
-                    'show_in_dropdown': True,
+                    'icon': 'fa fa-plug',
+                    'show_in_dropdown': False,
                     'subpages': subpages
                 })
 
@@ -809,6 +815,12 @@ class ProjectDataTab(UITab):
                 _('Explore Case Data (Preview)'),
                 url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
+        if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+            from corehq.apps.export.views.list import ODataFeedListView
+            items.append(dropdown_dict(
+                _(ODataFeedListView.page_title),
+                url=reverse(ODataFeedListView.urlname, args=(self.domain,)),
+            ))
 
         if items:
             items += [dropdown_dict(None, is_divider=True)]
@@ -817,23 +829,19 @@ class ProjectDataTab(UITab):
 
 
 class ApplicationsTab(UITab):
-    view = "default_app"
+    view = "default_new_app"
 
     url_prefix_formats = ('/a/{domain}/apps/',)
-
-    @property
-    def view(self):
-        return "default_new_app"
 
     @property
     def title(self):
         return _("Applications")
 
     @classmethod
-    def make_app_title(cls, app_name, doc_type):
+    def make_app_title(cls, app):
         return mark_safe("%s%s" % (
-            escape(strip_tags(app_name)) or '(Untitled)',
-            ' (Remote)' if doc_type == 'RemoteApp' else '',
+            escape(strip_tags(app.name)) or '(Untitled)',
+            ' (Remote)' if is_remote_app(app) else '',
         ))
 
     @property
@@ -849,7 +857,7 @@ class ApplicationsTab(UITab):
         for app in apps:
             url = reverse('view_app', args=[self.domain, app.get_id]) if self.couch_user.can_edit_apps() \
                 else reverse('release_manager', args=[self.domain, app.get_id])
-            app_title = self.make_app_title(app.name, app.doc_type)
+            app_title = self.make_app_title(app)
             if 'created_from_template' in app and app['created_from_template'] == 'appcues':
                 if domain_is_on_trial(self.domain):
                     # If trial is over, domain may have lost web apps access, don't do appcues intro
@@ -876,11 +884,6 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(
                 ManageHostedCCZ.page_title,
                 url=reverse(ManageHostedCCZ.urlname, args=[self.domain])
-            ))
-        if toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(self._request):
-            submenu_context.append(dropdown_dict(
-                _('Manage Releases'),
-                url=(reverse(ManageReleases.urlname, args=[self.domain])),
             ))
         return submenu_context
 
@@ -1688,6 +1691,18 @@ def _get_administration_section(domain):
             'url': reverse(TransferDomainView.urlname, args=[domain])
         })
 
+    if toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
+        administration.append({
+            'title': _(ManageReleasesByLocation.page_title),
+            'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
+        })
+
+    if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+        administration.append({
+            'title': _(ManageReleasesByAppProfile.page_title),
+            'url': reverse(ManageReleasesByAppProfile.urlname, args=[domain])
+        })
+
     return administration
 
 
@@ -1754,17 +1769,12 @@ def _get_integration_section(domain):
 
 
 def _get_feature_flag_items(domain):
-    from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
+    from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
     feature_flag_items = []
     if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({
             'title': _('Case Search'),
             'url': reverse('case_search_config', args=[domain])
-        })
-    if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(domain):
-        feature_flag_items.append({
-            'title': _('Calendar Fixture'),
-            'url': reverse(CalendarFixtureConfigView.urlname, args=[domain])
         })
     if toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
         feature_flag_items.append({
@@ -1937,7 +1947,6 @@ class AdminTab(UITab):
             dropdown_dict(_("Reports"), is_header=True),
             dropdown_dict(_("Admin Reports"), url=reverse("default_admin_report")),
             dropdown_dict(_("System Info"), url=reverse("system_info")),
-            dropdown_dict(_("Submission Map"), url=reverse("dimagisphere")),
             dropdown_dict(_("Management"), is_header=True),
         ]
         try:
@@ -2038,22 +2047,12 @@ class AdminTab(UITab):
             ] + admin_operations
         sections = [
             (_('Administrative Reports'), [
-                {'title': _('Project Space List'),
-                 'url': reverse('admin_report_dispatcher', args=('domains',))},
-                {'title': _('Submission Map'),
-                 'url': reverse('dimagisphere')},
-                {'title': _('Active Project Map'),
-                 'url': reverse('admin_report_dispatcher', args=('project_map',))},
                 {'title': _('User List'),
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
-                {'title': _('Application List'),
-                 'url': reverse('admin_report_dispatcher', args=('app_list',))},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('Download Global Impact Report'),
                  'url': reverse('download_gir')},
-                {'title': _('CommCare Version'),
-                 'url': reverse('admin_report_dispatcher', args=('commcare_version', ))},
                 {'title': _('Admin Phone Number Report'),
                  'url': reverse('admin_report_dispatcher', args=('phone_number_report',))},
             ]),
@@ -2073,13 +2072,7 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [
-                RealProjectSpacesReport,
-                CommConnectProjectSpacesReport,
-                CommTrackProjectSpacesReport,
-                DeviceLogSoftAssertReport,
-                UserAuditReport,
-            ]
+            } for report in [DeviceLogSoftAssertReport, UserAuditReport]
         ]))
         return sections
 

@@ -28,6 +28,12 @@
 
   <p>{{ lead_text }}</p>
 
+  {% if is_odata %}
+    <div class="pull-right">
+      <feedback params="featureName: '{% trans_html_attr 'PowerBI / Tableau Integration' %}'"></feedback>
+    </div>
+  {% endif %}
+
   {% include 'export/partials/export_list_controller.html' with is_daily_saved_export=is_daily_saved_export %}
 {% endblock %}
 

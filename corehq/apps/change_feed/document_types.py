@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 
-from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from couchforms.models import all_known_formlike_doc_types
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.feed.interface import ChangeMeta
+
+from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 
 GROUP_DOC_TYPES = ('Group', 'Group-Deleted')
 WEB_USER_DOC_TYPES = ('WebUser', 'WebUser-Deleted')

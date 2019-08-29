@@ -1,24 +1,20 @@
 # coding=utf-8
-from __future__ import absolute_import, unicode_literals
 
-from io import open
 import json
 import logging
 import os
 import re
+from collections import defaultdict
+
+from django.conf import settings
+from django.utils.translation import ugettext as _
+
 import six
+from django_prbac.exceptions import PermissionDenied
 from lxml import etree
 from memoized import memoized
 
-from collections import defaultdict
-from django.conf import settings
-from django_prbac.exceptions import PermissionDenied
-from django.utils.translation import ugettext as _
-
 from corehq import privileges
-from corehq.util.timer import time_method
-from corehq.util import view_utils
-
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_CASE,
@@ -26,6 +22,7 @@ from corehq.apps.app_manager.const import (
     AUTO_SELECT_RAW,
     AUTO_SELECT_USER,
     WORKFLOW_FORM,
+    WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
 )
 from corehq.apps.app_manager.exceptions import (
@@ -50,9 +47,11 @@ from corehq.apps.app_manager.util import (
     xpath_references_user_case,
 )
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
-from corehq.apps.app_manager.xpath import interpolate_xpath, LocationXpath
+from corehq.apps.app_manager.xpath import LocationXpath, interpolate_xpath
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.domain.models import Domain
+from corehq.util import view_utils
+from corehq.util.timer import time_method
 
 
 class ApplicationBaseValidator(object):
@@ -629,7 +628,7 @@ class ReportModuleValidator(ModuleBaseValidator):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
         duplicate_instance_ids = {
             instance_id
-            for instance_id, uuids in get_uuids_by_instance_id(self.module.get_app().domain).items()
+            for instance_id, uuids in get_uuids_by_instance_id(self.module.get_app()).items()
             if len(uuids) > 1
         }
         return any(report_config.instance_id in duplicate_instance_ids
@@ -745,9 +744,14 @@ class FormBaseValidator(object):
                     self.form.get_app().get_form(form_link.form_id)
                 except FormNotFoundException:
                     errors.append(dict(type='bad form link', **meta))
+        elif self.form.post_form_workflow == WORKFLOW_MODULE:
+            if module.put_in_root:
+                errors.append(dict(type='form link to display only forms', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             if not module.root_module:
                 errors.append(dict(type='form link to missing root', **meta))
+            if module.root_module.put_in_root:
+                errors.append(dict(type='form link to display only forms', **meta))
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self.form, 'form_filter') and self.form.form_filter:

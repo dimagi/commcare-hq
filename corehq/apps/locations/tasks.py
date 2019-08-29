@@ -1,30 +1,30 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 import uuid
 
-from celery.task import task
 from django.conf import settings
 
-from dimagi.utils.couch.database import iter_docs
+from celery.task import task
 
+from dimagi.utils.couch.database import iter_docs
 from soil import DownloadBase
 
-from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
-from corehq.apps.locations.util import dump_locations
 from corehq.apps.commtrack.models import (
-    StockState, sync_supply_point, close_supply_point_case,
+    StockState,
+    close_supply_point_case,
+    sync_supply_point,
 )
 from corehq.apps.es.users import UserES
 from corehq.apps.locations.bulk_management import new_locations_import
+from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import dump_locations
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.tasks import rebuild_indicators_in_place
 from corehq.apps.users.forms import generate_strong_password
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
 from corehq.toggles import LOCATIONS_IN_UCR
-from corehq.util.couch import IterDB, iter_update, DocUpdate
+from corehq.util.couch import DocUpdate, IterDB, iter_update
 from corehq.util.decorators import serial_task
 from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 
@@ -65,21 +65,6 @@ def sync_supply_points(location_type):
         location.save()
 
 
-# TODO add message on types page
-@serial_task("{location_type.domain}-{location_type.pk}",
-             default_retry_delay=30, max_retries=0)
-def update_location_users(location_type):
-    """
-    Called when location_type.has_user is changed.
-    Updates existing locations of that type to create or archive the
-    corresponding users.
-    """
-    if location_type.has_user:
-        _create_or_unarchive_users(location_type)
-    else:
-        _archive_users(location_type)
-
-
 def _get_users_by_loc_id(location_type):
     """Find any existing users previously assigned to this type"""
     loc_ids = SQLLocation.objects.filter(location_type=location_type).location_ids()
@@ -104,48 +89,6 @@ def _get_unique_username(domain, base, suffix=0, tries_left=3):
     if not CommCareUser.username_exists(username):
         return username
     return _get_unique_username(domain, base, suffix + 1, tries_left - 1)
-
-
-def make_location_user(location):
-    """For locations where location_type.has_user is True"""
-    return CommCareUser.create(
-        location.domain,
-        _get_unique_username(location.domain, location.site_code),
-        generate_strong_password(),  # They'll need to reset this anyways
-        uuid=uuid.uuid4().hex,
-        commit=False,
-    )
-
-
-def _create_or_unarchive_users(location_type):
-    users_by_loc = _get_users_by_loc_id(location_type)
-
-    with IterDB(CommCareUser.get_db()) as iter_db:
-        for loc in SQLLocation.objects.filter(location_type=location_type):
-            user = users_by_loc.get(loc.location_id, None) or make_location_user(loc)
-            user.is_active = True
-            user.user_location_id = loc.location_id
-            user.set_location(loc, commit=False)
-            iter_db.save(user)
-            loc.user_id = user._id
-            loc.save()
-
-
-def _archive_users(location_type):
-
-    def archive(user_doc):
-        if user_doc['is_active']:
-            user_doc['is_active'] = False
-            return DocUpdate(user_doc)
-
-    user_ids = (SQLLocation.objects
-                .filter(location_type=location_type)
-                .values_list('user_id', flat=True))
-    iter_update(CommCareUser.get_db(), archive, user_ids)
-
-    for loc in SQLLocation.objects.filter(location_type=location_type):
-        loc.user_id = ''
-        loc.save()
 
 
 @task(serializer='pickle')

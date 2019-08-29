@@ -1,15 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import subprocess
+
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 from compressor.exceptions import FilterError
 from compressor.filters import CompilerFilter
 from compressor.js import JsCompressor
 from compressor.utils.stringformat import FormattableString as fstr
-from django.conf import settings
-from django.utils.safestring import mark_safe
 
 
 # For use with node.js' uglifyjs minifier

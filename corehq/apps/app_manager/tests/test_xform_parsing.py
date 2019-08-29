@@ -1,10 +1,14 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
+
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.xform import XForm, XFormException, ItextValue, \
-    WrappedNode, validate_xform
+from corehq.apps.app_manager.xform import (
+    ItextValue,
+    WrappedNode,
+    XForm,
+    XFormException,
+    validate_xform,
+)
 
 
 class XFormParsingTest(SimpleTestCase, TestXmlMixin):

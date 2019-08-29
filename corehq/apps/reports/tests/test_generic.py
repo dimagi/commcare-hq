@@ -1,8 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from unittest import expectedFailure
-from corehq.apps.reports.generic import GenericTabularReport
+
 from django.test import SimpleTestCase
+
+from corehq.apps.reports.generic import GenericTabularReport
 
 
 class GenericTabularReportTests(SimpleTestCase):

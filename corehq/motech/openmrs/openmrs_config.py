@@ -1,23 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
-import six
 from itertools import chain
 from operator import eq
 
-from jsonpath_rw import (
-    Child,
-    Fields,
-    Slice,
-    Union,
-    Where,
-    parse as parse_jsonpath,
-)
+import six
+from jsonpath_rw import Child, Fields, Slice, Union, Where
+from jsonpath_rw import parse as parse_jsonpath
 
-from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
-from corehq.motech.openmrs.finders import PatientFinder
-from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
-from corehq.motech.value_source import ValueSource
 from dimagi.ext.couchdbkit import (
     DocumentSchema,
     ListProperty,
@@ -25,6 +13,11 @@ from dimagi.ext.couchdbkit import (
     SchemaProperty,
     StringProperty,
 )
+
+from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
+from corehq.motech.openmrs.finders import PatientFinder
+from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
+from corehq.motech.value_source import ValueSource
 
 
 class OpenmrsCaseConfig(DocumentSchema):

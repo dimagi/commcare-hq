@@ -1,27 +1,29 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from decimal import Decimal
-import jsonfield
 
 from django.db import models
 from django.utils.translation import ugettext as _
 
+import jsonfield
+import six
 from couchdbkit.exceptions import ResourceNotFound
+from six.moves import map
+
 from dimagi.ext.couchdbkit import (
-    Document,
-    StringProperty,
-    DecimalProperty,
-    DictProperty,
     BooleanProperty,
     DateTimeProperty,
+    DecimalProperty,
+    DictProperty,
+    Document,
+    StringProperty,
 )
 from dimagi.utils.couch.database import iter_docs
 
 # move these too
-from corehq.apps.commtrack.exceptions import InvalidProductException, DuplicateProductCodeException
-import six
-from six.moves import map
+from corehq.apps.commtrack.exceptions import (
+    DuplicateProductCodeException,
+    InvalidProductException,
+)
 
 
 class Product(Document):
@@ -71,6 +73,10 @@ class Product(Document):
                 )
 
         super(Product, cls).save_docs(docs, use_uuids)
+
+        domains = {doc['domain'] for doc in docs}
+        for domain in domains:
+            cls.clear_caches(domain)
 
     bulk_save = save_docs
 
@@ -127,6 +133,7 @@ class Product(Document):
 
         result = super(Product, self).save(*args, **kwargs)
 
+        self.clear_caches(self.domain)
         self.sync_to_sql()
 
         return result
@@ -138,6 +145,13 @@ class Product(Document):
     @code.setter
     def code(self, val):
         self.code_ = val.lower() if val else None
+
+    @classmethod
+    def clear_caches(cls, domain):
+        from casexml.apps.phone.utils import clear_fixture_cache
+        from corehq.apps.products.fixtures import ALL_CACHE_PREFIXES
+        for prefix in ALL_CACHE_PREFIXES:
+            clear_fixture_cache(domain, prefix)
 
     @classmethod
     def get_by_code(cls, domain, code):
@@ -156,18 +170,6 @@ class Product(Document):
         if not include_archived:
             queryset = queryset.filter(is_archived=False)
         return list(queryset.couch_products(wrapped=wrap))
-
-    @classmethod
-    def ids_by_domain(cls, domain):
-        return list(SQLProduct.objects.filter(domain=domain).product_ids())
-
-    @classmethod
-    def count_by_domain(cls, domain):
-        """
-        Gets count of products in a domain
-        """
-        # todo: we should add a reduce so we can get this out of couch
-        return len(cls.ids_by_domain(domain))
 
     @classmethod
     def _export_attrs(cls):
@@ -344,6 +346,11 @@ class SQLProduct(models.Model):
     @property
     def get_id(self):
         return self.product_id
+
+    @property
+    def unit(self):
+        # For compatibility with Product
+        return self.units
 
     class Meta(object):
         app_label = 'products'

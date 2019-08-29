@@ -1,20 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from io import BytesIO
 
+from django.test import SimpleTestCase
+
 import mock
 import six
-from django.test import SimpleTestCase
+
+from couchexport.export import export_raw
 
 from corehq.apps.app_manager.models import Application, LinkedApplication
 from corehq.apps.app_manager.ui_translations import (
     get_default_translations_for_download,
     process_ui_translation_upload,
 )
-from corehq.apps.translations.utils import update_app_translations_from_trans_dict
+from corehq.apps.translations.utils import (
+    update_app_translations_from_trans_dict,
+)
 from corehq.util.test_utils import flag_enabled
-from couchexport.export import export_raw
 
 INITIAL_TRANSLATIONS = {
     'en': {

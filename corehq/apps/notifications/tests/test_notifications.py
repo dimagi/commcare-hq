@@ -1,11 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import timedelta
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from corehq.apps.notifications.models import Notification, LastSeenNotification, IllegalModelStateException
+from corehq.apps.notifications.models import (
+    IllegalModelStateException,
+    LastSeenNotification,
+    Notification,
+)
 from corehq.apps.users.models import WebUser
 
 

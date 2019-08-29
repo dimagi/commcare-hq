@@ -1,13 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from time import sleep
+
+from django.core.management.base import BaseCommand
+
+from dimagi.utils.couch import get_redis_lock
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.sms.models import QueuedSMS
 from corehq.apps.sms.tasks import send_to_sms_queue
 from corehq.sql_db.util import handle_connection_failure
-from dimagi.utils.couch import get_redis_lock
-from dimagi.utils.logging import notify_exception
-from django.core.management.base import BaseCommand
-from time import sleep
 
 
 def skip_domain(domain):

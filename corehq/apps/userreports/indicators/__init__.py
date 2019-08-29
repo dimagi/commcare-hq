@@ -1,13 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from datetime import date, timedelta
 
 import six
 
+from fluff import TYPE_DATE, TYPE_INTEGER, TYPE_SMALL_INTEGER
+
 from corehq.apps.userreports.indicators.utils import get_values_by_product
 from corehq.apps.userreports.util import truncate_value
-from fluff import TYPE_DATE, TYPE_INTEGER, TYPE_SMALL_INTEGER
 
 
 class Column(object):

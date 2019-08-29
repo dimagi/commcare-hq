@@ -1,17 +1,24 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import hashlib
+
+import six
 from couchdbkit.exceptions import ResourceNotFound
+from six.moves import map
+
 from dimagi.ext.couchdbkit import (
-    Document, DocumentSchema, ListProperty, StringProperty,
-    IntegerProperty, SetProperty, SchemaDictProperty
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    SchemaDictProperty,
+    SetProperty,
+    StringProperty,
 )
+from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.app_manager.dbaccessors import get_build_ids_after_version
 from corehq.apps.app_manager.exceptions import AppManagerException
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id
-from dimagi.utils.couch.database import iter_docs
-import six
-from six.moves import map
+from corehq.apps.app_manager.util import is_remote_app
 
 
 class QuestionMeta(DocumentSchema):
@@ -92,7 +99,7 @@ class FormQuestionSchema(Document):
             self._id = self._get_id(self.domain, self.app_id, self.xmlns)
 
     def update_schema(self):
-        all_app_ids = get_built_app_ids_for_app_id(
+        all_app_ids = get_build_ids_after_version(
             self.domain,
             self.app_id,
             self.last_processed_version
@@ -104,7 +111,7 @@ class FormQuestionSchema(Document):
             to_process.append(self.app_id)
 
         for app_doc in iter_docs(Application.get_db(), to_process):
-            if app_doc['doc_type'] == 'RemoteApp':
+            if is_remote_app(app_doc):
                 continue
             app = Application.wrap(app_doc)
             try:

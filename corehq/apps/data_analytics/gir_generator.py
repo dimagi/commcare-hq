@@ -1,24 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
+from collections import defaultdict, namedtuple
 
-from collections import namedtuple, defaultdict
-
+import six
 from django_countries.data import COUNTRIES
 
 from dimagi.utils.dates import add_months
 
-from corehq.apps.domain.models import Domain
-from corehq.apps.data_analytics.esaccessors import (
-    get_domain_device_breakdown_es, active_mobile_users, get_possibly_experienced
-)
-from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import (
-    TEST_COUCH_TO_SQL_MAP, AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET, BU_MAPPING, NO_BU,
-    DEFAULT_EXPERIENCED_THRESHOLD, DEFAULT_PERFORMANCE_THRESHOLD
+    AMPLIFY_COUCH_TO_SQL_MAP,
+    BU_MAPPING,
+    DEFAULT_EXPERIENCED_THRESHOLD,
+    DEFAULT_PERFORMANCE_THRESHOLD,
+    NO_BU,
+    NOT_SET,
+    TEST_COUCH_TO_SQL_MAP,
 )
-import six
-
+from corehq.apps.data_analytics.esaccessors import (
+    active_mobile_users,
+    get_domain_device_breakdown_es,
+    get_possibly_experienced,
+)
+from corehq.apps.data_analytics.models import GIRRow, MALTRow
+from corehq.apps.domain.models import Domain
 
 UserCategories = namedtuple('UserCategories', 'active performing experienced total sms eligible')
 

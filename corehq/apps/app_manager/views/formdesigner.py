@@ -1,60 +1,67 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 import json
 import logging
 
-import six
-from django.urls import reverse
-from django.utils.translation import ugettext as _
-from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
-from django.shortcuts import render
-from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
+from django.http import Http404, HttpResponse, HttpResponseBadRequest
+from django.shortcuts import render
+from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.views.decorators.http import require_GET
 
-from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
-from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
-from corehq.apps.app_manager.views.forms import FormHasSubmissionsView
-from corehq.apps.domain.decorators import track_domain_request
+import six
+from couchdbkit.exceptions import ResourceConflict
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.app_manager.views.apps import get_apps_base_context
-from corehq.apps.app_manager.views.notifications import get_facility_for_form, notify_form_opened
-
-from corehq.apps.app_manager.exceptions import AppManagerException, \
-    FormNotFoundException
-
-from corehq.apps.app_manager.views.utils import back_to_main, bail, form_has_submissions, \
-    set_lang_cookie
-from corehq import toggles, privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import (
+    HUBSPOT_FORM_BUILDER_FORM_ID,
+    send_hubspot_form,
+)
+from corehq.apps.app_manager import add_ons
+from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
+from corehq.apps.app_manager.app_schemas.session_schema import (
+    get_session_schema,
+)
 from corehq.apps.app_manager.const import (
     SCHEDULE_CURRENT_VISIT_NUMBER,
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
     SCHEDULE_NEXT_DUE,
     SCHEDULE_UNSCHEDULED_VISIT,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
 )
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.decorators import require_can_edit_apps
+from corehq.apps.app_manager.exceptions import (
+    AppManagerException,
+    FormNotFoundException,
+)
+from corehq.apps.app_manager.models import Form, ModuleNotFoundException
+from corehq.apps.app_manager.templatetags.xforms_extras import translate
 from corehq.apps.app_manager.util import (
     app_callout_templates,
+    is_linked_app,
     is_usercase_in_use,
 )
-from corehq.apps.cloudcare.utils import should_show_preview_app
-from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import (
-    Form,
-    ModuleNotFoundException,
+from corehq.apps.app_manager.views.apps import get_apps_base_context
+from corehq.apps.app_manager.views.forms import FormHasSubmissionsView
+from corehq.apps.app_manager.views.notifications import (
+    get_facility_for_form,
+    notify_form_opened,
 )
-from corehq.apps.app_manager.decorators import require_can_edit_apps
-from corehq.apps.app_manager.templatetags.xforms_extras import translate
-from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_FORM_BUILDER_FORM_ID
+from corehq.apps.app_manager.views.utils import (
+    back_to_main,
+    bail,
+    form_has_submissions,
+    set_lang_cookie,
+)
+from corehq.apps.cloudcare.utils import should_show_preview_app
+from corehq.apps.domain.decorators import track_domain_request
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
 from corehq.util.context_processors import websockets_override
-
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +124,7 @@ def _get_form_designer_view(request, domain, app, module, form):
         return back_to_main(request, domain, app_id=app.id,
                             form_unique_id=form.unique_id)
 
-    if app.doc_type == 'LinkedApplication':
+    if is_linked_app(app):
         messages.warning(request, _(
             "You tried to edit this form in the Form Builder. "
             "However, this is a linked application and you can only make changes to the "
@@ -328,8 +335,6 @@ def _get_vellum_features(request, domain, app):
         'rich_text': True,
         'sorted_itemsets': app.enable_sorted_itemsets,
         'advanced_itemsets': add_ons.show("advanced_itemsets", request, app),
-        'remote_requests': (app.enable_remote_requests
-                            and toggles.REMOTE_REQUEST_QUESTION_TYPE.enabled(domain)),
     })
     return vellum_features
 

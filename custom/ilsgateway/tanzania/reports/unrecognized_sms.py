@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext_noop
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqwebapp.doc_info import get_doc_info

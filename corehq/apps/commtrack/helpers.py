@@ -1,13 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import six
 import uuid
 
+import six
+
 from casexml.apps.case.mock import CaseBlock
+
 from corehq.apps.commtrack import const
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import Product
 from corehq.form_processor.interfaces.supply import SupplyInterface
+
 
 """
 helper code to populate the various commtrack models, for ease of

@@ -1,22 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.locations.forms import LocationSelectWidget
-from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
-from corehq.motech.repeaters.repeater_generators import RegisterGenerator
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+from memoized import memoized
 
 from corehq.apps.es.users import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.locations.forms import LocationSelectWidget
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
 from corehq.apps.users.util import raw_username
-
-from memoized import memoized
+from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
+from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 
 from .models import BASIC_AUTH, DIGEST_AUTH
 
@@ -249,17 +248,6 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
                     'Specify a location so that CommCare can set an owner for cases added via the Atom feed.'
                 ))
         return cleaned_data
-
-
-class Dhis2RepeaterForm(FormRepeaterForm):
-
-    def __init__(self, *args, **kwargs):
-        super(Dhis2RepeaterForm, self).__init__(*args, **kwargs)
-        # self.fields['location_id'].widget = SupplyPointSelectWidget(self.domain, id='id_location_id')
-
-    def get_ordered_crispy_form_fields(self):
-        fields = super(Dhis2RepeaterForm, self).get_ordered_crispy_form_fields()
-        return fields
 
 
 class EmailBulkPayload(forms.Form):

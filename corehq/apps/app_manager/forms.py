@@ -1,12 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from crispy_forms import layout as crispy
-from crispy_forms import bootstrap as twbscrispy
-from crispy_forms.helper import FormHelper
-from crispy_forms.bootstrap import StrictButton, PrependedText
 from django import forms
 from django.urls import reverse
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import PrependedText, StrictButton
+from crispy_forms.helper import FormHelper
+
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -31,20 +32,21 @@ class CopyApplicationForm(forms.Form):
         help_text=_("This will create an application that can be updated from changes to this application."
                     " This requires your app to have at least one released version.")
     )
+    build_id = forms.CharField(
+        required=False,
+        label=_('Copy version'),
+        widget=forms.Select(choices=[], attrs={"class": "app-manager-version-dropdown",
+                                               "placeholder": _("Current")}))
 
     # Toggles to enable when copying the app
     toggles = forms.CharField(required=False, widget=forms.HiddenInput, max_length=5000)
 
     def __init__(self, from_domain, app, *args, **kwargs):
-        export_zipped_apps_enabled = kwargs.pop('export_zipped_apps_enabled', False)
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
-        fields = ['domain', 'name', 'toggles']
+        fields = ['domain', 'name', 'toggles', 'build_id']
         self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
-        if export_zipped_apps_enabled:
-            self.fields['gzip'] = forms.FileField(required=False)
-            fields.append('gzip')
         if LINKED_DOMAINS.enabled(self.from_domain):
             fields.append(PrependedText('linked', ''))
 

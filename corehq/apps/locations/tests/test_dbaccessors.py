@@ -1,14 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
+
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
+
 from ..analytics import users_have_locations
-from ..dbaccessors import (get_users_by_location_id, get_user_ids_by_location,
-                           get_one_user_at_location, get_user_docs_by_location,
-                           get_all_users_by_location, get_users_assigned_to_locations,
-                           generate_user_ids_from_primary_location_ids_from_couch)
+from ..dbaccessors import (
+    generate_user_ids_from_primary_location_ids_from_couch,
+    get_all_users_by_location,
+    get_one_user_at_location,
+    get_user_docs_by_location,
+    get_user_ids_by_location,
+    get_users_assigned_to_locations,
+    get_users_by_location_id,
+)
 from .util import make_loc
 
 

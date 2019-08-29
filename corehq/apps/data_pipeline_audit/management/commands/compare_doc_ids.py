@@ -1,25 +1,35 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
-from __future__ import print_function
-from datetime import datetime, timedelta
 
 import argparse
-from six.moves import zip_longest
+from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand, CommandError
 
+from six.moves import range, zip_longest
+
+from couchforms.models import doc_types
+
 from corehq.apps.change_feed.document_types import CASE_DOC_TYPES
-from corehq.apps.data_pipeline_audit.dbacessors import get_es_user_ids, get_es_form_ids, get_primary_db_form_ids, \
-    get_primary_db_case_ids, get_es_case_ids, get_es_case_counts, get_es_case_range
+from corehq.apps.data_pipeline_audit.dbacessors import (
+    get_es_case_counts,
+    get_es_case_ids,
+    get_es_case_range,
+    get_es_form_ids,
+    get_es_user_ids,
+    get_primary_db_case_ids,
+    get_primary_db_form_ids,
+)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain, get_mobile_user_ids
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_all_user_ids_by_domain,
+    get_mobile_user_ids,
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.util.markup import SimpleTableWriter, CSVRowFormatter, TableRowFormatter
-from couchforms.models import doc_types
-from six.moves import range
+from corehq.util.markup import (
+    CSVRowFormatter,
+    SimpleTableWriter,
+    TableRowFormatter,
+)
 
 DATE_FORMAT = "%Y-%m-%d"
 

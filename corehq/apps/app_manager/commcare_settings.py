@@ -1,14 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import defaultdict
-import re
-
-from memoized import memoized
-from django.utils.translation import ugettext_noop, ugettext
 import os
-import yaml
+import re
+from collections import defaultdict
+
+from django.utils.translation import ugettext, ugettext_noop
+
 import six
-from io import open
+import yaml
+from memoized import memoized
 
 from corehq.apps.app_manager.util import app_doc_types
 from corehq.util.python_compatibility import soft_assert_type_text

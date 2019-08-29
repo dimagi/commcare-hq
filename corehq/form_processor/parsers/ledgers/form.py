@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 import datetime
 from decimal import Decimal
@@ -128,9 +126,6 @@ def get_all_stock_report_helpers_from_form(xform):
     them to StockReportHelper objects.
     """
     form_xml = xform.get_xml_element()
-    if form_xml is None:
-        # HACK should be raised by xform.get_xml_element()
-        raise MissingFormXml(xform.form_id)
     commtrack_node_names = ('{%s}balance' % COMMTRACK_REPORT_XMLNS,
                             '{%s}transfer' % COMMTRACK_REPORT_XMLNS)
 
@@ -316,7 +311,3 @@ def _coerce_to_list(obj_or_list):
         return obj_or_list
     else:
         return [obj_or_list]
-
-
-class MissingFormXml(Exception):
-    pass

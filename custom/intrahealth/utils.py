@@ -1,6 +1,4 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import logging
 import re
@@ -16,6 +14,7 @@ from dimagi.utils.dates import force_to_datetime
 from corehq.apps.locations.models import get_location, SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.graph_models import MultiBarChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.fluff.calculators.xform import FormPropertyFilter, IN
@@ -27,6 +26,9 @@ import six
 COMMANDE_COMBINED = 'commande_combined'
 LIVRAISON_COMBINED = 'livraison_combined'
 OPERATEUR_COMBINED = 'operateur_combined'
+OPERATEUR_COMBINED2 = 'operateur_combined2'
+INDICATEURS_DE_BASE = 'indicateurs_de_base'
+YEKSI_NAA_REPORTS_CONSUMPTION = 'yeksi_naa_reports_consumption'
 RAPTURE_COMBINED = 'rapture_combined'
 RECOUVREMENT_COMBINED = 'recouvrement_combined'
 YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR = 'yeksi_naa_reports_visite_de_l_operateur'
@@ -239,6 +241,10 @@ def get_district_id(case):
     return loc.location_id if loc else None
 
 
+class PNAMultiBarChart(MultiBarChart):
+    template_partial = 'yeksi_naa/partials/pna_multibar_chart.html'
+
+
 class YeksiNaaLocationMixin(object):
 
     @cached_property
@@ -311,7 +317,7 @@ class MultiReport(CustomProjectReport, YeksiNaaMixin, ProjectReportParametersMix
     title = ''
     report_template_path = "yeksi_naa/multi_report.html"
     flush_layout = True
-    export_format_override = 'csv'
+    export_format_override = None
 
     @cached_property
     def rendered_report_title(self):

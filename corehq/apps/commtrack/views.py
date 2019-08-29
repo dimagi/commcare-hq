@@ -1,37 +1,37 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import json
 import copy
+import json
 
 from django.contrib import messages
+from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
-from casexml.apps.stock.models import StockTransaction
-from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
-from corehq.apps.commtrack.processing import plan_rebuild_stock_state, \
-    rebuild_stock_state
-from corehq import toggles
-from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.exceptions import XFormNotFound
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
-from corehq.util.timezones.conversions import ServerTime
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
+import six
 from memoized import memoized
 
-from corehq.apps.domain.decorators import (
-    domain_admin_required,
-)
-from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.locations.models import LocationType, SQLLocation
+from casexml.apps.stock.models import StockTransaction
 
-from .forms import ConsumptionForm, StockLevelsForm, CommTrackSettingsForm
+from corehq import toggles
+from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
+from corehq.apps.commtrack.processing import (
+    plan_rebuild_stock_state,
+    rebuild_stock_state,
+)
+from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
+from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.timezones.conversions import ServerTime
+
+from .forms import CommTrackSettingsForm, ConsumptionForm, StockLevelsForm
 from .models import CommtrackActionConfig, StockRestoreConfig
 from .tasks import recalculate_domain_consumption_task
 from .util import all_sms_codes
-import six
 
 
 @domain_admin_required

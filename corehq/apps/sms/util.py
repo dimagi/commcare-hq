@@ -1,21 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import datetime
 import re
 import uuid
-import datetime
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext as _
+
+import six
 from couchdbkit import ResourceNotFound
+from memoized import memoized
+
+from dimagi.utils.modules import to_function
+from dimagi.utils.parsing import json_format_datetime
+
+from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CouchUser
-from django.conf import settings
-from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
-from django.core.exceptions import ValidationError
-from memoized import memoized
-from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.modules import to_function
-from django.utils.translation import ugettext as _
-import six
 
 
 class DateFormat(object):

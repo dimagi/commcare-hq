@@ -1,25 +1,33 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
+
 from django.test import TestCase
 from django.test.utils import override_settings
+
+import six
+from six.moves import zip
+
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
-from corehq.apps.domain.models import Domain
-from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
-from corehq.util.test_utils import TestFileMixin
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
-from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
-from corehq.apps.tzmigration.api import set_tz_migration_complete, \
-    set_tz_migration_started, MigrationStatus, TZMIGRATION_SLUG
-from corehq.apps.tzmigration.timezonemigration import \
-    run_timezone_migration_for_domain, _run_timezone_migration_for_domain
-from corehq.apps.receiverwrapper.util import submit_form_locally
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from couchforms.dbaccessors import get_forms_by_type
 from couchforms.models import XFormInstance
-from six.moves import zip
-import six
+
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
+from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.tzmigration.api import (
+    TZMIGRATION_SLUG,
+    MigrationStatus,
+    set_tz_migration_complete,
+    set_tz_migration_started,
+)
+from corehq.apps.tzmigration.timezonemigration import (
+    _run_timezone_migration_for_domain,
+    run_timezone_migration_for_domain,
+)
+from corehq.util.test_utils import TestFileMixin
 
 
 class TimeZoneMigrationTest(TestCase, TestFileMixin):
@@ -125,7 +133,7 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
     def test_pause(self):
         xform = self.get_xml('form')
         set_tz_migration_started(self.domain)
-        with self.assertRaisesRegexp(LocalSubmissionError, 'status code 503'):
+        with self.assertRaisesRegex(LocalSubmissionError, 'status code 503'):
             submit_form_locally(xform, self.domain)
         _run_timezone_migration_for_domain(self.domain)
         set_tz_migration_complete(self.domain)

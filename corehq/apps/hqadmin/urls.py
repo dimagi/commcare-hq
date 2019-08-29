@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from django.conf.urls import include, url
 
@@ -12,11 +11,8 @@ from corehq.apps.hqadmin.views.operations import (
     mass_email,
 )
 from corehq.apps.hqadmin.views.reports import (
-    DimagisphereView,
     DownloadGIRView,
     DownloadMALTView,
-    admin_reports_stats_data,
-    stats_data,
     top_five_projects_by_country,
 )
 from corehq.apps.hqadmin.views.system import (
@@ -61,8 +57,6 @@ urlpatterns = [
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
     url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
     url(r'^app_build_timings/$', AppBuildTimingsView.as_view(), name="app_build_timings"),
-    url(r'^stats_data/$', stats_data, name="admin_stats_data"),
-    url(r'^admin_reports_stats_data/$', admin_reports_stats_data, name="admin_reports_stats_data"),
     url(r'^do_pillow_op/$', pillow_operation_api, name="pillow_operation_api"),
     url(r'^web_user_lookup/$', web_user_lookup, name='web_user_lookup'),
     url(r'^disable_two_factor/$', DisableTwoFactorView.as_view(), name=DisableTwoFactorView.urlname),
@@ -75,9 +69,6 @@ urlpatterns = [
     url(r'^download_malt/$',
         DownloadMALTView.as_view(), name=DownloadMALTView.urlname),
     url(r'^download_gir', DownloadGIRView.as_view(), name=DownloadGIRView.urlname),
-    url(r'^dimagisphere/$',
-        require_superuser(DimagisphereView.as_view(template_name='hqadmin/dimagisphere/form_feed.html')),
-        name='dimagisphere'),
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
     url(r'^top_five_projects_by_country/$', top_five_projects_by_country, name='top_five_projects_by_country'),

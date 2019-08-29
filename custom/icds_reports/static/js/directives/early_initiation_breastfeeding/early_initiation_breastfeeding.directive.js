@@ -21,7 +21,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.data = {
         legendTitle: '% Newborns',
     };
-    vm.filters = ['age', 'ageServiceDeliveryDashboard'];
+    vm.filters = ['age'];
 
     vm.rightLegend = {
         info: 'Of the children born in the last month and enrolled for Anganwadi services, the percentage whose breastfeeding was initiated within 1 hour of delivery.\n' +

@@ -1,19 +1,19 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 
+import textwrap
 from collections import OrderedDict
 from copy import deepcopy
-from io import open
-import simplejson as json
-import six
-import textwrap
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.userreports.models import ReportConfiguration, StaticReportConfiguration
-from corehq.apps.userreports.reports.filters import specs
+import simplejson as json
+import six
 from six.moves import zip
+
+from corehq.apps.userreports.models import (
+    ReportConfiguration,
+    StaticReportConfiguration,
+)
+from corehq.apps.userreports.reports.filters import specs
 
 COLUMN_PARAMS_ORDER = [
     'comment',

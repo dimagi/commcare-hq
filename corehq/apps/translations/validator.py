@@ -1,10 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import ghdiff
 from memoized import memoized
 
-from corehq.apps.translations.app_translations.download import get_bulk_app_sheets_by_name
+from corehq.apps.translations.app_translations.download import (
+    get_bulk_app_sheets_by_name,
+)
 from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
     get_unicode_dicts,
@@ -59,13 +59,11 @@ class UploadedTranslationsValidator(object):
             for mod_or_form_id, headers in
             get_bulk_app_sheet_headers(
                 self.app,
-                exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
-                exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment)
-        }
+                eligible_for_transifex_only=True,
+        )}
         self.current_rows = get_bulk_app_sheets_by_name(
             self.app,
-            exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
-            exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
+            eligible_for_transifex_only=True
         )
         self._set_current_sheet_name_to_module_or_form_mapping()
         self._map_ids_to_headers()
@@ -105,13 +103,13 @@ class UploadedTranslationsValidator(object):
 
     def _filter_rows(self, for_type, rows, module_or_form_id):
         if for_type == 'form':
-            return self.app_translation_generator._filter_invalid_rows_for_form(
+            return self.app_translation_generator.filter_invalid_rows_for_form(
                 rows,
                 module_or_form_id,
                 self._get_current_header_index(module_or_form_id, 'label')
             )
         elif for_type == 'module':
-            return self.app_translation_generator._filter_invalid_rows_for_module(
+            return self.app_translation_generator.filter_invalid_rows_for_module(
                 rows,
                 module_or_form_id,
                 self._get_current_header_index(module_or_form_id, 'case_property'),

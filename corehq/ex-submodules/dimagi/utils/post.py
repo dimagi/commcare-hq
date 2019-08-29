@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import subprocess
 import tempfile
 from subprocess import PIPE
 import requests
 import six
-from io import open
 
 
 def tmpfile(*args, **kwargs):

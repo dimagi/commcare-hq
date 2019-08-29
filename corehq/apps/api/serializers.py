@@ -1,18 +1,16 @@
 
 # Standard library imports
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from io import BytesIO
 
 # Django & Tastypie imports
 from django.utils.encoding import force_text
-from tastypie.bundle import Bundle
-from tastypie.serializers import Serializer, get_type_string
 
 # External imports
 import defusedxml.lxml as lxml
-from lxml.etree import Element
 import six
+from lxml.etree import Element
+from tastypie.bundle import Bundle
+from tastypie.serializers import Serializer, get_type_string
 
 from corehq.util.python_compatibility import soft_assert_type_text
 

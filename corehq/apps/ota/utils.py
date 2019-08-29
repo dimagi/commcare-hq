@@ -1,19 +1,26 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
+
+from functools import wraps
+
+from django.utils.translation import ugettext as _
+
 import six
 from couchdbkit import ResourceConflict
-from django.utils.translation import ugettext as _
 
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
-from corehq.apps.domain.auth import get_username_and_password_from_request, determine_authtype_from_request
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
+
+from corehq.apps.domain.auth import (
+    determine_authtype_from_request,
+    get_username_and_password_from_request,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.decorators import ensure_active_user_by_username
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
+
 from .exceptions import RestorePermissionDenied
 from .models import DemoUserRestore
 
@@ -179,6 +186,7 @@ def handle_401_response(f):
     :return json response with apt error_code in app_string and default response in english for missing
     translations and status_code as 406(unacceptable), similar code needed different from 401
     """
+    @wraps(f)
     def _inner(request, domain, *args, **kwargs):
         response = f(request, domain, *args, **kwargs)
         if response.status_code == 401:

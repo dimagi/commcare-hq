@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
@@ -114,6 +112,14 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def get_form_ids_for_user(domain, user_id):
         return get_form_ids_for_user(domain, user_id)
+
+    @staticmethod
+    def set_archived_state(form, archive, user_id):
+        operation = "archive" if archive else "unarchive"
+        form.doc_type = "XFormArchived" if archive else "XFormInstance"
+        form.history.append(XFormOperation(operation=operation, user=user_id))
+        # subclasses explicitly set the doc type so force regular save
+        XFormInstance.save(form)
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):

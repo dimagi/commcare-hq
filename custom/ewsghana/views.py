@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -18,7 +16,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.permissions import locations_access_required, location_safe
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
@@ -71,7 +69,7 @@ class InputStockView(BaseDomainView):
                 raise Http404()
             text = ''
             for form in formset:
-                product = Product.get(docid=form.cleaned_data['product_id'])
+                product = SQLProduct.objects.get(product_id=form.cleaned_data['product_id'])
                 if form.cleaned_data['stock_on_hand'] is not None:
                     text += '{} {}.{} '.format(
                         product.code, form.cleaned_data['stock_on_hand'], form.cleaned_data['receipts'] or 0

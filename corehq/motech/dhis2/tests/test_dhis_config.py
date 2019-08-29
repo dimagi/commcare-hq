@@ -1,10 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import json
-import six
 
 from django.test import SimpleTestCase
+
+import six
 from fakecouch import FakeCouchDb
 from jsonobject.base_properties import BadValueError
 

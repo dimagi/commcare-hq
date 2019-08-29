@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -8,7 +6,7 @@ from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_da
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestAWCDailyStatus(TestCase):
 
     def test_map_data(self):
@@ -295,12 +293,12 @@ class TestAWCDailyStatus(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0,
+                                "y": 21,
                                 "x": 1495756800000,
                                 "all": 0
                             },
                             {
-                                "y": 0,
+                                "y": 21,
                                 "x": 1495843200000,
                                 "all": 0
                             },
@@ -458,12 +456,12 @@ class TestAWCDailyStatus(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0,
+                                "y": 38,
                                 "x": 1495756800000,
                                 "all": 0
                             },
                             {
-                                "y": 0,
+                                "y": 34,
                                 "x": 1495843200000,
                                 "all": 0
                             },

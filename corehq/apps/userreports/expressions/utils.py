@@ -1,13 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import copy
 import ast
+import copy
+import operator
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
-from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression, DEFAULT_FUNCTIONS, FeatureNotAvailable
 import six
-import operator
+from simpleeval import (
+    DEFAULT_FUNCTIONS,
+    DEFAULT_OPERATORS,
+    FeatureNotAvailable,
+    InvalidExpression,
+    SimpleEval,
+)
 from six.moves import range
 
 

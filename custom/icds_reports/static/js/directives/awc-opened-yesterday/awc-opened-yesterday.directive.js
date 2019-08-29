@@ -5,7 +5,7 @@ function AwcOpenedYesterdayController($routeParams, $location, storageService, s
     var vm = this;
     vm.data = {};
     vm.step = $routeParams.step;
-    vm.filters = ['ageServiceDeliveryDashboard'];
+    vm.filters = [];
 
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));

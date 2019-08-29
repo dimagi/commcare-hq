@@ -1,14 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
+
 from django.test import TestCase
+
 from mock import MagicMock
 
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import UserFixtureStatus, UserFixtureType
-from corehq.apps.users.models import get_fixture_statuses
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import CommCareUser, get_fixture_statuses
 
 
 class TestFixtureStatus(TestCase):

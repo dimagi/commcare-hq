@@ -1,37 +1,37 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import datetime
 import math
 from collections import defaultdict, namedtuple
+
+from django.conf import settings
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+import pytz
 import six
+from memoized import memoized
+from pygooglechart import ScatterChart
 from six.moves import map, range
 from six.moves.urllib.parse import urlencode
 
-import pytz
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
-from memoized import memoized
-from pygooglechart import ScatterChart
-
-from corehq import toggles
-from corehq.elastic import ES_DEFAULT_INSTANCE
-from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.es import cases as case_es, filters
-from corehq.apps.es.aggregations import FilterAggregation, MissingAggregation, TermsAggregation
-from corehq.apps.locations.permissions import conditionally_location_safe, location_safe
-from corehq.apps.users.models import CommCareUser
-from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util import flatten_list
-from corehq.util.context_processors import commcare_hq_names
-from corehq.util.timezones.conversions import PhoneTime, ServerTime
-from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
-from dimagi.utils.chunked import chunked
 
+from corehq import toggles
+from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.es import cases as case_es
+from corehq.apps.es import filters
+from corehq.apps.es.aggregations import (
+    FilterAggregation,
+    MissingAggregation,
+    TermsAggregation,
+)
+from corehq.apps.locations.permissions import (
+    conditionally_location_safe,
+    location_safe,
+)
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
@@ -61,11 +61,23 @@ from corehq.apps.reports.filters.forms import (
     FormsByApplicationFilter,
 )
 from corehq.apps.reports.filters.select import CaseTypeFilter
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.users import \
+    ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import (
+    DatespanMixin,
+    ProjectReport,
+    ProjectReportParametersMixin,
+)
 from corehq.apps.reports.util import format_datatables_data, friendly_timedelta
+from corehq.apps.users.models import CommCareUser
+from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.elastic import ES_DEFAULT_INSTANCE
+from corehq.util import flatten_list
+from corehq.util.context_processors import commcare_hq_names
+from corehq.util.timezones.conversions import PhoneTime, ServerTime
+from corehq.util.view_utils import absolute_reverse
 
 TOO_MUCH_DATA = ugettext_noop(
     'The filters you selected include too much data. Please change your filters and try again'
@@ -1356,6 +1368,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     NO_FORMS_TEXT = ugettext_noop('None')
 
     @property
+    def include_active_cases(self):
+        return not settings.CASE_ES_DROP_FORM_FIELDS
+
+    @property
     def fields(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
             return [
@@ -1627,8 +1643,17 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
             owner_ids = _get_owner_ids_from_users(users)
 
-            active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
+            if self.include_active_cases:
+                active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
+                active_cases_cell = util.numcell(active_cases)
+                pct_active = util.numcell(
+                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+                )
+            else:
+                active_cases_cell = util.numcell('---')
+                pct_active = util.numcell('---')
+
             active_users = int(active_users_by_group.get(group, 0))
             total_users = len(self.users_by_group.get(group, []))
 
@@ -1666,13 +1691,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     )
                 ),
                 # Active cases
-                util.numcell(active_cases),
+                active_cases_cell,
                 # Total Cases
                 util.numcell(total_cases),
                 # Percent active cases
-                util.numcell(
-                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
-                ),
+                pct_active,
             ])
         return rows
 
@@ -1681,19 +1704,27 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         last_form_by_user = self.es_last_submissions([a.user_id for a in users])
         for user in users:
             owner_ids = set([user["user_id"].lower(), user["location_id"]] + user["group_ids"])
-            active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
+
+            if self.include_active_cases:
+                active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
+                if today_or_tomorrow(self.datespan.enddate):
+                    active_cases_cell = util.numcell(
+                        self._html_anchor_tag(self._case_list_url_active_cases(user['user_id']), active_cases),
+                        active_cases,
+                    )
+                else:
+                    active_cases_cell = util.numcell(active_cases)
+
+                pct_active = util.numcell(
+                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+                )
+            else:
+                active_cases_cell = util.numcell('---')
+                pct_active = util.numcell('---')
 
             cases_opened = int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
             cases_closed = int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
-
-            if today_or_tomorrow(self.datespan.enddate):
-                active_cases_cell = util.numcell(
-                    self._html_anchor_tag(self._case_list_url_active_cases(user['user_id']), active_cases),
-                    active_cases,
-                )
-            else:
-                active_cases_cell = util.numcell(active_cases)
 
             rows.append([
                 # Username
@@ -1727,9 +1758,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     total_cases,
                 ),
                 # Percent active
-                util.numcell(
-                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
-                ),
+                pct_active,
 
             ])
 
@@ -1754,6 +1783,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         case_owners = _get_owner_ids_from_users(users_to_iterate)
         user_ids = user_ids
 
+        if self.include_active_cases:
+            active_cases_by_owner = get_active_case_counts_by_owner(
+                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
+            )
+        else:
+            active_cases_by_owner = {}
+
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
                 self.domain, avg_datespan, user_ids=user_ids, export=export
@@ -1761,9 +1797,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             submissions_by_user=get_submission_counts_by_user(
                 self.domain, self.datespan, user_ids=user_ids, export=export
             ),
-            active_cases_by_owner=get_active_case_counts_by_owner(
-                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
-            ),
+            active_cases_by_owner=active_cases_by_owner,
             total_cases_by_owner=get_total_case_counts_by_owner(
                 self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
             ),
@@ -1788,12 +1822,15 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 total_row.append(None)
         num = len([row for row in rows if row[3] != _(self.NO_FORMS_TEXT)])
         case_owners = _get_owner_ids_from_users(users)
+
         total_row[6] = sum(
             [int(report_data.active_cases_by_owner.get(id, 0))
-             for id in case_owners])
+             for id in case_owners]) if self.include_active_cases else '---'
+
         total_row[7] = sum(
             [int(report_data.total_cases_by_owner.get(id, 0))
              for id in case_owners])
+
         if self.view_by_groups:
             active_users = set()
             all_users = set()

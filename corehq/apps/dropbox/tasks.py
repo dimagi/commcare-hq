@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import os
-from celery.task import task
-from dropbox import Dropbox
-from dropbox.sharing import SharedLinkSettings, RequestedVisibility
 
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
+from celery.task import task
+
 from corehq.apps.dropbox.utils import upload_to_dropbox
 from corehq.apps.users.models import CouchUser
-from corehq.util.translation import localize
 from corehq.util.log import send_HTML_email
+from corehq.util.translation import localize
+from dropbox import Dropbox
+from dropbox.sharing import RequestedVisibility, SharedLinkSettings
 
 
 @task(serializer='pickle')

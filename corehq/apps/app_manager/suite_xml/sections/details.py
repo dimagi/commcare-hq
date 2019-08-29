@@ -1,18 +1,25 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import os
+from collections import namedtuple
 from xml.sax.saxutils import escape
 
 import six
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from lxml import etree
+from memoized import memoized
 
+from corehq import toggles
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
+from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
+from corehq.apps.app_manager.suite_xml.features.scheduler import (
+    schedule_detail_variables,
+)
+from corehq.apps.app_manager.suite_xml.post_process.instances import (
+    get_all_instances_referenced_in_xpaths,
+)
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Action,
@@ -36,15 +43,12 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Xpath,
     XpathVariable,
 )
-from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
-from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search, \
-    get_sort_and_sort_only_columns
-from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import SuiteError
-from corehq.apps.app_manager.xpath import session_var, XPath
-from corehq import toggles
-from memoized import memoized
-from io import open
+from corehq.apps.app_manager.util import (
+    create_temp_sort_column,
+    get_sort_and_sort_only_columns,
+    module_offers_search,
+)
+from corehq.apps.app_manager.xpath import XPath, session_var
 
 
 class DetailContributor(SectionContributor):
@@ -474,7 +478,7 @@ def get_instances_for_module(app, module, additional_xpaths=None):
     for detail_id in detail_ids:
         xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
-    instances, _ = get_all_instances_referenced_in_xpaths(app.domain, xpaths)
+    instances, _ = get_all_instances_referenced_in_xpaths(app, xpaths)
     return instances
 
 

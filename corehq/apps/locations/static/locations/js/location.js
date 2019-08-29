@@ -74,7 +74,6 @@ hqDefine("locations/js/location", [
         var loc_id = initialPageData.get('location_id');
         var loc_type = initialPageData.get('location_type');
         var hierarchy = initialPageData.get('hierarchy');
-        var loc_types_with_users = initialPageData.get('loc_types_with_users');
 
         var model = locationModels.locationSelectViewModel({
             "hierarchy": hierarchy,
@@ -91,14 +90,6 @@ hqDefine("locations/js/location", [
             return (active_loc ? active_loc.allowed_child_types() : []);
         }, model);
         model.loc_type = ko.observable(loc_type);
-
-        model.has_user = ko.computed(function () {
-            var loc_type = (
-                model.allowed_child_types().length === 1 ?
-                    model.allowed_child_types()[0] :
-                    model.loc_type());
-            return loc_types_with_users.indexOf(loc_type) !== -1;
-        });
 
         var locs = initialPageData.get('locations');
         var selected_parent = initialPageData.get('location_parent_get_id');

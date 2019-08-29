@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.urls import reverse
 from django.utils import html
 from django.utils.translation import ugettext as _, ugettext_noop

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import io
 from base64 import b64decode
@@ -8,7 +6,7 @@ import os
 import re
 import tempfile
 import zipfile
-import csv342 as csv
+import csv
 import json
 import bz2
 from collections import OrderedDict

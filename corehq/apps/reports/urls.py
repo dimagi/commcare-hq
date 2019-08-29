@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 
 from django.conf.urls import include, url
@@ -14,8 +12,8 @@ from corehq.apps.userreports.views import (
     ConfigureReport,
     EditReportInBuilder,
     ReportBuilderDataSourceSelect,
-    ReportBuilderPaywallPricing,
     ReportBuilderPaywallActivatingSubscription,
+    ReportBuilderPaywallPricing,
     ReportPreview,
 )
 
@@ -27,41 +25,39 @@ from .dispatcher import (
 from .filters import urls as filter_urls
 from .util import get_installed_custom_modules
 from .views import (
-    EditFormInstance,
     AddSavedReportConfigView,
-    FormDataView,
-    CaseDataView,
     CaseAttachmentsView,
+    CaseDataView,
+    EditFormInstance,
+    FormDataView,
     MySavedReportsView,
     ScheduledReportsView,
+    archive_form,
+    case_form_data,
     case_forms,
     case_property_changes,
     case_property_names,
-    download_case_history,
     case_xml,
-    edit_case_view,
-    rebuild_case_view,
-    resave_case_view,
     close_case_view,
-    undo_close_case_view,
-    export_case_transactions,
-    case_form_data,
-    download_form,
-    restore_edit,
-    form_multimedia_export,
-    archive_form,
-    edit_form,
-    resave_form_view,
-    unarchive_form,
-    project_health_user_details,
-    export_report,
-    email_report,
     delete_config,
     delete_scheduled_report,
+    download_case_history,
+    download_form,
+    edit_case_view,
+    edit_form,
+    email_report,
+    export_case_transactions,
+    export_report,
+    project_health_user_details,
+    rebuild_case_view,
+    resave_case_view,
+    resave_form_view,
+    restore_edit,
     send_test_scheduled_report,
+    unarchive_form,
+    undo_close_case_view,
     view_scheduled_report,
 )
-
 
 custom_report_urls = [
     CustomProjectReportDispatcher.url_pattern(),
@@ -110,8 +106,6 @@ urlpatterns = [
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', download_form, name='download_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', EditFormInstance.as_view(), name='edit_form_instance'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', restore_edit, name='restore_edit'),
-    url(r'^form_data/download/media/$',
-        form_multimedia_export, name='form_multimedia_export'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/correct_data/$', edit_form, name='edit_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', archive_form, name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', unarchive_form, name='unarchive_form'),

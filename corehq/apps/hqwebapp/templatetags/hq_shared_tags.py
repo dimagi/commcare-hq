@@ -1,35 +1,37 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import OrderedDict
-from datetime import datetime, timedelta
 import hashlib
 import json
+from collections import OrderedDict
+from datetime import datetime, timedelta
 
-from django.conf import settings
-from django.template import loader_tags, NodeList, TemplateSyntaxError
-from django.template.base import Variable, VariableDoesNotExist, Token, TOKEN_TEXT
-from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
-from django.http import QueryDict
 from django import template
+from django.conf import settings
+from django.http import QueryDict
+from django.template import NodeList, TemplateSyntaxError, loader_tags
+from django.template.base import (
+    TOKEN_TEXT,
+    Token,
+    Variable,
+    VariableDoesNotExist,
+)
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
-from memoized import memoized
-from django_prbac.utils import has_privilege
+from django.utils.translation import ugettext as _
 
-from corehq.motech.utils import pformat_json
-from corehq import privileges
+import six
+from django_prbac.utils import has_privilege
+from memoized import memoized
+
+from dimagi.utils.web import json_handler
+
+from corehq import privileges, toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
+from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.motech.utils import pformat_json
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.web import json_handler
-from corehq.apps.hqwebapp.models import MaintenanceAlert
-from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
-from corehq import toggles
-import six
-from io import open
-
 
 register = template.Library()
 
@@ -99,7 +101,8 @@ def concat(str1, str2):
     return "%s%s" % (str1, str2)
 
 try:
-    from resource_versions import resource_versions
+    from get_resource_versions import get_resource_versions
+    resource_versions = get_resource_versions()
 except (ImportError, SyntaxError):
     resource_versions = {}
 
@@ -251,27 +254,6 @@ def ui_notify_slug(ui_notify_instance_or_name):
     import corehq.apps.notifications.ui_notify
     ui_notify = _get_obj_from_name_or_instance(corehq.apps.notifications.ui_notify, ui_notify_instance_or_name)
     return ui_notify.slug
-
-
-@register.filter
-def toggle_tag_info(request, toggle_or_toggle_name):
-    """Show Tag Information for feature flags / Toggles,
-    and if not enabled, show where the UI would be.
-    Useful for trying to find out if you have all the flags enabled in a
-    particular location or whether a feature on prod is part of a particular
-    flag. """
-    if not toggles.SHOW_DEV_TOGGLE_INFO.enabled_for_request(request):
-        return ""
-    flag = _get_obj_from_name_or_instance(toggles, toggle_or_toggle_name)
-    tag = flag.tag
-    is_enabled = flag.enabled_for_request(request)
-    return mark_safe("""<div class="label label-{css_class} label-flag{css_disabled}">{tag_name}: {description}{status}</div>""".format(
-        css_class=tag.css_class,
-        tag_name=tag.name,
-        description=flag.label,
-        status=" <strong>[DISABLED]</strong>" if not is_enabled else "",
-        css_disabled=" label-flag-disabled" if not is_enabled else "",
-    ))
 
 
 @register.filter

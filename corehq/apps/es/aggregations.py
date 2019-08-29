@@ -34,18 +34,15 @@ want.
 As of this writing, there's not much else developed, but it's pretty easy to
 add support for other aggregation types and more results processing
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from copy import deepcopy
-import re
-from collections import namedtuple, defaultdict
-
 import datetime
+import re
+from collections import defaultdict, namedtuple
+from copy import deepcopy
 
-from corehq.elastic import SIZE_LIMIT
 import six
 from six.moves import filter
 
+from corehq.elastic import SIZE_LIMIT
 from corehq.util.python_compatibility import soft_assert_type_text
 
 MISSING_KEY = None

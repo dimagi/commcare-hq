@@ -1,26 +1,27 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from multiprocessing import Process, Queue
-import sys
 import os
-from six.moves.urllib.parse import urlparse
-from couchdbkit import ResourceNotFound, ResourceConflict
+import sys
+from multiprocessing import Process, Queue
+
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.domain.models import Domain
-from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
-from corehq.util.couchdb_management import CouchConfig
-from corehq.util.dates import iso_string_to_date
-from dimagi.utils.couch.database import iter_docs
-from corehq.apps.domainsync.config import DocumentTransform, save
 
+import six
+from couchdbkit import ResourceConflict, ResourceNotFound
+from six.moves import range
+from six.moves.urllib.parse import urlparse
+
+from dimagi.utils.couch.database import iter_docs
 # doctypes we want to be careful not to copy, which must be explicitly
 # specified with --include
 from dimagi.utils.parsing import json_format_date
-from six.moves import range
-import six
-from io import open
+
+from corehq.apps.domain.models import Domain
+from corehq.apps.domainsync.config import DocumentTransform, save
+from corehq.apps.domainsync.management.commands.copy_utils import (
+    copy_postgres_data_for_docs,
+)
+from corehq.util.couchdb_management import CouchConfig
+from corehq.util.dates import iso_string_to_date
 
 DEFAULT_EXCLUDE_TYPES = [
     'ReportNotification',

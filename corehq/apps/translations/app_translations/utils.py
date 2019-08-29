@@ -1,19 +1,22 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
-import six
 from django.utils.translation import ugettext as _
 
-from corehq.apps.app_manager.exceptions import ModuleNotFoundException, FormNotFoundException
+import six
+
+from corehq.apps.app_manager.exceptions import (
+    FormNotFoundException,
+    ModuleNotFoundException,
+)
 from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
     SINGLE_SHEET_NAME,
 )
+from corehq.apps.translations.generators import EligibleForTransifexChecker
 from corehq.util.python_compatibility import soft_assert_type_text
 
 
-def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form=None, by_id=False):
+def get_bulk_app_sheet_headers(app, lang=None, eligible_for_transifex_only=False, by_id=False):
     '''
     Returns lists representing the expected structure of bulk app translation
     Excel file uploads and downloads.
@@ -25,9 +28,8 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
         ...
     ]
 
-    exclude_module and exclude_form are functions that take in one argument
-    (form or module) and return True if the module/form should be excluded
-    from the returned list
+    `eligible_for_transifex_only` will skip modules and forms that have "SKIP
+    TRANSIFEX" in their comment.
     '''
     langs = [lang] if lang else app.langs
 
@@ -61,7 +63,7 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
     ])
 
     for module in app.get_modules():
-        if exclude_module is not None and exclude_module(module):
+        if eligible_for_transifex_only and EligibleForTransifexChecker.exclude_module(module):
             continue
 
         sheet_name = module.unique_id if by_id else get_module_sheet_name(module)
@@ -70,7 +72,7 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
         for form in module.get_forms():
             if form.form_type == 'shadow_form':
                 continue
-            if exclude_form is not None and exclude_form(form):
+            if eligible_for_transifex_only and EligibleForTransifexChecker.exclude_form(form):
                 continue
 
             sheet_name = form.unique_id if by_id else get_form_sheet_name(form)

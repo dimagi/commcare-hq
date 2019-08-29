@@ -1,13 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
+import six
+from memoized import memoized
+
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    make_form_meta_block_indicator,
+    make_form_question_indicator,
+)
 from corehq.apps.userreports.datatypes import NUMERIC_TYPE_CHOICES
 from corehq.apps.userreports.reports.builder import (
     make_case_property_indicator,
     make_multiselect_question_indicator,
 )
-from corehq.apps.userreports.app_manager.data_source_meta import make_form_question_indicator, \
-    make_form_meta_block_indicator
 from corehq.apps.userreports.reports.builder.const import (
     UCR_AGG_AVG,
     UCR_AGG_EXPAND,
@@ -21,8 +24,6 @@ from corehq.apps.userreports.reports.builder.const import (
 )
 from corehq.apps.userreports.sql import get_column_name
 from corehq.util.python_compatibility import soft_assert_type_text
-from memoized import memoized
-import six
 
 
 class ColumnOption(object):

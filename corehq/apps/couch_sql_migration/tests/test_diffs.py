@@ -1,9 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from copy import deepcopy
 
-from attr import fields_dict
 from django.test import SimpleTestCase
+
+from attr import fields_dict
 
 from corehq.apps.couch_sql_migration.diff import (
     filter_case_diffs,
@@ -11,11 +10,14 @@ from corehq.apps.couch_sql_migration.diff import (
     filter_ledger_diffs,
     load_ignore_rules,
 )
-from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, json_diff, MISSING
+from corehq.apps.tzmigration.timezonemigration import (
+    MISSING,
+    FormJsonDiff,
+    json_diff,
+)
 from corehq.util.test_utils import softer_assert
 
 from ..diffrule import ANY
-
 
 DATE_DIFFS = [
     FormJsonDiff(

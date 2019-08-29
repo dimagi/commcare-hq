@@ -1,25 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import hashlib
 import inspect
 from functools import wraps
 
 from django.conf import settings
 
-from sqlagg import (
-    ColumnNotFoundException,
-)
+import six
+from sqlagg import ColumnNotFoundException
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.userreports.exceptions import (
     InvalidQueryColumn,
+    TableNotFoundWarning,
     UserReportsError,
-    translate_programming_error, TableNotFoundWarning)
+    translate_programming_error,
+)
 from corehq.util.soft_assert import soft_assert
-import six
 
 _soft_assert = soft_assert(
-    to='{}@{}'.format('npellegrino+ucr-get-data', 'dimagi.com'),
     exponential_backoff=True,
 )
 

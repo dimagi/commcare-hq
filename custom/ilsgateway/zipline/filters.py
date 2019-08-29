@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseReportFilter
 from custom.zipline.models import EmergencyOrderStatusUpdate
 

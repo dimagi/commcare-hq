@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import simplejson
 from . import CACHE_DOCS, key_doc_id, rcache
 

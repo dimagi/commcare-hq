@@ -1,37 +1,50 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import inspect
 import json
 import uuid
-from io import BytesIO
 from collections import Counter
 from datetime import datetime
+from io import BytesIO
 
-from nose.plugins.attrib import attr
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
 from django.db.models.signals import post_save
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+from nose.plugins.attrib import attr
+from six.moves import zip
+
+from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
-from corehq.apps.dump_reload.sql import SqlDataLoader, SqlDataDumper
-from corehq.apps.dump_reload.sql.dump import get_objects_to_dump, get_model_iterator_builders_to_dump
+from corehq.apps.dump_reload.sql import SqlDataDumper, SqlDataLoader
+from corehq.apps.dump_reload.sql.dump import (
+    get_model_iterator_builders_to_dump,
+    get_objects_to_dump,
+)
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 from corehq.form_processor.models import (
-    XFormInstanceSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
-    LedgerValue, LedgerTransaction)
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
-from six.moves import zip
-from io import open
+    CaseTransaction,
+    CommCareCaseIndexSQL,
+    CommCareCaseSQL,
+    LedgerTransaction,
+    LedgerValue,
+    XFormInstanceSQL,
+)
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    create_form_for_test,
+)
 
 
 class BaseDumpLoadTest(TestCase):

@@ -1,0 +1,63 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% requirejs_main 'app_manager/js/manage_releases_by_app_profile' %}
+
+{% block page_content %}
+  {% initial_page_data 'app_releases_by_app_profile' app_releases_by_app_profile %}
+  {% initial_page_data 'appVersionSelectInitialValue' selected_build_details %}
+  {% initial_page_data 'appProfileInitialValues' initial_app_profile_details %}
+  {% initial_page_data 'appVersionOnlyShowReleased' True %}
+  {% registerurl 'toggle_release_restriction_by_app_profile' domain '---'%}
+  {% registerurl "paginate_releases" domain '---' %}
+
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="panel panel-modern-gray panel-form-only">
+        <div class="panel-body">
+          <form class="form-horizontal disable-on-submit" id="manage-app-releases" action=""
+                method='post'>
+            {% crispy manage_releases_by_app_profile_form %}
+          </form>
+          {% if app_releases_by_app_profile %}
+            <table id="managed-releases" class="table">
+              <thead>
+              <tr>
+                <th class="col-sm-2">{% trans 'Application' %}</th>
+                <th class="col-sm-2">{% trans 'Profile' %}</th>
+                <th class="col-sm-2">{% trans 'Version' %}</th>
+                <th class="col-sm-2">{% trans 'Status' %}</th>
+                <th class="col-sm-2">{% trans 'Action' %}</th>
+              </tr>
+              </thead>
+              <tbody data-bind="foreach: appReleasesByAppProfile, visible: appReleasesByAppProfile">
+              <tr data-bind="attr: {id: domId}, css: {'bg-success': active }">
+                <td data-bind="text: appName"></td>
+                <td data-bind="text: profileName"></td>
+                <td data-bind="text: version"></td>
+                <td data-bind="text: status"></td>
+                <td>
+                  <button type="button" class="btn default-btn"
+                          data-bind="click: toggleRestriction, css: buttonClass,
+                                            disable: ajaxInProgress">
+                    <span data-bind="text: actionText"></span>
+                    <i class="spinner fa-spin fa fa-refresh"
+                       data-bind="visible: ajaxInProgress"></i>
+                  </button>
+                  <br/>
+                  <span class="error-message label label-danger" data-bind="visible: error">
+                    {% trans 'Could not update!' %}
+                    <span data-bind="text: errorMessage"></span>
+                  </span>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

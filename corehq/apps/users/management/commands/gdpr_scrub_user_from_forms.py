@@ -1,15 +1,14 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import logging
+import sys
+from io import StringIO
+
 from django.core.management.base import BaseCommand
+
+import six
+from lxml import etree
+
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from io import StringIO
-from lxml import etree
-import sys
-import six
-import logging
-
 
 logger = logging.getLogger(__name__)
 NEW_USERNAME = "Redacted User (GDPR)"

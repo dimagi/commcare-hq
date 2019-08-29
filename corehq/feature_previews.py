@@ -3,8 +3,6 @@ Feature Previews are built on top of toggle, so if you migrate a toggle to
 a feature preview, you shouldn't need to migrate the data, as long as the
 slug is kept intact.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy as _
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
@@ -18,6 +16,7 @@ from .toggles import (
     all_toggles_by_name_in_scope,
     ECD_MIGRATED_DOMAINS,
     ECD_PREVIEW_ENTERPRISE_DOMAINS,
+    ODATA,
 )
 
 
@@ -192,5 +191,21 @@ EXPLORE_CASE_DATA_PREVIEW = FeaturePreview(
         "ad-hoc data queries or to identify unclean data."
     ),
     can_self_enable_fn=is_eligible_for_ecd_preview,
+    save_fn=clear_project_data_tab_cache,
+)
+
+
+def is_eligible_for_bi_integration_preview(request):
+    return ODATA.enabled_for_request(request)
+
+
+BI_INTEGRATION_PREVIEW = FeaturePreview(
+    slug='bi_integration_preview',
+    label=_("PowerBi / Tableau Integration"),
+    description=_(
+        "Use OData feeds to integrate your CommCare data with Power "
+        "BI or Tableau."
+    ),
+    can_self_enable_fn=is_eligible_for_bi_integration_preview,
     save_fn=clear_project_data_tab_cache,
 )

@@ -1,11 +1,8 @@
-from __future__ import print_function, unicode_literals
 
-from __future__ import absolute_import
 from django.test import TestCase
 
-from corehq.apps.domain.models import Domain
-
 from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.domain.models import Domain
 
 
 class DomainCopyTest(TestCase):

@@ -1,0 +1,29 @@
+{% load i18n %}
+
+<script type="text/html" id="dataset_map_template">
+    <fieldset>
+
+        <legend>{% trans "DHIS2 DataSet map" %}</legend>
+
+        <div class="col-sm-8">&nbsp;</div>
+        <div class="col-sm-4">
+            <button type="button"
+                    class="btn btn-danger"
+                    data-bind="click: $root.removeDataSetMap">{% trans "Remove" %}</button>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-sm-3 col-md-2 requiredField">
+                {% trans "DataSet map" %}<span class="asteriskField">*</span>
+            </label>
+            <div class="controls col-sm-9 col-md-8 col-lg-6">
+                <textarea name="dataSetMap"
+                          class="jsonwidget form-control"
+                          required=""
+                          data-bind="value: dataSetMap"></textarea>
+            </div>
+        </div>
+
+    </fieldset>
+    <div class="spacer"></div>
+</script>

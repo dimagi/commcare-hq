@@ -1,24 +1,29 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import datetime
-import dateutil
 import warnings
+from datetime import datetime
+
 from django.core.cache import cache
 from django.urls import reverse
+from django.utils.translation import ugettext_noop
+
+import dateutil
+from memoized import memoized
+
+from dimagi.utils.dates import DateSpan
+
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
-from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
+from corehq.apps.reports.dispatcher import (
+    CustomProjectReportDispatcher,
+    ProjectReportDispatcher,
+)
 from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.filters.users import UserTypeFilter
 from corehq.apps.reports.generic import GenericReportView
-from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.dates import DateSpan
-from django.utils.translation import ugettext_noop
-from memoized import memoized
 
 
 class ProjectReport(GenericReportView):

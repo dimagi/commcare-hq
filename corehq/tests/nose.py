@@ -10,9 +10,6 @@ Django-nose database context to run tests in two phases:
 Adapted from testrunner.TwoStageTestRunner
 Based on http://www.caktusgroup.com/blog/2013/10/02/skipping-test-db-creation/
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import print_function
 import logging
 import os
 import sys

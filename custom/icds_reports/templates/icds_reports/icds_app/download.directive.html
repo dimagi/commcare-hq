@@ -82,7 +82,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="form-group" ng-if="$ctrl.showViewBy()">
+                <div class="form-group" ng-if="($ctrl.showViewBy() && $ctrl.selectedIndicator != 10)">
                     <label class="control-label col-sm-2" for="view_by">View by: <i class="fa fa-info-circle" uib-popover="Select the administrative level at which you want to download the tabular report. The tabular report will generate one row for each administrative level selected (for example, view by block would show one row for each block within the selected location)."
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>

@@ -1,16 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.encoding import python_2_unicode_compatible
-from corehq.motech.openmrs.const import IMPORT_FREQUENCY_CHOICES, IMPORT_FREQUENCY_MONTHLY
+
 from dimagi.ext.couchdbkit import (
-    Document,
-    IntegerProperty,
-    StringProperty,
     DictProperty,
-    ListProperty,
+    Document,
     DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    StringProperty,
 )
 
+from corehq.motech.openmrs.const import (
+    IMPORT_FREQUENCY_CHOICES,
+    IMPORT_FREQUENCY_MONTHLY,
+)
 
 # Supported values for ColumnMapping.data_type
 # ColumnMapping.data_type is only required if json.loads returns the wrong value

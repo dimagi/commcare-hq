@@ -1,22 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import numbers
 import re
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.utils import html, safestring
 
 from couchdbkit import ResourceNotFound
+from django_prbac.utils import has_privilege
+
+from casexml.apps.case.const import (
+    ARCHIVED_CASE_OWNER_ID,
+    UNOWNED_EXTENSION_OWNER_ID,
+)
+
 from corehq import privileges, toggles
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.util.quickcache import quickcache
-
-from django.core.cache import cache
-from django_prbac.utils import has_privilege
-
-from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, ARCHIVED_CASE_OWNER_ID
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
 SYSTEM_USER_ID = 'system'

@@ -1,22 +1,47 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
-from jsonobject.exceptions import BadValueError
-from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, Choice, DynamicChoiceListFilter, \
-    NumericFilter, PreFilter, QuarterFilter, LocationDrilldownFilter, MultiFieldDynamicChoiceListFilter
-from corehq.apps.userreports.exceptions import BadSpecError
+
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.reports.filters.choice_providers import DATA_SOURCE_COLUMN, \
-    LOCATION, DataSourceColumnChoiceProvider, LocationChoiceProvider, UserChoiceProvider, \
-    USER, OWNER, OwnerChoiceProvider, MultiFieldDataSourceColumnChoiceProvider
-from corehq.apps.userreports.reports.filters.values import (
-    dynamic_choice_list_url,
-    NONE_CHOICE,
-    SHOW_ALL_CHOICE,
+
+from jsonobject.exceptions import BadValueError
+
+from corehq.apps.reports_core.filters import (
+    Choice,
+    ChoiceListFilter,
+    DatespanFilter,
+    DynamicChoiceListFilter,
+    LocationDrilldownFilter,
+    MultiFieldDynamicChoiceListFilter,
+    NumericFilter,
+    PreFilter,
+    QuarterFilter,
+)
+from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.reports.filters.choice_providers import (
+    DATA_SOURCE_COLUMN,
+    LOCATION,
+    OWNER,
+    USER,
+    DataSourceColumnChoiceProvider,
+    LocationChoiceProvider,
+    MultiFieldDataSourceColumnChoiceProvider,
+    OwnerChoiceProvider,
+    UserChoiceProvider,
 )
 from corehq.apps.userreports.reports.filters.specs import (
-    ChoiceListFilterSpec, DynamicChoiceListFilterSpec, NumericFilterSpec, DateFilterSpec,
-    PreFilterSpec, QuarterFilterSpec, LocationDrilldownFilterSpec, MultiFieldDynamicChoiceFilterSpec)
+    ChoiceListFilterSpec,
+    DateFilterSpec,
+    DynamicChoiceListFilterSpec,
+    LocationDrilldownFilterSpec,
+    MultiFieldDynamicChoiceFilterSpec,
+    NumericFilterSpec,
+    PreFilterSpec,
+    QuarterFilterSpec,
+)
+from corehq.apps.userreports.reports.filters.values import (
+    NONE_CHOICE,
+    SHOW_ALL_CHOICE,
+    dynamic_choice_list_url,
+)
 
 
 def _build_date_filter(spec, report):

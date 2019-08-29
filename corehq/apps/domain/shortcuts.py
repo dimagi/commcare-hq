@@ -3,8 +3,6 @@ Shortcuts for working with domains and users.
 """
 
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 
 def create_domain(name, active=True):
@@ -33,5 +31,6 @@ def create_user(username, password, is_staff=False, is_superuser=False, is_activ
     user.save()
     return user
 
-from corehq.apps.domain.models import Domain
 from django.contrib.auth.models import User
+
+from corehq.apps.domain.models import Domain

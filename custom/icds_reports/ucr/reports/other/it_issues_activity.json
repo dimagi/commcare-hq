@@ -1,7 +1,6 @@
 {
   "server_environment": [
     "india",
-    "icds-new",
     "icds"
   ],
   "domains": [

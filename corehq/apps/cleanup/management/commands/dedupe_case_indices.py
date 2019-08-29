@@ -2,21 +2,22 @@
 Use this in preparation ``for form_processor/0067_auto_20170915_1506.py`` migration
 """
 
-from __future__ import print_function
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from itertools import groupby
 
 from django.core.management.base import BaseCommand
 from django.db import connections
 
-from corehq.form_processor.models import CommCareCaseIndexSQL
-from corehq.form_processor.utils.sql import fetchall_as_namedtuple, fetchone_as_namedtuple
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from dimagi.utils.chunked import chunked
 import six
 
+from dimagi.utils.chunked import chunked
+
+from corehq.form_processor.models import CommCareCaseIndexSQL
+from corehq.form_processor.utils.sql import (
+    fetchall_as_namedtuple,
+    fetchone_as_namedtuple,
+)
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 IDENTIFIER_INDEX_NAME = 'form_processor_commcarecaseindexsql_identifier'
 UNIQIE_INDEX_NAME = "form_processor_commcarecaseindexsql_case_id_57ebda3c_uniq"

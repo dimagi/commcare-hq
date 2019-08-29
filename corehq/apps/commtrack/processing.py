@@ -1,21 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import logging
+from collections import namedtuple
 from itertools import groupby
 
 from django.db import transaction
 from django.utils.translation import ugettext as _
-from dimagi.utils.decorators.log_exception import log_exception
 
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockTransaction
+from dimagi.utils.decorators.log_exception import log_exception
+
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
+from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.util.datadog.utils import ledger_load_counter
-
 
 logger = logging.getLogger('commtrack.incoming')
 
@@ -128,9 +127,13 @@ def process_stock(xforms, case_db=None):
     case_action_intents = []
     sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
     for xform in sorted_forms:
-        actions_for_form = get_stock_actions(xform)
-        stock_report_helpers += actions_for_form.stock_report_helpers
-        case_action_intents += actions_for_form.case_action_intents
+        try:
+            actions_for_form = get_stock_actions(xform)
+            stock_report_helpers += actions_for_form.stock_report_helpers
+            case_action_intents += actions_for_form.case_action_intents
+        except MissingFormXml:
+            if not xform.is_deprecated:
+                raise
 
     # validate the parsed transactions
     for stock_report_helper in stock_report_helpers:

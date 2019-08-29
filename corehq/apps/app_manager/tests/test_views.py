@@ -1,26 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import re
 from contextlib import contextmanager
 
-from django.urls import reverse
 from django.test import TestCase
+from django.urls import reverse
+
 from mock import patch
 
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.apps.app_manager.exceptions import XFormValidationError
-from corehq.apps.app_manager.tests.util import add_build
-from corehq.apps.app_manager.views import AppCaseSummaryView, AppFormSummaryView
-from corehq.apps.app_manager.views.forms import get_apps_modules
-from corehq.apps.builds.models import BuildSpec
 from pillowtop.es_utils import initialize_index_and_mapping
-from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 
 from corehq import toggles
-from corehq.apps.linked_domain.applications import create_linked_app
-from corehq.apps.users.models import WebUser
-from corehq.apps.domain.models import Domain
+from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
@@ -28,6 +18,19 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     ShadowModule,
 )
+from corehq.apps.app_manager.tests.util import add_build
+from corehq.apps.app_manager.views import (
+    AppCaseSummaryView,
+    AppFormSummaryView,
+)
+from corehq.apps.app_manager.views.forms import get_apps_modules
+from corehq.apps.builds.models import BuildSpec
+from corehq.apps.domain.models import Domain
+from corehq.apps.linked_domain.applications import create_linked_app
+from corehq.apps.users.models import WebUser
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
+
 from .test_form_versioning import BLANK_TEMPLATE
 
 
@@ -220,12 +223,6 @@ class TestViews(TestCase):
             'app_id': self.app.id,
             'module_unique_id': module.unique_id,
         })
-
-    def test_dashboard(self, mock):
-        # This redirects to the dashboard
-        self._test_status_codes(['default_app'], {
-            'domain': self.project.name,
-        }, True)
 
     def test_default_new_app(self, mock):
         response = self.client.get(reverse('default_new_app', kwargs={

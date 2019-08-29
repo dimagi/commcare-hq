@@ -1,20 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import division
 import os
 
 from django.conf import settings
 
+import six
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import Paragraph
+from six.moves import range
+
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.utils import get_money_str
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.view_utils import absolute_reverse
-import six
-from six.moves import range
 
 LOGO_FILENAME = \
     'corehq/apps/accounting/static/accounting/images/Dimagi-Logo-RGB.jpg'

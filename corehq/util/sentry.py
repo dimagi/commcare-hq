@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 import traceback
 
@@ -19,6 +18,7 @@ RATE_LIMITED_EXCEPTIONS = {
 
     'corehq.elastic.ESError': 'elastic',
     'elasticsearch.exceptions.ConnectionTimeout': 'elastic',
+    'TransportError': 'elastic',
 
     'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
 
@@ -27,9 +27,9 @@ RATE_LIMITED_EXCEPTIONS = {
     'redis.exceptions.ConnectionError': 'redis',
     'ClusterDownError': 'redis',
 
-    'botocore.exceptions.ClientError': 'riak',
-    'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
-    'botocore.vendored.requests.exceptions.ReadTimeout': 'riak',
+    'botocore.exceptions.ClientError': 'blobdb',
+    'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'blobdb',
+    'botocore.vendored.requests.exceptions.ReadTimeout': 'blobdb',
 
     'celery.beat.SchedulingError': 'celery-beat',
 
@@ -41,6 +41,7 @@ RATE_LIMIT_BY_PACKAGE = {
     # exception: (python package prefix, rate limit key)
     'requests.exceptions.ConnectionError': ('cloudant', 'couchdb'),
     'requests.exceptions.HTTPError': ('cloudant', 'couchdb'),
+    'builtins.BrokenPipeError': ('amqp', 'rabbitmq'),
 }
 
 

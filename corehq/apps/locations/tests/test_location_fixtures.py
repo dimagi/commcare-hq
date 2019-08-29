@@ -1,41 +1,64 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
-from collections import namedtuple
-import uuid
-import mock
 import os
+import uuid
+from collections import namedtuple
+from datetime import datetime, timedelta
 from xml.etree import cElementTree as ElementTree
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
-from corehq.apps.locations.views import LocationFieldsView
 
+from django.test import TestCase
+
+import mock
+import six
+
+from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.restore import RestoreParams
+from casexml.apps.phone.tests.utils import (
+    call_fixture_generator,
+    create_restore_user,
+)
+
+from corehq.apps.app_manager.tests.util import (
+    TestXmlMixin,
+    extract_xml_partial,
+)
+from corehq.apps.commtrack.tests.util import bootstrap_domain
+from corehq.apps.custom_data_fields.models import (
+    CustomDataField,
+    CustomDataFieldsDefinition,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.views import LocationFieldsView
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import flag_enabled, generate_cases
 
-from datetime import datetime, timedelta
-from django.test import TestCase
-from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
-from casexml.apps.phone.restore import RestoreParams
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.tests.util import bootstrap_domain
-from corehq.apps.users.models import CommCareUser
-
-from corehq.apps.app_manager.tests.util import TestXmlMixin, extract_xml_partial
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-
+from ..fixtures import (
+    LocationSet,
+    _get_location_data_fields,
+    _location_to_fixture,
+    flat_location_fixture_generator,
+    get_location_fixture_queryset,
+    location_fixture_generator,
+    related_locations_fixture_generator,
+    should_sync_flat_fixture,
+    should_sync_hierarchical_fixture,
+    should_sync_locations,
+)
+from ..models import (
+    LocationFixtureConfiguration,
+    LocationRelation,
+    LocationType,
+    SQLLocation,
+    make_location,
+)
 from .util import (
-    setup_location_types_with_structure,
-    setup_locations_with_structure,
+    LocationHierarchyTestCase,
     LocationStructure,
     LocationTypeStructure,
-    LocationHierarchyTestCase
+    setup_location_types_with_structure,
+    setup_locations_with_structure,
 )
-from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
-    flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchical_fixture, \
-    _get_location_data_fields, get_location_fixture_queryset, related_locations_fixture_generator
-from ..models import SQLLocation, LocationType, make_location, LocationFixtureConfiguration, LocationRelation
-import six
 
 EMPTY_LOCATION_FIXTURE_TEMPLATE = """
 <fixture id='commtrack:locations' user_id='{}'>
@@ -313,55 +336,6 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
             'expand_to_county_from_state',
             ['Massachusetts', 'Suffolk', 'Middlesex']
         )
-
-
-@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
-class TestIndexedLocationsFixture(LocationHierarchyTestCase, FixtureHasLocationsMixin):
-    domain = "indexed_location_fixtures"
-    location_type_names = ['state', 'county', 'city']
-    location_structure = TEST_LOCATION_STRUCTURE
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestIndexedLocationsFixture, cls).setUpClass()
-        cls.user = create_restore_user(cls.domain, 'user', '123')
-        cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
-        cls.loc_fields.fields = [
-            CustomDataField(slug='is_test', index_in_fixture=True),
-            CustomDataField(slug='favorite_color'),
-        ]
-        cls.loc_fields.save()
-        cls.field_slugs = [f.slug for f in cls.loc_fields.fields]
-        for location in cls.locations.values():
-            location.metadata = {
-                'is_test': 'no',
-                'favorite_color': 'blue',
-            }
-            location.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user._couch_user.delete()
-        super(TestIndexedLocationsFixture, cls).tearDownClass()
-
-    def test_index_location_fixtures(self):
-        self.user._couch_user.set_location(self.locations['Massachusetts'])
-        expected_result = self._assemble_expected_fixture(
-            'index_location_fixtures',
-            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'Middlesex', 'Cambridge', 'Somerville'],
-        )
-        fixture_nodes = call_fixture_generator(flat_location_fixture_generator, self.user)
-        self.assertEqual(len(fixture_nodes), 2)  # fixture schema, then fixture
-
-        # check the fixture like usual
-        fixture = extract_xml_partial(ElementTree.tostring(fixture_nodes[1]), '.')
-        expected_fixture = extract_xml_partial(expected_result, './fixture')
-        self.assertXmlEqual(expected_fixture, fixture)
-
-        # check the schema
-        schema = extract_xml_partial(ElementTree.tostring(fixture_nodes[0]), '.')
-        expected_schema = extract_xml_partial(expected_result, './schema')
-        self.assertXmlEqual(expected_schema, schema)
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting

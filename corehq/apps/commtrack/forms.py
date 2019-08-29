@@ -1,17 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from crispy_forms.bootstrap import PrependedText
 from django import forms
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, HTML
+from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 
+from crispy_forms.bootstrap import PrependedText
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import ButtonHolder, Fieldset, Layout, Submit
+
+from corehq.apps.consumption.shortcuts import (
+    get_default_monthly_consumption,
+    set_default_consumption_for_product,
+)
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.forms import FormListForm
-from corehq.apps.products.models import Product
-from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_monthly_consumption
+from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
-from django.urls import reverse
 
 
 class CommTrackSettingsForm(forms.Form):
@@ -117,17 +120,17 @@ class ConsumptionForm(forms.Form):
         self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
 
         layout = []
-        products = Product.by_domain(domain)
-        for p in products:
-            field_name = 'default_%s' % p._id
-            display = _('Default %(product_name)s') % {'product_name': p.name}
+        products = SQLProduct.objects.filter(domain=domain)
+        for product in products:
+            field_name = 'default_%s' % product.product_id
+            display = _('Default %(product_name)s') % {'product_name': product.name}
             layout.append(field_name)
             self.fields[field_name] = forms.DecimalField(
                 label=display,
                 required=False,
                 initial=get_default_monthly_consumption(
                     self.domain,
-                    p._id,
+                    product.product_id,
                     None,
                     None
                 )
@@ -143,13 +146,13 @@ class ConsumptionForm(forms.Form):
     def save(self):
         for field in self.fields:
             val = self.cleaned_data[field]
-            product = Product.get(field.split('_')[1])
+            product = SQLProduct.objects.get(product_id=field.split('_')[1])
             assert product.domain == self.domain, 'Product {} attempted to be updated in domain {}'.format(
-                product._id, self.domain
+                product.product_id, self.domain
             )
             set_default_consumption_for_product(
                 self.domain,
-                product._id,
+                product.product_id,
                 val,
             )
 

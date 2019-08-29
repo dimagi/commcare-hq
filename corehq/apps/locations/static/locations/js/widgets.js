@@ -16,7 +16,7 @@ hqDefine("locations/js/widgets", [
     }
 
     $(function () {
-        $(".locations-widget-autocomplete-v4").each(function () {
+        $(".locations-widget-autocomplete").each(function () {
             var $select = $(this),
                 options = $select.data();
             $select.select2({
@@ -60,7 +60,7 @@ hqDefine("locations/js/widgets", [
             $select.trigger('select-ready');
         });
 
-        $(".locations-widget-primary-v4").each(function () {
+        $(".locations-widget-primary").each(function () {
             var $select = $(this),
                 $source = $('#' + $select.data("sourceCssId")),
                 value = $select.data("initial");

@@ -1,31 +1,43 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import os
 import json
-from time import time
+import os
 from collections import defaultdict
 from datetime import datetime
-import six
-
-from celery.schedules import crontab
-from celery.task import periodic_task
+from time import time
 
 from django.conf import settings
 from django.core.management import call_command
 from django.db import connections
 
-from corehq.apps.accounting.models import Subscription
-from corehq.apps.domain.models import Domain
-from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, LedgerES, UserES
-from corehq.apps.hqwebapp.tasks import mail_admins_async
-from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import \
-    parse_log_message, ERROR_SAVING, SET_XMLNS, MULTI_MATCH, \
-    CANT_MATCH, FORM_HAS_UNDEFINED_XMLNS
-from corehq.apps.users.models import WebUser
-from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, FormReindexAccessor
-from corehq.sql_db.connections import ConnectionManager, UCR_ENGINE_ID
-from io import open
+import six
+from celery.schedules import crontab
+from celery.task import periodic_task
 
+from corehq.apps.accounting.models import Subscription
+from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import (
+    CANT_MATCH,
+    ERROR_SAVING,
+    FORM_HAS_UNDEFINED_XMLNS,
+    MULTI_MATCH,
+    SET_XMLNS,
+    parse_log_message,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.es import (
+    AppES,
+    CaseES,
+    CaseSearchES,
+    FormES,
+    GroupES,
+    LedgerES,
+    UserES,
+)
+from corehq.apps.hqwebapp.tasks import mail_admins_async
+from corehq.apps.users.models import WebUser
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseReindexAccessor,
+    FormReindexAccessor,
+)
+from corehq.sql_db.connections import UCR_ENGINE_ID, ConnectionManager
 
 UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
 

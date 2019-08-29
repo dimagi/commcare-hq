@@ -148,7 +148,11 @@ hqDefine("users/js/mobile_workers", function () {
                 },
             });
         };
-        self.goToPage(1);
+
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
+
         return self;
     };
 

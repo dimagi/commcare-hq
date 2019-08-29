@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 import uuid
 from collections import Counter, defaultdict, namedtuple
@@ -11,11 +10,11 @@ from couchdbkit import NoResultFound
 
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
-from corehq.apps.case_importer.exceptions import CaseRowError
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import set_task_progress
 
+from corehq.apps.case_importer.exceptions import CaseRowError
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks

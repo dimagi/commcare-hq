@@ -1,25 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
+import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import partial
-import uuid
 
-from django_bulk_update.helper import bulk_update as bulk_update_helper
-
-import jsonfield
 from django.db import models, transaction
 from django.db.models import Q
+
+import jsonfield
+import six
+from django_bulk_update.helper import bulk_update as bulk_update_helper
 from django_cte import CTEQuerySet
 from memoized import memoized
-import six
 
-from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.adjacencylist import AdjListModel, AdjListManager
+from corehq.apps.locations.adjacencylist import AdjListManager, AdjListModel
 from corehq.apps.products.models import SQLProduct
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 
 
@@ -135,7 +133,6 @@ class LocationType(models.Model):
     def __init__(self, *args, **kwargs):
         super(LocationType, self).__init__(*args, **kwargs)
         self._administrative_old = self.administrative
-        self._has_user_old = self.has_user
 
     @property
     def expand_from(self):
@@ -168,8 +165,6 @@ class LocationType(models.Model):
         self.overstock_threshold = config.overstock_threshold
 
     def save(self, *args, **kwargs):
-        from .tasks import update_location_users
-
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
@@ -185,8 +180,6 @@ class LocationType(models.Model):
 
         if is_not_first_save:
             self.sync_administrative_status()
-            if self._has_user_old != self.has_user:
-                update_location_users.delay(self)
 
         return saved
 
@@ -204,7 +197,7 @@ class LocationType(models.Model):
             self.domain,
             self.name,
             self.administrative,
-        ).encode('utf-8')
+        )
 
     @property
     @memoized
@@ -397,7 +390,7 @@ class SQLLocation(AdjListModel):
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True, blank=True)
 
-    # For locations where location_type.has_user == True
+    # No longer used. Should be removed once all references have been tracked down and removed
     user_id = models.CharField(max_length=255, blank=True)
 
     objects = _tree_manager = LocationManager()
@@ -620,7 +613,7 @@ class SQLLocation(AdjListModel):
             self.domain,
             self.name,
             self.location_type.name if hasattr(self, 'location_type') else None,
-        ).encode('utf-8')
+        )
 
     @property
     def display_name(self):

@@ -1,14 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import itertools
+
 from django.utils.translation import ugettext as _
 
-from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
-from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
+from jsonobject.base_properties import DefaultProperty
+
+from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
+
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
-from jsonobject.base_properties import DefaultProperty
+
 from .utils import SUPPORTED_UCR_AGGREGATIONS, aggregate_items
 
 

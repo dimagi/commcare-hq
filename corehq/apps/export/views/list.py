@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 import json
 from datetime import datetime, timedelta
@@ -10,7 +9,8 @@ from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -51,7 +51,10 @@ from corehq.apps.export.tasks import (
     get_saved_export_task_status,
     rebuild_saved_export,
 )
-from corehq.apps.export.views.edit import EditExportDescription, EditExportNameView
+from corehq.apps.export.views.edit import (
+    EditExportDescription,
+    EditExportNameView,
+)
 from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     user_can_view_deid_exports,
@@ -69,6 +72,7 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     has_permission_to_view_report,
 )
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
@@ -223,9 +227,26 @@ class ExportListHelper(object):
             'addedToBulk': False,
             'emailedExport': self._get_daily_saved_export_metadata(export),
             'odataUrl': self._get_odata_url(export),
+            'additionalODataUrls': self._get_additional_odata_urls(export),
         }
 
+    def _get_additional_odata_urls(self, export):
+        urls = []
+        for table_id, table in enumerate(export.tables):
+            if table.selected and table_id > 0:
+                urls.append({
+                    "label": table.label,
+                    "url": self._fmt_odata_url(
+                        export,
+                        export.get_id + "/{}".format(table_id)
+                    ),
+                })
+        return urls
+
     def _get_odata_url(self, export):
+        return self._fmt_odata_url(export, export.get_id)
+
+    def _fmt_odata_url(self, export, pk):
         resource_class = ODataCaseResource if isinstance(export, CaseExportInstance) else ODataFormResource
         return absolute_reverse(
             'api_dispatch_detail',
@@ -233,7 +254,7 @@ class ExportListHelper(object):
                 'domain': export.domain,
                 'api_name': 'v0.5',
                 'resource_name': resource_class._meta.resource_name,
-                'pk': export.get_id,
+                'pk': pk + '/feed',
             }
         )[:-1]  # Remove trailing forward slash for compatibility with BI tools
 
@@ -605,7 +626,7 @@ def commit_filters(request, domain):
         raise Http404
     if export.export_format == "html" and not domain_has_privilege(domain, EXCEL_DASHBOARD):
         raise Http404
-    if export.is_odata_config and not toggles.ODATA.enabled_for_request(request):
+    if export.is_odata_config and not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
         raise Http404
     if not export.filters.is_location_safe_for_user(request):
         return location_restricted_response(request)
@@ -867,8 +888,19 @@ class ODataFeedListHelper(ExportListHelper):
     beta_odata_feed_limit = 20
 
     @property
+    def create_export_form(self):
+        form = super(ODataFeedListHelper, self).create_export_form
+        form.fields['model_type'].label = _("Feed Type")
+        form.fields['model_type'].choices = [
+            ('', _("Select field type")),
+            ('case', _('Case')),
+            ('form', _('Form')),
+        ]
+        return form
+
+    @property
     def create_export_form_title(self):
-        return ""
+        return _("Select Feed Type")
 
     def _should_appear_in_list(self, export):
         return export['is_odata_config']
@@ -896,13 +928,21 @@ class ODataFeedListHelper(ExportListHelper):
         return DownloadNewCaseExportView
 
 
-@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     urlname = 'list_odata_feeds'
-    page_title = ugettext_lazy("Power BI/Tableau Integration")
+    page_title = ugettext_lazy("PowerBi/Tableau Integration (Preview)")
     lead_text = ugettext_lazy('''
         Use OData feeds to integrate your CommCare data with Power BI or Tableau.
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Integration+with+PowerBi+and+Tableau">
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Integration+with+PowerBi+and+Tableau"
+           id="js-odata-track-learn-more"
+           target="_blank">
+            Learn more.
+        </a><br />
+        This is a Feature Preview.
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Feature+Previews"
+           id="js-odata-track-learn-more-preview"
+           target="_blank">
             Learn more.
         </a>
     ''')

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 
 from django.test import TestCase
@@ -176,13 +174,13 @@ class LedgerAccessorErrorTests(TestCase):
         super(LedgerAccessorErrorTests, cls).tearDownClass()
 
     def test_delete_ledger_values_raise_error_case_section_entry(self):
-        with self.assertRaisesRegexp(LedgerSaveError, '.*still has transactions.*'):
+        with self.assertRaisesRegex(LedgerSaveError, '.*still has transactions.*'):
             LedgerAccessorSQL.delete_ledger_values(self.case.case_id, 'stock', self.product._id)
 
     def test_delete_ledger_values_raise_error_case_section(self):
-        with self.assertRaisesRegexp(LedgerSaveError, '.*still has transactions.*'):
+        with self.assertRaisesRegex(LedgerSaveError, '.*still has transactions.*'):
             LedgerAccessorSQL.delete_ledger_values(self.case.case_id, 'stock')
 
     def test_delete_ledger_values_raise_error_case(self):
-        with self.assertRaisesRegexp(LedgerSaveError, '.*still has transactions.*'):
+        with self.assertRaisesRegex(LedgerSaveError, '.*still has transactions.*'):
             LedgerAccessorSQL.delete_ledger_values(self.case.case_id)

@@ -1,19 +1,24 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import functools
 from datetime import datetime
 from decimal import Decimal
-import functools
 
 from django.test import TestCase
 
-from corehq.apps.commtrack.consumption import recalculate_domain_consumption
-from corehq.apps.commtrack.models import StockState, CommtrackConfig, ConsumptionConfig
-from corehq.apps.commtrack.tests import util
-from corehq.apps.consumption.models import DefaultConsumption
-from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
-from corehq.apps.products.models import Product, SQLProduct
 from casexml.apps.stock.models import DocDomainMapping
 from casexml.apps.stock.tests.base import _stock_report
+
+from corehq.apps.commtrack.consumption import recalculate_domain_consumption
+from corehq.apps.commtrack.models import (
+    CommtrackConfig,
+    ConsumptionConfig,
+    StockState,
+)
+from corehq.apps.commtrack.tests import util
+from corehq.apps.consumption.models import DefaultConsumption
+from corehq.apps.consumption.shortcuts import (
+    set_default_monthly_consumption_for_domain,
+)
+from corehq.apps.products.models import Product, SQLProduct
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
@@ -40,6 +45,8 @@ class StockStateTest(TestCase):
         cls.sp = cls.loc.linked_supply_point()
         cls.products = sorted(Product.by_domain(cls.domain), key=lambda p: p._id)
 
+        cls.process_ledger_changes = process_pillow_changes('LedgerToElasticsearchPillow')
+
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
@@ -58,7 +65,7 @@ class StockStateTest(TestCase):
 class StockStateBehaviorTest(StockStateTest):
 
     def test_stock_state(self):
-        with process_pillow_changes('LedgerToElasticsearchPillow'):
+        with self.process_ledger_changes:
             self.report(25, 5)
             self.report(10, 0)
 
@@ -177,7 +184,7 @@ class StockStateConsumptionTest(StockStateTest):
 
     def test_none_with_no_defaults(self):
         # need to submit something to have a state initialized
-        with process_pillow_changes('LedgerToElasticsearchPillow'):
+        with self.process_ledger_changes:
             self.report(25, 0)
 
         state = StockState.objects.get(
@@ -190,7 +197,7 @@ class StockStateConsumptionTest(StockStateTest):
 
     def test_pre_set_defaults(self):
         set_default_monthly_consumption_for_domain(self.domain, 5 * 30)
-        with process_pillow_changes('LedgerToElasticsearchPillow'):
+        with self.process_ledger_changes:
             self.report(25, 0)
         state = StockState.objects.get(
             section_id='stock',
@@ -201,7 +208,7 @@ class StockStateConsumptionTest(StockStateTest):
         self.assertEqual(5, float(state.get_daily_consumption()))
 
     def test_defaults_set_after_report(self):
-        with process_pillow_changes('LedgerToElasticsearchPillow'):
+        with self.process_ledger_changes:
             self.report(25, 0)
         set_default_monthly_consumption_for_domain(self.domain, 5 * 30)
 

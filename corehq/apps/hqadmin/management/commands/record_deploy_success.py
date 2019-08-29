@@ -1,19 +1,19 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
-from datadog import api as datadog_api
-import requests
-from django.core.management import call_command
-from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
-from django.core.management.base import BaseCommand
-from corehq.apps.hqadmin.models import HqDeploy
 from datetime import datetime, timedelta
+
 from django.conf import settings
-from corehq.util.log import send_HTML_email
+from django.core.management import call_command
+from django.core.management.base import BaseCommand
+
+import requests
+from datadog import api as datadog_api
 
 from dimagi.utils.parsing import json_format_datetime
 from pillow_retry.models import PillowError
+
+from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
+from corehq.apps.hqadmin.models import HqDeploy
+from corehq.util.log import send_HTML_email
 
 STYLE_MARKDOWN = 'markdown'
 DASHBOARD_URL = 'https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef'
@@ -107,12 +107,16 @@ class Command(BaseCommand):
                 alert_type="success"
             )
 
-            print("\n=============================================================\n" \
-                  "Congratulations! Deploy Complete.\n\n" \
-                  "Don't forget to keep an eye on the deploy dashboard to " \
-                  "make sure everything is running smoothly.\n\n" \
-                  "https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef" \
-                  "\n=============================================================\n")
+            print(
+                "\n=============================================================\n"
+                "Congratulations! Deploy Complete.\n\n"
+                "Don't forget to keep an eye on the deploy dashboard to "
+                "make sure everything is running smoothly.\n\n"
+                "https://app.datadoghq.com/dashboard/xch-zwt-vzv/hq-deploy-dashboard?tpl_var_environment={}"
+                "\n=============================================================\n".format(
+                    settings.SERVER_ENVIRONMENT
+                )
+            )
 
         if options['mail_admins']:
             message_body = get_deploy_email_message_body(user=options['user'], compare_url=compare_url)

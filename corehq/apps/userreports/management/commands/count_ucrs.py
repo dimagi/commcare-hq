@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from __future__ import print_function
 
-from __future__ import unicode_literals
 import textwrap
 from datetime import datetime
 
@@ -9,9 +6,12 @@ from django.conf import settings
 from django.core.management import BaseCommand
 
 from dimagi.utils.couch.database import iter_docs
-from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 
-from corehq.apps.userreports.models import ReportConfiguration, StaticReportConfiguration
+from corehq.apps.userreports.models import (
+    ReportConfiguration,
+    StaticReportConfiguration,
+)
+from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 
 
 class Command(BaseCommand):

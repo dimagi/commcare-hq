@@ -1,10 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
-import six
 
 from django.conf import settings
 from django.db.models import F, Q
+
+import six
 
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -17,9 +16,15 @@ from corehq.apps.accounting.models import (
     Subscriber,
     Subscription,
 )
-from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
+from corehq.apps.accounting.utils import (
+    fmt_feature_rate_dict,
+    fmt_product_rate_dict,
+)
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
+from corehq.apps.hqwebapp.async_handler import (
+    AsyncHandlerError,
+    BaseAsyncHandler,
+)
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 
 

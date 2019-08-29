@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import six
 from django_redis.serializers.pickle import PickleSerializer
@@ -13,7 +11,6 @@ except ImportError:
 
 
 _soft_assert_type_text = soft_assert(
-    to='{}@{}'.format('npellegrino', 'dimagi.com'),
     exponential_backoff=True,
 )
 

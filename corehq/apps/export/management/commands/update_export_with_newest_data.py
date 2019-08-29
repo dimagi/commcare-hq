@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-from __future__ import print_function
 
-from __future__ import unicode_literals
 import logging
+import multiprocessing
 import os
 import re
 import shutil
@@ -10,20 +8,23 @@ import tempfile
 import zipfile
 from datetime import datetime
 
-import multiprocessing
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+
+from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.export.const import FORM_EXPORT
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import get_export_size
-from corehq.apps.export.filters import TermFilter, NOT
+from corehq.apps.export.filters import NOT, TermFilter
 from corehq.apps.export.forms import FormExportFilterBuilder
 from corehq.apps.export.models import MAIN_TABLE, PathNode
-from corehq.apps.export.multiprocess import MultiprocessExporter, OutputPaginator, run_multiprocess_exporter
+from corehq.apps.export.multiprocess import (
+    MultiprocessExporter,
+    OutputPaginator,
+    run_multiprocess_exporter,
+)
 from corehq.util.files import safe_filename
-from dimagi.utils.parsing import string_to_utc_datetime
-from io import open
 
 logger = logging.getLogger(__name__)
 

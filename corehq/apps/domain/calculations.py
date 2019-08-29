@@ -1,42 +1,50 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict
-from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
-from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count, get_mobile_user_count
-from corehq.apps.users.models import UserRole
-from corehq.util.dates import iso_string_to_datetime
 from datetime import date, datetime, timedelta
-from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
-from corehq.apps.app_manager.dbaccessors import domain_has_apps
-from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.apps.es.sms import SMSES
-from corehq.apps.es.forms import FormES
-from corehq.apps.hqadmin.reporting.reports import (
-    get_mobile_users,
-)
-from couchforms.analytics import get_number_of_forms_in_domain, \
-    domain_has_submission_in_last_30_days, get_first_form_submission_received, \
-    get_last_form_submission_received
+from dateutil.relativedelta import relativedelta
 
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CouchUser
-from corehq.elastic import es_query, ADD_TO_ES_FILTER
+from couchforms.analytics import (
+    domain_has_submission_in_last_30_days,
+    get_first_form_submission_received,
+    get_last_form_submission_received,
+    get_number_of_forms_in_domain,
+)
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.userreports.util import number_of_report_builder_reports, number_of_ucr_reports
-from corehq.apps.sms.models import SQLMobileBackend
+
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
+from corehq.apps.domain.models import Domain
+from corehq.apps.es.forms import FormES
+from corehq.apps.es.sms import SMSES
+from corehq.apps.export.dbaccessors import (
+    get_case_exports_by_domain,
+    get_export_count_by_domain,
+    get_form_exports_by_domain,
+)
+from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.groups.models import Group
+from corehq.apps.hqadmin.reporting.reports import get_mobile_users
+from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
+from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import LocationType
-from corehq.apps.groups.models import Group
-from corehq.motech.repeaters.models import Repeater
-from corehq.apps.export.dbaccessors import get_form_exports_by_domain, get_case_exports_by_domain, \
-    get_export_count_by_domain
-from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.hqmedia.models import ApplicationMediaMixin
+from corehq.apps.sms.models import SQLMobileBackend
+from corehq.apps.userreports.util import (
+    number_of_report_builder_reports,
+    number_of_ucr_reports,
+)
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_mobile_user_count,
+    get_web_user_count,
+)
+from corehq.apps.users.models import CouchUser, UserRole
+from corehq.apps.users.util import WEIRD_USER_IDS
+from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.messaging.scheduling.util import domain_has_reminders
+from corehq.motech.repeaters.models import Repeater
+from corehq.util.dates import iso_string_to_datetime
 
 
 def num_web_users(domain, *args):

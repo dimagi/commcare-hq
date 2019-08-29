@@ -1,8 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
+
 from corehq.apps.app_manager.xpath_validator import validate_xpath
-from corehq.apps.app_manager.xpath_validator.wrapper import XpathValidationResponse
+from corehq.apps.app_manager.xpath_validator.wrapper import (
+    XpathValidationResponse,
+)
 
 
 class XpathValidatorTest(SimpleTestCase):
@@ -20,6 +21,16 @@ b"""Lexical error on line 1. Unrecognized text.
 data node
 -----^
 """))
+
+    def test_whitespace(self):
+        self.assertEqual(
+            validate_xpath('\n1 =\t2\r + 3'),
+            XpathValidationResponse(is_valid=True, message=None))
+
+    def test_unicode(self):
+        self.assertEqual(
+            validate_xpath('"Serviços e Supervisão"'),
+            XpathValidationResponse(is_valid=True, message=None))
 
     def test_real_valid(self):
         self.assertEqual(

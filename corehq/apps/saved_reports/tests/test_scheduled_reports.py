@@ -1,12 +1,14 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from datetime import datetime, timedelta
+
 from django.test import SimpleTestCase, TestCase
+
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
-from corehq.apps.saved_reports.scheduled import guess_reporting_minute, get_scheduled_report_ids
 from corehq.apps.reports.views import get_scheduled_report_response
+from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
+from corehq.apps.saved_reports.scheduled import (
+    get_scheduled_report_ids,
+    guess_reporting_minute,
+)
 from corehq.apps.users.models import WebUser
 
 

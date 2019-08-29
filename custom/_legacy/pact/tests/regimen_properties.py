@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
 from pact.enums import PACT_REGIMEN_CHOICES, DOT_NONART, DOT_ART, CASE_NONART_REGIMEN_PROP, CASE_ART_REGIMEN_PROP
 from pact.regimen import regimen_dict_from_choice, regimen_string_from_doc

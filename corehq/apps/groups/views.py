@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 
 from django.contrib import messages
+from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseForbidden
-from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _
+from django.views.decorators.http import require_POST
 
-from corehq.apps.users.models import Permissions, CommCareUser
-from corehq.apps.groups.models import Group, DeleteGroupRecord
-from corehq.apps.users.decorators import require_permission
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.groups.models import DeleteGroupRecord, Group
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import CommCareUser, Permissions
 
 require_can_edit_groups = require_permission(Permissions.edit_groups)
 

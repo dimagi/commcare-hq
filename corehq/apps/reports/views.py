@@ -1,39 +1,10 @@
-from __future__ import absolute_import, unicode_literals
-from collections import OrderedDict
 import copy
+import io
+import json
+import re
+from collections import OrderedDict
 from datetime import datetime, timedelta
 from functools import cmp_to_key, partial
-import json
-import csv342 as csv
-
-from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
-from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.locations.permissions import conditionally_location_safe, \
-    report_class_is_location_safe
-from corehq.apps.receiverwrapper.auth import AuthContext
-from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission, get_data_cleaning_data
-from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
-    DEID_EXPORT_PERMISSION
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
-from corehq.form_processor.utils.general import use_sqlite_backend
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
-from corehq.apps.reports.view_helpers import case_hierarchy_context
-from corehq.tabs.tabclasses import ProjectReportsTab
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.timezones.conversions import ServerTime
-from corehq.util.timezones.utils import get_timezone_for_request
-from corehq.blobs import get_blob_db, NotFound, models
-import langcodes
-import pytz
-import re
-import io
-from six.moves import zip
 
 from django.conf import settings
 from django.contrib import messages
@@ -52,7 +23,9 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, get_language
+from django.utils.translation import get_language
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import (
     require_GET,
     require_http_methods,
@@ -61,58 +34,95 @@ from django.views.decorators.http import (
 from django.views.generic import View
 from django.views.generic.base import TemplateView
 
+import csv
+import pytz
+import six
+from couchdbkit.exceptions import ResourceNotFound
+from django_prbac.utils import has_privilege
+from memoized import memoized
+from six.moves import range, zip
+
 from casexml.apps.case import const
-from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
+from casexml.apps.case.cleanup import close_case, rebuild_case_from_forms
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.templatetags.case_tags import case_inline_display
-from casexml.apps.case.xform import extract_case_blocks, get_case_updates
-from casexml.apps.case.xml import V2
 from casexml.apps.case.util import (
     get_case_history,
     get_paged_changes_to_case_property,
 )
-from casexml.apps.stock.models import StockTransaction
 from casexml.apps.case.views import get_wrapped_case
-from couchdbkit.exceptions import ResourceNotFound
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import UserRequestedRebuild
-
+from casexml.apps.case.xform import extract_case_blocks, get_case_updates
+from casexml.apps.case.xml import V2
+from casexml.apps.stock.models import StockTransaction
 from couchexport.export import Format, export_from_tables
 from couchexport.shortcuts import export_response
-
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
-from memoized import memoized
-from dimagi.utils.parsing import json_format_datetime, string_to_datetime, json_format_date
+from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.web import json_response
-from django_prbac.utils import has_privilege
-from soil import DownloadBase
 
+import langcodes
 from corehq import privileges, toggles
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
+from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
 from corehq.apps.app_manager.models import Application, ShadowForm
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_form_source_download_url
+from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
-from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
+from corehq.apps.cloudcare.touchforms_api import (
+    get_user_contributions_to_touchforms_session,
+)
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.export.models import CaseExportDataSchema
 from corehq.apps.export.utils import is_occurrence_deleted
-from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import submit_case_blocks, EDIT_FORM_XMLNS
-from corehq.apps.locations.permissions import can_edit_form_location, location_safe, \
-    location_restricted_exception, user_can_access_case
+from corehq.apps.hqcase.utils import (
+    EDIT_FORM_XMLNS,
+    resave_case,
+    submit_case_blocks,
+)
+from corehq.apps.hqwebapp.decorators import (
+    use_datatables,
+    use_jquery_ui,
+    use_multiselect,
+)
+from corehq.apps.hqwebapp.doc_info import DocInfo, get_doc_info_by_id
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.locations.permissions import (
+    can_edit_form_location,
+    conditionally_location_safe,
+    location_restricted_exception,
+    location_safe,
+    report_class_is_location_safe,
+    user_can_access_case,
+)
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.userreports.util import default_language as ucr_default_language
+from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.exceptions import EditFormValidationError
+from corehq.apps.reports.formdetails.readable import (
+    get_data_cleaning_data,
+    get_readable_data_for_submission,
+)
 from corehq.apps.reports.util import validate_xform_for_edit
+from corehq.apps.reports.view_helpers import case_hierarchy_context
+from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
+from corehq.apps.saved_reports.tasks import (
+    send_delayed_report,
+    send_email_report,
+)
+from corehq.apps.userreports.util import \
+    default_language as ucr_default_language
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import (
     CommCareUser,
@@ -120,37 +130,46 @@ from corehq.apps.users.models import (
     Permissions,
     WebUser,
 )
+from corehq.apps.users.permissions import (
+    CASE_EXPORT_PERMISSION,
+    DEID_EXPORT_PERMISSION,
+    FORM_EXPORT_PERMISSION,
+)
+from corehq.blobs import NotFound, get_blob_db, models
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+    LedgerAccessors,
+)
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import UserRequestedRebuild
+from corehq.form_processor.utils.general import use_sqlite_backend
+from corehq.form_processor.utils.xform import resave_form
+from corehq.motech.repeaters.dbaccessors import (
+    get_repeat_records_by_payload_id,
+)
+from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.couch import get_document_or_404
-from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import (
+    get_timezone_for_request,
+    get_timezone_for_user,
+)
 from corehq.util.view_utils import (
     absolute_reverse,
-    reverse,
     get_case_or_404,
     get_form_or_404,
-    request_as_dict
+    request_as_dict,
+    reverse,
 )
+from no_exceptions.exceptions import Http403
 
 from .dispatcher import ProjectReportDispatcher
 from .forms import SavedReportConfigForm
-from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
-
-from .standard import inspect, ProjectReport
+from .standard import ProjectReport, inspect
 from .standard.cases.basic import CaseListReport
-from .tasks import (
-    build_form_multimedia_zip,
-)
-from corehq.apps.saved_reports.tasks import send_delayed_report, send_email_report
-from corehq.form_processor.utils.xform import resave_form
-from corehq.apps.hqcase.utils import resave_case
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_multiselect,
-    use_jquery_ui
-)
-import six
-from six.moves import range
-from no_exceptions.exceptions import Http403
-
 
 # Number of columns in case property history popup
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
@@ -1210,16 +1229,12 @@ def case_property_names(request, domain, case_id):
         item.path[-1].name for item in property_schema.items
         if not is_occurrence_deleted(item.last_occurrences, last_app_ids) and '/' not in item.path[-1].name
     }
-
+    all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES)
     # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
     if case.external_id:
         all_property_names.add('external_id')
 
-    all_property_names = all_property_names.difference({'name', 'case_name', 'type', 'case_type'})
-    all_property_names = list(all_property_names)
-    all_property_names.sort()
-
-    return json_response(all_property_names)
+    return json_response(sorted(all_property_names))
 
 
 @location_safe
@@ -1968,8 +1983,15 @@ def unarchive_form(request, domain, instance_id):
 def _get_data_cleaning_updates(request, old_properties):
     updates = {}
     properties = json.loads(request.POST.get('properties'))
+
+    def _get_value(val_or_dict):
+        if isinstance(val_or_dict, dict):
+            return val_or_dict.get('value')
+        else:
+            return val_or_dict
+
     for prop, value in six.iteritems(properties):
-        if prop not in old_properties or old_properties[prop] != value:
+        if prop not in old_properties or _get_value(old_properties[prop]) != value:
             updates[prop] = value
     return updates
 
@@ -2077,29 +2099,6 @@ def export_report(request, domain, export_hash, format):
             return HttpResponseNotFound(_("We don't support this format"))
 
 
-@login_or_digest
-@require_form_view_permission
-@require_GET
-def form_multimedia_export(request, domain):
-    task_kwargs = {'domain': domain}
-    try:
-        task_kwargs['xmlns'] = request.GET["xmlns"]
-        task_kwargs['startdate'] = request.GET["startdate"]
-        task_kwargs['enddate'] = request.GET["enddate"]
-        task_kwargs['enddate'] = json_format_date(string_to_datetime(task_kwargs['enddate']) + timedelta(days=1))
-        task_kwargs['app_id'] = request.GET.get("app_id", None)
-        task_kwargs['export_id'] = request.GET.get("export_id", None)
-        task_kwargs['zip_name'] = request.GET.get("name", None)
-    except (KeyError, ValueError):
-        return HttpResponseBadRequest()
-
-    download = DownloadBase()
-    task_kwargs['download_id'] = download.download_id
-    download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
-
-    return download.get_start_response()
-
-
 @require_permission(Permissions.view_report, 'corehq.apps.reports.standard.project_health.ProjectHealthDashboard')
 def project_health_user_details(request, domain, user_id):
     # todo: move to project_health.py? goes with project health dashboard.
@@ -2111,6 +2110,6 @@ def project_health_user_details(request, domain, user_id):
     return render(request, 'reports/project_health/user_details.html', {
         'domain': domain,
         'user': user,
-        'groups': ', '.join(g.name for g in Group.by_user(user)),
+        'groups': ', '.join(g.name for g in Group.by_user_id(user_id)),
         'submission_by_form_link': submission_by_form_link,
     })
