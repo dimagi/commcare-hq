@@ -1,7 +1,5 @@
 from collections import defaultdict
 
-import six
-
 from corehq.apps.app_manager import id_strings, models
 from corehq.apps.app_manager.const import (
     MOBILE_UCR_MIGRATING_TO_2,
@@ -28,7 +26,6 @@ from corehq.apps.reports_core.filters import (
     DynamicChoiceListFilter,
 )
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 
 COLUMN_XPATH_TEMPLATE = "column[@id='{}']"
@@ -348,8 +345,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                     default_val = "column[@id='{column_id}']"
                 xpath_function = default_val
                 for word, translations in transform['translations'].items():
-                    if isinstance(translations, six.string_types):
-                        soft_assert_type_text(translations)
+                    if isinstance(translations, str):
                         # This is a flat mapping, not per-language translations
                         word_eval = "'{}'".format(translations)
                     else:

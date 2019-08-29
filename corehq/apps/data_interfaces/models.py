@@ -11,7 +11,6 @@ from django.utils.translation import ugettext_lazy
 
 import jsonfield
 import pytz
-import six
 from couchdbkit.exceptions import ResourceNotFound
 from dateutil.parser import parse
 from jsonobject.api import JsonObject
@@ -77,7 +76,6 @@ from corehq.sql_db.util import (
     paginate_query_across_partitioned_databases,
 )
 from corehq.util.log import with_progress_bar
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 
@@ -88,19 +86,14 @@ AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 def _try_date_conversion(date_or_string):
     if isinstance(date_or_string, bytes):
         date_or_string = date_or_string.decode('utf-8')
-    if (
-        isinstance(date_or_string, six.text_type) and
-        ALLOWED_DATE_REGEX.match(date_or_string)
-    ):
+    if isinstance(date_or_string, str) and ALLOWED_DATE_REGEX.match(date_or_string):
         try:
             return parse(date_or_string)
         except ValueError:
             pass
-
     return date_or_string
 
 
-@six.python_2_unicode_compatible
 class AutomaticUpdateRule(models.Model):
     # Used when the rule performs case update actions
     WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
@@ -138,7 +131,7 @@ class AutomaticUpdateRule(models.Model):
         pass
 
     def __str__(self):
-        return six.text_type("rule: '{s.name}', id: {s.id}, domain: {s.domain}").format(s=self)
+        return f"rule: '{self.name}', id: {self.id}, domain: {self.domain}"
 
     @property
     def references_parent_case(self):
@@ -536,9 +529,8 @@ class AutomaticUpdateRule(models.Model):
             query = query.server_modified_range(lte=boundary_date)
 
         for case_id in query.scroll():
-            if not isinstance(case_id, six.string_types):
+            if not isinstance(case_id, str):
                 raise ValueError("Something is wrong with the query, expected ids only")
-            soft_assert_type_text(case_id)
 
             yield case_id
 
@@ -846,8 +838,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
         for value in values:
             if value is None:
                 continue
-            if isinstance(value, six.string_types) and not value.strip():
-                soft_assert_type_text(value)
+            if isinstance(value, str) and not value.strip():
                 continue
             return True
 
@@ -863,8 +854,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
             return False
 
         for value in self.get_case_values(case):
-            if isinstance(value, (six.text_type, bytes)):
-                soft_assert_type_text(value)
+            if isinstance(value, str):
                 try:
                     if regex.match(value):
                         return True

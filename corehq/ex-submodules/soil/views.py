@@ -15,14 +15,10 @@ from soil.exceptions import TaskFailedError
 from soil.heartbeat import get_file_heartbeat, get_cache_heartbeat, last_heartbeat
 from soil.tasks import demo_sleep
 from soil.util import get_download_context
-import six
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def _parse_date(string):
-    if isinstance(string, six.string_types):
-        soft_assert_type_text(string)
+    if isinstance(string, str):
         return datetime.strptime(string, "%Y-%m-%d").date()
     else:
         return string

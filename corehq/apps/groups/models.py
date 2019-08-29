@@ -3,11 +3,16 @@ from datetime import datetime
 
 from django.conf import settings
 
-import six
 from memoized import memoized
-from six.moves import filter, map, range
 
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DictProperty,
+    ListProperty,
+    SetProperty,
+    StringProperty,
+)
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import (
     DELETED_SUFFIX,
@@ -25,7 +30,6 @@ from corehq.apps.groups.dbaccessors import (
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 
 dt_no_Z_re = re.compile(r'^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
@@ -94,11 +98,8 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         self.ids_by_domain.clear(self.__class__, self.domain)
 
     def add_user(self, couch_user_id, save=True):
-        if not isinstance(couch_user_id, six.string_types):
+        if not isinstance(couch_user_id, str):
             couch_user_id = couch_user_id.user_id
-        else:
-            soft_assert_type_text(couch_user_id)
-        soft_assert_type_text(couch_user_id)
         if couch_user_id not in self.users:
             self.users.append(couch_user_id)
         if couch_user_id in self.removed_users:
@@ -110,11 +111,8 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         '''
         Returns True if it removed a user, False otherwise
         '''
-        if not isinstance(couch_user_id, six.string_types):
+        if not isinstance(couch_user_id, str):
             couch_user_id = couch_user_id.user_id
-        else:
-            soft_assert_type_text(couch_user_id)
-        soft_assert_type_text(couch_user_id)
         if couch_user_id in self.users:
             for i in range(0, len(self.users)):
                 if self.users[i] == couch_user_id:
@@ -282,7 +280,8 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
     def user_in_group(cls, user_id, group_id):
         if not user_id or not group_id:
             return False
-        c = cls.get_db().view('groups/by_user',
+        c = cls.get_db().view(
+            'groups/by_user',
             key=user_id,
             startkey_docid=group_id,
             endkey_docid=group_id

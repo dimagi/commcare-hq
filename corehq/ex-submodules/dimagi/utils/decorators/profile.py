@@ -10,9 +10,7 @@ import logging
 from datetime import datetime
 from django.conf import settings
 from corehq.util.decorators import ContextDecorator
-from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.utils.modules import to_function
-import six
 
 logger = logging.getLogger(__name__)
 
@@ -139,8 +137,7 @@ try:
                     profiler = LineProfiler()
                     profiler.add_function(func)
                     for f in follow:
-                        if isinstance(f, six.string_types):
-                            soft_assert_type_text(f)
+                        if isinstance(f, str):
                             f = to_function(f)
                         profiler.add_function(f)
                     profiler.enable_by_count()

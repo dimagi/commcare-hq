@@ -300,6 +300,7 @@ def update_domain_date(user_id, domain):
     user = WebUser.get_by_user_id(user_id, domain)
     domain_membership = user.get_domain_membership(domain)
     today = datetime.today().date()
-    if domain_membership and today > domain_membership.last_accessed:
+    if (domain_membership and domain_membership.last_accessed
+            and today > domain_membership.last_accessed):
         domain_membership.last_accessed = today
         user.save()

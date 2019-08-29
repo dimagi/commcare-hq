@@ -624,12 +624,8 @@ class RegistrationAPITestCase(TestCase):
                 {'app_id': 123},
             )
             self.assertEqual(response.status_code, 400)
-            if six.PY3:
-                self.assertEqual(response.content.decode('utf-8'),
-                    '{"sms_user_registration": {"app_id": "Expected type: str"}}')
-            else:
-                self.assertEqual(response.content.decode('utf-8'),
-                    '{"sms_user_registration": {"app_id": "Expected type: basestring"}}')
+            self.assertEqual(response.content.decode('utf-8'),
+                '{"sms_user_registration": {"app_id": "Expected type: str"}}')
 
             response = self.make_api_post(
                 self.domain1,

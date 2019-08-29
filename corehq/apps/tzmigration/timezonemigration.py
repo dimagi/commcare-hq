@@ -5,9 +5,7 @@ from itertools import chain
 
 from django.conf import settings
 
-import six
 from couchdbkit import ResourceNotFound
-from six.moves import range
 
 from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
@@ -29,7 +27,6 @@ from corehq.form_processor.utils import adjust_datetimes, convert_xform_to_json
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.util import eval_lazy
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def run_timezone_migration_for_domain(domain):
@@ -45,11 +42,6 @@ FormJsonDiff = collections.namedtuple('FormJsonDiff', [
 def _json_diff(obj1, obj2, path, track_list_indices=True):
     obj1 = eval_lazy(obj1)
     obj2 = eval_lazy(obj2)
-    if isinstance(obj1, str):
-        obj1 = six.text_type(obj1)
-    if isinstance(obj2, str):
-        obj2 = six.text_type(obj2)
-
     if obj1 == obj2:
         return
     elif MISSING in (obj1, obj2):
@@ -210,9 +202,8 @@ def prepare_case_json(planning_db):
 
 
 def is_datetime_string(string):
-    if not isinstance(string, six.string_types):
+    if not isinstance(string, str):
         return False
-    soft_assert_type_text(string)
     try:
         iso_string_to_datetime(string, strict=True)
     except (ValueError, OverflowError, TypeError):
