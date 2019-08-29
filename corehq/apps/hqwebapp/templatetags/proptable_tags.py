@@ -10,10 +10,10 @@ Supports psuedo-tables using dls and real tables.
 
 import collections
 import datetime
+from itertools import zip_longest
 
 from django import template
 from django.template.defaultfilters import yesno
-from django.template.loader import render_to_string
 from django.utils.html import conditional_escape, escape
 from django.utils.safestring import mark_safe
 
