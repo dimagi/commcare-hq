@@ -1266,6 +1266,10 @@ class UpdateXmlTests(SimpleTestCase):
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'BAZ', 'QUUX')
         eq(updated_xml, DECL + b'<foo><ham/><bar>QUUX</bar></foo>')
 
+    def test_empty_string(self):
+        updated_xml = update_xml(NO_USERID_FORM, ['system', 'meta', 'userID'], '', 'foo')
+        self.assertIn('<userID>foo</userID>', str(updated_xml))
+
 
 class TestHelperFunctions(TestCase):
 
@@ -1538,3 +1542,30 @@ ERROR_FORM = """<data xmlns="example.com/foo">
     <update><foo>bar</foo></update>
 </case>
 </data>"""
+
+
+NO_USERID_FORM = """
+<system xmlns="http://commcarehq.org/case" version="1" uiVersion="1">
+    <meta xmlns="http://openrosa.org/jr/xforms">
+        <deviceID/>
+        <timeStart>2015-06-02T09:21:53.436292Z</timeStart>
+        <timeEnd>2015-06-02T09:21:53.436292Z</timeEnd>
+        <username>system</username>
+        <userID/>
+        <uid>06568786e400414d99eb1d7a095cb051</uid>
+    </meta>
+    <case xmlns="http://commcarehq.org/case/transaction/v2"
+          case_id="c5ec3132d1c946d9bc1412e8f14ed668"
+          date_modified="2015-06-02">
+        <update>
+            <case_type>usuarios</case_type>
+            <codio_telemovel/>
+            <email/>
+            <language>por</language>
+            <name>claire ogrady</name>
+            <nome/>
+            <phone_number>258845092645</phone_number>
+            <username>test-claire</username>
+        </update>
+    </case>
+</system>"""
