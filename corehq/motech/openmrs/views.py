@@ -144,8 +144,11 @@ class OpenmrsImporterView(BaseProjectSettingsView):
 
     def _update_importer(self, importer, data):
         for key, value in data.items():
-            if key == 'password' and value != PASSWORD_PLACEHOLDER:
-                value = b64_aes_encrypt(value)
+            if key == 'password':
+                if value == PASSWORD_PLACEHOLDER:
+                    continue  # Skip updating the password if it hasn't been changed.
+                else:
+                    value = b64_aes_encrypt(value)
             elif key == 'report_params':
                 value = json.loads(value)
             elif key == 'column_map':
