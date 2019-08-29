@@ -1,0 +1,101 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div id="registration-choose-plan-container"
+     class="reg-form-container reg-plan-container">
+  <div class="row">
+
+    <div class="col-xs-6">
+      <div class="plan-container plan-container-professional">
+        <div class="plan-header">
+          <h2>
+            <small>CommCare</small>
+            Professional
+          </h2>
+        </div>
+        <p class="lead">
+          {% blocktrans %}
+            For organizations running projects of any size.
+          {% endblocktrans %}
+        </p>
+        <ul class="check-list">
+          {% for feature in features %}
+            <li>
+              <i class="fa fa-check-square"></i>
+              {{ feature.desc }}
+            </li>
+          {% endfor %}
+        </ul>
+        <p class="plan-price">
+          {% blocktrans %}
+            Starts at $250/month.<br/>
+            See <a href="{{ pricing_url }}">pricing</a> details.
+          {% endblocktrans %}
+        </p>
+        <div class="plan-cta">
+          <a href="#" class="btn btn-default">
+            <i class="fa fa-play-circle"></i>
+            {% blocktrans %}
+              Watch Demo
+            {% endblocktrans %}
+          </a><br />
+          <a href="#" class="btn btn-primary">
+            {% blocktrans %}
+              Get Trial
+            {% endblocktrans %}
+          </a>
+        </div>
+        <p class="plan-footnote">
+          {% blocktrans %}
+            Questions? <a href="#">Chat now</a> with a product expert.
+          {% endblocktrans %}
+        </p>
+      </div>
+    </div>
+
+    <div class="col-xs-6">
+      <div class="plan-container plan-container-community">
+        <div class="plan-header">
+          <h2>
+            <small>CommCare</small>
+            Community
+          </h2>
+        </div>
+        <p class="lead">
+          {% blocktrans %}
+            For individuals exploring data collection workflows.
+          {% endblocktrans %}
+        </p>
+        <ul class="check-list">
+          {% for feature in features %}
+            <li{% if not feature.is_community %} class="not-available"{% endif %}>
+              {% if feature.is_community %}
+                <i class="fa fa-check-square"></i>
+              {% else %}
+                <i class="fa fa-square-o"></i>
+              {% endif %}
+              {% if feature.community_desc %}
+                {{ feature.community_desc }}
+              {% else %}
+                {{ feature.desc }}
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+        <p class="plan-price">
+          {% blocktrans %}
+            Free for personal use.
+          {% endblocktrans %}
+        </p>
+        <div class="plan-cta">
+          <a href="#" class="btn btn-default">
+            {% blocktrans %}
+              Create Account
+            {% endblocktrans %}
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
