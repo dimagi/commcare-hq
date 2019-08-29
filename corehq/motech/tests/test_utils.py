@@ -137,12 +137,22 @@ class PFormatJSONTests(SimpleTestCase):
             '{\n  "\\ud83d\\udc16": "\\ud83d\\udc16\\ud83d\\udc16\\ud83d\\udc16",\n  '
             '"\\ud83e\\udd5a\\ud83e\\udd5a": "\\ud83d\\udc16\\ud83d\\udc16\\ud83d\\udc16"\n}'
         )
-        assert json.loads(json_string) == pigs_and_eggs
 
     def test_nonascii_json_bytes(self):
         pigs_and_eggs = (u'{"\U0001f416": "\U0001f416\U0001f416\U0001f416", '
                          u'"\U0001f95a\U0001f95a": "\U0001f416\U0001f416\U0001f416"}')
         json_string = pformat_json(pigs_and_eggs.encode("utf-8"))
+
+        self.assertEqual(
+            json_string,
+            '{\n  "\\ud83d\\udc16": "\\ud83d\\udc16\\ud83d\\udc16\\ud83d\\udc16",\n  '
+            '"\\ud83e\\udd5a\\ud83e\\udd5a": "\\ud83d\\udc16\\ud83d\\udc16\\ud83d\\udc16"\n}'
+        )
+
+    def test_nonascii_dict(self):
+        pigs_and_eggs = {"\U0001f416": "\U0001f416\U0001f416\U0001f416",
+                         "\U0001f95a\U0001f95a": "\U0001f416\U0001f416\U0001f416"}
+        json_string = pformat_json(pigs_and_eggs)
 
         self.assertEqual(
             json_string,
