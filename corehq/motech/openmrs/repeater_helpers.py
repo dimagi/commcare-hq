@@ -1,6 +1,5 @@
-
 import re
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 
 from lxml import html
 from six.moves import zip
@@ -33,8 +32,6 @@ from corehq.motech.requests import Requests
 from corehq.motech.value_source import CaseTriggerInfo
 from corehq.util.quickcache import quickcache
 from requests import RequestException
-
-OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
 
 
 def get_case_location(case):
@@ -359,6 +356,8 @@ def generate_identifier(requests, identifier_type):
 def find_or_create_patient(requests, domain, info, openmrs_config):
     case = CaseAccessors(domain).get_case(info.case_id)
     patient_finder = PatientFinder.wrap(openmrs_config.case_config.patient_finder)
+    if patient_finder is None:
+        return
     patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
     if len(patients) == 1:
         patient, = patients

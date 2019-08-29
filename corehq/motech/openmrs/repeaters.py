@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
+import attr
 import six
 from memoized import memoized
 
@@ -29,7 +30,6 @@ from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT, XMLNS_OPENMRS
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.repeater_helpers import (
-    OpenmrsResponse,
     get_case_location_ancestor_repeaters,
     get_patient,
     get_relevant_case_updates_from_form_json,
@@ -56,6 +56,17 @@ from corehq.motech.value_source import (
     get_form_question_values,
 )
 from corehq.toggles import OPENMRS_INTEGRATION
+
+
+@attr.s
+class OpenmrsResponse:
+    """
+    Ducktypes an HTTP response for Repeater.handle_response(),
+    RepeatRecord.handle_success() and RepeatRecord.handle_failure()
+    """
+    status_code = attr.ib()
+    reason = attr.ib()
+    text = attr.ib(default="")
 
 
 class AtomFeedStatus(DocumentSchema):
@@ -213,17 +224,22 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
     want to do. Each workflow task has a rollback task. If a task fails, all previous tasks are rolled back in
     reverse order.
 
-    :return: A response-like object that can be used by Repeater.handle_response
+    :return: A response-like object that can be used by Repeater.handle_response(),
+             RepeatRecord.handle_success() and RepeatRecord.handle_failure()
 
 
     .. _OpenMRS REST Web Services: https://wiki.openmrs.org/display/docs/REST+Web+Services+API+For+Clients
     """
+    warnings = []
     errors = []
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
         patient = get_patient(requests, domain, info, openmrs_config)
         if patient is None:
-            errors.append('Warning: CommCare case "{}" was not found in OpenMRS'.format(info.case_id))
+            warnings.append(
+                f"CommCare case '{info.case_id}' was not matched to a "
+                f"patient in OpenMRS instance '{requests.base_url}'."
+            )
             continue
 
         # case_trigger_infos are info about all of the cases
@@ -266,9 +282,13 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         # have succeeded, but don't say everything was OK if any
         # workflows failed. (Of course most forms will only involve one
         # case, so one workflow.)
-        return OpenmrsResponse(400, 'Bad Request', pformat_json([str(e) for e in errors]))
-    else:
-        return OpenmrsResponse(200, 'OK', '')
+        return OpenmrsResponse(400, 'Bad Request', "Errors: " + pformat_json([str(e) for e in errors]))
+
+    if warnings:
+        logger.warning("Warnings encountered sending OpenMRS data: %s", warnings)
+        return OpenmrsResponse(201, "Accepted", "Warnings: " + pformat_json([str(e) for e in warnings]))
+
+    return OpenmrsResponse(200, "OK")
 
 
 def create_openmrs_repeat_records(sender, xform, **kwargs):
