@@ -15,6 +15,7 @@ from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
     ANDROID_LOGO_PROPERTY_MAPPING,
+    Application,
     CustomIcon,
     ModuleNotFoundException,
     ReportModule,
@@ -164,7 +165,20 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             template = 'app_manager/app_view_release_manager.html'
         if release_manager:
             context.update(get_releases_context(request, domain, app_id))
+
+        if hasattr(app, 'family_id') and app.family_id:
+            family_app = Application.get(app.family_id)
+            family_name = family_app.name
+            family_link = reverse(
+                'view_app',
+                args=[domain, app.family_id]
+            )
+            family_text = f"This app is in the <a href='{family_link}'>{family_name}</a> family."
+        else:
+            family_text = "This app is not in a family."
+
         context.update({
+            'family_text': family_text,
             'is_app_settings_page': not release_manager,
         })
 
