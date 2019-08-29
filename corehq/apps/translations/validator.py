@@ -151,7 +151,8 @@ class UploadedTranslationsValidator(object):
                                                                           columns_to_compare)
         parsed_uploaded_rows = self._processed_single_sheet_uploaded_rows(get_unicode_dicts(sheet),
                                                                           columns_to_compare)
-        return {sheet.title: self._generate_diff(parsed_expected_rows, parsed_uploaded_rows)}
+        error_msgs = self._generate_diff(parsed_expected_rows, parsed_uploaded_rows)
+        return {sheet.title: error_msgs} if error_msgs else {}
 
     def _processed_single_sheet_expected_rows(self, expected_rows, columns_to_compare):
         parsed_expected_rows = []
