@@ -277,9 +277,13 @@ def update_xml(xml, path, old_value, new_value):
         assert next_steps, 'path is empty'
         step, next_steps = next_steps[0], next_steps[1:]
         if not next_steps:
-            if get_localname(elem) == step and elem.text == old_value:
-                found.append(True)
-                elem.text = new_value
+            if get_localname(elem) == step:
+                if elem.text == old_value:
+                    found.append(True)
+                    elem.text = new_value
+                elif elem.text is None and not old_value:
+                    found.append(True)
+                    elem.text = new_value
             elif elem_has_attr(elem, step) and elem.attrib[step[1:]] == old_value:
                 found.append(True)
                 elem.attrib[step[1:]] = new_value
