@@ -118,7 +118,7 @@ def pformat_json(data):
     if data is None:
         return ''
     try:
-        json_data = json.loads(data) if isinstance(data, str) else data
+        json_data = json.loads(data) if isinstance(data, (str, bytes)) else data
         return json.dumps(json_data, indent=2, sort_keys=True)
-    except ValueError:
+    except (TypeError, ValueError):
         return data
