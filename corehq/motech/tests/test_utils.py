@@ -1,11 +1,11 @@
 import doctest
+import json
 from base64 import b64encode
 
-from Crypto.Cipher import AES
 from django.conf import settings
 from django.test import SimpleTestCase, override_settings
 
-import six
+from Crypto.Cipher import AES
 
 import corehq.motech.utils
 from corehq.motech.utils import (
@@ -13,8 +13,8 @@ from corehq.motech.utils import (
     AES_KEY_MAX_LEN,
     b64_aes_decrypt,
     b64_aes_encrypt,
-    simple_pad,
     pformat_json,
+    simple_pad,
 )
 
 
@@ -88,7 +88,7 @@ class DecryptTests(SimpleTestCase):
         aes = AES.new(aes_key, AES.MODE_ECB)
 
         message_bytes = message.encode('utf8')
-        plaintext_bytes = simple_pad(message_bytes, AES_BLOCK_SIZE)  # <-- this
+        plaintext_bytes = simple_pad(message_bytes, AES_BLOCK_SIZE)
         ciphertext_bytes = aes.encrypt(plaintext_bytes)
         b64ciphertext_bytes = b64encode(ciphertext_bytes)
         return b64ciphertext_bytes.decode('ascii')
@@ -96,21 +96,69 @@ class DecryptTests(SimpleTestCase):
 
 class PFormatJSONTests(SimpleTestCase):
 
-    def test_valid_json(self):
+    def test_valid_json_string(self):
         self.assertEqual(
             pformat_json('{"ham": "spam", "eggs": "spam"}'),
-            '{\n  "eggs": "spam",\n  "ham": "spam"\n}' if six.PY3 else '{\n  "eggs": "spam", \n  "ham": "spam"\n}'
-        )
-        self.assertEqual(
-            pformat_json({'ham': 'spam', 'eggs': 'spam'}),
-            '{\n  "eggs": "spam",\n  "ham": "spam"\n}' if six.PY3 else '{\n  "eggs": "spam", \n  "ham": "spam"\n}'
+            '{\n  "eggs": "spam",\n  "ham": "spam"\n}'
         )
 
-    def test_invalid_json(self):
+    def test_dict(self):
+        self.assertEqual(
+            pformat_json({'ham': 'spam', 'eggs': 'spam'}),
+            '{\n  "eggs": "spam",\n  "ham": "spam"\n}'
+        )
+
+    def test_valid_json_bytes(self):
+        self.assertEqual(
+            pformat_json(b'{"ham": "spam", "eggs": "spam"}'),
+            '{\n  "eggs": "spam",\n  "ham": "spam"\n}'
+        )
+
+    def test_invalid_json_string(self):
         self.assertEqual(
             pformat_json('ham spam eggs spam'),
             'ham spam eggs spam'
         )
+
+    def test_invalid_json_bytes(self):
+        self.assertEqual(
+            pformat_json(b'{"ham": "spam", "spam", "spa'),
+            b'{"ham": "spam", "spam", "spa'
+        )
+
+    def test_nonascii_json_string(self):
+        pigs_and_eggs = (u'{"\U0001f416": "\U0001f416\U0001f416\U0001f416", '
+                         u'"\U0001f95a\U0001f95a": "\U0001f416\U0001f416\U0001f416"}')
+        json_string = pformat_json(pigs_and_eggs)
+
+        self.assertEqual(
+            json_string,
+            '{\n  "\\ud83d\\udc16": "\\ud83d\\udc16\\ud83d\\udc16\\ud83d\\udc16",\n  '
+            '"\\ud83e\\udd5a\\ud83e\\udd5a": "\\ud83d\\udc16\\ud83d\\udc16\\ud83d\\udc16"\n}'
+        )
+
+    def test_nonascii_json_bytes(self):
+        pigs_and_eggs = (u'{"\U0001f416": "\U0001f416\U0001f416\U0001f416", '
+                         u'"\U0001f95a\U0001f95a": "\U0001f416\U0001f416\U0001f416"}')
+        json_string = pformat_json(pigs_and_eggs.encode("utf-8"))
+
+        self.assertEqual(
+            json_string,
+            '{\n  "\\ud83d\\udc16": "\\ud83d\\udc16\\ud83d\\udc16\\ud83d\\udc16",\n  '
+            '"\\ud83e\\udd5a\\ud83e\\udd5a": "\\ud83d\\udc16\\ud83d\\udc16\\ud83d\\udc16"\n}'
+        )
+
+    def test_nonascii_dict(self):
+        pigs_and_eggs = {"\U0001f416": "\U0001f416\U0001f416\U0001f416",
+                         "\U0001f95a\U0001f95a": "\U0001f416\U0001f416\U0001f416"}
+        json_string = pformat_json(pigs_and_eggs)
+
+        self.assertEqual(
+            json_string,
+            '{\n  "\\ud83d\\udc16": "\\ud83d\\udc16\\ud83d\\udc16\\ud83d\\udc16",\n  '
+            '"\\ud83e\\udd5a\\ud83e\\udd5a": "\\ud83d\\udc16\\ud83d\\udc16\\ud83d\\udc16"\n}'
+        )
+        assert json.loads(json_string) == pigs_and_eggs
 
     def test_empty_string(self):
         self.assertEqual(
@@ -128,12 +176,12 @@ class PFormatJSONTests(SimpleTestCase):
 class EncryptionTests(SimpleTestCase):
 
     def assert_message_equals_plaintext(self, message):
-        assert isinstance(message, six.text_type)
+        assert isinstance(message, str)
         ciphertext = b64_aes_encrypt(message)
         plaintext = b64_aes_decrypt(ciphertext)
         self.assertEqual(plaintext, message)
-        self.assertIsInstance(ciphertext, six.text_type)
-        self.assertIsInstance(plaintext, six.text_type)
+        self.assertIsInstance(ciphertext, str)
+        self.assertIsInstance(plaintext, str)
 
     def test_encrypt_decrypt_ascii(self):
         message = 'Around you is a forest.'

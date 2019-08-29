@@ -23,7 +23,7 @@ from soil import DownloadBase
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -97,6 +97,7 @@ def bulk_download_users_async(domain, download_id, user_filters):
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
+    NotAllowed.check(domain)
     CaseAccessors(domain).soft_delete_cases(list(case_ids), deletion_date, deletion_id)
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
@@ -299,8 +300,8 @@ def update_domain_date(user_id, domain):
     from corehq.apps.users.models import WebUser
     user = WebUser.get_by_user_id(user_id, domain)
     domain_membership = user.get_domain_membership(domain)
-    if domain_membership:
-        domain_membership.last_accessed = datetime.today().date()
+    today = datetime.today().date()
+    if (domain_membership and domain_membership.last_accessed
+            and today > domain_membership.last_accessed):
+        domain_membership.last_accessed = today
         user.save()
-    else:
-        logger.error("DomainMembership does not exist for user %s in domain %s" % (user.name, domain))

@@ -122,8 +122,6 @@ class DaysElapsedTransformTest(SimpleTestCase):
             "custom_type": "days_elapsed_from_date"
         })
         date = (datetime.utcnow() - timedelta(days=5)).strftime('%Y-%m-%d')
-        if six.PY2:
-            date = date.decode('utf-8')
         self.assertEqual(transform.transform(date), 5)
 
 

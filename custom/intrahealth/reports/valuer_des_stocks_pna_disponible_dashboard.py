@@ -18,7 +18,7 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     slug = 'valeur_des_stocks_pna_disponible_report'
-    comment = 'Valeur des stocks PNA disponible'
+    comment = 'Valeur des stocks PNA disponible (chaque produit)'
     name = 'Valeur des stocks PNA disponible'
     default_rows = 10
     exportable = True
@@ -29,7 +29,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
     def export_table(self):
         report = [
             [
-                'Valuer des stocks PNA disponible',
+                self.name,
                 [],
             ]
         ]
@@ -69,13 +69,13 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
 
     @property
     def report_context(self):
-        context = {
-            'report': self.get_report_context(),
-            'title': self.name,
-            'charts': self.charts if not self.needs_filters else None
-        }
-
-        return context
+        if not self.needs_filters:
+            return {
+                'report': self.get_report_context(),
+                'charts': self.charts,
+                'title': self.name
+            }
+        return {}
 
     @property
     def selected_location(self):
@@ -135,16 +135,16 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
             rows = self.calculate_rows()
             headers = self.headers
 
-        context = dict(
-            report_table=dict(
-                title=self.name,
-                slug=self.slug,
-                comment=self.comment,
-                headers=headers,
-                rows=rows,
-                default_rows=self.default_rows,
-            )
-        )
+        context = {
+            'report_table': {
+                'title': self.name,
+                'slug': self.slug,
+                'comment': self.comment,
+                'headers': headers,
+                'rows': rows,
+                'default_rows': self.default_rows,
+            }
+        }
 
         return context
 
@@ -160,7 +160,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
                 location_id = pna['location_id']
                 location_name = pna['location_name']
                 products = sorted(pna['products'], key=lambda x: x['product_name'])
-                if location_id in added_locations:
+                if location_id in added_locations and locations_with_products.get(location_name) is not None:
                     length = len(locations_with_products[location_name])
                     for r in range(0, length):
                         product_for_location = locations_with_products[location_name][r]
@@ -330,9 +330,9 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
 
     @property
     def config(self):
-        config = dict(
-            domain=self.domain,
-        )
+        config = {
+            'domain': self.domain,
+        }
         if self.request.GET.get('startdate'):
             startdate = force_to_date(self.request.GET.get('startdate'))
         else:

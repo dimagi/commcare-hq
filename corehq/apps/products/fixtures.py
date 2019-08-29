@@ -83,7 +83,7 @@ class ProductFixturesProvider(FixtureProvider):
             return []
 
         data = list(
-            SQLProduct.objects
+            SQLProduct.active_objects
             .filter(domain=restore_user.domain)
             .order_by('code')
             .all()

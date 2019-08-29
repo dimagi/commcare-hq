@@ -9,7 +9,6 @@ from django.template.loader import render_to_string
 from django.urls import RegexURLResolver, Resolver404
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from couchdbkit import ResourceConflict, ResourceNotFound
 
 from dimagi.utils.web import json_response
@@ -392,7 +391,7 @@ def download_index(request, domain, app_id):
                 section_name = "m{} - {}".format(
                     module_id,
                     ", ".join(["({}) {}".format(lang, name)
-                               for lang, name in six.iteritems(module.name)])
+                               for lang, name in module.name.items()])
                 )
                 files[section_name].append({
                     'name': file_[0],
@@ -400,7 +399,7 @@ def download_index(request, domain, app_id):
                     'readable_name': "f{} - {}".format(
                         form_id,
                         ", ".join(["({}) {}".format(lang, name)
-                                   for lang, name in six.iteritems(form.name)])
+                                   for lang, name in form.name.items()])
                     ),
                 })
             else:
@@ -429,7 +428,7 @@ def download_index(request, domain, app_id):
 
     return render(request, "app_manager/download_index.html", {
         'app': request.app,
-        'files': OrderedDict(sorted(six.iteritems(files), key=lambda x: x[0] or '')),
+        'files': OrderedDict(sorted(files.items(), key=lambda x: x[0] or '')),
         'supports_j2me': request.app.build_spec.supports_j2me(),
         'enabled_build_profiles': enabled_build_profiles,
         'latest_enabled_build_profiles': latest_enabled_build_profiles,
@@ -490,7 +489,7 @@ def download_index_files(app, build_profile_id=None):
     else:
         files = list(app.create_all_files().items())
     files = [
-        (name, build_file if isinstance(build_file, six.text_type) else build_file.decode('utf-8'))
+        (name, build_file if isinstance(build_file, str) else build_file.decode('utf-8'))
         for (name, build_file) in files
     ]
     return sorted(files)
@@ -508,8 +507,6 @@ def source_files(app):
     app_json = json.dumps(
         app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
     )
-    if six.PY2:
-        app_json = app_json.decode('utf-8')
     files.append(
         ("app.json", app_json)
     )

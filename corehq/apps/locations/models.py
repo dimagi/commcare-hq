@@ -418,8 +418,6 @@ class SQLLocation(AdjListModel):
 
         if not self.location_id:
             self.location_id = uuid.uuid4().hex
-            if six.PY2:
-                self.location_id = self.location_id.decode('utf-8')
 
         with transaction.atomic():
             set_site_code_if_needed(self)

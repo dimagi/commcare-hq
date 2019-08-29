@@ -52,6 +52,7 @@ load_ignore_rules = memoized(lambda: {
         ignore_renamed('uid', 'instanceID'),
     ],
     'XFormInstance-Deleted': [
+        Ignore('missing', 'deletion_id', old=MISSING, new=None),
         ignore_renamed('-deletion_id', 'deletion_id'),
         ignore_renamed('-deletion_date', 'deleted_on'),
     ],

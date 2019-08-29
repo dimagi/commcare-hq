@@ -34,7 +34,7 @@ def all_sms_codes(domain):
     config = CommtrackConfig.for_domain(domain)
 
     actions = {action.keyword: action for action in config.actions}
-    products = {p.code: p for p in SQLProduct.by_domain(domain)}
+    products = {p.code: p for p in SQLProduct.active_objects.filter(domain=domain)}
 
     ret = {}
     for action_key, action in actions.items():
@@ -195,11 +195,7 @@ def submit_mapping_case_block(user, index):
 def location_map_case_id(user):
     if should_use_sql_backend(user.domain):
         user_id = user.user_id
-        if isinstance(user_id, six.text_type) and six.PY2:
-            user_id = user_id.encode('utf8')
         case_id = uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user_id).hex
-        if six.PY2:
-            case_id = case_id.decode('utf-8')
         return case_id
     return 'user-owner-mapping-' + user.user_id
 

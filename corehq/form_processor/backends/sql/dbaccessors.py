@@ -34,7 +34,9 @@ from corehq.form_processor.exceptions import (
     AttachmentNotFound,
     CaseSaveError,
     LedgerSaveError,
-    LedgerValueNotFound)
+    LedgerValueNotFound,
+    NotAllowed,
+)
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor,
     AbstractFormAccessor,
@@ -64,7 +66,6 @@ from corehq.sql_db.util import (
 )
 from corehq.util.datadog.utils import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
-from corehq.util.soft_assert import soft_assert
 from dimagi.utils.chunked import chunked
 
 doc_type_to_state = {
@@ -499,6 +500,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def hard_delete_forms(domain, form_ids, delete_attachments=True):
         assert isinstance(form_ids, list)
+        NotAllowed.check(domain)
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
@@ -524,24 +526,11 @@ class FormAccessorSQL(AbstractFormAccessor):
         return deleted_count
 
     @staticmethod
-    def archive_form(form, user_id):
-        from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, user_id, archive=True)
-        form.state = XFormInstanceSQL.ARCHIVED
-        publish_form_saved(form)
-
-    @staticmethod
-    def unarchive_form(form, user_id):
-        from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, user_id, archive=False)
-        form.state = XFormInstanceSQL.NORMAL
-        publish_form_saved(form)
-
-    @staticmethod
     def soft_undelete_forms(domain, form_ids):
         from corehq.form_processor.change_publishers import publish_form_saved
 
         assert isinstance(form_ids, list)
+        NotAllowed.check(domain)
         problem = 'Restored on {}'.format(datetime.utcnow())
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
@@ -574,6 +563,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         from corehq.form_processor.change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
+        NotAllowed.check(domain)
         deletion_date = deletion_date or datetime.utcnow()
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
@@ -590,7 +580,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     @transaction.atomic
-    def _archive_unarchive_form(form, user_id, archive):
+    def set_archived_state(form, archive, user_id):
         from casexml.apps.case.xform import get_case_ids_from_form
         form_id = form.form_id
         case_ids = list(get_case_ids_from_form(form))
@@ -598,6 +588,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
                            [case_ids, form_id, archive])
+        form.state = XFormInstanceSQL.ARCHIVED if archive else XFormInstanceSQL.NORMAL
 
     @staticmethod
     @transaction.atomic
@@ -897,6 +888,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
+        NotAllowed.check(domain)
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT hard_delete_cases(%s, %s) as deleted_count', [domain, case_ids])
             results = fetchall_as_namedtuple(cursor)
@@ -1143,6 +1135,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         from corehq.form_processor.change_publishers import publish_case_saved
 
         assert isinstance(case_ids, list)
+        NotAllowed.check(domain)
 
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(

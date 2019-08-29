@@ -2809,8 +2809,6 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
     @property
     def rows(self):
         records = self.get_data()
-        for r in records:
-            print(r)
 
         if self.loc_id == 'pps_id':
             loc_names, data = self.get_availability_data_per_month_per_pps(records)
@@ -5275,6 +5273,12 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
                     pnas_list.append(data_dict)
                     added_products_for_locations[location_id] = [product_data]
 
+            for pna in pnas_list:
+                if pna['location_id'] is None:
+                    pna['location_id'] = ''
+                    pna['location_name'] = ''
+
+
             pnas_list = sorted(pnas_list, key=lambda x: x['location_id'])
 
             for pna in pnas_list:
@@ -5735,7 +5739,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
     @property
     def amt_delivered_convenience_context(self):
-        context = self.create_table_context('amt_delivered_convenience', 'Livraison Total Effectuées', False)
+        context = self.create_table_context('amt_delivered_convenience', 'Livraison Total Effectuées')
         rows = context['rows']
         new_row = self.create_row_with_column_values_sum('Livraison Effectuées', rows)
         context['rows'].append(new_row)
@@ -5743,7 +5747,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
     @property
     def display_total_stock_context(self):
-        context = self.create_table_context('total_stock', 'Stock Disponible Utilisable', False)
+        context = self.create_table_context('total_stock', 'Stock Disponible Utilisable')
         rows = context['rows']
         sum_row = self.create_row_with_column_values_sum('SDU avant Livraison', rows)
         display_stock_row = self.add_row_with_sum_value('SDU après Livraison', 'display_total_stock')

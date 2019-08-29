@@ -11,9 +11,7 @@ from django.utils import html, safestring
 from django.utils.translation import ugettext as _
 
 import pytz
-import six
 from memoized import memoized
-from six.moves import map, range
 
 from couchexport.util import SerializableFunction
 from dimagi.utils.dates import DateSpan
@@ -28,7 +26,6 @@ from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.log import send_HTML_email
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -161,8 +158,7 @@ def namedtupledict(name, fields):
     cls = namedtuple(name, fields)
 
     def __getitem__(self, item):
-        if isinstance(item, six.string_types):
-            soft_assert_type_text(item)
+        if isinstance(item, str):
             warnings.warn(
                 "namedtuple fields should be accessed as attributes",
                 DeprecationWarning,
@@ -184,7 +180,7 @@ def namedtupledict(name, fields):
 
 
 class SimplifiedUserInfo(
-        namedtupledict(b'SimplifiedUserInfo' if six.PY2 else 'SimplifiedUserInfo', (
+        namedtupledict('SimplifiedUserInfo', (
             'user_id',
             'username_in_report',
             'raw_username',

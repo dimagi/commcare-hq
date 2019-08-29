@@ -239,8 +239,6 @@ def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
 
     config_id = config._id.decode('utf-8') if isinstance(config._id, bytes) else config._id
     type_name = 'DynamicReport{}'.format(config_id)
-    if six.PY2:
-        type_name = type_name.encode('utf-8')
     return type(type_name, (GenericReportView,), {
         'name': config.title,
         'description': config.description or None,

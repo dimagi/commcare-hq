@@ -2,8 +2,6 @@ import json
 
 from django.http import HttpResponseBadRequest
 
-import six
-
 from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -40,7 +38,7 @@ def edit_schedule_phases(request, domain, app_id, module_unique_id):
         module.update_schedule_phases(all_anchors)
         module.has_schedule = enabled
     except ScheduleError as e:
-        return HttpResponseBadRequest(six.text_type(e))
+        return HttpResponseBadRequest(str(e))
 
     response_json = {}
     app.save(response_json)
@@ -63,7 +61,7 @@ def edit_visit_schedule(request, domain, app_id, form_unique_id):
         try:
             phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
         except ScheduleError as e:
-            return HttpResponseBadRequest(six.text_type(e))
+            return HttpResponseBadRequest(str(e))
         form.schedule_form_id = schedule_form_id
         form.schedule = FormSchedule.wrap(json_loads)
         phase.add_form(form)

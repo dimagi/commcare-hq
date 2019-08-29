@@ -12,9 +12,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_http_methods
 
-import six
 from memoized import memoized
-from six.moves import map, range
 
 from dimagi.utils.couch import get_redis_lock, release_lock
 from dimagi.utils.web import json_response
@@ -44,7 +42,6 @@ from corehq.apps.reports.filters.controllers import EmwfOptionsController
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
-from corehq.util.python_compatibility import soft_assert_type_text
 
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
@@ -304,9 +301,7 @@ class LocationTypesView(BaseDomainView):
         sql_loc_types = {}
 
         def _is_fake_pk(pk):
-            if isinstance(pk, six.string_types):
-                soft_assert_type_text(pk)
-            return isinstance(pk, six.string_types) and pk.startswith("fake-pk-")
+            return isinstance(pk, str) and pk.startswith("fake-pk-")
 
         def mk_loctype(name, parent_type, administrative,
                        shares_cases, view_descendants, pk, code, **kwargs):

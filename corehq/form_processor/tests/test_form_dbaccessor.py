@@ -2,11 +2,11 @@ import uuid
 from datetime import datetime
 from io import BytesIO
 
+from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
-from django.db import connections
 from django.test import TestCase
+from testil import eq
 
-import settings
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
@@ -16,7 +16,7 @@ from corehq.blobs.tests.util import TemporaryS3BlobDB, TemporaryFilesystemBlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import ARCHIVE_FORM, FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
 from corehq.form_processor.parsers.form import apply_deprecation
@@ -141,8 +141,8 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual([], operations)
 
         # don't call form.archive to avoid sending the signals
-        FormAccessorSQL.archive_form(form, user_id='user1')
-        FormAccessorSQL.unarchive_form(form, user_id='user2')
+        self.archive_form(form, user_id='user1')
+        self.unarchive_form(form, user_id='user2')
 
         operations = FormAccessorSQL.get_form_operations(form.form_id)
         self.assertEqual(2, len(operations))
@@ -197,7 +197,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual({form1.form_id, form2.form_id}, set(form_ids))
 
         # change state of form1
-        FormAccessorSQL.archive_form(form1, 'user1')
+        self.archive_form(form1, 'user1')
 
         # check filtering by state
         form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(DOMAIN, 'XFormArchived')
@@ -228,7 +228,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(form1.form_id, forms[0].form_id)
 
         # change state of form1
-        FormAccessorSQL.archive_form(form1, 'user1')
+        self.archive_form(form1, 'user1')
 
         # check filtering by state
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormArchived', 2)
@@ -271,7 +271,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(1, len(transactions))
         self.assertFalse(transactions[0].revoked)
 
-        FormAccessorSQL.archive_form(form, 'user1')
+        self.archive_form(form, 'user1')
         form = FormAccessorSQL.get_form(form.form_id)
         self.assertEqual(XFormInstanceSQL.ARCHIVED, form.state)
         operations = form.history
@@ -280,10 +280,10 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual('user1', operations[0].user_id)
 
         transactions = CaseAccessorSQL.get_transactions(case_id)
-        self.assertEqual(1, len(transactions))
+        self.assertEqual(1, len(transactions), transactions)
         self.assertTrue(transactions[0].revoked)
 
-        FormAccessorSQL.unarchive_form(form, 'user2')
+        self.unarchive_form(form, 'user2')
         form = FormAccessorSQL.get_form(form.form_id)
         self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
         operations = form.history
@@ -380,6 +380,14 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(DOMAIN, form.domain)
         self.assertEqual('user1', form.user_id)
         return form
+
+    @staticmethod
+    def archive_form(form, user_id):
+        FormAccessorSQL.set_archived_state(form, True, user_id)
+
+    @staticmethod
+    def unarchive_form(form, user_id):
+        FormAccessorSQL.set_archived_state(form, False, user_id)
 
 
 class FormAccessorsTests(TestCase, TestXmlMixin):
@@ -561,6 +569,11 @@ class DeleteAtachmentsS3DBTests(DeleteAttachmentsFSDBTests):
         self.s3db.close()
         super(DeleteAtachmentsS3DBTests, self).tearDown()
 
+
+def test_archive_form_system_action():
+    eq(ARCHIVE_FORM, "archive_form",
+        "Changing the value of this constant will break all "
+        "'archive_form' system action forms in existence.")
 
 
 def _simulate_form_edit():

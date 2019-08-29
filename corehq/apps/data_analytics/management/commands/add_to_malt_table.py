@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-import csv342 as csv
+import csv
 
 from corehq.apps.data_analytics.models import MALTRow
 

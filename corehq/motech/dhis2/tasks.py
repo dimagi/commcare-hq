@@ -1,14 +1,18 @@
-from base64 import b64decode
 import bz2
+from base64 import b64decode
 from datetime import datetime
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
-from corehq import toggles
-from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
-from corehq.motech.requests import Requests
 from toggle.shortcuts import find_domains_with_toggle_enabled
+
+from corehq import toggles
+from corehq.motech.dhis2.dbaccessors import (
+    get_dataset_maps,
+    get_dhis2_connection,
+)
+from corehq.motech.requests import Requests
 
 
 @task(serializer='pickle', queue='background_queue')

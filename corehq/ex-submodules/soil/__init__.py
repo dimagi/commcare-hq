@@ -15,10 +15,8 @@ from django.http import HttpResponse, StreamingHttpResponse
 from django_transfer import TransferHttpResponse
 from soil.progress import get_task_progress, get_multiple_task_progress, set_task_progress
 from corehq.blobs import get_blob_db
-import six
 
 from corehq.const import ONE_DAY
-from corehq.util.python_compatibility import soft_assert_type_text
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
@@ -104,8 +102,7 @@ class DownloadBase(object):
         Sometimes filenames have characters in them which aren't allowed in
         headers and causes the download to fail.
         """
-        if isinstance(content_disposition, six.string_types):
-            soft_assert_type_text(content_disposition)
+        if isinstance(content_disposition, str):
             return re.compile('[\r\n]').sub('', content_disposition)
 
         return content_disposition

@@ -23,7 +23,6 @@ from django.views import View
 from django.views.decorators.http import require_GET
 
 from lxml import etree
-from six.moves import map
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response

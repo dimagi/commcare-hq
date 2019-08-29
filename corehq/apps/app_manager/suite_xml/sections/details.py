@@ -2,7 +2,6 @@ import os
 from collections import namedtuple
 from xml.sax.saxutils import escape
 
-import six
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from lxml import etree
 from memoized import memoized

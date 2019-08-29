@@ -3,8 +3,6 @@ from io import BytesIO
 
 from django.test import SimpleTestCase
 
-import six
-
 from couchexport.export import export_raw
 
 from corehq.apps.app_manager.models import Application
@@ -25,7 +23,7 @@ class BulkUiTranslation(SimpleTestCase):
         if data is None:
             data = []
             translations = get_default_translations_for_download(self.app, 'latest')
-            for translation_key, translation_value in six.iteritems(translations):
+            for translation_key, translation_value in translations.items():
                 data.append((translation_key, translation_value))
 
         data = (('translations', tuple(data)),)

@@ -12,12 +12,10 @@ from django.utils.translation import override as override_language
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-import six
 from couchdbkit import MultipleResultsFound, ResourceNotFound
 from couchdbkit.exceptions import BadValueError, ResourceConflict
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
-from six.moves import map, range
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
@@ -73,7 +71,7 @@ from corehq.apps.users.util import (
     user_location_data,
     username_to_user_id,
 )
-from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -81,7 +79,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.dates import get_timestamp
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
@@ -400,7 +397,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def get_preset_permission_by_name(cls, name):
-        matches = {k for k, v in six.iteritems(PERMISSIONS_PRESETS) if v['name'] == name}
+        matches = {k for k, v in PERMISSIONS_PRESETS.items() if v['name'] == name}
         return matches.pop() if matches else None
 
     @classmethod
@@ -409,7 +406,8 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def preset_permissions_names(cls):
-        return {details['name'] for role, details in six.iteritems(PERMISSIONS_PRESETS)}
+        return {details['name'] for role, details in PERMISSIONS_PRESETS.items()}
+
 
 PERMISSIONS_PRESETS = {
     'edit-apps': {
@@ -977,7 +975,6 @@ class ReportingMetadata(DocumentSchema):
     last_build_for_user = SchemaProperty(LastBuild)
 
 
-@six.python_2_unicode_compatible
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     """
     A user (for web and commcare)
@@ -1210,9 +1207,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
-        if not isinstance(phone_number, six.string_types):
-            phone_number = six.text_type(phone_number)
-        soft_assert_type_text(phone_number)
+        if not isinstance(phone_number, str):
+            phone_number = str(phone_number)
         self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
 
     def set_default_phone_number(self, phone_number):
@@ -1810,6 +1806,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore the user's phone numbers
         - It will not restore reminders for cases
         """
+        NotAllowed.check(self.domain)
         by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
         if by_username and by_username['id'] != self._id:
             return False, "A user with the same username already exists in the system"
@@ -1827,6 +1824,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return True, None
 
     def retire(self):
+        NotAllowed.check(self.domain)
         suffix = DELETED_SUFFIX
         deletion_id = uuid4().hex
         deletion_date = datetime.utcnow()
@@ -2441,8 +2439,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def set_location(self, domain, location_object_or_id):
         # set the primary location for user's domain_membership
-        if isinstance(location_object_or_id, six.string_types):
-            soft_assert_type_text(location_object_or_id)
+        if isinstance(location_object_or_id, str):
             location_id = location_object_or_id
         else:
             location_id = location_object_or_id.location_id

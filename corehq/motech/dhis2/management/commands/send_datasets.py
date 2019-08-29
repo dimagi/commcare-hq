@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from django.core.management import BaseCommand
 
 from corehq.motech.dhis2.tasks import send_datasets

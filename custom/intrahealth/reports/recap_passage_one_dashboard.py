@@ -26,7 +26,7 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
     def export_table(self):
         report = [
             [
-                'Recap Passage 1',
+                self.name,
                 [],
             ]
         ]
@@ -57,12 +57,12 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
 
     @property
     def report_context(self):
-        context = {
-            'report': self.get_report_context(),
-            'title': self.name
-        }
-
-        return context
+        if not self.needs_filters:
+            return {
+                'report': self.get_report_context(),
+                'title': self.name
+            }
+        return {}
 
     @property
     def selected_location(self):
@@ -121,22 +121,22 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
 
             comment = self.comment
 
-        context = dict(
-            report_table=dict(
-                title=self.name,
-                slug=self.slug,
-                comment=comment,
-                headers=headers,
-                rows=rows,
-                project=self.request.GET.get('project_name') or "Malaria",
-                default_rows=self.default_rows,
-            ),
-            aggregated_table=dict(
-                headers=aggregated_headers,
-                rows=aggregated_rows,
-                number_of_agregated=2
-            )
-        )
+        context = {
+            'report_table': {
+                'title': self.name,
+                'slug': self.slug,
+                'comment': comment,
+                'headers': headers,
+                'rows': rows,
+                'project': self.request.GET.get('project_name') or "Malaria",
+                'default_rows': self.default_rows,
+            },
+            'aggregated_table': {
+                'headers': aggregated_headers,
+                'rows': aggregated_rows,
+                'number_of_agregated': 2
+            }
+        }
 
         return context
 
@@ -152,9 +152,9 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
 
     @property
     def config(self):
-        config = dict(
-            domain=self.domain,
-        )
+        config = {
+            'domain': self.domain,
+        }
         if self.request.GET.get('startdate'):
             startdate = force_to_date(self.request.GET.get('startdate'))
         else:

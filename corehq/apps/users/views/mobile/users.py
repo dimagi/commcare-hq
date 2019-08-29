@@ -20,7 +20,6 @@ from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 
-import csv342 as csv
 import six
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
@@ -184,6 +183,11 @@ class EditCommCareUserView(BaseEditUserView):
         return self.editable_user_id == self.couch_user._id
 
     @property
+    def is_delete_allowed(self):
+        from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
+        return not couch_sql_migration_in_progress(self.domain)
+
+    @property
     @memoized
     def reset_password_form(self):
         return SetUserPasswordForm(self.request.project, self.editable_user_id, user="")
@@ -245,6 +249,7 @@ class EditCommCareUserView(BaseEditUserView):
             'group_form': self.group_form,
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
+            'is_delete_allowed': self.is_delete_allowed,
             'data_fields_form': self.form_user_update.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
             'can_create_groups': (

@@ -2,12 +2,13 @@ import re
 from collections import namedtuple
 from decimal import Decimal
 
-import six
-
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    Document,
+    StringProperty,
+)
 from dimagi.utils.couch import CriticalSection
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 phone_number_re = re.compile(r"^\d+$")
 
@@ -63,11 +64,10 @@ def apply_leniency(contact_phone_number):
     Returns None if an unsupported data type is passed in.
     """
     from corehq.apps.sms.util import strip_plus
-    # Decimal preserves trailing zeroes, so it's ok 
-    if isinstance(contact_phone_number, six.integer_types + (Decimal,)):
-        contact_phone_number = six.text_type(contact_phone_number)
-    if isinstance(contact_phone_number, six.string_types):
-        soft_assert_type_text(contact_phone_number)
+    # Decimal preserves trailing zeroes, so it's ok
+    if isinstance(contact_phone_number, (int, Decimal)):
+        contact_phone_number = str(contact_phone_number)
+    if isinstance(contact_phone_number, str):
         chars = re.compile(r"[()\s\-.]+")
         contact_phone_number = chars.sub("", contact_phone_number)
         contact_phone_number = strip_plus(contact_phone_number)

@@ -2,7 +2,7 @@
 
 Usage: ./manage.py test --with-timing --timing-file=/path/to/timing.csv
 """
-import csv342 as csv
+import csv
 import sys
 import time
 

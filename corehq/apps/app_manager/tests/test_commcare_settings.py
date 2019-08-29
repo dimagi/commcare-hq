@@ -4,9 +4,7 @@ from collections import defaultdict
 from django.conf import settings
 from django.test import SimpleTestCase
 
-import six
 import yaml
-from six.moves import range
 
 from corehq.apps.app_manager.commcare_settings import (
     LAYOUT_SETTINGS_TO_TRANSLATE,
@@ -123,7 +121,7 @@ class CommCareSettingsTest(SimpleTestCase):
                         value = setting.get(key)
                         if not value:
                             continue
-                        if not isinstance(value, six.string_types):
+                        if not isinstance(value, str):
                             for v in value:
                                 self.assertIn(
                                     v,

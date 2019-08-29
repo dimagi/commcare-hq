@@ -1816,7 +1816,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', 'ucr_v2', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'dashboard', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'testing', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'ucr_v2', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),

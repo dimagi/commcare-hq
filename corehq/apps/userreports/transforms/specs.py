@@ -2,8 +2,6 @@ from decimal import Decimal
 
 from django.utils.translation import get_language
 
-import six
-
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
 
 from corehq.apps.userreports.specs import TypeProperty
@@ -22,7 +20,6 @@ from corehq.apps.userreports.transforms.custom.users import (
     get_user_without_domain_display,
 )
 from corehq.apps.userreports.util import localize
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 class Transform(JsonObject):
@@ -84,8 +81,7 @@ class NumberFormatTransform(Transform):
 
         def transform_function(value):
             try:
-                if isinstance(value, six.string_types):
-                    soft_assert_type_text(value)
+                if isinstance(value, str):
                     value = Decimal(value)
                 return self.format_string.format(value)
             except Exception:

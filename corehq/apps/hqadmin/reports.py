@@ -7,9 +7,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-import six
 from memoized import memoized
-from six.moves import range
 
 from auditcare.models import NavigationEventAudit
 from auditcare.utils.export import navigation_event_ids_by_user
@@ -55,7 +53,6 @@ from corehq.elastic import (
     fill_mapping_with_facets,
     parse_args_for_es,
 )
-from corehq.util.python_compatibility import soft_assert_type_text
 
 INDICATOR_DATA = {
     "active_domain_count": {
@@ -627,7 +624,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
     @property
     def shared_pagination_GET_params(self):
         ret = super(AdminFacetedReport, self).shared_pagination_GET_params
-        for param in six.iterlists(self.request.GET):
+        for param in self.request.GET.lists():
             if self.is_custom_param(param[0]):
                 for val in param[1]:
                     ret.append(dict(name=param[0], value=val))
@@ -1261,8 +1258,7 @@ class AdminPhoneNumberReport(PhoneNumberReport):
     @memoized
     def phone_number_filter(self):
         value = RequiredPhoneNumberFilter.get_value(self.request, domain=None)
-        if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+        if isinstance(value, str):
             return apply_leniency(value.strip())
 
         return None

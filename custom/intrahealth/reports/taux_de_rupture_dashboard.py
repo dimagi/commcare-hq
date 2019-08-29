@@ -17,8 +17,8 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 
 class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
-    name = "Taux De Rupture"
-    slug = 'taux_de_rupture_report'
+    name = "Taux de Rupture par Produit"
+    slug = 'taux_de_rupture_par_produit_report'
     comment = 'Indicateur logistique: Taux de rupture par produit'
     default_rows = 10
     exportable = True
@@ -29,7 +29,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
     def export_table(self):
         report = [
             [
-                'Taux de Rupture',
+                self.name,
                 [],
             ]
         ]
@@ -69,13 +69,13 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
     @property
     def report_context(self):
-        context = {
-            'report': self.get_report_context(),
-            'title': self.name,
-            'charts': self.charts if not self.needs_filters else None
-        }
-
-        return context
+        if not self.needs_filters:
+            return {
+                'report': self.get_report_context(),
+                'charts': self.charts,
+                'title': self.name
+            }
+        return {}
 
     @property
     def selected_location(self):
@@ -132,16 +132,16 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
             rows = self.calculate_rows()
             headers = self.headers
 
-        context = dict(
-            report_table=dict(
-                title=self.name,
-                slug=self.slug,
-                comment=self.comment,
-                headers=headers,
-                rows=rows,
-                default_rows=self.default_rows,
-            )
-        )
+        context = {
+            'report_table': {
+                'title': self.name,
+                'slug': self.slug,
+                'comment': self.comment,
+                'headers': headers,
+                'rows': rows,
+                'default_rows': self.default_rows,
+            }
+        }
 
         return context
 
@@ -393,9 +393,9 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
     @property
     def config(self):
-        config = dict(
-            domain=self.domain,
-        )
+        config = {
+            'domain': self.domain,
+        }
         if self.request.GET.get('startdate'):
             startdate = force_to_date(self.request.GET.get('startdate'))
         else:

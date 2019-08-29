@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 
-import csv342 as csv
+import csv
 
 from corehq.apps.domain.utils import send_repeater_payloads
 from corehq.apps.users.decorators import require_can_edit_web_users

@@ -2,7 +2,6 @@
 from django.conf import settings
 from django.core.mail import mail_admins, send_mail
 
-import six
 from celery.schedules import crontab
 from celery.task import task
 
@@ -70,10 +69,7 @@ def send_html_email_async(self, subject, recipient, html_content,
                         file_attachments=file_attachments, bcc=bcc,
                         smtp_exception_skip_list=smtp_exception_skip_list)
     except Exception as e:
-        from corehq.util.python_compatibility import soft_assert_type_text
-        if isinstance(recipient, six.string_types):
-            soft_assert_type_text(recipient)
-        recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
+        recipient = list(recipient) if not isinstance(recipient, str) else [recipient]
         notify_exception(
             None,
             message="Encountered error while sending email",

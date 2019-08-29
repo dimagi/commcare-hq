@@ -1,5 +1,3 @@
-
-import six
 from elasticsearch import ElasticsearchException
 
 from corehq.apps.es import CaseES, FormES, GroupES, LedgerES
@@ -9,7 +7,6 @@ from corehq.apps.es.aggregations import (
 )
 from corehq.apps.es.sms import SMSES
 from corehq.elastic import ES_EXPORT_INSTANCE, get_es_new
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
@@ -46,8 +43,7 @@ def get_groups_user_ids(group_ids):
 
     results = []
     for user_list in q.values_list("users", flat=True):
-        if isinstance(user_list, six.string_types):
-            soft_assert_type_text(user_list)
+        if isinstance(user_list, str):
             results.append(user_list)
         else:
             results.extend(user_list)

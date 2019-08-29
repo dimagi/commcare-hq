@@ -18,8 +18,6 @@ development/testing, before we have proper UIs and imports
 def make_supply_point(domain, location):
     # a supply point is currently just a case with a special type
     case_id = uuid.uuid4().hex
-    if six.PY2:
-        case_id = case_id.decode('utf-8')
     user_id = const.get_commtrack_user_id(domain)
     owner_id = location.location_id
     kwargs = {'external_id': location.external_id} if location.external_id else {}

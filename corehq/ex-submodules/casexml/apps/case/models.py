@@ -292,10 +292,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
     def deletion_date(self):
         return getattr(self, '-deletion_date', None)
 
-    def soft_delete(self):
-        self.doc_type += DELETED_SUFFIX
-        self.save()
-
     def to_api_json(self, lite=False):
         ret = {
             # actions excluded here

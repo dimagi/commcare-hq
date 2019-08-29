@@ -1,9 +1,3 @@
-import hashlib
-import json
-
-from django.core.serializers.json import DjangoJSONEncoder
-
-import six
 from jsonobject.base_properties import DefaultProperty
 from simpleeval import InvalidExpression
 
@@ -37,7 +31,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.util.couch import get_db_by_doc_type
-from corehq.util.python_compatibility import soft_assert_type_text
 
 from .utils import eval_statements
 
@@ -155,7 +148,7 @@ class PropertyPathGetterSpec(JsonObject):
     is specified, "string" will be used.
     """
     type = TypeProperty('property_path')
-    property_path = ListProperty(six.text_type, required=True)
+    property_path = ListProperty(str, required=True)
     datatype = DataTypeProperty(required=False)
 
     def __call__(self, item, context=None):
@@ -615,10 +608,8 @@ class DictExpressionSpec(JsonObject):
 
     def configure(self, compiled_properties):
         for key in compiled_properties:
-            if not isinstance(key, (six.text_type, bytes)):
+            if not isinstance(key, str):
                 raise BadSpecError("Properties in a dict expression must be strings!")
-            if six.PY3:
-                soft_assert_type_text(key)
         self._compiled_properties = compiled_properties
 
     def __call__(self, item, context=None):
@@ -914,9 +905,8 @@ class SplitStringExpressionSpec(JsonObject):
 
     def __call__(self, item, context=None):
         string_value = self._string_expression(item, context)
-        if not isinstance(string_value, six.string_types):
+        if not isinstance(string_value, str):
             return None
-        soft_assert_type_text(string_value)
 
         index_value = None
         if self.index_expression is not None:

@@ -3,7 +3,6 @@ import os
 
 import lxml
 import mock
-import six
 from lxml import etree
 from lxml.doctestcompare import LHTMLOutputChecker, LXMLOutputChecker
 
@@ -93,7 +92,7 @@ def normalize_attributes(xml):
     """Sort XML attributes to make it easier to find differences"""
     for node in xml.iterfind(".//*"):
         if node.attrib:
-            attrs = sorted(six.iteritems(node.attrib))
+            attrs = sorted(node.attrib.items())
             node.attrib.clear()
             node.attrib.update(attrs)
     return xml
