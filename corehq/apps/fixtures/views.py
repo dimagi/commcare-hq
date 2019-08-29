@@ -496,7 +496,7 @@ def fixture_api_upload_status(request, domain, download_id, **kwargs):
 
 def _upload_fixture_api(request, domain):
     try:
-        excel_file, replace, is_async, skip_orm = _get_fixture_upload_args_from_request(request, domain)
+        excel_file, replace, is_async, skip_orm, email = _get_fixture_upload_args_from_request(request, domain)
     except FixtureAPIRequestError as e:
         return UploadFixtureAPIResponse('fail', six.text_type(e))
 
@@ -570,6 +570,8 @@ def _get_fixture_upload_args_from_request(request, domain):
             replace = True
         elif replace.lower() == "false":
             replace = False
+        user_email = request.couch_user.email if request.couch_user.email is not None \
+            else request.couch_user.username
     except Exception:
         raise FixtureAPIRequestError(
             "Invalid post request."
@@ -586,7 +588,7 @@ def _get_fixture_upload_args_from_request(request, domain):
     if request.POST.get('skip_orm') == 'true' and SKIP_ORM_FIXTURE_UPLOAD.enabled(domain):
         skip_orm = True
 
-    return _excel_upload_file(upload_file), replace, is_async, skip_orm
+    return _excel_upload_file(upload_file), replace, is_async, skip_orm, user_email
 
 
 @login_and_domain_required
