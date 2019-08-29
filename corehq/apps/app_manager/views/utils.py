@@ -9,7 +9,6 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 import six
-from six.moves.urllib.parse import urlencode
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
@@ -229,7 +228,7 @@ def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
     def _practice_mode_configured(app):
         if is_set(app):
             return True
-        return any(is_set(profile) for _, profile in app.build_profiles.items())
+        return any(is_set(profile) for profile in app.build_profiles.values())
 
     return [app for app in get_apps_in_domain(domain) if _practice_mode_configured(app)]
 
@@ -260,7 +259,7 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
     apps = get_practice_mode_configured_apps(domain, mobile_worker_id)
     for app in apps:
         unset_user(app)
-        for _, profile in six.iteritems(app.build_profiles):
+        for profile in app.build_profiles.values():
             unset_user(profile)
         app.save()
 
