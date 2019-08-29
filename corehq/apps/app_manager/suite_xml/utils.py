@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext as _
 
-import six
 from lxml import etree
 
 from corehq import toggles
@@ -49,7 +48,7 @@ def get_select_chain_meta(app, module):
 
 
 def validate_suite(suite):
-    if isinstance(suite, six.text_type):
+    if isinstance(suite, str):
         suite = suite.encode('utf-8')
     if isinstance(suite, bytes):
         suite = etree.fromstring(suite)

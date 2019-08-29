@@ -3,8 +3,6 @@ import re
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-import six
-
 from corehq.apps.app_manager.const import (
     SCHEDULE_DATE_CASE_OPENED,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
@@ -115,7 +113,7 @@ def session_var(var, path='data'):
     return session.slash(var)
 
 
-class XPath(six.text_type):
+class XPath(str):
 
     def __new__(cls, string='', compound=False):
         return super(XPath, cls).__new__(cls, string)
@@ -124,7 +122,7 @@ class XPath(six.text_type):
         self.compound = compound
 
     def paren(self, force=False):
-        return six.text_type(self) if not (force or self.compound) else '({})'.format(self)
+        return str(self) if not (force or self.compound) else '({})'.format(self)
 
     def slash(self, xpath):
         if self:

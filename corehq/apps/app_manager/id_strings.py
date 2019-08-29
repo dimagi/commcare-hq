@@ -1,7 +1,5 @@
 import re
 
-from six.moves import zip
-
 ROOT = 'root'
 
 

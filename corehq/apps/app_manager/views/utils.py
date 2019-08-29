@@ -8,8 +8,6 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-import six
-
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -128,7 +126,7 @@ def bail(request, domain, app_id, not_found=""):
 
 
 def encode_if_unicode(s):
-    return s.encode('utf-8') if isinstance(s, six.text_type) else s
+    return s.encode('utf-8') if isinstance(s, str) else s
 
 
 def validate_langs(request, existing_langs):
@@ -171,7 +169,7 @@ def overwrite_app(app, master_build, report_map=None):
     app_json = app.to_json()
     form_ids_by_xmlns = _get_form_ids_by_xmlns(app_json)  # do this before we change the source
 
-    for key, value in six.iteritems(master_json):
+    for key, value in master_json.items():
         if key not in excluded_fields:
             app_json[key] = value
     app_json['version'] = master_json['version']
@@ -298,7 +296,7 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
     try:
         update_linked_app(app, user_id)
     except (AppLinkError, MultimediaMissingError) as e:
-        message = six.text_type(e)
+        message = str(e)
     except Exception:
         # Send an email but then crash the process
         # so we know what the error was

@@ -10,7 +10,6 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET
 
-import six
 from couchdbkit.exceptions import ResourceConflict
 
 from dimagi.utils.logging import notify_exception
@@ -207,7 +206,7 @@ def get_form_data_schema(request, domain, form_unique_id):
             "Please fix the error to see case properties in this tree")
         )
     except Exception as e:
-        notify_exception(request, message=six.text_type(e))
+        notify_exception(request, message=str(e))
         return HttpResponseBadRequest("schema error, see log for details")
 
     data.extend(
