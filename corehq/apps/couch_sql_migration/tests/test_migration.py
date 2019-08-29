@@ -48,14 +48,15 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.exceptions import (
     CaseNotFound,
-    FormEditNotAllowed,
     MissingFormXml,
+    NotAllowed,
 )
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
     LedgerAccessors,
 )
+from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import (
@@ -752,7 +753,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         clear_local_domain_sql_backend_override(self.domain_name)
         self.assert_backend("couch")
-        with self.assertRaises(FormEditNotAllowed):
+        with self.assertRaises(NotAllowed):
             self.submit_form(make_test_form("test-1", age=30))
 
         self._do_migration_and_assert_flags(self.domain_name)
@@ -766,13 +767,6 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(case.dynamic_case_properties()["age"], '27')
 
     def test_migrate_archived_form_after_live_migration(self):
-        def describe(form):
-            try:
-                arg0 = json.loads(form.form_data.get("args"))[0]
-            except Exception:
-                arg0 = repr(form)
-            return "%s %s" % (form.form_data.get("name", form.form_id), arg0)
-
         self.submit_form(make_test_form("arch-1"), timedelta(minutes=-95))
         self.submit_form(make_test_form("arch-2"), timedelta(minutes=-90)).archive()
         with self.patch_migration_chunk_size(1):
@@ -788,11 +782,131 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(
-            {describe(f) for f in self._iter_forms(self._get_form_ids())},
+            {self._describe(f) for f in self._iter_forms(self._get_form_ids())},
             {"archive_form arch-1"},
         )
         self.assertEqual(self._get_form_ids("XFormArchived"), {"arch-1", "arch-2"})
         self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"test-case"})
+        self._compare_diffs([])
+
+    def test_migrate_unarchived_form_after_live_migration(self):
+        self.submit_form(make_test_form("form"), timedelta(minutes=-90))
+        self.submit_form(make_test_form("arch"), timedelta(minutes=-95)).archive()
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids("XFormArchived"), {"arch"})
+        self.assertEqual(self._get_form_ids(), {"form"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.assert_backend("couch")
+        FormAccessors(self.domain_name).get_form("arch").unarchive()
+
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(
+            {self._describe(f) for f in self._iter_forms(self._get_form_ids())},
+            {"form", "archive_form arch", "arch"},
+        )
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        # diff because "arch" was originally migrated as an "unprocessed_form"
+        self._compare_diffs([
+            ('CommCareCase', Diff('set_mismatch', ['xform_ids', '[*]'], old='arch', new='')),
+        ])
+
+    @staticmethod
+    def _describe(form):
+        data = form.form_data
+        if data.get("@xmlns", "") == SYSTEM_ACTION_XMLNS:
+            return f"{data['name']} {json.loads(data['args'])[0]}"
+        return form.form_id
+
+    def test_migrate_deleted_form_after_live_migration(self):
+        self.submit_form(make_test_form("form-1"), timedelta(minutes=-95))
+        self.submit_form(make_test_form("form-2"), timedelta(minutes=-90)).soft_delete()
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        with self.assertRaises(NotAllowed):
+            FormAccessors(self.domain_name).get_form("form-1").soft_delete()
+        with self.assertRaises(NotAllowed):
+            FormAccessorSQL.hard_delete_forms(self.domain_name, ["form-1"])
+        with self.assertRaises(NotAllowed):
+            FormAccessors(self.domain_name).soft_undelete_forms(["form-2"])
+        self.assertEqual(self._get_form_ids(), {"form-1"})
+        deleted = FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain_name)
+        self.assertEqual(set(deleted), {"form-2"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.assert_backend("couch")
+        with self.assertRaises(NotAllowed):
+            FormAccessors(self.domain_name).get_form("form-1").soft_delete()
+        with self.assertRaises(NotAllowed):
+            FormAccessors(self.domain_name).soft_undelete_forms(["form-2"])
+
+        self._do_migration_and_assert_flags(self.domain_name)
+        deleted = FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain_name)
+        self.assertEqual(set(deleted), {"form-2"})
+        self.assertEqual(self._get_form_ids(), {"form-1"})
+        self.assertEqual(self._get_case_ids("CommCareCase"), {"test-case"})
+        self._compare_diffs([])
+
+    def test_delete_user_during_migration(self):
+        from corehq.apps.users.models import CommCareUser
+        user = CommCareUser.create(self.domain_name, "mobile-user", "123")
+        # NOTE user is deleted when domain is deleted in tearDown
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        with self.assertRaises(NotAllowed):
+            user.retire()
+        with self.assertRaises(NotAllowed):
+            user.unretire()
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.assert_backend("couch")
+        with self.assertRaises(NotAllowed):
+            user.retire()
+        with self.assertRaises(NotAllowed):
+            user.unretire()
+
+        self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(action=COMMIT)
+        user.retire()
+        user.unretire()
+
+    def test_delete_cases_during_migration(self):
+        from corehq.apps.hqcase.tasks import delete_exploded_cases
+        from corehq.form_processor.backends.couch.processor import FormProcessorCouch
+        from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+        form = self.submit_form(make_test_form("form-1"), timedelta(minutes=-95))
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        with self.assertRaises(NotAllowed):
+            CaseAccessorSQL.hard_delete_cases(self.domain_name, ["test-case"])
+        with self.assertRaises(NotAllowed):
+            FormProcessorSQL.hard_delete_case_and_forms(self.domain_name, None, [form])
+        with self.assertRaises(NotAllowed):
+            CaseAccessors(self.domain_name).soft_undelete_cases(["test-case"])
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self.assert_backend("couch")
+        with self.assertRaises(NotAllowed):
+            FormProcessorCouch.hard_delete_case_and_forms(self.domain_name, "non", "sense")
+        with self.assertRaises(NotAllowed):
+            call_command("delete_related_cases", self.domain_name, "test-case")
+        with self.assertRaises(NotAllowed):
+            call_command("purge_forms_and_cases", self.domain_name, "app", "1", "nope")
+        with self.assertRaises(NotAllowed):
+            delete_exploded_cases(self.domain_name, "boom")
+        with self.assertRaises(NotAllowed):
+            CaseAccessors(self.domain_name).soft_undelete_cases(["test-case"])
+
+        self._do_migration_and_assert_flags(self.domain_name)
         self._compare_diffs([])
 
     def test_reset_migration(self):

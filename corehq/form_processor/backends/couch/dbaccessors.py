@@ -27,7 +27,11 @@ from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
     get_last_modified_dates
-from corehq.form_processor.exceptions import AttachmentNotFound, LedgerValueNotFound
+from corehq.form_processor.exceptions import (
+    AttachmentNotFound,
+    LedgerValueNotFound,
+    NotAllowed,
+)
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent,
     AbstractLedgerAccessor)
@@ -125,12 +129,14 @@ class FormAccessorCouch(AbstractFormAccessor):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         def _form_delete(doc):
             doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
+        NotAllowed.check(domain)
         return _soft_delete(XFormInstance.get_db(), form_ids, deletion_date, deletion_id, _form_delete)
 
     @staticmethod
     def soft_undelete_forms(domain, form_ids):
         def _form_undelete(doc):
             doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
+        NotAllowed.check(domain)
         return _soft_undelete(XFormInstance.get_db(), form_ids, _form_undelete)
 
     @staticmethod
@@ -271,6 +277,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):
+        NotAllowed.check(domain)
         return _soft_undelete(CommCareCase.get_db(), case_ids)
 
     @staticmethod
