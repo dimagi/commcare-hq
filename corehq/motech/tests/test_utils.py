@@ -5,7 +5,6 @@ from base64 import b64encode
 from django.conf import settings
 from django.test import SimpleTestCase, override_settings
 
-import six
 from Crypto.Cipher import AES
 
 import corehq.motech.utils
@@ -89,7 +88,7 @@ class DecryptTests(SimpleTestCase):
         aes = AES.new(aes_key, AES.MODE_ECB)
 
         message_bytes = message.encode('utf8')
-        plaintext_bytes = simple_pad(message_bytes, AES_BLOCK_SIZE)  # <-- this
+        plaintext_bytes = simple_pad(message_bytes, AES_BLOCK_SIZE)
         ciphertext_bytes = aes.encrypt(plaintext_bytes)
         b64ciphertext_bytes = b64encode(ciphertext_bytes)
         return b64ciphertext_bytes.decode('ascii')
@@ -177,12 +176,12 @@ class PFormatJSONTests(SimpleTestCase):
 class EncryptionTests(SimpleTestCase):
 
     def assert_message_equals_plaintext(self, message):
-        assert isinstance(message, six.text_type)
+        assert isinstance(message, str)
         ciphertext = b64_aes_encrypt(message)
         plaintext = b64_aes_decrypt(ciphertext)
         self.assertEqual(plaintext, message)
-        self.assertIsInstance(ciphertext, six.text_type)
-        self.assertIsInstance(plaintext, six.text_type)
+        self.assertIsInstance(ciphertext, str)
+        self.assertIsInstance(plaintext, str)
 
     def test_encrypt_decrypt_ascii(self):
         message = 'Around you is a forest.'
