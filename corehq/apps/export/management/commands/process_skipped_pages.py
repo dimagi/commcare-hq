@@ -7,15 +7,19 @@ import tempfile
 import zipfile
 from datetime import datetime
 
-import sh
 from django.core.management.base import BaseCommand, CommandError
+
+import sh
+from six.moves import input
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.multiprocess import (
-    MultiprocessExporter, RetryResult,
-    UNPROCESSED_PAGES_DIR, _add_compressed_page_to_zip)
+    UNPROCESSED_PAGES_DIR,
+    MultiprocessExporter,
+    RetryResult,
+    _add_compressed_page_to_zip,
+)
 from corehq.util.files import safe_filename
-from six.moves import input
 
 
 class Command(BaseCommand):

@@ -387,12 +387,13 @@
   "using_salt": {
     "data_source": [
       {
-        "id": "static-{domain}-static-mpr_4b_infra_forms",
+        "id": "static-{domain}-static-mpr_4b_web_infra",
         "date_filter_field": "submitted_on",
         "columns": [
           {
             "column_name": "use_salt",
-            "agg_fun": "sum"
+            "agg_fun": "last_value",
+            "group_by": "awc_id"
           }
         ]
       }

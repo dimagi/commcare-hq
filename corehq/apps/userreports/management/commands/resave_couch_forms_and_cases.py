@@ -1,13 +1,15 @@
 
-import csv342 as csv
 import datetime
 
 from django.core.management.base import BaseCommand
 
-from corehq.util.couch import IterDB
-from corehq.util.log import with_progress_bar
+import csv
+
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
+
+from corehq.util.couch import IterDB
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):

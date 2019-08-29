@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 
-from django.db import models, migrations
-
+from django.db import migrations, models
 
 # Functions from the following migrations need manual copying.
 # Move them and any dependencies into this file, then update the

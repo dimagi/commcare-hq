@@ -1,31 +1,36 @@
+import logging
+import re
+from datetime import datetime
 from decimal import Decimal
+
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.commtrack.models import CommtrackConfig
-from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack import const
-from corehq.apps.sms.api import send_sms_to_verified_number, MessageMetadata
-from corehq import toggles
-from lxml import etree
-import logging
 
-from corehq.form_processor.interfaces.supply import SupplyInterface
+import six
+from lxml import etree
+
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils.parsing import json_format_datetime
-from datetime import datetime
-from corehq.apps.commtrack.util import get_supply_point_and_location
-from corehq.apps.commtrack.xmlutil import XML
-from corehq.apps.products.models import Product
-from corehq.apps.users.models import CouchUser
-from corehq.apps.receiverwrapper.util import submit_form_locally
+
+from corehq import toggles
+from corehq.apps.commtrack import const
 from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,
     NotAUserClassError,
     RequisitionsHaveBeenRemoved,
 )
-import re
-from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
-import six
+from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.commtrack.util import get_supply_point_and_location
+from corehq.apps.commtrack.xmlutil import XML
+from corehq.apps.domain.models import Domain
+from corehq.apps.products.models import SQLProduct
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.sms.api import MessageMetadata, send_sms_to_verified_number
+from corehq.apps.users.models import CouchUser
+from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.form_processor.parsers.ledgers.helpers import (
+    StockTransactionHelper,
+)
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -145,7 +150,7 @@ class StockReportParser(object):
                         domain=self.domain.name,
                         location_id=self.location.location_id,
                         case_id=self.case_id,
-                        product_id=self.product_from_code(prod_code).get_id,
+                        product_id=self.product_from_code(prod_code).product_id,
                         action=action.action,
                         subaction=action.subaction,
                         quantity=0,
@@ -170,12 +175,12 @@ class StockReportParser(object):
                 except:
                     raise SMSError('could not understand product quantity "%s"' % arg)
 
-                for p in products:
+                for product in products:
                     yield StockTransactionHelper(
                         domain=self.domain.name,
                         location_id=self.location.location_id,
                         case_id=self.case_id,
-                        product_id=p.get_id,
+                        product_id=product.product_id,
                         action=action.action,
                         subaction=action.subaction,
                         quantity=value,
@@ -194,10 +199,10 @@ class StockReportParser(object):
     def product_from_code(self, prod_code):
         """return the product doc referenced by prod_code"""
         prod_code = prod_code.lower()
-        p = Product.get_by_code(self.domain.name, prod_code)
-        if p is None:
+        try:
+            return SQLProduct.objects.get(domain=self.domain.name, code__iexact=prod_code)
+        except SQLProduct.DoesNotExist:
             raise SMSError('invalid product code "%s"' % prod_code)
-        return p
 
     def looks_like_prod_code(self, code):
         try:
@@ -292,7 +297,7 @@ class StockAndReceiptParser(StockReportParser):
                 else:
                     raise SMSError('could not understand product quantity "%s"' % arg)
 
-                for p in products:
+                for product in products:
                     # for EWS we have to do two transactions, one being a receipt
                     # and second being a transaction (that's reverse of the order
                     # the user provides them)
@@ -300,7 +305,7 @@ class StockAndReceiptParser(StockReportParser):
                         domain=self.domain.name,
                         location_id=self.location.location_id,
                         case_id=self.case_id,
-                        product_id=p.get_id,
+                        product_id=product.product_id,
                         action=const.StockActions.RECEIPTS,
                         quantity=Decimal(value.split('.')[1])
                     )
@@ -308,7 +313,7 @@ class StockAndReceiptParser(StockReportParser):
                         domain=self.domain.name,
                         location_id=self.location.location_id,
                         case_id=self.case_id,
-                        product_id=p.get_id,
+                        product_id=product.product_id,
                         action=const.StockActions.STOCKONHAND,
                         quantity=Decimal(value.split('.')[0])
                     )

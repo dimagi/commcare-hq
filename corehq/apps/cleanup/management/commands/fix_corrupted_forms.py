@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 import string
 
 from django.core.management import BaseCommand

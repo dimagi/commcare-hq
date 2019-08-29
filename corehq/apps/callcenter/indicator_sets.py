@@ -1,21 +1,30 @@
 import logging
 from collections import defaultdict
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
+
+from django.core.cache import cache
 
 import pytz
-from django.core.cache import cache
+import six
+from memoized import memoized
+
+from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
 
 from corehq.apps.callcenter.const import *
 from corehq.apps.callcenter.models import CallCenterIndicatorConfig
-from corehq.apps.callcenter.queries import CaseQueryTotalLegacy, StandardFormQuery, CaseQueryTotal, \
-    CaseQueryOpenedClosed, CaseQueryActive
-from corehq.apps.callcenter.queries import CustomFormQuery
+from corehq.apps.callcenter.queries import (
+    CaseQueryActive,
+    CaseQueryOpenedClosed,
+    CaseQueryTotal,
+    CaseQueryTotalLegacy,
+    CustomFormQuery,
+    StandardFormQuery,
+)
 from corehq.apps.callcenter.utils import get_call_center_cases
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
-from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
-from memoized import memoized
-import six
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
 
 logger = logging.getLogger('callcenter')
 

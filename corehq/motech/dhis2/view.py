@@ -1,27 +1,34 @@
 import json
+
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy, ugettext as _
-from django.views.decorators.http import require_POST, require_http_methods
-from django.shortcuts import render
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+from django.views.decorators.http import require_http_methods, require_POST
+
 import six
+from memoized import memoized
+from six.moves import map, range
+
+from dimagi.utils.web import json_response
+
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.motech.dhis2.dbaccessors import (
+    get_dataset_maps,
+    get_dhis2_connection,
+)
 from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig
-from corehq.motech.requests import Requests
-from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
-from corehq.motech.dhis2.forms import Dhis2ConnectionForm, Dhis2ConfigForm
-from corehq.motech.dhis2.models import DataValueMap, DataSetMap
+from corehq.motech.dhis2.forms import Dhis2ConfigForm, Dhis2ConnectionForm
+from corehq.motech.dhis2.models import DataSetMap, DataValueMap
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.dhis2.tasks import send_datasets
-from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from memoized import memoized
-from dimagi.utils.web import json_response
-from six.moves import range
-from six.moves import map
+from corehq.motech.requests import Requests
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')

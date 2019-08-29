@@ -1,26 +1,32 @@
+import collections
+import itertools
 import logging
 from copy import copy
 
-from django.urls import reverse
-from django.http import Http404
-import collections
-import itertools
 from django import forms
+from django.http import Http404
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from corehq.apps.app_manager.analytics import get_exports_by_application
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
-from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
-from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_RAW, \
-    DATA_SOURCE_TYPE_FORM
-from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
-from corehq.toggles import AGGREGATE_UCRS
-from corehq.util.soft_assert import soft_assert
-from couchforms.analytics import get_exports_by_form
 from memoized import memoized
 from six.moves import map
 
+from couchforms.analytics import get_exports_by_form
+
+from corehq.apps.app_manager.analytics import get_exports_by_application
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    DATA_SOURCE_TYPE_CASE,
+    DATA_SOURCE_TYPE_FORM,
+    DATA_SOURCE_TYPE_RAW,
+)
+from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.toggles import AGGREGATE_UCRS
+from corehq.util.soft_assert import soft_assert
 
 ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])

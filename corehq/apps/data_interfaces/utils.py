@@ -1,11 +1,13 @@
 from django.utils.translation import ugettext as _
+
+import six
 from couchdbkit import ResourceNotFound
+
+from soil import DownloadBase
+
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-
-from soil import DownloadBase
-import six
 
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data):

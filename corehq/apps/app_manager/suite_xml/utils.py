@@ -1,10 +1,12 @@
-from lxml import etree
 from django.utils.translation import ugettext as _
+
+import six
+from lxml import etree
+
+from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.suite_xml.xml_models import Suite, Text, XpathEnum
-from corehq import toggles
-import six
 
 
 def get_select_chain(app, module, include_self=True):

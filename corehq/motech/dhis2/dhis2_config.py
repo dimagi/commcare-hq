@@ -1,5 +1,6 @@
 
 import six
+
 from dimagi.ext.couchdbkit import (
     DocumentSchema,
     ListProperty,
@@ -8,7 +9,10 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
-from corehq.motech.dhis2.const import DHIS2_EVENT_STATUSES, DHIS2_EVENT_STATUS_COMPLETED
+from corehq.motech.dhis2.const import (
+    DHIS2_EVENT_STATUS_COMPLETED,
+    DHIS2_EVENT_STATUSES,
+)
 from corehq.motech.value_source import ValueSource
 from corehq.util.python_compatibility import soft_assert_type_text
 

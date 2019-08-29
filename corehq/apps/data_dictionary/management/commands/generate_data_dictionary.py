@@ -1,7 +1,10 @@
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.data_dictionary.util import generate_data_dictionary, OldExportsEnabledException
+from corehq.apps.data_dictionary.util import (
+    OldExportsEnabledException,
+    generate_data_dictionary,
+)
 from corehq.apps.domain.models import Domain
 from corehq.util.log import with_progress_bar
 

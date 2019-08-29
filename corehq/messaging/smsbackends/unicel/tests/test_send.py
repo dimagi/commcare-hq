@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 from six.moves.urllib.parse import parse_qs, urlparse
 
 from mock import patch

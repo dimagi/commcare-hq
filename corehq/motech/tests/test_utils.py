@@ -1,13 +1,11 @@
-# encoding: utf-8
-
 import doctest
 from base64 import b64encode
 
-from Crypto.Cipher import AES
 from django.conf import settings
 from django.test import SimpleTestCase, override_settings
 
 import six
+from Crypto.Cipher import AES
 
 import corehq.motech.utils
 from corehq.motech.utils import (
@@ -15,8 +13,8 @@ from corehq.motech.utils import (
     AES_KEY_MAX_LEN,
     b64_aes_decrypt,
     b64_aes_encrypt,
-    simple_pad,
     pformat_json,
+    simple_pad,
 )
 
 

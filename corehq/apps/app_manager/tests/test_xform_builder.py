@@ -1,12 +1,12 @@
-# coding: utf-8
 import doctest
+import re
 from collections import OrderedDict
 
 from django.test import SimpleTestCase
-import re
+
+import corehq.apps.app_manager.xform_builder
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform_builder import XFormBuilder
-import corehq.apps.app_manager.xform_builder
 
 
 class XFormBuilderTests(SimpleTestCase, TestXmlMixin):

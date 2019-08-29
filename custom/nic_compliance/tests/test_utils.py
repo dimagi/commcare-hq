@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import base64
 
 from django.test import TestCase, override_settings, Client

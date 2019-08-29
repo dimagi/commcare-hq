@@ -2,28 +2,36 @@ import copy
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+
 from django.test import SimpleTestCase, TestCase, override_settings
+
 from fakecouch import FakeCouchDb
 from mock import MagicMock
 from simpleeval import InvalidExpression
+
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
-from casexml.apps.case.mock import CaseStructure, CaseFactory, CaseIndex
+from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+
+from corehq.apps.groups.models import Group
 from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.specs import (
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
+    eval_statements,
 )
-from corehq.apps.userreports.expressions.specs import eval_statements
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.groups.models import Group
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.util.test_utils import generate_cases, create_and_save_a_form, create_and_save_a_case
+from corehq.util.test_utils import (
+    create_and_save_a_case,
+    create_and_save_a_form,
+    generate_cases,
+)
 
 
 class ExpressionPluginTest(SimpleTestCase):

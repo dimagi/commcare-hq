@@ -1,18 +1,16 @@
 
+from corehq.apps.es import cases as case_es
+from corehq.apps.es import filters
+from corehq.apps.es import users as user_es
+from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.locations.dbaccessors import (
+    get_users_location_ids,
     user_ids_at_locations,
     user_ids_at_locations_and_descendants,
-    get_users_location_ids,
 )
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
-from corehq.apps.es import (
-    filters,
-    users as user_es,
-    cases as case_es,
-)
-from corehq.apps.es.es_query import HQESQuery
+from corehq.apps.reports.models import HQUserType
 
 
 def _get_special_owner_ids(domain, admin, unknown, web, demo, commtrack):

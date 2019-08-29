@@ -4,9 +4,9 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
+# Dimagi Dev <devops@dimagi.com>, 2017
 # Marco Horta <mhorta@dimagi.com>, 2017
 # Jensen Daniel <jdaniel@dimagi.com>, 2019
-# Dimagi Dev <devops@dimagi.com>, 2019
 # Claire O'Grady <cogrady@dimagi.com>, 2019
 #
 #, fuzzy
@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-20 19:20+0000\n"
+"POT-Creation-Date: 2019-08-27 18:49+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Claire O'Grady <cogrady@dimagi.com>, 2019\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -116,7 +116,7 @@ msgid "There was an error saving."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:33
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
@@ -553,15 +553,15 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:24
 msgid "Active"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:23
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:24
 msgid "Inactive"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:31
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:33
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/sms/static/sms/js/add_gateway.js:11
 msgid "Remove"
@@ -744,7 +744,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:112
 msgid "Module"
-msgstr ""
+msgstr "Módulo"
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:113
 #: corehq/apps/userreports/static/userreports/js/data_source_select.js:10
@@ -843,16 +843,12 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:159
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:160
-#, fuzzy
-#| msgid "Case Type"
 msgid "Case Property"
-msgstr "Típo de Caso"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:160
-#, fuzzy
-#| msgid "Case Type"
 msgid "of Case Type"
-msgstr "Típo de Caso"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/summary/models.js:363
 #: corehq/apps/app_manager/static/app_manager/js/widgets.js:52
@@ -3810,6 +3806,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "Parameters"
-#~ msgstr "Manejo de Casos"

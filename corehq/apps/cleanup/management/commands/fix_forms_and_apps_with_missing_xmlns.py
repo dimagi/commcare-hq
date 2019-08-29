@@ -1,10 +1,17 @@
-import uuid
 import re
+import uuid
 from collections import defaultdict
 from datetime import datetime
 from itertools import chain
 
+from django.core.management.base import BaseCommand
+
+import six
 from couchdbkit import ResourceNotFound
+
+from couchforms.const import ATTACHMENT_NAME
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
@@ -16,12 +23,6 @@ from corehq.apps.es.filters import NOT, doc_type
 from corehq.util.couch import IterDB
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
-from couchforms.const import ATTACHMENT_NAME
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
-from django.core.management.base import BaseCommand
-import six
-
 
 ONE_HOUR = 60 * 60
 

@@ -1,15 +1,15 @@
-from django.conf.urls import url, include
+from django.conf.urls import include, url
 
 from corehq.apps.cloudcare.views import (
     EditCloudcareUserPermissionsView,
-    ReadableQuestions,
     FormplayerMain,
     FormplayerMainPreview,
     FormplayerPreviewSingleApp,
-    PreviewAppView,
     LoginAsUsers,
-    form_context,
+    PreviewAppView,
+    ReadableQuestions,
     default,
+    form_context,
 )
 
 app_urls = [

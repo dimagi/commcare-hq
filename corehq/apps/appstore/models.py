@@ -1,7 +1,9 @@
 from couchdbkit import ResourceNotFound
-from corehq.apps.appstore.exceptions import CopiedFromDeletedException
-from dimagi.ext.couchdbkit import *
 from memoized import memoized
+
+from dimagi.ext.couchdbkit import *
+
+from corehq.apps.appstore.exceptions import CopiedFromDeletedException
 
 
 class SnapshotMixin(DocumentSchema):

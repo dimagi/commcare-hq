@@ -1,7 +1,6 @@
 import json
-import pytz
 
-from django.http import HttpResponse, Http404
+from django.http import Http404, HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -9,25 +8,24 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
+import pytz
 from couchdbkit import ResourceNotFound
 from memoized import memoized
+
 from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.motech.repeaters.forms import EmailBulkPayload
-from corehq.util.xml_utils import indent_xml
-
 from corehq.motech.repeaters.const import (
+    RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
-    RECORD_CANCELLED_STATE,
     RECORD_SUCCESS_STATE,
 )
 from corehq.motech.repeaters.dbaccessors import (
@@ -35,8 +33,10 @@ from corehq.motech.repeaters.dbaccessors import (
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
 )
+from corehq.motech.repeaters.forms import EmailBulkPayload
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.utils import pformat_json
+from corehq.util.xml_utils import indent_xml
 
 
 class DomainForwardingRepeatRecords(GenericTabularReport):

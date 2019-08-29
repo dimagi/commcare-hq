@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 
 from django.db import migrations
-
 
 
 def copy_checkpoint(apps, schema_editor):

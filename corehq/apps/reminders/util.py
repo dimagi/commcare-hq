@@ -1,12 +1,13 @@
 from datetime import datetime, time
 from functools import wraps
 
-from couchdbkit import ResourceNotFound
 from django.http import Http404
 from django.utils.translation import ugettext as _
 
-from corehq import privileges
-from corehq import toggles
+from couchdbkit import ResourceNotFound
+from django_prbac.utils import has_privilege
+
+from corehq import privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.apps.app_manager.models import Form
 from corehq.apps.app_manager.util import is_remote_app
@@ -14,11 +15,14 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.sms.mixin import apply_leniency, CommCareMobileContactMixin, InvalidFormatException
+from corehq.apps.sms.mixin import (
+    CommCareMobileContactMixin,
+    InvalidFormatException,
+    apply_leniency,
+)
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.quickcache import quickcache
-from django_prbac.utils import has_privilege
 
 
 class DotExpandedDict(dict):

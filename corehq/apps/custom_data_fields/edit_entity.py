@@ -1,17 +1,21 @@
 from collections import OrderedDict
+
+from django import forms
 from django.core.validators import RegexValidator
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django import forms
 
-from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
-from crispy_forms.layout import Layout, Fieldset, Div, HTML, Field
-
+import six
+from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
 from memoized import memoized
 
-from .models import (CustomDataFieldsDefinition, is_system_key,
-                     CUSTOM_DATA_FIELD_PREFIX)
-import six
+from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
+
+from .models import (
+    CUSTOM_DATA_FIELD_PREFIX,
+    CustomDataFieldsDefinition,
+    is_system_key,
+)
 
 
 def add_prefix(field_dict, prefix):

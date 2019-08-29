@@ -1,19 +1,18 @@
 import re
 
-from corehq.apps.es.case_search import CaseSearchES
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
-
 from corehq.apps.case_search.models import (
-    CaseSearchConfig,
-    merge_queries,
-    replace_custom_query_variables,
-    CaseSearchQueryAddition,
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     SEARCH_QUERY_ADDITION_KEY,
     SEARCH_QUERY_CUSTOM_VALUE,
-    FuzzyProperties,
-    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     UNSEARCHABLE_KEYS,
+    CaseSearchConfig,
+    CaseSearchQueryAddition,
+    FuzzyProperties,
+    merge_queries,
+    replace_custom_query_variables,
 )
+from corehq.apps.es.case_search import CaseSearchES
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 
 
 class CaseSearchCriteria(object):

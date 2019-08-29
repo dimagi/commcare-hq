@@ -1,28 +1,39 @@
 import logging
-from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.domain.models import Domain
-from corehq.apps.reports.analytics.couchaccessors import get_ledger_values_for_case_as_of
-from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values, get_aggregated_ledger_values
-
-from dimagi.utils.couch.database import iter_docs
-from memoized import memoized
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.products.models import Product
-from dimagi.utils.couch.loosechange import map_reduce
-from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
+from decimal import Decimal
+
+import six
+from couchdbkit.exceptions import ResourceNotFound
 from dateutil import parser
-from casexml.apps.stock.const import SECTION_TYPE_STOCK, COMMTRACK_REPORT_XMLNS
+from memoized import memoized
+
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS, SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockReport
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from couchforms.models import XFormInstance
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, \
-    get_consumption_helper_from_ledger_value, get_product_id_name_mapping, get_product_ids_for_program
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.loosechange import map_reduce
+
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.products.models import Product
+from corehq.apps.reports.analytics.couchaccessors import (
+    get_ledger_values_for_case_as_of,
+)
+from corehq.apps.reports.analytics.esaccessors import (
+    get_aggregated_ledger_values,
+    get_wrapped_ledger_values,
+)
+from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
+from corehq.apps.reports.commtrack.util import (
+    get_consumption_helper_from_ledger_value,
+    get_product_id_name_mapping,
+    get_product_ids_for_program,
+    get_relevant_supply_point_ids,
+)
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
-from decimal import Decimal
-import six
 
 
 def format_decimal(d):

@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 
 from django.db import migrations
 
-from corehq.apps.smsbillables.management.commands.bootstrap_icds_gateway import bootstrap_icds_gateway
-
+from corehq.apps.smsbillables.management.commands.bootstrap_icds_gateway import (
+    bootstrap_icds_gateway,
+)
 
 
 def create_icds_rates(apps, schema_editor):

@@ -1,8 +1,10 @@
 from django.test import TestCase
-from corehq.apps.users.models import WebUser
+
+from six.moves import range
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
-from six.moves import range
+from corehq.apps.users.models import WebUser
 
 
 class PasswordLockoutTest(TestCase):

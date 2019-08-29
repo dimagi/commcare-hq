@@ -3,11 +3,11 @@ import functools
 from datetime import date, datetime, time
 from decimal import Decimal, InvalidOperation
 
+import six
 from six import string_types
 
 from corehq.util import eval_lazy
 from corehq.util.dates import iso_string_to_date, iso_string_to_datetime
-import six
 
 
 def evaluate_lazy_args(func, *args):

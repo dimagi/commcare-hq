@@ -1,14 +1,14 @@
 import json
 
-from django.urls import reverse
 from django.test import TestCase
+from django.urls import reverse
+
 from mock import patch
 
 from corehq.apps.cloudcare.views import ReadableQuestions
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-
 
 TEST_DOMAIN = "test-cloudcare-domain"
 

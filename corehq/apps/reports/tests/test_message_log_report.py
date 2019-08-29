@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from django.test.client import RequestFactory
 
+from six.moves import zip
+
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
@@ -14,7 +16,6 @@ from corehq.apps.sms.models import OUTGOING, SMS, MessagingEvent
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
-from six.moves import zip
 
 
 @flag_enabled('SMS_LOG_CHANGES')

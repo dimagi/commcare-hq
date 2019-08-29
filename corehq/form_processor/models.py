@@ -1,7 +1,6 @@
 import json
 import mimetypes
 import os
-import sys
 import uuid
 import functools
 from collections import (
@@ -37,7 +36,6 @@ from corehq.sql_db.models import PartitionedModel, RestrictedManager
 from corehq.util.json import CommCareJSONEncoder
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
-from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.ext import jsonobject
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
@@ -562,49 +560,14 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             raise MissingFormXml(self.form_id)
 
     def archive(self, user_id=None, trigger_signals=True):
-        # If this archive was initiated by a user, delete all other stubs for this action so that this action
-        # isn't overridden
-        if self.is_archived:
-            return
-        from couchforms.models import UnfinishedArchiveStub
-        UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        from corehq.form_processor.submission_process_tracker import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
-            FormAccessorSQL.archive_form(self, user_id)
-            archive_stub.archive_history_updated()
-            if trigger_signals:
-                xform_archived.send(sender="form_processor", xform=self)
+        from .interfaces.dbaccessors import FormAccessors
+        if not self.is_archived:
+            FormAccessors.do_archive(self, True, user_id, trigger_signals)
 
     def unarchive(self, user_id=None, trigger_signals=True):
-        # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
-        # isn't overridden
-        if not self.is_archived:
-            return
-        from couchforms.models import UnfinishedArchiveStub
-        UnfinishedArchiveStub.objects.filter(user_id=user_id).all().delete()
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        from corehq.form_processor.submission_process_tracker import unfinished_archive
-        with unfinished_archive(instance=self, user_id=user_id, archive=False) as archive_stub:
-            FormAccessorSQL.unarchive_form(self, user_id)
-            archive_stub.archive_history_updated()
-            if trigger_signals:
-                xform_unarchived.send(sender="form_processor", xform=self)
-
-    def publish_archive_action_to_kafka(self, user_id, archive, trigger_signals=True):
-        # Don't update the history, just send to kafka
-        from couchforms.models import UnfinishedArchiveStub
-        from corehq.form_processor.submission_process_tracker import unfinished_archive
-        from corehq.form_processor.change_publishers import publish_form_saved
-        # Delete the original stub
-        UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
-        if trigger_signals:
-            with unfinished_archive(instance=self, user_id=user_id, archive=archive):
-                if archive:
-                    xform_archived.send(sender="form_processor", xform=self)
-                else:
-                    xform_unarchived.send(sender="form_processor", xform=self)
-                publish_form_saved(self)
+        from .interfaces.dbaccessors import FormAccessors
+        if self.is_archived:
+            FormAccessors.do_archive(self, False, user_id, trigger_signals)
 
     def __str__(self):
         return (

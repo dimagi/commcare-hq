@@ -5,11 +5,11 @@ from django.test.testcases import TestCase
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
+    ProBonoStatus,
+    SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustment,
-    SoftwarePlanEdition,
-    ProBonoStatus,
-    SubscriptionType
+    SubscriptionType,
 )
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.analytics.tasks import get_subscription_properties_by_user

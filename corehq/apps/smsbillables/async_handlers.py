@@ -1,14 +1,22 @@
 import json
+
 from django.utils.translation import ugettext_lazy as _
+
 from corehq.apps.accounting.utils import fmt_dollar_amount
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
 from corehq.apps.smsbillables.exceptions import SMSRateCalculatorError
-from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsGatewayFee, SmsUsageFee
-from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty, log_smsbillables_error
+from corehq.apps.smsbillables.models import (
+    SmsGatewayFee,
+    SmsGatewayFeeCriteria,
+    SmsUsageFee,
+)
+from corehq.apps.smsbillables.utils import (
+    country_name_from_isd_code_or_empty,
+    log_smsbillables_error,
+)
 from corehq.util.quickcache import quickcache
-
 
 NONMATCHING_COUNTRY = 'nonmatching'
 

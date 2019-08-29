@@ -1,15 +1,18 @@
 import re
 from contextlib import contextmanager
 
-from crispy_forms.bootstrap import AccordionGroup, InlineField, FormActions as OriginalFormActions
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import LayoutObject, MultiField, Field as OldField
-from crispy_forms.utils import render_field, get_template_pack, flatatt
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 
+from crispy_forms.bootstrap import AccordionGroup
+from crispy_forms.bootstrap import FormActions as OriginalFormActions
+from crispy_forms.bootstrap import InlineField
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Field as OldField
+from crispy_forms.layout import LayoutObject, MultiField
+from crispy_forms.utils import flatatt, get_template_pack, render_field
 
 CSS_LABEL_CLASS = 'col-xs-12 col-sm-4 col-md-4 col-lg-2'
 CSS_FIELD_CLASS = 'col-xs-12 col-sm-8 col-md-8 col-lg-6'

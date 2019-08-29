@@ -1,10 +1,11 @@
 
-from memoized import memoized
 from django import forms
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 
-from crispy_forms.layout import Submit
 from crispy_forms import layout as crispy
+from crispy_forms.layout import Submit
+from memoized import memoized
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.integration.models import SimprintsIntegration

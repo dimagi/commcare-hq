@@ -1,14 +1,12 @@
-# encoding: utf-8
-
 import json
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
 
-import attr
-from django.test import TestCase, override_settings, SimpleTestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
-from mock import patch, Mock
+import attr
+from mock import Mock, patch
 from six.moves import range
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
@@ -19,28 +17,47 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
+from corehq.apps.receiverwrapper.exceptions import (
+    DuplicateFormatException,
+    IgnoreDocument,
+)
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
-from corehq.motech.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT, RECORD_SUCCESS_STATE
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    run_with_all_backends,
+)
+from corehq.motech.repeaters.const import (
+    MIN_RETRY_WAIT,
+    POST_TIMEOUT,
+    RECORD_SUCCESS_STATE,
+)
+from corehq.motech.repeaters.dbaccessors import (
+    delete_all_repeat_records,
+    delete_all_repeaters,
+)
 from corehq.motech.repeaters.models import (
     CaseRepeater,
     FormRepeater,
     LocationRepeater,
+    Repeater,
     RepeatRecord,
     ShortFormRepeater,
     UserRepeater,
-    Repeater,
 )
 from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator,
     FormRepeaterXMLPayloadGenerator,
     RegisterGenerator,
 )
-from corehq.motech.repeaters.tasks import check_repeaters, process_repeat_record
+from corehq.motech.repeaters.tasks import (
+    check_repeaters,
+    process_repeat_record,
+)
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"

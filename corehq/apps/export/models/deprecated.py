@@ -1,16 +1,24 @@
 import hashlib
+
+import six
 from couchdbkit.exceptions import ResourceNotFound
+from six.moves import map
+
 from dimagi.ext.couchdbkit import (
-    Document, DocumentSchema, ListProperty, StringProperty,
-    IntegerProperty, SetProperty, SchemaDictProperty
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    SchemaDictProperty,
+    SetProperty,
+    StringProperty,
 )
+from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.app_manager.dbaccessors import get_build_ids_after_version
 from corehq.apps.app_manager.exceptions import AppManagerException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import is_remote_app
-from corehq.apps.app_manager.dbaccessors import get_build_ids_after_version
-from dimagi.utils.couch.database import iter_docs
-import six
-from six.moves import map
 
 
 class QuestionMeta(DocumentSchema):

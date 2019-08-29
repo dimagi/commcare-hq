@@ -1,4 +1,3 @@
-# encoding: utf-8
 from django.http.response import HttpResponse
 from django.test import SimpleTestCase
 

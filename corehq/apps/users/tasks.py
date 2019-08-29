@@ -1,30 +1,34 @@
 from datetime import datetime
 
+from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+
 import six
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
-from django.urls import reverse
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from couchdbkit import ResourceConflict, BulkSaveError
+from couchdbkit import BulkSaveError, ResourceConflict
+from six.moves import map
+
 from casexml.apps.case.mock import CaseBlock
-
-from corehq import toggles
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.models import UserArchivedRebuild
+from casexml.apps.case.xform import get_case_ids_from_form
 from couchforms.exceptions import UnexpectedDeletedXForm
-from corehq.apps.domain.models import Domain
-from django.utils.html import format_html
-
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
-from casexml.apps.case.xform import get_case_ids_from_form
-from six.moves import map
+
+from corehq import toggles
+from corehq.apps.domain.models import Domain
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.form_processor.models import UserArchivedRebuild
 
 logger = get_task_logger(__name__)
 
@@ -295,8 +299,7 @@ def update_domain_date(user_id, domain):
     from corehq.apps.users.models import WebUser
     user = WebUser.get_by_user_id(user_id, domain)
     domain_membership = user.get_domain_membership(domain)
-    if domain_membership:
-        domain_membership.last_accessed = datetime.today().date()
+    today = datetime.today().date()
+    if domain_membership and today > domain_membership.last_accessed:
+        domain_membership.last_accessed = today
         user.save()
-    else:
-        logger.error("DomainMembership does not exist for user %s in domain %s" % (user.name, domain))

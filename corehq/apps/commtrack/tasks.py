@@ -1,4 +1,5 @@
 from celery.task import task
+
 from corehq.apps.commtrack.consumption import recalculate_domain_consumption
 
 

@@ -1,13 +1,13 @@
 
-import csv342 as csv
-
 from django.core.management import BaseCommand
+
+import csv
+import six
+
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-
-from dimagi.utils.chunked import chunked
-import six
 
 
 class Command(BaseCommand):

@@ -1,4 +1,5 @@
 from unittest import TestCase
+
 from django.template import Context, Template, TemplateSyntaxError
 
 

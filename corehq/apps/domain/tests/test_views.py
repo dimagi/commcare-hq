@@ -1,16 +1,17 @@
 
-from bs4 import BeautifulSoup
-from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.client import Client
+from django.urls import reverse
+
+from bs4 import BeautifulSoup
 from mock import patch
 
+from corehq.apps.app_manager.models import APP_V1, Application
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views.exchange import CreateNewExchangeSnapshotView
 from corehq.apps.users.models import WebUser
 from corehq.motech.repeaters.models import AppStructureRepeater
-from corehq.apps.domain.models import Domain
-from corehq.apps.app_manager.models import Application, APP_V1
-from corehq.apps.domain.views.exchange import CreateNewExchangeSnapshotView
 from corehq.util.test_utils import teardown
 
 

@@ -3,15 +3,12 @@ import logging
 from collections import defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
-try:
-    from inspect import signature
-except ImportError:
-    from funcsigs import signature  # TODO remove after Python 3 upgrade
+
+from django.test import SimpleTestCase
 
 import attr
 import gevent
 import six
-from django.test import SimpleTestCase
 from gevent.event import Event
 from gevent.queue import Queue
 from mock import patch
@@ -21,7 +18,15 @@ from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 from .. import casediff as mod
-from ..statedb import delete_state_db, init_state_db, StateDB
+from ..statedb import StateDB, delete_state_db, init_state_db
+
+try:
+    from inspect import signature
+except ImportError:
+    from funcsigs import signature  # TODO remove after Python 3 upgrade
+
+
+
 
 log = logging.getLogger(__name__)
 
@@ -73,6 +78,12 @@ class TestCaseDiffQueue(SimpleTestCase):
         with self.queue() as queue:
             queue.update({"c"}, "f0")
         self.assertDiffed("c")
+
+    def test_case_with_null_form_update(self):
+        self.add_cases("cx", "fx")
+        with self.queue() as queue:
+            queue.update({"cx"}, None)
+        self.assertDiffed("cx")
 
     def test_diff_batching(self):
         self.add_cases("a b c d e", "fx")

@@ -1,8 +1,17 @@
 from django.conf.urls import url
+
 from corehq.apps.products.views import (
-    ProductListView, FetchProductListView, NewProductView, EditProductView,
-    UploadProductView, ProductImportStatusView, ProductFieldsView,
-    product_importer_job_poll, download_products, archive_product, unarchive_product,
+    EditProductView,
+    FetchProductListView,
+    NewProductView,
+    ProductFieldsView,
+    ProductImportStatusView,
+    ProductListView,
+    UploadProductView,
+    archive_product,
+    download_products,
+    product_importer_job_poll,
+    unarchive_product,
 )
 
 settings_urls = [

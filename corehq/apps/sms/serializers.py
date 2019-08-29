@@ -1,5 +1,6 @@
-from corehq.apps.sms.models import SMS
 from rest_framework import serializers
+
+from corehq.apps.sms.models import SMS
 
 
 class SMSSerializer(serializers.ModelSerializer):

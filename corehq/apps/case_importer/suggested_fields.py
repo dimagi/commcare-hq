@@ -1,9 +1,14 @@
-from django.utils.translation import ugettext as _
 import itertools
-from corehq.apps.case_importer.util import RESERVED_FIELDS
-from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties_for_case_type
-from corehq.toggles import BULK_UPLOAD_DATE_OPENED
+
+from django.utils.translation import ugettext as _
+
 from dimagi.ext import jsonobject
+
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    get_all_case_properties_for_case_type,
+)
+from corehq.apps.case_importer.util import RESERVED_FIELDS
+from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 
 
 def _combine_field_specs(field_specs, exclude_fields):

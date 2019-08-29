@@ -1,32 +1,45 @@
-from collections import defaultdict, OrderedDict
-from functools import wraps
-import logging
-
+import collections
 import itertools
+import logging
+import re
+from collections import OrderedDict, defaultdict
+from functools import wraps
+
 from django.utils.translation import ugettext_lazy as _
 
-from casexml.apps.case.xml import V2_NAMESPACE
+import six
+from lxml import etree as ET
+from memoized import memoized
+
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
+from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+
 from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
-    SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
-    CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE,
+    CASE_ID,
+    SCHEDULE_CURRENT_VISIT_NUMBER,
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
+    SCHEDULE_LAST_VISIT,
+    SCHEDULE_LAST_VISIT_DATE,
+    SCHEDULE_NEXT_DUE,
+    SCHEDULE_PHASE,
+    SCHEDULE_UNSCHEDULED_VISIT,
+    USERCASE_ID,
 )
 from corehq.apps.app_manager.xpath import XPath
-from lxml import etree as ET
-
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
 from corehq.toggles import DONT_INDEX_SAME_CASETYPE
 from corehq.util.view_utils import get_request
-from memoized import memoized
-from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
-from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
-import collections
-import re
-import six
 
+from .exceptions import (
+    BindNotFound,
+    CaseError,
+    XFormException,
+    XFormValidationError,
+    XFormValidationFailed,
+)
+from .xpath import CaseIDXPath, QualifiedScheduleFormXPath, session_var
 
 VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio', 'markdown')
 

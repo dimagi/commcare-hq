@@ -13,6 +13,14 @@ from pprint import pformat
 
 import six
 
+from dimagi.ext.couchdbkit import (
+    DecimalProperty,
+    DocumentSchema,
+    ListProperty,
+    SchemaProperty,
+    StringProperty,
+)
+
 from corehq.motech.openmrs.const import OPENMRS_DATA_TYPE_BOOLEAN
 from corehq.motech.openmrs.finders_utils import (
     le_days_diff,
@@ -23,14 +31,6 @@ from corehq.motech.value_source import (
     ValueSource,
     recurse_subclasses,
 )
-from dimagi.ext.couchdbkit import (
-    DecimalProperty,
-    DocumentSchema,
-    ListProperty,
-    SchemaProperty,
-    StringProperty,
-)
-
 
 MATCH_TYPE_EXACT = 'exact'
 MATCH_TYPE_LEVENSHTEIN = 'levenshtein'  # Useful for words translated across alphabets

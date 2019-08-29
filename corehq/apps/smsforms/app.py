@@ -1,22 +1,26 @@
+import re
 import uuid
+from xml.etree.cElementTree import XML, tostring
+
+from django.conf import settings
+
+from dimagi.utils.parsing import json_format_datetime
+
 from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
+from corehq.apps.formplayer_api.smsforms import sms as tfsms
+from corehq.apps.formplayer_api.smsforms.api import (
+    InvalidSessionIdException,
+    TouchformsError,
+    XFormsConfig,
+    get_raw_instance,
+)
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.util import utcnow
+
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
-from corehq.apps.formplayer_api.smsforms.api import (
-    XFormsConfig,
-    get_raw_instance,
-    InvalidSessionIdException,
-    TouchformsError,
-)
-from corehq.apps.formplayer_api.smsforms import sms as tfsms
-from django.conf import settings
-from xml.etree.cElementTree import XML, tostring
-from dimagi.utils.parsing import json_format_datetime
-import re
 
 COMMCONNECT_DEVICE_ID = "commconnect"
 

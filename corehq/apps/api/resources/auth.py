@@ -1,21 +1,26 @@
 import json
 from functools import wraps
 
-import six
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
+
+import six
 from tastypie.authentication import Authentication
 
-from corehq.apps.domain.auth import determine_authtype_from_header, BASIC
+from corehq.apps.domain.auth import BASIC, determine_authtype_from_header
 from corehq.apps.domain.decorators import (
-    digest_auth,
-    basic_auth,
     api_key_auth,
+    basic_auth,
     basic_auth_or_try_api_key_auth,
-    login_or_digest,
+    digest_auth,
+    login_or_api_key,
     login_or_basic,
-    login_or_api_key)
-from corehq.apps.users.decorators import require_permission, require_permission_raw
+    login_or_digest,
+)
+from corehq.apps.users.decorators import (
+    require_permission,
+    require_permission_raw,
+)
 from corehq.toggles import IS_CONTRACTOR
 
 

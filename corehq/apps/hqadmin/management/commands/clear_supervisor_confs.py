@@ -1,8 +1,8 @@
 import os
-
-from django.core.management.base import BaseCommand
-from django.conf import settings
 import sys
+
+from django.conf import settings
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
@@ -21,4 +21,3 @@ class Command(BaseCommand):
         for c in env_confs:
             os.remove(os.path.join(conf_dir, c))
             print("\t[clear_supervisor_confs] Removed supervisor configuration file: %s" % c)
-

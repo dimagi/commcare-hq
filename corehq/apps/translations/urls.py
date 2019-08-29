@@ -6,9 +6,9 @@ from corehq.apps.translations.integrations.transifex.views import (
     BlacklistTranslations,
     ConvertTranslations,
     DownloadTranslations,
+    MigrateTransifexProject,
     PullResource,
     delete_translation_blacklist,
-    MigrateTransifexProject,
 )
 
 urlpatterns = [

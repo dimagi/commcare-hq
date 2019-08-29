@@ -3,11 +3,10 @@ import json
 
 from django.test import SimpleTestCase
 
-import requests
 from mock import Mock, patch
 
+import requests
 from corehq.motech.requests import Requests
-
 
 TEST_API_URL = 'http://localhost:9080/api/'
 TEST_API_USERNAME = 'admin'

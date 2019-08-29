@@ -1,11 +1,16 @@
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy
+
+from phonelog.models import DeviceReportEntry
+
 from corehq.apps.reports.filters.base import (
-    BaseReportFilter, BaseSingleOptionFilter, BaseTagsFilter, BaseMultipleOptionFilter
+    BaseMultipleOptionFilter,
+    BaseReportFilter,
+    BaseSingleOptionFilter,
+    BaseTagsFilter,
 )
 from corehq.util.queries import fast_distinct, fast_distinct_in_domain
 from corehq.util.quickcache import quickcache
-from phonelog.models import DeviceReportEntry
 
 
 class DeviceLogTagFilter(BaseReportFilter):

@@ -1,18 +1,24 @@
 import itertools
 import json
-import six
 from collections import Counter
 
+import six
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewIDProvider, UserIDProvider, \
-    DomainKeyGenerator, DomainInListKeyGenerator
-from corehq.apps.dump_reload.exceptions import DomainDumpError
-from corehq.apps.dump_reload.interface import DataDumper
-from corehq.feature_previews import all_previews
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.dump_reload.couch.id_providers import (
+    DocTypeIDProvider,
+    DomainInListKeyGenerator,
+    DomainKeyGenerator,
+    UserIDProvider,
+    ViewIDProvider,
+)
+from corehq.apps.dump_reload.exceptions import DomainDumpError
+from corehq.apps.dump_reload.interface import DataDumper
+from corehq.feature_previews import all_previews
 
 DOC_PROVIDERS = {
     DocTypeIDProvider(['Application']),

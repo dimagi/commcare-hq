@@ -1,11 +1,8 @@
 
-from django.http import (
-    HttpResponseRedirect,
-)
+from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_lazy
 
-from corehq.apps.domain.decorators import (
-    require_superuser)
+from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.util import reverse
 

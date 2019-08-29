@@ -1,18 +1,22 @@
-# -*- coding: utf-8 -*-
 from django.test import SimpleTestCase
+
 from mock import patch
 
 from corehq.apps.app_manager.const import CLAIM_DEFAULT_RELEVANT_CONDITION
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
-    Module,
     CaseSearch,
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DetailColumn,
+    Module,
 )
-from corehq.apps.app_manager.tests.util import TestXmlMixin, SuiteMixin, parse_normalize
+from corehq.apps.app_manager.tests.util import (
+    SuiteMixin,
+    TestXmlMixin,
+    parse_normalize,
+)
 from corehq.apps.builds.models import BuildSpec
 
 DOMAIN = 'test_domain'

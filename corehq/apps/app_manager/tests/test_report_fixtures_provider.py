@@ -1,17 +1,27 @@
 
 from datetime import datetime
+
+from django.test import SimpleTestCase
+
 from lxml import etree
 from lxml.builder import E
-from django.test import SimpleTestCase
 from mock import Mock, patch
+
 from casexml.apps.phone.models import UCRSyncLog
+
 from corehq.apps.app_manager.fixtures.mobile_ucr import (
-    ReportFixturesProvider, ReportFixturesProviderV2
+    ReportFixturesProvider,
+    ReportFixturesProviderV2,
 )
-from corehq.apps.app_manager.models import ReportAppConfig, StaticChoiceListFilter
+from corehq.apps.app_manager.models import (
+    ReportAppConfig,
+    StaticChoiceListFilter,
+)
+from corehq.apps.app_manager.tests.test_report_config import (
+    MAKE_REPORT_CONFIG,
+    mock_report_configuration_get,
+)
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.tests.test_report_config import MAKE_REPORT_CONFIG, \
-    mock_report_configuration_get
 
 
 class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):

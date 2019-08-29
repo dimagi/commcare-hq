@@ -1,6 +1,7 @@
 import json
-from django.test import SimpleTestCase
 import os
+
+from django.test import SimpleTestCase
 
 from mock import patch
 

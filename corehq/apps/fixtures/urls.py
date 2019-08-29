@@ -3,10 +3,15 @@ from django.views.generic import RedirectView
 
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from corehq.apps.fixtures.views import (
-    UploadItemLists, FixtureUploadStatusView,
-    upload_fixture_api, fixture_metadata, download_item_lists,
-    download_file, update_tables, fixture_upload_job_poll,
+    FixtureUploadStatusView,
+    UploadItemLists,
+    download_file,
+    download_item_lists,
     fixture_api_upload_status,
+    fixture_metadata,
+    fixture_upload_job_poll,
+    update_tables,
+    upload_fixture_api,
 )
 
 urlpatterns = [

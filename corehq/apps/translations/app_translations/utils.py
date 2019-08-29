@@ -1,9 +1,13 @@
 # coding=utf-8
 
-import six
 from django.utils.translation import ugettext as _
 
-from corehq.apps.app_manager.exceptions import ModuleNotFoundException, FormNotFoundException
+import six
+
+from corehq.apps.app_manager.exceptions import (
+    FormNotFoundException,
+    ModuleNotFoundException,
+)
 from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
     SINGLE_SHEET_STATIC_HEADERS,

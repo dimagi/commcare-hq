@@ -2,37 +2,16 @@
 import warnings
 from datetime import datetime, timedelta
 
+from django.utils.translation import ugettext_lazy as _
+
 import six
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
-from requests.exceptions import Timeout, ConnectionError
 
-from casexml.apps.case.xml import V2, LEGAL_VERSIONS
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.motech.const import ALGO_AES
-from corehq.motech.repeaters.repeater_generators import (
-    FormRepeaterXMLPayloadGenerator,
-    FormRepeaterJsonPayloadGenerator,
-    CaseRepeaterXMLPayloadGenerator,
-    CaseRepeaterJsonPayloadGenerator,
-    ShortFormRepeaterJsonPayloadGenerator,
-    AppStructureGenerator,
-    UserPayloadGenerator,
-    LocationPayloadGenerator,
-)
-from corehq.motech.utils import b64_aes_decrypt
-from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT, REPEATER_SUCCESS_COUNT
-from corehq.util.quickcache import quickcache
+from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -46,20 +25,50 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.post import simple_post
+
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.motech.const import ALGO_AES
+from corehq.motech.repeaters.repeater_generators import (
+    AppStructureGenerator,
+    CaseRepeaterJsonPayloadGenerator,
+    CaseRepeaterXMLPayloadGenerator,
+    FormRepeaterJsonPayloadGenerator,
+    FormRepeaterXMLPayloadGenerator,
+    LocationPayloadGenerator,
+    ShortFormRepeaterJsonPayloadGenerator,
+    UserPayloadGenerator,
+)
+from corehq.motech.utils import b64_aes_decrypt
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.metrics import (
+    REPEATER_ERROR_COUNT,
+    REPEATER_SUCCESS_COUNT,
+)
+from corehq.util.quickcache import quickcache
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
+from requests.exceptions import ConnectionError, Timeout
+
 from .const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
-    RECORD_FAILURE_STATE,
-    RECORD_SUCCESS_STATE,
-    RECORD_PENDING_STATE,
-    RECORD_CANCELLED_STATE,
     POST_TIMEOUT,
+    RECORD_CANCELLED_STATE,
+    RECORD_FAILURE_STATE,
+    RECORD_PENDING_STATE,
+    RECORD_SUCCESS_STATE,
 )
 from .dbaccessors import (
-    get_pending_repeat_record_count,
+    get_cancelled_repeat_record_count,
     get_failure_repeat_record_count,
+    get_pending_repeat_record_count,
     get_success_repeat_record_count,
-    get_cancelled_repeat_record_count
 )
 from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
@@ -831,4 +840,4 @@ def _is_response(duck):
 
 # import signals
 # Do not remove this import, its required for the signals code to run even though not explicitly used in this file
-from corehq.motech.repeaters import signals
+from corehq.motech.repeaters import signals  # pylint: disable=unused-import,F401

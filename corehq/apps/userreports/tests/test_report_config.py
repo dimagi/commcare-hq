@@ -3,13 +3,21 @@ from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.userreports.dbaccessors import get_all_report_configs, \
-    delete_all_report_configs
+from corehq.apps.userreports.dbaccessors import (
+    delete_all_report_configs,
+    get_all_report_configs,
+)
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
+from corehq.apps.userreports.reports.data_source import (
+    ConfigurableReportDataSource,
+)
 from corehq.apps.userreports.tests.utils import (
-    get_sample_report_config, mock_datasource_config
+    get_sample_report_config,
+    mock_datasource_config,
 )
 
 

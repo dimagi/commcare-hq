@@ -1,4 +1,8 @@
-from corehq.motech.repeaters.models import UpdateCaseRepeater, CreateCaseRepeater, CaseRepeater
+from corehq.motech.repeaters.models import (
+    CaseRepeater,
+    CreateCaseRepeater,
+    UpdateCaseRepeater,
+)
 
 
 class EventTypes(object):

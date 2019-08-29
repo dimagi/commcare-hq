@@ -1,10 +1,11 @@
 
 from django.core.management.base import BaseCommand
 
-from corehq.privileges import MAX_PRIVILEGES
-from corehq.apps.accounting.utils import ensure_grants
-from corehq.apps.accounting.models import SoftwarePlanVersion
 from six.moves import input
+
+from corehq.apps.accounting.models import SoftwarePlanVersion
+from corehq.apps.accounting.utils import ensure_grants
+from corehq.privileges import MAX_PRIVILEGES
 
 
 class Command(BaseCommand):

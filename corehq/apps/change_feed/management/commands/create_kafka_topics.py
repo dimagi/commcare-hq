@@ -1,4 +1,5 @@
 from django.core.management import BaseCommand
+
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_simple_kafka_client
 

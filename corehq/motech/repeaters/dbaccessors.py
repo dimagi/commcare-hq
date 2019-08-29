@@ -1,10 +1,16 @@
 import datetime
+
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.util.couch_helpers import paginate_view
 from corehq.util.test_utils import unit_testing_only
 
-from .const import RECORD_PENDING_STATE, RECORD_FAILURE_STATE, RECORD_SUCCESS_STATE, RECORD_CANCELLED_STATE
+from .const import (
+    RECORD_CANCELLED_STATE,
+    RECORD_FAILURE_STATE,
+    RECORD_PENDING_STATE,
+    RECORD_SUCCESS_STATE,
+)
 
 
 def get_pending_repeat_record_count(domain, repeater_id):
@@ -176,7 +182,7 @@ def get_domains_that_have_repeat_records():
 @unit_testing_only
 def delete_all_repeat_records():
     from .models import RepeatRecord
-    results = RepeatRecord.get_db().view('repeaters/repeat_records_by_next_check', reduce=False).all()
+    results = RepeatRecord.get_db().view('repeaters/repeat_records', reduce=False).all()
     for result in results:
         try:
             repeat_record = RepeatRecord.get(result['id'])

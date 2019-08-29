@@ -1,59 +1,78 @@
-from datetime import datetime
 import time
 import uuid
-
-import six
-from django.db.transaction import atomic
-from six.moves import map
-
-from couchdbkit import PreconditionFailed
+from collections import defaultdict
+from datetime import datetime
+from functools import reduce
+from importlib import import_module
+from itertools import chain
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
-from django.template.loader import render_to_string
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.domain.exceptions import DomainDeleteException
-from corehq.apps.tzmigration.api import set_tz_migration_complete
-from corehq.blobs import CODES as BLOB_CODES
-from corehq.blobs.mixin import BlobMixin
-from corehq.dbaccessors.couchapps.all_docs import \
-    get_all_doc_ids_for_domain_grouped_by_db
-from corehq.util.soft_assert import soft_assert
-from couchforms.analytics import domain_has_submission_in_last_30_days
-from dimagi.ext.couchdbkit import (
-    Document, StringProperty, BooleanProperty, DateTimeProperty, IntegerProperty,
-    DocumentSchema, SchemaProperty, DictProperty,
-    StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
-)
-from django.urls import reverse
 from django.db import models
 from django.db.models import F
+from django.db.transaction import atomic
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.appstore.models import SnapshotMixin
-from corehq.util.quickcache import quickcache
+
+import six
+from couchdbkit import PreconditionFailed
+from memoized import memoized
+from six import unichr
+from six.moves import map
+
+from couchforms.analytics import domain_has_submission_in_last_30_days
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DecimalProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringListProperty,
+    StringProperty,
+    TimeProperty,
+)
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
-    iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
+    apply_update,
+    get_safe_write_kwargs,
+    iter_bulk_delete,
+    iter_docs,
 )
-from memoized import memoized
-from corehq.apps.hqwebapp.tasks import send_html_email_async
-from django.utils.html import format_html
 from dimagi.utils.logging import log_signal_errors
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
-from itertools import chain
+
+from corehq.apps.app_manager.const import (
+    AMPLIFIES_NO,
+    AMPLIFIES_NOT_SET,
+    AMPLIFIES_YES,
+)
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.appstore.models import SnapshotMixin
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.apps.domain.exceptions import DomainDeleteException
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.blobs import CODES as BLOB_CODES
+from corehq.blobs.mixin import BlobMixin
+from corehq.dbaccessors.couchapps.all_docs import (
+    get_all_doc_ids_for_domain_grouped_by_db,
+)
+from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 from langcodes import langs as all_langs
-from collections import defaultdict
-from importlib import import_module
 
-from .exceptions import InactiveTransferDomainException, NameUnavailableException
-
-from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLIFIES_YES
-
+from .exceptions import (
+    InactiveTransferDomainException,
+    NameUnavailableException,
+)
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
-from functools import reduce
-from six import unichr
 
 lang_lookup = defaultdict(str)
 

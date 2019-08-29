@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
 
-from django.db import models, migrations
-import dimagi.utils.couch.migration
+from django.db import migrations, models
+
 import jsonfield.fields
+
+import dimagi.utils.couch.migration
 
 
 class Migration(migrations.Migration):

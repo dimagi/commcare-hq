@@ -1,13 +1,18 @@
 #!/usr/bin/env python
+from django.test import TestCase
+
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import apply_leniency
-from corehq.apps.sms.util import (clean_phone_number,
-    get_contact, ContactNotFoundException, is_contact_active)
+from corehq.apps.sms.util import (
+    ContactNotFoundException,
+    clean_phone_number,
+    get_contact,
+    is_contact_active,
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.test_utils import create_test_case
-from django.test import TestCase
 
 
 class UtilTestCase(TestCase):

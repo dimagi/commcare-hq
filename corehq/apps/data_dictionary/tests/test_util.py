@@ -1,9 +1,10 @@
 import uuid
 
 from django.test import TestCase
+
 from mock import patch
 
-from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_dictionary.util import generate_data_dictionary
 
 

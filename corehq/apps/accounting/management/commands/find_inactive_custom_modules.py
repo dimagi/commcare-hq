@@ -6,7 +6,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.management import BaseCommand
 
-import csv342 as csv
+import csv
 import six
 from six.moves import map
 

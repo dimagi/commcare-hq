@@ -1,31 +1,40 @@
-# -*- coding: utf-8 -*-
 
 from django.conf import settings
 from django.db import migrations
 
-from corehq.apps.smsbillables.management.commands.add_moz_zero_charge import \
-    add_moz_zero_charge
-from corehq.apps.smsbillables.management.commands.bootstrap_grapevine_gateway import \
-    bootstrap_grapevine_gateway
-from corehq.apps.smsbillables.management.commands.bootstrap_grapevine_gateway_update import \
-    bootstrap_grapevine_gateway_update
-from corehq.apps.smsbillables.management.commands.bootstrap_mach_gateway import \
-    bootstrap_mach_gateway
-from corehq.apps.smsbillables.management.commands.bootstrap_moz_gateway import \
-    bootstrap_moz_gateway
-from corehq.apps.smsbillables.management.commands.bootstrap_telerivet_gateway import \
-    bootstrap_telerivet_gateway
-from corehq.apps.smsbillables.management.commands.bootstrap_test_gateway import \
-    bootstrap_test_gateway
-from corehq.apps.smsbillables.management.commands.bootstrap_tropo_gateway import \
-    bootstrap_tropo_gateway
-from corehq.apps.smsbillables.management.commands.bootstrap_unicel_gateway import \
-    bootstrap_unicel_gateway
-from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import \
-    bootstrap_usage_fees
-from corehq.apps.smsbillables.management.commands.bootstrap_yo_gateway import \
-    bootstrap_yo_gateway
-
+from corehq.apps.smsbillables.management.commands.add_moz_zero_charge import (
+    add_moz_zero_charge,
+)
+from corehq.apps.smsbillables.management.commands.bootstrap_grapevine_gateway import (
+    bootstrap_grapevine_gateway,
+)
+from corehq.apps.smsbillables.management.commands.bootstrap_grapevine_gateway_update import (
+    bootstrap_grapevine_gateway_update,
+)
+from corehq.apps.smsbillables.management.commands.bootstrap_mach_gateway import (
+    bootstrap_mach_gateway,
+)
+from corehq.apps.smsbillables.management.commands.bootstrap_moz_gateway import (
+    bootstrap_moz_gateway,
+)
+from corehq.apps.smsbillables.management.commands.bootstrap_telerivet_gateway import (
+    bootstrap_telerivet_gateway,
+)
+from corehq.apps.smsbillables.management.commands.bootstrap_test_gateway import (
+    bootstrap_test_gateway,
+)
+from corehq.apps.smsbillables.management.commands.bootstrap_tropo_gateway import (
+    bootstrap_tropo_gateway,
+)
+from corehq.apps.smsbillables.management.commands.bootstrap_unicel_gateway import (
+    bootstrap_unicel_gateway,
+)
+from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import (
+    bootstrap_usage_fees,
+)
+from corehq.apps.smsbillables.management.commands.bootstrap_yo_gateway import (
+    bootstrap_yo_gateway,
+)
 
 
 def sync_sms_docs(apps, schema_editor):

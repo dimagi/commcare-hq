@@ -1,8 +1,10 @@
 from django.utils.decorators import method_decorator
+
+from django_prbac.decorators import requires_privilege_raise404
+
 from corehq import privileges
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.reports.dispatcher import ReportDispatcher
-from django_prbac.decorators import requires_privilege_raise404
 
 
 class AccountingAdminInterfaceDispatcher(ReportDispatcher):

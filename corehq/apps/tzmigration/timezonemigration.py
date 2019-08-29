@@ -3,28 +3,33 @@ import os
 from copy import deepcopy
 from itertools import chain
 
-from couchdbkit import ResourceNotFound
 from django.conf import settings
+
+import six
+from couchdbkit import ResourceNotFound
+from six.moves import range
 
 from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import get_case_updates
-from corehq.apps.tzmigration.api import set_tz_migration_started, \
-    set_tz_migration_complete, force_phone_timezones_should_be_processed
+from couchforms.dbaccessors import get_form_ids_by_type
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.tzmigration.api import (
+    force_phone_timezones_should_be_processed,
+    set_tz_migration_complete,
+    set_tz_migration_started,
+)
 from corehq.apps.tzmigration.planning import PlanningDB
 from corehq.blobs import CODES
 from corehq.blobs.mixin import BlobHelper
 from corehq.form_processor.parsers.ledgers import get_stock_actions
-from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
+from corehq.form_processor.utils import adjust_datetimes, convert_xform_to_json
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.util import eval_lazy
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.python_compatibility import soft_assert_type_text
-from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
-import six
-from six.moves import range
 
 
 def run_timezone_migration_for_domain(domain):

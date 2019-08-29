@@ -52,16 +52,12 @@ branches:
   - vellum-staging
   #- fr/case-templates      # FR May 15
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
-  - mk/skip-files-build # MK July 6
   #- mk/use-ids-to-validate-translations # July 19
   - revert-24882-jls/compress-mobile-workers-js # Jenny July 24 
-  - jls/resource-versions # Jenny July 24
-  - jls/more-eof-nav # Jenny Aug 13
-  - jls/add-js-to-sentry # Jenny Aug 7
-  - jls/icds-reports-on-staging # Jenny Aug 20
   - jls/linked-app-multiple-masters-rebased # Jenny Aug 17
-  - rn_fix_case_reassign_option_list #Negi Aug 14
+  - jls/reveal-family-id # Jenny Aug 27
   - bmb/bi-schema-updates  # Biyeun Aug 16
   - bmb/case-sharing  #Biyeun Aug 22
+  - je/fix-saved-reports  #j$ Aug 28
   #- mk/validate-single-sheet # MK Aug 20
 submodules: {}

@@ -1,20 +1,22 @@
 from django.conf.urls import include, url
 
-from corehq.apps.domain.urls import domain_settings
 from corehq.apps.cloudcare.urls import settings_urls as cloudcare_settings
 from corehq.apps.commtrack.urls import settings_urls as commtrack_settings
+from corehq.apps.domain.urls import domain_settings
+from corehq.apps.locations.urls import settings_urls as location_settings
 from corehq.apps.products.urls import settings_urls as product_settings
 from corehq.apps.programs.urls import settings_urls as program_settings
-from corehq.apps.locations.urls import settings_urls as location_settings
-
 from corehq.apps.settings.views import (
     ChangeMyPasswordView,
     DefaultMySettingsView,
     EnableMobilePrivilegesView,
     MyAccountSettingsView,
     MyProjectsList,
-    new_api_key, default, project_id_mapping, redirect_users,
+    default,
+    new_api_key,
+    project_id_mapping,
     redirect_domain_settings,
+    redirect_users,
 )
 
 urlpatterns = [
@@ -47,4 +49,3 @@ domain_redirect = [
     url(r'^$', redirect_domain_settings, name='redirect_domain_settings'),
     url(r'^(?P<old_url>[\w_\\\/\-]+)/$', redirect_domain_settings, name='redirect_domain_settings')
 ]
-

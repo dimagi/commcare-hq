@@ -1,11 +1,17 @@
 from collections import namedtuple
+
 from tastypie.models import ApiKey
-from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
+
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP
 from corehq.motech.repeaters.models import FormRepeater, RepeatRecord
-
 
 ZapierDomainConfig = namedtuple('ZapierDomainConfig', 'domain web_user api_key')
 

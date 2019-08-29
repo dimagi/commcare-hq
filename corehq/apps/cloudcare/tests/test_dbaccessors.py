@@ -1,8 +1,9 @@
 from django.test import TestCase
+
+from corehq.apps.app_manager.signals import app_post_save
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.signals import app_post_save
 from corehq.util.context_managers import drop_connected_signals
 
 

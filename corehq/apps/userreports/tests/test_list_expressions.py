@@ -8,7 +8,6 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.utils import COUNT
 from corehq.util.test_utils import generate_cases
 
-
 _filter_v1 = {
     'type': 'boolean_expression',
     'operator': 'eq',

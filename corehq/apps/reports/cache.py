@@ -1,8 +1,9 @@
 from django.conf import settings
 from django.utils.cache import _generate_cache_header_key
-from corehq.util.quickcache import quickcache
+
 from quickcache import QuickCacheHelper
 
+from corehq.util.quickcache import quickcache
 
 DEFAULT_EXPIRY = 60 * 60  # an hour
 CACHE_PREFIX = 'hq.reports'  # a namespace where cache keys go

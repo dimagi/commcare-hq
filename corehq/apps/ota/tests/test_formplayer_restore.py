@@ -1,10 +1,11 @@
 
 
-import mock
-import six
 from django.http.response import HttpResponse
 from django.test import TestCase, override_settings
 from django.urls import reverse
+
+import mock
+import six
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains

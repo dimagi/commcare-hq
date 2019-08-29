@@ -1,14 +1,18 @@
 import uuid
+from datetime import datetime
+
+from django.test import TestCase
+
+from mock import patch
+
+from dimagi.utils.parsing import json_format_datetime
+
 from corehq.apps.domain.models import Domain
-from corehq.apps.sms.models import SMS, SQLLastReadMessage, OUTGOING, INCOMING
+from corehq.apps.sms.models import INCOMING, OUTGOING, SMS, SQLLastReadMessage
 from corehq.apps.sms.views import ChatMessageHistory
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.util.test_utils import softer_assert, create_test_case
-from datetime import datetime
-from dimagi.utils.parsing import json_format_datetime
-from django.test import TestCase
-from mock import patch
+from corehq.util.test_utils import create_test_case, softer_assert
 
 
 class LastReadMessageTestCase(TestCase):

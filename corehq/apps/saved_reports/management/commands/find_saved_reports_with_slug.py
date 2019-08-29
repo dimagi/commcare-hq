@@ -1,9 +1,10 @@
 
 from django.conf import settings
-from dimagi.utils.couch.cache import cache_core
-from corehq.apps.saved_reports.models import ReportConfig
-
 from django.core.management import BaseCommand
+
+from dimagi.utils.couch.cache import cache_core
+
+from corehq.apps.saved_reports.models import ReportConfig
 
 
 class Command(BaseCommand):

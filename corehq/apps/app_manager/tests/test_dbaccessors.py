@@ -1,5 +1,7 @@
-from couchdbkit.exceptions import NoResultFound
 from django.test import TestCase
+
+from couchdbkit.exceptions import NoResultFound
+
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_all_app_ids,
@@ -16,12 +18,12 @@ from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_with_submissions_for_app_id,
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_current_app,
-    get_latest_build_doc,
     get_latest_app_ids_and_versions,
+    get_latest_build_doc,
     get_latest_released_app_doc,
     get_latest_released_app_version,
 )
-from corehq.apps.app_manager.models import Application, RemoteApp, Module
+from corehq.apps.app_manager.models import Application, Module, RemoteApp
 from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import DocTestMixin
 
