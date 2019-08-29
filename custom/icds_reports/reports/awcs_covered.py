@@ -2,7 +2,6 @@
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum, Max
@@ -62,7 +61,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
         data_for_map[on_map_name]['states'].append(states)
         data_for_map[on_map_name]['original_name'].append(name)
 
-    for data_for_location in six.itervalues(data_for_map):
+    for data_for_location in data_for_map.values():
         data_for_location['awcs'] = (
             sum(data_for_location['awcs']) if level <= 5 else max(data_for_location['awcs'])
         )
@@ -91,8 +90,8 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     else:
         prop = 'awcs'
 
-    total_awcs = sum([(x['awcs'] or 0) for x in six.itervalues(data_for_map)])
-    total = sum([(x[prop] or 0) for x in six.itervalues(data_for_map)])
+    total_awcs = sum([(x['awcs'] or 0) for x in data_for_map.values()])
+    total = sum([(x[prop] or 0) for x in data_for_map.values()])
 
     fills = OrderedDict()
     fills.update({'Launched': MapColors.PINK})
@@ -182,10 +181,10 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
             'districts': districts,
             'states': states,
         }
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += (value or 0)
 
-    for name, value_dict in six.iteritems(tooltips_data):
+    for name, value_dict in tooltips_data.items():
         chart_data['blue'].append([name, value_dict['awcs']])
 
     for sql_location in loc_children:
@@ -205,8 +204,8 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     else:
         prop = 'awcs'
 
-    total_awcs = sum([(x['awcs'] or 0) for x in six.itervalues(tooltips_data)])
-    total = sum([(x[prop] or 0) for x in six.itervalues(tooltips_data)])
+    total_awcs = sum([(x['awcs'] or 0) for x in tooltips_data.values()])
+    total = sum([(x[prop] or 0) for x in tooltips_data.values()])
 
     info = _(
         "{:s}<br /><br />"
@@ -286,7 +285,7 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
             'loc_name': key,
             'value': sum(value) / len(value)
         }
-        for key, value in six.iteritems(best_worst)
+        for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_value_and_name = sorted(
@@ -300,7 +299,7 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in six.iteritems(data['pink'])
+                    } for key, value in data['pink'].items()
                 ],
                 "key": "Number of AWCs Launched",
                 "strokeWidth": 2,

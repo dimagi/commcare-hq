@@ -54,7 +54,7 @@ class ScheduleInstanceRefresher(object):
     @staticmethod
     def _get_any_value_or_none(from_dict):
         if from_dict:
-            return six.next(six.itervalues(from_dict))
+            return six.next(from_dict.values())
 
         return None
 
@@ -139,7 +139,7 @@ class ScheduleInstanceRefresher(object):
                     (self.create_new_instance_for_recipient(recipient_type, recipient_id), True)
                 )
 
-        for recipient_type_and_id, instance in six.iteritems(self.existing_instances):
+        for recipient_type_and_id, instance in self.existing_instances.items():
             if recipient_type_and_id in self.new_recipients:
                 needs_saving = self.handle_existing_instance(instance)
                 refreshed_list.append((instance, needs_saving))
