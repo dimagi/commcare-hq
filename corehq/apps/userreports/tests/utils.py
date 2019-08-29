@@ -8,7 +8,6 @@ from decimal import Decimal
 import six
 import sqlalchemy
 from mock import patch
-from six.moves import zip
 
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime
@@ -161,8 +160,6 @@ def load_data_from_db(table_name):
                     row[idx] = str(value)
                 elif isinstance(value, (float, Decimal)):
                     row[idx] = _convert_decimal_to_string(row[idx])
-                elif six.PY2 and isinstance(value, six.text_type):
-                    row[idx] = value.encode('utf-8')
                 elif value is None:
                     row[idx] = ''
             yield dict(zip(columns, row))
