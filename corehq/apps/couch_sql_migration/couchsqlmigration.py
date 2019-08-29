@@ -270,25 +270,26 @@ def update_xml(xml, path, old_value, new_value):
     True
 
     """
-    # TODO: When we have dropped Python 2, set `found = False` and use nonlocal
-    found = []
+    found = False
 
     def elem_has_attr(elem, string):
         return string.startswith('@') and string[1:] in elem.attrib
 
     def recurse_elements(elem, next_steps):
+        nonlocal found
+
         assert next_steps, 'path is empty'
         step, next_steps = next_steps[0], next_steps[1:]
         if not next_steps:
             if get_localname(elem) == step:
                 if elem.text == old_value:
-                    found.append(True)
+                    found = True
                     elem.text = new_value
                 elif elem.text is None and not old_value:
-                    found.append(True)
+                    found = True
                     elem.text = new_value
             elif elem_has_attr(elem, step) and elem.attrib[step[1:]] == old_value:
-                found.append(True)
+                found = True
                 elem.attrib[step[1:]] = new_value
             return
         for child in elem:
@@ -305,7 +306,7 @@ def update_xml(xml, path, old_value, new_value):
         return_as_bytestring = False
     assert get_localname(root) == path[0], 'root "{}" not found in path {}'.format(root.tag, path)
     recurse_elements(root, path)
-    if not any(found):
+    if not found:
         raise MissingValueError('Unable to find "{value}" at path "{path}" in "{xml}".'.format(
             value=old_value,
             xml=xml if isinstance(xml, six.string_types) else etree.tostring(xml),
