@@ -195,11 +195,7 @@ def submit_mapping_case_block(user, index):
 def location_map_case_id(user):
     if should_use_sql_backend(user.domain):
         user_id = user.user_id
-        if isinstance(user_id, six.text_type) and six.PY2:
-            user_id = user_id.encode('utf8')
         case_id = uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user_id).hex
-        if six.PY2:
-            case_id = case_id.decode('utf-8')
         return case_id
     return 'user-owner-mapping-' + user.user_id
 
