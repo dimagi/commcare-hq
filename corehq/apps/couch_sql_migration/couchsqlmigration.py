@@ -470,13 +470,13 @@ class CouchSqlDomainMigrator(object):
         )
         self._id_map = {}
         for location in SQLLocation.objects.filter(domain=self.dst_domain):
-            if 'orig_id' in location.metadata:
+            if 'orig_id' in location.metadata and location.metadata['orig_id']:
                 self._id_map[location.metadata['orig_id']] = location.location_id
         for group in Group.by_domain(self.dst_domain):
-            if group.metadata and 'orig_id' in group.metadata:
+            if group.metadata and 'orig_id' in group.metadata and group.metadata['orig_id']:
                 self._id_map[group.metadata['orig_id']] = group._id
         for user in all_users:
-            if 'orig_id' in user.user_data:
+            if 'orig_id' in user.user_data and user.user_data['orig_id']:
                 self._id_map[user.user_data['orig_id']] = user.get_id
         self._dump_id_map()
 
