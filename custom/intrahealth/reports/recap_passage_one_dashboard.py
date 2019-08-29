@@ -7,7 +7,8 @@ from django.utils.functional import cached_property
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
-from custom.intrahealth.filters import DateRangeFilter, YeksiNaaLocationFilter, ProgramFilter
+from custom.intrahealth.filters import DateRangeFilter, RecapPassageOneProgramFilter, \
+    YeksiRecapPassageNaaLocationFilter
 from custom.intrahealth.sqldata import RecapPassageOneData
 from dimagi.utils.dates import force_to_date
 
@@ -17,12 +18,38 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
     comment = 'recap passage 1'
     name = 'Recap Passage 1'
     default_rows = 10
+    exportable = True
 
     report_template_path = 'yeksi_naa/recap_passage.html'
 
     @property
+    def export_table(self):
+        report = [
+            [
+                self.name,
+                [],
+            ]
+        ]
+        rows, headers_objects = self.calculate_table()
+        headers = [x.html for x in headers_objects]
+        report[0][1].append(headers)
+
+        for row in rows:
+            location_name = row[0]
+            row_to_return = [location_name]
+
+            rows_length = len(row)
+            for r in range(1, rows_length):
+                value = row[r]
+                row_to_return.append(value)
+
+            report[0][1].append(row_to_return)
+
+        return report
+
+    @property
     def fields(self):
-        return [DateRangeFilter, ProgramFilter, YeksiNaaLocationFilter]
+        return [DateRangeFilter, RecapPassageOneProgramFilter, YeksiRecapPassageNaaLocationFilter]
 
     @cached_property
     def rendered_report_title(self):
@@ -30,12 +57,12 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
 
     @property
     def report_context(self):
-        context = {
-            'report': self.get_report_context(),
-            'title': self.name
-        }
-
-        return context
+        if not self.needs_filters:
+            return {
+                'report': self.get_report_context(),
+                'title': self.name
+            }
+        return {}
 
     @property
     def selected_location(self):
@@ -94,22 +121,22 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
 
             comment = self.comment
 
-        context = dict(
-            report_table=dict(
-                title=self.name,
-                slug=self.slug,
-                comment=comment,
-                headers=headers,
-                rows=rows,
-                project=self.request.GET.get('project_name') or "Malaria",
-                default_rows=self.default_rows,
-            ),
-            aggregated_table=dict(
-                headers=aggregated_headers,
-                rows=aggregated_rows,
-                number_of_agregated=2
-            )
-        )
+        context = {
+            'report_table': {
+                'title': self.name,
+                'slug': self.slug,
+                'comment': comment,
+                'headers': headers,
+                'rows': rows,
+                'project': self.request.GET.get('project_name') or "Malaria",
+                'default_rows': self.default_rows,
+            },
+            'aggregated_table': {
+                'headers': aggregated_headers,
+                'rows': aggregated_rows,
+                'number_of_agregated': 2
+            }
+        }
 
         return context
 
@@ -125,9 +152,9 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
 
     @property
     def config(self):
-        config = dict(
-            domain=self.domain,
-        )
+        config = {
+            'domain': self.domain,
+        }
         if self.request.GET.get('startdate'):
             startdate = force_to_date(self.request.GET.get('startdate'))
         else:

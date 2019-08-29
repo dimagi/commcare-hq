@@ -1,8 +1,9 @@
 
 import json
-import six
 
 from django.test import SimpleTestCase
+
+import six
 from fakecouch import FakeCouchDb
 from jsonobject.base_properties import BadValueError
 

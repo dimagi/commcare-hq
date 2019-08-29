@@ -6,9 +6,6 @@ from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-import six
-from six.moves import range
-
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
@@ -51,7 +48,6 @@ from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.datadog.utils import sms_load_counter
-from corehq.util.python_compatibility import soft_assert_type_text
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -131,7 +127,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     """
     if phone_number is None:
         return False
-    if isinstance(phone_number, six.integer_types):
+    if isinstance(phone_number, int):
         phone_number = str(phone_number)
     phone_number = clean_phone_number(phone_number)
 
@@ -150,15 +146,14 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
 
     if domain and contact and is_commcarecase(contact):
         backend_name = contact.get_case_property('contact_backend_id')
-        backend_name = backend_name.strip() if isinstance(backend_name, six.string_types) else ''
-        soft_assert_type_text(backend_name)
+        backend_name = backend_name.strip() if isinstance(backend_name, str) else ''
         if backend_name:
             try:
                 backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
             except BadSMSConfigException as e:
                 if logged_subevent:
                     logged_subevent.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND,
-                        additional_error_text=six.text_type(e))
+                        additional_error_text=str(e))
                 return False
 
             msg.backend_id = backend.couch_id
@@ -183,7 +178,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
     except BadSMSConfigException as e:
         if logged_subevent:
             logged_subevent.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND,
-                additional_error_text=six.text_type(e))
+                additional_error_text=str(e))
             return False
         raise
 
@@ -561,7 +556,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
 def is_opt_message(text, keyword_list):
     if isinstance(text, bytes):
         text = text.decode('utf-8')
-    if not isinstance(text, six.text_type):
+    if not isinstance(text, str):
         return False
 
     text = text.strip().upper()

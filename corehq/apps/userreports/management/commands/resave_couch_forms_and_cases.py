@@ -3,7 +3,7 @@ import datetime
 
 from django.core.management.base import BaseCommand
 
-import csv342 as csv
+import csv
 
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs

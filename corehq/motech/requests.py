@@ -2,11 +2,9 @@
 import logging
 
 import requests
-
 from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.models import RequestLog
 from corehq.motech.utils import pformat_json
-
 
 logger = logging.getLogger('motech')
 

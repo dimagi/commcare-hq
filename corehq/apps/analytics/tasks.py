@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 
 from django.conf import settings
 
-import csv342 as csv
+import csv
 import KISSmetrics
 import requests
 import six.moves.urllib.error

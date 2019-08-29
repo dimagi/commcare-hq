@@ -1,20 +1,23 @@
 
 import json
 
-from dimagi.ext.couchdbkit import SchemaProperty
+from django.utils.translation import ugettext_lazy as _
+
 from memoized import memoized
+
+from couchforms.signals import successful_form_received
+from dimagi.ext.couchdbkit import SchemaProperty
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.dhis2.dhis2_config import Dhis2Config
+from corehq.motech.dhis2.handler import send_data_to_dhis2
 from corehq.motech.repeaters.models import FormRepeater
-from corehq.motech.repeaters.repeater_generators import FormRepeaterJsonPayloadGenerator
+from corehq.motech.repeaters.repeater_generators import (
+    FormRepeaterJsonPayloadGenerator,
+)
 from corehq.motech.repeaters.signals import create_repeat_records
-from couchforms.signals import successful_form_received
-from django.utils.translation import ugettext_lazy as _
-
 from corehq.motech.repeaters.views.repeaters import AddDhis2RepeaterView
 from corehq.motech.requests import Requests
-from corehq.motech.dhis2.handler import send_data_to_dhis2
 from corehq.toggles import DHIS2_INTEGRATION
 from corehq.util import reverse
 

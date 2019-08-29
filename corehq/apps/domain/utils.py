@@ -8,7 +8,7 @@ from collections import Counter
 
 from django.conf import settings
 
-import csv342 as csv
+import csv
 from celery.task import task
 
 from couchexport.models import Format

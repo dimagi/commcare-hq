@@ -5,7 +5,7 @@ import mock
 import postgres_copy
 import six
 import sqlalchemy
-import csv342 as csv
+import csv
 
 from django.conf import settings
 from django.test.utils import override_settings

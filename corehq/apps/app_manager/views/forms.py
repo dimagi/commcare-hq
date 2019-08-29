@@ -113,7 +113,6 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.view_utils import set_file_download
 
 
@@ -225,7 +224,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
     for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
         if isinstance(condition.answer, str):
-            soft_assert_type_text(condition.answer)
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
     if actions_use_usercase(form.actions):

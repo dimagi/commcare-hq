@@ -1,4 +1,4 @@
-import csv342 as csv
+import csv
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 from casexml.apps.phone.models import SyncLog
