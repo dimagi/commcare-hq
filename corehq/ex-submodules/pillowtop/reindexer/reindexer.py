@@ -1,11 +1,9 @@
-
 from abc import ABCMeta, abstractmethod
 import argparse
 from datetime import datetime
 import time
 
 from elasticsearch import TransportError
-import six
 
 from corehq.apps.change_feed.document_types import is_deletion
 from corehq.util.doc_processor.interface import BaseDocProcessor, BulkDocProcessor
@@ -30,7 +28,7 @@ def valid_date(s):
         raise argparse.ArgumentTypeError(msg)
 
 
-class Reindexer(six.with_metaclass(ABCMeta)):
+class Reindexer(metaclass=ABCMeta):
     def clean(self):
         """
             Cleans the index.
@@ -46,7 +44,7 @@ class Reindexer(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
 
-class ReindexerFactory(six.with_metaclass(ABCMeta)):
+class ReindexerFactory(metaclass=ABCMeta):
     slug = None
     arg_contributors = None
 

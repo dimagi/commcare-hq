@@ -15,7 +15,6 @@ import csiphash
 import re
 
 import operator
-import six
 from ddtrace import tracer
 from django.conf import settings
 from django.db import connections, InternalError, transaction
@@ -155,7 +154,7 @@ class ShardAccessor(object):
 
     @staticmethod
     def hash_doc_id_python(doc_id):
-        if isinstance(doc_id, six.text_type):
+        if isinstance(doc_id, str):
             doc_id = doc_id.encode('utf-8')
         elif isinstance(doc_id, UUID):
             # Hash the 16-byte string
@@ -207,7 +206,7 @@ class ShardAccessor(object):
 DocIds = namedtuple('DocIds', 'doc_id primary_key')
 
 
-class ReindexAccessor(six.with_metaclass(ABCMeta)):
+class ReindexAccessor(metaclass=ABCMeta):
     primary_key_field_name = 'id'
 
     def __init__(self, limit_db_aliases=None):

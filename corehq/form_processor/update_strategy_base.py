@@ -1,8 +1,7 @@
 from abc import ABCMeta, abstractproperty, abstractmethod
-import six
 
 
-class UpdateStrategy(six.with_metaclass(ABCMeta, object)):
+class UpdateStrategy(metaclass=ABCMeta):
     @abstractproperty
     def case_implementation_class(self):
         pass

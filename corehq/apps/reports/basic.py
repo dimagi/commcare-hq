@@ -3,7 +3,6 @@ from functools import reduce
 from django.conf import settings
 
 import six
-from six.moves import range
 
 from dimagi.utils.couch.database import get_db
 
@@ -111,7 +110,7 @@ class ColumnCollector(type):
         return super(ColumnCollector, cls).__new__(cls, name, bases, attrs)
 
 
-class BasicTabularReport(six.with_metaclass(ColumnCollector, GenericTabularReport)):
+class BasicTabularReport(GenericTabularReport, metaclass=ColumnCollector):
     update_after = False
 
     @property

@@ -3,10 +3,9 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from datetime import datetime, timedelta
 
 import attr
-import six
 
 
-class TimePeriod(six.with_metaclass(ABCMeta, object)):
+class TimePeriod(metaclass=ABCMeta):
     """
     Base class for providing a time period interface
     """
