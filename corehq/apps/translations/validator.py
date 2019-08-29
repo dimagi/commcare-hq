@@ -14,7 +14,6 @@ from corehq.apps.translations.app_translations.utils import (
 )
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.generators import (
-    SKIP_TRANSFEX_STRING,
     AppTranslationsGenerator,
     Unique_ID,
 )
