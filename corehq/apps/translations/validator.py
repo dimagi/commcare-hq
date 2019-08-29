@@ -20,7 +20,6 @@ from corehq.apps.translations.const import (
 )
 from corehq.apps.translations.generators import (
     AppTranslationsGenerator,
-    SKIP_TRANSFEX_STRING,
 )
 
 COLUMNS_TO_COMPARE = {
@@ -72,20 +71,17 @@ class UploadedTranslationsValidator(object):
             self.app,
             lang=self.lang_to_compare,
             eligible_for_transifex_only=True,
-            exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
-            exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
         )}
         if self.single_sheet:
             self.expected_rows = get_bulk_app_single_sheet_by_name(
                 self.app,
                 self.lang_to_compare,
+                eligible_for_transifex_only=True,
             )
         else:
             self.expected_rows = get_bulk_app_sheets_by_name(
                 self.app,
                 eligible_for_transifex_only=True,
-                exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
-                exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
             )
 
     @memoized
