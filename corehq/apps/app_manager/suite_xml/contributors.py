@@ -11,7 +11,7 @@ class BaseSuiteContributor(metaclass=ABCMeta):
         self.entries_helper = EntriesHelper(app, modules, build_profile_id=self.build_profile_id)
 
 
-class SectionContributor(BaseSuiteContributor):
+class SectionContributor(BaseSuiteContributor, metaclass=ABCMeta):
     @abstractproperty
     def section_name(self):
         pass
@@ -21,7 +21,7 @@ class SectionContributor(BaseSuiteContributor):
         return []
 
 
-class SuiteContributorByModule(BaseSuiteContributor):
+class SuiteContributorByModule(BaseSuiteContributor, metaclass=ABCMeta):
     section = None
 
     @abstractmethod
@@ -29,7 +29,7 @@ class SuiteContributorByModule(BaseSuiteContributor):
         return []
 
 
-class PostProcessor(BaseSuiteContributor):
+class PostProcessor(BaseSuiteContributor, metaclass=ABCMeta):
     @abstractmethod
     def update_suite(self):
         pass
