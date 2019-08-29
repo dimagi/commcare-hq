@@ -120,7 +120,7 @@ class ConsumptionForm(forms.Form):
         self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
 
         layout = []
-        products = SQLProduct.objects.filter(domain=domain)
+        products = SQLProduct.active_objects.filter(domain=domain)
         for product in products:
             field_name = 'default_%s' % product.product_id
             display = _('Default %(product_name)s') % {'product_name': product.name}
