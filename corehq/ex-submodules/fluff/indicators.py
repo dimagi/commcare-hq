@@ -28,7 +28,7 @@ class FlatField(schema.StringProperty):
 
     def calculate(self, item):
         result = self.fn(item)
-        assert isinstance(result, str), type(item)
+        assert isinstance(result, str), type(result)
         return result
 
 
