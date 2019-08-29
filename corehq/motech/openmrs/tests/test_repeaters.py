@@ -46,7 +46,6 @@ from corehq.motech.value_source import (
 )
 from corehq.util.test_utils import TestFileMixin, _create_case
 
-
 DOMAIN = 'openmrs-repeater-tests'
 PATIENT_SEARCH_RESPONSE = json.loads("""{
     "results": [

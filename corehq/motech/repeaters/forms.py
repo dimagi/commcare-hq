@@ -2,19 +2,20 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.locations.forms import LocationSelectWidget
-from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
-from corehq.motech.repeaters.repeater_generators import RegisterGenerator
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+from memoized import memoized
 
 from corehq.apps.es.users import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.locations.forms import LocationSelectWidget
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
 from corehq.apps.users.util import raw_username
-
-from memoized import memoized
+from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
+from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 
 from .models import BASIC_AUTH, DIGEST_AUTH
 

@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from itertools import groupby
 
 from django.conf import settings
@@ -128,13 +129,17 @@ class Command(BaseCommand):
             diff_process=self.diff_process,
         )
 
+        return_code = 0
         if self.live_migrate:
             print("Live migration completed.")
             has_diffs = True
         else:
             has_diffs = self.print_stats(domain, short=True, diffs_only=True)
+            return_code = int(has_diffs)
         if has_diffs:
             print("\nRun `diff` or `stats [--verbose]` for more details.\n")
+        if return_code:
+            sys.exit(return_code)
 
     def do_reset(self, domain):
         if not self.no_input:
@@ -179,6 +184,9 @@ class Command(BaseCommand):
         has_diffs = False
         for doc_type in doc_types():
             form_ids_in_couch = set(get_form_ids_by_type(domain, doc_type))
+            if doc_type == "XFormInstance":
+                form_ids_in_couch.update(get_doc_ids_in_domain_by_type(
+                    domain, "HQSubmission", XFormInstance.get_db()))
             form_ids_in_sql = set(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type))
             diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
             has_diffs |= self._print_status(

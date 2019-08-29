@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
-import csv342 as csv
+import csv
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain

@@ -3,7 +3,7 @@ import re
 
 from django.conf import settings
 
-import csv342 as csv
+import csv
 import six
 from six.moves import zip
 

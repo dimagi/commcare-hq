@@ -21,16 +21,6 @@ from corehq.messaging.tasks import initiate_messaging_rule_run
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 import json
-import six
-
-
-def open_for_json_read(path):
-    # json.dumps returns bytes in python2, but unicode in python3
-    # this function mirrors open_for_json_write in export_conditional_alerts
-    if six.PY2:
-        return open(path, 'rb')
-
-    return open(path, 'r', encoding='utf-8')
 
 
 class Command(BaseCommand):
@@ -52,7 +42,7 @@ class Command(BaseCommand):
             raise CommandError("Project space '%s' not found" % domain)
 
         json_rules = []
-        with open_for_json_read(filename) as f:
+        with open(filename, 'r', encoding='utf-8') as f:
             for line in f:
                 json_rules.append(json.loads(line))
 

@@ -11,7 +11,7 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
-import csv342 as csv
+import csv
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request

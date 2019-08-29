@@ -8,7 +8,6 @@ import yaml
 from memoized import memoized
 
 from corehq.apps.app_manager.util import app_doc_types
-from corehq.util.python_compatibility import soft_assert_type_text
 
 PROFILE_SETTINGS_TO_TRANSLATE = [
     'name',
@@ -28,7 +27,6 @@ def _translate_setting(setting, prop):
     if not isinstance(value, str):
         return [ugettext(v) for v in value]
     else:
-        soft_assert_type_text(value)
         return ugettext(value)
 
 

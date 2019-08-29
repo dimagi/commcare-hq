@@ -11,11 +11,10 @@ from datetime import date, datetime, timedelta
 from io import BytesIO, open
 
 from django.conf import settings
-from django.core.cache import cache
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 
-import csv342 as csv
+import csv
 import six
 from celery import chain
 from celery.schedules import crontab
@@ -105,6 +104,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateTHRForm
 )
 from custom.icds_reports.models.helper import IcdsFile
+from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.reports.disha import build_dumps_for_month, DishaDump
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.issnip_monthly_register import (
@@ -399,9 +399,6 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             'aggregate_awc_daily': aggregate_awc_daily,
         }[func_name]
 
-        if six.PY2 and isinstance(date, bytes):
-            date = date.decode('utf-8')
-
         db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
         if not db_alias:
             return
@@ -446,9 +443,6 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
             '_agg_beneficiary_form': _agg_beneficiary_form,
             '_agg_thr_table': _agg_thr_table
         }[func_name]
-
-        if six.PY2 and isinstance(date, bytes):
-            date = date.decode('utf-8')
 
         db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
         if not db_alias:
@@ -675,8 +669,6 @@ def _agg_thr_table(state_id, day):
 def email_dashboad_team(aggregation_date, aggregation_start_time, force_citus=False):
     aggregation_start_time = aggregation_start_time.astimezone(INDIA_TIMEZONE)
     aggregation_finish_time = datetime.now(INDIA_TIMEZONE)
-    if six.PY2 and isinstance(aggregation_date, bytes):
-        aggregation_date = aggregation_date.decode('utf-8')
 
     # temporary soft assert to verify it's completing
     if not settings.UNIT_TESTING:
@@ -755,16 +747,16 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 show_test=include_test,
                 beta=beta
             ).get_excel_data(location)
-            if beta:
-                if file_format == 'xlsx':
-                    cache_key = create_child_report_excel_file(
-                        excel_data,
-                        data_type,
-                        config['month'].strftime("%B %Y"),
-                        aggregation_level,
-                    )
-                else:
-                    cache_key = create_excel_file(excel_data, data_type, file_format)
+
+            if file_format == 'xlsx':
+                cache_key = create_child_report_excel_file(
+                    excel_data,
+                    data_type,
+                    config['month'].strftime("%B %Y"),
+                    aggregation_level,
+                )
+            else:
+                cache_key = create_excel_file(excel_data, data_type, file_format)
 
         elif indicator == PREGNANT_WOMEN_EXPORT:
             data_type = 'Pregnant_Women'
@@ -865,8 +857,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             else:
                 cache_key = create_excel_file(excel_data, data_type, file_format)
 
-        if (indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT) and
-            (beta is False or indicator !=CHILDREN_EXPORT)):
+        if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT):
             if file_format == 'xlsx' and beta:
                 cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
             else:
@@ -1049,88 +1040,102 @@ def _get_value(data, field):
     acks_late=True,
     queue='icds_aggregation_queue'
 )
-def collect_inactive_awws():
-    celery_task_logger.info("Started updating the Inactive AWW")
-    filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
-    last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
-
-    # If last sync not exist then collect initial data
-    if not last_sync:
-        last_sync_date = datetime(2017, 3, 1).date()
-    else:
-        last_sync_date = last_sync.file_added
-
-    _aggregate_inactive_aww(last_sync_date)
+def collect_inactive_awws_task():
+    collect_inactive_awws().delay()
     if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
-        _aggregate_inactive_aww.delay(last_sync_date, force_citus=True)
+        collect_inactive_awws.delay(force_citus=True)
 
-    celery_task_logger.info("Collecting inactive AWW to generate zip file")
-    excel_data = AggregateInactiveAWW.objects.all()
 
-    celery_task_logger.info("Preparing data to csv file")
-    columns = [x.name for x in AggregateInactiveAWW._meta.fields] + [
-        'days_since_start',
-        'days_inactive'
-    ]
-    rows = [columns]
-    for data in excel_data:
-        rows.append(
-            [_get_value(data, field) for field in columns]
-        )
+@task(queue='icds_aggregation_queue')
+def collect_inactive_awws(force_citus=False):
+    with force_citus_engine(force_citus):
+        celery_task_logger.info("Started updating the Inactive AWW")
+        filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
+        last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
 
-    celery_task_logger.info("Creating csv file")
-    export_file = BytesIO()
-    export_from_tables([['inactive AWWSs', rows]], export_file, 'csv')
+        # If last sync not exist then collect initial data
+        if not last_sync:
+            last_sync_date = datetime(2017, 3, 1).date()
+        else:
+            last_sync_date = last_sync.file_added
 
-    celery_task_logger.info("Saving csv file in blobdb")
-    sync = IcdsFile(blob_id=filename, data_type='inactive_awws')
-    sync.store_file_in_blobdb(export_file)
-    sync.save()
-    celery_task_logger.info("Ended updating the Inactive AWW")
+        _aggregate_inactive_aww(last_sync_date)
+
+        celery_task_logger.info("Collecting inactive AWW to generate zip file")
+        excel_data = AggregateInactiveAWW.objects.all()
+
+        celery_task_logger.info("Preparing data to csv file")
+        columns = [x.name for x in AggregateInactiveAWW._meta.fields] + [
+            'days_since_start',
+            'days_inactive'
+        ]
+        rows = [columns]
+        for data in excel_data:
+            rows.append(
+                [_get_value(data, field) for field in columns]
+            )
+
+        celery_task_logger.info("Creating csv file")
+        export_file = BytesIO()
+        export_from_tables([['inactive AWWSs', rows]], export_file, 'csv')
+
+        celery_task_logger.info("Saving csv file in blobdb")
+        sync = IcdsFile(blob_id=filename, data_type='inactive_awws')
+        sync.store_file_in_blobdb(export_file)
+        sync.save()
+        celery_task_logger.info("Ended updating the Inactive AWW")
 
 
 @periodic_task(run_every=crontab(day_of_week='monday', hour=0, minute=0),
                acks_late=True, queue='background_queue')
-def collect_inactive_dashboard_users():
-    celery_task_logger.info("Started updating the Inactive Dashboard users")
+def collect_inactive_dashboard_users_task():
+    collect_inactive_dashboard_users.delay()
+    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
+        collect_inactive_dashboard_users.delay(force_citus=True)
 
-    end_date = datetime.utcnow()
-    start_date_week = end_date - timedelta(days=7)
-    start_date_month = end_date - timedelta(days=30)
 
-    not_logged_in_week = get_dashboard_users_not_logged_in(start_date_week, end_date)
-    not_logged_in_month = get_dashboard_users_not_logged_in(start_date_month, end_date)
+@task(queue='background_queue')
+def collect_inactive_dashboard_users(force_citus=False):
+    with force_citus_engine(force_citus):
+        celery_task_logger.info("Started updating the Inactive Dashboard users")
 
-    week_file_name = 'dashboard_users_not_logged_in_{:%Y-%m-%d}_to_{:%Y-%m-%d}.csv'.format(
-        start_date_week, end_date
-    )
-    month_file_name = 'dashboard_users_not_logged_in_{:%Y-%m-%d}_to_{:%Y-%m-%d}.csv'.format(
-        start_date_month, end_date
-    )
-    rows_not_logged_in_week = _get_inactive_dashboard_user_rows(not_logged_in_week)
-    rows_not_logged_in_month = _get_inactive_dashboard_user_rows(not_logged_in_month)
+        end_date = datetime.utcnow()
+        start_date_week = end_date - timedelta(days=7)
+        start_date_month = end_date - timedelta(days=30)
 
-    sync = IcdsFile(blob_id="inactive_dashboad_users_%s.zip" % date.today().strftime('%Y-%m-%d'),
-                    data_type='inactive_dashboard_users')
+        not_logged_in_week = get_dashboard_users_not_logged_in(start_date_week, end_date)
+        not_logged_in_month = get_dashboard_users_not_logged_in(start_date_month, end_date)
 
-    in_memory = BytesIO()
-    zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
+        week_file_name = 'dashboard_users_not_logged_in_{:%Y-%m-%d}_to_{:%Y-%m-%d}.csv'.format(
+            start_date_week, end_date
+        )
+        month_file_name = 'dashboard_users_not_logged_in_{:%Y-%m-%d}_to_{:%Y-%m-%d}.csv'.format(
+            start_date_month, end_date
+        )
+        rows_not_logged_in_week = _get_inactive_dashboard_user_rows(not_logged_in_week)
+        rows_not_logged_in_month = _get_inactive_dashboard_user_rows(not_logged_in_month)
 
-    zip_file.writestr(week_file_name,
-                      '\n'.join(rows_not_logged_in_week)
-                      )
-    zip_file.writestr(month_file_name,
-                      '\n'.join(rows_not_logged_in_month)
-                      )
+        sync = IcdsFile(blob_id="inactive_dashboad_users_%s.zip" % date.today().strftime('%Y-%m-%d'),
+                        data_type='inactive_dashboard_users')
 
-    zip_file.close()
+        in_memory = BytesIO()
+        zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
 
-    # we need to reset buffer position to the beginning after creating zip, if not read() will return empty string
-    # we read this to save file in blobdb
-    in_memory.seek(0)
-    sync.store_file_in_blobdb(in_memory)
+        zip_file.writestr(week_file_name,
+                          '\n'.join(rows_not_logged_in_week)
+                          )
+        zip_file.writestr(month_file_name,
+                          '\n'.join(rows_not_logged_in_month)
+                          )
 
-    sync.save()
+        zip_file.close()
+
+        # we need to reset buffer position to the beginning after creating zip, if not read() will return empty string
+        # we read this to save file in blobdb
+        in_memory.seek(0)
+        sync.store_file_in_blobdb(in_memory)
+
+        sync.save()
 
 
 def _get_inactive_dashboard_user_rows(not_logged_in_week):
@@ -1308,14 +1313,9 @@ def setup_aggregation(agg_date):
             _create_aggregate_functions(cursor)
 
         _update_aggregate_locations_tables()
-    state_ids = list(SQLLocation.objects
-                     .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
-                     .values_list('location_id', flat=True))
-    cache.set('agg_state_ids_{}'.format(agg_date), state_ids, ONE_DAY * 2)
 
 
-def _child_health_monthly_aggregation(day):
-    state_ids = cache.get('agg_state_ids_{}'.format(date))
+def _child_health_monthly_aggregation(day, state_ids):
     helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
 
     with get_cursor(ChildHealthMonthly) as cursor:

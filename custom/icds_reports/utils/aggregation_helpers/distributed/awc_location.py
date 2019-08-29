@@ -2,7 +2,7 @@
 import io
 import json
 
-import csv342 as csv
+import csv
 from six.moves import map, range
 
 from corehq.apps.locations.models import SQLLocation

@@ -38,8 +38,8 @@ from couchdbkit.exceptions import BadValueError
 from jsonpath_rw import jsonpath, parse
 from lxml import etree
 from memoized import memoized
-from six.moves.urllib.parse import urljoin
-from six.moves.urllib.request import urlopen
+from urllib.parse import urljoin
+from urllib.request import urlopen
 
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -179,7 +179,6 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.util import bitly, view_utils
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext, time_method
@@ -1205,8 +1204,7 @@ class FormBase(DocumentSchema):
                 include_translations=include_translations,
             )
         except XFormException as e:
-            raise XFormException(_('Error in form "{}": {}')
-                                 .format(trans(self.name), str(e)))
+            raise XFormException(_('Error in form "{}": {}').format(trans(self.name), e))
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1410,7 +1408,6 @@ class NavMenuItemMediaMixin(DocumentSchema):
                 # Convert this to a dict, using a dummy key because we
                 # don't know the app's supported or default lang yet.
                 if isinstance(old_media, str):
-                    soft_assert_type_text(old_media)
                     new_media = {'default': old_media}
                     data[media_attr] = new_media
                 elif isinstance(old_media, dict):
@@ -3499,7 +3496,6 @@ class ReportAppConfig(DocumentSchema):
         old_description = doc.get('description')
         if old_description:
             if isinstance(old_description, str) and not doc.get('xpath_description'):
-                soft_assert_type_text(old_description)
                 doc['xpath_description'] = old_description
             elif isinstance(old_description, dict) and not doc.get('localized_description'):
                 doc['localized_description'] = old_description
@@ -4042,7 +4038,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
             del data['commcare_tag']
         if "built_with" in data and isinstance(data['built_with'], str):
-            soft_assert_type_text(data['built_with'])
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
         if 'native_input' in data:
@@ -5001,7 +4996,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                     raise XFormException(_('Unable to validate the forms due to a server error. '
                                            'Please try again later.'))
                 except XFormException as e:
-                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), str(e)))
+                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), e))
         return files
 
     @time_method()
@@ -5604,7 +5599,6 @@ class LinkedApplication(Application):
 
 def import_app(app_id_or_source, domain, source_properties=None, request=None):
     if isinstance(app_id_or_source, str):
-        soft_assert_type_text(app_id_or_source)
         source_app = get_app(None, app_id_or_source)
     else:
         source_app = wrap_app(app_id_or_source)

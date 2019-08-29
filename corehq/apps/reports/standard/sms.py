@@ -12,7 +12,6 @@ from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-import six
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
@@ -100,7 +99,6 @@ from corehq.messaging.scheduling.views import (
     EditScheduleView,
 )
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import absolute_reverse
 
@@ -658,8 +656,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     @memoized
     def phone_number_filter(self):
         value = PhoneNumberFilter.get_value(self.request, self.domain)
-        if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+        if isinstance(value, str):
             return value.strip()
 
         return None
@@ -1132,8 +1129,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     @memoized
     def phone_number_filter(self):
         value = self._filter['phone_number_filter']
-        if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+        if isinstance(value, str):
             return apply_leniency(value.strip())
 
         return None

@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand, call_command
 
-import csv342 as csv
+import csv
 
 from corehq.apps.es.cases import CaseES
 from corehq.apps.hqcase.utils import resave_case

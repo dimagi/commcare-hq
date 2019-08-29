@@ -87,6 +87,16 @@ class ArgsProvider(object):
         :returns: tuple of args list and kwargs dict"""
         raise NotImplementedError
 
+    def adjust_results(self, results, args, kwargs):
+        """Adjust results given args and kwargs used to retrieve them
+
+        :param results: list of results loaded with `args` and `kwargs`.
+        :param args: args used to load results.
+        :param kwargs: kwargs used to load results.
+        :returns: adjusted list of results.
+        """
+        return results
+
     def get_next_args(self, last_item, *last_args, **last_kwargs):
         """Return the next set of args and kwargs
 
@@ -143,6 +153,7 @@ def paginate_function(data_function, args_provider, event_handler=None):
                 continue
             raise
 
+        results = args_provider.adjust_results(results, args, kwargs)
         event_handler.page(results)
         for item in results:
             yield item
@@ -193,6 +204,9 @@ class ResumableArgsProvider(ArgsProvider):
         if self.resume:
             return unpack_jsonobject(self.resume_args), unpack_jsonobject(self.resume_kwargs)
         return self.args_provider.get_initial_args()
+
+    def adjust_results(self, results, args, kwargs):
+        return self.args_provider.adjust_results(results, args, kwargs)
 
     def get_next_args(self, last_item, *last_args, **last_kwargs):
         return self.args_provider.get_next_args(last_item, *last_args, **last_kwargs)
