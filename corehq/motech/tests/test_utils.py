@@ -96,20 +96,34 @@ class DecryptTests(SimpleTestCase):
 
 class PFormatJSONTests(SimpleTestCase):
 
-    def test_valid_json(self):
+    def test_valid_json_string(self):
         self.assertEqual(
             pformat_json('{"ham": "spam", "eggs": "spam"}'),
-            '{\n  "eggs": "spam",\n  "ham": "spam"\n}' if six.PY3 else '{\n  "eggs": "spam", \n  "ham": "spam"\n}'
-        )
-        self.assertEqual(
-            pformat_json({'ham': 'spam', 'eggs': 'spam'}),
-            '{\n  "eggs": "spam",\n  "ham": "spam"\n}' if six.PY3 else '{\n  "eggs": "spam", \n  "ham": "spam"\n}'
+            '{\n  "eggs": "spam",\n  "ham": "spam"\n}'
         )
 
-    def test_invalid_json(self):
+    def test_dict(self):
+        self.assertEqual(
+            pformat_json({'ham': 'spam', 'eggs': 'spam'}),
+            '{\n  "eggs": "spam",\n  "ham": "spam"\n}'
+        )
+
+    def test_valid_json_bytes(self):
+        self.assertEqual(
+            pformat_json(b'{"ham": "spam", "eggs": "spam"}'),
+            '{\n  "eggs": "spam",\n  "ham": "spam"\n}'
+        )
+
+    def test_invalid_json_string(self):
         self.assertEqual(
             pformat_json('ham spam eggs spam'),
             'ham spam eggs spam'
+        )
+
+    def test_invalid_json_bytes(self):
+        self.assertEqual(
+            pformat_json(b'{"ham": "spam", "spam", "spa'),
+            b'{"ham": "spam", "spam", "spa'
         )
 
     def test_empty_string(self):
