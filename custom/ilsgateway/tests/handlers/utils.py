@@ -1,6 +1,7 @@
 import six
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import CommtrackActionConfig
+from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -21,8 +22,7 @@ TEST_DOMAIN = 'ils-test-domain'
 
 def create_products(cls, domain_name, codes):
     for code in codes:
-        product = Product(domain=domain_name, name=code, code=code, unit='each')
-        product.save()
+        product = make_product(domain=domain_name, name=code, code=code, unit='each')
         setattr(cls, code, product)
 
 

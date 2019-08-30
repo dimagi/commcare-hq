@@ -1,8 +1,9 @@
 from datetime import datetime
 from django.test import TestCase
+
+from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import LocationType, make_location
-from corehq.apps.products.models import Product
 from custom.ilsgateway.models import ProductAvailabilityData, DeliveryGroupReport, Alert, OrganizationSummary, \
     GroupSummary, SupplyPointStatus, ReportRun, ILSNotes, SupervisionDocument
 
@@ -10,8 +11,7 @@ from custom.ilsgateway.models import ProductAvailabilityData, DeliveryGroupRepor
 class TestDeleteDomain(TestCase):
 
     def _create_data(self, domain_name):
-        product = Product(domain=domain_name, name='test-product')
-        product.save()
+        product = make_product(domain=domain_name, name='test-product')
 
         location = make_location(
             domain=domain_name,
@@ -46,7 +46,7 @@ class TestDeleteDomain(TestCase):
         )
 
         ProductAvailabilityData.objects.create(
-            product=product.get_id,
+            product=product.product_id,
             date=datetime.utcnow(),
             location_id=location.get_id
         )

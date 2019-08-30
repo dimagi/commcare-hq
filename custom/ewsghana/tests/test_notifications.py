@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import mock
 
+from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
@@ -47,8 +48,7 @@ class MissingReportNotificationTestCase(EWSTestCase):
             username='test', domain=self.TEST_DOMAIN, phone_number='+4444', location=self.district,
             email='test@example.com', password='dummy', user_data={}
         )
-        self.product = Product(domain=self.TEST_DOMAIN, name='Test Product', code_='tp', unit='each')
-        self.product.save()
+        self.product = make_product(domain=self.TEST_DOMAIN, name='Test Product', code='tp', unit='each')
 
     def tearDown(self):
         delete_all_locations()
@@ -105,10 +105,8 @@ class MissingReportNotificationTestCase(EWSTestCase):
             password='dummy', email='test@example.com', user_data={}, program_id=self.program.get_id
         )
 
-        other_product = Product(domain=self.TEST_DOMAIN, name='Test Product2', code_='tp2', unit='each')
-        other_product2 = Product(domain=self.TEST_DOMAIN, name='Test Product3', code_='tp3', unit='each')
-        other_product.save()
-        other_product2.save()
+        other_product = make_product(domain=self.TEST_DOMAIN, name='Test Product2', code='tp2', unit='each')
+        other_product2 = make_product(domain=self.TEST_DOMAIN, name='Test Product3', code='tp3', unit='each')
         assign_products_to_location(self.facility, [self.product, other_product, other_product2])
 
         generated = list(OnGoingNonReporting(self.TEST_DOMAIN).get_notifications())
@@ -129,10 +127,9 @@ class MissingReportNotificationTestCase(EWSTestCase):
 
         create_stock_report(self.facility, {'tp': 100}, date=datetime.utcnow() - timedelta(days=365))
 
-        other_product = Product(
-            domain=self.TEST_DOMAIN, name='Test Product2', code_='tp2', unit='each', program_id=self.program.get_id
+        other_product = make_product(
+            domain=self.TEST_DOMAIN, name='Test Product2', code='tp2', unit='each', program_id=self.program.get_id
         )
-        other_product.save()
         assign_products_to_location(self.facility, [self.product, other_product])
         generated = list(OnGoingNonReporting(self.TEST_DOMAIN).get_notifications())
 
@@ -143,10 +140,9 @@ class MissingReportNotificationTestCase(EWSTestCase):
         create_stock_report(self.facility, {'tp': 100}, date=datetime.utcnow())
         self.product.program_id = self.program.get_id
         self.product.save()
-        other_product = Product(
-            domain=self.TEST_DOMAIN, name='Test Product2', code_='tp2', unit='each', program_id=self.program.get_id
+        other_product = make_product(
+            domain=self.TEST_DOMAIN, name='Test Product2', code='tp2', unit='each', program_id=self.program.get_id
         )
-        other_product.save()
         assign_products_to_location(self.facility, [self.product, other_product])
         generated = list(OnGoingNonReporting(self.TEST_DOMAIN).get_notifications())
 
@@ -156,10 +152,9 @@ class MissingReportNotificationTestCase(EWSTestCase):
         create_stock_report(self.facility, {'tp': 100}, date=datetime.utcnow())
         self.product.program_id = self.program2.get_id
         self.product.save()
-        other_product = Product(
-            domain=self.TEST_DOMAIN, name='Test Product2', code_='tp2', unit='each', program_id=self.program.get_id
+        other_product = make_product(
+            domain=self.TEST_DOMAIN, name='Test Product2', code='tp2', unit='each', program_id=self.program.get_id
         )
-        other_product.save()
         assign_products_to_location(self.facility, [self.product, other_product])
         generated = list(OnGoingNonReporting(self.TEST_DOMAIN).get_notifications())
 
@@ -186,8 +181,7 @@ class StockoutReportNotificationTestCase(EWSTestCase):
             username='test', domain=self.TEST_DOMAIN, phone_number='+4444', location=self.district,
             email='test@example.com', password='dummy', user_data={}
         )
-        self.product = Product(domain=self.TEST_DOMAIN, name='Test Product', code_='tp', unit='each')
-        self.product.save()
+        self.product = make_product(domain=self.TEST_DOMAIN, name='Test Product', code='tp', unit='each')
 
     def tearDown(self):
         delete_all_locations()
@@ -244,8 +238,7 @@ class StockoutReportNotificationTestCase(EWSTestCase):
 
     def test_partial_product_stockout(self):
         """Multiple products but only one is stocked out. Should be reported."""
-        other_product = Product(domain=self.TEST_DOMAIN, name='Test Product2', code_='tp2', unit='each')
-        other_product.save()
+        other_product = make_product(domain=self.TEST_DOMAIN, name='Test Product2', code_='tp2', unit='each')
 
         assign_products_to_location(self.facility, [self.product, other_product])
 
@@ -462,9 +455,8 @@ class UrgentNonReportingNotificationTestCase(EWSTestCase):
 
     def setUp(self):
         super(UrgentNonReportingNotificationTestCase, self).setUp()
-        self.product = Product(domain=self.TEST_DOMAIN, name='Test Product', code_='tp', unit='each',
+        self.product = make_product(domain=self.TEST_DOMAIN, name='Test Product', code='tp', unit='each',
                                program_id=self.program.get_id)
-        self.product.save()
 
         self.country = make_loc('test-country', 'Test country', self.TEST_DOMAIN, 'country')
         self.region = make_loc('test-region', 'Test Region', self.TEST_DOMAIN, 'region', parent=self.country)

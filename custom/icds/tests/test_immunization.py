@@ -1,23 +1,27 @@
-from corehq.apps.commtrack.tests.util import get_single_balance_block
+from datetime import date
+
+from mock import patch
+
+from corehq.apps.commtrack.tests.util import (
+    get_single_balance_block,
+    make_product,
+)
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.products.models import Product
 from corehq.form_processor.models import LedgerValue
 from custom.icds.case_relationships import (
-    child_person_case_from_tasks_case,
     ccs_record_case_from_tasks_case,
+    child_person_case_from_tasks_case,
 )
 from custom.icds.rules.immunization import (
-    get_immunization_products,
-    get_tasks_case_immunization_ledger_values,
-    get_immunization_date,
-    get_immunization_anchor_date,
-    get_map,
     calculate_immunization_window,
+    get_immunization_anchor_date,
+    get_immunization_date,
+    get_immunization_products,
+    get_map,
+    get_tasks_case_immunization_ledger_values,
     immunization_is_due,
 )
 from custom.icds.tests.base import BaseICDSTest
-from datetime import date
-from mock import patch
 
 
 class ImmunizationUtilTestCase(BaseICDSTest):
@@ -82,7 +86,7 @@ class ImmunizationUtilTestCase(BaseICDSTest):
     @classmethod
     def create_product(cls, code, schedule, valid, expires, predecessor_id='', days_after_previous='',
             schedule_flag=''):
-        p = Product(
+        return make_product(
             domain=cls.domain,
             name=code,
             code=code,
@@ -95,8 +99,6 @@ class ImmunizationUtilTestCase(BaseICDSTest):
                 'schedule_flag': schedule_flag,
             }
         )
-        p.save()
-        return p
 
     def test_get_immunization_products(self):
         self.assertItemsEqual(

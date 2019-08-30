@@ -3,7 +3,7 @@ from datetime import datetime
 from casexml.apps.stock.models import StockReport
 
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.products.models import Product
+from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.sms.models import SMS
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 
@@ -38,11 +38,9 @@ class TestUrgentAlerts(EWSTestCase):
         cls.loc4 = make_loc(code="tf4", name="Test Facility 4", type="Hospital", domain=TEST_DOMAIN,
                             parent=cls.district)
 
-        cls.product = Product(domain=TEST_DOMAIN, name='Test Product', code_='tp', unit='each')
-        cls.product.save()
+        cls.product = make_product(domain=TEST_DOMAIN, name='Test Product', code='tp', unit='each')
 
-        cls.product2 = Product(domain=TEST_DOMAIN, name='Test Product2', code_='tp2', unit='each')
-        cls.product2.save()
+        cls.product2 = make_product(domain=TEST_DOMAIN, name='Test Product2', code='tp2', unit='each')
 
         cls.user1 = bootstrap_web_user(
             username='test1', phone_number='1111', location=cls.district, domain=TEST_DOMAIN,

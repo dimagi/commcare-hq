@@ -2,9 +2,9 @@
 from django.test.testcases import TestCase
 
 from casexml.apps.case.tests.util import delete_all_xforms
+from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, make_location
-from corehq.apps.products.models import Product
 from corehq.apps.users.models import CommCareUser
 from corehq.sql_db.connections import connection_manager
 from custom.intrahealth.models import (
@@ -47,13 +47,12 @@ class IntraHealthTestCase(TestCase):
         cls.mobile_worker.location_id = cls.pps.get_id
         cls.mobile_worker.save()
 
-        cls.product = Product(_id='81457658bdedd663f8b0bdadb19d8f22', name='ASAQ Nourisson', domain=TEST_DOMAIN)
-        cls.product2 = Product(
-            _id='81457658bdedd663f8b0bdadb19d83d8', name='ASAQ Petit Enfant', domain=TEST_DOMAIN
+        cls.product = make_product(
+            TEST_DOMAIN, 'ASAQ Nourisson', 'ASAQ Nourisson', product_id='81457658bdedd663f8b0bdadb19d8f22'
         )
-
-        cls.product.save()
-        cls.product2.save()
+        cls.product2 = make_product(
+            TEST_DOMAIN, 'ASAQ Petit Enfant', 'ASAQ Petit Enfant', product_id='81457658bdedd663f8b0bdadb19d83d8'
+        )
 
         cls.recap_table = RecapPassageFluff._table
         cls.intra_table = IntraHealthFluff._table

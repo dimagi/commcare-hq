@@ -1,4 +1,3 @@
-
 import datetime
 import re
 
@@ -12,7 +11,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchforms.models import XFormInstance
 
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig
-from corehq.apps.commtrack.tests.util import make_loc
+from corehq.apps.commtrack.tests.util import make_loc, make_product
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -117,24 +116,19 @@ class EWSScriptTest(EWSTestCase, TestScript):
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         domain = prepare_domain(TEST_DOMAIN)
 
-        p = Product(domain=domain.name, name='Jadelle', code='jd', unit='each')
-        p.save()
-        p2 = Product(domain=domain.name, name='Male Condom', code='mc', unit='each')
-        p2.save()
-        p3 = Product(domain=domain.name, name='Lofem', code='lf', unit='each')
-        p3.save()
-        p4 = Product(domain=domain.name, name='Ng', code='ng', unit='each')
-        p4.save()
-        p5 = Product(domain=domain.name, name='Micro-G', code='mg', unit='each')
-        p5.save()
+        make_product(domain=domain.name, name='Jadelle', code='jd', unit='each')
+        p2 = make_product(domain=domain.name, name='Male Condom', code='mc', unit='each')
+        p3 = make_product(domain=domain.name, name='Lofem', code='lf', unit='each')
+        make_product(domain=domain.name, name='Ng', code='ng', unit='each')
+        p5 = make_product(domain=domain.name, name='Micro-G', code='mg', unit='each')
 
-        Product(domain=domain.name, name='Ad', code='ad', unit='each').save()
-        Product(domain=domain.name, name='Al', code='al', unit='each').save()
-        Product(domain=domain.name, name='Qu', code='qu', unit='each').save()
-        Product(domain=domain.name, name='Sp', code='sp', unit='each').save()
-        Product(domain=domain.name, name='Rd', code='rd', unit='each').save()
-        Product(domain=domain.name, name='Ov', code='ov', unit='each').save()
-        Product(domain=domain.name, name='Ml', code='ml', unit='each').save()
+        make_product(domain=domain.name, name='Ad', code='ad', unit='each')
+        make_product(domain=domain.name, name='Al', code='al', unit='each')
+        make_product(domain=domain.name, name='Qu', code='qu', unit='each')
+        make_product(domain=domain.name, name='Sp', code='sp', unit='each')
+        make_product(domain=domain.name, name='Rd', code='rd', unit='each')
+        make_product(domain=domain.name, name='Ov', code='ov', unit='each')
+        make_product(domain=domain.name, name='Ml', code='ml', unit='each')
 
         national = make_loc(code='country', name='Test national', type='country', domain=domain.name)
         region = make_loc(code='region', name='Test region', type='region', domain=domain.name, parent=national)

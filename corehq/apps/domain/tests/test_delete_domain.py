@@ -44,6 +44,7 @@ from corehq.apps.case_search.models import (
     FuzzyProperties,
     IgnorePatterns,
 )
+from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_interfaces.models import (
@@ -63,7 +64,7 @@ from corehq.apps.locations.models import (
     make_location,
 )
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.sms.models import (
@@ -105,8 +106,7 @@ from corehq.motech.models import RequestLog
 class TestDeleteDomain(TestCase):
 
     def _create_data(self, domain_name, i):
-        product = Product(domain=domain_name, name='test-{}'.format(i))
-        product.save()
+        product = make_product(domain_name, name='test-{}'.format(i), code='code-{}'.format(i))
 
         location = make_location(
             domain=domain_name,

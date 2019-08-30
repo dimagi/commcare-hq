@@ -103,13 +103,17 @@ def bootstrap_location_types(domain):
         previous = location_type
 
 
-def make_product(domain, name, code, program_id=None):
+def make_product(domain, name, code, program_id=None, product_id=None, unit=None, product_data=None):
     p = Product(
         domain=domain,
         name=name,
         code=code.lower(),
-        program_id=program_id
+        program_id=program_id,
+        product_data=product_data,
+        unit=unit,
     )
+    if product_id:
+        p._id = product_id
     p.save()
     return p
 

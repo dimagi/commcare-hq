@@ -1,4 +1,5 @@
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.commtrack.tests.util import make_product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from custom.ewsghana.tests.handlers.utils import EWSTestCase
 from custom.ewsghana.tests.test_reminders import create_stock_report
@@ -21,12 +22,8 @@ class EWSTestReminders(EWSTestCase):
     def setUp(self):
         super(EWSTestReminders, self).setUp()
         self.facility = make_loc('test-faciity', 'Test Facility', TEST_DOMAIN, 'Polyclinic')
-        self.commodity = Product(domain=TEST_DOMAIN, name='Drug A', code_='ab', unit='cycle')
-        self.commodity.save()
-
-        self.commodity2 = Product(domain=TEST_DOMAIN, name='Drug B', code_='cd', unit='cycle')
-        self.commodity2.save()
-
+        self.commodity = make_product(TEST_DOMAIN, 'Drug A', '_ab', unit='cycle')
+        self.commodity2 = make_product(TEST_DOMAIN, 'Drug B', 'cd', unit='cycle')
         self.sql_facility = self.facility.sql_location
         self.sql_facility.products = []
         self.sql_facility.save()

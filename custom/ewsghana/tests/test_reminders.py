@@ -4,8 +4,9 @@ from decimal import Decimal
 from casexml.apps.stock.models import StockTransaction, StockReport
 
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.locations.tests.util import make_loc
-from corehq.apps.products.models import SQLProduct, Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.models import SMS
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 
@@ -120,21 +121,19 @@ class TestReminders(EWSTestCase):
             location=cls.loc2.sql_location
         )
 
-        cls.product = Product(
+        cls.product = make_product(
             domain=TEST_DOMAIN,
             name='Test Product',
-            code_='tp',
+            code='tp',
             unit='each'
         )
-        cls.product.save()
 
-        cls.product2 = Product(
+        cls.product2 = make_product(
             domain=TEST_DOMAIN,
             name='Test Product2',
-            code_='tp2',
+            code='tp2',
             unit='each'
         )
-        cls.product2.save()
 
         sql_product = SQLProduct.objects.get(product_id=cls.product.get_id)
         sql_product2 = SQLProduct.objects.get(product_id=cls.product2.get_id)

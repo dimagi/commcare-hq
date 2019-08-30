@@ -1,7 +1,8 @@
 from django.test import TestCase
+
+from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import LocationType, make_location
-from corehq.apps.products.models import Product
 from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.models import FacilityInCharge
 
@@ -9,8 +10,7 @@ from custom.ewsghana.models import FacilityInCharge
 class TestDeleteDomain(TestCase):
 
     def _create_data(self, domain_name):
-        product = Product(domain=domain_name, name='test-product')
-        product.save()
+        make_product(domain=domain_name, name='test-product')
 
         location = make_location(
             domain=domain_name,

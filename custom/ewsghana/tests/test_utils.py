@@ -1,9 +1,10 @@
 from nose.tools import nottest
 
 from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.locations.models import make_location, LocationType
-from corehq.apps.products.models import SQLProduct, Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole, Permissions
 
@@ -19,42 +20,37 @@ def create_test_products(domain):
     program = Program(domain=domain, name='HIV/AIDS', code='hiv')
     program.save()
 
-    abacavir = Product(
+    make_product(
         domain=domain,
         name="Abacavir 300mg",
-        code_="abc",
+        code="abc",
         program_id=program.get_id,
     )
-    abacavir.save()
 
-    ali = Product(
+    make_product(
         domain=domain,
         name="AL 20mg/120mg 1X6",
-        code_="ali",
+        code="ali",
         program_id=program.get_id,
     )
-    ali.save()
 
-    al = Product(
+    make_product(
         domain=domain,
         name="AL 20mg/120mg 4x6",
-        code_="alk"
+        code="alk"
     )
-    al.save()
 
-    ad = Product(
+    make_product(
         domain=domain,
         name="A-L Dispersible",
-        code_="ad"
+        code="ad"
     )
-    ad.save()
 
-    al = Product(
+    make_product(
         domain=domain,
         name="A-L Suspension",
-        code_="al"
+        code="al"
     )
-    al.save()
 
 
 @nottest
