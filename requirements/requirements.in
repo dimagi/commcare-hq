@@ -96,7 +96,7 @@ csiphash==0.0.5
 json-delta==2.0
 email_validator==1.0.3
 dnspython==1.15.0
-raven==6.1.0
+sentry-sdk==0.11.1
 quickcache~=0.5
 ethiopian-date-converter==0.1.5
 contextlib2~=0.5.4

@@ -635,7 +635,7 @@ class BugReportView(View):
             'scale_backend': '<unknown>',
             'has_handoff_info': '<unknown>',
             'project_description': '<unknown>',
-            'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+            'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL', ''), report['sentry_id'])
         }
         if domain_object:
             current_project_description = domain_object.project_description if domain_object else None
