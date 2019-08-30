@@ -910,7 +910,7 @@ class LocationRelation(models.Model):
         location_dict: {loc_id: distance}
         """
 
-        for loc_id, distance in six.iteritems(location_dict):
+        for loc_id, distance in location_dict.items():
             relation = cls.objects.filter(
                 (Q(location_a_id=loc_id) & Q(location_b_id=source_location_id)) |
                 (Q(location_b_id=loc_id) & Q(location_a_id=source_location_id))

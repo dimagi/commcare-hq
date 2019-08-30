@@ -14,10 +14,8 @@ from django.test import TestCase, override_settings
 
 import attr
 import mock
-import six
 from couchdbkit.exceptions import ResourceNotFound
 from nose.tools import nottest
-from six.moves import zip
 from testil import tempdir
 
 from casexml.apps.case.mock import CaseBlock
@@ -160,7 +158,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.assertEqual(json_diffs, expected_diffs or [])
         self.assertEqual({
             kind: counts.missing
-            for kind, counts in six.iteritems(state.get_doc_counts())
+            for kind, counts in state.get_doc_counts().items()
             if counts.missing
         }, missing or {})
         if not expected_diffs and not self.migration_success:

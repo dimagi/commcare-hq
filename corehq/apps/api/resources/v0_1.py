@@ -1,7 +1,5 @@
-# Standard library imports
 import datetime
 
-import six
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 
@@ -94,7 +92,7 @@ class CommCareUserResource(UserResource):
         user_data = bundle.obj.user_data
         if self.determine_format(bundle.request) == 'application/xml':
             # attribute names can't start with digits in xml
-            user_data = {k: v for k, v in six.iteritems(user_data) if not k[0].isdigit()}
+            user_data = {k: v for k, v in user_data.items() if not k[0].isdigit()}
         return user_data
 
     def obj_get_list(self, bundle, **kwargs):

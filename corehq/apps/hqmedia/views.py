@@ -27,7 +27,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 
-import six
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django_prbac.decorators import requires_privilege_raise404
 from memoized import memoized
@@ -307,7 +306,7 @@ def update_multimedia_paths(request, domain, app_id):
     warnings = []
     app.remove_unused_mappings()
     app_paths = {m.path: True for m in app.all_media()}
-    for old_path, new_path in six.iteritems(paths):
+    for old_path, new_path in paths.items():
         if old_path in app_paths:
             warnings.append(_("Could not completely update path <code>{}</code>, "
                               "please check app for remaining references.").format(old_path))
@@ -441,7 +440,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
             self.validate_file()
             response.update(self.process_upload())
         except BadMediaFileException as e:
-            self.errors.append(six.text_type(e))
+            self.errors.append(str(e))
         response.update({
             'errors': self.errors,
         })
@@ -741,7 +740,7 @@ def iter_media_files(media_objects):
             try:
                 data, _ = media.get_display_file()
                 folder = path.replace(MULTIMEDIA_PREFIX, "")
-                if not isinstance(data, six.text_type):
+                if not isinstance(data, str):
                     yield os.path.join(folder), data
             except NameError as e:
                 message = "%(path)s produced an ERROR: %(error)s" % {
@@ -920,7 +919,7 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
         }.get(f, f)
 
     def _encode_if_unicode(s):
-        return s.encode('utf-8') if isinstance(s, six.text_type) else s
+        return s.encode('utf-8') if isinstance(s, str) else s
 
     def _files(files):
         for name, f in files:
@@ -948,6 +947,6 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
     try:
         files = _download_index_files(app, build_profile_id)
     except Exception as e:
-        errors = [six.text_type(e)]
+        errors = [str(e)]
 
     return _files(files), errors, len(files)

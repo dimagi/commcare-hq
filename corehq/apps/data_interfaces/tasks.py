@@ -5,7 +5,6 @@ from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
-import six
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
@@ -143,7 +142,7 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, db=None):
     all_rules = list(AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE))
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
 
-    for case_type, rules in six.iteritems(rules_by_case_type):
+    for case_type, rules in rules_by_case_type.items():
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
         for case in AutomaticUpdateRule.iter_cases(domain, case_type, boundary_date, db=db):
             migration_in_progress, last_migration_check_time = check_data_migration_in_progress(domain,

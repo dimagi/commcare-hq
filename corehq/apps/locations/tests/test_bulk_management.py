@@ -4,9 +4,7 @@ from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
 
-import six
 from mock import Mock, patch
-from six.moves import range
 
 from corehq.apps.custom_data_fields.models import (
     CustomDataField,
@@ -261,7 +259,7 @@ class UploadTestUtils(object):
             descendants[child] = get_descendants(child)
 
         # for each location assert that calculated and expected get_descendants are equal
-        for (l, desc) in six.iteritems(descendants):
+        for (l, desc) in descendants.items():
             q = SQLLocation.objects.filter(site_code=l)
             loc = q[0] if q else None
 

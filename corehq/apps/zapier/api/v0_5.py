@@ -1,4 +1,3 @@
-import six
 from couchdbkit.exceptions import ResourceNotFound
 from tastypie import fields
 from tastypie.exceptions import NotFound
@@ -175,7 +174,7 @@ class ZapierCustomFieldCaseResource(BaseZapierCustomFieldResource):
                     label=self._build_label(prop)
                 )
             ))
-        for case_prop, case_prop_zapier_name in six.iteritems(CASE_PROPERTIES):
+        for case_prop, case_prop_zapier_name in CASE_PROPERTIES.items():
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',
