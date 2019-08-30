@@ -41,6 +41,7 @@ hqDefine("users/js/mobile_workers",[
     RMI,
     zxcvbn
 ) {
+    'use strict';
     // These are used as css classes, so the values of success/warning/error need to be what they are.
     var STATUS = {
         NONE: '',
