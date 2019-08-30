@@ -53,7 +53,9 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema):
         ).format(index=self)
 
     def __cmp__(self, other):
-        return cmp(str(self), str(other))
+        a = str(self)
+        b = str(other)
+        return (a > b) - (a < b)
 
     def __repr__(self):
         return str(self)
