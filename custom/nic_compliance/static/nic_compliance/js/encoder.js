@@ -62,7 +62,7 @@ hqDefine('nic_compliance/js/encoder', [
                     $field.val(passwordEncoder.encode(unencodedValue));
                 });
                 $(document).on("ajaxComplete", function (e, xhr, options) {
-                    if ($form.attr("action").endsWith(options.url)) {
+                    if ($form.attr("action") && $form.attr("action").endsWith(options.url)) {
                         $field.attr("type", fieldType);
                         $field.val(unencodedValue);
                     }
