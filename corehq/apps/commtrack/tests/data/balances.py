@@ -43,9 +43,9 @@ def submission_wrap(instance_id, products, user, sp_id, sp2_id, insides, timesta
     """ % insides).format(
         sp_id=sp_id,
         sp2_id=sp2_id,
-        product0=products[0]._id,
-        product1=products[1]._id,
-        product2=products[2]._id,
+        product0=products[0].product_id,
+        product1=products[1].product_id,
+        product2=products[2].product_id,
         user_id=user._id,
         instance_id=instance_id,
         username=user.username,

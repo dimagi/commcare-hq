@@ -23,15 +23,15 @@ class ProductsTest(TestCase):
 
     def test_archive(self):
         bootstrap_products(self.domain)
-        products = SQLProduct.active_objects.filter(domain=self.domain).order_by('product_id')
+        product = SQLProduct.active_objects.filter(domain=self.domain).order_by('product_id').first()
         original_number_products = SQLProduct.active_objects.filter(domain=self.domain).count()
 
-        products[0].archive()
+        product.archive()
 
         new_list = SQLProduct.active_objects.filter(domain=self.domain).values_list('product_id', flat=True)
 
         self.assertTrue(
-            products[0].product_id not in new_list,
+            product.product_id not in new_list,
             "Archived product still returned by active_objects"
         )
 
@@ -47,7 +47,7 @@ class ProductsTest(TestCase):
             1
         )
 
-        products[0].unarchive()
+        product.unarchive()
 
         self.assertEqual(
             original_number_products,
