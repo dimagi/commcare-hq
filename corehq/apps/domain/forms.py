@@ -34,7 +34,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-import six
 from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -45,8 +44,6 @@ from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
 from pyzxcvbn import zxcvbn
-from six import unichr
-from six.moves import range
 from six.moves.urllib.parse import parse_qs, urlparse
 
 from corehq import privileges
@@ -430,7 +427,7 @@ class SnapshotSettingsForm(forms.Form):
 
     def _get_apps_to_publish(self):
         app_ids = []
-        for d, val in six.iteritems(self.data):
+        for d, val in self.data.items():
             d = d.split('-')
             if len(d) < 2:
                 continue
@@ -1308,7 +1305,7 @@ def _get_uppercase_unicode_regexp():
     # http://stackoverflow.com/a/17065040/10840
     uppers = ['[']
     for i in range(sys.maxunicode):
-        c = unichr(i)
+        c = chr(i)
         if c.isupper():
             uppers.append(c)
     uppers.append(']')
@@ -1700,7 +1697,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         except Exception as e:
             log_accounting_error(
                 "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
-                % (self.domain, self.plan_version.plan.name, six.text_type(e)),
+                % (self.domain, self.plan_version.plan.name, str(e)),
                 show_stack_trace=True,
             )
             return False

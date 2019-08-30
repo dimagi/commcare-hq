@@ -1,9 +1,6 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 
-import six
-from six.moves import map
-
 from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.es import (
@@ -66,7 +63,7 @@ def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_a
     aggregations = query.run().aggregations
     buckets_dict = aggregations.user_id.buckets_dict
     result = {}
-    for user_id, bucket in six.iteritems(buckets_dict):
+    for user_id, bucket in buckets_dict.items():
         result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['form']['meta']['timeEnd'])
     return result
 
@@ -228,7 +225,7 @@ def get_last_form_submissions_by_user(domain, user_ids, app_id=None, xmlns=None)
         result[MISSING_KEY] = aggregations.missing_user_id.bucket.top_hits_last_form_submissions.hits
 
     buckets_dict = aggregations.user_id.buckets_dict
-    for user_id, bucket in six.iteritems(buckets_dict):
+    for user_id, bucket in buckets_dict.items():
         result[user_id] = bucket.top_hits_last_form_submissions.hits
 
     return result
@@ -259,7 +256,7 @@ def get_last_forms_by_app(user_id):
 
     buckets_dict = aggregations.app_id.buckets_dict
     result = []
-    for app_id, bucket in six.iteritems(buckets_dict):
+    for app_id, bucket in buckets_dict.items():
         result.append(bucket.top_hits_last_form_submissions.hits[0])
 
     return result
@@ -480,7 +477,7 @@ def get_form_duration_stats_by_user(
         result[MISSING_KEY] = aggregations.missing_user_id.bucket.duration_stats.result
 
     buckets_dict = aggregations.user_id.buckets_dict
-    for user_id, bucket in six.iteritems(buckets_dict):
+    for user_id, bucket in buckets_dict.items():
         result[user_id] = bucket.duration_stats.result
     return result
 
