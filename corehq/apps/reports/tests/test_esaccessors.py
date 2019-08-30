@@ -5,7 +5,6 @@ from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 
 import pytz
-import six
 from elasticsearch.exceptions import ConnectionError
 from mock import patch
 
@@ -111,7 +110,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         form_pair = make_es_ready_form(metadata)
         if attachment_dict:
             form_pair.wrapped_form.external_blobs = {name: BlobMetaRef(**meta)
-                for name, meta in six.iteritems(attachment_dict)}
+                for name, meta in attachment_dict.items()}
             form_pair.json_form['external_blobs'] = attachment_dict
 
         es_form = transform_xform_for_elasticsearch(form_pair.json_form)
