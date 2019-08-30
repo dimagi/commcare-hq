@@ -49,7 +49,7 @@ def archive_product(request, domain, prod_id, archive=True):
     """
     Archive product
     """
-    product = Product.get(prod_id)
+    product = SQLProduct.objects.get(product_id=prod_id)
     product.archive()
     return json_response({
         'success': True,
@@ -66,7 +66,7 @@ def unarchive_product(request, domain, prod_id, archive=True):
     """
     Unarchive product
     """
-    product = Product.get(prod_id)
+    product = SQLProduct.objects.get(product_id=prod_id)
     try:
         product.unarchive()
     except DuplicateProductCodeException:

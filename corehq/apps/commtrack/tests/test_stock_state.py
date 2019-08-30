@@ -18,7 +18,7 @@ from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.consumption.shortcuts import (
     set_default_monthly_consumption_for_domain,
 )
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
@@ -43,7 +43,7 @@ class StockStateTest(TestCase):
 
         cls.loc = util.make_loc('loc1', domain=cls.domain)
         cls.sp = cls.loc.linked_supply_point()
-        cls.products = sorted(Product.by_domain(cls.domain), key=lambda p: p._id)
+        cls.products = SQLProduct.active_objects.filter(domain=cls.domain).order_by('product_id')
 
         cls.process_ledger_changes = process_pillow_changes('LedgerToElasticsearchPillow')
 
@@ -56,7 +56,7 @@ class StockStateTest(TestCase):
         return _stock_report(
             self.domain,
             self.sp.case_id,
-            self.products[0]._id,
+            self.products[0].product_id,
             amount,
             days_ago
         )
@@ -72,7 +72,7 @@ class StockStateBehaviorTest(StockStateTest):
         state = StockState.objects.get(
             section_id='stock',
             case_id=self.sp.case_id,
-            product_id=self.products[0]._id,
+            product_id=self.products[0].product_id,
         )
 
         self.assertEqual(10, state.stock_on_hand)
@@ -85,7 +85,7 @@ class StockStateBehaviorTest(StockStateTest):
         StockState.objects.get(
             section_id='stock',
             case_id=self.sp.case_id,
-            product_id=self.products[0]._id,
+            product_id=self.products[0].product_id,
         )
 
         self.products[0].archive()
@@ -94,7 +94,7 @@ class StockStateBehaviorTest(StockStateTest):
             StockState.objects.get(
                 section_id='stock',
                 case_id=self.sp.case_id,
-                product_id=self.products[0]._id,
+                product_id=self.products[0].product_id,
             )
 
         # should still show up in include_archived filter
@@ -102,9 +102,9 @@ class StockStateBehaviorTest(StockStateTest):
             StockState.include_archived.get(
                 section_id='stock',
                 case_id=self.sp.case_id,
-                product_id=self.products[0]._id,
+                product_id=self.products[0].product_id,
             ).product_id,
-            self.products[0]._id
+            self.products[0].product_id
         )
 
     def test_stock_state_for_archived_locations(self):
@@ -114,7 +114,7 @@ class StockStateBehaviorTest(StockStateTest):
         StockState.objects.get(
             section_id='stock',
             case_id=self.sp.case_id,
-            product_id=self.products[0]._id,
+            product_id=self.products[0].product_id,
         )
 
         self.sp.sql_location.archive()
@@ -123,7 +123,7 @@ class StockStateBehaviorTest(StockStateTest):
             StockState.objects.get(
                 section_id='stock',
                 case_id=self.sp.case_id,
-                product_id=self.products[0]._id,
+                product_id=self.products[0].product_id,
             )
 
         # should still show up in include_archived filter
@@ -131,9 +131,9 @@ class StockStateBehaviorTest(StockStateTest):
             StockState.include_archived.get(
                 section_id='stock',
                 case_id=self.sp.case_id,
-                product_id=self.products[0]._id,
+                product_id=self.products[0].product_id,
             ).product_id,
-            self.products[0]._id
+            self.products[0].product_id
         )
 
     def test_stock_state_for_deleted_locations(self):
@@ -143,7 +143,7 @@ class StockStateBehaviorTest(StockStateTest):
         StockState.objects.get(
             section_id='stock',
             case_id=self.sp.case_id,
-            product_id=self.products[0]._id,
+            product_id=self.products[0].product_id,
         )
 
         self.sp.sql_location.full_delete()
@@ -152,7 +152,7 @@ class StockStateBehaviorTest(StockStateTest):
             StockState.objects.get(
                 section_id='stock',
                 case_id=self.sp.case_id,
-                product_id=self.products[0]._id,
+                product_id=self.products[0].product_id,
             )
 
     def test_domain_mapping(self):
@@ -163,9 +163,9 @@ class StockStateBehaviorTest(StockStateTest):
         StockState(
             section_id='stock',
             case_id=self.sp.case_id,
-            product_id=self.products[0]._id,
+            product_id=self.products[0].product_id,
             last_modified_date=datetime.utcnow(),
-            sql_product=SQLProduct.objects.get(product_id=self.products[0]._id),
+            sql_product=SQLProduct.objects.get(product_id=self.products[0].product_id),
         ).save()
 
         self.assertEqual(
@@ -190,7 +190,7 @@ class StockStateConsumptionTest(StockStateTest):
         state = StockState.objects.get(
             section_id='stock',
             case_id=self.sp.case_id,
-            product_id=self.products[0]._id,
+            product_id=self.products[0].product_id,
         )
 
         self.assertEqual(None, state.get_daily_consumption())
@@ -202,7 +202,7 @@ class StockStateConsumptionTest(StockStateTest):
         state = StockState.objects.get(
             section_id='stock',
             case_id=self.sp.case_id,
-            product_id=self.products[0]._id,
+            product_id=self.products[0].product_id,
         )
 
         self.assertEqual(5, float(state.get_daily_consumption()))
@@ -215,7 +215,7 @@ class StockStateConsumptionTest(StockStateTest):
         state = StockState.objects.get(
             section_id='stock',
             case_id=self.sp.case_id,
-            product_id=self.products[0]._id,
+            product_id=self.products[0].product_id,
         )
 
         self.assertEqual(5, float(state.get_daily_consumption()))
@@ -246,7 +246,9 @@ class StockStateConsumptionTest(StockStateTest):
         for consumption_params, test_result in tests:
             _reset()
             recalculate_domain_consumption(self.domain)
-            state = StockState.objects.get(section_id='stock', case_id=self.sp.case_id, product_id=self.products[0]._id)
+            state = StockState.objects.get(
+                section_id='stock', case_id=self.sp.case_id, product_id=self.products[0].product_id
+            )
             self.assertEqual(
                 expected_result,
                 state.daily_consumption,
@@ -256,7 +258,9 @@ class StockStateConsumptionTest(StockStateTest):
 
             # just changing the config shouldn't change the state
             _update_consumption_config(*consumption_params)
-            state = StockState.objects.get(section_id='stock', case_id=self.sp.case_id, product_id=self.products[0]._id)
+            state = StockState.objects.get(
+                section_id='stock', case_id=self.sp.case_id, product_id=self.products[0].product_id
+            )
             self.assertEqual(
                 expected_result,
                 state.daily_consumption,
@@ -266,7 +270,9 @@ class StockStateConsumptionTest(StockStateTest):
 
             # recalculating should though
             recalculate_domain_consumption(self.domain)
-            state = StockState.objects.get(section_id='stock', case_id=self.sp.case_id, product_id=self.products[0]._id)
+            state = StockState.objects.get(
+                section_id='stock', case_id=self.sp.case_id, product_id=self.products[0].product_id
+            )
             self.assertEqual(
                 test_result,
                 state.daily_consumption,
