@@ -1095,7 +1095,7 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
     'start', 'length', 'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
-    latest_available_month = datetime.utcnow() - timedelta(days=1)
+    latest_available_month = date.today() - timedelta(days=1)
     query_month = latest_available_month.replace(day=1)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
@@ -1237,7 +1237,7 @@ def get_pregnant_details(case_id, awc_id):
     'start', 'length', 'order', 'reversed_order', 'awc_id'
 ], timeout=30 * 60)
 def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
-    latest_available_month = datetime.utcnow() - timedelta(days=1)
+    latest_available_month = date.today() - timedelta(days=1)
     first_day_month = latest_available_month.replace(day=1)
     data = CcsRecordMonthlyView.objects.filter(
         awc_id=awc_id,
