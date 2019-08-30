@@ -4,6 +4,7 @@ import os
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from functools import wraps
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
@@ -131,6 +132,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         if domain is None:
             domain = self.domain_name
         self.assert_backend("couch", domain)
+        self.migration_success = None
         options.setdefault("no_input", True)
         options.setdefault("diff_process", False)
         with mock.patch(
@@ -148,7 +150,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self._do_migration(domain, **options)
         self.assert_backend("sql", domain)
 
-    def _compare_diffs(self, expected_diffs=None, missing=None):
+    def _compare_diffs(self, expected_diffs=None, missing=None, ignore_fail=False):
         def diff_key(diff):
             return diff.kind, diff.json_diff.diff_type, diff.json_diff.path
 
@@ -161,7 +163,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             for kind, counts in state.get_doc_counts().items()
             if counts.missing
         }, missing or {})
-        if not expected_diffs and not self.migration_success:
+        if not (expected_diffs or self.migration_success or ignore_fail):
             self.fail("migration failed")
 
     def _get_form_ids(self, doc_type='XFormInstance'):
@@ -223,6 +225,27 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
     def patch_migration_chunk_size(self, chunk_size):
         path = "corehq.apps.couch_sql_migration.couchsqlmigration._iter_docs.chunk_size"
         with mock.patch(path, chunk_size):
+            yield
+
+    @contextmanager
+    def stop_on_doc(self, doc_type, doc_id):
+        from ..couchsqlmigration import _iter_docs
+
+        @wraps(_iter_docs)
+        def iter_docs(domain, iter_doc_type, **kw):
+            itr = _iter_docs(domain, iter_doc_type, **kw)
+            if doc_type == iter_doc_type:
+                for doc in itr:
+                    if doc["_id"] == doc_id:
+                        log.debug("stopping on %s", doc_id)
+                        raise KeyboardInterrupt
+                    log.debug("yielding %(_id)s", doc)
+                    yield doc
+            else:
+                yield from itr
+
+        path = "corehq.apps.couch_sql_migration.couchsqlmigration._iter_docs"
+        with self.assertRaises(KeyboardInterrupt), mock.patch(path, iter_docs):
             yield
 
 
@@ -724,6 +747,100 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3", "test-4", "test-5"})
         self.assertEqual(self._get_case_ids(), {"test-case"})
 
+    def test_migrate_form_twice(self):
+        @contextmanager
+        def interrupted_migration():
+            from ..asyncforms import AsyncFormProcessor
+
+            @wraps(AsyncFormProcessor.__exit__)
+            def process_form1(self, *exc_info):
+                self._finish_processing_queues()
+                real_exit(self, *exc_info)
+
+            real_exit = AsyncFormProcessor.__exit__
+            with self.stop_on_doc("XFormInstance", "form-2"), \
+                    mock.patch.object(AsyncFormProcessor, "__exit__", process_form1):
+                yield
+
+        self.submit_form(make_test_form("form-1"), timedelta(minutes=-95))
+        self.submit_form(make_test_form("form-2"), timedelta(minutes=-90))
+
+        with interrupted_migration():
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), {"form-1"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self._compare_diffs(ignore_fail=True)
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        # change couch form, which has already been migrated, to create a diff
+        form = self._get_form("form-1")
+        form.form_data["first_name"] = "Zeena"
+        form.save()
+
+        # migration should re-diff previously migrated form-1
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(self._get_form_ids(), {"form-1", "form-2"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self._compare_diffs([
+            ('XFormInstance', Diff('diff', ['form', 'first_name'], old="Zeena", new="Xeenax")),
+        ])
+
+    def test_migrate_unprocessed_form_twice(self):
+        self.submit_form(make_test_form("form-1"), timedelta(minutes=-95)).archive()
+        self.submit_form(make_test_form("form-2"), timedelta(minutes=-90)).archive()
+
+        with self.stop_on_doc("XFormArchived", "form-2"):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids("XFormArchived"), {"form-1"})
+        self.assertEqual(self._get_case_ids(), set())
+        self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), set())
+        self._compare_diffs(ignore_fail=True)
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        # change couch form, which has already been migrated, to create a diff
+        form = self._get_form("form-1")
+        form.form_data["first_name"] = "Zeena"
+        form.save()
+
+        # migration should re-diff previously migrated form-1
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(self._get_form_ids("XFormArchived"), {"form-1", "form-2"})
+        self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"test-case"})
+        self._compare_diffs([
+            ('XFormArchived', Diff('diff', ['form', 'first_name'], old="Zeena", new="Xeenax")),
+        ])
+
+    def test_migrate_deleted_case_twice(self):
+        form1 = make_test_form("form-1", case_id="case-1")
+        form2 = make_test_form("form-2", case_id="case-2")
+        self.submit_form(form1, timedelta(minutes=-95))
+        self.submit_form(form2, timedelta(minutes=-90))
+        now = datetime.utcnow()
+        CaseAccessors(self.domain.name).soft_delete_cases(["case-1", "case-2"], now)
+
+        with self.stop_on_doc("CommCareCase-Deleted", "case-2"):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), {"form-1", "form-2"})
+        self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"case-1"})
+        self.assertEqual(self._get_case_ids(), {"case-2"})
+        self._compare_diffs(ignore_fail=True)
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        # change couch case, which has already been migrated, to create a diff
+        case = self._get_case("case-1")
+        case.age = '35'
+        case.save()
+
+        # migration should re-diff previously migrated form-1
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"case-1", "case-2"})
+        self._compare_diffs([
+            ('CommCareCase-Deleted', Diff('diff', ['age'], old='35', new='27')),
+        ])
+
     def test_migrate_archived_form_after_live_migration_of_error_forms(self):
         # The theory of this test is that XFormArchived comes earlier in
         # the "unprocessed_forms" iteration than XFormError. It ensures
@@ -1009,15 +1126,18 @@ class MigrationTestCase(BaseMigrationTestCase):
         with self.assertRaises(CaseNotFound):
             self._get_case("test-case")
         self._compare_diffs([
-            ('XFormInstance', Diff('missing', ['form', '#type'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form', '@name'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form', '@uiVersion'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form', '@version'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form', '@xmlns'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form', 'age'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form', 'case'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form', 'first_name'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form', 'meta'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['_id'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['auth_context'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['doc_type'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['domain'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['history'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['initial_processing_complete'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['openrosa_headers'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['partial_submission'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['received_on'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['server_modified_on'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['xmlns'], new=MISSING)),
         ], missing={'CommCareCase': 1})
 
 
@@ -1125,12 +1245,14 @@ def create_form_with_missing_xml(domain_name):
 
 
 @nottest
-def make_test_form(form_id, age=27):
+def make_test_form(form_id, age=27, case_id="test-case"):
     form = TEST_FORM
     assert form.count(">test-form<") == 1
     assert form.count(">27<") == 2
-    form = form.replace(">27<", ">%s<" % age)
-    return form.replace(">test-form<", ">%s<" % form_id)
+    assert form.count('"test-case"') == 1
+    form = form.replace(">27<", f">{age}<")
+    form = form.replace('"test-case"', f'"{case_id}"')
+    return form.replace(">test-form<", f">{form_id}<")
 
 
 def atomic_savepoint(*args, **kw):

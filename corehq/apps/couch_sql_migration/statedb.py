@@ -167,6 +167,10 @@ class StateDB(DiffDB):
             yield case_id
 
     def add_problem_form(self, form_id):
+        """Add form to be migrated with "unprocessed" forms
+
+        A "problem" form is an error form with normal doctype (XFormInstance)
+        """
         with self.session() as session:
             session.add(ProblemForm(id=form_id))
 
