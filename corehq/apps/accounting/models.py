@@ -16,7 +16,6 @@ from django.utils.html import strip_tags
 from django.utils.translation import ugettext_lazy as _
 
 import jsonfield
-import six
 import stripe
 from django_prbac.models import Role
 from memoized import memoized
@@ -612,7 +611,6 @@ class BillingContactInfo(models.Model):
             return "%s %s" % (self.first_name, self.last_name)
 
 
-@six.python_2_unicode_compatible
 class SoftwareProductRate(models.Model):
     """
     Represents the monthly fixed fee for a software product.
@@ -668,7 +666,6 @@ class Feature(models.Model):
             return FeatureRate() if default_instance else None  # the defaults
 
 
-@six.python_2_unicode_compatible
 class FeatureRate(models.Model):
     """
     Links a feature to a monthly fee, monthly limit, and a per-excess fee for exceeding the monthly limit.
@@ -809,7 +806,6 @@ class DefaultProductPlan(models.Model):
         return None if return_plan else SoftwarePlanEdition.ENTERPRISE
 
 
-@six.python_2_unicode_compatible
 class SoftwarePlanVersion(models.Model):
     """
     Links a plan to its rates and provides versioning information.
@@ -926,7 +922,6 @@ class SubscriberManager(models.Manager):
             return None
 
 
-@six.python_2_unicode_compatible
 class Subscriber(models.Model):
     """
     The objects that can be subscribed to a Subscription.
@@ -1790,7 +1785,7 @@ class Subscription(models.Model):
         if date_end is not None:
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
         if future_subscriptions.count() > 0:
-            raise NewSubscriptionError(six.text_type(
+            raise NewSubscriptionError(str(
                 _(
                     "There is already a subscription '%(sub)s' that has an end date "
                     "that conflicts with the start and end dates of this "
@@ -3130,7 +3125,6 @@ class LineItem(models.Model):
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, line_item=self)
 
 
-@six.python_2_unicode_compatible
 class CreditLine(models.Model):
     """
     The amount of money in USD that exists can can be applied toward a specific account,
@@ -3359,7 +3353,7 @@ class CreditLine(models.Model):
             if not permit_inactive and not credit_line.is_active and not invoice:
                 raise CreditLineError(
                     "Could not add credit to CreditLine %s because it is "
-                    "inactive." % six.text_type(credit_line)
+                    "inactive." % str(credit_line)
                 )
             is_new = False
         except cls.MultipleObjectsReturned as e:
@@ -3373,7 +3367,7 @@ class CreditLine(models.Model):
                     'feature': (" | Feature %s" % feature_type
                                 if feature_type is not None else ""),
                     'product': (" | Product" if is_product else ""),
-                    'error': six.text_type(e),
+                    'error': str(e),
                 }
             )
         except cls.DoesNotExist:

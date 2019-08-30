@@ -11,7 +11,6 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import attr
-import six
 from io import BytesIO
 from django.db import models
 from jsonfield.fields import JSONField
@@ -109,7 +108,7 @@ class Attachment(IsImageMixin):
         """
         if isinstance(self.raw_content, bytes):
             return len(self.raw_content)
-        if isinstance(self.raw_content, six.text_type):
+        if isinstance(self.raw_content, str):
             return len(self.raw_content.encode('utf-8'))
         pos = self.raw_content.tell()
         try:
@@ -134,7 +133,7 @@ class Attachment(IsImageMixin):
         else:
             data = self.raw_content
 
-        if isinstance(data, six.text_type):
+        if isinstance(data, str):
             data = data.encode("utf-8")
         return data
 
@@ -148,7 +147,7 @@ class Attachment(IsImageMixin):
         underlying file object and will affect other concurrent readers
         (it is not safe to use this for multiple concurrent reads).
         """
-        if isinstance(self.raw_content, (bytes, six.text_type)):
+        if isinstance(self.raw_content, (bytes, str)):
             return BytesIO(self.content)
         fileobj = self.raw_content.open()
 
@@ -308,7 +307,6 @@ class AttachmentMixin(SaveStateMixin):
         raise NotImplementedError
 
 
-@six.python_2_unicode_compatible
 class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
                        AbstractXFormInstance, TrackRelatedChanges):
     partition_attr = 'form_id'
@@ -702,7 +700,6 @@ class SupplyPointCaseMixin(object):
         return SQLLocation.objects.get(location_id=self.location_id)
 
 
-@six.python_2_unicode_compatible
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin, MessagingCaseContactMixin):
@@ -1029,7 +1026,6 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         db_table = CommCareCaseSQL_DB_TABLE
 
 
-@six.python_2_unicode_compatible
 class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageMixin):
     """Case attachment
 
@@ -1109,7 +1105,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
         return cls(name=name, attachment_id=uuid.uuid4())
 
     def __str__(self):
-        return six.text_type(
+        return str(
             "CaseAttachmentSQL("
             "attachment_id='{a.attachment_id}', "
             "case_id='{a.case_id}', "
@@ -1140,7 +1136,6 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
         ]
 
 
-@six.python_2_unicode_compatible
 class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -1225,7 +1220,6 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
         app_label = "form_processor"
 
 
-@six.python_2_unicode_compatible
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -1605,7 +1599,6 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
         unique_together = ("case", "section_id", "entry_id")
 
 
-@six.python_2_unicode_compatible
 class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
     objects = RestrictedManager()

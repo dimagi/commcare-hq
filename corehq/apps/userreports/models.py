@@ -14,7 +14,6 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import ugettext as _
 
-import six
 import yaml
 from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
@@ -217,7 +216,6 @@ class MirroredEngineIds(DocumentSchema):
     engine_ids = StringListProperty()
 
 
-@six.python_2_unicode_compatible
 class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
     A data source configuration. These map 1:1 with database tables that get created.
@@ -626,7 +624,6 @@ class ReportMeta(DocumentSchema):
     builder_source_type = StringProperty(choices=REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES)
 
 
-@six.python_2_unicode_compatible
 class ReportConfiguration(QuickCachedDocumentMixin, Document):
     """
     A report configuration. These map 1:1 with reports that show up in the UI.

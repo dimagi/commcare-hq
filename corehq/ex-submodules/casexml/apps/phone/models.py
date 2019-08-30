@@ -441,7 +441,6 @@ class SyncLogSQL(models.Model):
             )
 
 
-@six.python_2_unicode_compatible
 class SyncLog(AbstractSyncLog):
     """
     A log of a single sync operation.
