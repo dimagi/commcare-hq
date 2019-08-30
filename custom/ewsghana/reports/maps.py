@@ -37,7 +37,8 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
     def active_product(self):
         product_id = self.config.get('product_id')
         if product_id:
-            return SQLProduct.objects.get(domain=self.domain, product_id=product_id)
+            return SQLProduct.active_objects.get(domain=self.domain, product_id=product_id)
+        return None
 
     @property
     def locations(self):

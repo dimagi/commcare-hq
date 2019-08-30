@@ -46,7 +46,7 @@ class SMSTests(TestCase):
         if not case_id:
             case_id = self.sp.case_id
 
-        product = SQLProduct.objbects.get(domain=self.domain.name, code=code)
+        product = SQLProduct.active_objects.get(domain=self.domain.name, code=code)
 
         try:
             state = StockState.objects.get(
@@ -90,7 +90,7 @@ class StockReportTest(SMSTests):
         self.assertEqual(3, report.stocktransaction_set.count())
 
         for code, amt in amounts.items():
-            product = SQLProduct.objbects.get(domain=self.domain.name, code=code)
+            product = SQLProduct.active_objects.get(domain=self.domain.name, code=code)
             trans = StockTransaction.objects.get(product_id=product.product_id)
             self.assertEqual(self.sp.case_id, trans.case_id)
             self.assertEqual(0, trans.quantity)
@@ -114,7 +114,7 @@ class StockReportTest(SMSTests):
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
         for code, amt in amounts.items():
-            product = SQLProduct.objbects.get(domain=self.domain.name, code=code)
+            product = SQLProduct.active_objects.get(domain=self.domain.name, code=code)
             trans = StockTransaction.objects.get(product_id=product.product_id)
             self.assertEqual(self.sp.case_id, trans.case_id)
             self.assertEqual(0, trans.quantity)

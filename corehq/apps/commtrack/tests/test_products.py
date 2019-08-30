@@ -24,11 +24,11 @@ class ProductsTest(TestCase):
     def test_archive(self):
         bootstrap_products(self.domain)
         products = sorted(Product.by_domain(self.domain), key=lambda p: p._id)
-        original_number_products = SQLProduct.objects.filter(domain=self.domain).count()
+        original_number_products = SQLProduct.active_objects.filter(domain=self.domain).count()
 
         products[0].archive()
 
-        new_list = SQLProduct.objects.filter(domain=self.domain).values_list('product_id', flat=True)
+        new_list = SQLProduct.active_objects.filter(domain=self.domain).values_list('product_id', flat=True)
 
         self.assertTrue(
             products[0]._id not in new_list,
@@ -51,7 +51,7 @@ class ProductsTest(TestCase):
 
         self.assertEqual(
             original_number_products,
-            SQLProduct.objects.filter(domain=self.domain).count(),
+            SQLProduct.active_objects.filter(domain=self.domain).count(),
         )
 
     def test_sync(self):

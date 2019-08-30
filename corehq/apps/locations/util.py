@@ -152,7 +152,7 @@ class LocationExporter(object):
             self.domain_obj.commtrack_settings.individual_consumption_defaults
         ):
             # we'll be needing these, so init 'em:
-            self.products = SQLProduct.objects.filter(domain=self.domain)
+            self.products = SQLProduct.active_objects.filter(domain=self.domain)
             self.product_codes = [p.code for p in self.products]
             self.supply_point_map = get_supply_point_ids_in_domain_by_location(
                 self.domain)

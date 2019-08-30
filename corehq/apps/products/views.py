@@ -401,10 +401,7 @@ def download_products(request, domain):
     uncategorized_data = set()
     products = []
 
-    sql_products = (
-        SQLProduct.objects
-        .filter(domain=domain, is_archived=False)
-    )
+    sql_products = SQLProduct.active_objects.filter(domain=domain)
 
     for product in sql_products:
         product_dict = product.to_dict()

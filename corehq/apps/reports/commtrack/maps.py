@@ -54,7 +54,7 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         }
 
         products = (
-            SQLProduct.objects
+            SQLProduct.active_objects
             .filter(domain=self.domain)
             .order_by('name')
         )

@@ -683,7 +683,7 @@ class EditLocationView(BaseEditLocationView):
     @property
     def consumption(self):
         consumptions = []
-        for product in SQLProduct.objects.filter(domain=self.domain):
+        for product in SQLProduct.active_objects.filter(domain=self.domain):
             consumption = get_default_monthly_consumption(
                 self.domain,
                 product.product_id,
