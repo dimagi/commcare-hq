@@ -995,7 +995,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     title_row = worksheet.row_dimensions[2]
     title_row.height = 23
     worksheet.row_dimensions[table_header_position_row].height = 46
-    worksheet.row_dimensions[3].height = 32
+    worksheet.row_dimensions[3].height = 16
     widths = {}
     widths_columns = ['A']
     widths_columns.extend(columns)
