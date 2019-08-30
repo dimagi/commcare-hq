@@ -67,6 +67,7 @@ from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
 from corehq.toggles import SKIP_ORM_FIXTURE_UPLOAD
 from corehq.util.files import file_extention_from_filename
+from corehq import toggles
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
@@ -571,8 +572,10 @@ def _get_fixture_upload_args_from_request(request, domain):
             replace = True
         elif replace.lower() == "false":
             replace = False
-        user_email = request.couch_user.email if request.couch_user.email is not None \
-            else request.couch_user.username
+        user_email = None
+        if toggles.SUPPORT.enabled(request.couch_user.username):
+            user_email = request.couch_user.email if request.couch_user.email is not None \
+                else request.couch_user.username
     except Exception:
         raise FixtureAPIRequestError(
             "Invalid post request."
