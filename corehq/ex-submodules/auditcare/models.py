@@ -150,7 +150,7 @@ class ModelActionAudit(AuditEvent):
             #if it's an existing version, then save it
             instance_copy.pop('_rev')
             json_string = json.dumps(instance_copy)
-        return hashlib.sha1(json_string.encode('utf-8')
+        return hashlib.sha1(json_string.encode('utf-8')).hexdigest()
 
     def compute_changes(self, save=False):
         """
