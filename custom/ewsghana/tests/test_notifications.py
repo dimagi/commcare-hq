@@ -289,9 +289,9 @@ class UrgentStockoutNotificationTestCase(EWSTestCase):
 
     def setUp(self):
         super(UrgentStockoutNotificationTestCase, self).setUp()
-        self.product = Product(domain=self.TEST_DOMAIN, name='Test Product', code_='tp', unit='each',
-                               program_id=self.program.get_id)
-        self.product.save()
+        self.product = make_product(
+            domain=self.TEST_DOMAIN, name='Test Product', code='tp', unit='each', program_id=self.program.get_id
+        )
 
         self.country = make_loc('test-country', 'Test country', self.TEST_DOMAIN, 'country')
         self.region = make_loc('test-region', 'Test Region', self.TEST_DOMAIN, 'region', parent=self.country)
