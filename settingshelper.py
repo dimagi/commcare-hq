@@ -232,9 +232,6 @@ def fix_logger_obfuscation(fix_logger_obfuscation_, logging_config):
 
 
 def configure_sentry(base_dir, server_env, dsn):
-    if not dsn:
-        return False
-
     import sentry_sdk
     from sentry_sdk.integrations.logging import ignore_logger
     from sentry_sdk.integrations.django import DjangoIntegration
@@ -262,7 +259,6 @@ def configure_sentry(base_dir, server_env, dsn):
             RedisIntegration()
         ]
     )
-    return True
 
 
 def get_release_name(base_dir, server_env):

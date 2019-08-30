@@ -860,9 +860,9 @@ CUSTOM_LANDING_PAGE = False
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
 
 SENTRY_DSN = None
-
-# adds a link to sentry event into error reports
-SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
+SENTRY_REPOSITORY = 'dimagi/commcare-hq'
+SENTRY_ORGANIZATION_SLUG = 'dimagi'
+SENTRY_PROJECT_SLUG = 'commcarehq'
 
 # used for creating releases and deploys
 SENTRY_API_KEY = None
@@ -2107,14 +2107,21 @@ if not SENTRY_DSN:
             Please replace SENTRY_PUBLIC_KEY, SENTRY_PRIVATE_KEY, SENTRY_PROJECT_ID with SENTRY_DSN:
 
             SENTRY_DSN = {SENTRY_DSN}
+
+            The following settings are also recommended:
+                SENTRY_ORGANIZATION_SLUG
+                SENTRY_PROJECT_SLUG
+                SENTRY_REPOSITORY
+
+            SENTRY_QUERY_URL is not longer needed.
             """), DeprecationWarning)
 
+if SENTRY_DSN:
+    if 'SENTRY_QUERY_URL' not in globals():
+        SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
+    helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
+    SENTRY_CONFIGURED = True
 
-SENTRY_CONFIGURED = helper.configure_sentry(
-    BASE_DIR,
-    SERVER_ENVIRONMENT,
-    SENTRY_DSN,
-)
 
 CSRF_COOKIE_HTTPONLY = True
 if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
