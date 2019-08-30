@@ -52,11 +52,8 @@ branches:
   - vellum-staging
   #- fr/case-templates      # FR May 15
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
-  - mk/use-ids-to-validate-translations # July 19
   - jls/linked-app-multiple-masters-rebased # Jenny Aug 17
   - jls/reveal-family-id # Jenny Aug 27
-  - bmb/bi-schema-updates  # Biyeun Aug 16
   - bmb/case-sharing  #Biyeun Aug 22
-  - je/fix-saved-reports  #j$ Aug 28
   - sk/sentry-upgrade  # SK Aug 30
 submodules: {}
