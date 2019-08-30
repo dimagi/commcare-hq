@@ -225,7 +225,7 @@ def get_last_form_submissions_by_user(domain, user_ids, app_id=None, xmlns=None)
         result[MISSING_KEY] = aggregations.missing_user_id.bucket.top_hits_last_form_submissions.hits
 
     buckets_dict = aggregations.user_id.buckets_dict
-    for user_id, bucket in buckets_dict.iteems():
+    for user_id, bucket in buckets_dict.items():
         result[user_id] = bucket.top_hits_last_form_submissions.hits
 
     return result
