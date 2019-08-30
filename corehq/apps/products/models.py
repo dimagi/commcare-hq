@@ -350,6 +350,27 @@ class SQLProduct(models.Model):
 
         return product_dict
 
+    def archive(self):
+        """
+        Mark a product as archived. This will cause it (and its data)
+        to not show up in default Couch and SQL views.
+        """
+        product = Product.get(self.product_id)
+        product.is_archived = True
+        product.save()
+
+    def unarchive(self):
+        """
+        Unarchive a product, causing it (and its data) to show
+        up in Couch and SQL views again.
+        """
+        if self.code:
+            if SQLProduct.active_objects.filter(domain=self.domain, code=self.code).exists():
+                raise DuplicateProductCodeException()
+        product = Product.get(self.product_id)
+        product.is_archived = False
+        product.save()
+
 
 PRODUCT_EXPORT_ATTRS = [
     ('name', six.text_type),
