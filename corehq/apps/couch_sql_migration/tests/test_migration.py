@@ -165,21 +165,34 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             self.fail("migration failed")
 
     def _get_form_ids(self, doc_type='XFormInstance'):
-        return set(
-            FormAccessors(domain=self.domain_name)
-            .get_all_form_ids_in_domain(doc_type=doc_type)
-        )
+        domain = self.domain_name
+        if doc_type == "XFormInstance-Deleted" and should_use_sql_backend(domain):
+            ids = FormAccessorSQL.get_deleted_form_ids_in_domain(domain)
+        elif doc_type == "XFormInstance-Deleted" or doc_type == "HQSubmission":
+            db = XFormInstance.get_db()
+            ids = get_doc_ids_in_domain_by_type(domain, doc_type, db)
+        else:
+            ids = (FormAccessors(domain=self.domain_name)
+                .get_all_form_ids_in_domain(doc_type=doc_type))
+        return set(ids)
 
     def _iter_forms(self, form_ids):
         db = FormAccessors(domain=self.domain_name)
         for form_id in form_ids:
             yield db.get_form(form_id)
 
-    def _get_case_ids(self, doc_type=None):
-        if doc_type is None:
-            return set(CaseAccessors(domain=self.domain_name).get_case_ids_in_domain())
+    def _get_form(self, form_id):
+        return FormAccessors(domain=self.domain_name).get_form(form_id)
+
+    def _get_case_ids(self, doc_type="CommCareCase"):
+        domain = self.domain_name
+        if doc_type == "CommCareCase":
+            return set(CaseAccessors(domain=domain).get_case_ids_in_domain())
+        if doc_type == "CommCareCase-Deleted" and should_use_sql_backend(domain):
+            return set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain))
+        assert not should_use_sql_backend(domain)
         db = XFormInstance.get_db()
-        return set(get_doc_ids_in_domain_by_type(self.domain_name, doc_type, db))
+        return set(get_doc_ids_in_domain_by_type(domain, doc_type, db))
 
     def _get_case(self, case_id):
         return CaseAccessors(domain=self.domain_name).get_case(case_id)
@@ -273,7 +286,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         submit_form_locally(xml, self.domain_name)
 
         # hack the form to remove XMLNS since it's now validated during form submission
-        form = FormAccessors(self.domain_name).get_form(form_id)
+        form = self._get_form(form_id)
         form.xmlns = None
         del form.form_data['@xmlns']
         xml_no_xmlns = form_template.format(form_id=form_id, xmlns="")
@@ -309,7 +322,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_error_with_normal_doc_type_migration(self):
         submit_form_locally(ERROR_FORM, self.domain_name)
-        form = FormAccessors(self.domain_name).get_form('im-a-bad-form')
+        form = self._get_form('im-a-bad-form')
         form_json = form.to_json()
         form_json['doc_type'] = 'XFormInstance'
         XFormInstance.wrap(form_json).save()
@@ -398,9 +411,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             [form.form_id], datetime.utcnow(), 'test-deletion'
         )
 
-        self.assertEqual(1, len(get_doc_ids_in_domain_by_type(
-            self.domain_name, "XFormInstance-Deleted", XFormInstance.get_db())
-        ))
+        self.assertEqual(1, len(self._get_form_ids("XFormInstance-Deleted")))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain_name)))
         self._compare_diffs([])
@@ -412,12 +423,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         FormAccessors(self.domain.name).soft_delete_forms(
             [form.form_id], datetime.utcnow(), 'test-deletion'
         )
-        self.assertEqual(
-            get_doc_ids_in_domain_by_type(
-                form.domain, "XFormInstance-Deleted", XFormInstance.get_db()
-            ),
-            [form.form_id],
-        )
+        self.assertEqual(self._get_form_ids("XFormInstance-Deleted"), {form.form_id})
         self._do_migration_and_assert_flags(form.domain)
         self.assertEqual(
             FormAccessorSQL.get_deleted_form_ids_in_domain(form.domain),
@@ -441,9 +447,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         form.doc_type = 'HQSubmission'
         form.save()
 
-        self.assertEqual(get_doc_ids_in_domain_by_type(
-            self.domain_name, "HQSubmission", XFormInstance.get_db()
-        ), [form.form_id])
+        self.assertEqual(self._get_form_ids("HQSubmission"), {form.form_id})
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(self._get_form_ids(), {form.form_id})
         self._compare_diffs([])
@@ -558,9 +562,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         CaseAccessors(self.domain.name).soft_delete_cases(
             [parent_case_id, child_case_id], datetime.utcnow(), 'test-deletion-with-cases'
         )
-        self.assertEqual(2, len(get_doc_ids_in_domain_by_type(
-            self.domain_name, "CommCareCase-Deleted", XFormInstance.get_db())
-        ))
+        self.assertEqual(2, len(self._get_case_ids("CommCareCase-Deleted")))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(2, len(CaseAccessorSQL.get_deleted_case_ids_in_domain(self.domain_name)))
         self._compare_diffs([])
@@ -776,7 +778,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         clear_local_domain_sql_backend_override(self.domain_name)
         self.assert_backend("couch")
-        FormAccessors(self.domain_name).get_form("arch-1").archive()
+        self._get_form("arch-1").archive()
 
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(
@@ -799,7 +801,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         clear_local_domain_sql_backend_override(self.domain_name)
         self.assert_backend("couch")
-        FormAccessors(self.domain_name).get_form("arch").unarchive()
+        self._get_form("arch").unarchive()
 
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(
@@ -826,7 +828,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             self._do_migration(live=True)
         self.assert_backend("sql")
         with self.assertRaises(NotAllowed):
-            FormAccessors(self.domain_name).get_form("form-1").soft_delete()
+            self._get_form("form-1").soft_delete()
         with self.assertRaises(NotAllowed):
             FormAccessorSQL.hard_delete_forms(self.domain_name, ["form-1"])
         with self.assertRaises(NotAllowed):
@@ -839,7 +841,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         clear_local_domain_sql_backend_override(self.domain_name)
         self.assert_backend("couch")
         with self.assertRaises(NotAllowed):
-            FormAccessors(self.domain_name).get_form("form-1").soft_delete()
+            self._get_form("form-1").soft_delete()
         with self.assertRaises(NotAllowed):
             FormAccessors(self.domain_name).soft_undelete_forms(["form-2"])
 
@@ -847,7 +849,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         deleted = FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain_name)
         self.assertEqual(set(deleted), {"form-2"})
         self.assertEqual(self._get_form_ids(), {"form-1"})
-        self.assertEqual(self._get_case_ids("CommCareCase"), {"test-case"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
         self._compare_diffs([])
 
     def test_delete_user_during_migration(self):
@@ -974,7 +976,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         case = self._get_case("test-case")
         self.assertEqual(case.xform_ids, ["new-form"])
         self._compare_diffs([])
-        form = FormAccessors(self.domain_name).get_form('new-form')
+        form = self._get_form('new-form')
         self.assertEqual(form.deprecated_form_id, "test-form")
         self.assertIsNone(form.problem)
 
