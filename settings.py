@@ -1097,10 +1097,6 @@ LOGGING = {
         'null': {
             'class': 'logging.NullHandler',
         },
-        'sentry': {
-            'level': 'ERROR',
-            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
-        },
         'soft_asserts': {
             "level": "DEBUG",
             'class': 'logging.handlers.RotatingFileHandler',
@@ -1129,7 +1125,7 @@ LOGGING = {
             'propagate': False,
         },
         'django': {
-            'handlers': ['sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1144,7 +1140,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1197,11 +1193,6 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'WARNING',
             'propagate': True
-        },
-        'sentry.errors.uncaught': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
         },
         'soft_asserts': {
             'handlers': ['soft_asserts', 'console'],
