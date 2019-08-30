@@ -1,5 +1,4 @@
-
-import logging
+import subprocess
 from collections import namedtuple
 import os
 import sys
@@ -8,9 +7,6 @@ import uuid
 
 import re
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
-import six
-from raven import breadcrumbs
-from raven import fetch_git_sha
 
 
 def is_testing():
@@ -237,34 +233,45 @@ def fix_logger_obfuscation(fix_logger_obfuscation_, logging_config):
 
 def configure_sentry(base_dir, server_env, dsn):
     if not dsn:
-        return
+        return False
+
+    import sentry_sdk
+    from sentry_sdk.integrations.logging import ignore_logger
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+
+    from corehq.util.sentry import before_sentry_send
 
     release = get_release_name(base_dir, server_env)
 
-    breadcrumbs.ignore_logger('quickcache')
-    breadcrumbs.ignore_logger('django.template')
+    ignore_logger('quickcache')
+    ignore_logger('django.template')
 
-    return {
-        'dsn': dsn,
-        'release': release,
-        'environment': server_env,
-        'tags': {},
-        'include_versions': False,  # performance without this is bad
-        'processors': (
-            'raven.processors.RemovePostDataProcessor',
-            'corehq.util.sentry.HQSanitzeSystemPasswordsProcessor',
-        ),
-        'ignore_exceptions': [
-            'KeyboardInterrupt'
-        ],
-        'CELERY_LOGLEVEL': logging.FATAL
-    }
+    sentry_sdk.init(
+        dsn,
+        release=release,
+        environment=server_env,
+        request_bodies='never',
+        before_send=before_sentry_send,
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(),
+            SqlalchemyIntegration(),
+            RedisIntegration()
+        ]
+    )
+    return True
 
 
 def get_release_name(base_dir, server_env):
     release_dir = base_dir.split('/')[-1]
     if re.match(r'\d{4}-\d{2}-\d{2}_\d{2}.\d{2}', release_dir):
-        release = "{}-{}-deploy".format(release_dir, server_env)
+        return "{}-{}-deploy".format(release_dir, server_env)
     else:
-        release = fetch_git_sha(base_dir)
-    return release
+        try:
+            out = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+            return out.strip().decode('ascii')
+        except OSError:
+            return "unknown"

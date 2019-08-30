@@ -2120,16 +2120,11 @@ if not SENTRY_DSN:
             """), DeprecationWarning)
 
 
-SENTRY_CONFIGURED = False
-_raven_config = helper.configure_sentry(
+SENTRY_CONFIGURED = helper.configure_sentry(
     BASE_DIR,
     SERVER_ENVIRONMENT,
     SENTRY_DSN,
 )
-if _raven_config:
-    RAVEN_CONFIG = _raven_config
-    SENTRY_CONFIGURED = True
-    SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
 
 CSRF_COOKIE_HTTPONLY = True
 if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
