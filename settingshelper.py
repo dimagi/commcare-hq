@@ -235,8 +235,8 @@ def fix_logger_obfuscation(fix_logger_obfuscation_, logging_config):
                 handler["class"] = "logging.StreamHandler"
 
 
-def configure_sentry(base_dir, server_env, pub_key, priv_key, project_id):
-    if not (pub_key and priv_key and project_id):
+def configure_sentry(base_dir, server_env, dsn):
+    if not dsn:
         return
 
     release = get_release_name(base_dir, server_env)
@@ -245,11 +245,7 @@ def configure_sentry(base_dir, server_env, pub_key, priv_key, project_id):
     breadcrumbs.ignore_logger('django.template')
 
     return {
-        'dsn': 'https://{pub_key}:{priv_key}@sentry.io/{project_id}'.format(
-            pub_key=pub_key,
-            priv_key=priv_key,
-            project_id=project_id
-        ),
+        'dsn': dsn,
         'release': release,
         'environment': server_env,
         'tags': {},

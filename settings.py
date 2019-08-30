@@ -860,10 +860,12 @@ CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
 
-SENTRY_PUBLIC_KEY = None
-SENTRY_PRIVATE_KEY = None
-SENTRY_PROJECT_ID = None
+SENTRY_DSN = None
+
+# adds a link to sentry event into error reports
 SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
+
+# used for creating releases and deploys
 SENTRY_API_KEY = None
 
 OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
@@ -2098,13 +2100,31 @@ REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
 }
 
+if not SENTRY_DSN:
+    pub_key = globals().get('SENTRY_PUBLIC_KEY')
+    priv_key = globals().get('SENTRY_PRIVATE_KEY')
+    project_id = globals().get('SENTRY_PROJECT_ID')
+    if pub_key and priv_key and project_id:
+        SENTRY_DSN = 'https://{pub_key}:{priv_key}@sentry.io/{project_id}'.format(
+            pub_key=pub_key,
+            priv_key=priv_key,
+            project_id=project_id
+        )
+
+        import warnings
+        warnings.warn(inspect.cleandoc(f"""SENTRY configuration has changed
+
+            Please replace SENTRY_PUBLIC_KEY, SENTRY_PRIVATE_KEY, SENTRY_PROJECT_ID with SENTRY_DSN:
+
+            SENTRY_DSN = {SENTRY_DSN}
+            """), DeprecationWarning)
+
+
 SENTRY_CONFIGURED = False
 _raven_config = helper.configure_sentry(
     BASE_DIR,
     SERVER_ENVIRONMENT,
-    SENTRY_PUBLIC_KEY,
-    SENTRY_PRIVATE_KEY,
-    SENTRY_PROJECT_ID
+    SENTRY_DSN,
 )
 if _raven_config:
     RAVEN_CONFIG = _raven_config
