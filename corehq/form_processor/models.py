@@ -19,7 +19,6 @@ from jsonobject import JsonObject
 from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
 from PIL import Image
-from six.moves import map
 from lxml import etree
 
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
@@ -227,7 +226,7 @@ class AttachmentMixin(SaveStateMixin):
         existing_names = {a.name for a in self.attachments_list}
         self.attachments_list.extend(
             Attachment(meta.name, meta, meta.content_type, meta.properties)
-            for meta in six.itervalues(xform.attachments)
+            for meta in xform.attachments.values()
             if meta.name not in existing_names
         )
 
@@ -775,7 +774,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return self.deleted
 
     def dynamic_case_properties(self):
-        return OrderedDict(sorted(six.iteritems(self.case_json)))
+        return OrderedDict(sorted(self.case_json.items()))
 
     def to_api_json(self, lite=False):
         from .serializers import CommCareCaseSQLAPISerializer

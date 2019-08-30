@@ -1,7 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
-import six
 from contextlib import contextmanager
 from io import BytesIO
 
@@ -33,7 +32,7 @@ class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'conten
             return stream.read()
 
 
-class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
+class AbstractFormAccessor(metaclass=ABCMeta):
     """
     Contract for common methods expected on FormAccessor(SQL/Couch). All methods
     should be static or classmethods.
@@ -239,7 +238,7 @@ class FormAccessors(object):
                                                                    new_username)
 
 
-class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
+class AbstractCaseAccessor(metaclass=ABCMeta):
     """
     Contract for common methods expected on CaseAccessor(SQL/Couch). All methods
     should be static or classmethods.
@@ -501,7 +500,7 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
     return cobject
 
 
-class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
+class AbstractLedgerAccessor(metaclass=ABCMeta):
 
     @abstractmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):

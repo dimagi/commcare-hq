@@ -7,7 +7,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 import attr
-import six
 from memoized import memoized
 
 from casexml.apps.case.xform import extract_case_blocks
@@ -195,11 +194,11 @@ class OpenmrsRepeater(CaseRepeater):
 
     def send_request(self, repeat_record, payload):
         value_sources = chain(
-            six.itervalues(self.openmrs_config.case_config.patient_identifiers),
-            six.itervalues(self.openmrs_config.case_config.person_properties),
-            six.itervalues(self.openmrs_config.case_config.person_preferred_name),
-            six.itervalues(self.openmrs_config.case_config.person_preferred_address),
-            six.itervalues(self.openmrs_config.case_config.person_attributes),
+            self.openmrs_config.case_config.patient_identifiers.values(),
+            self.openmrs_config.case_config.person_properties.values(),
+            self.openmrs_config.case_config.person_preferred_name.values(),
+            self.openmrs_config.case_config.person_preferred_address.values(),
+            self.openmrs_config.case_config.person_attributes.values(),
         )
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,

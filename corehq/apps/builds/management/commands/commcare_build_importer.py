@@ -4,7 +4,6 @@ from io import BytesIO, StringIO
 from django.core.management.base import BaseCommand, CommandError
 
 import requests
-import six
 from jenkinsapi.jenkins import Jenkins
 from memoized import memoized
 from six.moves import input
@@ -80,7 +79,7 @@ class Command(BaseCommand):
     @memoized
     def jenkin_projects(self):
         print("Pinging Jenkins build server. Pelase wait...")
-        return list(six.iterkeys(self.build_server))
+        return list(self.build_server.keys())
 
     @property
     @memoized
