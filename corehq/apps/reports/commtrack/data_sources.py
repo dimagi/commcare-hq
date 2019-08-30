@@ -21,10 +21,10 @@ from corehq.apps.products.models import Product
 from corehq.apps.reports.analytics.couchaccessors import (
     get_ledger_values_for_case_as_of,
 )
-from corehq.apps.reports.analytics.esaccessors import (
+from corehq.apps.reports.analytics.dbaccessors import (
     get_aggregated_ledger_values,
-    get_wrapped_ledger_values,
 )
+from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.util import (
