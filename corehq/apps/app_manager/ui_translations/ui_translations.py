@@ -46,16 +46,41 @@ def process_ui_translation_upload(app, trans_file):
     default_trans = get_default_translations_for_download(app, commcare_version)
     lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
 
+    # Find all of the ${0}-looking values in a translation.
+    # Returns list like ["${0}", "${1}", ...]
+    def _get_params(translation):
+        if not translation:
+            return []
+        return re.findall(r"\$.*?}", translation)
+
+    # Create a string version of all parameters in a translation, suitable both for
+    # comparison and for displaying in an error message.
+    def _get_params_text(params):
+        if not params:
+            return "no parameters"
+        return ", ".join(["${{{}}}".format(num) for num in sorted({re.sub(r'\D', '', p) for p in params})])
+
     for row in translations:
         if row["property"] not in commcare_ui_strings:
             # Add a warning for  unknown properties, but still add them to the translation dict
             warnings.append(row["property"] + " is not a known CommCare UI string, but we added it anyway")
+        default_params_text = _get_params_text(_get_params(default_trans.get(row["property"])))
         for lang in app.langs:
             if row.get(lang):
-                all_parameters = re.findall(r"\$.*?}", row[lang])
-                for param in all_parameters:
+                params = _get_params(row[lang])
+                params_text = _get_params_text(params)
+                for param in params:
                     if not re.match(r"\$\{[0-9]+}", param):
-                        error_properties.append(row["property"] + ' - ' + row[lang])
+                        error_properties.append(_("""
+                            Could not understand '{param}' in {lang} value of {prop}.
+                        """).format(param=param, lang=lang, prop=row["property"]))
+                if params_text != default_params_text:
+                    error_properties.append(_("""
+                        Property {prop} should contain {expected} but {lang} value contains {actual}.
+                    """).format(prop=row["property"],
+                                expected=default_params_text,
+                                lang=lang,
+                                actual=params_text))
                 if not (lang_with_defaults == lang and
                         row[lang] == default_trans.get(row["property"], "")):
                     trans_dict[lang].update({row["property"]: row[lang]})
