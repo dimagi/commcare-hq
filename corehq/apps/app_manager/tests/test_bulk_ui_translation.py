@@ -53,7 +53,7 @@ class BulkUiTranslation(SimpleTestCase):
                 ('home.start.demo', 'Ding', 'Dong'),
                 ('unknown_string', 'Ding', 'Dong'),
                 ('updates.found', 'I am missing a parameter', 'I have ${0} an ${1} extra ${2} parameter'),
-                ('sync.progress', 'It is fine to ${1} reorder ${0} parameters', 'But they need ${x0} correct syntax $ {1}'))
+                ('sync.progress', 'It is fine to ${1} reorder ${0} params', 'But use ${x0} correct syntax $ {1}'))
 
         f = self._build_translation_download_file(headers, data)
         translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
@@ -67,7 +67,7 @@ class BulkUiTranslation(SimpleTestCase):
                     'home.start.demo': 'Ding',
                     'unknown_string': 'Ding',
                     'updates.found': 'I am missing a parameter',
-                    'sync.progress': 'It is fine to ${1} reorder ${0} parameters',
+                    'sync.progress': 'It is fine to ${1} reorder ${0} params',
                 },
                 'fra': {
                     'connection.test.access.settings': 'wibble',
@@ -75,7 +75,7 @@ class BulkUiTranslation(SimpleTestCase):
                     'home.start.demo': 'Dong',
                     'unknown_string': 'Dong',
                     'updates.found': 'I have ${0} an ${1} extra ${2} parameter',
-                    'sync.progress': 'But they need ${x0} correct syntax $ {1}',
+                    'sync.progress': 'But use ${x0} correct syntax $ {1}',
                 }
             }
 
