@@ -46,8 +46,8 @@ from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
-# REQUEST_TIMEOUT is 5 minutes, but reports can take up to an hour
-REPORT_REQUEST_TIMEOUT = 60 * 60
+# REQUEST_TIMEOUT is 5 minutes, but reports can take hours
+REPORT_REQUEST_TIMEOUT = 8 * 60 * 60
 # The location metadata key that maps to its corresponding OpenMRS location UUID
 LOCATION_OPENMRS = 'openmrs_uuid'
 
