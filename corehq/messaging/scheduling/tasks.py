@@ -34,7 +34,6 @@ from corehq.util.celery_utils import no_result_task
 from datetime import datetime
 from dimagi.utils.couch import CriticalSection
 from django.conf import settings
-import six
 
 
 class ScheduleInstanceRefresher(object):
@@ -54,7 +53,7 @@ class ScheduleInstanceRefresher(object):
     @staticmethod
     def _get_any_value_or_none(from_dict):
         if from_dict:
-            return six.next(from_dict.values())
+            return next(iter(from_dict.values()))
 
         return None
 
