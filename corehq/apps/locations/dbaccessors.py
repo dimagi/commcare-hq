@@ -1,10 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from itertools import chain
+
 from six.moves import map
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
+
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 

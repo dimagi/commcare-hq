@@ -1,14 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import json
 from collections import namedtuple
 import copy
 import logging
 import time
-from io import open
 
-from six.moves.urllib.parse import unquote
+from urllib.parse import unquote
 
 from corehq.util.json import CommCareJSONEncoder
 from dimagi.utils.chunked import chunked
@@ -30,11 +27,8 @@ from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.python_compatibility import soft_assert_type_text
 from memoized import memoized
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
-import six
-from six.moves import range
 
 
 class ESJSONSerializer(object):
@@ -51,9 +45,8 @@ class ESJSONSerializer(object):
 
     def dumps(self, data):
         # don't serialize strings
-        if isinstance(data, six.string_types):
+        if isinstance(data, str):
             return data
-
         try:
             return json.dumps(data, cls=CommCareJSONEncoder)
         except (ValueError, TypeError) as e:
@@ -120,8 +113,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     """
     Check if a document exists, by ID or the whole document.
     """
-    if isinstance(doc_id_or_dict, six.string_types):
-        soft_assert_type_text(doc_id_or_dict)
+    if isinstance(doc_id_or_dict, str):
         doc_id = doc_id_or_dict
     else:
         assert isinstance(doc_id_or_dict, dict)
@@ -512,7 +504,7 @@ def parse_args_for_es(request, prefix=None):
         return str[:-2] if str.endswith('[]') else str
 
     params, facets = {}, []
-    for attr in six.iterlists(request.GET):
+    for attr in request.GET.lists():
         param, vals = attr[0], attr[1]
         if param == 'facets':
             facets = vals[0].split()
@@ -534,7 +526,8 @@ def generate_sortables_from_facets(results, params=None):
     """
 
     def generate_facet_dict(f_name, ft):
-        if isinstance(ft['term'], six.text_type): #hack to get around unicode encoding issues. However it breaks this specific facet
+        # hack to get around unicode encoding issues. However it breaks this specific facet
+        if isinstance(ft['term'], str):
             ft['term'] = ft['term'].encode('ascii', 'replace')
 
         return {'name': ft["term"],

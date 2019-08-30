@@ -1,8 +1,6 @@
 """
 Create a template app from ODM-formatted OpenClinica study metadata
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from lxml import etree
 from django.core.management.base import BaseCommand
 from corehq.apps.app_manager.models import (
@@ -24,7 +22,6 @@ from custom.openclinica.const import (
     CC_ENROLLMENT_DATE,
 )
 from custom.openclinica.utils import odm_nsmap, quote_nan
-from io import open
 
 
 # Map ODM data types to ODK XForm data types

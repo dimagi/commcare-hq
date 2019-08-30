@@ -1,6 +1,4 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from django.test import SimpleTestCase, override_settings
 from corehq.util.sentry import HQSanitzeSystemPasswordsProcessor

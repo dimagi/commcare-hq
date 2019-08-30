@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 import os
 import re
@@ -549,6 +548,14 @@ class LocationAggregationTest(TestCase):
             ]
         )
 
+        block1 = SQLLocation.objects.filter(domain=cls.domain_name, name='Block1').first()
+        block1.metadata = {"map_location_name": "Not Block1"}
+        block1.save()
+
+        sup2 = SQLLocation.objects.filter(domain=cls.domain_name, name='Supervisor2').first()
+        sup2.metadata = {"is_test_location": "test"}
+        sup2.save()
+
         cls.helper = LocationAggregationHelper()
 
     @classmethod
@@ -566,6 +573,7 @@ class LocationAggregationTest(TestCase):
     def test_agg(self):
         # This is copied over in the module
         self.assertEqual(AwcLocation.objects.count(), 92)
+        self.maxDiff = None
 
         with maybe_atomic(AwcLocation):
             # if we ran the aggregation now, we'd have 55 fewer locations
@@ -581,7 +589,113 @@ class LocationAggregationTest(TestCase):
                         self.helper.aggregate(cursor)
 
                     self.assertEqual(AwcLocation.objects.count(), 8)
+                    self.assertEqual(
+                        list(AwcLocation.objects.values(
+                            'aggregation_level',
+                            'awc_is_test', 'awc_name', 'awc_site_code',
+                            'supervisor_is_test', 'supervisor_name', 'supervisor_site_code',
+                            'block_is_test', 'block_name', 'block_site_code', 'block_map_location_name',
+                            'district_is_test', 'district_name', 'district_site_code', 'district_map_location_name',
+                            'state_is_test', 'state_name', 'state_site_code', 'state_map_location_name',
+                        ).order_by(
+                            '-aggregation_level', 'awc_name', 'supervisor_name',
+                            'block_name', 'district_name', 'state_name'
+                        ).all()),
+                        self._expected_end_state
+                    )
                     raise Exception("Don't allow this to be commited")
             except Exception as e:
                 if 'allow this' not in str(e):
                     raise
+
+    @property
+    def _expected_end_state(self):
+        return [
+            {
+                'aggregation_level': 5,
+                'awc_is_test': 0, 'awc_name': 'Awc1', 'awc_site_code': 'awc',
+                'supervisor_is_test': 0, 'supervisor_name': 'Supervisor1', 'supervisor_site_code': 'supervisor',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 5,
+                'awc_is_test': 0, 'awc_name': 'Awc2', 'awc_site_code': 'awc',
+                'supervisor_is_test': 0, 'supervisor_name': 'Supervisor1', 'supervisor_site_code': 'supervisor',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 5,
+                'awc_is_test': 0, 'awc_name': 'Awc3', 'awc_site_code': 'awc',
+                'supervisor_is_test': 1, 'supervisor_name': 'Supervisor2', 'supervisor_site_code': 'supervisor',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 4,
+                'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
+                'supervisor_is_test': 0, 'supervisor_name': 'Supervisor1', 'supervisor_site_code': 'supervisor',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 4,
+                'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
+                'supervisor_is_test': 1, 'supervisor_name': 'Supervisor2', 'supervisor_site_code': 'supervisor',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 3,
+                'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
+                'supervisor_is_test': 0, 'supervisor_name': None, 'supervisor_site_code': 'All',
+                'block_is_test': 0, 'block_map_location_name': 'Not Block1',
+                'block_name': 'Block1', 'block_site_code': 'block',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 2,
+                'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
+                'supervisor_is_test': 0, 'supervisor_name': None, 'supervisor_site_code': 'All',
+                'block_is_test': 0, 'block_map_location_name': 'All',
+                'block_name': None, 'block_site_code': 'All',
+                'district_is_test': 0, 'district_map_location_name': '',
+                'district_name': 'District1', 'district_site_code': 'district',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            },
+            {
+                'aggregation_level': 1,
+                'awc_is_test': 0, 'awc_name': None, 'awc_site_code': 'All',
+                'supervisor_is_test': 0, 'supervisor_name': None, 'supervisor_site_code': 'All',
+                'block_is_test': 0, 'block_map_location_name': 'All', 'block_name': None, 'block_site_code': 'All',
+                'district_is_test': 0, 'district_map_location_name': 'All',
+                'district_name': None, 'district_site_code': 'All',
+                'state_is_test': 0, 'state_map_location_name': '',
+                'state_name': 'State1', 'state_site_code': 'state',
+            }
+        ]

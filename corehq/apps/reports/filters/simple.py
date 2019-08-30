@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy
+
 from corehq.apps.reports.filters.base import BaseSimpleFilter
 
 

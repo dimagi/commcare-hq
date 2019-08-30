@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 
 from django.utils.functional import cached_property
@@ -9,7 +7,6 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.app_manager.models import Application
 from corehq.util.quickcache import quickcache
 import six
-from io import open
 
 
 class AbtExpressionSpec(JsonObject):

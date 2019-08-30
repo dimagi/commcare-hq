@@ -1,28 +1,33 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import decimal
 import json
 from collections import Counter
-from couchdbkit.exceptions import ResourceNotFound
-import decimal
+
 from django.conf import settings
 from django.contrib import messages
-from django.urls import reverse
 from django.http.response import Http404, HttpResponse
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
+
+import six
+from couchdbkit.exceptions import ResourceNotFound
+
 from couchforms.analytics import get_last_form_submission_received
+from toggle.models import Toggle
+from toggle.shortcuts import parse_toggle
+
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
+from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.apps.users.models import CouchUser
-from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.toggles import (
     ALL_NAMESPACES,
     ALL_TAG_GROUPS,
-    NAMESPACE_USER,
     NAMESPACE_DOMAIN,
+    NAMESPACE_USER,
     TAG_CUSTOM,
     TAG_DEPRECATED,
     TAG_INTERNAL,
@@ -31,9 +36,6 @@ from corehq.toggles import (
     all_toggles,
 )
 from corehq.util.soft_assert import soft_assert
-from toggle.models import Toggle
-from toggle.shortcuts import parse_toggle
-import six
 
 NOT_FOUND = "Not Found"
 

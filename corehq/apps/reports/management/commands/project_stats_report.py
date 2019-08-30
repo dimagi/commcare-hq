@@ -1,30 +1,50 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 import re
 from collections import defaultdict
-from datetime import datetime, date
+from datetime import date, datetime
 
-from dateutil.relativedelta import relativedelta
 from django.core.management import BaseCommand
-from django.db import models, connections
-from django.db.models import Func, F, Count
+from django.db import connections, models
+from django.db.models import Count, F, Func
 from django.db.models.aggregates import Avg, StdDev
 
+from dateutil.relativedelta import relativedelta
+
 from casexml.apps.stock.models import StockTransaction
+
 from corehq.apps.data_analytics.models import MALTRow
-from corehq.apps.es import UserES, CaseES, FormES
-from corehq.apps.es.aggregations import TermsAggregation, DateHistogram, NestedAggregation
-from corehq.apps.reports.standard.project_health import get_performance_threshold
-from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
+from corehq.apps.es import CaseES, FormES, UserES
+from corehq.apps.es.aggregations import (
+    DateHistogram,
+    NestedAggregation,
+    TermsAggregation,
+)
+from corehq.apps.reports.standard.project_health import (
+    get_performance_threshold,
+)
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    StaticDataSourceConfiguration,
+)
 from corehq.apps.userreports.util import get_table_name
 from corehq.elastic import ES_EXPORT_INSTANCE
-from corehq.form_processor.models import LedgerValue, LedgerTransaction, CommCareCaseSQL, CommCareCaseIndexSQL
+from corehq.form_processor.models import (
+    CommCareCaseIndexSQL,
+    CommCareCaseSQL,
+    LedgerTransaction,
+    LedgerValue,
+)
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.connections import connection_manager
-from corehq.sql_db.util import split_list_by_db_partition, get_db_aliases_for_partitioned_query
-from corehq.util.markup import CSVRowFormatter, TableRowFormatter, SimpleTableWriter
+from corehq.sql_db.util import (
+    get_db_aliases_for_partitioned_query,
+    split_list_by_db_partition,
+)
+from corehq.util.markup import (
+    CSVRowFormatter,
+    SimpleTableWriter,
+    TableRowFormatter,
+)
 
 
 class Month(Func):

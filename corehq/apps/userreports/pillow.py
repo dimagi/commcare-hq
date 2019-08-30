@@ -1,12 +1,11 @@
-from __future__ import absolute_import, division, unicode_literals
 
 import hashlib
+import signal
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 
 from django.conf import settings
 
-import signal
 import six
 
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint

@@ -1,11 +1,8 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
 
-from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import CouchUser
 
 
 class Command(BaseCommand):

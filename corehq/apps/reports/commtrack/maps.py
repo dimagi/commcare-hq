@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.utils.translation import ugettext_noop
-from corehq.apps.products.models import Product
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext_noop
+
+from corehq.apps.hqwebapp.decorators import use_maps
+from corehq.apps.products.models import Product
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
-from corehq.apps.hqwebapp.decorators import use_maps
 
 
 class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):

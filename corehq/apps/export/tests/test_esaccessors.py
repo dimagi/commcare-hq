@@ -1,17 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 
-from django.test import TestCase, SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations, get_groups_user_ids
-from corehq.elastic import send_to_elasticsearch, get_es_new
-from corehq.form_processor.models import LedgerValue
-from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.apps.groups.models import Group
-from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
+
+from corehq.apps.export.esaccessors import (
+    get_groups_user_ids,
+    get_ledger_section_entry_combinations,
+)
+from corehq.apps.groups.models import Group
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.form_processor.models import LedgerValue
+from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
+from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
 
 
 class TestExportESAccessors(TestCase):

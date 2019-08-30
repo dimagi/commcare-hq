@@ -1,30 +1,27 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import re
 from datetime import datetime
 from itertools import chain
 
+from django.core.management.base import BaseCommand
+
 import six
 from couchdbkit import ResourceNotFound
+from six.moves import input
+
+from couchforms.const import ATTACHMENT_NAME
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_correct_app_class
-from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xmlns import \
-    name_matches
+from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xmlns import (
+    name_matches,
+)
 from corehq.apps.es import FormES
 from corehq.apps.es.filters import NOT, doc_type
 from corehq.util.couch import IterDB
 from corehq.util.quickcache import quickcache
-from couchforms.const import ATTACHMENT_NAME
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
-from django.core.management.base import BaseCommand
-from six.moves import input
-from io import open
-
 
 ONE_HOUR = 60 * 60
 INFO = "info"

@@ -1,42 +1,39 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 
+import six
+from six.moves import map
+
+from dimagi.utils.parsing import string_to_datetime
+
 from corehq.apps.es import (
-    FormES,
-    UserES,
-    GroupES,
     CaseES,
-    filters,
-    aggregations,
     CaseSearchES,
+    FormES,
+    GroupES,
+    UserES,
+    aggregations,
+    filters,
 )
 from corehq.apps.es.aggregations import (
-    TermsAggregation,
-    ExtendedStatsAggregation,
-    TopHitsAggregation,
-    MissingAggregation,
     MISSING_KEY,
+    ExtendedStatsAggregation,
+    MissingAggregation,
+    TermsAggregation,
+    TopHitsAggregation,
 )
-from corehq.apps.export.const import CASE_SCROLL_SIZE, MAX_MULTIMEDIA_EXPORT_SIZE
-from corehq.apps.es.forms import (
-    submitted as submitted_filter,
-    completed as completed_filter,
-    xmlns as xmlns_filter,
-)
-from corehq.apps.es.cases import (
-    closed_range as closed_range_filter,
-    case_type as case_type_filter,
+from corehq.apps.es.cases import case_type as case_type_filter
+from corehq.apps.es.cases import closed_range as closed_range_filter
+from corehq.apps.es.forms import completed as completed_filter
+from corehq.apps.es.forms import submitted as submitted_filter
+from corehq.apps.es.forms import xmlns as xmlns_filter
+from corehq.apps.export.const import (
+    CASE_SCROLL_SIZE,
+    MAX_MULTIMEDIA_EXPORT_SIZE,
 )
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.elastic import ES_DEFAULT_INSTANCE, ES_EXPORT_INSTANCE
 from corehq.util.quickcache import quickcache
-from dimagi.utils.parsing import string_to_datetime
-import six
-from six.moves import map
 
 PagedResult = namedtuple('PagedResult', 'total hits')
 

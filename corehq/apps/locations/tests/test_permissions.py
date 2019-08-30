@@ -1,30 +1,30 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
-import uuid
 import random
 import string
+import uuid
 from io import BytesIO
+
+from django.http import HttpResponse
+from django.urls import reverse
+
 import mock
 
-from django.urls import reverse
-from django.http import HttpResponse
+from casexml.apps.case.tests.util import delete_all_xforms
 
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import WebUser, CommCareUser
-from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.views.mobile import users as user_views
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils.xform import (
     TestFormMetadata,
     get_simple_wrapped_form,
 )
-from corehq.form_processor.tests.utils import run_with_all_backends
-from casexml.apps.case.tests.util import delete_all_xforms
-
+from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.test_utils import create_and_save_a_case
-from ..views import LocationsListView, EditLocationView
+
 from ..permissions import can_edit_form_location, user_can_access_case
+from ..views import EditLocationView, LocationsListView
 from .util import LocationHierarchyTestCase
 
 

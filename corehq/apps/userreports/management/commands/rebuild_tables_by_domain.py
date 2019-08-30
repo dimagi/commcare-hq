@@ -1,9 +1,10 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
+
 from corehq.apps.userreports import tasks
-from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    StaticDataSourceConfiguration,
+)
 
 
 class Command(BaseCommand):

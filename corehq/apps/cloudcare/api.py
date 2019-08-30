@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+
+from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
-from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps

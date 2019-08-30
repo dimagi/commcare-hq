@@ -1,13 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from django.db import transaction
+
 from memoized import memoized
+
+from dimagi.utils.logging import notify_exception
 
 from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.logging import notify_exception
 
 skipped_destructive_rebuild_assert = soft_assert(exponential_backoff=False)
 

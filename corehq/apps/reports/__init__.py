@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext_noop as _
-
 
 # this is just here to mark some strings from settings for translation
 # in a safer way.

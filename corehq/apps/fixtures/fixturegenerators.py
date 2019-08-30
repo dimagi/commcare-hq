@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from collections import defaultdict
 from functools import partial
@@ -6,11 +5,16 @@ from operator import attrgetter
 from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.phone.fixtures import FixtureProvider
-from casexml.apps.phone.utils import GLOBAL_USER_ID, get_or_cache_global_fixture
+from casexml.apps.phone.utils import (
+    GLOBAL_USER_ID,
+    get_or_cache_global_fixture,
+)
+
 from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
 from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataType
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
+
 from .utils import get_index_schema_node
 
 

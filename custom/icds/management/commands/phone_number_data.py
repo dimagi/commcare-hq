@@ -1,14 +1,9 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import csv342 as csv
+import csv
 
 from django.core.management import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from io import open
 
 
 class Command(BaseCommand):

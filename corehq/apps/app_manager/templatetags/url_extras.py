@@ -1,8 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django import template
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
+
 import six
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
 
 register = template.Library()
 
@@ -53,7 +54,7 @@ class URLEncodeNode(template.Node):
         path = self.path_var.resolve(context)
         params = {}
         for key, val in self.params_var.resolve(context).lists():
-            params[key] = [v.encode('utf-8') if isinstance(v, six.text_type) else v
+            params[key] = [v.encode('utf-8') if isinstance(v, str) else v
                            for v in val]
 
         for key, val in self.extra_params.items():
@@ -66,6 +67,6 @@ class URLEncodeNode(template.Node):
 
         # clean up
         for key in params:
-            if isinstance(params[key], six.text_type):
+            if isinstance(params[key], str):
                 params[key] = params[key].encode('utf-8')
         return "%s?%s" % (path, six.moves.urllib.parse.urlencode(params, True)) if params else path

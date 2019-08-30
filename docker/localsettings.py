@@ -1,7 +1,5 @@
 ####### Configuration for CommCareHQ Running in docker #######
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import os
 
@@ -123,9 +121,6 @@ redis_host = 'redis'
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://{}:6379/0'.format(redis_host),
-    'OPTIONS': {
-        'PICKLE_VERSION': 2,  # After PY3 migration: remove
-    },
 }
 
 CACHES = {

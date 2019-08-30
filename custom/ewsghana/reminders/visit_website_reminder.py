@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 from corehq.apps.users.models import WebUser
 from custom.ewsghana.reminders import WEB_REMINDER

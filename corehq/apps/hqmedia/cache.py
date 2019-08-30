@@ -1,12 +1,16 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import io
 import zipfile
+
 from django.core.cache import cache
-from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareVideo
 from django.utils.translation import ugettext as _
+
 from soil import DownloadBase
+
+from corehq.apps.hqmedia.models import (
+    CommCareAudio,
+    CommCareImage,
+    CommCareVideo,
+)
 
 
 class BaseMultimediaStatusCache(object):

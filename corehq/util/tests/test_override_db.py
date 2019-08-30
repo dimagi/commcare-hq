@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from six.moves.queue import Queue
 import threading
 from couchdbkit import Database

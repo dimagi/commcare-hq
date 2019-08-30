@@ -1,18 +1,15 @@
-from __future__ import absolute_import, print_function
-from __future__ import unicode_literals
 import hashlib
 import json
 import os
-import six
-import yaml
-from django.core.management.base import BaseCommand
-from django.contrib.staticfiles import finders
-from django.conf import settings
-from dimagi.utils import gitinfo
-from django.core import cache
-from io import open
 
-from corehq.util.python_compatibility import soft_assert_type_text
+from django.conf import settings
+from django.contrib.staticfiles import finders
+from django.core import cache
+from django.core.management.base import BaseCommand
+
+import yaml
+
+from dimagi.utils import gitinfo
 
 rcache = cache.caches['redis']
 RESOURCE_PREFIX = '#resource_%s'
@@ -36,13 +33,15 @@ class Command(BaseCommand):
         print("Current commit SHA: %s" % sha)
         return sha
 
-    def output_resources(self, resources, overwrite=True):
+    def output_resources(self, resources, overwrite=True, path=None):
         if not overwrite:
             from get_resource_versions import get_resource_versions
-            old_resources = get_resource_versions()
+            old_resources = get_resource_versions(path=path)
             old_resources.update(resources)
             resources = old_resources
-        with open(os.path.join(self.root_dir, 'resource_versions.yaml'), 'w') as fout:
+        if not path:
+            path = os.path.join(self.root_dir, 'resource_versions.yaml')
+        with open(path, 'w') as fout:
             fout.write(yaml.dump([{'name': name, 'version': version}
                                   for name, version in resources.items()]))
 
@@ -61,12 +60,10 @@ class Command(BaseCommand):
 
         current_sha = self.current_sha()
         existing_resources = rcache.get(RESOURCE_PREFIX % current_sha, None)
-        if existing_resources and not isinstance(existing_resources, six.string_types):
+        if existing_resources and not isinstance(existing_resources, str):
             print("getting resource dict from cache")
             self.output_resources(existing_resources, overwrite=True)
             return
-        if isinstance(existing_resources, six.string_types):
-            soft_assert_type_text(existing_resources)
 
         resources = {}
         for finder in finders.get_finders():

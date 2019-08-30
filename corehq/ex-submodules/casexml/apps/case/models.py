@@ -4,8 +4,6 @@ Couch models for commcare cases.
 For details on casexml check out:
 http://bitbucket.org/javarosa/javarosa/wiki/casexml
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import OrderedDict
 import re
 from datetime import datetime
@@ -293,10 +291,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
     @property
     def deletion_date(self):
         return getattr(self, '-deletion_date', None)
-
-    def soft_delete(self):
-        self.doc_type += DELETED_SUFFIX
-        self.save()
 
     def to_api_json(self, lite=False):
         ret = {

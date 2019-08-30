@@ -1,12 +1,10 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 
 from django.core.management import BaseCommand, CommandError
-from pillowtop import get_pillow_by_name
+
 from six.moves import input
-from io import open
+
+from pillowtop import get_pillow_by_name
 
 
 class Command(BaseCommand):

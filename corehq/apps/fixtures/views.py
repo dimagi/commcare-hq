@@ -1,10 +1,8 @@
-from __future__ import absolute_import, unicode_literals
 
 import json
 from collections import OrderedDict
 from contextlib import contextmanager
 from copy import deepcopy
-from io import open
 from tempfile import NamedTemporaryFile
 
 from django.contrib import messages
@@ -69,6 +67,7 @@ from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
 from corehq.toggles import SKIP_ORM_FIXTURE_UPLOAD
 from corehq.util.files import file_extention_from_filename
+from corehq import toggles
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
@@ -498,7 +497,7 @@ def fixture_api_upload_status(request, domain, download_id, **kwargs):
 
 def _upload_fixture_api(request, domain):
     try:
-        excel_file, replace, is_async, skip_orm = _get_fixture_upload_args_from_request(request, domain)
+        excel_file, replace, is_async, skip_orm, email = _get_fixture_upload_args_from_request(request, domain)
     except FixtureAPIRequestError as e:
         return UploadFixtureAPIResponse('fail', six.text_type(e))
 
@@ -516,7 +515,8 @@ def _upload_fixture_api(request, domain):
                     domain,
                     download_id,
                     replace,
-                    skip_orm
+                    skip_orm,
+                    user_email=email
                 )
                 file_ref.set_task(task)
 
@@ -572,6 +572,10 @@ def _get_fixture_upload_args_from_request(request, domain):
             replace = True
         elif replace.lower() == "false":
             replace = False
+        user_email = None
+        if toggles.SUPPORT.enabled(request.couch_user.username):
+            user_email = request.couch_user.email if request.couch_user.email is not None \
+                else request.couch_user.username
     except Exception:
         raise FixtureAPIRequestError(
             "Invalid post request."
@@ -588,7 +592,7 @@ def _get_fixture_upload_args_from_request(request, domain):
     if request.POST.get('skip_orm') == 'true' and SKIP_ORM_FIXTURE_UPLOAD.enabled(domain):
         skip_orm = True
 
-    return _excel_upload_file(upload_file), replace, is_async, skip_orm
+    return _excel_upload_file(upload_file), replace, is_async, skip_orm, user_email
 
 
 @login_and_domain_required

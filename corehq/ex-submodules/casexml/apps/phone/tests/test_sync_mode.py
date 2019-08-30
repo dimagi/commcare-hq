@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import uuid
 from datetime import datetime
@@ -46,7 +44,6 @@ from casexml.apps.phone.restore import (
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from six.moves import range
-from io import open
 
 USERNAME = "syncguy"
 OTHER_USERNAME = "ferrel"
@@ -814,7 +811,7 @@ class SyncDeletedCasesTest(BaseSyncTest):
     def test_deleted_case_doesnt_sync(self):
         case_id = uuid.uuid4().hex
         self.device.post_changes(case_id=case_id, create=True)
-        CaseAccessors(self.project.name).get_case(case_id).soft_delete()
+        CaseAccessors(self.project.name).soft_delete_cases([case_id])
         self.assertNotIn(case_id, self.device.sync().cases)
 
     def test_deleted_parent_doesnt_sync(self):
@@ -832,7 +829,7 @@ class SyncDeletedCasesTest(BaseSyncTest):
                 )],
             )
         )
-        CaseAccessors().get_case(parent_id).soft_delete()
+        CaseAccessors(self.project.name).soft_delete_cases([parent_id])
         self.assertEqual(set(self.device.sync().cases), {child_id})
         # todo: in the future we may also want to purge the child
 

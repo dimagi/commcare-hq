@@ -1,14 +1,12 @@
-from __future__ import absolute_import, print_function, unicode_literals
 
 from collections import defaultdict
 from importlib import import_module
-from io import open
 
 from django.apps import apps
 from django.conf import settings
 from django.core.management import BaseCommand
 
-import csv342 as csv
+import csv
 import six
 from six.moves import map
 

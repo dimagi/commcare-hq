@@ -1,25 +1,24 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import copy
-import six
 import re
 from collections import defaultdict
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+
+import six
 from lxml import etree
-from lxml.etree import XMLSyntaxError, Element
+from lxml.etree import Element, XMLSyntaxError
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ShadowForm
 from corehq.apps.app_manager.util import save_xform
-from corehq.apps.app_manager.xform import namespaces, WrappedNode
+from corehq.apps.app_manager.xform import WrappedNode, namespaces
 from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
-    get_unicode_dicts,
     get_form_from_sheet_name,
+    get_unicode_dicts,
 )
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
 

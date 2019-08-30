@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import hashlib
 import six
 from django.core.cache import cache

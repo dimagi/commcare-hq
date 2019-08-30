@@ -1,11 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.callcenter import const
-from corehq.apps.callcenter.const import WEEK1, WEEK0, MONTH0
-from corehq.apps.callcenter.models import (
-    TypedIndicator, BasicIndicator, ByTypeWithTotal, CallCenterIndicatorConfig
-)
 from django.test import SimpleTestCase
+
+from corehq.apps.callcenter import const
+from corehq.apps.callcenter.const import MONTH0, WEEK0, WEEK1
+from corehq.apps.callcenter.models import (
+    BasicIndicator,
+    ByTypeWithTotal,
+    CallCenterIndicatorConfig,
+    TypedIndicator,
+)
 
 
 def get_indicator_slugs_from_config(config, all_types=None):

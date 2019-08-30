@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.users import SelectCaseOwnerFilter
 from django.utils.translation import ugettext_noop

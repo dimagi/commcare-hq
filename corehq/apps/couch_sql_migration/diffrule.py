@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import attr
 import six
@@ -9,9 +7,6 @@ class AnyType(object):
 
     def __eq__(self, other):
         return True
-
-    def __ne__(self, other):
-        return False
 
     def __repr__(self):
         return "ANY"

@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
 from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from io import open
 
 
 class MultiCaseTest(TestCase):

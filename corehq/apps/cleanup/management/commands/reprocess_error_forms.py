@@ -1,17 +1,15 @@
-from __future__ import print_function
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict
 
 from django.core.management.base import BaseCommand
 
+from couchforms.dbaccessors import get_form_ids_by_type
+
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.reprocess import reprocess_xform_error
+from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.log import with_progress_bar
-from couchforms.dbaccessors import get_form_ids_by_type
 
 
 class Command(BaseCommand):

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import architect
 import uuid
@@ -89,3 +87,10 @@ class CitusDashboardTiming(models.Model):
     context = JSONField()
     control_duration = models.DecimalField(max_digits=10, decimal_places=3)
     candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)
+
+
+class AggregationRecord(models.Model):
+    agg_date = models.DateField()
+    run_date = models.DateField(auto_now_add=True)
+    state_ids = ArrayField(models.CharField(max_length=255), null=True)
+    agg_uuid = models.UUIDField(unique=True, default=uuid.uuid4)

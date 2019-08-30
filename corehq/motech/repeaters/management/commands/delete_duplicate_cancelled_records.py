@@ -1,19 +1,19 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-import csv342 as csv
+import csv
 import datetime
 from collections import defaultdict
 
 from django.core.management.base import BaseCommand
-from memoized import memoized
 
-from corehq.util.couch import IterDB
-from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE, RECORD_SUCCESS_STATE
-from corehq.motech.repeaters.models import RepeatRecord, Repeater
-from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
+from memoized import memoized
 from six.moves import input
-from io import open
+
+from corehq.motech.repeaters.const import (
+    RECORD_CANCELLED_STATE,
+    RECORD_SUCCESS_STATE,
+)
+from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
+from corehq.motech.repeaters.models import Repeater, RepeatRecord
+from corehq.util.couch import IterDB
 
 
 class Command(BaseCommand):

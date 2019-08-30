@@ -1,24 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from decimal import Decimal
-import random
 import datetime
+import random
+from decimal import Decimal
 
 from dateutil.relativedelta import relativedelta
+from six.moves import range
 
 from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.models import (
-    CreditLine, CreditAdjustment, FeatureType,
-    SoftwarePlanEdition, DefaultProductPlan, BillingAccount, Subscription,
+    BillingAccount,
+    CreditAdjustment,
     CreditAdjustmentReason,
+    CreditLine,
+    DefaultProductPlan,
+    FeatureType,
+    SoftwarePlanEdition,
+    Subscription,
 )
 from corehq.apps.accounting.tasks import deactivate_subscriptions
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
-from six.moves import range
 
 
 class TestCreditLines(BaseInvoiceTestCase):

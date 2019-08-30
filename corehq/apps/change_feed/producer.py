@@ -1,9 +1,8 @@
-from __future__ import unicode_literals
-from __future__ import absolute_import
 import json
-import six
 
 from django.conf import settings
+
+import six
 from kafka import KafkaProducer
 
 from corehq.util.soft_assert import soft_assert
@@ -11,7 +10,8 @@ from corehq.util.soft_assert import soft_assert
 
 class ChangeProducer(object):
 
-    def __init__(self):
+    def __init__(self, auto_flush=True):
+        self.auto_flush = auto_flush
         self._producer = None
 
     @property
@@ -36,13 +36,17 @@ class ChangeProducer(object):
             message_json_dump = message_json_dump.encode('utf-8')
         try:
             self.producer.send(topic, message_json_dump, key=change_meta.document_id)
-            self.producer.flush()
+            if self.auto_flush:
+                self.producer.flush()
         except Exception as e:
             _assert = soft_assert(notify_admins=True)
             _assert(False, 'Problem sending change to kafka {}: {} ({})'.format(
                 message, e, type(e)
             ))
             raise
+
+    def flush(self, timeout=None):
+        self.producer.flush(timeout=timeout)
 
 
 producer = ChangeProducer()

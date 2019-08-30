@@ -1,48 +1,48 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-import csv342 as csv
 import datetime
-from datetime import date
 import io
 import json
 import uuid
-import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
-from six.moves.urllib.parse import urlencode
-from dateutil.relativedelta import relativedelta
+from datetime import date
 
 from django.conf import settings
-from django.db import transaction, IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import F, Q, Sum
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
-from couchdbkit import ResourceConflict
+import csv
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
 from celery.schedules import crontab
 from celery.task import periodic_task, task
+from couchdbkit import ResourceConflict
+from dateutil.relativedelta import relativedelta
+from six.moves.urllib.parse import urlencode
 
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.database import iter_docs
-from corehq.util.log import send_HTML_email
 
 from corehq.apps.accounting.enterprise import EnterpriseReport
-from corehq.apps.accounting.exceptions import (
-    CreditLineError,
-    InvoiceError,
+from corehq.apps.accounting.exceptions import CreditLineError, InvoiceError
+from corehq.apps.accounting.invoicing import (
+    CustomerAccountInvoiceFactory,
+    DomainInvoiceFactory,
 )
-from corehq.apps.accounting.invoicing import DomainInvoiceFactory, CustomerAccountInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
     Currency,
+    CustomerInvoice,
     DefaultProductPlan,
+    DomainUserHistory,
     EntryPoint,
     FeatureType,
     Invoice,
-    CustomerInvoice,
+    InvoicingPlan,
     SoftwarePlanEdition,
     StripePaymentMethod,
     Subscription,
@@ -52,10 +52,10 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
-    DomainUserHistory,
-    InvoicingPlan
 )
-from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
+from corehq.apps.accounting.payment_handlers import (
+    AutoPayInvoicePaymentHandler,
+)
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
@@ -64,20 +64,21 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
-from corehq.const import ONE_DAY
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.users.models import FakeUser, WebUser, CommCareUser
+from corehq.apps.users.models import CommCareUser, FakeUser, WebUser
 from corehq.const import (
+    ONE_DAY,
     SERVER_DATE_FORMAT,
     SERVER_DATETIME_FORMAT_NO_SEC,
     USER_DATE_FORMAT,
     USER_MONTH_FORMAT,
 )
-from corehq.util.view_utils import absolute_reverse
 from corehq.util.dates import get_previous_month_date_range
+from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
+from corehq.util.view_utils import absolute_reverse
 
 _invoicing_complete_soft_assert = soft_assert(
     to=[

@@ -1,8 +1,4 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-import csv342 as csv
+import csv
 import logging
 import re
 import sys
@@ -22,7 +18,6 @@ from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.util.decorators import change_log_level
 from corehq.util.log import with_progress_bar
-from io import open
 
 
 USAGE = "Usage: ./manage.py blob_storage_report [options] FILE [FILE ...]"
@@ -102,7 +97,7 @@ def report_blobs_by_type(data, sizes, samples_by_type, write):
                 bucket_missing[size.bucket] += 1
                 type_missing[size.doc_type] += 1
     write(["BUCKET", "BLOB COUNT", "NOT FOUND"])
-    for bucket, key_list in sorted(six.iteritems(data)):
+    for bucket, key_list in sorted(data.items()):
         if bucket not in samples_by_type:
             continue
         write([bucket, len(key_list), bucket_missing.get(bucket, "")])
@@ -154,13 +149,13 @@ def report_blob_sizes(data, sizes, samples_by_type, write, summarize=False):
         return -sum(s.length for s in item[1] if s.length is not UNKNOWN)
 
     if summarize:
-        sizes = {"EST SIZE": list(chain.from_iterable(six.itervalues(sizes)))}
+        sizes = {"EST SIZE": list(chain.from_iterable(sizes.values()))}
 
     # get top five domains + all others combined
     OTHER = "OTHER"
     by_domain = OrderedDict()
     by_type = defaultdict(lambda: defaultdict(list))
-    for i, (domain, domain_sizes) in enumerate(sorted(six.iteritems(sizes), key=sumlens)):
+    for i, (domain, domain_sizes) in enumerate(sorted(sizes.items(), key=sumlens)):
         if i < 5:
             by_domain[domain] = domain_sizes
         else:
@@ -184,7 +179,7 @@ def report_blob_sizes(data, sizes, samples_by_type, write, summarize=False):
     else:
         write(["Storage use based on sampled estimates (may be inaccurate)"])
     write(["DOC_TYPE"] + list(iter_headers(by_domain)))
-    for doc_type, domain_sizes in sorted(six.iteritems(by_type), key=key):
+    for doc_type, domain_sizes in sorted(by_type.items(), key=key):
         write([doc_type] + list(iter_sizes(doc_type, domain_sizes, totals)))
     write(["---"] + ["---" for x in iter_headers(by_domain)])
     write(list(iter_totals(totals)))

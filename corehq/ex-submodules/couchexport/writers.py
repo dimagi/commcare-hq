@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import io
 from base64 import b64decode
@@ -8,7 +6,7 @@ import os
 import re
 import tempfile
 import zipfile
-import csv342 as csv
+import csv
 import json
 import bz2
 from collections import OrderedDict
@@ -22,8 +20,6 @@ from couchexport.models import Format
 import six
 from openpyxl.styles import numbers
 from openpyxl.cell import WriteOnlyCell
-from six.moves import zip
-from six.moves import map
 
 
 MAX_XLS_COLUMNS = 256
@@ -199,7 +195,7 @@ class ExportWriter(object):
                 name = name.decode('utf8')
             elif isinstance(name, Promise):
                 # noinspection PyCompatibility
-                name = unicode(name) if six.PY2 else str(name)
+                name = str(name)
             return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", name))
 
         table_title_truncated = self.table_name_generator.next_unique(
@@ -335,8 +331,6 @@ class ZippedExportWriter(OnDiskExportWriter):
                 name = name.decode('utf-8')
             path = self.tables[index].get_path()
             archive_filename = self._get_archive_filename(name)
-            if six.PY2:
-                archive_filename = archive_filename.encode('utf-8')
             archive.write(path, archive_filename)
         archive.close()
         self.file.seek(0)

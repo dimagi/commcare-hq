@@ -1,18 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import uuid
 
 from django.core.management import call_command
 from django.test import TestCase
+
 from testil import tempdir
 
-from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import \
-    FIXED_FORM_PROBLEM_TEMPLATE, BAD_FORM_PROBLEM_TEMPLATE
-from corehq.apps.receiverwrapper.util import submit_form_locally
 from couchforms.models import XFormInstance
-from io import open
+
+from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
+    BAD_FORM_PROBLEM_TEMPLATE,
+    FIXED_FORM_PROBLEM_TEMPLATE,
+)
+from corehq.apps.receiverwrapper.util import submit_form_locally
 
 DOMAIN = "test"
 

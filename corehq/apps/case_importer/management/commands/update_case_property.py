@@ -1,17 +1,13 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import csv342 as csv
 
 from django.core.management import BaseCommand
 
-from corehq.apps.hqcase.utils import bulk_update_cases
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+import csv
+import six
 
 from dimagi.utils.chunked import chunked
-import six
-from io import open
+
+from corehq.apps.hqcase.utils import bulk_update_cases
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 class Command(BaseCommand):

@@ -1,10 +1,7 @@
-from __future__ import absolute_import, division
 
-from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
@@ -82,7 +79,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         data_for_map[on_map_name]['total_measured'] += total_measured
         data_for_map[on_map_name]['original_name'].append(name)
 
-    for data_for_location in six.itervalues(data_for_map):
+    for data_for_location in data_for_map.values():
         numerator = data_for_location['moderate'] + data_for_location['severe']
         value = numerator * 100 / (data_for_location['total_measured'] or 1)
         if value < 25:
@@ -222,7 +219,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
         data['red'][date_in_miliseconds]['all'] += total
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
+        [dict(loc_name=key, percent=value) for key, value in best_worst.items()],
         key=lambda x: (x['percent'], x['loc_name'])
     )
 
@@ -235,7 +232,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
                         'y': value['y'] / float(value['measured'] or 1),
                         'all': value['all'],
                         'measured': value['measured']
-                    } for key, value in six.iteritems(data['peach'])
+                    } for key, value in data['peach'].items()
                 ],
                 "key": "% normal",
                 "strokeWidth": 2,
@@ -249,7 +246,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
                         'y': value['y'] / float(value['measured'] or 1),
                         'all': value['all'],
                         'measured': value['measured']
-                    } for key, value in six.iteritems(data['orange'])
+                    } for key, value in data['orange'].items()
                 ],
                 "key": "% moderately stunted",
                 "strokeWidth": 2,
@@ -263,7 +260,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
                         'y': value['y'] / float(value['measured'] or 1),
                         'all': value['all'],
                         'measured': value['measured']
-                    } for key, value in six.iteritems(data['red'])
+                    } for key, value in data['red'].items()
                 ],
                 "key": "% severely stunted",
                 "strokeWidth": 2,
@@ -334,7 +331,7 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
             'total_measured': total_measured,
         }
 
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         value = (moderate + severe) / float(total_measured or 1)

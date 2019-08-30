@@ -1,22 +1,28 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 import uuid
 from datetime import datetime
 
-import six
 from django.test import TestCase, override_settings
 
+import six
+
 from casexml.apps.case.mock import CaseBlock, CaseIndex, CaseStructure
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_ledgers, delete_all_xforms
+from casexml.apps.case.tests.util import (
+    delete_all_cases,
+    delete_all_ledgers,
+    delete_all_xforms,
+)
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from casexml.apps.stock.mock import Balance, Entry
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.tasks import explode_cases, topological_sort_cases
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import (CaseAccessors,
-                                                          LedgerAccessors)
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    LedgerAccessors,
+)
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import flag_enabled
 

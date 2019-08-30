@@ -1,15 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.conf import settings
-from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
-    DTSortType)
-from corehq.apps.reports.generic import GenericTabularReport
-from couchdbkit_aggregate import AggregateView, KeyView, AggregateKeyView
-from dimagi.utils.couch.database import get_db
-from corehq.apps.reports.util import format_datatables_data
-import six
 from functools import reduce
-from six.moves import range
+
+from django.conf import settings
+
+import six
+
+from dimagi.utils.couch.database import get_db
+
+from corehq.apps.reports.datatables import (
+    DataTablesColumn,
+    DataTablesHeader,
+    DTSortType,
+)
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.util import format_datatables_data
+from couchdbkit_aggregate import AggregateKeyView, AggregateView, KeyView
 
 __all__ = ['Column', 'BasicTabularReport']
 
@@ -106,7 +110,7 @@ class ColumnCollector(type):
         return super(ColumnCollector, cls).__new__(cls, name, bases, attrs)
 
 
-class BasicTabularReport(six.with_metaclass(ColumnCollector, GenericTabularReport)):
+class BasicTabularReport(GenericTabularReport, metaclass=ColumnCollector):
     update_after = False
 
     @property

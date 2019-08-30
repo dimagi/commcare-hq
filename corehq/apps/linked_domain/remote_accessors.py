@@ -1,17 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import requests
-
 from django.urls.base import reverse
+
+import requests
 from requests import ConnectionError
+
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.dbaccessors import wrap_app
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.linked_domain.auth import ApiKeyAuth
-from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
+from corehq.apps.linked_domain.exceptions import (
+    ActionNotPermitted,
+    RemoteAuthError,
+    RemoteRequestError,
+)
 from corehq.util.view_utils import absolute_reverse
-
-from dimagi.utils.logging import notify_exception
 
 
 def get_toggles_previews(domain_link):

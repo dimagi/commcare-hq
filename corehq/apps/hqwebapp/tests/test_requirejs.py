@@ -1,15 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import gevent
 import os
 import re
 import subprocess
-from io import open
 
-from django.core.management import call_command
 from django.test import SimpleTestCase
 
-from corehq.apps.hqwebapp.management.commands.build_requirejs import Command as BuildRequireJSCommand
+import gevent
 
 
 class TestRequireJS(SimpleTestCase):

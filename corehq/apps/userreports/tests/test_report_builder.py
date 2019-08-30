@@ -1,22 +1,33 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from django.test import TestCase
+
 from mock import patch
 
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_FORM, DATA_SOURCE_TYPE_CASE, \
-    DATA_SOURCE_TYPE_RAW
-from corehq.apps.userreports.app_manager.helpers import get_form_data_source, get_case_data_source
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    DATA_SOURCE_TYPE_CASE,
+    DATA_SOURCE_TYPE_FORM,
+    DATA_SOURCE_TYPE_RAW,
+)
+from corehq.apps.userreports.app_manager.helpers import (
+    get_case_data_source,
+    get_form_data_source,
+)
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
-from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-
-from corehq.apps.userreports.reports.builder.columns import MultiselectQuestionColumnOption
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
+from corehq.apps.userreports.reports.builder.columns import (
+    MultiselectQuestionColumnOption,
+)
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
-    DataSourceBuilder, ReportBuilderDataSourceReference)
+    DataSourceBuilder,
+    ReportBuilderDataSourceReference,
+)
 from corehq.apps.userreports.tests.utils import get_simple_xform
 
 

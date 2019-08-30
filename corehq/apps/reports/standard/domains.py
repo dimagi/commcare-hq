@@ -1,13 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.elastic import es_query
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+
+from corehq.apps.reports.datatables import (
+    DataTablesColumn,
+    DataTablesHeader,
+    DTSortType,
+)
 from corehq.apps.reports.dispatcher import BasicReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
-from django.utils.translation import ugettext as _
 from corehq.apps.reports.util import numcell
+from corehq.elastic import es_query
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
 

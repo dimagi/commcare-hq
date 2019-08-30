@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import copy
 import hashlib
 import json
@@ -20,7 +18,6 @@ from django.contrib.contenttypes.models import ContentType
 
 from auditcare import utils
 import six
-from io import open
 
 log = logging.getLogger(__name__)
 

@@ -14,17 +14,23 @@ hqDefine("export/js/create_export", [
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/kissmetrix',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
     _,
-    assertProperties
+    assertProperties,
+    initialPageData,
+    kissmetricsAnalytics
 ) {
     var createExportModel = function (options) {
         assertProperties.assert(options, ['drilldown_fetch_url', 'drilldown_submit_url', 'page'], ['model_type']);
 
         var self = {};
+
+        self.isOData = initialPageData.get('is_odata', true);
 
         // This contains flags that distinguish the various pages that use this modal.
         // Note that there is both a page-level model type and an observable model type below, since model type
@@ -245,6 +251,21 @@ hqDefine("export/js/create_export", [
 
         self.handleSubmitForm = function () {
             self.isSubmitting(true);
+            if (self.isOData) {
+                kissmetricsAnalytics.track.event(
+                    "[BI Integration] Clicked Add Odata Feed button",
+                    {
+                        "Feed Type": self.modelType(),
+                    }
+                );
+                setTimeout(self.submitNewExportForm, 250);
+            } else {
+                self.submitNewExportForm();
+            }
+
+        };
+
+        self.submitNewExportForm = function () {
             $.ajax({
                 method: 'POST',
                 url: options.drilldown_submit_url,

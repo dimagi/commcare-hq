@@ -1,13 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from distutils.version import StrictVersion
-from django.test import SimpleTestCase
 from io import BytesIO
-from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.ui_translations import \
-    process_ui_translation_upload, get_default_translations_for_download
+
+from django.test import SimpleTestCase
+
 from couchexport.export import export_raw
-import six
+
+from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.ui_translations import (
+    get_default_translations_for_download,
+    process_ui_translation_upload,
+)
 
 
 class BulkUiTranslation(SimpleTestCase):
@@ -21,7 +23,7 @@ class BulkUiTranslation(SimpleTestCase):
         if data is None:
             data = []
             translations = get_default_translations_for_download(self.app, 'latest')
-            for translation_key, translation_value in six.iteritems(translations):
+            for translation_key, translation_value in translations.items():
                 data.append((translation_key, translation_value))
 
         data = (('translations', tuple(data)),)

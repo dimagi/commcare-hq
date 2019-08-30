@@ -1,13 +1,16 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
-from couchdbkit import ResourceNotFound
+
 from django.core.management.base import BaseCommand
-from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.apps.userreports.tasks import rebuild_indicators
+
+from couchdbkit import ResourceNotFound
+
 from dimagi.utils.decorators.log_exception import log_exception
-from io import open
+
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
+from corehq.apps.userreports.tasks import rebuild_indicators
 
 
 class Command(BaseCommand):

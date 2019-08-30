@@ -1,11 +1,13 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 import unittest
 
 from mock import Mock
 
-from corehq.motech.openmrs.workflow import WorkflowTask, WorkflowError, execute_workflow
+from corehq.motech.openmrs.workflow import (
+    WorkflowError,
+    WorkflowTask,
+    execute_workflow,
+)
 
 
 class WorkflowTests(unittest.TestCase):

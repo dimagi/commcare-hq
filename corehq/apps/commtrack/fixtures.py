@@ -1,6 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from decimal import Decimal
 from xml.etree import cElementTree as ElementTree
+
 import six
 
 
@@ -38,6 +38,8 @@ def simple_fixture_generator(restore_user, id, name, fields, data, user_id=None)
 
                     item_elem.append(field_elem)
             else:
+                if isinstance(val, Decimal):
+                    val = val.normalize()
                 field_elem.text = six.text_type(val if val is not None else '')
                 item_elem.append(field_elem)
 

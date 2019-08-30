@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from custom.reports.mc.reports.models import AsyncDrillableFilter
 from django.utils.translation import ugettext_noop
 

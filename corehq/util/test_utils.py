@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 import uuid
 import functools
 import json
@@ -106,7 +103,7 @@ class TestFileMixin(object):
 
     @classmethod
     def get_json(cls, name, override_path=None):
-        return json.loads(cls.get_file(name, '.json', override_path))
+        return json.loads(cls.get_file(name, '.json', override_path).encode('utf-8'))
 
     @classmethod
     def get_xml(cls, name, override_path=None):
@@ -574,7 +571,7 @@ class PatchMeta(type):
     """A metaclass to patch all inherited classes.
 
     Usage:
-    class BaseTest(six.with_metaclass(PatchMeta, TestCase)):
+    class BaseTest(TestCase, metaclass=PatchMeta):
         patch = mock.patch('something.do.patch', .....)
     """
 

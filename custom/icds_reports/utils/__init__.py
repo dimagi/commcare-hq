@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-from __future__ import unicode_literals
 import json
 import os
 import string
@@ -35,7 +33,6 @@ from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSo
 from corehq.blobs.mixin import safe_id
 from corehq.const import ONE_DAY
 from corehq.util.datadog.gauges import datadog_histogram
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from custom.icds_reports import const
@@ -46,13 +43,9 @@ from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField, Max, Min
 from django.db.utils import OperationalError
-import six
 import uuid
-from six.moves import range
-from sqlagg.filters import EQ, NOT, AND
-from io import open
+from sqlagg.filters import EQ, NOT
 from pillowtop.models import KafkaCheckpoint
-from six.moves import zip
 
 
 OPERATORS = {
@@ -255,8 +248,7 @@ class ICDSMixin(object):
                     op = column['condition']['operator']
 
                     def check_condition(v):
-                        if isinstance(v, six.string_types):
-                            soft_assert_type_text(v)
+                        if isinstance(v, str):
                             fil_v = str(value)
                         elif isinstance(v, int):
                             fil_v = int(value)
@@ -272,6 +264,10 @@ class ICDSMixin(object):
                 elif column_agg_func == 'avg':
                     values = [x.get(column_name, 0) for x in report_data]
                     column_data = sum(values) / (len(values) or 1)
+                elif column_agg_func == 'last_value':
+                    group_by = column['group_by']
+                    awc_mapping = {x.get(group_by): x.get(column_name, 0) for x in report_data}
+                    column_data = sum(awc_mapping.values())
                 column_display = column_name if 'column_in_report' not in column else column['column_in_report']
                 data.update({
                     column_display: data.get(column_display, 0) + column_data
@@ -605,7 +601,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
         data_for_map[on_map_name][denom_prop] += valid
         data_for_map[on_map_name]['original_name'].append(name)
 
-    for data_for_location in six.itervalues(data_for_map):
+    for data_for_location in data_for_map.values():
         value = data_for_location[num_prop] * 100 / (data_for_location[denom_prop] or 1)
         fill_format = '%s%%-%s%%'
         if value < fill_key_lower:
@@ -999,6 +995,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     title_row = worksheet.row_dimensions[2]
     title_row.height = 23
     worksheet.row_dimensions[table_header_position_row].height = 46
+    worksheet.row_dimensions[3].height = 16
     widths = {}
     widths_columns = ['A']
     widths_columns.extend(columns)
@@ -1026,7 +1023,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
             widths[columns[column_index]],
             max(
                 len(row[column_index].decode('utf-8') if isinstance(row[column_index], bytes)
-                    else six.text_type(row[column_index])
+                    else str(row[column_index])
                     )
                 for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
         )
@@ -1206,7 +1203,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
             widths[columns[column_index]],
             max(
                 len(row[column_index].decode('utf-8') if isinstance(row[column_index], bytes)
-                    else six.text_type(row[column_index])
+                    else str(row[column_index])
                     )
                 for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
         )
@@ -1456,7 +1453,7 @@ def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_
             widths[columns[column_index]],
             max(
                 len(row[column_index].decode('utf-8') if isinstance(row[column_index], bytes)
-                    else six.text_type(row[column_index])
+                    else str(row[column_index])
                     )
                 for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
         )

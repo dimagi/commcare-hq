@@ -1,14 +1,11 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import os
-from io import open
 
-import polib
 from django.test.testcases import SimpleTestCase
 
-from corehq.apps.translations.generators import Translation, PoFileGenerator
+import polib
+
+from corehq.apps.translations.generators import PoFileGenerator, Translation
 
 translations = [
     Translation('hello', 'नमस्ते', [('occurrence-hello', '')], '0:occurrence-hello'),

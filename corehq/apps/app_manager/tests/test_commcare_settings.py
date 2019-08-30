@@ -1,24 +1,24 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
-import yaml
 from collections import defaultdict
+
 from django.conf import settings
 from django.test import SimpleTestCase
+
+import yaml
+
 from corehq.apps.app_manager.commcare_settings import (
-    get_custom_commcare_settings,
-    get_commcare_settings_lookup,
+    LAYOUT_SETTINGS_TO_TRANSLATE,
+    PROFILE_SETTINGS_TO_TRANSLATE,
     check_condition,
     circular_dependencies,
+    get_commcare_settings_lookup,
+    get_custom_commcare_settings,
     parse_condition_string,
-    PROFILE_SETTINGS_TO_TRANSLATE,
-    LAYOUT_SETTINGS_TO_TRANSLATE,
 )
-from corehq.apps.app_manager.static_strings import STATICALLY_ANALYZABLE_TRANSLATIONS
 from corehq.apps.app_manager.models import Application
-import six
-from six.moves import range
-from io import open
+from corehq.apps.app_manager.static_strings import (
+    STATICALLY_ANALYZABLE_TRANSLATIONS,
+)
 
 
 class CommCareSettingsTest(SimpleTestCase):
@@ -121,7 +121,7 @@ class CommCareSettingsTest(SimpleTestCase):
                         value = setting.get(key)
                         if not value:
                             continue
-                        if not isinstance(value, six.string_types):
+                        if not isinstance(value, str):
                             for v in value:
                                 self.assertIn(
                                     v,

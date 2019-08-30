@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import functools
 import json
@@ -12,9 +9,6 @@ import traceback
 import uuid
 from datetime import datetime
 
-from django.utils import html
-from six.moves.urllib.parse import urlparse
-
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -23,75 +17,99 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import logout as django_logout
 from django.core import cache
 from django.core.mail.message import EmailMessage
-from django.http import HttpResponseRedirect, HttpResponse, Http404, \
-    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest, \
-    HttpResponseForbidden, HttpResponsePermanentRedirect
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    HttpResponsePermanentRedirect,
+    HttpResponseRedirect,
+    HttpResponseServerError,
+)
 from django.shortcuts import redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.urls import resolve
+from django.utils import html
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop, LANGUAGE_SESSION_KEY
-
-
+from django.utils.translation import LANGUAGE_SESSION_KEY
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
-from djangular.views.mixins import JSONResponseMixin
 
 import httpagentparser
 from couchdbkit import ResourceNotFound
-from two_factor.views import LoginView
+from memoized import memoized
+from urllib.parse import urlparse
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
+from two_factor.views import LoginView
 
-from corehq.apps.analytics import ab_tests
-from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
-from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
-from corehq.apps.users.models import CouchUser
-
-from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
-from memoized import memoized
-
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_datetime
-from dimagi.utils.web import get_url_base, json_response, get_site_domain
-from no_exceptions.exceptions import Http403
+from dimagi.utils.web import get_site_domain, get_url_base, json_response
 from soil import DownloadBase
 from soil import views as soil_views
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.domain.decorators import require_superuser, login_and_domain_required, two_factor_exempt, \
-    track_domain_request
+from corehq.apps.analytics import ab_tests
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    require_superuser,
+    track_domain_request,
+    two_factor_exempt,
+)
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
+from corehq.apps.domain.utils import get_domain_from_url, normalize_domain_name
 from corehq.apps.dropbox.decorators import require_dropbox_session
-from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress, DropboxInvalidToken
+from corehq.apps.dropbox.exceptions import (
+    DropboxInvalidToken,
+    DropboxUploadAlreadyInProgress,
+)
 from corehq.apps.dropbox.models import DropboxUploadHelper
 from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN, DropboxAuthInitiate
-from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
+from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
+    DEPLOY_IN_PROGRESS_FLAG,
+)
+from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
-from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.hqwebapp.utils import get_environment_friendly_name, update_session_language
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.hqwebapp.forms import (
+    CloudCareAuthenticationForm,
+    EmailAuthenticationForm,
+)
+from corehq.apps.hqwebapp.utils import (
+    get_environment_friendly_name,
+    update_session_language,
+)
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.users.landing_pages import (
+    get_cloudcare_urlname,
+    get_redirect_url,
+)
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+)
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.datadog.const import DATADOG_UNKNOWN
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.view_utils import reverse
-import six
-from six.moves import range
+from no_exceptions.exceptions import Http403
 
 
 def is_deploy_in_progress():
@@ -107,19 +125,8 @@ def format_traceback_the_way_python_does(type, exc, tb):
       File "<stdin>", line 2, in <module>
     NameError: name 'name' is not defined
     """
-
-    if six.PY3:
-        exc_message = six.text_type(exc)
-    else:
-        exc_message = exc.message
-        if isinstance(exc_message, bytes):
-            exc_message = exc_message.decode('utf-8')
-
-    return 'Traceback (most recent call last):\n{}{}: {}'.format(
-        ''.join(traceback.format_tb(tb)),
-        type.__name__,
-        exc_message
-    )
+    tb = ''.join(traceback.format_tb(tb))
+    return f'Traceback (most recent call last):\n{tb}{type.__name__}: {exc}'
 
 
 def server_error(request, template_name='500.html'):
@@ -372,8 +379,7 @@ def _login(req, domain_name):
     template_name = 'login_and_password/login.html'
     custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
     if custom_landing_page:
-        if isinstance(custom_landing_page, six.string_types):
-            soft_assert_type_text(custom_landing_page)
+        if isinstance(custom_landing_page, str):
             template_name = custom_landing_page
         else:
             template_name = custom_landing_page.get(req.get_host())
@@ -1158,7 +1164,7 @@ class MaintenanceAlertsView(BasePageView):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
         return {
             'alerts': [{
-                'created': six.text_type(alert.created),
+                'created': str(alert.created),
                 'active': alert.active,
                 'html': alert.html,
                 'id': alert.id,

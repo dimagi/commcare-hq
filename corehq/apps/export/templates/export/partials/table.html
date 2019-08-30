@@ -57,7 +57,7 @@
           {% trans 'Edit' %}
         {% else %}
           {% blocktrans %}
-            Copy &amp; Edit
+            Copy &amp; Edit Feed
           {% endblocktrans %}
         {% endif %}
       </th>
@@ -117,22 +117,107 @@
         </div>
 
         <!-- ko if: isOData -->
-        <div class="input-group">
-          <span data-bind="css: {
-                             'input-group-btn': showLink
-                           },
-                           click: copyLinkRequested">
-            <a class="btn btn-default btn-sm">
-              <i class="fa fa-clipboard"></i>
-              {% trans "Copy OData Feed Link" %}
-            </a>
-          </span>
-          <input data-bind="visible: showLink,
-                            value: odataFeedUrl"
-                 type="text"
-                 class="form-control input-sm"
-                 readonly />
-        </div>
+          <!-- ko with: odataFeedUrl -->
+          <p>
+            <div class="input-group">
+              <span data-bind="css: {
+                                 'input-group-btn': showLink
+                               },
+                               click: copyLinkRequested">
+                <a class="btn btn-default btn-sm">
+                  <i class="fa fa-clipboard"></i>
+                  {% trans "Copy OData Feed Link" %}
+                </a>
+              </span>
+              <input data-bind="visible: showLink,
+                                value: url"
+                     type="text"
+                     class="form-control input-sm"
+                     readonly />
+            </div>
+          </p>
+          <!-- /ko -->
+          <!-- ko if: hasAdditionalODataFeeds -->
+            <p>
+              <a class="btn btn-link btn-sm"
+                 data-bind="attr: {
+                              href: '#' + id() + '-odata-additional'
+                            },
+                            click: sendAnalyticsOpenAdditionalFeeds"
+                 data-toggle="modal">
+                <i class="fa fa-rss"></i>
+                <!-- ko if: exportType() == 'form' -->
+                  {% trans "Show additional feeds for Repeat Group data." %}
+                <!-- /ko -->
+                <!-- ko if: exportType() == 'case' -->
+                  {% trans "Show additional feeds for linking Parent and Child Cases." %}
+                <!-- /ko -->
+              </a>
+            </p>
+            <div class="modal fade"
+                 data-bind="attr: {id: id() + '-odata-additional'}">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button"
+                            class="close"
+                            data-dismiss="modal">
+                      <span aria-hidden="true">&times;</span>
+                      <span class="sr-only">
+                        {% trans 'Close' %}
+                      </span>
+                    </button>
+                    <h4 class="modal-title">
+                      {% trans "Additional Feeds" %}
+                    </h4>
+                  </div>
+                  <div class="modal-body">
+                    <p class="lead">
+                      <!-- ko if: exportType() == 'form' -->
+                      {% blocktrans %}
+                        Click to copy feeds for <strong>Repeat Group</strong> data:
+                      {% endblocktrans %}
+                      <!-- /ko -->
+                      <!-- ko if: exportType() == 'case' -->
+                      {% blocktrans %}
+                        Click to copy feeds for linking <strong>Parent</strong>
+                        and <strong>Child Cases</strong>:
+                      {% endblocktrans %}
+                      <!-- /ko -->
+                    </p>
+                    <!-- ko foreach: odataAdditionalFeedUrls -->
+                    <p>
+                      <div class="input-group">
+                        <span data-bind="css: {
+                                           'input-group-btn': url.showLink
+                                         },
+                                         click: url.copyLinkRequested">
+                          <a class="btn btn-default btn-sm">
+                            <i class="fa fa-clipboard"></i>
+                            <span data-bind="text: label"></span>
+                          </a>
+                        </span>
+                        <input data-bind="visible: url.showLink,
+                                          value: url.url"
+                               type="text"
+                               class="form-control input-sm"
+                               readonly />
+                      </div>
+                    </p>
+                    <!-- /ko -->
+                  </div>
+                  <div class="modal-footer">
+                    <a href="#"
+                       class="btn btn-default"
+                       data-bind="click: sendAnalyticsCloseAdditionalFeeds"
+                       data-dismiss="modal">
+                      {% trans "Close" %}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <!-- /ko -->
         <!-- /ko -->
 
         <!-- ko if: hasEmailedExport && !isAutoRebuildEnabled() -->
@@ -221,23 +306,26 @@
               <i class="fa fa-cloud-download"></i>
               {% trans "Download" %}
             </a>
-
-            <div class="input-group" data-bind="visible: isFeed">
-              <span data-bind="css: {
-                                 'input-group-btn': showLink
-                               },
-                               click: copyLinkRequested">
-                <a class="btn btn-default btn-sm">
-                  <i class="fa fa-clipboard"></i>
-                  {% trans "Copy Dashboard Feed Link" %}
-                </a>
-              </span>
-              <input data-bind="visible: showLink,
-                                value: emailedExport.fileData.downloadUrl()"
-                     type="text"
-                     class="form-control input-sm"
-                     readonly />
-            </div>
+            <!-- ko if: isFeed -->
+              <div class="input-group">
+                <!-- ko with: feedUrl -->
+                <span data-bind="css: {
+                                   'input-group-btn': showLink
+                                 },
+                                 click: copyLinkRequested">
+                  <a class="btn btn-default btn-sm">
+                    <i class="fa fa-clipboard"></i>
+                    {% trans "Copy Dashboard Feed Link" %}
+                  </a>
+                </span>
+                <input data-bind="visible: showLink,
+                                  value: url"
+                       type="text"
+                       class="form-control input-sm"
+                       readonly />
+                <!-- /ko -->
+              </div>
+            <!-- /ko -->
           </div>
 
           <div data-bind="if: isLocationSafeForUser">
@@ -501,7 +589,9 @@
                 <div data-bind="if: isOData()">
                   <i class="fa fa-pencil"></i>
                   <span>
-                    {% trans 'Copy Feed' %}
+                    {% blocktrans %}
+                      Copy &amp; Edit Feed
+                    {% endblocktrans %}
                   </span>
                 </div>
               </a>
@@ -528,7 +618,7 @@
         </div>
         <div data-bind="ifnot: $parent.showOwnership">
           <div data-bind="if: isLocationSafeForUser">
-            <a data-bind="attr: {href: editUrl}"
+            <a data-bind="click: editExport"
                class="btn btn-default"{% if odata_feeds_over_limit %} data-toggle="modal"{% endif %}>
               <div data-bind="ifnot: isOData()">
                 <i class="fa fa-pencil"></i>
@@ -542,7 +632,9 @@
               <div data-bind="if: isOData()">
                 <i class="fa fa-pencil"></i>
                 <span>
-                  {% trans 'Copy Feed' %}
+                  {% blocktrans %}
+                    Copy &amp; Edit Feed
+                  {% endblocktrans %}
                 </span>
               </div>
             </a>

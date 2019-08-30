@@ -1,15 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+
+from django.conf import settings
+from django.core.mail import mail_admins, send_mail
 
 from celery.schedules import crontab
 from celery.task import task
-from django.conf import settings
-from django.core.mail import send_mail, mail_admins
+
+from dimagi.utils.logging import notify_exception
 
 from corehq.util.datadog.gauges import datadog_gauge_task
 from corehq.util.log import send_HTML_email
-from dimagi.utils.logging import notify_exception
-import six
 
 
 @task(serializer='pickle', queue="email_queue",
@@ -70,10 +69,7 @@ def send_html_email_async(self, subject, recipient, html_content,
                         file_attachments=file_attachments, bcc=bcc,
                         smtp_exception_skip_list=smtp_exception_skip_list)
     except Exception as e:
-        from corehq.util.python_compatibility import soft_assert_type_text
-        if isinstance(recipient, six.string_types):
-            soft_assert_type_text(recipient)
-        recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
+        recipient = list(recipient) if not isinstance(recipient, str) else [recipient]
         notify_exception(
             None,
             message="Encountered error while sending email",

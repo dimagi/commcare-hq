@@ -1,12 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
 from django import forms
-from django_countries.data import COUNTRIES
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
+
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+from django_countries.data import COUNTRIES
 from phonenumbers import country_code_for_region
+
+from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
 
 
 class PublicSMSRateCalculatorForm(forms.Form):

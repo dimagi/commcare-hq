@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 APP_V1 = '1.0'
 APP_V2 = '2.0'
 MAJOR_RELEASE_TO_VERSION = {

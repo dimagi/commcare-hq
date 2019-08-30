@@ -1,8 +1,6 @@
 """Filesystem database for large binary data objects (blobs)
 """
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 from corehq.blobs.exceptions import NotFound
 
 

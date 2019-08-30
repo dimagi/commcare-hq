@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from kafka.common import OffsetRequestPayload
+
+from couchforms.models import all_known_formlike_doc_types
 
 from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.change_feed.connection import get_simple_kafka_client
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
-from couchforms.models import all_known_formlike_doc_types
 
 CASE = 'case'
 FORM = 'form'
@@ -44,7 +43,7 @@ ALL = (
 )
 
 
-def get_topic_for_doc_type(doc_type, data_source_type=None):
+def get_topic_for_doc_type(doc_type, data_source_type=None, default_topic=None):
     from corehq.apps.change_feed import document_types
     from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 
@@ -74,6 +73,8 @@ def get_topic_for_doc_type(doc_type, data_source_type=None):
         return LOCATION
     elif doc_type in ALL:  # for docs that don't have a doc_type we use the Kafka topic
         return doc_type
+    elif default_topic:
+        return default_topic
     else:
         # at some point we may want to make this more granular
         return META  # note this does not map to the 'meta' Couch database

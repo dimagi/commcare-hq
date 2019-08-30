@@ -1,35 +1,37 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import OrderedDict
-from datetime import datetime, timedelta
 import hashlib
 import json
+from collections import OrderedDict
+from datetime import datetime, timedelta
 
-from django.conf import settings
-from django.template import loader_tags, NodeList, TemplateSyntaxError
-from django.template.base import Variable, VariableDoesNotExist, Token, TOKEN_TEXT
-from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
-from django.http import QueryDict
 from django import template
+from django.conf import settings
+from django.http import QueryDict
+from django.template import NodeList, TemplateSyntaxError, loader_tags
+from django.template.base import (
+    TOKEN_TEXT,
+    Token,
+    Variable,
+    VariableDoesNotExist,
+)
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
-from memoized import memoized
-from django_prbac.utils import has_privilege
+from django.utils.translation import ugettext as _
 
-from corehq.motech.utils import pformat_json
-from corehq import privileges
+import six
+from django_prbac.utils import has_privilege
+from memoized import memoized
+
+from dimagi.utils.web import json_handler
+
+from corehq import privileges, toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
+from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.motech.utils import pformat_json
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.web import json_handler
-from corehq.apps.hqwebapp.models import MaintenanceAlert
-from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
-from corehq import toggles
-import six
-from io import open
-
 
 register = template.Library()
 

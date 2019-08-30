@@ -1,21 +1,29 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
-from django.test import TestCase
-from mock import patch
 
-from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from django.test import TestCase
+
+from mock import patch
+from six.moves import range
+
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
+from corehq.apps.userreports.reports.data_source import (
+    ConfigurableReportDataSource,
+)
 from corehq.apps.userreports.sql.adapter import MultiDBSqlAdapter
 from corehq.apps.userreports.sql.connection import get_engine_id
-from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
-    get_sample_report_config, doc_to_change
+from corehq.apps.userreports.tests.utils import (
+    doc_to_change,
+    get_sample_data_source,
+    get_sample_doc_and_indicators,
+    get_sample_report_config,
+)
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.pillows.case import get_case_pillow
 from corehq.sql_db import connections
 from corehq.sql_db.tests.utils import temporary_database
-from six.moves import range
-
 from corehq.util.test_utils import flag_enabled
 
 

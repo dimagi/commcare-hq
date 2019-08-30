@@ -1,10 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from lxml import etree
+from django.urls import reverse
+
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
-from django.urls import reverse
+from lxml import etree
+
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.xform import WrappedNode
 from corehq.apps.users.util import cc_user_domain

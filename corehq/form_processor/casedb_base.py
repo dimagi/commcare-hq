@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod, abstractproperty
-import six
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.util.datadog.utils import case_load_counter
 from corehq.util.soft_assert.api import soft_assert
@@ -15,7 +12,7 @@ def _get_id_for_case(case):
     return case.case_id
 
 
-class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
+class AbstractCaseDbCache(metaclass=ABCMeta):
     """
     A temp object we use to keep a cache of in-memory cases around
     so we can get the latest updates even if they haven't been saved

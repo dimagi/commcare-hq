@@ -1,6 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import csv342 as csv
+import csv
 
 from datetime import datetime
 
@@ -9,7 +7,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 from auditcare.utils.export import write_log_events, get_users_to_export
 from corehq.apps.domain.models import Domain
-from io import open
 
 
 def valid_date(s):

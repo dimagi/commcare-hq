@@ -1,15 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
-from memoized import memoized
-from corehq.apps.hqwebapp.crispy import FormActions, FieldWithHelpBubble
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
-from corehq.apps.users.models import CommCareUser
+
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+from memoized import memoized
+
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble, FormActions
+from corehq.apps.users.models import CommCareUser
 
 
 class EmailForm(forms.Form):

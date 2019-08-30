@@ -1,10 +1,7 @@
-from __future__ import print_function
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import math
-
 import sys
+
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.callcenter.checks import get_call_center_data_source_stats

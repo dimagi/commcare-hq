@@ -1,19 +1,13 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import re
 from collections import defaultdict
-
 from datetime import datetime
 from uuid import UUID
 
 from django.core.management import BaseCommand
 
-from couchforms.models import XFormInstance, XFormDuplicate
 from six.moves import input
-from io import open
 
+from couchforms.models import XFormDuplicate, XFormInstance
 
 PROBLEM_TEMPLATE_START = "This document was an xform duplicate that replaced "
 # This string will be used in the problem field of fixed xforms.

@@ -1,16 +1,15 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 from collections import namedtuple
 
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.es import UserES
-from corehq.apps.locations.models import SQLLocation
-from corehq.util.quickcache import quickcache
-from corehq.util.test_utils import unit_testing_only
-from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
 from six.moves import map
 
+from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
+
+from corehq.apps.es import UserES
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
+from corehq.util.quickcache import quickcache
+from corehq.util.test_utils import unit_testing_only
 
 UserExists = namedtuple('UserExists', 'exists is_deleted')
 

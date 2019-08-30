@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
+
 from corehq.apps.app_manager.models import (
     AUTO_SELECT_CASE,
     AUTO_SELECT_FIXTURE,
@@ -15,8 +13,12 @@ from corehq.apps.app_manager.models import (
     LoadUpdateAction,
     Module,
 )
-from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import (
+    SuiteMixin,
+    TestXmlMixin,
+    commtrack_enabled,
+)
 from corehq.util.test_utils import flag_enabled
 
 

@@ -1,5 +1,5 @@
-from __future__ import absolute_import
 from lxml.builder import ElementMaker
+
 from casexml.apps.stock import const
 
 

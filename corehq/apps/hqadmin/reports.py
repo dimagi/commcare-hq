@@ -1,44 +1,58 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import copy
-from datetime import datetime, timedelta
 import json
+from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+from memoized import memoized
 
 from auditcare.models import NavigationEventAudit
 from auditcare.utils.export import navigation_event_ids_by_user
-from corehq.apps.builds.utils import get_all_versions
-from corehq.apps.es import FormES, filters, UserES
-from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm, SumAggregation
-from corehq.apps.hqwebapp.decorators import (
-    use_nvd3,
-)
-from corehq.apps.reports.standard import DatespanMixin
 from dimagi.utils.couch.database import iter_docs
-from memoized import memoized
-from corehq.apps.accounting.models import (
-    SoftwarePlanEdition,
+from phonelog.models import DeviceReportEntry
+from phonelog.reports import BaseDeviceLogReport
+
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.app_manager.commcare_settings import (
+    get_custom_commcare_settings,
 )
 from corehq.apps.app_manager.models import Application
+from corehq.apps.builds.utils import get_all_versions
+from corehq.apps.es import FormES, UserES, filters
+from corehq.apps.es.aggregations import (
+    AggregationTerm,
+    NestedTermAggregationsHelper,
+    SumAggregation,
+)
+from corehq.apps.es.domains import DomainES
+from corehq.apps.hqwebapp.decorators import use_nvd3
+from corehq.apps.reports.datatables import (
+    DataTablesColumn,
+    DataTablesHeader,
+    DTSortType,
+)
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
-from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularReport
-from corehq.apps.reports.standard.domains import DomainStatsReport, es_domain_query
+from corehq.apps.reports.generic import (
+    ElasticTabularReport,
+    GenericTabularReport,
+)
+from corehq.apps.reports.standard import DatespanMixin
+from corehq.apps.reports.standard.domains import (
+    DomainStatsReport,
+    es_domain_query,
+)
 from corehq.apps.reports.standard.sms import PhoneNumberReport
 from corehq.apps.sms.filters import RequiredPhoneNumberFilter
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import PhoneNumber
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
-from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settings
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from corehq.util.python_compatibility import soft_assert_type_text
-from phonelog.reports import BaseDeviceLogReport
-from phonelog.models import DeviceReportEntry
-from corehq.apps.es.domains import DomainES
-import six
-from six.moves import range
+from corehq.elastic import (
+    es_query,
+    fill_mapping_with_facets,
+    parse_args_for_es,
+)
 
 INDICATOR_DATA = {
     "active_domain_count": {
@@ -582,15 +596,6 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
 
     @property
     def template_context(self):
-        msg = """
-        WARNING! This page will soon be deleted. As part of an effort to
-        upgrade elasticsearch, we are removing several admin reports which rely
-        on deprecated functionality. This page will be removed on August 16th.
-        Comparable reports are available in salesforce. If you rely on this
-        report, please contact product@dimagi.com to discuss as soon as
-        possible.
-        """
-        messages.add_message(self.request, messages.ERROR, msg)
         ctxt = super(AdminFacetedReport, self).template_context
 
         self.run_query(0)
@@ -619,7 +624,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
     @property
     def shared_pagination_GET_params(self):
         ret = super(AdminFacetedReport, self).shared_pagination_GET_params
-        for param in six.iterlists(self.request.GET):
+        for param in self.request.GET.lists():
             if self.is_custom_param(param[0]):
                 for val in param[1]:
                     ret.append(dict(name=param[0], value=val))
@@ -1253,8 +1258,7 @@ class AdminPhoneNumberReport(PhoneNumberReport):
     @memoized
     def phone_number_filter(self):
         value = RequiredPhoneNumberFilter.get_value(self.request, domain=None)
-        if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+        if isinstance(value, str):
             return apply_leniency(value.strip())
 
         return None

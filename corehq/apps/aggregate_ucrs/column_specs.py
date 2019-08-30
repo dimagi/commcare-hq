@@ -1,25 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
-import sqlalchemy
-from django.utils.translation import ugettext_lazy as _
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-import six
+from django.utils.translation import ugettext_lazy as _
+
+import sqlalchemy
 from jsonobject.base_properties import DefaultProperty
 
-from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM
-from corehq.apps.aggregate_ucrs.query_column_providers import StandardQueryColumnProvider, \
-    AggregationParamQueryColumnProvider
-from corehq.apps.userreports import const
-from corehq.apps.userreports.datatypes import DATA_TYPE_INTEGER, DataTypeProperty, DATA_TYPE_STRING, \
-    DATA_TYPE_DATE, DATA_TYPE_SMALL_INTEGER, DATA_TYPE_DECIMAL
-from corehq.apps.userreports.indicators import Column
-from corehq.apps.userreports.reports.specs import SQLAGG_COLUMN_MAP
 from dimagi.ext import jsonobject
 
+from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM
+from corehq.apps.aggregate_ucrs.query_column_providers import (
+    AggregationParamQueryColumnProvider,
+    StandardQueryColumnProvider,
+)
+from corehq.apps.userreports import const
+from corehq.apps.userreports.datatypes import (
+    DATA_TYPE_DATE,
+    DATA_TYPE_DECIMAL,
+    DATA_TYPE_INTEGER,
+    DATA_TYPE_SMALL_INTEGER,
+    DATA_TYPE_STRING,
+    DataTypeProperty,
+)
+from corehq.apps.userreports.indicators import Column
+from corehq.apps.userreports.reports.specs import SQLAGG_COLUMN_MAP
 
-class ColumnAdapater(six.with_metaclass(ABCMeta, object)):
+
+class ColumnAdapater(metaclass=ABCMeta):
     """
     A column adapter represents everything needed to work with an aggregate column,
     including its config as well as its sqlalchemy information (via the ucr column spec).
@@ -155,7 +162,7 @@ def WeekColumnAdapter():
     )
 
 
-class PrimaryColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
+class PrimaryColumnAdapter(ColumnAdapater, metaclass=ABCMeta):
     """
     A base ColumnAdapter class for columns associated with the primary table.
     """
@@ -296,7 +303,7 @@ class SingleFieldColumnProperties(jsonobject.JsonObject):
     referenced_column = jsonobject.StringProperty(required=True)
 
 
-class SimpleAggregationAdapater(six.with_metaclass(ABCMeta, SecondaryColumnAdapter)):
+class SimpleAggregationAdapater(SecondaryColumnAdapter, metaclass=ABCMeta):
     """
     Generic SecondaryColumnAdapter class that does a passed-in sqlalchemy aggregation.
     """

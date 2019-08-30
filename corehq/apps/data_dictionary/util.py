@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from itertools import groupby
 from operator import attrgetter
@@ -7,12 +5,15 @@ from operator import attrgetter
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext
 
+import six
+
 from corehq import toggles
-from corehq.util.quickcache import quickcache
-from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    all_case_properties_by_domain,
+)
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
-import six
+from corehq.util.quickcache import quickcache
 
 
 class OldExportsEnabledException(Exception):

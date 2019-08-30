@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict
 
 from corehq.blobs import Error as BlobError
@@ -85,8 +83,8 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
     @property
     @quickcache(['self.domain'], timeout=30 * 60)
     def product_ids(self):
-        from corehq.apps.products.models import Product
-        return Product.ids_by_domain(self.domain)
+        from corehq.apps.products.models import SQLProduct
+        return list(SQLProduct.objects.filter(domain=self.domain).product_ids())
 
     def iter_document_ids(self, last_id=None):
         if should_use_sql_backend(self.domain):

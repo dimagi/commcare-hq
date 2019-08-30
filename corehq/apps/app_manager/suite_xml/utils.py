@@ -1,12 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from lxml import etree
 from django.utils.translation import ugettext as _
+
+from lxml import etree
+
+from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.suite_xml.xml_models import Suite, Text, XpathEnum
-from corehq import toggles
-import six
 
 
 def get_select_chain(app, module, include_self=True):
@@ -49,7 +48,7 @@ def get_select_chain_meta(app, module):
 
 
 def validate_suite(suite):
-    if isinstance(suite, six.text_type):
+    if isinstance(suite, str):
         suite = suite.encode('utf-8')
     if isinstance(suite, bytes):
         suite = etree.fromstring(suite)

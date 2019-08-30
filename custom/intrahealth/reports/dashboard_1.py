@@ -1,6 +1,4 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from custom.intrahealth.filters import YeksiNaaLocationFilter, MonthsDateFilter, ProgramFilter
 from custom.intrahealth.sqldata import AvailabilityData, RuptureRateByPPSData
 from custom.intrahealth.utils import MultiReport
