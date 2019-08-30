@@ -270,8 +270,12 @@ def get_release_name(base_dir, server_env):
     if re.match(r'\d{4}-\d{2}-\d{2}_\d{2}.\d{2}', release_dir):
         return "{}-{}-deploy".format(release_dir, server_env)
     else:
-        try:
-            out = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
-            return out.strip().decode('ascii')
-        except OSError:
-            return "unknown"
+        return get_git_commit(base_dir) or 'unknown'
+
+
+def get_git_commit(base_dir):
+    try:
+        out = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=base_dir)
+        return out.strip().decode('ascii')
+    except OSError:
+        pass

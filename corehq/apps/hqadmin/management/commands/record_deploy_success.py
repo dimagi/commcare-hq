@@ -134,15 +134,14 @@ class Command(BaseCommand):
 
 
 def create_update_sentry_release():
-    from settingshelper import get_release_name
-    from raven import fetch_git_sha
+    from settingshelper import get_release_name, get_git_commit
     release = get_release_name(settings.BASE_DIR, settings.SERVER_ENVIRONMENT)
     headers = {'Authorization': 'Bearer {}'.format(settings.SENTRY_API_KEY), }
     payload = {
         'version': release,
         'refs': [{
             'repository': 'dimagi/commcare-hq',
-            'commit': fetch_git_sha(settings.BASE_DIR)
+            'commit': get_git_commit(settings.BASE_DIR)
         }],
         'projects': ['commcarehq']
     }

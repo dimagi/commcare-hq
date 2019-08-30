@@ -199,7 +199,6 @@ DEFAULT_APPS = (
     'two_factor',
     'ws4redis',
     'statici18n',
-    'raven.contrib.django.raven_compat',
     'django_user_agents',
 )
 
