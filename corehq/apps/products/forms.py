@@ -65,13 +65,13 @@ class ProductForm(forms.Form):
     def clean_name(self):
         name = self.cleaned_data['name']
 
-        num_other_products_with_name = (
+        product_with_name_conflict = (
             SQLProduct.active_objects
             .filter(domain=self.product.domain, name=name)
             .exclude(product_id=self.product._id)
-        ).count()
+        ).exists()
 
-        if num_other_products_with_name:
+        if product_with_name_conflict:
             raise forms.ValidationError('name already in use')
 
         return name
