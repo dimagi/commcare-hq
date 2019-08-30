@@ -1,4 +1,10 @@
-hqDefine('nic_compliance/js/encoder', function () {
+hqDefine('nic_compliance/js/encoder', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+],function (
+    $,
+    initialPageData
+) {
     function HexParser() {
         var self = {};
 
@@ -33,7 +39,7 @@ hqDefine('nic_compliance/js/encoder', function () {
     }
 
     $(function(){
-        if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
+        if (initialPageData.get("implement_password_obfuscation")) {
             var ids = _.filter([
                 'id_auth-password',
                 'id_password',
@@ -56,7 +62,7 @@ hqDefine('nic_compliance/js/encoder', function () {
                     $field.val(passwordEncoder.encode(unencodedValue));
                 });
                 $(document).on("ajaxComplete", function (e, xhr, options) {
-                    if ($form.attr("action").endsWith(options.url)) {
+                    if ($form.attr("action") && $form.attr("action").endsWith(options.url)) {
                         $field.attr("type", fieldType);
                         $field.val(unencodedValue);
                     }
