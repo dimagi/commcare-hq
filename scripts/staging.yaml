@@ -56,4 +56,5 @@ branches:
   - jls/reveal-family-id # Jenny Aug 27
   - bmb/case-sharing  #Biyeun Aug 22
   - sk/sentry-upgrade  # SK Aug 30
+  - bmb/requirejs-registration  # Biyeun Aug 30
 submodules: {}
