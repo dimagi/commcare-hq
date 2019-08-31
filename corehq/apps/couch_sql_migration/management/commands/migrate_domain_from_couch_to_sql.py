@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 from six.moves import input, zip_longest
 from sqlalchemy.exc import OperationalError
 
+from corehq.apps.domain.models import Domain
 from corehq.blobs import get_blob_db, CODES
 from corehq.form_processor.change_publishers import publish_case_saved, publish_form_saved
 from couchforms.dbaccessors import get_form_ids_by_type
@@ -135,6 +136,9 @@ class Command(BaseCommand):
             raise CommandError("--verbose only allowed for `stats`")
 
         dst_domain = options.pop('dest', None) or domain
+        assert Domain.get_by_name(domain)
+        if domain != dst_domain:
+            assert Domain.get_by_name(dst_domain)
         setup_logging(self.state_dir, options['debug'])
         getattr(self, "do_" + action)(domain, dst_domain)
 
