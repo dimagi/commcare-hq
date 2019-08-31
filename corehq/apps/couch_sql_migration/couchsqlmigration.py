@@ -958,7 +958,7 @@ def _copy_form_properties(sql_form, couch_form):
 
 def append_undo(src_domain, meta, operation):
     filename = UNDO_CSV.format(domain=src_domain)
-    with io.open(filename, 'ab') as undo_csv:
+    with io.open(filename, 'a') as undo_csv:
         writer = csv.writer(undo_csv)
         row = (meta.parent_id, meta.key, operation)
         writer.writerow(row)
@@ -1044,7 +1044,7 @@ def revert_form_attachment_meta_domain(src_domain):
     """
     filename = UNDO_CSV.format(domain=src_domain)
     try:
-        csv_file = io.open(filename, 'rb')
+        csv_file = io.open(filename, 'r')
     except IOError as err:
         if 'No such file or directory' in str(err):
             # Nothing to undo
