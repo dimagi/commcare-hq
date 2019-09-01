@@ -1,10 +1,8 @@
-
 import logging
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
 
 import gevent
-import six
 from gevent.pool import Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form, get_case_updates
@@ -50,7 +48,7 @@ class AsyncFormProcessor(object):
         form_id = doc["_id"]
         log.debug('Processing doc: XFormInstance(%s)', form_id)
         if doc.get('problem'):
-            if six.text_type(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
+            if str(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
                 doc = _fix_replacement_form_problem_in_couch(doc)
             else:
                 self.statedb.add_problem_form(form_id)
@@ -185,7 +183,7 @@ class PartiallyLockingQueue(object):
 
         queue_by_lock_id = self.queue_by_lock_id
         lock_ids_by_queue_id = self.lock_ids_by_queue_id
-        for queue in six.itervalues(queue_by_lock_id):
+        for queue in queue_by_lock_id.values():
             if not queue:
                 continue
             queue_id = queue[0]
@@ -199,7 +197,7 @@ class PartiallyLockingQueue(object):
 
         Returns :boolean: True if there are objs left, False if not
         """
-        for queue in six.itervalues(self.queue_by_lock_id):
+        for queue in self.queue_by_lock_id.values():
             if queue:
                 return True
         return False

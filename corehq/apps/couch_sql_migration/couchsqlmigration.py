@@ -12,7 +12,6 @@ from django.db.utils import IntegrityError
 
 import attr
 import gevent
-import six
 from gevent.pool import Pool
 from lxml import etree
 
@@ -309,7 +308,7 @@ def update_xml(xml, path, old_value, new_value):
     if not found:
         raise MissingValueError('Unable to find "{value}" at path "{path}" in "{xml}".'.format(
             value=old_value,
-            xml=xml if isinstance(xml, six.string_types) else etree.tostring(xml),
+            xml=xml if isinstance(xml, str) else etree.tostring(xml),
             path=path,
         ))
     if return_as_bytestring:
@@ -434,7 +433,7 @@ class CouchSqlDomainMigrator(object):
         else:
             xmlns = couch_form.xmlns
             user_id = couch_form.user_id
-        form_id = couch_form.form_id if self.same_domain() else six.text_type(uuid.uuid4())
+        form_id = couch_form.form_id if self.same_domain() else str(uuid.uuid4())
         sql_form = XFormInstanceSQL(
             form_id=form_id,
             domain=self.dst_domain,
@@ -492,7 +491,7 @@ class CouchSqlDomainMigrator(object):
         with open(self._id_map_filename, 'w') as f:
             f.write('ID Map\n'
                     '------\n')
-            for src, dst in six.iteritems(self._id_map):
+            for src, dst in self._id_map.items():
                 f.write(' -> '.join((src, dst)))
                 f.write('\n')
             f.write('\n')
@@ -840,7 +839,7 @@ def _migrate_form_attachments(sql_form, couch_form, form_xml=None):
     ):
         _migrate_couch_attachments_to_blob_db(couch_form)
 
-    for name, blob in six.iteritems(couch_form.blobs):
+    for name, blob in couch_form.blobs.items():
         if name == "form.xml" and form_xml:
             # form_xml is None if we are migrating to the same domain
 
@@ -982,7 +981,7 @@ def _migrate_couch_attachments_to_blob_db(couch_form):
     blobs = couch_form.blobs
     doc = Document(couch_form.get_db().cloudant_database, couch_form.form_id)
     with couch_form.atomic_blobs():
-        for name, meta in six.iteritems(couch_form._attachments):
+        for name, meta in couch_form._attachments.items():
             if name not in blobs:
                 couch_form.put_attachment(
                     doc.get_attachment(name, attachment_type='binary'),
@@ -1007,7 +1006,7 @@ def sql_form_to_json(form):
 
 def _migrate_case_attachments(couch_case, sql_case):
     """Copy over attachment meta """
-    for name, attachment in six.iteritems(couch_case.case_attachments):
+    for name, attachment in couch_case.case_attachments.items():
         blob = couch_case.blobs[name]
         assert name == attachment.identifier or not attachment.identifier or not name, \
             (name, attachment.identifier)
