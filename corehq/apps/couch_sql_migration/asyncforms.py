@@ -56,14 +56,14 @@ class AsyncFormProcessor(object):
                 return
         try:
             wrapped_form = XFormInstance.wrap(doc)
+            case_ids = get_case_ids(wrapped_form)
         except Exception:
             log.exception("Error migrating form %s", form_id)
         else:
-            self._try_to_process_form(wrapped_form)
+            self._try_to_process_form(wrapped_form, case_ids)
             self._try_to_empty_queues()
 
-    def _try_to_process_form(self, wrapped_form):
-        case_ids = get_case_ids(wrapped_form)
+    def _try_to_process_form(self, wrapped_form, case_ids):
         if self.queues.try_obj(case_ids, wrapped_form):
             self.pool.spawn(self._async_migrate_form, wrapped_form, case_ids)
         elif self.queues.full:
