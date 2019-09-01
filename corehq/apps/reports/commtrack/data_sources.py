@@ -23,8 +23,8 @@ from corehq.apps.reports.analytics.couchaccessors import (
 )
 from corehq.apps.reports.analytics.dbaccessors import (
     get_aggregated_ledger_values,
+    get_wrapped_ledger_values,
 )
-from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.util import (
