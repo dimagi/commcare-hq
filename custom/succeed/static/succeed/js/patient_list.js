@@ -1,4 +1,4 @@
-hqDefine("succeed/js/main", function () {
+hqDefine("succeed/js/patient_list", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
     $(function() {
         var tableOptions = initialPageData.get('report_table_js_options');
