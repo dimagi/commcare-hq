@@ -5,15 +5,11 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css"/>
 {% compress css %}
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
-        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
-        <link type="text/css"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'font-awesome/css/font-awesome.css' %}"/>
-
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3-1.8.6/build/nv.d3.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/css/angular-datatables.min.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/plugins/bootstrap/datatables.bootstrap.min.css' %}">
@@ -52,14 +48,18 @@
         <script src="{% static 'angular-leaflet-directive/dist/angular-leaflet-directive.js' %}"></script>
         <script src="{% static 'perfect-scrollbar/js/perfect-scrollbar.jquery.min.js' %}"></script>
         <script src="{% static 'angular-perfect-scrollbar/src/angular-perfect-scrollbar.js' %}"></script>
-
         <script src="{% static 'topojson/topojson.js' %}"></script>
         <script src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
 
         <script src="{% static 'js/topojsons/states_v2.topojson.js' %}"></script>
         <script src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
         <script src="{% static 'js/topojsons/blocks_v3.topojson.js' %}"></script>
-
+{% endcompress %}
+{% comment %}
+For some odd reason if we include the entire block in a single compres tag we get javascript errors
+related to angular not being defined. But if we split it here it works fine.
+{% endcomment %}
+{% compress js %}
         <script src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
         <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
 
