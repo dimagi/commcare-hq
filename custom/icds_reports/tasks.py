@@ -1041,7 +1041,7 @@ def _get_value(data, field):
     queue='icds_aggregation_queue'
 )
 def collect_inactive_awws_task():
-    collect_inactive_awws().delay()
+    collect_inactive_awws.delay()
     if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
         collect_inactive_awws.delay(force_citus=True)
 
