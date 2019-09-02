@@ -5,6 +5,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+{% compress css %}
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
         <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
@@ -20,6 +21,8 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'perfect-scrollbar/css/perfect-scrollbar.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
+{% endcompress %}
+
         {% include 'analytics/google.html' %}
         {% javascript_libraries underscore=True hq=True %}
         <script src="{% static 'autotrack/autotrack.js' %}"></script>
@@ -28,6 +31,7 @@
             window.ga('require', 'outboundLinkTracker');
             window.ga('require', 'urlChangeTracker');
         </script>
+{% compress js %}
         <script src="{% static 'd3-3.5.17/d3.js' %}"></script>
         <script src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
         <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
@@ -116,6 +120,7 @@
         <script src="{% static 'js/directives/cas-export/cas-export.directive.js' %}"></script>
         <script src="{% static 'js/directives/access-denied/access-denied.directive.js' %}"></script>
         <script src="{% static 'js/directives/info-message/info-message.directive.js' %}"></script>
+{% endcompress %}
 </head>
 <body>
 
