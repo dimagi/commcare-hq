@@ -8,7 +8,6 @@ from django.conf import settings
 from django.core.management import call_command
 from django.db import connections
 
-import six
 from celery.schedules import crontab
 from celery.task import periodic_task
 
@@ -189,7 +188,7 @@ def check_for_sql_cases_without_existing_domain():
     if missing_domains_with_cases:
         mail_admins_async.delay(
             'There exist SQL cases belonging to a missing domain',
-            six.text_type(missing_domains_with_cases)
+            str(missing_domains_with_cases)
         )
     elif _is_monday():
         mail_admins_async.delay(
@@ -210,7 +209,7 @@ def check_for_sql_forms_without_existing_domain():
     if missing_domains_with_forms:
         mail_admins_async.delay(
             'There exist SQL forms belonging to a missing domain',
-            six.text_type(missing_domains_with_forms)
+            str(missing_domains_with_forms)
         )
     elif _is_monday():
         mail_admins_async.delay(
@@ -258,7 +257,7 @@ def check_for_ucr_tables_without_existing_domain():
         for missing_domain in missing_domains_to_tables:
             mail_admins_async.delay(
                 'Missing domain "%s" has remaining UCR tables' % missing_domain,
-                six.text_type(missing_domains_to_tables[missing_domain])
+                str(missing_domains_to_tables[missing_domain])
             )
     elif _is_monday():
         mail_admins_async.delay('All UCR tables belong to valid domains', '')

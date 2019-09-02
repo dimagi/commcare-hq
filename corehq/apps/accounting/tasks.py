@@ -121,7 +121,7 @@ def activate_subscriptions(based_on_date=None):
             _activate_subscription(subscription)
         except Exception as e:
             log_accounting_error(
-                'Error activating subscription %d: %s' % (subscription.id, six.text_type(e)),
+                'Error activating subscription %d: %s' % (subscription.id, str(e)),
                 show_stack_trace=True,
             )
 
@@ -175,7 +175,7 @@ def deactivate_subscriptions(based_on_date=None):
             _deactivate_subscription(subscription)
         except Exception as e:
             log_accounting_error(
-                'Error deactivating subscription %d: %s' % (subscription.id, six.text_type(e)),
+                'Error deactivating subscription %d: %s' % (subscription.id, str(e)),
                 show_stack_trace=True,
             )
 
@@ -413,7 +413,7 @@ def send_subscription_reminder_emails(num_days):
                 subscription.send_ending_reminder_email()
         except Exception as e:
             log_accounting_error(
-                "Error sending reminder for subscription %d: %s" % (subscription.id, six.text_type(e)),
+                "Error sending reminder for subscription %d: %s" % (subscription.id, str(e)),
                 show_stack_trace=True,
             )
 
@@ -454,7 +454,7 @@ def create_wire_credits_invoice(domain_name,
                 record.send_email(contact_email=email)
         except Exception as e:
             log_accounting_error(
-                "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, six.text_type(e)),
+                "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, str(e)),
                 show_stack_trace=True,
             )
     else:
@@ -655,7 +655,7 @@ def update_exchange_rates():
                 })
         except Exception as e:
             log_accounting_error(
-                "Error updating exchange rates: %s" % six.text_type(e),
+                "Error updating exchange rates: %s" % str(e),
                 show_stack_trace=True,
             )
 
@@ -995,7 +995,7 @@ def send_prepaid_credits_export():
     writer.writerow(headers)
     for row in body:
         writer.writerow([
-            val if isinstance(val, six.text_type) else bytes(val)
+            val if isinstance(val, str) else bytes(val)
             for val in row
         ])
 

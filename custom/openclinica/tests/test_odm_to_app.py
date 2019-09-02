@@ -8,7 +8,6 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
 from custom.openclinica.management.commands.odm_to_app import Command, Item
 import custom.openclinica.management.commands.odm_to_app
-import six
 
 
 def replace_uuids(string):
@@ -43,7 +42,7 @@ class OdmToAppTest(TestCase, TestXmlMixin):
 
     def test_odm_to_app_xform(self):
         def as_utf8(string):
-            return string.encode('utf-8') if isinstance(string, six.text_type) else string
+            return string.encode('utf-8') if isinstance(string, str) else string
         expected = self.get_xml('xform')
         actual = self.app.modules[2].forms[0].source
         self.assertXmlEqual(expected, as_utf8(actual))

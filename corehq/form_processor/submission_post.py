@@ -45,7 +45,6 @@ from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log, SumoLogicLog
 
 from celery.task.control import revoke as revoke_celery_task
-import six
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
@@ -500,7 +499,7 @@ class SubmissionPost(object):
 
 
 def _transform_instance_to_error(interface, exception, instance):
-    error_message = '{}: {}'.format(type(exception).__name__, six.text_type(exception))
+    error_message = '{}: {}'.format(type(exception).__name__, str(exception))
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 

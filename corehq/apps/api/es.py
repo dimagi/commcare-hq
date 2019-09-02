@@ -232,7 +232,7 @@ class ESView(View):
         try:
             raw_query = json.loads(request.body.decode('utf-8'))
         except Exception as e:
-            content_response = dict(message="Error parsing query request", exception=six.text_type(e))
+            content_response = dict(message="Error parsing query request", exception=str(e))
             response = HttpResponse(status=406, content=json.dumps(content_response))
             return response
 
@@ -742,7 +742,7 @@ def es_search_by_params(search_params, domain, reserved_query_params=None):
         try:
             payload_filter = consumer.consume_params(query_params)
         except DateTimeError as e:
-            raise Http400("Bad query parameter: {}".format(six.text_type(e)))
+            raise Http400("Bad query parameter: {}".format(str(e)))
 
         if payload_filter:
             payload["filter"]["and"].append(payload_filter)

@@ -1,12 +1,9 @@
-# coding=utf-8
-
 import io
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
 
 import ghdiff
-import six
 
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -109,7 +106,7 @@ def process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, 
         try:
             _check_for_sheet_error(sheet, expected_headers, processed_sheets)
         except BulkAppTranslationsException as e:
-            msgs.append((messages.error, six.text_type(e)))
+            msgs.append((messages.error, str(e)))
             continue
 
         processed_sheets.add(sheet.worksheet.title)
@@ -350,7 +347,7 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
                 else:
                     document = get_menu_or_form_by_sheet_name(self.app, sheet_name)
             except (ModuleNotFoundException, FormNotFoundException, ValueError) as err:
-                self.msgs.append((messages.error, six.text_type(err)))
+                self.msgs.append((messages.error, str(err)))
                 continue
 
             self.update_translation_dict('default_', document.name, row)

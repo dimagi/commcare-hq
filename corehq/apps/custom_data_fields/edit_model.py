@@ -9,7 +9,6 @@ from django.shortcuts import redirect
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-import six
 from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -131,7 +130,7 @@ class CustomDataModelMixin(object):
 
     @classmethod
     def page_name(cls):
-        return _("Edit {} Fields").format(six.text_type(cls.entity_string))
+        return _("Edit {} Fields").format(str(cls.entity_string))
 
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain,
@@ -201,7 +200,7 @@ class CustomDataModelMixin(object):
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
             msg = _("{} fields saved successfully").format(
-                six.text_type(self.entity_string)
+                str(self.entity_string)
             )
             messages.success(request, msg)
             return redirect(self.urlname, self.domain)
