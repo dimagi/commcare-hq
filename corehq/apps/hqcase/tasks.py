@@ -78,13 +78,13 @@ def explode_cases(domain, user_id, factor, task=None):
                     i.case_type, new_case_ids[i.case_id][explosion], i.relationship
                 ) for key, i in cases[old_case_id].index.items()
             }
-            progress += queue_case(new_case.as_string().decode('utf-8'), queue, progress)
+            progress += queue_case(new_case.as_text(), queue, progress)
 
             for ledger in sync_result.ledgers.get(old_case_id, []):
                 new_ledger = copy(ledger)
                 new_ledger.entity_id = new_case_id
                 total_ledgers += 1
-                queue_case(new_ledger.as_string().decode('utf-8'), queue, progress)
+                queue_case(new_ledger.as_text(), queue, progress)
 
     if len(queue):
         submit_case_blocks(queue, domain, user_id=user_id, device_id="explode_cases")
