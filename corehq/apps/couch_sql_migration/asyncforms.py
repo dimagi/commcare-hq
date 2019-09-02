@@ -1,4 +1,3 @@
-
 import logging
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
@@ -58,6 +57,7 @@ class AsyncFormProcessor(object):
             wrapped_form = XFormInstance.wrap(doc)
         except Exception:
             log.exception("Error migrating form %s", form_id)
+            self.statedb.save_form_diffs(doc, {})
         else:
             self._try_to_process_form(wrapped_form)
             self._try_to_empty_queues()
