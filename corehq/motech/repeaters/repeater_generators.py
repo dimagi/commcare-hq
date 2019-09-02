@@ -7,8 +7,6 @@ from uuid import uuid4
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import ugettext_lazy as _
 
-import six
-
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.case.xml import V2
 from dimagi.utils.parsing import json_format_datetime
@@ -131,7 +129,7 @@ class GeneratorCollection(object):
 
     def get_all_formats(self, for_domain=None):
         """returns all the formats added to this repeater collection"""
-        return [(name, format.label) for name, format in six.iteritems(self.format_generator_map)
+        return [(name, format.label) for name, format in self.format_generator_map.items()
                 if not for_domain or format.generator_class.enabled_for_domain(for_domain)]
 
     def get_generator_by_format(self, format):
