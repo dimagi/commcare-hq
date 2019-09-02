@@ -25,7 +25,7 @@ hqDefine("succeed/js/patient_list", function () {
                 reportTablesOptions = _.extend(reportTablesOptions, {
                     ajaxSource: tableOptions.pagination.source,
                     ajaxParams: tableOptions.pagination.params,
-                };
+                });
             }
             if (tableOptions.bad_request_error_text) {
                 reportTablesOptions.badRequestErrorText = "<span class='label label-danger'>Sorry!</span> " + tableOptions.bad_request_error_text;
