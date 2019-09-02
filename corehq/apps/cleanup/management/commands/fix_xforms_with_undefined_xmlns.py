@@ -88,7 +88,7 @@ class Command(BaseCommand):
                 except MultiplePreviouslyFixedForms as e:
                     if xform_instance.build_id not in unfixable_builds:
                         unfixable_builds.add(xform_instance.build_id)
-                        print(six(e))
+                        print(str(e))
                     _log(log_file, WARNING, MULTI_MATCH, xform_instance)
                     continue
                 except CantMatchAForm as e:
