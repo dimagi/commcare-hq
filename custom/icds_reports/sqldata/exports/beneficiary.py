@@ -21,10 +21,7 @@ class BeneficiaryExport(ExportableMixin, IcdsSqlData):
         config.update({
             '5_years': 60,
         })
-        self.config = config
-        self.loc_level = loc_level
-        self.show_test = show_test
-        self.beta = beta
+        super(BeneficiaryExport, self).__init__(config, loc_level, show_test, beta)
 
     @property
     def group_by(self):
