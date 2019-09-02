@@ -1,6 +1,8 @@
-{% extends "hqmedia/uploader_base.html" %}
+{% extends "hqwebapp/base_page.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
+
+{% requirejs_main 'hqmedia/js/hqmediauploaders' %}
 
 {% block stylesheets %}{{ block.super }}
   <style type="text/css">
