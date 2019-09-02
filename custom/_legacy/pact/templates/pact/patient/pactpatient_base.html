@@ -1,8 +1,15 @@
 {% extends "reports/async/default.html" %}
 {% load i18n %}
 
-{% block reportcontent %}
+{% block js %}
+  {{ block.super }}
   <script src="{% static 'pact/js/main.js' %}"></script>
+{% endblock js %}
+
+{% block reportcontent %}
+  {% registerurl 'pactdata_1' domain %}
+  {% initial_page_data 'patient_id' patient_doc.get_id %}
+  {% initial_page_data 'pt_root_url' pt_root_url %}
 
   {% block pactpatient_header %}
     <div>
