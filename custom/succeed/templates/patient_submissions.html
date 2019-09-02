@@ -3,7 +3,13 @@
 {% load report_tags %}
 {% load i18n %}
 
+{% block js %}
+    {{ block.super }}
+    <script src="{% static 'succeed/js/patient_submissions.js' %}"></script>
+{% endblock js %}
+
 {% block reportcontent %}
+    {% initial_page_data 'patient_id' patient_id %}
     {% include "base_patient.html" %}
     <div class="col-md-12" style="margin-top: 30px">
         <table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
@@ -41,19 +47,3 @@
         </table>
     </div>
 {% endblock reportcontent %}
-
-{% block js-inline %} {{ block.super }}
-<script>
-    $(function() {
-        if ($('#paramSelectorForm').find('#patient_id_field').length == 0) {
-            $('<input>').attr({id: 'patient_id_field', type: 'hidden', name: 'patient_id', value: '{{ patient_id }}' }).appendTo('#paramSelectorForm');
-        }
-    });
-     {% if report_table and report_table.datatables %}
-        var id = '#report_table_{{ report.slug }}';
-        var table = $(id).dataTable();
-        var oSettings = table.fnSettings().aaSorting = [[2, 'desc']];
-        table.fnDraw();
-     {% endif %}
-</script>
-{% endblock %}
