@@ -1,6 +1,6 @@
 hqDefine("m4change/javascripts/main", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-    $(function ()
+    $(function () {
         var OPTIONS = {
             users: initialPageData.get("users"),
             groups: initialPageData.get("groups"),
