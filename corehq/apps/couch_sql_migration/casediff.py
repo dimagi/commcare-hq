@@ -585,8 +585,6 @@ def diff_case(sql_case, couch_case, statedb):
 
 
 def rebuild_couch_case_and_re_diff(couch_case, sql_case_json, statedb):
-    assert couch_case["domain"] == sql_case_json["domain"], \
-        (couch_case["domain"], sql_case_json["domain"])
     rebuilt_case = FormProcessorCouch.hard_rebuild_case(
         couch_case["domain"], couch_case['_id'], None, save=False, lock=False
     )
