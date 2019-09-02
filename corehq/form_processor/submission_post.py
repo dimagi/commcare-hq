@@ -31,6 +31,7 @@ from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
+from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, verify_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
 from corehq.util.datadog.utils import form_load_counter
@@ -228,6 +229,9 @@ class SubmissionPost(object):
             self.formdb.save_new_form(submitted_form)
             response = self.get_exception_response_and_log(submitted_form, self.path)
             return FormProcessingResult(response, None, [], [], 'submission_error_log')
+
+        if submitted_form.xmlns == SYSTEM_ACTION_XMLNS:
+            verify_system_action(submitted_form, self.auth_context)
 
         if submitted_form.xmlns == DEVICE_LOG_XMLNS:
             return self.process_device_log(submitted_form)
