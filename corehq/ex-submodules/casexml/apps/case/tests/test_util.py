@@ -2,8 +2,6 @@ import datetime
 
 from django.test import SimpleTestCase
 
-from iso8601 import iso8601
-
 from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.case.util import validate_phone_datetime
 
