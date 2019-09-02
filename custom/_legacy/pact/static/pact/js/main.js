@@ -2,128 +2,103 @@ hqDefine("pact/js/main", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     function format_date(isodatestring) {
-      if (isodatestring == "" || isodatestring == null) {
-        return 'present';
-      }
-      //parse nad format the date timestamps - seconds since epoch into date object
-      var date = new Date(isodatestring);
-      // hours part from the timestamp
-      var hours = date.getHours();
-      // minutes part from the timestamp
-      var minutes = date.getMinutes();
-      // seconds part from the timestamp
-      var seconds = date.getSeconds();
-      if (seconds < 10) {
-        var second_str = "0" + seconds;
-      } else {
-        var second_str = seconds;
-      }
+        if (isodatestring == "" || isodatestring == null) {
+          return 'present';
+        }
+        //parse nad format the date timestamps - seconds since epoch into date object
+        var date = new Date(isodatestring);
+        // hours part from the timestamp
+        var hours = date.getHours();
+        // minutes part from the timestamp
+        var minutes = date.getMinutes();
+        // seconds part from the timestamp
+        var seconds = date.getSeconds();
+        if (seconds < 10) {
+          var second_str = "0" + seconds;
+        } else {
+          var second_str = seconds;
+        }
 
-      var year = date.getFullYear();
-      var month = date.getMonth() + 1;
-      var day = date.getDate();
+        var year = date.getFullYear();
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
 
-      //return  year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' + second_str;
-      //return  year + '/' + month + '/' + day;
-      return  month + '/' + day + '/' + year;
-
+        return  month + '/' + day + '/' + year;
     }
 
     function format_user(username) {
-      if (username === undefined) {
-        return "---"
-      }
-      if (username == "" || username == null ) {
-        return "---"
-      }
-      else {
-        return username;
-      }
+        if (username === undefined) {
+            return "---"
+        }
+        if (username == "" || username == null ) {
+            return "---"
+        }
+        else {
+            return username;
+        }
     }
 
     function ScheduleModel(data) {
-      this.schedule_id = ko.observable(data.schedule_id);
-      this.sunday = ko.observable(format_user(data.sunday));
-      this.monday = ko.observable(format_user(data.monday));
-      this.tuesday = ko.observable(format_user(data.tuesday));
-      this.wednesday = ko.observable(format_user(data.wednesday));
-      this.thursday = ko.observable(format_user(data.thursday));
-      this.friday = ko.observable(format_user(data.friday));
-      this.saturday = ko.observable(format_user(data.saturday));
-      this.comment = ko.observable(data.comment);
+        this.schedule_id = ko.observable(data.schedule_id);
+        this.sunday = ko.observable(format_user(data.sunday));
+        this.monday = ko.observable(format_user(data.monday));
+        this.tuesday = ko.observable(format_user(data.tuesday));
+        this.wednesday = ko.observable(format_user(data.wednesday));
+        this.thursday = ko.observable(format_user(data.thursday));
+        this.friday = ko.observable(format_user(data.friday));
+        this.saturday = ko.observable(format_user(data.saturday));
+        this.comment = ko.observable(data.comment);
 
-      this.created_by = ko.observable(data.created_by);
-      this.edited_by = ko.observable(data.edited_by);
-      this.started = ko.observable(data.started);
-      this.ended = ko.observable(data.ended);
+        this.created_by = ko.observable(data.created_by);
+        this.edited_by = ko.observable(data.edited_by);
+        this.started = ko.observable(data.started);
+        this.ended = ko.observable(data.ended);
 
-      this.display_started = ko.observable(format_date(data.started));
-      this.display_ended = ko.observable(format_date(data.ended));
+        this.display_started = ko.observable(format_date(data.started));
+        this.display_ended = ko.observable(format_date(data.ended));
 
-      this.deprecated = ko.observable(data.deprecated);
+        this.deprecated = ko.observable(data.deprecated);
     }
-    var api_url = "{% url 'pactdata_1' domain=domain %}?case_id={{ patient_doc.get_id }}";
+
     function ScheduleListViewModel() {
-      // Data
-      var self = this;
-      self.getSchedules = function () {
-        $.getJSON(api_url + "&method=schedule", function (allData) {
-            var mappedSchedules = $.map(allData, function (item) {
-              return new ScheduleModel(item)
+        var self = this;
+        self.getSchedules = function () {
+            var api_url = initialPageData.reverse('pactdata_1') + "?case_id=" + initialPageData.get('patient_id');
+            $.getJSON(api_url + "&method=schedule", function (allData) {
+                var mappedSchedules = $.map(allData, function (item) {
+                    return new ScheduleModel(item)
+                });
+                self.schedules(mappedSchedules);
+              }
+            );
+        };
+        self.schedules = ko.observableArray(self.getSchedules());
+
+        self.refresh = function () {
+            self.getSchedules();
+        };
+
+        self.removeLast = function() {
+            var api_url = initialPageData.reverse('pactdata_1') + "?case_id=" + initialPageData.get('patient_id');
+            var json_schedules= ko.toJSON(self.schedules);
+            var send_xhr = $.ajax({
+                "type": "POST",
+                "url":  api_url + "&method=rm_schedule",
+                "data": {"rm_schedule":""},
+                "success": function(data) {
+                    alert("Removed, I hope you know what you're doing");
+                    scheduleView.refresh();
+                },
+                "error": function(data) {
+                    alert ("Error trying to save form, please try again.");
+                }
             });
-            self.schedules(mappedSchedules);
-          }
-        );
-      };
-      self.schedules = ko.observableArray(self.getSchedules());
+        };
 
-      self.refresh = function () {
-        self.getSchedules();
-      };
-      self.removeLast = function() {
-        var json_schedules= ko.toJSON(self.schedules);
-        var send_xhr = $.ajax({
-          "type": "POST",
-          "url":  api_url + "&method=rm_schedule",
-          "data": {"rm_schedule":""},
-          "success": function(data) {
-            alert("Removed, I hope you know what you're doing");
-            scheduleView.refresh();
-          }, //end success
-          "error": function(data) {
-            alert ("Error trying to save form, please try again.");
-          }
-        });
-      };
-
-      self.currentSchedule = function(idx) {
-        return idx == self.schedules().length -1;
-
-      }
-
-
+        self.currentSchedule = function(idx) {
+            return idx == self.schedules().length -1;
+        }
     }
-
-    var scheduleView = new ScheduleListViewModel();
-    $(function () {
-      $("#scheduleblock").koApplyBindings(scheduleView);
-      $("#id_active_date").datepicker({ minDate: 0, maxDate: "+14D" });
-      $('#new_schedule_form').ajaxForm(function() {
-        var send_xhr = $.ajax({
-          "type": "POST",
-          "url":  api_url + "&method=schedule",
-          "data": $("#new_schedule_form").serialize(),
-          "success": function(data) {
-            console.log(data);
-            scheduleView.refresh();
-          }, //end success
-          "error": function(data) {
-            console.log(data);
-            alert ("Error trying to save form, please try again.");
-          }
-        });
-      });
-    });
 
     function ProviderModel(data) {
         this.id = ko.observable(data.id);
@@ -316,5 +291,26 @@ hqDefine("pact/js/main", function () {
         // Providers page
         var providerView = new ProviderListViewModel();
         $("#providerblock").koApplyBindings(providerView);
+
+        // Schedule page
+        var scheduleView = new ScheduleListViewModel();
+        $("#scheduleblock").koApplyBindings(scheduleView);
+        $("#id_active_date").datepicker({ minDate: 0, maxDate: "+14D" });
+        $('#new_schedule_form').ajaxForm(function() {
+            var api_url = initialPageData.reverse('pactdata_1') + "?case_id=" + initialPageData.get('patient_id');
+            var send_xhr = $.ajax({
+                "type": "POST",
+                "url":  api_url + "&method=schedule",
+                "data": $("#new_schedule_form").serialize(),
+                "success": function(data) {
+                    console.log(data);
+                    scheduleView.refresh();
+                },
+                "error": function(data) {
+                    console.log(data);
+                    alert ("Error trying to save form, please try again.");
+                }
+            });
+        });
     });
 });
