@@ -1,8 +1,6 @@
-
 from collections import OrderedDict
 from datetime import datetime
 
-import six
 from django.core.mail import mail_admins
 from django.db import ProgrammingError
 
@@ -92,7 +90,7 @@ def _get_case_properties(doc_dict):
     else:
         dynamic_case_properties = CommCareCase.wrap(doc_dict).dynamic_case_properties()
 
-    dynamic_mapping = [{'key': key, VALUE: value} for key, value in six.iteritems(dynamic_case_properties)]
+    dynamic_mapping = [{'key': key, VALUE: value} for key, value in dynamic_case_properties.items()]
 
     return base_case_properties + dynamic_mapping
 

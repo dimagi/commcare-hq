@@ -26,7 +26,6 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     get_tt_dates, is_anemic, format_decimal, DATA_NOT_ENTERED, get_delivery_nature, get_color_with_green_positive,\
     get_color_with_red_positive
 from custom.icds_reports.const import MapColors
-import six
 
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
@@ -299,7 +298,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                         dict(
                             x=x_val,
                             y=y_val
-                        ) for x_val, y_val in six.iteritems(open_count_chart)
+                        ) for x_val, y_val in open_count_chart.items()
                     ], key=lambda d: d['x']),
                     "strokeWidth": 2,
                     "classed": "dashed",
@@ -315,7 +314,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                             y=y_val['avg_percent'],
                             attended=y_val['attended'],
                             eligible=y_val['eligible']
-                        ) for x_val, y_val in six.iteritems(attended_children_chart)
+                        ) for x_val, y_val in attended_children_chart.items()
                     ], key=lambda d: d['x']),
                     "strokeWidth": 2,
                     "classed": "dashed",
@@ -755,7 +754,7 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
         'chart': [
             {
                 'key': 'Children (0-6 years)',
-                'values': [[key, value] for key, value in six.iteritems(chart_data)],
+                'values': [[key, value] for key, value in chart_data.items()],
                 "classed": "dashed",
             }
         ],

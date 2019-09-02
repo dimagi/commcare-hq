@@ -1,7 +1,5 @@
 from django.core.management import BaseCommand, CommandError
 
-from six.moves import input
-
 from corehq.pillows.app_submission_tracker import (
     CouchAppFormSubmissionTrackerReindexerFactory,
     SqlAppFormSubmissionTrackerReindexerFactory,

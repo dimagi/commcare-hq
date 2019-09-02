@@ -136,7 +136,7 @@ the total number of migrated blobs were not found.
 
 
 def encode_content(data):
-    if isinstance(data, six.text_type):
+    if isinstance(data, str):
         data = data.encode("utf-8")
     return b64encode(data)
 
@@ -196,7 +196,7 @@ class CouchAttachmentMigrator(BaseDocMigrator):
         obj = self.blob_helper(doc, self.couchdb, self.get_type_code(doc))
         try:
             with obj.atomic_blobs():
-                for name, data in list(six.iteritems(attachments)):
+                for name, data in list(attachments.items()):
                     if name in external_blobs:
                         continue  # skip attachment already in blob db
                     if self.shared_domain:

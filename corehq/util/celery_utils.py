@@ -125,7 +125,7 @@ def revoke_tasks(task_names, interval=5):
             if not result:
                 continue
 
-            for worker, task_dicts in six.iteritems(result):
+            for worker, task_dicts in result.items():
                 tasks.extend(_get_task_info_fcn(task_state)(task_dicts))
 
         for task in tasks:

@@ -23,7 +23,6 @@ from os.path import abspath, dirname, exists, join
 
 import sh
 from gitutils import get_git
-from six.moves import input
 
 VELLUM_TAR = "vellum.tar.gz"
 

@@ -4,7 +4,6 @@ from io import StringIO
 
 from django.core.management.base import BaseCommand
 
-import six
 from lxml import etree
 
 from corehq.apps.users.models import CouchUser
@@ -29,7 +28,7 @@ class Command(BaseCommand):
             sys.exit(1)
         user_id = user._id
         form_ids = this_form_accessor.get_form_ids_for_user(user_id)
-        input_response = six.moves.input(
+        input_response = input(
             "Update {} form(s) for user {} in domain {}? (y/n): ".format(len(form_ids), username, domain))
         if input_response == "y":
             for form_data in this_form_accessor.iter_forms(form_ids):

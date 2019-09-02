@@ -1,9 +1,6 @@
-
 import logging
 
 from django.core.management import BaseCommand
-
-from six.moves import input
 
 from dimagi.utils.chunked import chunked
 

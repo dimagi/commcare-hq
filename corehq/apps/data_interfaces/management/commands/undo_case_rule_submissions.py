@@ -4,7 +4,6 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Min
 
 from dateutil.parser import parse
-from six.moves import input
 
 from corehq.apps.data_interfaces.models import CaseRuleUndoer
 

@@ -1,7 +1,4 @@
-
 from django.core.management.base import BaseCommand
-
-from six.moves import input
 
 from corehq.apps.accounting.models import SoftwarePlanVersion
 from corehq.apps.accounting.utils import ensure_grants

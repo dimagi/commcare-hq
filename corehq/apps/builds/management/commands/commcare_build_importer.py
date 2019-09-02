@@ -6,7 +6,6 @@ from django.core.management.base import BaseCommand, CommandError
 import requests
 from jenkinsapi.jenkins import Jenkins
 from memoized import memoized
-from six.moves import input
 
 from corehq.apps.builds.models import CommCareBuild
 
