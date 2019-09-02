@@ -50,6 +50,7 @@ hqDefine("reports/js/tabular", function () {
             trigger: 'hover',
             placement: 'bottom',
             container: 'body',
+            html: true,     // needed only for pact custom reports
         });
     }
 
