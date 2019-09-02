@@ -10,8 +10,6 @@ from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
 
-import six
-
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import html_attr

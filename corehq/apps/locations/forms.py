@@ -7,7 +7,6 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-import six
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -649,6 +648,6 @@ def to_list(value):
     True
 
     """
-    if hasattr(value, '__iter__') and not isinstance(value, six.string_types):
+    if hasattr(value, '__iter__') and not isinstance(value, str):
         return list(value)
     return [value]

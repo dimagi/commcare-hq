@@ -76,7 +76,6 @@ from datetime import timedelta
 from tempfile import mkdtemp
 
 import gevent
-import six
 from django.conf import settings
 from gevent.pool import Pool
 from gevent.queue import LifoQueue
@@ -322,7 +321,7 @@ class BlobMetaReindexAccessor(ReindexAccessor):
 
     def get_key(self, doc):
         obj = doc["_obj_not_json"]
-        assert isinstance(obj.id, six.integer_types), (type(obj.id), obj.id)
+        assert isinstance(obj.id, int), (type(obj.id), obj.id)
         # would use a tuple, but JsonObject.to_string requires dict keys to be strings
         return "%s %s" % (obj.parent_id, obj.id)
 

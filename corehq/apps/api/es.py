@@ -7,7 +7,6 @@ from django.http import HttpResponse
 from django.utils.decorators import classonlymethod, method_decorator
 from django.views.generic import View
 
-import six
 from elasticsearch.exceptions import ElasticsearchException, NotFoundError
 
 from casexml.apps.case.models import CommCareCase
@@ -615,7 +614,7 @@ class ElasticAPIQuerySet(object):
 
             return self.with_fields(payload=new_payload)
 
-        elif isinstance(idx, six.integer_types):
+        elif isinstance(idx, int):
             if idx >= 0:
                 # Leverage efficicent backend slicing
                 return list(self[idx:idx+1])[0]
