@@ -4,9 +4,7 @@ from itertools import chain
 
 from django.core.management.base import BaseCommand
 
-import six
 from couchdbkit import ResourceNotFound
-from six.moves import input
 
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
@@ -90,7 +88,7 @@ class Command(BaseCommand):
                 except MultiplePreviouslyFixedForms as e:
                     if xform_instance.build_id not in unfixable_builds:
                         unfixable_builds.add(xform_instance.build_id)
-                        print(six.text_type(e))
+                        print(six(e))
                     _log(log_file, WARNING, MULTI_MATCH, xform_instance)
                     continue
                 except CantMatchAForm as e:

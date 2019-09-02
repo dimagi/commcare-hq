@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
 import sys
 from pillowtop import get_pillow_by_name, get_all_pillow_configs
-from six.moves import input
 
 
 class Command(BaseCommand):

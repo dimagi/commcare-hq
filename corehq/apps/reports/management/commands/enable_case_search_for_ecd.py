@@ -2,8 +2,6 @@
 from django.core.management import BaseCommand
 from django.db.models import Q
 
-from six.moves import input
-
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import CaseES, CaseSearchES

@@ -1,7 +1,5 @@
 from django.core.management.base import BaseCommand
 
-from six.moves import input
-
 from corehq.apps.sms.models import OUTGOING, SMS
 from corehq.util.argparse_types import utc_timestamp
 
