@@ -5,8 +5,6 @@ from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-import six
-from six.moves import map, range
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
@@ -54,7 +52,7 @@ class YearFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         start_year = getattr(settings, 'START_YEAR', 2008)
-        years = [(six.text_type(y), y) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
+        years = [(str(y), y) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
         years.reverse()
         return years
 

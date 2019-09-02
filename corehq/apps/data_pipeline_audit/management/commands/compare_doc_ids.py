@@ -1,10 +1,9 @@
-
 import argparse
 from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand, CommandError
 
-from six.moves import range, zip_longest
+from itertools import zip_longest
 
 from couchforms.models import doc_types
 

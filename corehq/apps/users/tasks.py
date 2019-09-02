@@ -5,14 +5,12 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
-import six
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
 from couchdbkit import BulkSaveError, ResourceConflict
-from six.moves import map
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -280,7 +278,7 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
         reset_demo_user_restore(user, domain)
         results = {'errors': []}
     except Exception as e:
-        notify_exception(None, message=six.text_type(e))
+        notify_exception(None, message=str(e))
         results = {'errors': [
             _("Something went wrong in creating restore for the user. Please try again or report an issue")
         ]}

@@ -5,7 +5,6 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from memoized import memoized
-from six.moves import map
 
 from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.models import Domain

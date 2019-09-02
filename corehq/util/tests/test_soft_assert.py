@@ -6,7 +6,6 @@ from corehq.util.soft_assert.core import SoftAssert
 from corehq.util.soft_assert.api import _send_message, soft_assert
 from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.test_utils import softer_assert
-from six.moves import range
 
 
 class SoftAssertTest(SimpleTestCase):

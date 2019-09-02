@@ -1,13 +1,9 @@
-# coding=utf-8
-
 import itertools
 import re
 from collections import Counter
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
-
-from six.moves import zip
 
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule

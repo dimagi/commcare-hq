@@ -8,8 +8,6 @@ from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 
-import six
-from six.moves import map
 from tastypie import fields, http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
@@ -232,7 +230,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         except ValidationError as e:
                             if not hasattr(bundle.obj, 'errors'):
                                 bundle.obj.errors = []
-                            bundle.obj.errors.append(six.text_type(e))
+                            bundle.obj.errors.append(str(e))
                             return False
                     bundle.obj.set_password(bundle.data.get("password"))
                     should_save = True
@@ -432,7 +430,7 @@ class GroupResource(v0_4.GroupResource):
                 self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
             except AssertionError as e:
                 status = http.HttpBadRequest
-                bundle.data['_id'] = six.text_type(e)
+                bundle.data['_id'] = str(e)
             bundles_seen.append(bundle)
 
         to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
@@ -457,7 +455,7 @@ class GroupResource(v0_4.GroupResource):
                 updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
                 return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
         except AssertionError as e:
-            bundle.data['error_message'] = six.text_type(e)
+            bundle.data['error_message'] = str(e)
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
 
     def _update(self, bundle):
@@ -760,7 +758,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         try:
             report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
         except Http404 as e:
-            raise NotFound(six.text_type(e))
+            raise NotFound(str(e))
         return report_configuration
 
     def obj_get_list(self, bundle, **kwargs):

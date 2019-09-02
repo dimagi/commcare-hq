@@ -3,9 +3,6 @@ import re
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
-import six
-from six.moves import filter
-
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     Document,
@@ -93,7 +90,7 @@ class CustomDataFieldsDefinition(QuickCachedDocumentMixin, Document):
         Returns a validator to be used in bulk import
         """
         def validate_choices(field, value):
-            if field.choices and value and six.text_type(value) not in field.choices:
+            if field.choices and value and str(value) not in field.choices:
                 return _(
                     "'{value}' is not a valid choice for {slug}, the available "
                     "options are: {options}."

@@ -13,7 +13,6 @@ from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from memoized import memoized
-from six.moves import filter
 
 from dimagi.utils.couch.database import iter_docs
 
