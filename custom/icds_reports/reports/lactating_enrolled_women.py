@@ -127,7 +127,7 @@ def get_lactating_enrolled_women_sector_data(domain, config, loc_level, location
             'valid': valid,
             'all': all_lactating
         }
-        for prop, value in row_values).items(:
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         chart_data['blue'].append([
