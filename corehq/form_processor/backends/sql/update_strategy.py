@@ -40,7 +40,7 @@ from corehq.util import cmp
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.soft_assert import soft_assert
 
-reconciliation_soft_assert = soft_assert('@'.join(['dmiller', 'dimagi.com']), include_breadcrumbs=True)
+reconciliation_soft_assert = soft_assert('@'.join(['dmiller', 'dimagi.com']))
 
 
 def _validate_length(length):
