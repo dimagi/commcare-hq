@@ -58,7 +58,15 @@ def process_ui_translation_upload(app, trans_file):
     def _get_params_text(params):
         if not params:
             return "no parameters"
-        return ", ".join(["${{{}}}".format(num) for num in sorted({re.sub(r'\D', '', p) for p in params})])
+
+        # Reduce parameter list to the numbers alone, a set like {'0', '1', '2'}
+        numbers = {re.sub(r'\D', '', p) for p in params}
+
+        # Sort numbers, so that re-ordering parameters doesn't trigger error
+        numbers = sorted(numbers)
+
+        # Re-join numbers into a string for display
+        return ", ".join(["${{{}}}".format(num) for num in numbers])
 
     for row in translations:
         if row["property"] not in commcare_ui_strings:
