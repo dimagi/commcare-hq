@@ -1,9 +1,7 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
 {% load hq_shared_tags %}
 
-{% block js %} {{ block.super }}
-  <script src="{% static 'hqadmin/js/couch_changes.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'hqadmin/js/couch_changes' %}
 
 {% block reportcontent %}
   {% initial_page_data "domain_data" domain_data %}
