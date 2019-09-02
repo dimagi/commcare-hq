@@ -1,4 +1,3 @@
-
 import os
 import re
 from datetime import date, time
@@ -8,7 +7,6 @@ from django.test.utils import override_settings
 
 import mock
 import postgres_copy
-import six
 import sqlalchemy
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
@@ -90,7 +88,7 @@ class AggregationScriptTestBase(CSVTestCase):
                     row[key] = value.strftime('%Y-%m-%d')
                 elif isinstance(value, time):
                     row[key] = value.strftime("%H:%M:%S.%f").rstrip('0').rstrip('.')
-                elif isinstance(value, six.integer_types):
+                elif isinstance(value, int):
                     row[key] = str(value)
                 elif isinstance(value, (float, Decimal)):
                     row[key] = self._convert_decimal_to_string(row[key])
@@ -167,10 +165,7 @@ def _setup_ucr_tables():
                 '"{}"'.format(c.strip())  # quote to preserve case
                 for c in f.readline().split(',')
             ]
-            postgres_copy.copy_from(
-                f, table, engine, format='csv' if six.PY3 else b'csv',
-                null='' if six.PY3 else b'', columns=columns
-            )
+            postgres_copy.copy_from(f, table, engine, format='csv', null='', columns=columns)
 
 
 def _teardown_ucr_tables():

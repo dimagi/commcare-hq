@@ -449,8 +449,7 @@ class Item(StudyObject):
         """
         Returns a CommCare validation condition given a CDISC ODM comparator and a list of values
 
-        >>> import six
-        >>> Item.get_condition('LT', ['5']) if six.PY3 else Item.get_condition('LT', ['5']).encode('utf-8')
+        >>> Item.get_condition('LT', ['5'])
         '. < 5'
 
         """
