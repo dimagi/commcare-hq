@@ -403,25 +403,25 @@ CREATE INDEX ON "agg_awc_2019-01-01_5" (awc_id)
 {}
 CREATE INDEX ON "agg_awc_2019-01-01_5" (state_id, district_id, block_id, supervisor_id, awc_id)
 {}
-CREATE INDEX ON "agg_awc_2019-01-01_5" (district_id)
+CREATE INDEX ON "agg_awc_2019-01-01_4" (district_id)
 {}
-CREATE INDEX ON "agg_awc_2019-01-01_5" (block_id)
+CREATE INDEX ON "agg_awc_2019-01-01_4" (block_id)
 {}
-CREATE INDEX ON "agg_awc_2019-01-01_5" (supervisor_id)
+CREATE INDEX ON "agg_awc_2019-01-01_4" (supervisor_id)
 {}
-CREATE INDEX ON "agg_awc_2019-01-01_5" (awc_id)
+CREATE INDEX ON "agg_awc_2019-01-01_4" (awc_id)
 {}
-CREATE INDEX ON "agg_awc_2019-01-01_5" (state_id, district_id, block_id, supervisor_id, awc_id)
+CREATE INDEX ON "agg_awc_2019-01-01_4" (state_id, district_id, block_id, supervisor_id, awc_id)
 {}
-CREATE INDEX ON "agg_awc_2019-01-01_5" (district_id)
+CREATE INDEX ON "agg_awc_2019-01-01_3" (district_id)
 {}
-CREATE INDEX ON "agg_awc_2019-01-01_5" (block_id)
+CREATE INDEX ON "agg_awc_2019-01-01_3" (block_id)
 {}
-CREATE INDEX ON "agg_awc_2019-01-01_5" (state_id, district_id, block_id)
+CREATE INDEX ON "agg_awc_2019-01-01_3" (state_id, district_id, block_id)
 {}
-CREATE INDEX ON "agg_awc_2019-01-01_5" (district_id)
+CREATE INDEX ON "agg_awc_2019-01-01_2" (district_id)
 {}
-CREATE INDEX ON "agg_awc_2019-01-01_5" (state_id, district_id)
+CREATE INDEX ON "agg_awc_2019-01-01_2" (state_id, district_id)
 {}
-CREATE INDEX ON "agg_awc_2019-01-01_5" (state_id)
+CREATE INDEX ON "agg_awc_2019-01-01_1" (state_id)
 {}
