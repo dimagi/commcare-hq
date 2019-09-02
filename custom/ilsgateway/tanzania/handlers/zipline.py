@@ -6,8 +6,6 @@ from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import INVALID_PRODUCT_CODE
 from custom.zipline.api import ProductQuantity
 
-from six.moves import zip
-
 
 class ParseError(Exception):
     pass

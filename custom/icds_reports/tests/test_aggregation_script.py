@@ -9,7 +9,6 @@ from django.test.testcases import TestCase, override_settings
 import six
 import sqlalchemy
 from freezegun import freeze_time
-from six.moves import zip
 
 from custom.icds_reports.exceptions import LocationRemovedException
 from corehq.apps.locations.models import SQLLocation, LocationType

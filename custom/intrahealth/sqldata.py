@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import datetime
 
 import sqlalchemy
@@ -36,7 +34,6 @@ from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 import six
 from functools import reduce
-from six.moves import range
 
 PRODUCT_NAMES = {
     'diu': ["diu"],

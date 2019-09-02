@@ -23,8 +23,6 @@ from django.contrib.postgres.fields import ArrayField, DateRangeField
 from django.db import connections, models
 from django.utils.decorators import classproperty
 
-from six.moves import zip
-
 from dimagi.utils.dates import force_to_date
 
 from corehq.apps.locations.models import SQLLocation

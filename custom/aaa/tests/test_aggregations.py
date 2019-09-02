@@ -10,7 +10,6 @@ import mock
 import postgres_copy
 import six
 import sqlalchemy
-from six.moves import range
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
