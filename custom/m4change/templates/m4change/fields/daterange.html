@@ -7,7 +7,8 @@
             <input type="text"
                    id="filter_range"
                    class="date-range-picker form-control"
-                   value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+                   value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}"
+                   />
             <!-- Since a lot parts of commcarehq are using 'startdate' and 'enddate' parameters, we could keep them for backward compatibility -->
             <input type="hidden"
                    id="{{ css_id }}_startdate"
@@ -28,20 +29,4 @@
             </p>
         </div>
     </div>
-{% endblock %}
-{% block filter_js %}
-    <script>
-        $.getScript("{% static 'm4change/javascripts/daterangepicker.js' %}", function () {
-            var separator = '{{ separator }}';
-            var report_labels = JSON.parse('{{ report_labels|safe }}');
-            var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
-
-            $('#filter_range').createDateRangePicker(report_labels, separator);
-            $('#filter_range').on('apply', function(ev, picker) {
-                var dates = $(this).val().split(separator);
-                $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
-                $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', dates[1]);
-            });
-        });
-    </script>
 {% endblock %}

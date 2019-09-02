@@ -36,6 +36,7 @@ hqDefine("m4change/javascripts/main", function () {
              });
         }
 
+        // Initialize page once it's ready
         var keepTrying = setInterval(function () {
             if (window.reportTables !== undefined) {
                 clearInterval(keepTrying);
@@ -45,8 +46,24 @@ hqDefine("m4change/javascripts/main", function () {
             }
         }, 1000);
 
+        // Initialize help templates
         $('.hq-help-template').each(function () {
             hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
         });
+
+        // Initialize date range
+        var $datespan = $('#filter_range');
+        if ($datespan.length) {
+            var separator = $datespan.data('separator');
+            var report_labels = $datespan.data("report-labels");
+            var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
+
+            $('#filter_range').createDateRangePicker(report_labels, separator);
+            $('#filter_range').on('apply', function(ev, picker) {
+                var dates = $(this).val().split(separator);
+                $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
+                $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', dates[1]);
+            });
+        }
     });
 });
