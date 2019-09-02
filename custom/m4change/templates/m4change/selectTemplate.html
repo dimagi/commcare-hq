@@ -11,16 +11,15 @@
 {% endblock %}
 
 {% block reportcontent %}
+    {% initial_page_data 'domain' domain %}
+    {% initial_page_data 'end_date' datespan.enddate_param_utc %}
+    {% initial_page_data 'groups' groups %}
+    {% initial_page_data 'user_id' request.couch_user.userID %}
+    {% initial_page_data 'users' users %}
+    {% registerurl 'receiver_secure_post' domain %}
     <div id="mcct_project_review_page_management">
         {{ block.super }}
     </div>
-    <script>
-        $(function () {
-            $('.hq-help-template').each(function () {
-                hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
-            });
-        });
-    </script>
 {% endblock %}
 
 {% block pretable %}

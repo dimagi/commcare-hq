@@ -1,12 +1,13 @@
 hqDefine("m4change/javascripts/main", function () {
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
     $(function ()
         var OPTIONS = {
-            users: {{ users|JSON }},
-            groups: {{ groups|JSON }},
-            receiverUrl: '{% url "receiver_secure_post" domain %}',
-            enddate: '{{ datespan.enddate_param_utc }}',
-            webUserID: '{{ request.couch_user.userID }}',
-            domain: '{{ domain }}'
+            users: initialPageData.get("users"),
+            groups: initialPageData.get("groups"),
+            receiverUrl: initialPageData.reverse('receiver_secure_post'),
+            enddate: initialPageData.get("end_date"),
+            webUserID: initialPageData.get("user_id"),
+            domain: initialPageData.get("domain"),
         };
 
         var managementModel = new McctProjectReviewPageManagement(OPTIONS);
@@ -43,5 +44,9 @@ hqDefine("m4change/javascripts/main", function () {
                 window.reportTables.fnDrawCallback = applyCheckboxListeners;
             }
         }, 1000);
+
+        $('.hq-help-template').each(function () {
+            hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
+        });
     });
 });
