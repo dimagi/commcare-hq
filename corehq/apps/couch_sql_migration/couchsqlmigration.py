@@ -8,7 +8,6 @@ from django.db.utils import IntegrityError
 
 import attr
 import gevent
-import six
 from gevent.pool import Pool
 
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
@@ -475,7 +474,7 @@ def _migrate_form_attachments(sql_form, couch_form):
     ):
         _migrate_couch_attachments_to_blob_db(couch_form)
 
-    for name, blob in six.iteritems(couch_form.blobs):
+    for name, blob in couch_form.blobs.items():
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
         meta = try_to_get_blob_meta(sql_form.form_id, type_code, name)
 
@@ -561,7 +560,7 @@ def _migrate_couch_attachments_to_blob_db(couch_form):
     blobs = couch_form.blobs
     doc = Document(couch_form.get_db().cloudant_database, couch_form.form_id)
     with couch_form.atomic_blobs():
-        for name, meta in six.iteritems(couch_form._attachments):
+        for name, meta in couch_form._attachments.items():
             if name not in blobs:
                 couch_form.put_attachment(
                     doc.get_attachment(name, attachment_type='binary'),
@@ -586,7 +585,7 @@ def sql_form_to_json(form):
 
 def _migrate_case_attachments(couch_case, sql_case):
     """Copy over attachment meta """
-    for name, attachment in six.iteritems(couch_case.case_attachments):
+    for name, attachment in couch_case.case_attachments.items():
         blob = couch_case.blobs[name]
         assert name == attachment.identifier or not attachment.identifier or not name, \
             (name, attachment.identifier)

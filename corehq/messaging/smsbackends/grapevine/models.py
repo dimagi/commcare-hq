@@ -144,7 +144,7 @@ class UrlencodedDeserializer(Serializer):
     def from_urlencode(self, data, options=None):
         """ handles basic form encoded url posts """
         qs = dict((k, v if len(v) > 1 else v[0])
-            for k, v in six.iteritems(six.moves.urllib.parse.parse_qs(data)))
+            for k, v in six.moves.urllib.parse.parse_qs(data).items())
 
         return qs
 

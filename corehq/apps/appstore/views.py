@@ -10,7 +10,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-import six
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
@@ -70,7 +69,7 @@ def rewrite_url(request, path):
 
 
 def inverse_dict(d):
-    return dict([(v, k) for k, v in six.iteritems(d)])
+    return dict([(v, k) for k, v in d.items()])
 
 
 def can_view_app(req, dom):
@@ -184,7 +183,7 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
                     message=(
                         "Fetched Exchange Snapshot Error: {}. "
                         "The problem snapshot id: {}".format(
-                            six.text_type(e), res['_source']['_id'])
+                            str(e), res['_source']['_id'])
                     )
                 )
 

@@ -6,7 +6,6 @@ from itertools import chain
 
 from django.core.management.base import BaseCommand
 
-import six
 from couchdbkit import ResourceNotFound
 
 from couchforms.const import ATTACHMENT_NAME
@@ -85,7 +84,7 @@ class Command(BaseCommand):
                 app_to_unique_ids_map[(app_id, domain)].add(form_unique_id)
 
         # Logging here instead of in the loop to reduce superfluous repeated lines
-        for key, unique_ids in six.iteritems(app_to_unique_ids_map):
+        for key, unique_ids in app_to_unique_ids_map.items():
             for form_unique_id in unique_ids:
                 new_log_file.write(unique_ids_map_log_message(
                     key[0], key[1], form_unique_id
@@ -101,8 +100,8 @@ class Command(BaseCommand):
                 try:
                     unique_id = get_form_unique_id(xform_instance)
                 except (MultipleFormsMissingXmlns, FormNameMismatch) as e:
-                    log_file.write(six.text_type(e))
-                    print(six.text_type(e))
+                    log_file.write(str(e))
+                    print(str(e))
                     continue
 
                 if unique_id:
@@ -337,6 +336,6 @@ def get_xmlns(form_unique_id, app_id, domain):
 def name_matches(xform_name, form_names):
     if xform_name in list(form_names.values()):
         return True
-    if xform_name in ["{} [{}]".format(v, k) for k, v in six.iteritems(form_names)]:
+    if xform_name in ["{} [{}]".format(v, k) for k, v in form_names.items()]:
         return True
     return False

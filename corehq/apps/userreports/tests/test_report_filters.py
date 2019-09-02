@@ -4,8 +4,6 @@ from django.http import HttpRequest, QueryDict
 from django.test import SimpleTestCase, TestCase
 from django.utils.http import urlencode
 
-import six
-
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
@@ -274,7 +272,7 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for key, adapter in six.iteritems(cls.adapters):
+        for key, adapter in cls.adapters.items():
             adapter.drop_table()
         cls._delete_everything()
         super(DateFilterDBTest, cls).tearDownClass()
