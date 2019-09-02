@@ -11,7 +11,7 @@ from corehq.apps.commtrack.models import CommtrackActionConfig, CommtrackConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.reports.analytics.esaccessors import (
+from corehq.apps.reports.analytics.dbaccessors import (
     get_wrapped_ledger_values,
     products_with_ledgers,
 )

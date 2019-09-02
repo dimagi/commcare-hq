@@ -346,6 +346,28 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
         from casexml.apps.stock.utils import get_current_ledger_state
         return get_current_ledger_state(case_ids, ensure_form_id=ensure_form_id)
 
+    @staticmethod
+    def get_ledger_values_for_cases(case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
+        from corehq.apps.commtrack.models import StockState
+
+        assert isinstance(case_ids, list)
+        if not case_ids:
+            return []
+
+        filters = {'case_id__in': case_ids}
+        if section_ids:
+            assert isinstance(section_ids, list)
+            filters['section_id__in'] = section_ids
+        if entry_ids:
+            assert isinstance(entry_ids, list)
+            filters['product_id__in'] = entry_ids
+        if date_start:
+            filters['last_modifed__gte'] = date_start
+        if date_end:
+            filters['last_modified__lte'] = date_end
+
+        return list(StockState.objects.filter(**filters))
+
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):
     try:
