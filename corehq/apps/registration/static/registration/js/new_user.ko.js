@@ -1,62 +1,74 @@
-/* global $ */
-/* global ko */
-/* global _ */
-/* global RMI */
-/* global django */
-
-/* New User Registration Form Model
- * This model is for validating and stepping through the new user registration form
- */
-
-hqDefine('registration/js/new_user.ko', function () {
+hqDefine('registration/js/new_user.ko', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'jquery.rmi/jquery.rmi',
+    'analytix/js/kissmetrix',
+    'analytix/js/appcues',
+    'hqwebapp/js/initial_page_data',
+    'nic_compliance/js/encoder',
+    'jquery-ui/ui/effect',
+    'jquery-ui/ui/effect-slide',
+    'intl-tel-input/build/js/intlTelInput.min',
+    'hqwebapp/js/password_validators.ko',
+], function (
+    $,
+    ko,
+    _,
+    RMI,
+    kissmetrics,
+    appcues,
+    initialPageData,
+    nicEncoder
+) {
     'use strict';
     var module = {};
 
-    var _private = {},
-        _appcues = hqImport('analytix/js/appcues'),
-        _kissmetrics = hqImport('analytix/js/kissmetrix');
-
-    _private.rmiUrl = null;
-    _private.csrf = null;
-    _private.showPasswordFeedback = false;
-    _private.rmi = function () {
+    module.rmiUrl = null;
+    module.csrf = null;
+    module.showPasswordFeedback = false;
+    module.rmi = function () {
         throw "Please call initRMI first.";
     };
-    _private.resetEmailFeedback = function (isValidating) {
+    module.resetEmailFeedback = function (isValidating) {
         throw "please call setResetEmailFeedbackFn. " +
               "Expects boolean isValidating. " + isValidating;
     };
-    _private.submitAttemptAnalytics = function (data) {  // eslint-disable-line no-unused-vars
-        _kissmetrics.track.event("Clicked Create Account");
+    module.submitAttemptAnalytics = function (data) {  // eslint-disable-line no-unused-vars
+        kissmetrics.track.event("Clicked Create Account");
     };
-    _private.getPhoneNumberFn = function () {
+    module.getPhoneNumberFn = function () {
         // number to return phone number
     };
-    _private.submitSuccessAnalytics = function () {
+    module.submitSuccessAnalytics = function () {
         // analytics haven't loaded yet or at all, fail silently
     };
 
-    // Can't set up analytics until the values for the A/B tests are ready
-    _kissmetrics.whenReadyAlways(function () {
-        _kissmetrics.track.event("Viewed CommCare signup page");
+    module.onModuleLoad = function () {
+        throw "overwrite onModule load to remove loading indicators";
+    };
 
-        _private.submitSuccessAnalytics = function (data) {
-            _kissmetrics.track.event("Account Creation was Successful");
+    // Can't set up analytics until the values for the A/B tests are ready
+    kissmetrics.whenReadyAlways(function () {
+        kissmetrics.track.event("Viewed CommCare signup page");
+
+        module.submitSuccessAnalytics = function (data) {
+            kissmetrics.track.event("Account Creation was Successful");
 
             var appcuesEvent = "Assigned user to Appcues test",
                 appcuesData = {
                     'Appcues test': data.appcuesAbTest,
                 };
 
-            _appcues.identify(data.email, appcuesData);
-            _appcues.trackEvent(appcuesEvent, appcuesData);
+            appcues.identify(data.email, appcuesData);
+            appcues.trackEvent(appcuesEvent, appcuesData);
 
-            _kissmetrics.identify(data.email);
-            _kissmetrics.identifyTraits(appcuesData);
-            _kissmetrics.track.event(appcuesEvent, appcuesData);
+            kissmetrics.identify(data.email);
+            kissmetrics.identifyTraits(appcuesData);
+            kissmetrics.track.event(appcuesEvent, appcuesData);
 
             if (data.deniedEmail) {
-                _kissmetrics.track.event("Created account after previous denial due to enterprise restricting signups", {
+                kissmetrics.track.event("Created account after previous denial due to enterprise restricting signups", {
                     email: data.email,
                     previousAttempt: data.deniedEmail,
                 });
@@ -64,42 +76,7 @@ hqDefine('registration/js/new_user.ko', function () {
         };
     });
 
-    module.setResetEmailFeedbackFn = function (callback) {
-        // use this function to reset the form-control-feedback ui
-        // in the email form so that it removes the waiting / checking email note
-        // or adds it if the validator is still in async validation mode
-        _private.resetEmailFeedback = callback;
-    };
-
-    module.setSubmitAttemptFn = function (callback) {
-        _private.submitAttemptFn = callback;
-    };
-
-    module.setGetPhoneNumberFn = function (callback) {
-        _private.getPhoneNumberFn = callback;
-    };
-
-    module.initRMI = function (rmiUrl) {
-        _private.rmiUrl = rmiUrl;
-        _private.csrf = $("#csrfTokenContainer").val();
-
-        _private.rmi = function (remoteMethod, data, options) {
-            options = options || {};
-            options.headers = {"DjNg-Remote-Method": remoteMethod};
-            var _rmi = RMI(_private.rmiUrl, _private.csrf);
-            return _rmi("", data, options);
-        };
-    };
-
-    module.showPasswordFeedback = function () {
-        _private.showPasswordFeedback = true;
-    };
-
-    module.onModuleLoad = function () {
-        throw "overwrite onModule load to remove loading indicators";
-    };
-
-    module.formViewModel = function (defaults, containerSelector, steps) {
+    var formViewModel = function (defaults, containerSelector, steps) {
         var self = {};
 
         module.onModuleLoad();
@@ -137,13 +114,13 @@ hqDefine('registration/js/new_user.ko', function () {
                     async: true,
                     validator: function (val, params, callback) {
                         if (self.email.isValid()) {
-                            _private.rmi(
+                            module.rmi(
                                 "check_username_availability",
                                 {email: val},
                                 {
                                     success: function (result) {
                                         if (result.restrictedByDomain) {
-                                            _kissmetrics.track.event("Denied account due to enterprise restricting signups", {email: val});
+                                            kissmetrics.track.event("Denied account due to enterprise restricting signups", {email: val});
                                             self.deniedEmail(val);
                                         }
                                         callback({
@@ -154,7 +131,7 @@ hqDefine('registration/js/new_user.ko', function () {
                                 }
                             );
                         } else if (self.email() !== undefined) {
-                            _private.resetEmailFeedback(false);
+                            module.resetEmailFeedback(false);
                         }
                     },
                 },
@@ -167,7 +144,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.validatingEmailMsg = ko.observable(django.gettext("Checking email..."));
         self.emailDelayed.isValidating.subscribe(function (isValidating) {
             self.isEmailValidating(isValidating && self.email.isValid());
-            _private.resetEmailFeedback(isValidating);
+            module.resetEmailFeedback(isValidating);
         });
 
         // ---------------------------------------------------------------------
@@ -246,14 +223,14 @@ hqDefine('registration/js/new_user.ko', function () {
 
         self.currentStep.subscribe(function (newValue) {
             if (newValue === 1) {
-                _kissmetrics.track.event("Clicked Next button on Step 1 of CommCare signup");
+                kissmetrics.track.event("Clicked Next button on Step 1 of CommCare signup");
             }
         });
 
         var _getDataForSubmission = function () {
             var password = self.password();
-            if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
-                password = (hqImport("nic_compliance/js/encoder")()).encode(self.password());
+            if (initialPageData.get("implement_password_obfuscation")) {
+                password = (nicEncoder()).encode(self.password());
             }
             var data = {
                 full_name: self.fullName(),
@@ -261,7 +238,7 @@ hqDefine('registration/js/new_user.ko', function () {
                 password: password,
                 project_name: self.projectName(),
                 eula_confirmed: self.eulaConfirmed(),
-                phone_number: _private.getPhoneNumberFn() || self.phoneNumber(),
+                phone_number: module.getPhoneNumberFn() || self.phoneNumber(),
                 atypical_user: defaults.atypical_user,
             };
             if (self.hasPersonaFields) {
@@ -372,9 +349,9 @@ hqDefine('registration/js/new_user.ko', function () {
             self.isSubmitting(true);
 
             var submitData = _getDataForSubmission();
-            _private.submitAttemptAnalytics(submitData);
+            module.submitAttemptAnalytics(submitData);
 
-            _private.rmi(
+            module.rmi(
                 "register_new_user",
                 {data: submitData},
                 {
@@ -391,7 +368,7 @@ hqDefine('registration/js/new_user.ko', function () {
                         } else if (response.success) {
                             self.isSubmitting(false);
                             self.isSubmitSuccess(true);
-                            _private.submitSuccessAnalytics(_.extend({}, submitData, {
+                            module.submitSuccessAnalytics(_.extend({}, submitData, {
                                 email: self.email(),
                                 deniedEmail: self.deniedEmail(),
                                 appcuesAbTest: response.appcues_ab_test,
@@ -410,5 +387,72 @@ hqDefine('registration/js/new_user.ko', function () {
         return self;
     };
 
-    return module;
+    return {
+        setResetEmailFeedbackFn: function (callback) {
+            // use this function to reset the form-control-feedback ui
+            // in the email form so that it removes the waiting / checking email note
+            // or adds it if the validator is still in async validation mode
+            module.resetEmailFeedback = callback;
+        },
+        setSubmitAttemptFn: function (callback) {
+            module.submitAttemptFn = callback;
+        },
+        setPhoneNumberInput: function (inputSelector) {
+            var $number = $(inputSelector);
+            $number.intlTelInput({
+                separateDialCode: true,
+                utilsScript: initialPageData.get('number_utils_script'),
+                initialCountry: "auto",
+                geoIpLookup: function (success) {
+                    $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
+                        var countryCode = (resp && resp.country) ? resp.country : "";
+                        if (!countryCode) {
+                            countryCode = "us";
+                        }
+                        success(countryCode);
+                    });
+                },
+            });
+            $number.keydown(function (e) {
+                // prevents non-numeric numbers from being entered.
+                // from http://stackoverflow.com/questions/995183/how-to-allow-only-numeric-0-9-in-html-inputbox-using-jquery
+                // Allow: backspace, delete, tab, escape, enter and .
+                if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 110, 190]) !== -1 ||
+                    // Allow: Ctrl+A, Command+A
+                    (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
+                    // Allow: home, end, left, right, down, up
+                    (e.keyCode >= 35 && e.keyCode <= 40)
+                ) {
+                    // let it happen, don't do anything
+                    return;
+                }
+
+                // Ensure that it is a number and stop the keypress
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                    e.preventDefault();
+                }
+            });
+            module.getPhoneNumberFn = function () {
+                return $number.intlTelInput("getNumber");
+            };
+        },
+        initRMI: function (rmiUrl) {
+            module.rmiUrl = rmiUrl;
+            module.csrf = $("#csrfTokenContainer").val();
+
+            module.rmi = function (remoteMethod, data, options) {
+                options = options || {};
+                options.headers = {"DjNg-Remote-Method": remoteMethod};
+                var _rmi = RMI(module.rmiUrl, module.csrf);
+                return _rmi("", data, options);
+            };
+        },
+        showPasswordFeedback: function () {
+            module.showPasswordFeedback = true;
+        },
+        setOnModuleLoad: function (callback) {
+            module.onModuleLoad = callback;
+        },
+        formViewModel: formViewModel,
+    };
 });
