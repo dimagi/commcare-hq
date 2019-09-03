@@ -39,18 +39,31 @@ class UploadedTranslationsValidator(object):
         self.current_headers = dict()  # module_or_form_id: list of headers
         self.current_rows = dict()  # module_or_form_id: translations
         self.lang_prefix = lang_prefix
-        self.lang_cols_to_compare = [self.lang_prefix + self.app.default_language]
         self.default_language_column = self.lang_prefix + self.app.default_language
-        if lang_to_compare in app.langs and lang_to_compare != self.app.default_language:
-            self.lang_cols_to_compare.append(self.lang_prefix + lang_to_compare)
-            target_lang = lang_to_compare
+        self.lang_to_compare = lang_to_compare
+        self.single_sheet = False
+        self._setup()
+
+    def _setup(self):
+        if self.lang_to_compare:
+            # assume its a single sheet workbook if there is a language
+            self.single_sheet = True
+            self._ensure_single_sheet()
+            target_lang = self.lang_to_compare
+            self.lang_cols_to_compare = [self.lang_prefix + self.lang_to_compare]
         else:
             target_lang = self.app.default_language
+            self.lang_cols_to_compare = [self.lang_prefix + self.app.default_language]
         self.app_translation_generator = AppTranslationsGenerator(
             self.app.domain, self.app.get_id, None, self.app.default_language, target_lang,
             self.lang_prefix)
         self.current_sheet_name_to_module_or_form_type_and_id = dict()
         self.uploaded_sheet_name_to_module_or_form_type_and_id = dict()
+
+    def _ensure_single_sheet(self):
+        sheet = self.uploaded_workbook.worksheets[0]
+        if not is_single_sheet(sheet.title):
+            raise Exception("Expected single sheet with title %s" % SINGLE_SHEET_NAME)
 
     def _generate_current_headers_and_rows(self):
         self.current_headers = {
@@ -138,6 +151,10 @@ class UploadedTranslationsValidator(object):
         for uploaded_row in uploaded_rows:
             parsed_uploaded_rows.append([uploaded_row.get(column_name) for column_name in columns_to_compare])
 
+        return self._generate_diff(parsed_current_rows, parsed_uploaded_rows)
+
+    @staticmethod
+    def _generate_diff(parsed_current_rows, parsed_uploaded_rows):
         current_rows_as_string = '\n'.join([', '.join(row) for row in parsed_current_rows])
         uploaded_rows_as_string = '\n'.join([', '.join(row) for row in parsed_uploaded_rows])
         diff = ghdiff.diff(current_rows_as_string, uploaded_rows_as_string, css=False)
@@ -146,8 +163,17 @@ class UploadedTranslationsValidator(object):
         return diff
 
     def compare(self):
-        msgs = {}
         self._generate_current_headers_and_rows()
+        if self.single_sheet:
+            return self._compare_single_sheet()
+        else:
+            return self._compare_multiple_sheets()
+
+    def _compare_single_sheet(self):
+        pass
+
+    def _compare_multiple_sheets(self):
+        msgs = {}
         sheets_rows = self._parse_uploaded_worksheet()
         for sheet_name in sheets_rows:
             if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
