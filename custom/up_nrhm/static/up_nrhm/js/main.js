@@ -28,13 +28,6 @@ hqDefine("up_nrhm/js/main", function () {
     }
 
     $(function () {
-        if (hqImport("hqwebapp/js/initial_page_data").get("rendered_as") === "print") {
-            if (!$('#report_filter_sf').val()) {
-                document.body.style.zoom="80%";
-                $('.hq-loading').hide();
-            }
-        }
-
         $('#report_filter_sf').on('change', function() {
             sf = $(this).val();
             hideFilters(sf);

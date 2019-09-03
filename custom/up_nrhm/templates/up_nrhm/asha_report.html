@@ -30,6 +30,14 @@
             display: none !important;
         }
     </style>
+    <script>
+        {% if rendered_as == 'print' and not sf %}
+            $(function() {
+                document.body.style.zoom="80%";
+                $('.hq-loading').hide();
+            });
+        {% endif %}
+    </script>
 {% endblock js %}
 
 {% block pretable %}
