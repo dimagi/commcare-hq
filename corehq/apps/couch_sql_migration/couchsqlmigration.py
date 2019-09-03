@@ -749,7 +749,7 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
         key_date = results[-1]['key'][-1]
         if key_date is None:
             return  # ...except when it isn't :(
-        key_date = datetime.strptime(key_date, ISO_DATETIME_FORMAT)
+        key_date = self._convert_date(key_date)
         if self.should_stop(key_date):
             raise StopToResume
 
@@ -759,6 +759,14 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
 
     def _cache_key(self):
         return "couchsqlmigration.%s" % self.domain
+
+    @staticmethod
+    def _convert_date(value):
+        try:
+            return datetime.strptime(value, ISO_DATETIME_FORMAT)
+        except ValueError:
+            sans_micros = ISO_DATETIME_FORMAT.replace(".%f", "")
+            return datetime.strptime(value, sans_micros)
 
     def stop(self):
         if self.should_stop is not None:
