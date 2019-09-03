@@ -1168,7 +1168,7 @@ class CommCareUserFilterForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Filter and Download Users"),
-                crispy.Field('role_id'),
+                crispy.Field('role_id', css_class="hqwebapp-select2"),
                 crispy.Field('search_string'),
                 crispy.Field('location_id'),
             ),

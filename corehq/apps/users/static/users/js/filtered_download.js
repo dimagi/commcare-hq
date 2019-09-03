@@ -1,5 +1,14 @@
-/* global interpolate */
-hqDefine('users/js/filtered_download', function () {
+hqDefine('users/js/filtered_download', [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/widgets',      // role selection
+    'locations/js/widgets',     // location search
+], function (
+    $,
+    _,
+    initialPageData
+) {
     function getFilters() {
         return {
             'role_id': $("#id_role_id").val(),
@@ -10,7 +19,7 @@ hqDefine('users/js/filtered_download', function () {
 
     $(function () {
         var prevFilters = getFilters();
-        var countUsersUrl = hqImport('hqwebapp/js/initial_page_data').get('count_users_url');
+        var countUsersUrl = initialPageData.get('count_users_url');
         setInterval(function () {
             var currentFilters = getFilters();
             if (!_.isEqual(currentFilters, prevFilters)) {
@@ -18,10 +27,9 @@ hqDefine('users/js/filtered_download', function () {
                     url: countUsersUrl,
                     data: currentFilters,
                     success: function (data) {
-                        var count = data['count'];
-                        var text = ngettext("Download %s User", "Download %s Users", count);
-                        text = interpolate(text, [count]);
-                        $('.submit_button').text(text);
+                        var count = data.count;
+                        var template = count == 1 ? gettext("Download <%= count %> user") : gettext("Download <%= count %> users");
+                        $('.submit_button').text(_.template(template)({count: count}));
                     },
                     error: function () {
                         alert("Error determining number of matching users");
