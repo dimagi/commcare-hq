@@ -28,7 +28,14 @@ pillow_logging = logging.getLogger("pillowtop")
 pillow_logging.setLevel(logging.INFO)
 
 
+class InvalidChangeException(Exception):
+    pass
+
+
 def transform_case_for_elasticsearch(doc_dict):
+    if doc_dict.get('doc_type') == 'MobileAuthKeyRecord':
+        raise InvalidChangeException("doc_type is not a case")
+
     doc_ret = copy.deepcopy(doc_dict)
     if not doc_ret.get("owner_id"):
         if doc_ret.get("user_id"):
