@@ -244,10 +244,13 @@ class FormProcessorInterface(object):
         if case:
             return case, lock
 
-        if not couch_sql_migration_in_progress(self.domain) and not settings.ENTERPRISE_MODE:
+        if (
+            not couch_sql_migration_in_progress(self.domain, include_dry_runs=True)
+            and not settings.ENTERPRISE_MODE
+            and self.other_db_processor().case_exists(case_id)
+        ):
             # during migration we're copying from one DB to the other so this check will always fail
-            if self.other_db_processor().case_exists(case_id):
-                raise IllegalCaseId("Bad case id")
+            raise IllegalCaseId("Bad case id")
 
         return case, lock
 
