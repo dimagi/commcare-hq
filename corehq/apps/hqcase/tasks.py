@@ -84,7 +84,7 @@ def explode_cases(domain, user_id, factor, task=None):
                 new_ledger = copy(ledger)
                 new_ledger.entity_id = new_case_id
                 total_ledgers += 1
-                queue_case(new_ledger.as_text(), queue, progress)
+                queue_case(new_ledger.as_string(), queue, progress)
 
     if len(queue):
         submit_case_blocks(queue, domain, user_id=user_id, device_id="explode_cases")
