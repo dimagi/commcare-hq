@@ -10,14 +10,6 @@ hqDefine('users/js/edit_commcare_user', [
     'registration/js/password',
     'nic_compliance/js/encoder',
     'select2/dist/js/select2.full.min',
-    'hqwebapp/js/ui_elements/ui-element-langcode-button',
-    'hqwebapp/js/ui_elements/ui-element-input',
-    'hqwebapp/js/ui_elements/ui-element-checkbox',
-    'hqwebapp/js/ui_elements/ui-element-input-map',
-    'hqwebapp/js/ui_elements/ui-element-key-val-list',
-    'hqwebapp/js/ui_elements/ui-element-key-val-mapping',
-    'hqwebapp/js/ui_elements/ui-element-select',
-    'hqwebapp/js/ui-element', // todo cleanup ui-element imports
 ], function (
     $,
     ko,
