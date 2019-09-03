@@ -284,6 +284,7 @@ class CaseDiffQueue(object):
         def status_logger():
             while not exit.wait(timeout=self.status_interval):
                 self.log_status(self.get_status())
+            self.log_status(self.get_status())
 
         def stop():
             exit.set()
@@ -452,6 +453,7 @@ class CaseDiffProcess(object):
             log.error("stopping process with error", exc_info=exc_info)
         else:
             log.debug("stopping process")
+        self.request_status()
         self.calls.put((TERMINATE, is_error))
         self.status_logger.join(timeout=30)
         self.process.join(timeout=30)
@@ -476,18 +478,18 @@ class CaseDiffProcess(object):
         has not sent an update in `status_interval` seconds.
         """
         requested = object()
-        status = None
-        while True:
+        result = None
+        action = STATUS
+        while action != TERMINATE:
             with gevent.Timeout(self.status_interval, False) as timeout:
-                status = self.stats.get(timeout=timeout)
-            if status == TERMINATE:
-                break
-            if status is None:
+                result = self.stats.get(timeout=timeout)
+            if result is None:
                 self.request_status()
-                status = requested
-            elif status is not requested:
+                result = requested
+            elif result is not requested:
+                action, status = result
                 CaseDiffQueue.log_status(status)
-                status = None
+                result = None
 
 
 STATUS = "status"
@@ -496,10 +498,9 @@ TERMINATE = "terminate"
 
 def run_case_diff_queue(queue_class, calls, stats, statedb, debug):
     def status():
-        stats.put(queue.get_status())
+        stats.put((STATUS, queue.get_status()))
 
     def terminate(is_error):
-        stats.put(TERMINATE)
         raise (ParentError if is_error else GracefulExit)
 
     def dispatch(action, *args):
@@ -511,16 +512,23 @@ def run_case_diff_queue(queue_class, calls, stats, statedb, debug):
 
     process_actions = {STATUS: status, TERMINATE: terminate}
     setup_logging(statedb, debug)
-    try:
-        with queue_class(statedb, status_interval=0) as queue, calls, stats:
-            try:
-                while True:
-                    call = calls.get()
-                    dispatch(*call)
-            except GracefulExit:
-                pass
-    except ParentError:
-        log.error("stopped due to error in parent process")
+    with calls, stats:
+        try:
+            with queue_class(statedb, status_interval=0) as queue:
+                try:
+                    while True:
+                        call = calls.get()
+                        dispatch(*call)
+                except GracefulExit:
+                    pass
+        except ParentError:
+            log.error("stopped due to error in parent process")
+        except Exception:
+            log.exception("unexpected error")
+        finally:
+            status_ = queue.get_status()
+            log.info("termination status: %s", status_)
+            stats.put((TERMINATE, status_))
 
 
 def setup_logging(statedb, debug):
