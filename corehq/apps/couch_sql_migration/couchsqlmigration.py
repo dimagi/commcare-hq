@@ -93,7 +93,6 @@ from corehq.util.timer import TimingContext
 
 from .asyncforms import AsyncFormProcessor
 from .casediff import CaseDiffProcess, CaseDiffQueue
-from .diff import filter_form_diffs
 from .statedb import init_state_db
 
 log = logging.getLogger(__name__)
@@ -575,23 +574,13 @@ class CouchSqlDomainMigrator(object):
         return couch_case
 
     def _save_diffs(self, couch_form, sql_form):
-        from corehq.apps.tzmigration.timezonemigration import json_diff
-        couch_form_json = couch_form.to_json()
-        sql_form_json = {} if sql_form is None else sql_form_to_json(sql_form)
-
+        couch_json = couch_form.to_json()
+        sql_json = {} if sql_form is None else sql_form_to_json(sql_form)
         if self.same_domain():
             ignore_paths = None
         else:
             ignore_paths = self.statedb.get_ignore_paths(couch_form.get_id) + [('domain',), ('_id',)]
-        diffs = json_diff(
-            couch_form_json, sql_form_json,
-            track_list_indices=False,
-            ignore_paths=ignore_paths,
-        )
-        self.statedb.add_diffs(
-            couch_form.doc_type, couch_form.form_id,
-            filter_form_diffs(couch_form_json, sql_form_json, diffs)
-        )
+        self.statedb.save_form_diffs(couch_json, sql_json, ignore_paths)
 
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None

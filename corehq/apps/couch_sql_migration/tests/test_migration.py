@@ -1148,6 +1148,27 @@ class MigrationTestCase(BaseMigrationTestCase):
             ('XFormInstance', Diff('missing', ['xmlns'], new=MISSING)),
         ], missing={'CommCareCase': 1})
 
+    def test_unwrappable_form(self):
+        def bad_wrap(doc):
+            raise Exception(f"refusing to wrap {doc}")
+        submit_form_locally(SIMPLE_FORM_XML, self.domain_name).xform
+        with mock.patch.object(XFormInstance, "wrap", bad_wrap):
+            self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([
+            ('XFormInstance', Diff('missing', ['_id'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['auth_context'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['doc_type'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['domain'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['form'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['history'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['initial_processing_complete'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['openrosa_headers'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['partial_submission'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['received_on'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['server_modified_on'], new=MISSING)),
+            ('XFormInstance', Diff('missing', ['xmlns'], new=MISSING)),
+        ])
+
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):
