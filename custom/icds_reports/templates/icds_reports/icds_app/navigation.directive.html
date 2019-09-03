@@ -1,13 +1,13 @@
 {% load i18n %}
 {% load static %}
 
-<div class="navigation-directive" style="height: 100%;">
+<div class="navigation-directive">
     <div style="padding: 5px; margin: 0 auto; text-align: center;">
         <img src="{% static "img/logo.png" %}" alt="Logo" style="width: 60%;">
     </div>
-    <div>
+    <div class="nav-container">
         <perfect-scrollbar class="scroller" suppress-scroll-x="true" wheel-propagation="true" wheel-speed="5" min-scrollbar-length="10" min-scrollbar-length="10">
-            <ul class="nav nav-list" >
+            <ul class="nav nav-list">
             <li ng-class="{'active': $location.path().indexOf('/program_summary') !== -1}">
                 <a class="row pointer" href="{$ goToStep('', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true">
                     <div class="col-sm-1"><i class="fa fa-home" aria-hidden="true"></i></div>
