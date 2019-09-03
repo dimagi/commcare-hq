@@ -362,16 +362,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                     return month.id <= (latest.getMonth() + 1) - offset;
                 });
 
-                if (vm.months.length > 9) {
-                    vm.months = vm.months.slice(9);
-                    vm.selectedMonth = 10;
-                } else {
-                    vm.months = [];
-                    vm.selectedMonth = undefined;
+                if (vm.selectedMonth > vm.months[0].id) {
+                    vm.selectedMonth = vm.months[0].id;
                 }
-            } else {
+            } else if (vm.selectedYear === 2018) {
                 vm.months = vm.months.slice(-3);
-                if (vm.selectedMonth === undefined || vm.selectedMonth < 10) {
+                if (vm.selectedMonth < 10) {
                     vm.selectedMonth = 10;
                 }
             }
