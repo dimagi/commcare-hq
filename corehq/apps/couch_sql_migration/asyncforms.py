@@ -1,4 +1,3 @@
-
 import logging
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
@@ -41,8 +40,7 @@ class AsyncFormProcessor(object):
     def _rebuild_queues(self, form_ids):
         for chunk in chunked(form_ids, 100, list):
             for form in FormAccessorCouch.get_forms(chunk):
-                case_ids = get_case_ids(form)
-                self._try_to_process_form(form, case_ids)
+                self._try_to_process_form(form)
         self._try_to_empty_queues()
 
     def process_xform(self, doc):
@@ -57,14 +55,15 @@ class AsyncFormProcessor(object):
                 return
         try:
             wrapped_form = XFormInstance.wrap(doc)
-            case_ids = get_case_ids(wrapped_form)
         except Exception:
             log.exception("Error migrating form %s", form_id)
+            self.statedb.save_form_diffs(doc, {})
         else:
-            self._try_to_process_form(wrapped_form, case_ids)
+            self._try_to_process_form(wrapped_form)
             self._try_to_empty_queues()
 
-    def _try_to_process_form(self, wrapped_form, case_ids):
+    def _try_to_process_form(self, wrapped_form):
+        case_ids = get_case_ids(wrapped_form)
         if self.queues.try_obj(case_ids, wrapped_form):
             self.pool.spawn(self._async_migrate_form, wrapped_form, case_ids)
         elif self.queues.full:
