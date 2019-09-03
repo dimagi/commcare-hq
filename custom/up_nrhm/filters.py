@@ -123,6 +123,14 @@ class ASHAMonthFilter(MonthFilter):
     label = ugettext_lazy("Last Reporting month of the quarter")
 
 
+class NRHMDatespanFilter(DatespanFilter):
+    template = "up_nrhm/datespan.html"
+
+
+class NRHMDatespanMixin(DatespanMixin):
+    datespan_field = NRHMDatespanFilter
+
+
 class LanguageFilter(BaseSingleOptionFilter):
     slug = 'lang'
     label = ugettext_lazy('Language')

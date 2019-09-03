@@ -4,12 +4,13 @@ from collections import OrderedDict
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
+from custom.up_nrhm.filters import NRHMDatespanMixin
 from custom.up_nrhm.sql_data import ASHAFunctionalityChecklistData, ASHAAFChecklistData
 from dimagi.utils.dates import force_to_datetime
 from django.utils.translation import ugettext as _, ugettext_noop
 
 
-class ASHAFunctionalityChecklistReport(GenericTabularReport, CustomProjectReport):
+class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport):
     name = ugettext_noop("Format-1 for ASHA Sanginis")
     slug = "asha_functionality_checklist_report"
 
