@@ -49,7 +49,7 @@ class Command(BaseCommand):
 
     def handle(self, path, state_dir, **options):
         self.strict = options['strict']
-        setup_logging(state_dir)
+        setup_logging(state_dir, "multiple")
 
         if not os.path.isfile(path):
             raise CommandError("Couldn't locate domain list: {}".format(path))
