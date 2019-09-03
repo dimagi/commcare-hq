@@ -2,7 +2,7 @@ import calendar
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport
+from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
 from corehq.util.translation import localize
 from custom.up_nrhm.reports import LangMixin
@@ -26,7 +26,7 @@ def total_rows(report):
     return {}
 
 
-class ASHAReports(GenericTabularReport, CustomProjectReport, LangMixin):
+class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport, LangMixin):
     fields = [SampleFormatFilter, LanguageFilter,
               DatespanFilter, DrillDownOptionFilter,
               ASHAMonthFilter, YearFilter]
