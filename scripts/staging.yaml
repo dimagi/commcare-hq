@@ -56,6 +56,5 @@ branches:
   - jls/reveal-family-id # Jenny Aug 27
   - bmb/case-sharing  #Biyeun Aug 22
   - bmb/requirejs-registration  # Biyeun Aug 30
-  - mk/validate-single-sheet-redone # MK Sep 3
   - sk/sentry-upgrade # SK Sep 3
 submodules: {}
