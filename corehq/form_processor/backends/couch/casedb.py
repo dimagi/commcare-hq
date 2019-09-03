@@ -3,6 +3,7 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import iter_cases
+from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
@@ -14,7 +15,11 @@ class CaseDbCacheCouch(AbstractCaseDbCache):
     case_update_strategy = CouchCaseUpdateStrategy
 
     def _validate_case(self, doc):
-        if self.domain and doc['domain'] != self.domain:
+        if (
+            self.domain
+            and doc['domain'] != self.domain
+            and not couch_sql_migration_in_progress(self.domain, include_dry_runs=True)
+        ):
             raise IllegalCaseId("Bad case id")
         elif doc['doc_type'] == 'CommCareCase-Deleted':
             if not self.deleted_ok:

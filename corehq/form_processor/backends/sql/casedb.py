@@ -1,4 +1,5 @@
 from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
@@ -15,7 +16,11 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
             raise ValueError('CaseDbCacheSQL does not support unwrapped models')
 
     def _validate_case(self, case):
-        if self.domain and case.domain != self.domain:
+        if (
+            self.domain
+            and case.domain != self.domain
+            and not couch_sql_migration_in_progress(self.domain, include_dry_runs=True)
+        ):
             raise IllegalCaseId("Bad case id")
         elif case.is_deleted:
             if not self.deleted_ok:
