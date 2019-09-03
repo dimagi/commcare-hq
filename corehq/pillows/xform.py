@@ -201,9 +201,10 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         ucr_processor.bootstrap(ucr_configs)
     processors = [
         xform_to_es_processor,
-        form_meta_processor,
         unknown_user_form_processor
     ]
+    if settings.RUN_FORM_META_PILLOW:
+        processors.append(form_meta_processor)
     if not settings.ENTERPRISE_MODE:
         xform_to_report_es_processor = ElasticProcessor(
             elasticsearch=get_es_new(),
