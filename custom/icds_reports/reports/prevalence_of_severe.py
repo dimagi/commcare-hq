@@ -240,7 +240,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                         'total_weighed': value['total_weighed'],
                         'total_measured': value['total_measured'],
                         'total_height_eligible': value['total_height_eligible']
-                    } for key, value in data['peach'].items
+                    } for key, value in data['peach'].items()
                 ],
                 "key": "% normal",
                 "strokeWidth": 2,
