@@ -2,10 +2,11 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ImmunizationCoverageController($scope, $routeParams, $location, $filter, maternalChildService,
-    locationsService, userLocationId, storageService, genders, haveAccessToAllLocations, baseControllersService) {
+    locationsService, userLocationId, storageService, genders, haveAccessToAllLocations, baseControllersService, isAlertActive) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
+    vm.isAlertActive = isAlertActive;
     var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
@@ -92,7 +93,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     };
 }
 
-ImmunizationCoverageController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService'];
+ImmunizationCoverageController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive('immunizationCoverage', function() {
     return {
