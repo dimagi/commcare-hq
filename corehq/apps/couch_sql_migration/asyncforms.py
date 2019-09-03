@@ -41,7 +41,8 @@ class AsyncFormProcessor(object):
     def _rebuild_queues(self, form_ids):
         for chunk in chunked(form_ids, 100, list):
             for form in FormAccessorCouch.get_forms(chunk):
-                self._try_to_process_form(form)
+                case_ids = get_case_ids(form)
+                self._try_to_process_form(form, case_ids)
         self._try_to_empty_queues()
 
     def process_xform(self, doc):
