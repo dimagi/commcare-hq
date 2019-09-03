@@ -4,7 +4,6 @@ from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
 
 import mock
-from six.moves import range
 
 from casexml.apps.case.mock import (
     CaseBlock,

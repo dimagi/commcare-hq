@@ -10,7 +10,6 @@ from django.views.decorators.http import require_GET, require_POST
 
 import requests
 import requests.exceptions
-import six
 from couchdbkit import BadValueError, ResourceNotFound
 
 from dimagi.utils.couch.database import get_db
@@ -132,8 +131,8 @@ def import_build(request):
         return json_response({
             'reason': 'Badly formatted version',
             'info': {
-                'error_message': six.text_type(e),
-                'error_type': six.text_type(type(e))
+                'error_message': str(e),
+                'error_type': str(type(e))
             }
         }, status_code=400)
 

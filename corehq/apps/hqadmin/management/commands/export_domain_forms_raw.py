@@ -4,7 +4,6 @@ import os
 from django.core.management.base import BaseCommand, CommandError
 
 import jsonobject
-import six
 
 from dimagi.ext.jsonobject import JsonObject
 
@@ -16,7 +15,7 @@ class FormMetadata(JsonObject):
     received_on = jsonobject.DateTimeProperty()
     app_id = jsonobject.StringProperty()
     build_id = jsonobject.StringProperty()
-    attachments = jsonobject.ListProperty(six.text_type)
+    attachments = jsonobject.ListProperty(str)
     auth_context = jsonobject.DictProperty()
 
 

@@ -12,7 +12,6 @@ from simpleeval import (
     InvalidExpression,
     SimpleEval,
 )
-from six.moves import range
 
 
 def safe_pow_fn(a, b):

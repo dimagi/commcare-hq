@@ -4,7 +4,6 @@ import math
 from django.test import TestCase
 
 from elasticsearch import ConnectionError
-from six.moves import range
 
 from pillowtop.es_utils import initialize_index_and_mapping
 

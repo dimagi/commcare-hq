@@ -1,4 +1,3 @@
-
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
@@ -7,7 +6,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from django_prbac.utils import has_privilege
 from memoized import memoized
-from six.moves import map
 from six.moves.urllib.parse import urlencode
 
 from corehq import privileges, toggles

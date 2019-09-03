@@ -1,4 +1,3 @@
-
 from collections import defaultdict
 from itertools import groupby
 from xml.etree.cElementTree import Element, SubElement
@@ -6,7 +5,6 @@ from xml.etree.cElementTree import Element, SubElement
 from django.contrib.postgres.fields.array import ArrayField
 from django.db.models import IntegerField, Q
 
-import six
 from django_cte import With
 from django_cte.raw import raw_cte_sql
 
@@ -421,7 +419,7 @@ def _get_metadata_node(location, data_fields):
     # add default empty nodes for all known fields: http://manage.dimagi.com/default.asp?247786
     for field in data_fields:
         element = Element(field.slug)
-        element.text = six.text_type(location.metadata.get(field.slug, ''))
+        element.text = str(location.metadata.get(field.slug, ''))
         node.append(element)
     return node
 
@@ -446,7 +444,7 @@ def _fill_in_location_element(xml_root, location, data_fields):
     for field in fixture_fields:
         field_node = Element(field)
         val = getattr(location, field)
-        field_node.text = six.text_type(val if val is not None else '')
+        field_node.text = str(val if val is not None else '')
         xml_root.append(field_node)
 
     xml_root.append(_get_metadata_node(location, data_fields))

@@ -3,8 +3,6 @@ from collections import namedtuple
 
 from django.db import models, transaction
 
-import six
-
 from casexml.apps.phone.restore import stream_response
 
 from corehq.blobs import CODES, get_blob_db
@@ -72,7 +70,7 @@ class DemoUserRestore(models.Model):
 
     def _write_restore_blob(self, restore, db, domain):
 
-        if isinstance(restore, six.text_type):
+        if isinstance(restore, str):
             restore = io.BytesIO(restore.encode("utf-8"))
         elif isinstance(restore, bytes):
             restore = io.BytesIO(restore)

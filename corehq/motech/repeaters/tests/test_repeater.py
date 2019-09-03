@@ -7,7 +7,6 @@ from django.test import SimpleTestCase, TestCase, override_settings
 
 import attr
 from mock import Mock, patch
-from six.moves import range
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 from casexml.apps.case.xform import get_case_ids_from_form

@@ -74,7 +74,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 from django.views.generic import View
 
-import six
 from django_prbac.decorators import requires_privilege_raise404
 from tastypie.resources import Resource
 

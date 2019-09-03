@@ -17,7 +17,6 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
-import six
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
@@ -458,7 +457,7 @@ class EditReportInBuilder(View):
             try:
                 return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
-                messages.error(request, six.text_type(e))
+                messages.error(request, str(e))
                 return HttpResponseRedirect(reverse(ConfigurableReportView.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
@@ -923,7 +922,7 @@ def evaluate_expression(request, domain):
         )
     except Exception as e:
         return json_response(
-            {"error": six.text_type(e)},
+            {"error": str(e)},
             status_code=500,
         )
 
@@ -1365,7 +1364,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             msg = ugettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
             return HttpResponse(msg, status=400)
     except UserQueryError as e:
-        return HttpResponse(six.text_type(e), status=400)
+        return HttpResponse(str(e), status=400)
 
     q = q.filter_by(**params.keyword_filters)
     for sql_filter in params.sql_filters:

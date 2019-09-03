@@ -24,7 +24,6 @@ from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from django_prbac.models import Grant, Role, UserRole
 from memoized import memoized
-from six.moves import range
 
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import (

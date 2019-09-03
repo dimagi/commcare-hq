@@ -3,7 +3,6 @@ import random
 from decimal import Decimal
 
 from dateutil.relativedelta import relativedelta
-from six.moves import range
 
 from dimagi.utils.dates import add_months_to_date
 

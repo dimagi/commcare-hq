@@ -20,7 +20,6 @@ from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 
-import six
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
@@ -707,7 +706,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             form_data = self._construct_form_data(in_data)
         except InvalidMobileWorkerRequest as e:
             return {
-                'error': six.text_type(e)
+                'error': str(e)
             }
 
         self.request.POST = form_data
@@ -960,7 +959,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
         except WorkbookJSONError as e:
-            messages.error(request, six.text_type(e))
+            messages.error(request, str(e))
             return self.get(request, *args, **kwargs)
 
         try:
@@ -979,7 +978,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             check_headers(self.user_specs)
         except UserUploadError as e:
-            messages.error(request, _(six.text_type(e)))
+            messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         # convert to list here because iterator destroys the row once it has
@@ -1000,13 +999,13 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             check_existing_usernames(self.user_specs, self.domain)
         except UserUploadError as e:
-            messages.error(request, _(six.text_type(e)))
+            messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         try:
             check_duplicate_usernames(self.user_specs)
         except UserUploadError as e:
-            messages.error(request, _(six.text_type(e)))
+            messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)

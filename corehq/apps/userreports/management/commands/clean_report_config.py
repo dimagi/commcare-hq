@@ -6,8 +6,6 @@ from copy import deepcopy
 from django.core.management.base import BaseCommand
 
 import simplejson as json
-import six
-from six.moves import zip
 
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -79,7 +77,7 @@ class Command(BaseCommand):
         ])
 
         with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(six.text_type(json.dumps(json_spec, indent=2)))
+            f.write(str(json.dumps(json_spec, indent=2)))
 
         print(textwrap.dedent("""
             Wrote those changes to the existing file.

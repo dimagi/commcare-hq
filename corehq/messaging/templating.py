@@ -4,7 +4,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
-import six
 import string
 
 UNKNOWN_VALUE = '(?)'
@@ -79,7 +78,7 @@ class MessagingTemplateRenderer(object):
         self.context_params[name] = value
 
     def render(self, message):
-        return string.Formatter().vformat(six.text_type(message), [], self.context_params)
+        return string.Formatter().vformat(str(message), [], self.context_params)
 
 
 class SimpleMessagingTemplateParam(object):
@@ -94,7 +93,7 @@ class SimpleMessagingTemplateParam(object):
         __format__ is what is called when this object is to be rendered
         in a string.
         """
-        return six.text_type(self.__value)
+        return str(self.__value)
 
     def __getattr__(self, item):
         """

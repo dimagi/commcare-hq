@@ -2,9 +2,6 @@ from datetime import date
 
 from django.core.management import BaseCommand
 
-import six
-from six.moves import map
-
 from corehq.apps.accounting.models import (
     CreditAdjustment,
     CreditAdjustmentReason,
@@ -12,7 +9,7 @@ from corehq.apps.accounting.models import (
 
 
 def _make_value_safe_for_csv(value):
-    return six.text_type(value).replace('\n', '\\n').replace(',', ';').replace('\t', '\\t').replace('\r', '\\r')
+    return str(value).replace('\n', '\\n').replace(',', ';').replace('\t', '\\t').replace('\r', '\\r')
 
 
 def _get_subscription_from_credit_adj(credit_adj):

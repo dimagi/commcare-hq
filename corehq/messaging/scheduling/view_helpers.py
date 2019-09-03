@@ -1,6 +1,3 @@
-
-import six
-
 from collections import defaultdict
 from copy import copy
 from django.contrib import messages
@@ -15,7 +12,6 @@ from corehq.messaging.scheduling.models.alert_schedule import AlertSchedule
 from corehq.messaging.scheduling.models.content import SMSContent
 from corehq.messaging.scheduling.models.timed_schedule import TimedSchedule
 from corehq.messaging.tasks import initiate_messaging_rule_run
-from six.moves import zip
 
 
 def get_conditional_alerts_queryset_by_domain(domain, query_string=''):
@@ -175,7 +171,7 @@ class ConditionalAlertUploader(object):
                 except RuleUpdateError as e:
                     self.msgs.append((messages.error, _("Error updating rule with id {id} in '{sheet_name}' "
                                       "sheet: {detail}").format(id=rule.id, sheet_name=self.sheet_name,
-                                                                detail=six.text_type(e))))
+                                                                detail=str(e))))
                     continue
 
                 if dirty:

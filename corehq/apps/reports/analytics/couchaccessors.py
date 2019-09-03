@@ -1,6 +1,5 @@
 from collections import namedtuple
 
-import six
 from jsonobject import DefaultProperty
 
 from casexml.apps.stock.models import StockTransaction
@@ -15,7 +14,7 @@ SimpleFormInfo = namedtuple('FormInfo', ['app_id', 'xmlns'])
 class AppInfo(jsonobject.JsonObject):
     id = jsonobject.StringProperty()
     names = jsonobject.StringProperty()
-    langs = jsonobject.ListProperty(six.text_type)
+    langs = jsonobject.ListProperty(str)
 
 
 class AppPart(jsonobject.JsonObject):

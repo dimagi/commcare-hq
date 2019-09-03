@@ -8,11 +8,9 @@ from django.conf import settings
 from django.db import models, transaction
 
 import pytz
-import six
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import ResourceConflict
 from dateutil.parser import parse
-from six.moves import filter
 
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch import CriticalSection, LockableMixIn

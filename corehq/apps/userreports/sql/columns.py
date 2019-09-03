@@ -1,5 +1,3 @@
-
-import six
 import sqlalchemy
 from sqlagg import SumWhen
 

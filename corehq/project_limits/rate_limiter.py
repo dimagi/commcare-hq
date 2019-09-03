@@ -1,6 +1,4 @@
-
 import functools
-import six
 
 from corehq.project_limits.rate_counter.presets import week_rate_counter, \
     day_rate_counter, hour_rate_counter, minute_rate_counter, second_rate_counter
@@ -34,7 +32,7 @@ class RateLimiter(object):
         return functools.partial(cls, feature_key)
 
     def get_normalized_scope(self, scope):
-        if isinstance(scope, six.string_types):
+        if isinstance(scope, str):
             scope = (scope,)
         elif not isinstance(scope, tuple):
             raise ValueError("scope must be a string or tuple: {!r}".format(scope))

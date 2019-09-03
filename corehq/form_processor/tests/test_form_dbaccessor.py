@@ -28,7 +28,6 @@ from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMet
 from corehq.sql_db.routers import db_for_read_write
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
-from six.moves import range
 
 DOMAIN = 'test-form-accessor'
 
