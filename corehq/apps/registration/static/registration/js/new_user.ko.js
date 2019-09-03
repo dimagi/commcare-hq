@@ -45,7 +45,7 @@ hqDefine('registration/js/new_user.ko', [
     };
 
     module.onModuleLoad = function () {
-        throw "overwrite onModule load to remove loading indicators";
+        throw new Error("overwrite onModule load to remove loading indicators");
     };
 
     // Can't set up analytics until the values for the A/B tests are ready

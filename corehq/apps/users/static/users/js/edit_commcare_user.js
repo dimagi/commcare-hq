@@ -98,7 +98,6 @@ hqDefine('users/js/edit_commcare_user', [
     }
 
     // Groups form
-    console.log(multiselectUtils);
     multiselectUtils.createFullMultiselectWidget(
         'id_selected_ids',
         gettext("Available Groups"),
