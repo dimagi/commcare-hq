@@ -295,20 +295,21 @@ class AggCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHel
         )
 
     def indexes(self, aggregation_level):
+        tablename = self._tablename_func(aggregation_level)
         indexes = [
-            'CREATE INDEX ON "{}" (ccs_status)'.format(self.tablename),
+            'CREATE INDEX ON "{}" (ccs_status)'.format(tablename),
         ]
 
         agg_locations = ['state_id']
         if aggregation_level > 1:
-            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(tablename))
             agg_locations.append('district_id')
         if aggregation_level > 2:
-            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(tablename))
             agg_locations.append('block_id')
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(tablename))
             agg_locations.append('supervisor_id')
 
-        indexes.append('CREATE INDEX ON "{}" ({})'.format(self.tablename, ', '.join(agg_locations)))
+        indexes.append('CREATE INDEX ON "{}" ({})'.format(tablename, ', '.join(agg_locations)))
         return indexes
