@@ -132,6 +132,7 @@ def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
     user_processor = get_user_es_processor()
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_providers=[DynamicDataSourceProvider('CommCareUser'), StaticDataSourceProvider('CommCareUser')],
+        run_migrations=(process_num == 0),  # only first process runs migrations
     )
     change_feed = KafkaChangeFeed(
         topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num
