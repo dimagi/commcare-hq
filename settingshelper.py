@@ -239,7 +239,10 @@ def configure_sentry(base_dir, server_env, dsn):
     from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
     from sentry_sdk.integrations.redis import RedisIntegration
 
-    from corehq.util.sentry import before_sentry_send
+    def _before_send(event, hint):
+        # can't import this during load since settings is not fully configured yet
+        from corehq.util.sentry import before_sentry_send
+        return before_sentry_send(event, hint)
 
     release = get_release_name(base_dir, server_env)
 
@@ -251,7 +254,7 @@ def configure_sentry(base_dir, server_env, dsn):
         release=release,
         environment=server_env,
         request_bodies='never',
-        before_send=before_sentry_send,
+        before_send=_before_send,
         integrations=[
             DjangoIntegration(),
             CeleryIntegration(),
