@@ -1,10 +1,7 @@
-
 import logging
 from itertools import chain
 
 from django.utils.translation import ugettext_lazy as _
-
-import six
 
 LOG_LEVEL_CHOICES = (
     (99, 'Disable logging'),
@@ -123,7 +120,7 @@ ADDRESS_PROPERTIES = {
     'endDate': OPENMRS_DATA_TYPE_DATETIME,
 }
 OPENMRS_PROPERTIES = dict(chain(
-    six.iteritems(PERSON_PROPERTIES),
-    six.iteritems(NAME_PROPERTIES),
-    six.iteritems(ADDRESS_PROPERTIES),
+    PERSON_PROPERTIES.items(),
+    NAME_PROPERTIES.items(),
+    ADDRESS_PROPERTIES.items(),
 ))

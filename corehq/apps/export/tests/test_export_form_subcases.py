@@ -4,7 +4,6 @@ import os
 from django.test import TestCase
 
 from mock import patch
-from six.moves import zip
 
 from couchexport.models import Format
 

@@ -6,7 +6,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from six.moves import range
 
 import langcodes
 from corehq.apps.hqwebapp.crispy import B3MultiField, FormActions

@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-import six
 from couchdbkit.exceptions import ResourceNotFound
 from dateutil import parser
 from memoized import memoized
@@ -21,7 +20,7 @@ from corehq.apps.products.models import Product
 from corehq.apps.reports.analytics.couchaccessors import (
     get_ledger_values_for_case_as_of,
 )
-from corehq.apps.reports.analytics.esaccessors import (
+from corehq.apps.reports.analytics.dbaccessors import (
     get_aggregated_ledger_values,
     get_wrapped_ledger_values,
 )
@@ -426,7 +425,7 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
         by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
         locs = _location_map(list(by_supply_point))
 
-        for loc_id, subcases in six.iteritems(by_supply_point):
+        for loc_id, subcases in by_supply_point.items():
             if loc_id not in locs:
                 continue  # it's archived, skip
             loc = locs[loc_id]
@@ -453,14 +452,14 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
     @property
     def converted_start_datetime(self):
         start_date = self.start_date
-        if isinstance(start_date, six.text_type):
+        if isinstance(start_date, str):
             start_date = parser.parse(start_date)
         return start_date
 
     @property
     def converted_end_datetime(self):
         end_date = self.end_date
-        if isinstance(end_date, six.text_type):
+        if isinstance(end_date, str):
             end_date = parser.parse(end_date)
         return end_date
 

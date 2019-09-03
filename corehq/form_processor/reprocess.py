@@ -18,7 +18,6 @@ from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.datadog.utils import form_load_counter
 from dimagi.utils.couch import LockManager
-import six
 
 ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers error')
 
@@ -140,7 +139,7 @@ def reprocess_form(form, save=True, lock_form=True):
                 case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
             except (IllegalCaseId, UsesReferrals, MissingProductId,
                     PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
-                error_message = '{}: {}'.format(type(e).__name__, six.text_type(e))
+                error_message = '{}: {}'.format(type(e).__name__, str(e))
                 form = interface.xformerror_from_xform_instance(form, error_message)
                 return ReprocessingResult(form, [], [], error_message)
 

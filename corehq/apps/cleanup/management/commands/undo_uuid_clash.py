@@ -1,10 +1,7 @@
-
 from collections import defaultdict
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
-
-import six
 
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.chunked import chunked
@@ -48,7 +45,7 @@ def get_forms_to_reprocess(form_ids):
         })
 
     deprecated_form_ids = {
-        form.deprecated_form_id for form in six.itervalues(edited_forms)
+        form.deprecated_form_id for form in edited_forms.values()
     }
     for dbname, forms_by_db in split_list_by_db_partition(deprecated_form_ids):
         deprecated_forms = XFormInstanceSQL.objects.using(dbname).filter(form_id__in=forms_by_db)
@@ -158,14 +155,14 @@ def update_case_transactions_for_form(case_cache, live_case_updates, deprecated_
 
 def rebuild_cases(cases_to_rebuild_by_domain, logger):
         detail = RebuildWithReason(reason='undo UUID clash')
-        for domain, case_ids in six.iteritems(cases_to_rebuild_by_domain):
+        for domain, case_ids in cases_to_rebuild_by_domain.items():
             for case_id in case_ids:
                 FormProcessorSQL.hard_rebuild_case(domain, case_id, detail)
                 logger.log('Case %s rebuilt' % case_id)
 
 
 def rebuild_ledgers(ledgers_to_rebuild_by_domain, logger):
-    for domain, ledger_ids in six.iteritems(ledgers_to_rebuild_by_domain):
+    for domain, ledger_ids in ledgers_to_rebuild_by_domain.items():
         for ledger_id in ledger_ids:
             LedgerProcessorSQL.hard_rebuild_ledgers(domain, **ledger_ids._asdict())
             logger.log('Ledger %s rebuilt' % ledger_id.as_id())
@@ -241,10 +238,10 @@ def check_and_process_forms(form_ids, logger, debug):
     print('  Found %s forms to reprocess' % len(forms_to_process) * 2)
     cases_to_rebuild, ledgers_to_rebuild = undo_form_edits(forms_to_process, logger)
 
-    ncases = sum(len(cases) for cases in six.itervalues(cases_to_rebuild))
+    ncases = sum(len(cases) for cases in cases_to_rebuild.values())
     print('  Rebuilding %s cases' % ncases)
     rebuild_cases(cases_to_rebuild, logger)
 
-    nledgers = sum(len(ledgers) for ledgers in six.itervalues(ledgers_to_rebuild))
+    nledgers = sum(len(ledgers) for ledgers in ledgers_to_rebuild.values())
     print('  Rebuilding %s ledgers' % nledgers)
     rebuild_cases(cases_to_rebuild, logger)

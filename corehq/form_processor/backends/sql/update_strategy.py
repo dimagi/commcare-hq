@@ -1,11 +1,9 @@
-
 import logging
 import sys
 from functools import cmp_to_key
 
 from django.utils.translation import ugettext as _
 
-import six
 from ddtrace import tracer
 from iso8601 import iso8601
 
@@ -329,7 +327,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         try:
             self.reconcile_transactions()
         except ReconciliationError as e:
-            reconciliation_soft_assert(False, "ReconciliationError: %s" % six.text_type(e))
+            reconciliation_soft_assert(False, "ReconciliationError: %s" % str(e))
 
         return True
 

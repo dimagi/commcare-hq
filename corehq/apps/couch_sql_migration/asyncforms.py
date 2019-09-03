@@ -4,7 +4,6 @@ from collections import defaultdict, deque
 from datetime import datetime, timedelta
 
 import gevent
-import six
 from gevent.pool import Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form, get_case_updates
@@ -42,7 +41,8 @@ class AsyncFormProcessor(object):
     def _rebuild_queues(self, form_ids):
         for chunk in chunked(form_ids, 100, list):
             for form in FormAccessorCouch.get_forms(chunk):
-                self._try_to_process_form(form)
+                case_ids = get_case_ids(form)
+                self._try_to_process_form(form, case_ids)
         self._try_to_empty_queues()
 
     def process_xform(self, doc):
@@ -50,20 +50,21 @@ class AsyncFormProcessor(object):
         form_id = doc["_id"]
         log.debug('Processing doc: XFormInstance(%s)', form_id)
         if doc.get('problem'):
-            if six.text_type(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
+            if str(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
                 doc = _fix_replacement_form_problem_in_couch(doc)
             else:
                 self.statedb.add_problem_form(form_id)
                 return
         try:
             wrapped_form = XFormInstance.wrap(doc)
+            case_ids = get_case_ids(wrapped_form)
         except Exception:
             log.exception("Error migrating form %s", form_id)
-        self._try_to_process_form(wrapped_form)
-        self._try_to_empty_queues()
+        else:
+            self._try_to_process_form(wrapped_form, case_ids)
+            self._try_to_empty_queues()
 
-    def _try_to_process_form(self, wrapped_form):
-        case_ids = get_case_ids(wrapped_form)
+    def _try_to_process_form(self, wrapped_form, case_ids):
         if self.queues.try_obj(case_ids, wrapped_form):
             self.pool.spawn(self._async_migrate_form, wrapped_form, case_ids)
         elif self.queues.full:
@@ -185,7 +186,7 @@ class PartiallyLockingQueue(object):
 
         queue_by_lock_id = self.queue_by_lock_id
         lock_ids_by_queue_id = self.lock_ids_by_queue_id
-        for queue in six.itervalues(queue_by_lock_id):
+        for queue in queue_by_lock_id.values():
             if not queue:
                 continue
             queue_id = queue[0]
@@ -199,7 +200,7 @@ class PartiallyLockingQueue(object):
 
         Returns :boolean: True if there are objs left, False if not
         """
-        for queue in six.itervalues(self.queue_by_lock_id):
+        for queue in self.queue_by_lock_id.values():
             if queue:
                 return True
         return False

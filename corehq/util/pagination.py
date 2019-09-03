@@ -8,8 +8,6 @@ from requests.exceptions import ConnectionError
 
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DateTimeProperty, DictProperty
 from dimagi.utils.couch.database import get_db
-import six
-from six.moves import range
 
 
 class PaginationEventHandler(object):
@@ -188,7 +186,7 @@ def unpack_jsonobject(json_object):
         return {unpack_jsonobject(x) for x in json_object}
     elif isinstance(json_object, JsonDict):
         return {
-            unpack_jsonobject(k): unpack_jsonobject(v) for k, v in six.iteritems(json_object)
+            unpack_jsonobject(k): unpack_jsonobject(v) for k, v in json_object.items()
         }
     return json_object
 
@@ -272,7 +270,7 @@ class ResumableFunctionIterator(object):
 
         retried = {}
         while self.state.retry != retried:
-            for item_id, retries in six.iteritems(self.state.retry):
+            for item_id, retries in self.state.retry.items():
                 if retries == retried.get(item_id):
                     continue  # skip already retried (successfully)
                 retried[item_id] = retries

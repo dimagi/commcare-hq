@@ -8,7 +8,6 @@ from django.test import SimpleTestCase
 
 import attr
 import gevent
-import six
 from gevent.event import Event
 from gevent.queue import Queue
 from mock import patch
@@ -318,11 +317,11 @@ class TestCaseDiffQueue(SimpleTestCase):
         `case_ids` and `form_ids` can be either a string (space-
         delimited ids) or a sequence of strings (ids).
         """
-        if isinstance(case_ids, six.text_type):
+        if isinstance(case_ids, str):
             case_ids = case_ids.split()
-        if isinstance(xform_ids, six.text_type):
+        if isinstance(xform_ids, str):
             xform_ids = xform_ids.split()
-        if isinstance(stock_forms, six.text_type):
+        if isinstance(stock_forms, str):
             stock_forms = stock_forms.split()
         for case_id in case_ids:
             if case_id in self.cases:
@@ -354,13 +353,13 @@ class TestCaseDiffQueue(SimpleTestCase):
 
     def diff_cases(self, cases, statedb):
         log.info("diff cases %s", list(cases))
-        for case in six.itervalues(cases):
+        for case in cases.values():
             case_id = case["_id"]
             self.diffed[case_id] += 1
 
     def assertDiffed(self, spec):
         if not isinstance(spec, dict):
-            if isinstance(spec, six.text_type):
+            if isinstance(spec, str):
                 spec = spec.split()
             spec = {c: 1 for c in spec}
         self.assertEqual(dict(self.diffed), spec)

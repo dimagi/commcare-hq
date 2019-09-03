@@ -4,8 +4,6 @@ from xml.etree import cElementTree as ElementTree
 
 from django.test import SimpleTestCase
 
-import six
-
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.models import (
     OTARestoreCommCareUser,
@@ -37,7 +35,7 @@ class MockIndicatorSet(object):
         return datetime(2014, 1, 1, 0, 0)
 
 
-mock_indicators_fixture_generator = type('IndicatorsFixturesProviderFake' if six.PY3 else b'IndicatorsFixturesProviderFake', (IndicatorsFixturesProvider,), {
+mock_indicators_fixture_generator = type('IndicatorsFixturesProviderFake', (IndicatorsFixturesProvider,), {
     '_should_return_no_fixtures': (lambda self, domain, last_sync: False),
 })()
 
@@ -73,7 +71,7 @@ class CallcenterFixtureTests(SimpleTestCase):
             ('user_case1', {'i1': 1, 'i2': 2}),
             ('user_case2', {'i1': 0, 'i2': 3})
         ]))
-        restore_user = type('OTARestoreCommCareUserFake' if six.PY3 else b'OTARestoreCommCareUserFake', (OTARestoreCommCareUser,), {
+        restore_user = type('OTARestoreCommCareUserFake', (OTARestoreCommCareUser,), {
             'project': Domain(name='test', default_timezone='UTC'),
             'get_call_center_indicators': lambda self, config: indicator_set,
         })('test', user)
@@ -85,7 +83,7 @@ class CallcenterFixtureTests(SimpleTestCase):
 
     def test_callcenter_fixture_web_user(self):
         user = WebUser(_id='123')
-        restore_user = type('OTARestoreWebUserFake' if six.PY3 else b'OTARestoreWebUserFake', (OTARestoreWebUser,), {
+        restore_user = type('OTARestoreWebUserFake', (OTARestoreWebUser,), {
             'project': Domain(name='test', default_timezone='UTC'),
         })('test', user)
 

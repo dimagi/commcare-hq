@@ -2,7 +2,6 @@ import uuid
 
 from django.test import SimpleTestCase, TestCase
 
-from six.moves import range
 from sqlagg import SumWhen
 
 from casexml.apps.case.mock import CaseBlock

@@ -2,7 +2,6 @@ import re
 from collections import defaultdict
 
 from lxml import html
-from six.moves import zip
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock

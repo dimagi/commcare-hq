@@ -8,7 +8,6 @@ from time import strptime
 from lxml import etree
 from corehq.util.quickcache import quickcache
 from couchforms.models import XFormDeprecated
-import six
 
 
 class OpenClinicaIntegrationError(Exception):
@@ -33,9 +32,9 @@ def quote_nan(value):
     """
     Returns value in single quotes if value is not a number
 
-    >>> quote_nan('foo') if six.PY3 else quote_nan('foo').encode('utf-8')
+    >>> quote_nan('foo')
     "'foo'"
-    >>> quote_nan('1') if six.PY3 else quote_nan('1').encode('utf-8')
+    >>> quote_nan('1')
     '1'
 
     """
@@ -106,7 +105,7 @@ def get_study_metadata_string(domain):
     else:
         string = oc_settings.study.metadata
     # If the XML is Unicode but it says that it's UTF-8, then make it UTF-8.
-    if isinstance(string, six.text_type):
+    if isinstance(string, str):
         match = re.match(r'<\?xml .*?encoding="([\w-]+)".*?\?>', string)  # Assumes no whitespace up front
         if match:
             string = string.encode(match.group(1))
@@ -175,11 +174,11 @@ def mk_oc_username(cc_username):
 
     Strips off "@domain.name", replaces non-alphanumerics, and pads with "_" if less than 5 characters
 
-    >>> mk_oc_username('eric.idle@montypython.com') if six.PY3 else mk_oc_username('eric.idle@montypython.com').encode('utf-8')
+    >>> mk_oc_username('eric.idle@montypython.com')
     'eric_idle'
-    >>> mk_oc_username('eric') if six.PY3 else mk_oc_username('eric').encode('utf-8')
+    >>> mk_oc_username('eric')
     'eric_'
-    >>> mk_oc_username('I3#') if six.PY3 else mk_oc_username('I3#').encode('utf-8')
+    >>> mk_oc_username('I3#')
     'I3___'
 
     """
@@ -236,7 +235,7 @@ def oc_format_date(answer):
 
     """
     if isinstance(answer, datetime):
-        return answer.isoformat(sep=' ' if six.PY3 else b' ')
+        return answer.isoformat(sep=' ')
     if isinstance(answer, (date, time)):
         return answer.isoformat()
     return answer

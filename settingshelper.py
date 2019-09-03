@@ -1,3 +1,4 @@
+import logging
 import subprocess
 from collections import namedtuple
 import os

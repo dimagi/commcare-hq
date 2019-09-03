@@ -1,12 +1,11 @@
 import logging
 import os
 import sys
-from itertools import groupby
+from itertools import groupby, zip_longest
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from six.moves import input, zip_longest
 from sqlalchemy.exc import OperationalError
 
 from couchforms.dbaccessors import get_form_ids_by_type

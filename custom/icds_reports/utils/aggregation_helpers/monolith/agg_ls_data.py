@@ -1,6 +1,5 @@
 
 from dateutil.relativedelta import relativedelta
-from six.moves import range
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
@@ -135,18 +134,18 @@ class AggLsHelper(BaseICDSAggregationHelper):
         """
         indexes = []
         agg_locations = ['state_id']
+        tablename = self._tablename_func(aggregation_level)
         if aggregation_level > 1:
-            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(self._tablename_func(aggregation_level)))
+            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(tablename))
             agg_locations.append('district_id')
         if aggregation_level > 2:
-            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(self._tablename_func(aggregation_level)))
+            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(tablename))
             agg_locations.append('block_id')
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(self._tablename_func(aggregation_level)))
+            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(tablename))
             agg_locations.append('supervisor_id')
 
-        indexes.append('CREATE INDEX ON "{}" ({})'.format(self._tablename_func(aggregation_level),
-                                                          ', '.join(agg_locations)))
+        indexes.append('CREATE INDEX ON "{}" ({})'.format(tablename, ', '.join(agg_locations)))
         return indexes
 
     def rollup_query(self, agg_level):

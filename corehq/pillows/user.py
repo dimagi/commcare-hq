@@ -17,7 +17,6 @@ from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor, PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
-import six
 
 
 def update_unknown_user_from_form_if_necessary(es, doc_dict):
@@ -56,7 +55,7 @@ def transform_user_for_elasticsearch(doc_dict):
     doc['__group_names'] = [res.name for res in results]
     doc['user_data_es'] = []
     if 'user_data' in doc:
-        for key, value in six.iteritems(doc['user_data']):
+        for key, value in doc['user_data'].items():
             doc['user_data_es'].append({
                 'key': key,
                 'value': value,

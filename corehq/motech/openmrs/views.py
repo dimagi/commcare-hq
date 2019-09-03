@@ -9,7 +9,6 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
-from six.moves import map, range
 
 from dimagi.utils.web import json_response
 

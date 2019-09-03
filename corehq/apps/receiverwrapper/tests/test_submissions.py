@@ -8,8 +8,6 @@ from django.test.client import Client
 from django.test.utils import override_settings
 from django.urls import reverse
 
-import six
-
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
@@ -61,7 +59,7 @@ class SubmissionTest(TestCase):
             expected = json.load(f)
 
         expected['_id'] = form_id
-        expected['xmlns'] = six.text_type(xmlns)
+        expected['xmlns'] = str(xmlns)
 
         return expected
 

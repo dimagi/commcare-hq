@@ -4,7 +4,6 @@ from django.test import TestCase
 
 from elasticsearch.exceptions import ConnectionError
 from mock import patch
-from six.moves import range
 
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase

@@ -355,16 +355,17 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
         )
 
     def indexes(self, aggregation_level):
+        tablename = self._tablename_func(aggregation_level)
         indexes = [
-            'CREATE INDEX ON "{}" (state_id)'.format(self.tablename),
-            'CREATE INDEX ON "{}" (gender)'.format(self.tablename),
-            'CREATE INDEX ON "{}" (age_tranche)'.format(self.tablename),
+            'CREATE INDEX ON "{}" (state_id)'.format(tablename),
+            'CREATE INDEX ON "{}" (gender)'.format(tablename),
+            'CREATE INDEX ON "{}" (age_tranche)'.format(tablename),
         ]
         if aggregation_level > 1:
-            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(tablename))
         if aggregation_level > 2:
-            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(tablename))
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(tablename))
 
         return indexes

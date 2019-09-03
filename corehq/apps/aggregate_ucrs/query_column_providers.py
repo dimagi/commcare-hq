@@ -1,10 +1,9 @@
 from abc import ABCMeta, abstractmethod
 
-import six
 import sqlalchemy
 
 
-class QueryColumnProvider(six.with_metaclass(ABCMeta, object)):
+class QueryColumnProvider(metaclass=ABCMeta):
     """
     A QueryColumnProvider is a utility class that can provide a sqlalchemy column
     based on an input table and set of aggregation params.
@@ -19,7 +18,7 @@ class QueryColumnProvider(six.with_metaclass(ABCMeta, object)):
         pass
 
 
-class StandardQueryColumnProvider(six.with_metaclass(ABCMeta, QueryColumnProvider)):
+class StandardQueryColumnProvider(QueryColumnProvider, metaclass=ABCMeta):
     """
     A QueryColumnProvider that passes the query through to a column on the table.
     """
@@ -34,7 +33,7 @@ class StandardQueryColumnProvider(six.with_metaclass(ABCMeta, QueryColumnProvide
         return True
 
 
-class AggregationParamQueryColumnProvider(six.with_metaclass(ABCMeta, QueryColumnProvider)):
+class AggregationParamQueryColumnProvider(QueryColumnProvider, metaclass=ABCMeta):
     """
     A QueryColumnProvider that returns one of the aggregation params
     """

@@ -22,7 +22,6 @@ import dateutil
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
-from six.moves import map
 
 from dimagi.utils.web import json_response
 

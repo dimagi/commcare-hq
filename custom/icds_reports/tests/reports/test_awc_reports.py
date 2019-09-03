@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import json
 import datetime
 
@@ -17,7 +15,6 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
     percent_aadhaar_seeded_beneficiaries_help_text, percent_children_enrolled_help_text, \
     percent_pregnant_women_enrolled_help_text, percent_lactating_women_enrolled_help_text, \
     percent_adolescent_girls_enrolled_help_text
-from six.moves import filter
 
 
 class FirstDayOfMay(datetime.datetime):
@@ -2474,13 +2471,13 @@ class TestAWCReport(TestCase):
             json.dumps({
                 "draw": 1,
                 "last_month": "May 2017",
-                "recordsTotal": 27,
+                "recordsTotal": 32,
                 "months": [
                     "May 2017",
                     "Apr 2017",
                     "Mar 2017"
                 ],
-                "recordsFiltered": 27,
+                "recordsFiltered": 32,
             }, cls=DjangoJSONEncoder)
         )
 

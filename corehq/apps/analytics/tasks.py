@@ -1,4 +1,3 @@
-
 import json
 import logging
 import math
@@ -19,7 +18,6 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
-from six.moves import range
 
 from dimagi.utils.logging import notify_exception
 
@@ -390,7 +388,7 @@ def track_workflow(email, event, properties=None):
 @analytics_task(serializer='pickle', )
 def _track_workflow_task(email, event, properties=None, timestamp=0):
     def _no_nonascii_unicode(value):
-        if isinstance(value, six.text_type):
+        if isinstance(value, str):
             return value.encode('utf-8')
         return value
 
@@ -400,7 +398,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
         res = km.record(
             email,
             event,
-            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in six.iteritems(properties)} if properties else {},
+            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()} if properties else {},
             timestamp
         )
         _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)

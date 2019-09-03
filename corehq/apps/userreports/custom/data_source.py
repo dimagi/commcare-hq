@@ -3,7 +3,6 @@ from abc import ABCMeta, abstractmethod
 
 from django.utils.decorators import method_decorator
 
-import six
 from memoized import memoized
 
 from dimagi.utils.modules import to_function
@@ -97,7 +96,7 @@ class ConfigurableReportCustomSQLDataSourceHelper(object):
         }
 
 
-class ConfigurableReportCustomQueryProvider(six.with_metaclass(ABCMeta, object)):
+class ConfigurableReportCustomQueryProvider(metaclass=ABCMeta):
     @abstractmethod
     def get_data(self, start, limit):
         """This method is run before transformations defined in the UCR occur,

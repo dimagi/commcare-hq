@@ -1,4 +1,3 @@
-
 import json
 from datetime import date
 
@@ -15,7 +14,6 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_GET, require_POST
 
-import six
 from memoized import memoized
 
 from dimagi.utils.logging import notify_exception
@@ -315,7 +313,7 @@ def prepare_custom_export(request, domain):
         _check_export_size(domain, export_instances, export_filters)
     except ExportAsyncException as e:
         return json_response({
-            'error': six.text_type(e),
+            'error': str(e),
         })
 
     # Generate filename

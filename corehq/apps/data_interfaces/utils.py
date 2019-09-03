@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext as _
 
-import six
 from couchdbkit import ResourceNotFound
 
 from soil import DownloadBase
@@ -97,7 +96,7 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
 
 
 def property_references_parent(case_property):
-    return isinstance(case_property, six.string_types) and (
+    return isinstance(case_property, str) and (
         case_property.startswith("parent/") or
         case_property.startswith("host/")
     )

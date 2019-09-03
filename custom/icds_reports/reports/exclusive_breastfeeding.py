@@ -2,7 +2,6 @@
 from collections import defaultdict, OrderedDict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
@@ -132,7 +131,7 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
             'loc_name': key,
             'percent': value
         }
-        for key, value in six.iteritems(best_worst)
+        for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(
@@ -147,7 +146,7 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
                         'y': value['y'],
                         'all': value['all'],
                         'in_month': value['in_month']
-                    } for key, value in six.iteritems(data['blue'])
+                    } for key, value in data['blue'].items()
                 ],
                 "key": "% children exclusively breastfed",
                 "strokeWidth": 2,
@@ -203,7 +202,7 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_
             'all': valid or 0
         }
 
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         in_month = row['in_month']

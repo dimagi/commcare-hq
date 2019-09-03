@@ -1,4 +1,3 @@
-
 import uuid
 
 from django.test import TestCase
@@ -13,7 +12,6 @@ from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.feed.interface import ChangeMeta
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.sample import ChunkedCountProcessor
-from six.moves import range
 
 
 class ChunkedPorcessingTest(TestCase):

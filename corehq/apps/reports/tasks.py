@@ -6,11 +6,9 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
-import six
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
-from six.moves import filter, map
 from unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
@@ -369,7 +367,7 @@ def _extract_form_attachment_info(form, properties):
     attachments
     """
     def find_question_id(form, value):
-        for k, v in six.iteritems(form):
+        for k, v in form.items():
             if isinstance(v, dict):
                 ret = find_question_id(v, value)
                 if ret:
@@ -398,7 +396,7 @@ def _extract_form_attachment_info(form, properties):
     # TODO make form.attachments always return objects that conform to a
     # uniform interface. XFormInstance attachment values are dicts, and
     # XFormInstanceSQL attachment values are BlobMeta objects.
-    for attachment_name, attachment in six.iteritems(form.attachments):
+    for attachment_name, attachment in form.attachments.items():
         if hasattr(attachment, 'content_type'):
             content_type = attachment.content_type
         else:
@@ -406,14 +404,14 @@ def _extract_form_attachment_info(form, properties):
         if content_type == 'text/xml':
             continue
         try:
-            question_id = six.text_type(
+            question_id = str(
                 '-'.join(find_question_id(form.form_data, attachment_name)))
         except TypeError:
-            question_id = 'unknown' + six.text_type(unknown_number)
+            question_id = 'unknown' + str(unknown_number)
             unknown_number += 1
 
         if not properties or question_id in properties:
-            extension = six.text_type(os.path.splitext(attachment_name)[1])
+            extension = str(os.path.splitext(attachment_name)[1])
             if hasattr(attachment, 'content_length'):
                 # BlobMeta
                 size = attachment.content_length

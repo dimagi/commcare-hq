@@ -1,11 +1,8 @@
-
-import re
 import traceback
 
+import re
 from django.conf import settings
 from django.db.utils import OperationalError
-from six import string_types
-from six.moves import filter
 
 from corehq.util.cache_utils import is_rate_limited
 from corehq.util.datadog.gauges import datadog_counter
@@ -87,7 +84,7 @@ class HQSanitzeSystemPasswords(object):
         return event
 
     def sanitize(self, key, value):
-        if value and isinstance(value, string_types):
+        if value and isinstance(value, str):
             return self._regex.sub(self.MASK, value)
         return value
 

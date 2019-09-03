@@ -15,7 +15,6 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base
 
 from corehq.util import global_request
-import six
 
 JSON = 'application/json'
 logger = logging.getLogger('django.request')
@@ -100,7 +99,7 @@ def _json_exception_response_data(code, exception):
     if isinstance(exception.args[0], bytes):
         message = exception.args[0].decode('utf-8')
     else:
-        message = six.text_type(exception)
+        message = str(exception)
     data = {
         'error': code,
         'message': message

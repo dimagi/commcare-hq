@@ -1,10 +1,8 @@
-
 import random
 import uuid
 from datetime import datetime, timedelta
 from django.test import TestCase
 
-import six
 from django.conf import settings
 from django.core.management import call_command
 
@@ -149,7 +147,7 @@ def _create_locations_from_tree(domain, tree, parent_id, next_id, batch_id):
     if not next_id:
         next_id['id'] = 0
 
-    for index, item in enumerate(six.iteritems(tree)):
+    for index, item in enumerate(tree.items()):
         location_name, location_type = item[0]
         next_tree = item[1]
 

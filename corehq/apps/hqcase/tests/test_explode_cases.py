@@ -1,10 +1,7 @@
-
 import uuid
 from datetime import datetime
 
 from django.test import TestCase, override_settings
-
-import six
 
 from casexml.apps.case.mock import CaseBlock, CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import (
@@ -269,6 +266,6 @@ class ExplodeLedgersTest(BaseSyncTest):
                 self.assertEqual(len(ledger_values), 0)
             else:
                 self.assertEqual(len(ledger_values), len(self.ledgers))
-                for id, balance in six.iteritems(self.ledgers):
+                for id, balance in self.ledgers.items():
                     self.assertEqual(ledger_values[id].balance, balance.entry.quantity)
                     self.assertEqual(ledger_values[id].entry_id, balance.entry.id)

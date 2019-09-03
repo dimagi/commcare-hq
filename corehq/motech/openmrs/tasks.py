@@ -46,7 +46,10 @@ from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
-LOCATION_OPENMRS = 'openmrs_uuid'  # The location metadata key that maps to its corresponding OpenMRS location UUID
+# REQUEST_TIMEOUT is 5 minutes, but reports can take up to an hour
+REPORT_REQUEST_TIMEOUT = 60 * 60
+# The location metadata key that maps to its corresponding OpenMRS location UUID
+LOCATION_OPENMRS = 'openmrs_uuid'
 
 
 def parse_params(params, location=None):
@@ -71,7 +74,8 @@ def get_openmrs_patients(requests, importer, location=None):
     """
     endpoint = f'/ws/rest/v1/reportingrest/reportdata/{importer.report_uuid}'
     params = parse_params(importer.report_params, location)
-    response = requests.get(endpoint, params=params, raise_for_status=True)
+    response = requests.get(endpoint, params=params, raise_for_status=True,
+                            timeout=REPORT_REQUEST_TIMEOUT)
     data = response.json()
     return data['dataSets'][0]['rows']  # e.g. ...
     #     [{u'familyName': u'Hornblower', u'givenName': u'Horatio', u'personId': 2},

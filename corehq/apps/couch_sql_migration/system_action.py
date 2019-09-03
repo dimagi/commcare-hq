@@ -4,7 +4,10 @@ from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import ARCHIVE_FORM
-from corehq.form_processor.system_action import do_system_action as _do_system_action
+from corehq.form_processor.system_action import (
+    UnauthorizedSystemAction,
+    do_system_action as _do_system_action,
+)
 
 from .asyncforms import get_case_ids
 
@@ -59,8 +62,4 @@ def _archive_form_data(args_json):
 
 
 class IgnoreSystemAction(Exception):
-    pass
-
-
-class UnauthorizedSystemAction(Exception):
     pass

@@ -14,7 +14,6 @@ from django.db import models
 from django.http import Http404, HttpRequest, QueryDict
 from django.utils.translation import ugettext as _
 
-import six
 from couchdbkit.ext.django.schema import (
     BooleanProperty,
     DateProperty,
@@ -25,7 +24,6 @@ from couchdbkit.ext.django.schema import (
 )
 from django_prbac.exceptions import PermissionDenied
 from memoized import memoized
-from six.moves import range
 from six.moves.urllib.parse import urlencode
 from sqlalchemy.util import immutabledict
 
@@ -278,7 +276,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except UnsupportedSavedReportError:
             return "#"
         except Exception as e:
-            logging.exception(six.text_type(e))
+            logging.exception(str(e))
             return "#"
 
     @property

@@ -1,12 +1,8 @@
-# coding=utf-8
-
 import re
 from collections import OrderedDict
 
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
-
-import six
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ReportModule
@@ -278,7 +274,7 @@ def get_module_detail_graph_rows(langs, detail, list_or_detail):
         return []
 
     rows = []
-    for key, val in six.iteritems(detail.graph_configuration.locale_specific_config):
+    for key, val in detail.graph_configuration.locale_specific_config.items():
         rows.append(
             (
                 key + " (graph config)",
@@ -286,7 +282,7 @@ def get_module_detail_graph_rows(langs, detail, list_or_detail):
             ) + tuple(val.get(lang, "") for lang in langs)
         )
     for i, series in enumerate(detail.graph_configuration.series):
-        for key, val in six.iteritems(series.locale_specific_config):
+        for key, val in series.locale_specific_config.items():
             rows.append(
                 (
                     "{} {} (graph series config)".format(key, i),
@@ -345,7 +341,7 @@ def get_form_question_label_name_media(langs, form):
                 itext_items[text_id][(lang, value_form)] = value
 
     app = form.get_app()
-    for text_id, values in six.iteritems(itext_items):
+    for text_id, values in itext_items.items():
         row = [text_id]
         for value_form in ["default", "image", "audio", "video"]:
             # Get the fallback value for this form

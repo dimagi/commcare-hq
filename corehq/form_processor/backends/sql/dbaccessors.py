@@ -15,7 +15,6 @@ import csiphash
 import re
 
 import operator
-import six
 from ddtrace import tracer
 from django.conf import settings
 from django.db import connections, InternalError, transaction
@@ -155,7 +154,7 @@ class ShardAccessor(object):
 
     @staticmethod
     def hash_doc_id_python(doc_id):
-        if isinstance(doc_id, six.text_type):
+        if isinstance(doc_id, str):
             doc_id = doc_id.encode('utf-8')
         elif isinstance(doc_id, UUID):
             # Hash the 16-byte string
@@ -207,7 +206,7 @@ class ShardAccessor(object):
 DocIds = namedtuple('DocIds', 'doc_id primary_key')
 
 
-class ReindexAccessor(six.with_metaclass(ABCMeta)):
+class ReindexAccessor(metaclass=ABCMeta):
     primary_key_field_name = 'id'
 
     def __init__(self, limit_db_aliases=None):
@@ -1305,20 +1304,25 @@ class LedgerReindexAccessor(ReindexAccessor):
 class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
-    def get_ledger_values_for_cases(case_ids, section_id=None, entry_id=None, date_start=None, date_end=None):
+    def get_ledger_values_for_cases(case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
         assert isinstance(case_ids, list)
         if not case_ids:
             return []
 
+        if section_ids:
+            assert isinstance(section_ids, list)
+        if entry_ids:
+            assert isinstance(entry_ids, list)
+
         return list(LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_cases(%s, %s, %s, %s, %s)',
-            [case_ids, section_id, entry_id, date_start, date_end]
+            'SELECT * FROM get_ledger_values_for_cases_2(%s, %s, %s, %s, %s)',
+            [case_ids, section_ids, entry_ids, date_start, date_end]
         ))
 
     @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_cases(%s)',
+            'SELECT * FROM get_ledger_values_for_cases_2(%s)',
             [[case_id]]
         ))
 
@@ -1397,7 +1401,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):
         ledger_values = LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_cases(%s)',
+            'SELECT * FROM get_ledger_values_for_cases_2(%s)',
             [case_ids]
         )
         ret = {case_id: {} for case_id in case_ids}

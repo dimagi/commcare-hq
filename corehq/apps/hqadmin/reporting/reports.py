@@ -32,7 +32,6 @@ import datetime
 from django.db.models import Count, Q
 from django.utils.translation import ugettext as _
 
-import six
 from dateutil.relativedelta import relativedelta
 
 from casexml.apps.stock.models import StockReport, StockTransaction
@@ -112,7 +111,7 @@ def get_timestep(interval):
         return relativedelta(months=1)
     elif interval == 'year':
         return relativedelta(years=1)
-    raise IntervalNotFoundException(six.text_type(interval))
+    raise IntervalNotFoundException(str(interval))
 
 
 def daterange(interval, start_date, end_date):
@@ -989,8 +988,8 @@ def _sql_to_json_data(domains, sql_data, datespan, individual_domain_limit=16):
             else:
                 histo_data[domain][tstamp] += 1
 
-    for k, v in six.iteritems(histo_data):
-        for l, w in six.iteritems(v):
+    for k, v in histo_data.items():
+        for l, w in v.items():
             ret[k].append({'count': w, 'time': l})
 
     return init_ret, ret

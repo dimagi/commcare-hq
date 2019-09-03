@@ -23,7 +23,6 @@ from couchforms.models import (
     XFormOperation)
 from couchforms.util import fetch_and_wrap_form
 from dimagi.utils.couch import acquire_lock, release_lock
-import six
 
 
 class FormProcessorCouch(object):
@@ -90,7 +89,7 @@ class FormProcessorCouch(object):
         from corehq.form_processor.parsers.form import apply_deprecation
         new_form = XFormInstance.wrap(existing_form.to_json())
 
-        for question, response in six.iteritems(value_responses_map):
+        for question, response in value_responses_map.items():
             data = new_form.form_data
             i = XFormQuestionValueIterator(question)
             for (qid, repeat_index) in i:

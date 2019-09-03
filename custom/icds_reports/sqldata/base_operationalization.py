@@ -25,7 +25,7 @@ class BaseOperationalization(ICDSMixin):
                 [
                     'No. of AWCs',
                     self.awc_number,
-                    0,
+                    data['owner_id'],
                     data['owner_id']
                 ],
                 [
