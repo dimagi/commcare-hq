@@ -91,9 +91,9 @@ class UploadedTranslationsValidator(object):
                 self.app,
                 eligible_for_transifex_only=True
             )
-        self._set_current_sheet_name_to_module_or_form_mapping()
-        self._map_ids_to_headers()
-        self._map_ids_to_translations()
+            self._set_current_sheet_name_to_module_or_form_mapping()
+            self._map_ids_to_headers()
+            self._map_ids_to_translations()
 
     def _set_current_sheet_name_to_module_or_form_mapping(self):
         # iterate the first sheet to get unique ids for forms/modules
