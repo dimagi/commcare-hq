@@ -1,5 +1,5 @@
 language: python
-python: 2.7
+dist: bionic
 sudo: required
 group: edge
 branches:
