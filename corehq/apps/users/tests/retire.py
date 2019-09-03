@@ -76,7 +76,7 @@ class RetireUserTestCase(TestCase):
                 case_id=case_id,
                 owner_id=owner_id,
                 user_id=owner_id,
-            ).as_string().decode('utf-8'))
+            ).as_text())
         xform = submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
 
         self.commcare_user.retire()
@@ -107,7 +107,7 @@ class RetireUserTestCase(TestCase):
                 case_id=case_id,
                 owner_id=owner_id,
                 user_id=owner_id,
-            ).as_string().decode('utf-8'))
+            ).as_text())
         submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
 
         # submit a system form to update one, and another to update two
