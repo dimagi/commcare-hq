@@ -109,5 +109,4 @@ polib==1.1.0
 werkzeug==0.11.15
 CommcareTranslationChecker==0.9.3.5
 WeasyPrint==0.42.3
-
-git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
+architect==0.5.6
