@@ -4,6 +4,7 @@ from memoized import memoized
 
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
+    get_bulk_app_single_sheet_by_name,
 )
 from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
@@ -11,8 +12,13 @@ from corehq.apps.translations.app_translations.utils import (
     is_form_sheet,
     is_module_sheet,
     is_modules_and_forms_sheet,
+    is_single_sheet,
 )
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.const import (
+    MODULES_AND_FORMS_SHEET_NAME,
+    SINGLE_SHEET_STATIC_HEADERS,
+    SINGLE_SHEET_NAME,
+)
 from corehq.apps.translations.generators import (
     AppTranslationsGenerator,
     Unique_ID,
@@ -71,12 +77,20 @@ class UploadedTranslationsValidator(object):
             for mod_or_form_id, headers in
             get_bulk_app_sheet_headers(
                 self.app,
+                lang=self.lang_to_compare,
                 eligible_for_transifex_only=True,
         )}
-        self.current_rows = get_bulk_app_sheets_by_name(
-            self.app,
-            eligible_for_transifex_only=True
-        )
+        if self.single_sheet:
+            self.current_rows = get_bulk_app_single_sheet_by_name(
+                self.app,
+                self.lang_to_compare,
+                eligible_for_transifex_only=True
+            )
+        else:
+            self.current_rows = get_bulk_app_sheets_by_name(
+                self.app,
+                eligible_for_transifex_only=True
+            )
         self._set_current_sheet_name_to_module_or_form_mapping()
         self._map_ids_to_headers()
         self._map_ids_to_translations()
@@ -170,7 +184,33 @@ class UploadedTranslationsValidator(object):
             return self._compare_multiple_sheets()
 
     def _compare_single_sheet(self):
-        pass
+        sheet = self.uploaded_workbook.worksheets[0]
+        columns_to_compare = SINGLE_SHEET_STATIC_HEADERS + self.lang_cols_to_compare
+        parsed_expected_rows = self._processed_single_sheet_expected_rows(self.current_rows[sheet.title],
+                                                                          columns_to_compare)
+        parsed_uploaded_rows = self._processed_single_sheet_uploaded_rows(get_unicode_dicts(sheet),
+                                                                          columns_to_compare)
+        error_msgs = self._generate_diff(parsed_expected_rows, parsed_uploaded_rows)
+        return {sheet.title: error_msgs} if error_msgs else {}
+
+    def _processed_single_sheet_expected_rows(self, expected_rows, columns_to_compare):
+        parsed_expected_rows = []
+        for expected_row in expected_rows:
+            _parsed_row = []
+            for column_name in columns_to_compare:
+                column_value = expected_row[self._get_current_header_index(SINGLE_SHEET_NAME, column_name)]
+                if column_value is None:
+                    column_value = ''
+                _parsed_row.append(column_value)
+            parsed_expected_rows.append(_parsed_row)
+        return parsed_expected_rows
+
+    @staticmethod
+    def _processed_single_sheet_uploaded_rows(uploaded_rows, columns_to_compare):
+        return [
+            [uploaded_row.get(column_name) for column_name in columns_to_compare]
+            for uploaded_row in uploaded_rows
+        ]
 
     def _compare_multiple_sheets(self):
         msgs = {}
