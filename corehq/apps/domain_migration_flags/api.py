@@ -18,7 +18,10 @@ log = logging.getLogger(__name__)
 
 def set_migration_started(domain, slug, dry_run=False):
     progress, _ = DomainMigrationProgress.objects.get_or_create(domain=domain, migration_slug=slug)
-    if progress.migration_status == MigrationStatus.NOT_STARTED:
+    if (
+        progress.migration_status == MigrationStatus.NOT_STARTED
+        or progress.migration_status == MigrationStatus.DRY_RUN
+    ):
         progress.migration_status = MigrationStatus.DRY_RUN if dry_run else MigrationStatus.IN_PROGRESS
         progress.started_on = datetime.utcnow()
         progress.save()
