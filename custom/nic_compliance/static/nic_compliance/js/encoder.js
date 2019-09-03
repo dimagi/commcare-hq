@@ -1,8 +1,10 @@
 hqDefine('nic_compliance/js/encoder', [
     'jquery',
+    'underscore',
     'hqwebapp/js/initial_page_data',
 ],function (
     $,
+    _,
     initialPageData
 ) {
     function HexParser() {
