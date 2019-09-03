@@ -1,4 +1,4 @@
-
+from django.conf import settings
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -182,8 +182,18 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
         ]
 
     @property
-    def view_response(self):
+    def can_upgrade_to_case_list_explorer(self):
+        if settings.ENTERPRISE_MODE:
+            return False
+
         if self.request.couch_user.is_dimagi and not CASE_LIST_EXPLORER.enabled(self.domain):
+            return True
+
+        return False
+
+    @property
+    def view_response(self):
+        if self.can_upgrade_to_case_list_explorer:
             messages.warning(
                 self.request,
                 'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/ccinternal/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',
