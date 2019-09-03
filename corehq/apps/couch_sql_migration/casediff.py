@@ -1,5 +1,5 @@
-
 import logging
+import os
 from collections import defaultdict
 from itertools import chain, count
 
@@ -440,7 +440,8 @@ class CaseDiffProcess(object):
         self.stats_pipe = gipc.pipe()
         calls, self.calls = self.calls_pipe.__enter__()
         self.stats, stats = self.stats_pipe.__enter__()
-        args = (self.queue_class, calls, stats, self.statedb)
+        debug = log.isEnabledFor(logging.DEBUG)
+        args = (self.queue_class, calls, stats, self.statedb, debug)
         self.process = gipc.start_process(target=run_case_diff_queue, args=args)
         self.status_logger = gevent.spawn(self.run_status_logger)
         return self
@@ -493,7 +494,7 @@ STATUS = "status"
 TERMINATE = "terminate"
 
 
-def run_case_diff_queue(queue_class, calls, stats, statedb):
+def run_case_diff_queue(queue_class, calls, stats, statedb, debug):
     def status():
         stats.put(queue.get_status())
 
@@ -509,6 +510,7 @@ def run_case_diff_queue(queue_class, calls, stats, statedb):
             getattr(queue, action)(*args)
 
     process_actions = {STATUS: status, TERMINATE: terminate}
+    setup_logging(statedb, debug)
     try:
         with queue_class(statedb, status_interval=0) as queue, calls, stats:
             try:
@@ -519,6 +521,15 @@ def run_case_diff_queue(queue_class, calls, stats, statedb):
                 pass
     except ParentError:
         log.error("stopped due to error in parent process")
+
+
+def setup_logging(statedb, debug):
+    from .couchsqlmigration import setup_logging
+    log_dir = os.path.dirname(statedb.db_filepath)
+    if os.path.basename(log_dir) == "db":
+        # unfortunately coupled to _get_state_db_filepath, which adds /db/
+        log_dir = os.path.dirname(log_dir)
+    setup_logging(log_dir, "casediff", debug)
 
 
 class GracefulExit(Exception):

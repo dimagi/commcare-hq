@@ -1,8 +1,9 @@
-
 import logging
+import os
 from collections import defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
+from glob import glob
 
 from django.test import SimpleTestCase
 
@@ -404,6 +405,9 @@ class TestCaseDiffProcess(SimpleTestCase):
 
     def tearDown(self):
         delete_state_db("test", self.state_dir)
+        for log_file in self.get_log_files():
+            assert os.path.isabs(log_file), log_file
+            os.remove(log_file)
         super(TestCaseDiffProcess, self).tearDown()
 
     def test_process(self):
@@ -436,12 +440,23 @@ class TestCaseDiffProcess(SimpleTestCase):
 
     @contextmanager
     def process(self):
-        with init_state_db("test", self.state_dir) as statedb, mod.CaseDiffProcess(
-            statedb,
-            status_interval=1,
-            queue_class=FakeCaseDiffQueue,
-        ) as proc:
-            yield proc
+        try:
+            with init_state_db("test", self.state_dir) as statedb, mod.CaseDiffProcess(
+                statedb,
+                status_interval=1,
+                queue_class=FakeCaseDiffQueue,
+            ) as proc:
+                yield proc
+        finally:
+            print(f"{' diff process logs ':-^40}")
+            for log_file in self.get_log_files():
+                print("#", log_file)
+                with open(log_file, encoding="utf-8") as fh:
+                    print(fh.read())
+            print(f"{' end diff process logs ':-^40}")
+
+    def get_log_files(self):
+        return glob(os.path.join(self.state_dir, "*-casediff.log"))
 
     @staticmethod
     def get_status(proc):
