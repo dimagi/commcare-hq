@@ -1151,7 +1151,7 @@ def get_awc_report_pregnant(start, length, order, reversed_order, awc_id):
 
 @icds_quickcache(['case_id', 'awc_id'], timeout=30 * 60)
 def get_pregnant_details(case_id, awc_id):
-    ten_months_ago = datetime.utcnow() - relativedelta(months=10, day=1)
+    ten_months_ago = date.today() - relativedelta(months=10, day=1)
     data = CcsRecordMonthlyView.objects.filter(
         case_id=case_id,
         awc_id=awc_id,
