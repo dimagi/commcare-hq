@@ -94,6 +94,7 @@ def get_case_pillow(
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
+        run_migrations=(process_num == 0),  # only first process runs migrations
     )
     if ucr_configs:
         ucr_processor.bootstrap(ucr_configs)

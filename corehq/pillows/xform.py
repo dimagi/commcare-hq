@@ -181,6 +181,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
+        run_migrations=(process_num == 0),  # only first process runs migrations
     )
     xform_to_es_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
