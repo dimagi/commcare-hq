@@ -1,40 +1,41 @@
 import copy
 import json
 import re
-from crispy_forms.bootstrap import InlineField
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
-from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from django.urls import reverse
-from django.template.loader import render_to_string
 from datetime import time
+
+from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.forms import Field, Widget
 from django.forms.fields import *
 from django.forms.forms import Form
-from django import forms
-from django.forms import Field, Widget
-from corehq.apps.reminders.util import DotExpandedDict, get_form_list
-from corehq.apps.groups.models import Group
-from corehq.apps.sms.models import Keyword
-from corehq.util.python_compatibility import soft_assert_type_text
-from dimagi.utils.couch.database import iter_docs
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import InlineField
+from crispy_forms.helper import FormHelper
+from dateutil.parser import parse
 from memoized import memoized
 
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.django.fields import TrimmedCharField
+
+from corehq.apps.app_manager.models import Form as CCHQForm
+from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.reminders.util import DotExpandedDict, get_form_list
+from corehq.apps.sms.models import Keyword
+
 from .models import (
-    RECIPIENT_CASE,
-    RECIPIENT_SURVEY_SAMPLE,
-    RECIPIENT_OWNER,
     METHOD_SMS,
     METHOD_SMS_SURVEY,
+    RECIPIENT_OWNER,
     RECIPIENT_USER_GROUP,
 )
-from dateutil.parser import parse
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.app_manager.models import Form as CCHQForm
-from dimagi.utils.django.fields import TrimmedCharField
-import six
 
 NO_RESPONSE = "none"
 
@@ -60,10 +61,8 @@ def validate_time(value):
         return value
     error_msg = _("Please enter a valid time from 00:00 to 23:59.")
     time_regex = re.compile(r"^\d{1,2}:\d\d(:\d\d){0,1}$")
-    if not isinstance(value, six.string_types) or time_regex.match(value) is None:
+    if not isinstance(value, str) or time_regex.match(value) is None:
         raise ValidationError(error_msg)
-    if isinstance(value, six.string_types):
-        soft_assert_type_text(value)
     try:
         return parse(value).time()
     except Exception:
@@ -98,9 +97,9 @@ class RecordListWidget(Widget):
         data_dict = DotExpandedDict(raw)
         data_list = []
         if len(data_dict) > 0:
-            for key in sorted(six.iterkeys(data_dict[input_name])):
+            for key in sorted(data_dict[input_name]):
                 data_list.append(data_dict[input_name][key])
-        
+
         return data_list
 
     def render(self, name, value, attrs=None):

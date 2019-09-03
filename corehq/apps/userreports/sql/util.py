@@ -1,5 +1,4 @@
 import hashlib
-from six.moves import filter
 
 
 def get_column_name(path, suffix=None, add_hash=True):

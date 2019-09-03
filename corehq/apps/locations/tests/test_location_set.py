@@ -1,6 +1,7 @@
 from django.test import SimpleTestCase
-from corehq.apps.locations.models import SQLLocation, LocationType
+
 from corehq.apps.locations.fixtures import LocationSet
+from corehq.apps.locations.models import LocationType, SQLLocation
 
 
 class LocationSetTest(SimpleTestCase):

@@ -1,12 +1,12 @@
 import collections
 import hashlib
 
+from django_prbac.utils import has_privilege
+
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
-from django_prbac.utils import has_privilege
-
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util.couch import DocumentNotFound

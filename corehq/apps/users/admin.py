@@ -1,7 +1,8 @@
 from django.contrib import admin
-from django_digest.models import UserNonce, PartialDigest
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+
+from django_digest.models import PartialDigest, UserNonce
 
 
 class DDUserNonceAdmin(admin.ModelAdmin):

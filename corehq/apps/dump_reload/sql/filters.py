@@ -1,12 +1,11 @@
 from abc import ABCMeta, abstractmethod
 
-import six
 from django.db.models import Q
 
 from dimagi.utils.chunked import chunked
 
 
-class DomainFilter(six.with_metaclass(ABCMeta)):
+class DomainFilter(metaclass=ABCMeta):
     @abstractmethod
     def get_filters(self, domain_name):
         """Return a list of filters. Each filter will be applied to a queryset independently

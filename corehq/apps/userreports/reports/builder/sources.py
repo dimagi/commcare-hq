@@ -1,4 +1,7 @@
-from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_CASE, DATA_SOURCE_TYPE_FORM
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    DATA_SOURCE_TYPE_CASE,
+    DATA_SOURCE_TYPE_FORM,
+)
 
 
 def get_source_type_from_report_config(report_config):

@@ -20,8 +20,8 @@ from sqlalchemy import (
     or_,
 )
 
-
-from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
+from corehq.apps.tzmigration.planning import Base, DiffDB
+from corehq.apps.tzmigration.planning import PlanningDiff as Diff
 
 
 def init_state_db(domain, state_dir):
@@ -167,6 +167,10 @@ class StateDB(DiffDB):
             yield case_id
 
     def add_problem_form(self, form_id):
+        """Add form to be migrated with "unprocessed" forms
+
+        A "problem" form is an error form with normal doctype (XFormInstance)
+        """
         with self.session() as session:
             session.add(ProblemForm(id=form_id))
 

@@ -1,8 +1,9 @@
-# Standard library imports
 import datetime
 
 from tastypie import fields
 from tastypie.exceptions import BadRequest
+
+from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.api.couch import UserQuerySetAdapter
 from corehq.apps.api.resources import (
@@ -14,9 +15,7 @@ from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser, WebUser, Permissions
-from dimagi.utils.parsing import string_to_boolean
-import six
+from corehq.apps.users.models import CommCareUser, Permissions, WebUser
 
 TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username', 'format']
 
@@ -93,7 +92,7 @@ class CommCareUserResource(UserResource):
         user_data = bundle.obj.user_data
         if self.determine_format(bundle.request) == 'application/xml':
             # attribute names can't start with digits in xml
-            user_data = {k: v for k, v in six.iteritems(user_data) if not k[0].isdigit()}
+            user_data = {k: v for k, v in user_data.items() if not k[0].isdigit()}
         return user_data
 
     def obj_get_list(self, bundle, **kwargs):

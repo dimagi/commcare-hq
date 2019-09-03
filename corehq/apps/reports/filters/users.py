@@ -1,30 +1,30 @@
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from memoized import memoized
 
-from corehq.apps.es import users as user_es, filters
+from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.models import Domain
+from corehq.apps.es import filters
+from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.apps.commtrack.models import SQLLocation
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 
 from .. import util
+from ..analytics.esaccessors import get_group_stubs, get_user_stubs
 from ..models import HQUserType
-from ..analytics.esaccessors import get_user_stubs, get_group_stubs
 from .base import (
     BaseMultipleOptionFilter,
     BaseReportFilter,
     BaseSingleOptionFilter,
 )
-from six.moves import map
 
 
 class UserOrGroupFilter(BaseSingleOptionFilter):

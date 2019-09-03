@@ -1,11 +1,5 @@
-
-import six
-from six.moves import map
-
-from corehq.util.python_compatibility import soft_assert_type_text
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
 from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
-from six.moves import range
 
 
 class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
@@ -258,7 +252,7 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('fully_immunized_on_time', ),
             ('fully_immunized_late', ),
             ('has_aadhar_id', ),
-            ('aggregation_level', six.text_type(aggregation_level)),
+            ('aggregation_level', str(aggregation_level)),
             ('pnc_eligible', ),
             ('height_eligible', ),
             ('wasting_moderate', ),
@@ -307,8 +301,7 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
 
             if len(column_tuple) == 2:
                 agg_col = column_tuple[1]
-                if isinstance(agg_col, six.string_types):
-                    soft_assert_type_text(agg_col)
+                if isinstance(agg_col, str):
                     return column_tuple
                 elif callable(agg_col):
                     return (column, agg_col(column))
@@ -353,16 +346,17 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
         )
 
     def indexes(self, aggregation_level):
+        tablename = self._tablename_func(aggregation_level)
         indexes = [
-            'CREATE INDEX ON "{}" (state_id)'.format(self.tablename),
-            'CREATE INDEX ON "{}" (gender)'.format(self.tablename),
-            'CREATE INDEX ON "{}" (age_tranche)'.format(self.tablename),
+            'CREATE INDEX ON "{}" (state_id)'.format(tablename),
+            'CREATE INDEX ON "{}" (gender)'.format(tablename),
+            'CREATE INDEX ON "{}" (age_tranche)'.format(tablename),
         ]
         if aggregation_level > 1:
-            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(tablename))
         if aggregation_level > 2:
-            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(tablename))
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(tablename))
 
         return indexes

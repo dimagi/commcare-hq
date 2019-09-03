@@ -8,6 +8,7 @@
     {% if rendered_as == 'print' %}
         <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
     {% endif %}
+    <script src="{% static 'up_nrhm/js/main.js' %}"></script>
     <style>
         @page {
             size: A4 landscape;
@@ -29,14 +30,6 @@
             display: none !important;
         }
     </style>
-    <script>
-        {% if rendered_as == 'print' and not sf %}
-            $(function() {
-                document.body.style.zoom="80%";
-                $('.hq-loading').hide();
-            });
-        {% endif %}
-    </script>
 {% endblock js %}
 
 {% block pretable %}
@@ -64,44 +57,3 @@
     </div>
     {% endif %}
 {% endblock pretable %}
-
-{% block js-inline %}
-    <script>
-        function hideFilters(sf) {
-            if (sf === "" || sf === 'sf2') {
-                $('#fieldset_datespan').css('display', 'block');
-                $('#fieldset_year').css('display', 'none');
-                $('#fieldset_month').css('display', 'none');
-                $('#report_filter_hierarchy_af').parent().parent().removeClass('hideImportant');
-                $('#report_filter_hierarchy_block').parent().parent().removeClass('hideImportant');
-            } else if (sf === "sf3") {
-                $('#fieldset_datespan').css('display', 'none');
-                $('#fieldset_year').css('display', 'block');
-                $('#fieldset_month').css('display', 'block');
-                $('#report_filter_hierarchy_af').parent().parent().removeClass('hideImportant');
-                $('#report_filter_hierarchy_block').parent().parent().removeClass('hideImportant');
-            } else if (sf === "sf4") {
-                $('#fieldset_datespan').css('display', 'none');
-                $('#fieldset_year').css('display', 'block');
-                $('#fieldset_month').css('display', 'block');
-                $('#report_filter_hierarchy_af').parent().parent().addClass('hideImportant');
-                $('#report_filter_hierarchy_block').parent().parent().removeClass('hideImportant');
-            } else if (sf === "sf5") {
-                $('#fieldset_datespan').css('display', 'none');
-                $('#fieldset_year').css('display', 'block');
-                $('#fieldset_month').css('display', 'block');
-                $('#report_filter_hierarchy_af').parent().parent().addClass('hideImportant');
-                $('#report_filter_hierarchy_block').parent().parent().addClass('hideImportant');
-            }
-        }
-        $('#report_filter_sf').on('change', function() {
-            sf = $(this).val();
-            hideFilters(sf);
-        });
-        $('#hq-report-filters').on('change', function() {
-            hideFilters(sf);
-        });
-        sf = $('#report_filter_sf').val();
-        hideFilters(sf);
-    </script>
-{% endblock %}

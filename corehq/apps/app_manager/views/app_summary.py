@@ -7,9 +7,6 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
-import six
-from six.moves import range
-
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -25,9 +22,9 @@ from corehq.apps.app_manager.app_schemas.form_metadata import (
 from corehq.apps.app_manager.const import WORKFLOW_FORM
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
+from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import get_langs
-from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
@@ -206,9 +203,9 @@ def _translate_name(names, language):
     if not names:
         return "[{}]".format(_("Unknown"))
     try:
-        return six.text_type(names[language])
+        return str(names[language])
     except KeyError:
-        first_name = next(six.iteritems(names))
+        first_name = next(names.items())
         return "{} [{}]".format(first_name[1], first_name[0])
 
 
@@ -522,7 +519,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
             relationships = case_type.relationships
             relationships.update({'': [case_type.name]})
-            for relationship, types in six.iteritems(relationships):
+            for relationship, types in relationships.items():
                 for type_ in types:
                     if relationship and not opened_by[type_] and not closed_by[type_]:
                         rows.append((case_type.name, "[{}] {}".format(relationship, type_)))

@@ -1,9 +1,9 @@
 import datetime
 
-from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
-from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting import tasks
 from corehq.apps.accounting.models import DomainUserHistory
+from corehq.apps.accounting.tests import generator
+from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 
 
 class TestDomainUserHistory(BaseInvoiceTestCase):

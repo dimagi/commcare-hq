@@ -1,6 +1,6 @@
-import csv342 as csv
 import io
 import json
+import re
 from collections import defaultdict
 from datetime import datetime
 
@@ -9,29 +9,28 @@ from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
+from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import View, TemplateView
+from django.views.generic import TemplateView, View
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-import re
-
-from memoized import memoized
-
-from corehq.apps.hqwebapp.crispy import make_form_readonly
-from dimagi.utils.web import json_response
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
+from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from memoized import memoized
+
+from dimagi.utils.web import json_response
+from soil import DownloadBase
 from soil.exceptions import TaskFailedError
-from soil.util import get_download_context, expose_cached_download
+from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -48,51 +47,70 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.crispy import make_form_readonly
+from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
-from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
+from corehq.apps.locations.permissions import (
+    location_safe,
+    user_can_access_location_id,
+)
+from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.bulkupload import (
+    UserUploadError,
     check_duplicate_usernames,
     check_existing_usernames,
     check_headers,
-    UserUploadError,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
 )
+from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.forms import (
-    CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
-    MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
-    SelfRegistrationForm, SetUserPasswordForm,
-    CommCareUserFilterForm
+    CommCareAccountForm,
+    CommCareUserFilterForm,
+    CommCareUserFormSet,
+    CommtrackUserForm,
+    ConfirmExtraUserChargesForm,
+    MultipleSelectionForm,
+    NewMobileWorkerForm,
+    SelfRegistrationForm,
+    SetUserPasswordForm,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task, \
-    bulk_download_users_async
-from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
-from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
-from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
-from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
+from corehq.apps.users.tasks import (
+    bulk_download_users_async,
+    bulk_upload_async,
+    reset_demo_user_restore_task,
+    turn_on_demo_mode_task,
+)
+from corehq.apps.users.util import (
+    can_add_extra_mobile_workers,
+    format_username,
+)
+from corehq.apps.users.views import (
+    BaseEditUserView,
+    BaseUserSettingsView,
+    get_domain_languages,
+)
+from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
-    enforce_string_type,
-    get_workbook,
     StringTypeRequiredError,
     WorkbookJSONError,
     WorksheetNotFound,
+    enforce_string_type,
+    get_workbook,
 )
-from soil import DownloadBase
+
 from .custom_data_fields import UserFieldsView
-import six
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -164,6 +182,11 @@ class EditCommCareUserView(BaseEditUserView):
         return self.editable_user_id == self.couch_user._id
 
     @property
+    def is_delete_allowed(self):
+        from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
+        return not couch_sql_migration_in_progress(self.domain)
+
+    @property
     @memoized
     def reset_password_form(self):
         return SetUserPasswordForm(self.request.project, self.editable_user_id, user="")
@@ -225,6 +248,7 @@ class EditCommCareUserView(BaseEditUserView):
             'group_form': self.group_form,
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
+            'is_delete_allowed': self.is_delete_allowed,
             'data_fields_form': self.form_user_update.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
             'can_create_groups': (
@@ -682,7 +706,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             form_data = self._construct_form_data(in_data)
         except InvalidMobileWorkerRequest as e:
             return {
-                'error': six.text_type(e)
+                'error': str(e)
             }
 
         self.request.POST = form_data
@@ -935,7 +959,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
         except WorkbookJSONError as e:
-            messages.error(request, six.text_type(e))
+            messages.error(request, str(e))
             return self.get(request, *args, **kwargs)
 
         try:
@@ -954,7 +978,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             check_headers(self.user_specs)
         except UserUploadError as e:
-            messages.error(request, _(six.text_type(e)))
+            messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         # convert to list here because iterator destroys the row once it has
@@ -975,13 +999,13 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             check_existing_usernames(self.user_specs, self.domain)
         except UserUploadError as e:
-            messages.error(request, _(six.text_type(e)))
+            messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         try:
             check_duplicate_usernames(self.user_specs)
         except UserUploadError as e:
-            messages.error(request, _(six.text_type(e)))
+            messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)

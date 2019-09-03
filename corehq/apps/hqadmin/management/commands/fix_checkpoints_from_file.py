@@ -1,8 +1,8 @@
 import json
 
 from django.core.management import BaseCommand, CommandError
+
 from pillowtop import get_pillow_by_name
-from six.moves import input
 
 
 class Command(BaseCommand):

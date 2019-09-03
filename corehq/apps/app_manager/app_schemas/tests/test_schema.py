@@ -1,10 +1,15 @@
-from datetime import datetime
 import re
+from datetime import datetime
+
 from django.test import SimpleTestCase
-from mock import patch, MagicMock
+
+from mock import MagicMock, patch
+
 from corehq.apps.app_manager import util as util
 from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
-from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
+from corehq.apps.app_manager.app_schemas.session_schema import (
+    get_session_schema,
+)
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.util.test_utils import flag_enabled

@@ -6,14 +6,14 @@ import gevent
 from gevent.pool import Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form, get_case_updates
+from couchforms.models import XFormInstance, XFormOperation
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
     PROBLEM_TEMPLATE_START,
 )
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.exceptions import MissingFormXml
-from couchforms.models import XFormInstance, XFormOperation
-from dimagi.utils.chunked import chunked
 
 log = logging.getLogger(__name__)
 

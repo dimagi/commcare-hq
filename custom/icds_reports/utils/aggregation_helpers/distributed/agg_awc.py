@@ -1,16 +1,11 @@
-
-import six
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-from six.moves import map
 
-from corehq.util.python_compatibility import soft_assert_type_text
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
-from six.moves import range
 
 
 class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -106,21 +101,22 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
     def indexes(self, aggregation_level):
         indexes = []
 
+        tablename = self._tablename_func(aggregation_level)
         agg_locations = ['state_id']
         if aggregation_level > 1:
-            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(tablename))
             agg_locations.append('district_id')
         if aggregation_level > 2:
-            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(tablename))
             agg_locations.append('block_id')
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(tablename))
             agg_locations.append('supervisor_id')
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (awc_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (awc_id)'.format(tablename))
             agg_locations.append('awc_id')
 
-        indexes.append('CREATE INDEX ON "{}" ({})'.format(self.tablename, ', '.join(agg_locations)))
+        indexes.append('CREATE INDEX ON "{}" ({})'.format(tablename, ', '.join(agg_locations)))
         return indexes
 
     def updates(self):
@@ -592,7 +588,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('usage_num_add_person',),
             ('usage_num_add_pregnancy',),
             ('is_launched', "'yes'"),
-            ('aggregation_level', six.text_type(aggregation_level)),
+            ('aggregation_level', str(aggregation_level)),
             ('num_launched_states', lambda col: _launched_col(col)),
             ('num_launched_districts', lambda col: _launched_col(col)),
             ('num_launched_blocks', lambda col: _launched_col(col)),
@@ -646,8 +642,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
             if len(column_tuple) == 2:
                 agg_col = column_tuple[1]
-                if isinstance(agg_col, six.string_types):
-                    soft_assert_type_text(agg_col)
+                if isinstance(agg_col, str):
                     return column_tuple
                 elif callable(agg_col):
                     return (column, agg_col(column))

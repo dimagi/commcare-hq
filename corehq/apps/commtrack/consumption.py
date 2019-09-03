@@ -3,7 +3,8 @@ from django.db.models.signals import post_save
 from casexml.apps.stock import const
 from casexml.apps.stock.models import DocDomainMapping, StockTransaction
 from casexml.apps.stock.signals import get_stock_state_for_transaction
-from corehq.apps.products.models import Product
+
+from corehq.apps.products.models import SQLProduct
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.quickcache import quickcache
 
@@ -17,12 +18,12 @@ def recalculate_domain_consumption(domain):
         domain_name=domain,
         doc_type='CommCareCase',
     ).values_list('doc_id', flat=True)
-    products = Product.by_domain(domain)
+    product_ids = SQLProduct.active_objects.filter(domain=domain).product_ids()
     for supply_point_id in found_doc_ids:
-        for product in products:
+        for product_id in product_ids:
             try:
                 latest_transaction = StockTransaction.get_ordered_transactions_for_stock(
-                    supply_point_id, const.SECTION_TYPE_STOCK, product._id
+                    supply_point_id, const.SECTION_TYPE_STOCK, product_id
                 )[0]
             except IndexError:
                 pass

@@ -1,17 +1,20 @@
 # coding=utf-8
-from collections import namedtuple
 import re
+from collections import namedtuple
+
+from django.http import Http404
+
 from couchdbkit import ResourceNotFound
+
+import couchforms
+from couchforms.models import DefaultAuthContext
+
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
-from couchforms.models import DefaultAuthContext
-import couchforms
-from django.http import Http404
-import six
 
 
 def get_submit_url(domain, app_id=None):
@@ -44,7 +47,7 @@ def get_meta_appversion_text(form_metadata):
         return None
 
     # just make sure this is a longish string and not something like '2.0'
-    if isinstance(text, (str, six.text_type)) and len(text) > 5:
+    if isinstance(text, (str, str)) and len(text) > 5:
         return text
     else:
         return None

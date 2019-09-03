@@ -16,7 +16,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.permissions import locations_access_required, location_safe
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
@@ -30,7 +30,6 @@ from custom.ewsghana.utils import make_url, has_input_stock_permissions, calcula
 from custom.ilsgateway.views import GlobalStats
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.web import json_handler, json_response
-from six.moves import map
 
 
 @location_safe
@@ -69,7 +68,7 @@ class InputStockView(BaseDomainView):
                 raise Http404()
             text = ''
             for form in formset:
-                product = Product.get(docid=form.cleaned_data['product_id'])
+                product = SQLProduct.objects.get(product_id=form.cleaned_data['product_id'])
                 if form.cleaned_data['stock_on_hand'] is not None:
                     text += '{} {}.{} '.format(
                         product.code, form.cleaned_data['stock_on_hand'], form.cleaned_data['receipts'] or 0

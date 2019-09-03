@@ -1,7 +1,6 @@
 from dimagi.ext import jsonobject
-from soil.progress import get_task_status, STATES
+from soil.progress import STATES, get_task_status
 from soil.util import get_task
-import six
 
 
 class TaskStatus(jsonobject.StrictJsonObject):
@@ -61,8 +60,8 @@ def normalize_task_status_result_errors(result):
     for _, columns_to_error_value in result['errors'].items():
         for column_name, error_value in columns_to_error_value.items():
             result_errors.append(TaskStatusResultError(
-                title=six.text_type(error_value['error']),
-                description=six.text_type(error_value['description']),
+                title=str(error_value['error']),
+                description=str(error_value['description']),
                 column=column_name,
                 rows=error_value['rows']
             ))

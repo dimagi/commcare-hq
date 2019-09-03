@@ -1,37 +1,39 @@
-import pytz
-from datetime import timedelta, datetime, date, time
 import re
 from collections import namedtuple
-from corehq.apps.casegroups.models import CommCareCaseGroup
+from datetime import date, datetime, time, timedelta
+from random import randint
+from string import Formatter
+
+from django.conf import settings
+from django.db import models, transaction
+
+import pytz
+from couchdbkit import ResourceNotFound
+from couchdbkit.exceptions import ResourceConflict
+from dateutil.parser import parse
+
 from dimagi.ext.couchdbkit import *
-from corehq.apps.sms.models import MessagingEvent
-from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.users.models import CouchUser, CommCareUser
+from dimagi.utils.couch import CriticalSection, LockableMixIn
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
+from dimagi.utils.parsing import json_format_datetime, string_to_datetime
+
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.sms.models import MessagingEvent
+from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
-from dimagi.utils.parsing import string_to_datetime, json_format_datetime
-from dateutil.parser import parse
-from couchdbkit.exceptions import ResourceConflict
-from couchdbkit import ResourceNotFound
-from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
-from dimagi.utils.couch import LockableMixIn, CriticalSection
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.modules import to_function
-from random import randint
-from django.conf import settings
-from dimagi.utils.couch.database import iter_docs
-from django.db import models, transaction
-from string import Formatter
-import six
-from six.moves import filter
 
 
 class IllegalModelStateException(Exception):

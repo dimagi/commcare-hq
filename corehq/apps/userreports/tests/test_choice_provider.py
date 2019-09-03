@@ -1,21 +1,28 @@
 from abc import ABCMeta, abstractmethod
-from django.test import SimpleTestCase
-import mock
 from functools import partial
 
-from corehq.apps.locations.tests.util import LocationHierarchyTestCase
+from django.test import SimpleTestCase
+
+import mock
+
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.groups.models import Group
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.filters.choice_providers import (
-    ChoiceQueryContext, LocationChoiceProvider, UserChoiceProvider, GroupChoiceProvider,
-    OwnerChoiceProvider, StaticChoiceProvider, SearchableChoice)
-from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership
+    ChoiceQueryContext,
+    GroupChoiceProvider,
+    LocationChoiceProvider,
+    OwnerChoiceProvider,
+    SearchableChoice,
+    StaticChoiceProvider,
+    UserChoiceProvider,
+)
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
 from corehq.apps.users.util import normalize_username
-import six
 
 
 class StaticChoiceProviderTest(SimpleTestCase):
@@ -38,7 +45,7 @@ class StaticChoiceProviderTest(SimpleTestCase):
         )
 
 
-class ChoiceProviderTestMixin(six.with_metaclass(ABCMeta, object)):
+class ChoiceProviderTestMixin(metaclass=ABCMeta):
     """
     A mixin for a creating uniform tests for different ChoiceProvider subclasses.
 
@@ -127,7 +134,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
                 location.display_name,
                 searchable_text=[location.site_code, location.name]
             ))
-            for location in six.itervalues(cls.locations)
+            for location in cls.locations.values()
         ]
         choice_tuples.sort()
         choices = [choice for name, choice in choice_tuples]

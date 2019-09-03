@@ -1,24 +1,23 @@
 import json
 from copy import copy
 
-import six
 from django.conf import settings
+
 from kafka import KafkaConsumer
 from kafka.common import TopicPartition
+
+from dimagi.utils.logging import notify_error
+from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
+from pillowtop.feed.interface import Change, ChangeFeed, ChangeMeta
+from pillowtop.models import kafka_seq_to_str
 
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import validate_offsets
-from dimagi.utils.logging import notify_error
-from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
-from pillowtop.models import kafka_seq_to_str
-from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
-from six.moves import range
 
 MIN_TIMEOUT = 500
 
 
-@six.python_2_unicode_compatible
 class KafkaChangeFeed(ChangeFeed):
     """
     Kafka-based implementation of a ChangeFeed

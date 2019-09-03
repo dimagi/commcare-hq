@@ -5,8 +5,6 @@ import uuid
 from django.template.loader import render_to_string
 from django.test.testcases import SimpleTestCase
 
-from six.moves import filter
-
 from corehq.apps.app_manager.models import Application, Module
 from corehq.util.test_utils import TestFileMixin
 

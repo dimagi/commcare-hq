@@ -1,7 +1,6 @@
 
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from corehq.apps.case_importer.tracking.dbaccessors import (
     get_case_upload_record_count,

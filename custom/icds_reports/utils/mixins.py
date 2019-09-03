@@ -1,6 +1,8 @@
 from io import BytesIO
 import datetime
 
+from django.conf import settings
+
 import pytz
 from sqlagg.filters import EQ, IN, NOT
 from sqlagg.sorting import OrderBy
@@ -9,12 +11,13 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.sqlreport import Column
 
 from corehq.apps.reports.util import get_INFilter_bindparams
+from corehq.sql_db.connections import ICDS_UCR_CITUS_ENGINE_ID, ICDS_UCR_ENGINE_ID
+from corehq.sql_db.routers import forced_citus
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 from custom.utils.utils import clean_IN_filter_value
-import six
 
 NUM_LAUNCHED_AWCS = 'Number of launched AWCs (ever submitted at least one HH reg form)'
 NUM_OF_DAYS_AWC_WAS_OPEN = 'Number of days AWC was open in the given month'
@@ -35,8 +38,6 @@ FILTER_BY_LIST = {
 
 
 class ExportableMixin(object):
-    engine_id = 'icds-ucr'
-
     def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
         self.config = config
         self.loc_level = loc_level
@@ -51,6 +52,13 @@ class ExportableMixin(object):
         return self.config['domain']
 
     @property
+    def engine_id(self):
+        if forced_citus() or getattr(settings, 'ICDS_USE_CITUS', False):
+            return ICDS_UCR_CITUS_ENGINE_ID
+        else:
+            return ICDS_UCR_ENGINE_ID
+
+    @property
     def filters(self):
         filters = []
         infilter_params = get_INFilter_bindparams('excluded_states', self.excluded_states)
@@ -58,7 +66,7 @@ class ExportableMixin(object):
         if not self.show_test:
             filters.append(NOT(IN('state_id', infilter_params)))
 
-        for key, value in six.iteritems(self.config):
+        for key, value in self.config.items():
             if key == 'domain' or key in infilter_params or 'age' in key:
                 continue
             filters.append(EQ(key, key))

@@ -2,22 +2,30 @@
 import uuid
 from collections import OrderedDict
 from copy import deepcopy
+
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
+
 from lxml import etree
 from mock import patch
 
-from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.models import Application, Module, GraphConfiguration, \
-    GraphSeries, ReportModule, ReportAppConfig, CustomIcon, BuildProfile
-from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.tests.util import parse_normalize
-from corehq.apps.builds.models import BuildSpec
-from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
-from corehq.util.test_utils import softer_assert
-
 import commcare_translations
+from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.models import (
+    Application,
+    BuildProfile,
+    CustomIcon,
+    GraphConfiguration,
+    GraphSeries,
+    Module,
+    ReportAppConfig,
+    ReportModule,
+)
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import TestXmlMixin, parse_normalize
+from corehq.apps.builds.models import BuildSpec
+from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage
+from corehq.util.test_utils import softer_assert
 
 
 class MediaSuiteTest(SimpleTestCase, TestXmlMixin):

@@ -7,7 +7,7 @@ from corehq.apps.commtrack.const import StockActions
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.commtrack.models import CommtrackActionConfig
 from corehq.apps.commtrack.xmlutil import XML
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 
 
 class UniqueLedgerReference(namedtuple('UniqueLedgerReference', ['case_id', 'section_id', 'entry_id'])):
@@ -126,8 +126,10 @@ class StockTransactionHelper(jsonobject.JsonObject):
             quant = self.quantity
         else:
             quant = ''
-        # FIXME product fetch here is inefficient
-        return '%s%s' % (Product.get(self.product_id).code.lower(), quant)
+        return '{}{}'.format(
+            SQLProduct.objects.values_list('code', flat=True).get(product_id=self.product_id).lower(),
+            quant
+        )
 
     def __repr__(self):
         return '{action} ({subaction}): {quantity} (loc: {location_id}, product: {product_id})'.format(

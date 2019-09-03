@@ -1,6 +1,7 @@
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.utils.translation import ugettext as _
+
+from couchdbkit.exceptions import ResourceNotFound
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps

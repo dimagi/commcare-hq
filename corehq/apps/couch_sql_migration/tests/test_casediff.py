@@ -3,15 +3,11 @@ import logging
 from collections import defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
-try:
-    from inspect import signature
-except ImportError:
-    from funcsigs import signature  # TODO remove after Python 3 upgrade
+
+from django.test import SimpleTestCase
 
 import attr
 import gevent
-import six
-from django.test import SimpleTestCase
 from gevent.event import Event
 from gevent.queue import Queue
 from mock import patch
@@ -21,7 +17,15 @@ from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 from .. import casediff as mod
-from ..statedb import delete_state_db, init_state_db, StateDB
+from ..statedb import StateDB, delete_state_db, init_state_db
+
+try:
+    from inspect import signature
+except ImportError:
+    from funcsigs import signature  # TODO remove after Python 3 upgrade
+
+
+
 
 log = logging.getLogger(__name__)
 
@@ -73,6 +77,12 @@ class TestCaseDiffQueue(SimpleTestCase):
         with self.queue() as queue:
             queue.update({"c"}, "f0")
         self.assertDiffed("c")
+
+    def test_case_with_null_form_update(self):
+        self.add_cases("cx", "fx")
+        with self.queue() as queue:
+            queue.update({"cx"}, None)
+        self.assertDiffed("cx")
 
     def test_diff_batching(self):
         self.add_cases("a b c d e", "fx")
@@ -307,11 +317,11 @@ class TestCaseDiffQueue(SimpleTestCase):
         `case_ids` and `form_ids` can be either a string (space-
         delimited ids) or a sequence of strings (ids).
         """
-        if isinstance(case_ids, six.text_type):
+        if isinstance(case_ids, str):
             case_ids = case_ids.split()
-        if isinstance(xform_ids, six.text_type):
+        if isinstance(xform_ids, str):
             xform_ids = xform_ids.split()
-        if isinstance(stock_forms, six.text_type):
+        if isinstance(stock_forms, str):
             stock_forms = stock_forms.split()
         for case_id in case_ids:
             if case_id in self.cases:
@@ -343,13 +353,13 @@ class TestCaseDiffQueue(SimpleTestCase):
 
     def diff_cases(self, cases, statedb):
         log.info("diff cases %s", list(cases))
-        for case in six.itervalues(cases):
+        for case in cases.values():
             case_id = case["_id"]
             self.diffed[case_id] += 1
 
     def assertDiffed(self, spec):
         if not isinstance(spec, dict):
-            if isinstance(spec, six.text_type):
+            if isinstance(spec, str):
                 spec = spec.split()
             spec = {c: 1 for c in spec}
         self.assertEqual(dict(self.diffed), spec)

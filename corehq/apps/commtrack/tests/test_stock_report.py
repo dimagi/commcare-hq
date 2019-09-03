@@ -1,24 +1,27 @@
-import uuid
-from datetime import datetime
 import random
 import string
+import uuid
+from datetime import datetime
 
 from django.test import TestCase
-from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
-from corehq.apps.commtrack.models import SQLProduct
 
+from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
+
+from corehq.apps.commtrack.models import SQLProduct
 from corehq.apps.commtrack.processing import StockProcessingResult
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
+from corehq.form_processor.parsers.ledgers.helpers import (
+    StockReportHelper,
+    StockTransactionHelper,
+)
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import TestFormMetadata
-from six.moves import range
 
 DOMAIN_MAX_LENGTH = 25
 

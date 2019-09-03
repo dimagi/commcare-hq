@@ -1,6 +1,12 @@
-from django.core.management import BaseCommand
-from corehq.apps.hqadmin.service_checks import CHECKS, run_checks, UnknownCheckException
 import sys
+
+from django.core.management import BaseCommand
+
+from corehq.apps.hqadmin.service_checks import (
+    CHECKS,
+    UnknownCheckException,
+    run_checks,
+)
 
 
 class Command(BaseCommand):

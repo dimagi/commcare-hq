@@ -6,11 +6,12 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext
 
 from corehq import toggles
-from corehq.util.quickcache import quickcache
-from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    all_case_properties_by_domain,
+)
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
-import six
+from corehq.util.quickcache import quickcache
 
 
 class OldExportsEnabledException(Exception):
@@ -148,7 +149,7 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     try:
         prop.full_clean()
     except ValidationError as e:
-        return six.text_type(e)
+        return str(e)
     prop.save()
 
 

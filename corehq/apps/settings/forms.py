@@ -1,23 +1,25 @@
-from django import forms
-from django.contrib.auth.forms import PasswordChangeForm
-from two_factor.forms import (
-    PhoneNumberMethodForm, DeviceValidationForm, MethodForm,
-    TOTPDeviceForm, PhoneNumberForm
-)
-from corehq.apps.settings.validators import validate_international_phonenumber
-from two_factor.utils import totp_digits
-
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
-from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.users.models import CouchUser
-
-from django.utils.translation import ugettext as _
-from django.utils.safestring import mark_safe
-
 from datetime import datetime
 
+from django import forms
+from django.contrib.auth.forms import PasswordChangeForm
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+from two_factor.forms import (
+    DeviceValidationForm,
+    MethodForm,
+    PhoneNumberForm,
+    PhoneNumberMethodForm,
+    TOTPDeviceForm,
+)
+from two_factor.utils import totp_digits
+
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.settings.validators import validate_international_phonenumber
+from corehq.apps.users.models import CouchUser
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 

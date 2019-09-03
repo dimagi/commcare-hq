@@ -3,8 +3,15 @@ from collections import defaultdict
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
-from corehq.apps.userreports.util import get_table_name, UCR_TABLE_PREFIX, LEGACY_UCR_TABLE_PREFIX
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    StaticDataSourceConfiguration,
+)
+from corehq.apps.userreports.util import (
+    LEGACY_UCR_TABLE_PREFIX,
+    UCR_TABLE_PREFIX,
+    get_table_name,
+)
 from corehq.sql_db.connections import connection_manager
 
 

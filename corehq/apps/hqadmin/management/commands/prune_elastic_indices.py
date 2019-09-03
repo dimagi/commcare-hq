@@ -1,10 +1,9 @@
-
 from django.core.management import BaseCommand
+
 import elasticsearch
 
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
-from six.moves import input
 
 
 class Command(BaseCommand):

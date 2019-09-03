@@ -1,13 +1,11 @@
-
-import csv342 as csv
-
 from django.core.management import BaseCommand
+
+import csv
+
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-
-from dimagi.utils.chunked import chunked
-import six
 
 
 class Command(BaseCommand):
@@ -36,7 +34,7 @@ class Command(BaseCommand):
                     log.write(xform.form_id + '\n')
                 except Exception as e:
                     print('error')
-                    print(six.text_type(e))
+                    print(str(e))
                     failed_updates.extend(u[0] for u in updates)
             log.write('--------Failed Cases--------------\n')
             for case_id in failed_updates:

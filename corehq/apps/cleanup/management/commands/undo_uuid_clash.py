@@ -1,24 +1,36 @@
-
 from collections import defaultdict
 from datetime import datetime
 
-import six
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.xform import get_case_updates
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.commtrack.processing import process_stock
 from corehq.apps.domain.dbaccessors import iter_domains
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+    LedgerAccessorSQL,
+)
 from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, RebuildWithReason, CaseTransaction, \
-    LedgerTransaction
-from corehq.sql_db.util import (
-    split_list_by_db_partition, new_id_in_same_dbalias, get_db_aliases_for_partitioned_query
+from corehq.form_processor.backends.sql.update_strategy import (
+    SqlCaseUpdateStrategy,
 )
-from dimagi.utils.chunked import chunked
+from corehq.form_processor.models import (
+    CaseTransaction,
+    LedgerTransaction,
+    RebuildWithReason,
+    XFormInstanceSQL,
+    XFormOperationSQL,
+)
+from corehq.sql_db.util import (
+    get_db_aliases_for_partitioned_query,
+    new_id_in_same_dbalias,
+    split_list_by_db_partition,
+)
 
 
 def get_forms_to_reprocess(form_ids):
@@ -33,7 +45,7 @@ def get_forms_to_reprocess(form_ids):
         })
 
     deprecated_form_ids = {
-        form.deprecated_form_id for form in six.itervalues(edited_forms)
+        form.deprecated_form_id for form in edited_forms.values()
     }
     for dbname, forms_by_db in split_list_by_db_partition(deprecated_form_ids):
         deprecated_forms = XFormInstanceSQL.objects.using(dbname).filter(form_id__in=forms_by_db)
@@ -143,14 +155,14 @@ def update_case_transactions_for_form(case_cache, live_case_updates, deprecated_
 
 def rebuild_cases(cases_to_rebuild_by_domain, logger):
         detail = RebuildWithReason(reason='undo UUID clash')
-        for domain, case_ids in six.iteritems(cases_to_rebuild_by_domain):
+        for domain, case_ids in cases_to_rebuild_by_domain.items():
             for case_id in case_ids:
                 FormProcessorSQL.hard_rebuild_case(domain, case_id, detail)
                 logger.log('Case %s rebuilt' % case_id)
 
 
 def rebuild_ledgers(ledgers_to_rebuild_by_domain, logger):
-    for domain, ledger_ids in six.iteritems(ledgers_to_rebuild_by_domain):
+    for domain, ledger_ids in ledgers_to_rebuild_by_domain.items():
         for ledger_id in ledger_ids:
             LedgerProcessorSQL.hard_rebuild_ledgers(domain, **ledger_ids._asdict())
             logger.log('Ledger %s rebuilt' % ledger_id.as_id())
@@ -226,10 +238,10 @@ def check_and_process_forms(form_ids, logger, debug):
     print('  Found %s forms to reprocess' % len(forms_to_process) * 2)
     cases_to_rebuild, ledgers_to_rebuild = undo_form_edits(forms_to_process, logger)
 
-    ncases = sum(len(cases) for cases in six.itervalues(cases_to_rebuild))
+    ncases = sum(len(cases) for cases in cases_to_rebuild.values())
     print('  Rebuilding %s cases' % ncases)
     rebuild_cases(cases_to_rebuild, logger)
 
-    nledgers = sum(len(ledgers) for ledgers in six.itervalues(ledgers_to_rebuild))
+    nledgers = sum(len(ledgers) for ledgers in ledgers_to_rebuild.values())
     print('  Rebuilding %s ledgers' % nledgers)
     rebuild_cases(cases_to_rebuild, logger)

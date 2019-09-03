@@ -4,13 +4,14 @@ from collections import defaultdict
 from itertools import chain, count
 
 import gevent
-import gipc
-import six
-from gevent.pool import Pool
 from gevent.event import Event
+from gevent.pool import Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.stock.models import StockReport
+from dimagi.utils.chunked import chunked
+
+import gipc
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.tzmigration.timezonemigration import json_diff
 from corehq.form_processor.backends.couch.dbaccessors import (
@@ -23,7 +24,6 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL,
 )
 from corehq.form_processor.exceptions import MissingFormXml
-from dimagi.utils.chunked import chunked
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .lrudict import LRUDict
@@ -98,8 +98,9 @@ class CaseDiffQueue(object):
         """
         log.debug("update: cases=%s form=%s", case_ids, form_id)
         pending = self.pending_cases
+        increment = 0 if form_id is None else 1
         for case_id in case_ids:
-            pending[case_id] += 1
+            pending[case_id] += increment
             if len(pending) >= self.BATCH_SIZE:
                 self._async_enqueue_or_load(pending)
                 pending = self.pending_cases = defaultdict(int)
@@ -566,7 +567,7 @@ def diff_cases(couch_cases, statedb):
             statedb.add_missing_docs(doc_type, doc_ids)
             counts[doc_type] += len(doc_ids)
 
-    for doc_type, count_ in six.iteritems(counts):
+    for doc_type, count_ in counts.items():
         statedb.increment_counter(doc_type, count_)
 
 
@@ -616,7 +617,7 @@ def filter_missing_cases(missing_cases):
             log.info("Ignoring orphaned case: %s", couch_case["_id"])
         else:
             result[couch_case["doc_type"]].append(couch_case["_id"])
-    return six.iteritems(result)
+    return result.items()
 
 
 def is_orphaned_case(couch_case):

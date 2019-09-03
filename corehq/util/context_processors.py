@@ -1,7 +1,6 @@
 
 import datetime
 
-import six
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
@@ -13,7 +12,6 @@ from corehq.apps.analytics import ab_tests
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
-from corehq.util.python_compatibility import soft_assert_type_text
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -180,8 +178,7 @@ def emails(request=None):
 
 def _get_cc_name(request, var):
     value = getattr(settings, var)
-    if isinstance(value, six.string_types):
-        soft_assert_type_text(value)
+    if isinstance(value, str):
         return value
 
     if request is None:

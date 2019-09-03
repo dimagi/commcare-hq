@@ -1,13 +1,9 @@
-
 import functools
 from datetime import date, datetime, time
 from decimal import Decimal, InvalidOperation
 
-from six import string_types
-
 from corehq.util import eval_lazy
 from corehq.util.dates import iso_string_to_date, iso_string_to_datetime
-import six
 
 
 def evaluate_lazy_args(func, *args):
@@ -103,7 +99,7 @@ def recursive_lookup(dict_object, keys):
 def transform_date(item):
     # postgres crashes on empty strings, but is happy to take null dates
     if item:
-        if isinstance(item, string_types):
+        if isinstance(item, str):
             try:
                 return iso_string_to_date(item)
             except ValueError:
@@ -120,7 +116,7 @@ def transform_date(item):
 
 def transform_datetime(item):
     if item:
-        if isinstance(item, string_types):
+        if isinstance(item, str):
             try:
                 return iso_string_to_datetime(item, strict=True)
             except ValueError:
@@ -158,7 +154,7 @@ def transform_unicode(item):
     if item is None:
         return None
     try:
-        return six.text_type(item)
+        return str(item)
     except (ValueError, TypeError):
         return None
 

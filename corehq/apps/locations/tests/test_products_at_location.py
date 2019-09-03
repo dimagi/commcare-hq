@@ -1,8 +1,9 @@
 from django.test import TestCase
+
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.products.models import SQLProduct
 
-from ..models import make_location, LocationType
+from ..models import LocationType, make_location
 
 
 class ProductsAtLocationTest(TestCase):

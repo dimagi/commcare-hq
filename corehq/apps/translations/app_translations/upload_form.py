@@ -1,23 +1,21 @@
-# coding=utf-8
-
 import copy
-import six
 import re
 from collections import defaultdict
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+
 from lxml import etree
-from lxml.etree import XMLSyntaxError, Element
+from lxml.etree import Element, XMLSyntaxError
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ShadowForm
 from corehq.apps.app_manager.util import save_xform
-from corehq.apps.app_manager.xform import namespaces, WrappedNode
+from corehq.apps.app_manager.xform import WrappedNode, namespaces
 from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
-    get_unicode_dicts,
     get_form_from_sheet_name,
+    get_unicode_dicts,
 )
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
 
@@ -71,7 +69,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         try:
             self._check_for_shadow_form_error()
         except BulkAppTranslationsException as e:
-            return [(messages.error, six.text_type(e))]
+            return [(messages.error, str(e))]
 
         if not self.itext:
             # This form is empty or malformed. Ignore it.
@@ -98,7 +96,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 try:
                     self._add_or_remove_translations(lang, row)
                 except BulkAppTranslationsException as e:
-                    self.msgs.append((messages.warning, six.text_type(e)))
+                    self.msgs.append((messages.warning, str(e)))
 
         save_xform(self.app, self.form, etree.tostring(self.xform.xml))
 

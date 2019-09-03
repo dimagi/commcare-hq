@@ -10,8 +10,9 @@ LedgerES
          .section('stock')
 """
 from corehq.pillows.mappings import NULL_VALUE
-from .es_query import HQESQuery
+
 from . import filters
+from .es_query import HQESQuery
 
 
 class LedgerES(HQESQuery):

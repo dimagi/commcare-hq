@@ -1,10 +1,10 @@
 import os
-from nose.plugins.attrib import attr
-
-from django.test import SimpleTestCase
 
 from django.conf import settings
 from django.template.loaders.app_directories import get_app_template_dirs
+from django.test import SimpleTestCase
+
+from nose.plugins.attrib import attr
 
 B3_BASE = 'hqwebapp/base.html'
 

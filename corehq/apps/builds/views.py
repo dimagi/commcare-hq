@@ -1,27 +1,28 @@
-from couchdbkit import ResourceNotFound, BadValueError
+import io
+
+from django.http import Http404, HttpResponse, HttpResponseBadRequest
+from django.shortcuts import render
 from django.urls import reverse
-from django.http import HttpResponseBadRequest, HttpResponse, Http404
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from django.shortcuts import render
-from django.utils.decorators import method_decorator
-from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
-from corehq.util.view_utils import json_error
-from dimagi.utils.web import json_request, json_response
+
+import requests
+import requests.exceptions
+from couchdbkit import BadValueError, ResourceNotFound
+
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.web import json_request, json_response
 
 from corehq.apps.api.models import require_api_user
 from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.views import BasePageView
+from corehq.util.view_utils import json_error
 
 from .models import CommCareBuild, CommCareBuildConfig, SemanticVersionProperty
-from .utils import get_all_versions, extract_build_info_from_filename
-
-import io
-import requests
-import requests.exceptions
-import six
+from .utils import extract_build_info_from_filename, get_all_versions
 
 
 @csrf_exempt  # is used by an API
@@ -130,8 +131,8 @@ def import_build(request):
         return json_response({
             'reason': 'Badly formatted version',
             'info': {
-                'error_message': six.text_type(e),
-                'error_type': six.text_type(type(e))
+                'error_message': str(e),
+                'error_type': str(type(e))
             }
         }, status_code=400)
 

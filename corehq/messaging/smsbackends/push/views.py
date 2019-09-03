@@ -4,7 +4,6 @@ from corehq.messaging.smsbackends.push.models import PushBackend
 from django.http import HttpResponse, HttpResponseBadRequest
 from lxml import etree
 from xml.sax.saxutils import unescape
-import six
 
 
 class PushIncomingView(IncomingBackendView):
@@ -17,7 +16,7 @@ class PushIncomingView(IncomingBackendView):
     def clean_value(self, value):
         if isinstance(value, bytes):
             value = value.decode('utf-8')
-        if isinstance(value, six.text_type):
+        if isinstance(value, str):
             return unescape(value.strip())
         return value
 

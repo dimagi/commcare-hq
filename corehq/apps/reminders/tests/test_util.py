@@ -1,7 +1,8 @@
 from django.test import TestCase
-from corehq.apps.users.models import CommCareUser
+
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.tests.util import delete_domain_phone_numbers
+from corehq.apps.users.models import CommCareUser
 
 
 class ReminderUtilTest(TestCase):

@@ -1,8 +1,6 @@
-
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
@@ -141,7 +139,7 @@ def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False)
                         'x': key,
                         'y': value,
                         'all': all
-                    } for key, value in six.iteritems(chart)
+                    } for key, value in chart.items()
                 ],
                 "key": "Children (0-6 years) who are enrolled",
                 "strokeWidth": 2,
@@ -193,7 +191,7 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
             'all': all_children
         }
 
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         chart_data['blue'].append([

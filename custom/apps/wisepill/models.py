@@ -1,19 +1,23 @@
-from dimagi.ext.couchdbkit import *
 from memoized import memoized
-import six
 
-from corehq.util.python_compatibility import soft_assert_type_text
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    Document,
+    StringProperty,
+)
 
 
 class WisePillDeviceEvent(Document):
     """
-    One DeviceEvent is created each time a device sends data that is 
+    One DeviceEvent is created each time a device sends data that is
     forwarded to the CommCareHQ WisePill API (/wisepill/device/).
     """
     domain = StringProperty()
     data = StringProperty()
     received_on = DateTimeProperty()
-    case_id = StringProperty() # Document _id of the case representing the device that sent this data in
+    # Document _id of the case representing the device that sent this data in
+    case_id = StringProperty()
     processed = BooleanProperty()
 
     @property
@@ -23,8 +27,7 @@ class WisePillDeviceEvent(Document):
         Convert 'a=b,c=d' to {'a': 'b', 'c': 'd'}
         """
         result = {}
-        if isinstance(self.data, six.string_types):
-            soft_assert_type_text(self.data)
+        if isinstance(self.data, str):
             items = self.data.strip().split(',')
             for item in items:
                 parts = item.partition('=')
@@ -41,8 +44,7 @@ class WisePillDeviceEvent(Document):
     @property
     def timestamp(self):
         raw = self.data_as_dict.get('T', None)
-        if isinstance(raw, six.string_types) and len(raw) == 12:
-            soft_assert_type_text(raw)
+        if isinstance(raw, str) and len(raw) == 12:
             return "20%s-%s-%s %s:%s:%s" % (
                 raw[4:6],
                 raw[2:4],

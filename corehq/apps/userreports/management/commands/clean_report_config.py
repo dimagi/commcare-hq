@@ -1,15 +1,17 @@
 
+import textwrap
 from collections import OrderedDict
 from copy import deepcopy
-import simplejson as json
-import six
-import textwrap
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.userreports.models import ReportConfiguration, StaticReportConfiguration
+import simplejson as json
+
+from corehq.apps.userreports.models import (
+    ReportConfiguration,
+    StaticReportConfiguration,
+)
 from corehq.apps.userreports.reports.filters import specs
-from six.moves import zip
 
 COLUMN_PARAMS_ORDER = [
     'comment',
@@ -75,7 +77,7 @@ class Command(BaseCommand):
         ])
 
         with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(six.text_type(json.dumps(json_spec, indent=2)))
+            f.write(str(json.dumps(json_spec, indent=2)))
 
         print(textwrap.dedent("""
             Wrote those changes to the existing file.

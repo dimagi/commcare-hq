@@ -1,20 +1,26 @@
-from django.urls import reverse
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.generic import View
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation, JSONResponseException
-
+from djangular.views.mixins import (
+    JSONResponseException,
+    JSONResponseMixin,
+    allow_remote_invocation,
+)
 from memoized import memoized
 
 from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm
-from corehq.apps.notifications.models import Notification, LastSeenNotification, \
-    IllegalModelStateException, DismissedUINotify
-import six
+from corehq.apps.notifications.models import (
+    DismissedUINotify,
+    IllegalModelStateException,
+    LastSeenNotification,
+    Notification,
+)
 
 
 class NotificationsServiceRMIView(JSONResponseMixin, View):
@@ -54,7 +60,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
         try:
             notification.set_as_last_seen(self.request.user)
         except IllegalModelStateException as e:
-            raise JSONResponseException(six.text_type(e))
+            raise JSONResponseException(str(e))
         return {
             'activated': notification.activated
         }
@@ -92,7 +98,7 @@ class ManageNotificationView(BasePageView):
                 'content': alert.content,
                 'url': alert.url,
                 'type': alert.get_type_display(),
-                'activated': six.text_type(alert.activated),
+                'activated': str(alert.activated),
                 'isActive': alert.is_active,
                 'id': alert.id,
             } for alert in Notification.objects.order_by('-created').all()],

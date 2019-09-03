@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext_noop
 
-
 FAILURE_MESSAGES = {
     "has_no_column": ugettext_noop(
         "Workbook 'types' has no column '{column_name}'."

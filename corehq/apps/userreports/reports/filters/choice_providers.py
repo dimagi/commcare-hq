@@ -2,9 +2,10 @@ from abc import ABCMeta, abstractmethod
 
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext
-from sqlalchemy import or_
 
+from sqlalchemy import or_
 from sqlalchemy.exc import ProgrammingError
+
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
@@ -15,7 +16,6 @@ from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
 from corehq.util.soft_assert import soft_assert
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
-import six
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
@@ -49,7 +49,7 @@ class ChoiceQueryContext(object):
             raise TypeError("One of page or offset must be passed in")
 
 
-class ChoiceProvider(six.with_metaclass(ABCMeta, object)):
+class ChoiceProvider(metaclass=ABCMeta):
     location_safe = False
 
     def __init__(self, report, filter_slug):
@@ -83,7 +83,7 @@ class ChoiceProvider(six.with_metaclass(ABCMeta, object)):
         used_values = {value for value, _ in choices}
         for value in values:
             if value not in used_values:
-                choices.add(Choice(value, six.text_type(value) if value is not None else ''))
+                choices.add(Choice(value, str(value) if value is not None else ''))
                 used_values.add(value)
         return choices
 
@@ -127,7 +127,7 @@ class StaticChoiceProvider(ChoiceProvider):
                 if choice.value in values}
 
 
-class ChainableChoiceProvider(six.with_metaclass(ABCMeta, ChoiceProvider)):
+class ChainableChoiceProvider(ChoiceProvider, metaclass=ABCMeta):
     @abstractmethod
     def query(self, query_context):
         pass
@@ -168,7 +168,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         try:
             return self._adapter.get_table().c[self.report_filter.field]
         except KeyError as e:
-            raise ColumnNotFoundError(six.text_type(e))
+            raise ColumnNotFoundError(str(e))
 
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(self._sql_column)
@@ -194,7 +194,7 @@ class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
         try:
             return [self._adapter.get_table().c[field] for field in self.report_filter.fields]
         except KeyError as e:
-            raise ColumnNotFoundError(six.text_type(e))
+            raise ColumnNotFoundError(str(e))
 
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(*self._sql_columns)

@@ -1,4 +1,5 @@
 from django.test import TestCase
+
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.sms.models import ForwardingRule
 

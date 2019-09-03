@@ -6,12 +6,11 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import Paragraph
+
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.utils import get_money_str
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.view_utils import absolute_reverse
-import six
-from six.moves import range
 
 LOGO_FILENAME = \
     'corehq/apps/accounting/static/accounting/images/Dimagi-Logo-RGB.jpg'
@@ -199,13 +198,13 @@ class InvoiceTemplate(object):
         top = inches(10.3)
         if self.from_address.mailing_address is not None:
             self.draw_text(
-                six.text_type(self.from_address.mailing_address),
+                str(self.from_address.mailing_address),
                 inches(.5),
                 top
             )
         if self.from_address.contact_info is not None:
             self.draw_text(
-                six.text_type(self.from_address.contact_info),
+                str(self.from_address.contact_info),
                 inches(2.5),
                 top
             )
@@ -234,13 +233,13 @@ class InvoiceTemplate(object):
 
         if self.to_address.mailing_address is not None:
             self.draw_text(
-                six.text_type(self.to_address.mailing_address),
+                str(self.to_address.mailing_address),
                 left + inches(0.2),
                 inches(-0.2)
             )
         if self.to_address.contact_info is not None:
             self.draw_text(
-                six.text_type(self.to_address.contact_info),
+                str(self.to_address.contact_info),
                 left + inches(4.2),
                 inches(-0.2)
             )

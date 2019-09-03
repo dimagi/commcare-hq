@@ -1,18 +1,20 @@
 from couchdbkit.exceptions import ResourceNotFound
+from tastypie import fields
 from tastypie.exceptions import NotFound
+from tastypie.resources import Resource
 
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.resources.v0_4 import XFormInstanceResource, BaseApplicationResource
+from corehq.apps.api.resources.v0_4 import (
+    BaseApplicationResource,
+    XFormInstanceResource,
+)
 from corehq.apps.api.resources.v0_5 import DoesNothingPaginator
-from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties_for_case_type
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    get_all_case_properties_for_case_type,
+)
+from corehq.apps.app_manager.models import Application
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES
 from corehq.apps.zapier.util import remove_advanced_fields
-from corehq.apps.app_manager.models import Application
-
-
-from tastypie.resources import Resource
-from tastypie import fields
-import six
 
 
 class ZapierXFormInstanceResource(XFormInstanceResource):
@@ -172,7 +174,7 @@ class ZapierCustomFieldCaseResource(BaseZapierCustomFieldResource):
                     label=self._build_label(prop)
                 )
             ))
-        for case_prop, case_prop_zapier_name in six.iteritems(CASE_PROPERTIES):
+        for case_prop, case_prop_zapier_name in CASE_PROPERTIES.items():
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',

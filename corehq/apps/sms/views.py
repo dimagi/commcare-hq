@@ -1,110 +1,145 @@
 #!/usr/bin/env python
 import base64
 import io
-from datetime import datetime, timedelta, time
-import re
 import json
-from django.urls import reverse
+import re
+from datetime import datetime, time, timedelta
+
+from django.conf import settings
+from django.contrib import messages
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
+from django.db.models import Q
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from corehq import privileges
-from corehq import toggles
-from corehq.apps.hqadmin.views.users import BaseAdminSectionView
-from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
+from django.utils.functional import cached_property
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import View
+
+from couchdbkit import ResourceNotFound
+from django_prbac.utils import has_privilege
+from memoized import memoized
+
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.decorators.view import get_file
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import json_format_datetime, string_to_boolean
+from dimagi.utils.web import json_response
+
+from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import (
-    requires_privilege_with_fallback,
     requires_privilege_plaintext_response,
+    requires_privilege_with_fallback,
 )
-from corehq.apps.accounting.models import DefaultProductPlan, SoftwarePlanEdition, Subscription
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+)
 from corehq.apps.commtrack.models import AlertConfig
-from corehq.apps.sms.api import (
-    send_sms,
-    incoming,
-    send_sms_with_backend_name,
-    send_sms_to_verified_number,
-    MessageMetadata,
-)
-from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
-from corehq.apps.domain.views.base import BaseDomainView, DomainViewMixin
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
-from corehq.apps.hqwebapp.decorators import (
-    use_timepicker,
-    use_typeahead,
-    use_jquery_ui,
-    use_datatables,
-)
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
-from corehq.apps.users import models as user_models
-from corehq.apps.users.views.mobile.users import EditCommCareUserView
-from corehq.apps.reminders.util import get_two_way_number_for_recipient
-from corehq.apps.sms.models import (
-    SMS, INCOMING, OUTGOING, ForwardingRule,
-    MessagingEvent, SelfRegistrationInvitation,
-    SQLMobileBackend, SQLMobileBackendMapping, PhoneLoadBalancingMixin,
-    SQLLastReadMessage, PhoneNumber
-)
-from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
-                                   InitiateAddSMSBackendForm, SubscribeSMSForm,
-                                   SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
-                                   DEFAULT, CUSTOM, SendRegistrationInvitationsForm,
-                                   WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
-                                   WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
-from corehq.apps.sms.util import (get_contact, get_sms_backend_classes, ContactNotFoundException,
-    get_or_create_translation_doc)
-from corehq.apps.sms.messages import _MESSAGES
-from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
-from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import (
+    domain_admin_required,
     login_and_domain_required,
     login_or_digest_ex,
-    domain_admin_required,
     require_superuser,
 )
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views.base import BaseDomainView, DomainViewMixin
+from corehq.apps.groups.models import Group
+from corehq.apps.hqadmin.views.users import BaseAdminSectionView
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.decorators import (
+    use_datatables,
+    use_jquery_ui,
+    use_timepicker,
+    use_typeahead,
+)
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.reminders.util import get_two_way_number_for_recipient
+from corehq.apps.sms.api import (
+    MessageMetadata,
+    incoming,
+    send_sms,
+    send_sms_to_verified_number,
+    send_sms_with_backend_name,
+)
+from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
+from corehq.apps.sms.forms import (
+    CUSTOM,
+    DEFAULT,
+    DISABLED,
+    ENABLED,
+    HIDE_ALL,
+    SHOW_ALL,
+    SHOW_INVALID,
+    WELCOME_RECIPIENT_ALL,
+    WELCOME_RECIPIENT_CASE,
+    WELCOME_RECIPIENT_MOBILE_WORKER,
+    WELCOME_RECIPIENT_NONE,
+    BackendMapForm,
+    ComposeMessageForm,
+    ForwardingRuleForm,
+    InitiateAddSMSBackendForm,
+    SendRegistrationInvitationsForm,
+    SettingsForm,
+    SubscribeSMSForm,
+)
+from corehq.apps.sms.messages import _MESSAGES
+from corehq.apps.sms.mixin import BadSMSConfigException
+from corehq.apps.sms.models import (
+    INCOMING,
+    OUTGOING,
+    SMS,
+    ForwardingRule,
+    MessagingEvent,
+    PhoneLoadBalancingMixin,
+    PhoneNumber,
+    SelfRegistrationInvitation,
+    SQLLastReadMessage,
+    SQLMobileBackend,
+    SQLMobileBackendMapping,
+)
+from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
+from corehq.apps.sms.util import (
+    ContactNotFoundException,
+    get_contact,
+    get_or_create_translation_doc,
+    get_sms_backend_classes,
+)
+from corehq.apps.smsbillables.utils import \
+    country_name_from_isd_code_or_empty as country_name_from_code
+from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.users import models as user_models
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
+from corehq.apps.users.views.mobile.users import EditCommCareUserView
+from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
-from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.util import show_messaging_dashboard
-from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.soft_assert import soft_assert
-from corehq.util.workbook_json.excel import get_single_worksheet
-from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.quickcache import quickcache
-from django.contrib import messages
-from django.db.models import Q
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_user
-from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import View
-from corehq.apps.domain.models import Domain
-from corehq.const import SERVER_DATETIME_FORMAT, SERVER_DATE_FORMAT
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from dimagi.utils.parsing import json_format_datetime, string_to_boolean
-from memoized import memoized
-from dimagi.utils.decorators.view import get_file
-from django.utils.functional import cached_property
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.couch.cache import cache_core
-from django.conf import settings
-from django_prbac.utils import has_privilege
-from couchdbkit import ResourceNotFound
-from couchexport.models import Format
-from couchexport.export import export_raw
-from couchexport.shortcuts import export_response
-import six
-
+from corehq.util.workbook_json.excel import get_single_worksheet
 
 # Tuple of (description, days in the past)
 SMS_CHAT_HISTORY_CHOICES = (
@@ -1798,9 +1833,8 @@ def upload_sms_translations(request, domain):
                         msg_id = row["property"]
                         if msg_id in msg_ids:
                             val = row[lang]
-                            if not isinstance(val, six.string_types):
-                                val = six.text_type(val)
-                            soft_assert_type_text(val)
+                            if not isinstance(val, str):
+                                val = str(val)
                             val = val.strip()
                             result[lang][msg_id] = val
 

@@ -1,9 +1,16 @@
 import json
-from django.test import SimpleTestCase
-from corehq.util.test_utils import generate_cases
 
-from corehq.apps.app_manager.models import AdvancedForm, Form, PreloadAction, CaseReferences, CaseSaveReference
+from django.test import SimpleTestCase
+
+from corehq.apps.app_manager.models import (
+    AdvancedForm,
+    CaseReferences,
+    CaseSaveReference,
+    Form,
+    PreloadAction,
+)
 from corehq.apps.app_manager.views.forms import _get_case_references
+from corehq.util.test_utils import generate_cases
 
 
 def _assert_references_equal(testcase, wrapped_references, unwrapped_references):

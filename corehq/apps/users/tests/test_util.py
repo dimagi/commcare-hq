@@ -1,5 +1,5 @@
-from django.test import TestCase
 from django.core.cache import cache
+from django.test import TestCase
 
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import username_to_user_id

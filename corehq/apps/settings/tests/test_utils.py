@@ -1,5 +1,7 @@
 import os
+
 from django.test import SimpleTestCase
+
 from corehq.apps.settings.utils import get_temp_file
 
 

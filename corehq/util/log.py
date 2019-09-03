@@ -1,4 +1,3 @@
-import six
 import sys
 from collections import defaultdict
 from itertools import islice
@@ -34,7 +33,7 @@ def clean_exception(exception):
     # couchdbkit doesn't provide a better way for us to catch this exception
     if (
         isinstance(exception, AssertionError) and
-        six.text_type(exception).startswith('received an invalid response of type')
+        str(exception).startswith('received an invalid response of type')
     ):
         message = ("It looks like couch returned an invalid response to "
                    "couchdbkit.  This could contain sensitive information, "
@@ -301,12 +300,8 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
 
 
 def get_traceback_string():
-    if six.PY3:
-        from io import StringIO
-        f = StringIO()
-    else:
-        from cStringIO import StringIO
-        f = StringIO()
+    from io import StringIO
+    f = StringIO()
     traceback.print_exc(file=f)
     return f.getvalue()
 

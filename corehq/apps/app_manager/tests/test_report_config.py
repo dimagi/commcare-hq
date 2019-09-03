@@ -6,7 +6,6 @@ from xml.etree import cElementTree as ElementTree
 from django.test import SimpleTestCase, TestCase
 
 import mock
-import six
 
 from casexml.apps.phone.tests.utils import (
     call_fixture_generator,
@@ -62,7 +61,7 @@ class ReportAppConfigTest(SimpleTestCase):
     def test_new_uuid(self):
         report_app_config = ReportAppConfig(report_id='report_id')
         self.assertTrue(report_app_config.uuid)
-        self.assertIsInstance(report_app_config.uuid, six.text_type)
+        self.assertIsInstance(report_app_config.uuid, str)
 
     def test_different_uuids(self):
         report_app_config_1 = ReportAppConfig(report_id='report_id')

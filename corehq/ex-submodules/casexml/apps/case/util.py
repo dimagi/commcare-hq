@@ -1,5 +1,4 @@
 from collections import defaultdict, namedtuple
-import six
 import uuid
 
 from xml.etree import cElementTree as ElementTree
@@ -305,4 +304,4 @@ def get_case_history(case):
                 property_changes.update(block.get('create', {}))
                 property_changes.update(block.get('update', {}))
                 changes[form.form_id].update(property_changes)
-    return sorted(six.itervalues(changes), key=lambda f: f['Form Received On'])
+    return sorted(changes.values(), key=lambda f: f['Form Received On'])

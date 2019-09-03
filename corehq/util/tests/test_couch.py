@@ -10,7 +10,6 @@ from corehq.util.exceptions import DocumentClassNotFound
 
 from ..couch import (get_document_or_404, IterDB, iter_update, IterUpdateError,
         DocUpdate, get_document_class_by_doc_type)
-from six.moves import range
 
 
 class MockDb(object):

@@ -2,12 +2,12 @@
 from django.conf.urls import url
 
 from corehq.apps.linked_domain.views import (
-    toggles_and_previews,
+    DomainLinkRMIView,
     case_search_config,
     custom_data_models,
-    user_roles,
     get_latest_released_app_source,
-    DomainLinkRMIView,
+    toggles_and_previews,
+    user_roles,
 )
 
 app_name = 'linked_domain'

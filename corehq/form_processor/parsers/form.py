@@ -4,8 +4,7 @@ from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from ddtrace import tracer
 
-from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
-from corehq.form_processor.exceptions import FormEditNotAllowed, MissingFormXml
+from corehq.form_processor.exceptions import MissingFormXml, NotAllowed
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
@@ -14,7 +13,6 @@ from corehq.util.soft_assert.api import soft_assert
 from couchforms import XMLSyntaxError
 from couchforms.exceptions import MissingXMLNSError
 from dimagi.utils.couch import release_lock
-import six
 
 
 @contextmanager
@@ -123,9 +121,9 @@ def _get_submission_error(domain, instance, error):
     :returns: xform error instance with raw xml as attachment
     """
     try:
-        message = six.text_type(error)
+        message = str(error)
     except UnicodeDecodeError:
-        message = six.text_type(str(error), encoding='utf-8')
+        message = str(str(error), encoding='utf-8')
 
     xform = FormProcessorInterface(domain).submission_error_form_instance(instance, message)
     return FormProcessingResult(xform)
@@ -222,8 +220,7 @@ def _handle_duplicate(new_doc):
                 #  - "Deprecate" the old form by making a new document with the same contents
                 #    but a different ID and a doc_type of XFormDeprecated
                 #  - Save the new instance to the previous document to preserve the ID
-                if couch_sql_migration_in_progress(new_doc.domain):
-                    raise FormEditNotAllowed("migration in progress")
+                NotAllowed.check(new_doc.domain)
                 existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
                 return new_doc, existing_doc
     else:

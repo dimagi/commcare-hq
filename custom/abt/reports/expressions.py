@@ -6,7 +6,6 @@ import yaml
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.app_manager.models import Application
 from corehq.util.quickcache import quickcache
-import six
 
 
 class AbtExpressionSpec(JsonObject):
@@ -141,14 +140,14 @@ class AbtExpressionSpec(JsonObject):
 
     @classmethod
     def _get_warning(cls, spec, item):
-        default = six.text_type(spec.get("warning", ""))
+        default = str(spec.get("warning", ""))
         language = cls._get_language(item)
         warning_key_map = {
             "fra": "warning_fr",
             "por": "warning_por",
             "en": "warning"
         }
-        warning = six.text_type(spec.get(warning_key_map[language], default))
+        warning = str(spec.get(warning_key_map[language], default))
         return warning if warning else default
 
     @classmethod

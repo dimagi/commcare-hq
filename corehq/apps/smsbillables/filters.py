@@ -1,11 +1,9 @@
-from corehq.apps.accounting.filters import (
-    clean_options,
-    DateRangeFilter,
-)
 from django.utils.translation import ugettext_noop as _
+
+from corehq.apps.accounting.filters import DateRangeFilter, clean_options
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.sms.models import DIRECTION_CHOICES
-from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsBillable
+from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFeeCriteria
 
 
 class DateSentFilter(DateRangeFilter):

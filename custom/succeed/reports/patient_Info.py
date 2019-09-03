@@ -4,7 +4,6 @@ from django.utils.translation import ugettext as _
 from custom.succeed.reports.patient_details import PatientDetailsReport
 from custom.succeed.utils import get_form_dict, is_pm_or_pi, is_cm, is_chw
 from custom.succeed.utils import format_date
-from six.moves import range
 
 EMPTY_FIELD = ""
 

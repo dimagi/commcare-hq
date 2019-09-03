@@ -3,44 +3,65 @@ from datetime import datetime
 
 from django.contrib import messages
 from django.db.models.expressions import RawSQL
-from django.http import (
-    JsonResponse,
-    Http404,
-    HttpResponseRedirect,
-)
-from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy, ugettext
-from django.views import View
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
-from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext, ugettext_lazy
+from django.views import View
+
+from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from memoized import memoized
 
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app, get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_brief_apps_in_domain,
+    get_latest_released_app,
+)
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.util import is_linked_app
-from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchQueryAddition
-from corehq.apps.domain.decorators import login_or_api_key, domain_admin_required
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    CaseSearchQueryAddition,
+)
+from corehq.apps.domain.decorators import (
+    domain_admin_required,
+    login_or_api_key,
+)
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.apps.linked_domain.const import LINKED_MODELS, LINKED_MODELS_MAP
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, get_linked_domains
+from corehq.apps.linked_domain.dbaccessors import (
+    get_domain_master_link,
+    get_linked_domains,
+)
 from corehq.apps.linked_domain.decorators import require_linked_domain
-from corehq.apps.linked_domain.local_accessors import get_toggles_previews, get_custom_data_models, get_user_roles
-from corehq.apps.linked_domain.models import AppLinkDetail, wrap_detail, DomainLinkHistory, DomainLink
+from corehq.apps.linked_domain.local_accessors import (
+    get_custom_data_models,
+    get_toggles_previews,
+    get_user_roles,
+)
+from corehq.apps.linked_domain.models import (
+    AppLinkDetail,
+    DomainLink,
+    DomainLinkHistory,
+    wrap_detail,
+)
+from corehq.apps.linked_domain.tasks import (
+    pull_missing_multimedia_for_app_and_notify_task,
+)
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
     convert_app_for_remote_linking,
-    server_to_user_time,
     pull_missing_multimedia_for_app,
+    server_to_user_time,
 )
-from corehq.apps.linked_domain.tasks import pull_missing_multimedia_for_app_and_notify_task
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.util.timezones.utils import get_timezone_for_request
-from memoized import memoized
 
 
 @login_or_api_key

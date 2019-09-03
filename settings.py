@@ -4,7 +4,6 @@ import inspect
 from collections import defaultdict
 import importlib
 import os
-import six
 
 from django.contrib import messages
 import settingshelper as helper
@@ -912,7 +911,7 @@ try:
     else:
         from localsettings import *
 except ImportError as error:
-    if six.text_type(error) != 'No module named localsettings':
+    if str(error) != 'No module named localsettings':
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
@@ -1245,47 +1244,32 @@ INDICATOR_CONFIG = {
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
-if six.PY3:
-    NEW_USERS_GROUPS_DB = 'users'
-    USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
+NEW_USERS_GROUPS_DB = 'users'
+USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
-    NEW_FIXTURES_DB = 'fixtures'
-    FIXTURES_DB = NEW_FIXTURES_DB
+NEW_FIXTURES_DB = 'fixtures'
+FIXTURES_DB = NEW_FIXTURES_DB
 
-    NEW_DOMAINS_DB = 'domains'
-    DOMAINS_DB = NEW_DOMAINS_DB
+NEW_DOMAINS_DB = 'domains'
+DOMAINS_DB = NEW_DOMAINS_DB
 
-    NEW_APPS_DB = 'apps'
-    APPS_DB = NEW_APPS_DB
+NEW_APPS_DB = 'apps'
+APPS_DB = NEW_APPS_DB
 
-    META_DB = 'meta'
+META_DB = 'meta'
 
-    _serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
-    for _name in ["default", "redis"]:
-        if _name not in CACHES:  # noqa: F405
-            continue
-        _options = CACHES[_name].setdefault('OPTIONS', {})  # noqa: F405
-        assert _options.get('SERIALIZER', _serializer) == _serializer, (
-            "Refusing to change SERIALIZER. Remove that option from "
-            "localsettings or whereever redis caching is configured. {}"
-            .format(_options)
-        )
-        _options['SERIALIZER'] = _serializer
-    del _name, _options, _serializer
-else:
-    NEW_USERS_GROUPS_DB = b'users'
-    USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
-
-    NEW_FIXTURES_DB = b'fixtures'
-    FIXTURES_DB = NEW_FIXTURES_DB
-
-    NEW_DOMAINS_DB = b'domains'
-    DOMAINS_DB = NEW_DOMAINS_DB
-
-    NEW_APPS_DB = b'apps'
-    APPS_DB = NEW_APPS_DB
-
-    META_DB = b'meta'
+_serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
+for _name in ["default", "redis"]:
+    if _name not in CACHES:  # noqa: F405
+        continue
+    _options = CACHES[_name].setdefault('OPTIONS', {})  # noqa: F405
+    assert _options.get('SERIALIZER', _serializer) == _serializer, (
+        "Refusing to change SERIALIZER. Remove that option from "
+        "localsettings or whereever redis caching is configured. {}"
+        .format(_options)
+    )
+    _options['SERIALIZER'] = _serializer
+del _name, _options, _serializer
 
 
 COUCHDB_APPS = [
@@ -1816,7 +1800,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', 'ucr_v2', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'dashboard', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'testing', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'ucr_v2', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
@@ -1886,6 +1869,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_product_consumption.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'indicateurs_de_base.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),

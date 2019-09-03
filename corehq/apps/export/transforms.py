@@ -1,8 +1,12 @@
 from django.core.cache import cache
 
 from corehq.apps.export.esaccessors import get_case_name
-from corehq.apps.users.util import cached_user_id_to_username, cached_owner_id_to_display
+from corehq.apps.users.util import (
+    cached_owner_id_to_display,
+    cached_user_id_to_username,
+)
 from corehq.util import reverse
+
 
 """
 Module for transforms used in exports.

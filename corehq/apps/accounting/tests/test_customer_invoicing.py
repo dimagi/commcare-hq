@@ -1,33 +1,31 @@
-from decimal import Decimal
 import random
 from datetime import date
+from decimal import Decimal
+
+from django.test import TestCase
 
 from dateutil import relativedelta
 from mock import Mock
 
-from django.test import TestCase
-
 from dimagi.utils.dates import add_months_to_date
 
+from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.invoicing import LineItemFactory
-from corehq.apps.accounting.tasks import calculate_users_in_all_domains
-from corehq.apps.domain.models import Domain
-from corehq.util.dates import get_previous_month_date_range
-
-from corehq.apps.accounting import utils, tasks
 from corehq.apps.accounting.models import (
+    CreditLine,
+    CustomerInvoice,
     DefaultProductPlan,
+    DomainUserHistory,
     FeatureType,
+    InvoicingPlan,
     SoftwarePlan,
     SoftwarePlanEdition,
-    CustomerInvoice,
-    InvoicingPlan,
-    DomainUserHistory,
-    CreditLine,
     Subscription,
 )
+from corehq.apps.accounting.tasks import calculate_users_in_all_domains
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import INCOMING
 from corehq.apps.smsbillables.models import (
     SmsBillable,
@@ -36,8 +34,10 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFee,
     SmsUsageFeeCriteria,
 )
-from corehq.apps.smsbillables.tests.generator import arbitrary_sms_billables_for_domain
-from six.moves import range
+from corehq.apps.smsbillables.tests.generator import (
+    arbitrary_sms_billables_for_domain,
+)
+from corehq.util.dates import get_previous_month_date_range
 
 
 class BaseCustomerInvoiceCase(BaseAccountingTest):

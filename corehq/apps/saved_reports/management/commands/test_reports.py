@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+
 from corehq.apps.saved_reports.tasks import queue_scheduled_reports
 
 

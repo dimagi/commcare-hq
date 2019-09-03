@@ -1,6 +1,7 @@
 
-from django.db import models, migrations
 import django.db.models.deletion
+from django.db import migrations, models
+
 import dimagi.utils.couch.migration
 
 

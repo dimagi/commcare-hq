@@ -1,12 +1,14 @@
 from django.conf.urls import url
+
 from corehq.apps.data_dictionary.views import (
+    DataDictionaryView,
+    ExportDataDictionaryView,
+    UploadDataDictionaryView,
     data_dictionary_json,
     generate_data_dictionary,
     update_case_property,
     update_case_property_description,
-    DataDictionaryView,
-    ExportDataDictionaryView,
-    UploadDataDictionaryView)
+)
 
 urlpatterns = [
     url(r"^generate/$", generate_data_dictionary),

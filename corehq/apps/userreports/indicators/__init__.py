@@ -1,11 +1,9 @@
-
 from datetime import date, timedelta
 
-import six
+from fluff import TYPE_DATE, TYPE_INTEGER, TYPE_SMALL_INTEGER
 
 from corehq.apps.userreports.indicators.utils import get_values_by_product
 from corehq.apps.userreports.util import truncate_value
-from fluff import TYPE_DATE, TYPE_INTEGER, TYPE_SMALL_INTEGER
 
 
 class Column(object):
@@ -158,5 +156,5 @@ class DueListDateIndicator(LedgerBalancesIndicator):
         values_by_product = super(DueListDateIndicator, self)._get_values_by_product(domain, case_id)
         return {
             product_code: unix_epoch + timedelta(days=value)
-            for product_code, value in six.iteritems(values_by_product)
+            for product_code, value in values_by_product.items()
         }

@@ -3,17 +3,20 @@ from distutils.version import LooseVersion
 
 from django.utils.translation import ugettext
 
-from corehq.apps.app_manager import id_strings
 from memoized import memoized
-from corehq.apps.app_manager.util import module_offers_search,\
-    create_temp_sort_column, get_sort_and_sort_only_columns
-import langcodes
+
 import commcare_translations
+import langcodes
+from corehq import toggles
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
+from corehq.apps.app_manager.util import (
+    create_temp_sort_column,
+    get_sort_and_sort_only_columns,
+    module_offers_search,
+)
 from corehq.util.translation import localize
 from langcodes import langs_by_code
-import six
-from corehq import toggles
 
 
 def non_empty_only(dct):
@@ -83,10 +86,10 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                 elif column.format == "graph":
                     for index, item in enumerate(column.graph_configuration.annotations):
                         yield id_strings.graph_annotation(module, detail_type, column, index), trans(item.values)
-                    for property, values in six.iteritems(column.graph_configuration.locale_specific_config):
+                    for property, values in column.graph_configuration.locale_specific_config.items():
                         yield id_strings.graph_configuration(module, detail_type, column, property), trans(values)
                     for index, item in enumerate(column.graph_configuration.series):
-                        for property, values in six.iteritems(item.locale_specific_config):
+                        for property, values in item.locale_specific_config.items():
                             yield id_strings.graph_series_configuration(
                                 module, detail_type, column, index, property
                             ), trans(values)
@@ -132,13 +135,13 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                         id_strings.report_column_header(config.uuid, column.column_id),
                         column.get_header(lang)
                     )
-                for chart_id, graph_config in six.iteritems(config.complete_graph_configs):
+                for chart_id, graph_config in config.complete_graph_configs.items():
                     for index, item in enumerate(graph_config.annotations):
                         yield id_strings.mobile_ucr_annotation(module, config.uuid, index), trans(item.values)
-                    for property, values in six.iteritems(graph_config.locale_specific_config):
+                    for property, values in graph_config.locale_specific_config.items():
                         yield id_strings.mobile_ucr_configuration(module, config.uuid, property), trans(values)
                     for index, item in enumerate(graph_config.series):
-                        for property, values in six.iteritems(item.locale_specific_config):
+                        for property, values in item.locale_specific_config.items():
                             yield id_strings.mobile_ucr_series_configuration(
                                 module, config.uuid, index, property
                             ), trans(values)

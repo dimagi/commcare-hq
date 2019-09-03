@@ -11,7 +11,6 @@ from corehq.util.quickcache import quickcache
 from pillowtop.dao.django import DjangoDocumentStore
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.interface import ReadOnlyDocumentStore
-import six
 
 
 class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
@@ -83,8 +82,8 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
     @property
     @quickcache(['self.domain'], timeout=30 * 60)
     def product_ids(self):
-        from corehq.apps.products.models import Product
-        return Product.ids_by_domain(self.domain)
+        from corehq.apps.products.models import SQLProduct
+        return list(SQLProduct.objects.filter(domain=self.domain).product_ids())
 
     def iter_document_ids(self, last_id=None):
         if should_use_sql_backend(self.domain):
@@ -107,9 +106,9 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
         for id_string in ids:
             case_id, section_id, entry_id = UniqueLedgerReference.from_id(id_string)
             case_id_map[(section_id, entry_id)].append(case_id)
-        for section_entry, case_ids in six.iteritems(case_id_map):
+        for section_entry, case_ids in case_id_map.items():
             section_id, entry_id = section_entry
-            results = self.ledger_accessors.get_ledger_values_for_cases(case_ids, section_id, entry_id)
+            results = self.ledger_accessors.get_ledger_values_for_cases(case_ids, [section_id], [entry_id])
             for ledger_value in results:
                 yield ledger_value.to_json()
 

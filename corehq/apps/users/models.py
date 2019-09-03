@@ -1,79 +1,86 @@
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 import logging
 import re
+from datetime import datetime
 from uuid import uuid4
+from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _, override as override_language, ugettext_noop
+from django.utils.translation import override as override_language
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
+from couchdbkit import MultipleResultsFound, ResourceNotFound
+from couchdbkit.exceptions import BadValueError, ResourceConflict
+from dateutil.relativedelta import relativedelta
+from memoized import memoized
+
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
-from corehq import toggles
-from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
-from corehq.apps.users.permissions import EXPORT_PERMISSIONS
-from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.sql_db.routers import db_for_read_write
-from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.ext.couchdbkit import (
-    StringProperty,
-    IntegerProperty,
-    DateTimeProperty,
-    SchemaListProperty,
-    DocumentSchema,
     BooleanProperty,
-    StringListProperty,
-    ListProperty,
-    SchemaProperty,
+    DateProperty,
+    DateTimeProperty,
     DictProperty,
     Document,
-    DateProperty
+    DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringListProperty,
+    StringProperty,
 )
-from couchdbkit import ResourceNotFound, MultipleResultsFound
-from corehq.util.dates import get_timestamp
-from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
-from dimagi.utils.logging import notify_exception, log_signal_errors
-
-from memoized import memoized
+from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
+from dimagi.utils.dates import force_to_datetime
+from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
-from corehq.util.quickcache import quickcache
-from casexml.apps.case.mock import CaseBlock
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
+from dimagi.utils.web import get_site_domain
+
+from corehq import toggles
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers, guess_domain_language
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
+from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain, LicenseAgreement
+from corehq.apps.domain.shortcuts import create_user
+from corehq.apps.domain.utils import (
+    domain_restricts_superusers,
+    guess_domain_language,
+    normalize_domain_name,
+)
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
+from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
+from corehq.apps.users.permissions import EXPORT_PERMISSIONS
+from corehq.apps.users.tasks import (
+    tag_cases_as_deleted_and_remove_indices,
+    tag_forms_as_deleted_rebuild_associated_cases,
+    tag_system_forms_as_deleted,
+    undelete_system_forms,
+)
 from corehq.apps.users.util import (
+    filter_by_app,
     user_display_string,
     user_location_data,
     username_to_user_id,
-    filter_by_app
 )
-from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
-    tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted, \
-    undelete_system_forms
-from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
-from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
-from corehq.apps.hqwebapp.tasks import send_html_email_async
-from dimagi.utils.dates import force_to_datetime
-from xml.etree import cElementTree as ElementTree
-
-from couchdbkit.exceptions import ResourceConflict, BadValueError
-
-from dimagi.utils.web import get_site_domain
-import six
-from six.moves import range
-from six.moves import map
+from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.sql_db.routers import db_for_read_write
+from corehq.util.dates import get_timestamp
+from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import absolute_reverse
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -390,7 +397,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def get_preset_permission_by_name(cls, name):
-        matches = {k for k, v in six.iteritems(PERMISSIONS_PRESETS) if v['name'] == name}
+        matches = {k for k, v in PERMISSIONS_PRESETS.items() if v['name'] == name}
         return matches.pop() if matches else None
 
     @classmethod
@@ -399,7 +406,8 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def preset_permissions_names(cls):
-        return {details['name'] for role, details in six.iteritems(PERMISSIONS_PRESETS)}
+        return {details['name'] for role, details in PERMISSIONS_PRESETS.items()}
+
 
 PERMISSIONS_PRESETS = {
     'edit-apps': {
@@ -967,7 +975,6 @@ class ReportingMetadata(DocumentSchema):
     last_build_for_user = SchemaProperty(LastBuild)
 
 
-@six.python_2_unicode_compatible
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     """
     A user (for web and commcare)
@@ -1200,9 +1207,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
-        if not isinstance(phone_number, six.string_types):
-            phone_number = six.text_type(phone_number)
-        soft_assert_type_text(phone_number)
+        if not isinstance(phone_number, str):
+            phone_number = str(phone_number)
         self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
 
     def set_default_phone_number(self, phone_number):
@@ -1800,6 +1806,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore the user's phone numbers
         - It will not restore reminders for cases
         """
+        NotAllowed.check(self.domain)
         by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
         if by_username and by_username['id'] != self._id:
             return False, "A user with the same username already exists in the system"
@@ -1817,6 +1824,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return True, None
 
     def retire(self):
+        NotAllowed.check(self.domain)
         suffix = DELETED_SUFFIX
         deletion_id = uuid4().hex
         deletion_date = datetime.utcnow()
@@ -2431,8 +2439,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def set_location(self, domain, location_object_or_id):
         # set the primary location for user's domain_membership
-        if isinstance(location_object_or_id, six.string_types):
-            soft_assert_type_text(location_object_or_id)
+        if isinstance(location_object_or_id, str):
             location_id = location_object_or_id
         else:
             location_id = location_object_or_id.location_id

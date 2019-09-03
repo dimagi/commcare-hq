@@ -1,36 +1,41 @@
 import json
 import re
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
 
-from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
-from django.urls import RegexURLResolver, Resolver404
-from django.http import HttpResponse, Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.urls import RegexURLResolver, Resolver404
 from django.utils.translation import ugettext_lazy as _
 
-from corehq import toggles
+from couchdbkit import ResourceConflict, ResourceNotFound
+
+from dimagi.utils.web import json_response
+
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
-from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
-    AppManagerException, FormNotFoundException
+from corehq.apps.app_manager.decorators import (
+    safe_cached_download,
+    safe_download,
+)
+from corehq.apps.app_manager.exceptions import (
+    AppManagerException,
+    FormNotFoundException,
+    ModuleNotFoundException,
+)
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.tasks import autogenerate_build
 from corehq.apps.app_manager.util import (
     add_odk_profile_after_build,
     get_latest_enabled_versions_per_profile,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
-from corehq.apps.app_manager.tasks import autogenerate_build
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
-from dimagi.utils.web import json_response
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq import privileges
-import six
-
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
                       "If error persists, please report an issue")
@@ -386,7 +391,7 @@ def download_index(request, domain, app_id):
                 section_name = "m{} - {}".format(
                     module_id,
                     ", ".join(["({}) {}".format(lang, name)
-                               for lang, name in six.iteritems(module.name)])
+                               for lang, name in module.name.items()])
                 )
                 files[section_name].append({
                     'name': file_[0],
@@ -394,7 +399,7 @@ def download_index(request, domain, app_id):
                     'readable_name': "f{} - {}".format(
                         form_id,
                         ", ".join(["({}) {}".format(lang, name)
-                                   for lang, name in six.iteritems(form.name)])
+                                   for lang, name in form.name.items()])
                     ),
                 })
             else:
@@ -423,7 +428,7 @@ def download_index(request, domain, app_id):
 
     return render(request, "app_manager/download_index.html", {
         'app': request.app,
-        'files': OrderedDict(sorted(six.iteritems(files), key=lambda x: x[0] or '')),
+        'files': OrderedDict(sorted(files.items(), key=lambda x: x[0] or '')),
         'supports_j2me': request.app.build_spec.supports_j2me(),
         'enabled_build_profiles': enabled_build_profiles,
         'latest_enabled_build_profiles': latest_enabled_build_profiles,
@@ -484,7 +489,7 @@ def download_index_files(app, build_profile_id=None):
     else:
         files = list(app.create_all_files().items())
     files = [
-        (name, build_file if isinstance(build_file, six.text_type) else build_file.decode('utf-8'))
+        (name, build_file if isinstance(build_file, str) else build_file.decode('utf-8'))
         for (name, build_file) in files
     ]
     return sorted(files)
@@ -502,8 +507,6 @@ def source_files(app):
     app_json = json.dumps(
         app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
     )
-    if six.PY2:
-        app_json = app_json.decode('utf-8')
     files.append(
         ("app.json", app_json)
     )

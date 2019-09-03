@@ -3,25 +3,34 @@ from django.core.management import BaseCommand, CommandError
 from corehq.pillows.app_submission_tracker import (
     CouchAppFormSubmissionTrackerReindexerFactory,
     SqlAppFormSubmissionTrackerReindexerFactory,
-    UserAppFormSubmissionReindexerFactory
+    UserAppFormSubmissionReindexerFactory,
 )
 from corehq.pillows.application import AppReindexerFactory
 from corehq.pillows.case import (
-    CouchCaseReindexerFactory, SqlCaseReindexerFactory
+    CouchCaseReindexerFactory,
+    SqlCaseReindexerFactory,
 )
-from corehq.pillows.case_search import CaseSearchReindexerFactory, ResumableCaseSearchReindexerFactory
+from corehq.pillows.case_search import (
+    CaseSearchReindexerFactory,
+    ResumableCaseSearchReindexerFactory,
+)
 from corehq.pillows.domain import DomainReindexerFactory
 from corehq.pillows.group import GroupReindexerFactory
 from corehq.pillows.groups_to_user import GroupToUserReindexerFactory
-from corehq.pillows.ledger import LedgerV1ReindexerFactory, LedgerV2ReindexerFactory
+from corehq.pillows.ledger import (
+    LedgerV1ReindexerFactory,
+    LedgerV2ReindexerFactory,
+)
 from corehq.pillows.reportcase import ReportCaseReindexerFactory
 from corehq.pillows.reportxform import ReportFormReindexerFactory
 from corehq.pillows.sms import SmsReindexerFactory
 from corehq.pillows.synclog import UpdateUserSyncHistoryReindexerFactory
 from corehq.pillows.user import UserReindexerFactory
-from corehq.pillows.xform import CouchFormReindexerFactory, SqlFormReindexerFactory
+from corehq.pillows.xform import (
+    CouchFormReindexerFactory,
+    SqlFormReindexerFactory,
+)
 from corehq.util.test_utils import unit_testing_only
-from six.moves import input
 
 USAGE = """Reindex a pillowtop index.
 

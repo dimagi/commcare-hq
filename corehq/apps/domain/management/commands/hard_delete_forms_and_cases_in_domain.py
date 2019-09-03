@@ -1,13 +1,15 @@
-
 import logging
 
 from django.core.management import BaseCommand
 
-from corehq.apps.domain.utils import silence_during_tests
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
-from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
-from six.moves import input
+
+from corehq.apps.domain.utils import silence_during_tests
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+)
+from corehq.util.log import with_progress_bar
 
 logger = logging.getLogger(__name__)
 

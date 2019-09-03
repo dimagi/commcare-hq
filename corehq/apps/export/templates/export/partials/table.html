@@ -57,7 +57,7 @@
           {% trans 'Edit' %}
         {% else %}
           {% blocktrans %}
-            Copy &amp; Edit
+            Copy &amp; Edit Feed
           {% endblocktrans %}
         {% endif %}
       </th>
@@ -137,16 +137,25 @@
             </div>
           </p>
           <!-- /ko -->
-          <!-- ko if: hasSecondaryOdataFeed -->
+          <!-- ko if: hasAdditionalODataFeeds -->
             <p>
               <a class="btn btn-link btn-sm"
-                 data-bind="attr: {href: '#' + id() + 'secondary-odata'}"
+                 data-bind="attr: {
+                              href: '#' + id() + '-odata-additional'
+                            },
+                            click: sendAnalyticsOpenAdditionalFeeds"
                  data-toggle="modal">
-                {% trans "Show Additional Feeds" %}
+                <i class="fa fa-rss"></i>
+                <!-- ko if: exportType() == 'form' -->
+                  {% trans "Show additional feeds for Repeat Group data." %}
+                <!-- /ko -->
+                <!-- ko if: exportType() == 'case' -->
+                  {% trans "Show additional feeds for linking Parent and Child Cases." %}
+                <!-- /ko -->
               </a>
             </p>
             <div class="modal fade"
-                 data-bind="attr: {id: id() + 'secondary-odata'}">
+                 data-bind="attr: {id: id() + '-odata-additional'}">
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
@@ -159,25 +168,24 @@
                       </span>
                     </button>
                     <h4 class="modal-title">
-                      {% trans "Secondary Feed Links" %}
+                      {% trans "Additional Feeds" %}
                     </h4>
                   </div>
                   <div class="modal-body">
                     <p class="lead">
                       <!-- ko if: exportType() == 'form' -->
                       {% blocktrans %}
-                        Click to copy the links below to add <strong>repeat group</strong>
-                        support:
+                        Click to copy feeds for <strong>Repeat Group</strong> data:
                       {% endblocktrans %}
                       <!-- /ko -->
                       <!-- ko if: exportType() == 'case' -->
                       {% blocktrans %}
-                        Click to copy the links below to add <strong>parent case</strong>
-                        support:
+                        Click to copy feeds for linking <strong>Parent</strong>
+                        and <strong>Child Cases</strong>:
                       {% endblocktrans %}
                       <!-- /ko -->
                     </p>
-                    <!-- ko foreach: odataSecondaryFeedUrls -->
+                    <!-- ko foreach: odataAdditionalFeedUrls -->
                     <p>
                       <div class="input-group">
                         <span data-bind="css: {
@@ -201,6 +209,7 @@
                   <div class="modal-footer">
                     <a href="#"
                        class="btn btn-default"
+                       data-bind="click: sendAnalyticsCloseAdditionalFeeds"
                        data-dismiss="modal">
                       {% trans "Close" %}
                     </a>
@@ -580,7 +589,9 @@
                 <div data-bind="if: isOData()">
                   <i class="fa fa-pencil"></i>
                   <span>
-                    {% trans 'Copy Feed' %}
+                    {% blocktrans %}
+                      Copy &amp; Edit Feed
+                    {% endblocktrans %}
                   </span>
                 </div>
               </a>
@@ -607,7 +618,7 @@
         </div>
         <div data-bind="ifnot: $parent.showOwnership">
           <div data-bind="if: isLocationSafeForUser">
-            <a data-bind="attr: {href: editUrl}"
+            <a data-bind="click: editExport"
                class="btn btn-default"{% if odata_feeds_over_limit %} data-toggle="modal"{% endif %}>
               <div data-bind="ifnot: isOData()">
                 <i class="fa fa-pencil"></i>
@@ -621,7 +632,9 @@
               <div data-bind="if: isOData()">
                 <i class="fa fa-pencil"></i>
                 <span>
-                  {% trans 'Copy Feed' %}
+                  {% blocktrans %}
+                    Copy &amp; Edit Feed
+                  {% endblocktrans %}
                 </span>
               </div>
             </a>

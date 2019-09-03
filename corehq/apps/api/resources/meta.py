@@ -1,4 +1,5 @@
 from django.conf import settings
+
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.throttle import CacheDBThrottle
 

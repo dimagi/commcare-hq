@@ -2,24 +2,24 @@ import re
 from datetime import datetime
 from itertools import chain
 
-import six
+from django.core.management.base import BaseCommand
+
 from couchdbkit import ResourceNotFound
+
+from couchforms.const import ATTACHMENT_NAME
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_correct_app_class
-from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xmlns import \
-    name_matches
+from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xmlns import (
+    name_matches,
+)
 from corehq.apps.es import FormES
 from corehq.apps.es.filters import NOT, doc_type
 from corehq.util.couch import IterDB
 from corehq.util.quickcache import quickcache
-from couchforms.const import ATTACHMENT_NAME
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
-from django.core.management.base import BaseCommand
-from six.moves import input
-
 
 ONE_HOUR = 60 * 60
 INFO = "info"
@@ -88,7 +88,7 @@ class Command(BaseCommand):
                 except MultiplePreviouslyFixedForms as e:
                     if xform_instance.build_id not in unfixable_builds:
                         unfixable_builds.add(xform_instance.build_id)
-                        print(six.text_type(e))
+                        print(str(e))
                     _log(log_file, WARNING, MULTI_MATCH, xform_instance)
                     continue
                 except CantMatchAForm as e:

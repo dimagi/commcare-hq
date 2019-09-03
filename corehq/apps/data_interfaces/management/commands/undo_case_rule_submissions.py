@@ -1,9 +1,11 @@
 import re
-from corehq.apps.data_interfaces.models import CaseRuleUndoer
-from dateutil.parser import parse
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Min
-from six.moves import input
+
+from dateutil.parser import parse
+
+from corehq.apps.data_interfaces.models import CaseRuleUndoer
 
 
 class Command(BaseCommand):

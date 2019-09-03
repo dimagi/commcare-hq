@@ -1,9 +1,11 @@
 import re
 from collections import defaultdict
-from github import Github
+
 from django.template.loader import render_to_string
+
 import requests
 from gevent.pool import Pool
+from github import Github
 
 LABELS_TO_EXPAND = [
     "product/all-users-all-environments",

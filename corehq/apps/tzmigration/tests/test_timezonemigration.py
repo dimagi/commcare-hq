@@ -1,23 +1,30 @@
 import os
+
 from django.test import TestCase
 from django.test.utils import override_settings
+
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
-from corehq.apps.domain.models import Domain
-from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
-from corehq.util.test_utils import TestFileMixin
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
-from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
-from corehq.apps.tzmigration.api import set_tz_migration_complete, \
-    set_tz_migration_started, MigrationStatus, TZMIGRATION_SLUG
-from corehq.apps.tzmigration.timezonemigration import \
-    run_timezone_migration_for_domain, _run_timezone_migration_for_domain
-from corehq.apps.receiverwrapper.util import submit_form_locally
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from couchforms.dbaccessors import get_forms_by_type
 from couchforms.models import XFormInstance
-from six.moves import zip
-import six
+
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
+from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.tzmigration.api import (
+    TZMIGRATION_SLUG,
+    MigrationStatus,
+    set_tz_migration_complete,
+    set_tz_migration_started,
+)
+from corehq.apps.tzmigration.timezonemigration import (
+    _run_timezone_migration_for_domain,
+    run_timezone_migration_for_domain,
+)
+from corehq.util.test_utils import TestFileMixin
 
 
 class TimeZoneMigrationTest(TestCase, TestFileMixin):
@@ -67,7 +74,7 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
             '#export_tag': actual_json['#export_tag'],
             'auth_context': actual_json['auth_context'],
         })
-        for name, meta in six.iteritems(actual_json.get("external_blobs", {})):
+        for name, meta in actual_json.get("external_blobs", {}).items():
             expected_json["external_blobs"][name]["blobmeta_id"] = meta["blobmeta_id"]
             expected_json["external_blobs"][name]["key"] = meta["key"]
         expected_json = XFormInstance.wrap(expected_json).to_json()

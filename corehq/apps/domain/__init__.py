@@ -1,5 +1,6 @@
-from corehq.preindex import ExtraPreindexPlugin
 from django.conf import settings
+
+from corehq.preindex import ExtraPreindexPlugin
 
 ExtraPreindexPlugin.register('domain', __file__, (
     settings.NEW_DOMAINS_DB,

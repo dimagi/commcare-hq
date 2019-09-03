@@ -1,5 +1,5 @@
+from decimal import Decimal
 from xml.etree import cElementTree as ElementTree
-import six
 
 
 def simple_fixture_generator(restore_user, id, name, fields, data, user_id=None):
@@ -31,12 +31,14 @@ def simple_fixture_generator(restore_user, id, name, fields, data, user_id=None)
                 if val:
                     for k, v in val.items():
                         sub_el = ElementTree.Element(k)
-                        sub_el.text = six.text_type(v if v is not None else '')
+                        sub_el.text = str(v if v is not None else '')
                         field_elem.append(sub_el)
 
                     item_elem.append(field_elem)
             else:
-                field_elem.text = six.text_type(val if val is not None else '')
+                if isinstance(val, Decimal):
+                    val = val.normalize()
+                field_elem.text = str(val if val is not None else '')
                 item_elem.append(field_elem)
 
     return [root]

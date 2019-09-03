@@ -2,24 +2,22 @@
 import json
 from collections import OrderedDict, defaultdict, namedtuple
 
-import six
-import six.moves.html_parser
-from couchdbkit import ResourceNotFound
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import (
-    HttpResponseRedirect,
-    HttpResponse,
-)
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 
-from corehq.apps.domain.decorators import (
-    require_superuser)
+import six.moves.html_parser
+from couchdbkit import ResourceNotFound
+
+from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.locations.models import SQLLocation
 from corehq.elastic import ES_META, run_query
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
-from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
-    CommCareCaseSQLRawDocSerializer
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+from corehq.form_processor.serializers import (
+    CommCareCaseSQLRawDocSerializer,
+    XFormInstanceSQLRawDocSerializer,
+)
 from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
 from corehq.util.json import CommCareJSONEncoder
@@ -91,7 +89,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
         try:
             doc = db.get(doc_id)
         except ResourceNotFound as e:
-            db_results.append(db_result(db.dbname, six.text_type(e), STATUSES[six.text_type(e)]))
+            db_results.append(db_result(db.dbname, str(e), STATUSES[str(e)]))
         else:
             db_results.append(db_result(db.dbname, 'found', 'success'))
             response.update({

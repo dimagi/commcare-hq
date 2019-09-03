@@ -1,18 +1,22 @@
 import json
-from couchdbkit import ResourceNotFound
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+
 from django.contrib import messages
-from memoized import memoized
-from dimagi.utils.web import json_response
-from django.views.decorators.http import require_POST
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
-from corehq.apps.domain.decorators import domain_admin_required
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+from django.views.decorators.http import require_POST
+
+from couchdbkit import ResourceNotFound
+from memoized import memoized
+
+from dimagi.utils.web import json_response
+
 from corehq.apps.commtrack.views import BaseCommTrackManageView
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.programs.models import Program
 from corehq.apps.programs.forms import ProgramForm
-from six.moves import range
+from corehq.apps.programs.models import Program
 
 
 @require_POST

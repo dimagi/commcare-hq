@@ -22,9 +22,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from os.path import abspath, dirname, exists, join
 
 import sh
-import six
 from gitutils import get_git
-from six.moves import input
 
 VELLUM_TAR = "vellum.tar.gz"
 
@@ -236,7 +234,7 @@ def get_version(vellum_tar):
 def byte_stream(stream):
     # Get a stream that accepts bytes
     # https://github.com/amoffat/sh/issues/242
-    return stream if six.PY2 else stream.buffer
+    return stream.buffer
 
 
 if __name__ == '__main__':

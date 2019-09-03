@@ -1,8 +1,9 @@
-from django.core.management.base import BaseCommand
 import sys
+
+from django.core.management.base import BaseCommand
+
 from corehq.apps.domain.models import Domain
 from corehq.util.couch import get_db_by_doc_type
-from six.moves import input
 
 
 class Command(BaseCommand):

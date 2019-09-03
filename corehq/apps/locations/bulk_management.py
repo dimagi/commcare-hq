@@ -9,25 +9,31 @@ import copy
 from collections import Counter, defaultdict
 from decimal import Decimal, InvalidOperation
 
-from attr import attrs, attrib
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.functional import cached_property
-from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
+from django.utils.translation import string_concat
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from attr import attrib, attrs
 from memoized import memoized
 
-from corehq.apps.domain.models import Domain
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
 
+from corehq.apps.domain.models import Domain
+
 from .const import (
-    LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE,
-    LOCATION_SHEET_HEADERS_OPTIONAL, LOCATION_SHEET_HEADERS_BASE)
-from .models import SQLLocation, LocationType
+    LOCATION_SHEET_HEADERS,
+    LOCATION_SHEET_HEADERS_BASE,
+    LOCATION_SHEET_HEADERS_OPTIONAL,
+    LOCATION_TYPE_SHEET_HEADERS,
+    ROOT_LOCATION_TYPE,
+)
+from .models import LocationType, SQLLocation
 from .tree_utils import BadParentError, CycleError, assert_no_cycles
 from .util import get_location_data_model
-
-import six
 
 
 class LocationExcelSheetError(Exception):
@@ -50,15 +56,15 @@ def to_boolean(val):
 
 
 def strip(val):
-    return six.text_type(val).strip()
+    return str(val).strip()
 
 
 @attrs(frozen=True)
 class LocationTypeData(object):
     """read-only representation of location type attributes specified in an upload"""
-    name = attrib(type=six.text_type, converter=strip)
-    code = attrib(type=six.text_type, converter=strip)
-    parent_code = attrib(type=six.text_type, converter=lambda code: code or ROOT_LOCATION_TYPE)
+    name = attrib(type=str, converter=strip)
+    code = attrib(type=str, converter=strip)
+    parent_code = attrib(type=str, converter=lambda code: code or ROOT_LOCATION_TYPE)
     do_delete = attrib(type=bool, converter=to_boolean)
     shares_cases = attrib(type=bool, converter=to_boolean)
     view_descendants = attrib(type=bool, converter=to_boolean)
@@ -110,7 +116,7 @@ class LocationTypeStub(object):
 
 
 def lowercase_string(val):
-    return six.text_type(val).strip().lower()
+    return str(val).strip().lower()
 
 
 def maybe_decimal(val):
@@ -125,14 +131,14 @@ def maybe_decimal(val):
 @attrs(frozen=True)
 class LocationData(object):
     """read-only representation of location attributes specified in an upload"""
-    name = attrib(type=six.text_type, converter=strip)
-    site_code = attrib(type=six.text_type, converter=lowercase_string)
-    location_type = attrib(type=six.text_type, converter=strip)
-    parent_code = attrib(type=six.text_type,
+    name = attrib(type=str, converter=strip)
+    site_code = attrib(type=str, converter=lowercase_string)
+    location_type = attrib(type=str, converter=strip)
+    parent_code = attrib(type=str,
                          converter=lambda val: lowercase_string(val) if val else ROOT_LOCATION_TYPE)
-    location_id = attrib(type=six.text_type, converter=strip)
+    location_id = attrib(type=str, converter=strip)
     do_delete = attrib(type=bool, converter=to_boolean)
-    external_id = attrib(type=six.text_type, converter=strip)
+    external_id = attrib(type=str, converter=strip)
     latitude = attrib(converter=maybe_decimal)
     longitude = attrib(converter=maybe_decimal)
     # This can be a dict or 'NOT_PROVIDED_IN_EXCEL'
@@ -185,7 +191,7 @@ class LocationStub(object):
         # This just compiles the custom location data, the validation is done in _custom_data_errors()
         data_provided = self.new_data.custom_data != self.NOT_PROVIDED
         if data_provided:
-            metadata = {key: six.text_type(value) for key, value in self.new_data.custom_data.items()}
+            metadata = {key: str(value) for key, value in self.new_data.custom_data.items()}
         elif self.is_new:
             metadata = {}
         else:
@@ -752,7 +758,7 @@ class LocationTreeValidator(object):
             try:
                 location.db_object.full_clean(exclude=exclude_fields)
             except ValidationError as e:
-                for field, issues in six.iteritems(e.message_dict):
+                for field, issues in e.message_dict.items():
                     for issue in issues:
                         errors.append(_(
                             "Error with location in sheet '{}', at row {}. {}: {}").format(

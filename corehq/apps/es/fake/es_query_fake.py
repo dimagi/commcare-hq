@@ -1,11 +1,12 @@
-from copy import deepcopy
 import datetime
 import logging
-import pytz
 import uuid
+from copy import deepcopy
+
+import pytz
+
 from corehq.apps.es.es_query import ESQuerySet
 from corehq.apps.es.utils import values_list
-from six.moves import filter
 from corehq.elastic import ScanResult
 
 FILTER_TEMPLATE = """

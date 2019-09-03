@@ -1,11 +1,14 @@
+from memoized import memoized
 
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    make_form_meta_block_indicator,
+    make_form_question_indicator,
+)
 from corehq.apps.userreports.datatypes import NUMERIC_TYPE_CHOICES
 from corehq.apps.userreports.reports.builder import (
     make_case_property_indicator,
     make_multiselect_question_indicator,
 )
-from corehq.apps.userreports.app_manager.data_source_meta import make_form_question_indicator, \
-    make_form_meta_block_indicator
 from corehq.apps.userreports.reports.builder.const import (
     UCR_AGG_AVG,
     UCR_AGG_EXPAND,
@@ -18,9 +21,6 @@ from corehq.apps.userreports.reports.builder.const import (
     UI_AGGREGATIONS,
 )
 from corehq.apps.userreports.sql import get_column_name
-from corehq.util.python_compatibility import soft_assert_type_text
-from memoized import memoized
-import six
 
 
 class ColumnOption(object):
@@ -164,8 +164,7 @@ class FormMetaColumnOption(ColumnOption):
         # ui_aggregation parameter is never used because we need not infer the data type
         # self._question_source is a tuple of (identifier, datatype)
         identifier = self._meta_property_spec[0]
-        if isinstance(identifier, six.string_types):
-            soft_assert_type_text(identifier)
+        if isinstance(identifier, str):
             identifier = [identifier]
         identifier = "/".join(identifier)
         column_id = get_column_name(identifier.strip("/"))

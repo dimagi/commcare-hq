@@ -1,15 +1,16 @@
-
 import os
-import six
 import zipfile
 from collections import Counter
 
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.dump_reload.couch.load import CouchDataLoader, ToggleLoader, DomainLoader
+from corehq.apps.dump_reload.couch.load import (
+    CouchDataLoader,
+    DomainLoader,
+    ToggleLoader,
+)
 from corehq.apps.dump_reload.exceptions import DataExistsException
 from corehq.apps.dump_reload.sql import SqlDataLoader
-
 
 # Domain loader should be first
 LOADERS = [DomainLoader, SqlDataLoader, CouchDataLoader, ToggleLoader]
@@ -83,7 +84,7 @@ class Command(BaseCommand):
         try:
             return loader_class(self.stdout, self.stderr).load_from_file(extracted_dump_path, self.force)
         except DataExistsException as e:
-            raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(six.text_type(e)))
+            raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(str(e)))
         except Exception as e:
             if not isinstance(e, CommandError):
                 e.args = ("Problem loading data '%s': %s" % (extracted_dump_path, e),)

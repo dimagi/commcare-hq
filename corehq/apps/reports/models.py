@@ -1,21 +1,18 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import html
 from django.utils.safestring import mark_safe
-from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+
 from jsonfield import JSONField
 
-from corehq.apps.users.models import CommCareUser
-from corehq.util.python_compatibility import soft_assert_type_text
+from dimagi.ext.couchdbkit import IntegerProperty
 
-from dimagi.ext.couchdbkit import *
-import six
-from six.moves import range
-from six.moves import map
+from corehq.apps.users.models import CommCareUser
 
 
 class HQUserType(object):
@@ -68,7 +65,7 @@ class HQUserType(object):
 
     @classmethod
     def use_filter(cls, ufilter):
-        return [HQUserToggle(i, six.text_type(i) in ufilter) for i in range(cls.count)]
+        return [HQUserToggle(i, str(i) in ufilter) for i in range(cls.count)]
 
 
 class HQToggle(object):
@@ -83,7 +80,7 @@ class HQToggle(object):
 
     def __repr__(self):
         return "%(klass)s[%(type)s:%(show)s:%(name)s]" % dict(
-            klass = self.__class__.__name__,
+            klass=self.__class__.__name__,
             type=self.type,
             name=self.name,
             show=self.show
@@ -172,16 +169,13 @@ def ordering_config_validator(value):
     for group in value:
         if not isinstance(group, list) or len(group) != 2:
             raise error
-        if not isinstance(group[0], six.string_types):
+        if not isinstance(group[0], str):
             raise error
-        else:
-            soft_assert_type_text(group[0])
         if not isinstance(group[1], list):
             raise error
         for report in group[1]:
-            if not isinstance(report, six.string_types):
+            if not isinstance(report, str):
                 raise error
-            soft_assert_type_text(report)
 
 
 class ReportsSidebarOrdering(models.Model):

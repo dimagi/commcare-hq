@@ -1,8 +1,9 @@
+from django.test import TestCase
+
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import INCOMING
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import create_test_case
-from django.test import TestCase
 
 
 class LogCallTestCase(TestCase):

@@ -26,10 +26,12 @@ CUSTOM_REPORTS = (
         FicheConsommationReport,
         RecapPassageReport
     )),
-    ("Rapports Yeksi Naa", (
+    ('ANCIENS RAPPORTS YEKSI NAA', (
         Dashboard1Report,
         Dashboard2Report,
         Dashboard3Report,
+    )),
+    ('NOUVEAUX RAPPORTS YEKSI NAA', (
         DisponibiliteReport,
         TauxDeRuptureReport,
         ConsommationReport,
@@ -39,7 +41,7 @@ CUSTOM_REPORTS = (
         ValuerDesStocksPNADisponsibleReport,
         RecapPassageOneReport,
         RecapPassageTwoReport,
-        IndicateursDeBaseReport
+        IndicateursDeBaseReport,
     )),
     ("INFORMED PUSH MODEL REPORTS UCR", (
         TableuDeBoardReport2,

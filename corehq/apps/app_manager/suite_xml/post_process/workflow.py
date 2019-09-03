@@ -1,19 +1,21 @@
+import re
 from collections import defaultdict, namedtuple
 from functools import total_ordering
 from os.path import commonprefix
-import re
 from xml.sax.saxutils import unescape
 
+from memoized import memoized
+
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import (
-    RETURN_TO, )
+from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
-from corehq.apps.app_manager.suite_xml.xml_models import StackDatum, Stack, CreateFrame
-from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
-    XPath
-from memoized import memoized
-from six.moves import filter
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    CreateFrame,
+    Stack,
+    StackDatum,
+)
+from corehq.apps.app_manager.xpath import CaseIDXPath, XPath, session_var
 
 
 class WorkflowHelper(PostProcessor):

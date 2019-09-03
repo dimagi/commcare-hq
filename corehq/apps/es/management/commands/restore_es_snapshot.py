@@ -1,14 +1,16 @@
 
-from django.core.management.base import BaseCommand
 from datetime import date, timedelta
-from corehq.elastic import get_es_new
-from elasticsearch.client import SnapshotClient, IndicesClient
+
 from django.conf import settings
+from django.core.management.base import BaseCommand
+
+from elasticsearch.client import IndicesClient, SnapshotClient
+
 from pillowtop.models import str_to_kafka_seq
 from pillowtop.utils import get_all_pillow_instances
-from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
-from six.moves import input
 
+from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
+from corehq.elastic import get_es_new
 
 DEFAULT_EMPTY_CHECKPOINT_SEQUENCE_FOR_RESTORE = {
     'text': '0',

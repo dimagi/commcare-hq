@@ -1,8 +1,16 @@
 from django.test import TestCase
+
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig, StockRestoreConfig
+
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
-from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
+from corehq.apps.commtrack.models import (
+    CommtrackConfig,
+    ConsumptionConfig,
+    StockRestoreConfig,
+)
+from corehq.apps.consumption.shortcuts import (
+    set_default_monthly_consumption_for_domain,
+)
 
 from .util import bootstrap_domain, bootstrap_products
 

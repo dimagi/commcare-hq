@@ -13,6 +13,7 @@ from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.form_processor.exceptions import NotAllowed
 from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.utils import extract_meta_instance_id
 from corehq.util.datadog.utils import case_load_counter, form_load_counter
@@ -22,7 +23,6 @@ from couchforms.models import (
     XFormOperation)
 from couchforms.util import fetch_and_wrap_form
 from dimagi.utils.couch import acquire_lock, release_lock
-import six
 
 
 class FormProcessorCouch(object):
@@ -80,6 +80,7 @@ class FormProcessorCouch(object):
 
     @classmethod
     def hard_delete_case_and_forms(cls, domain, case, xforms):
+        NotAllowed.check(domain)
         docs = [case._doc] + [f._doc for f in xforms]
         case.get_db().bulk_delete(docs)
 
@@ -88,7 +89,7 @@ class FormProcessorCouch(object):
         from corehq.form_processor.parsers.form import apply_deprecation
         new_form = XFormInstance.wrap(existing_form.to_json())
 
-        for question, response in six.iteritems(value_responses_map):
+        for question, response in value_responses_map.items():
             data = new_form.form_data
             i = XFormQuestionValueIterator(question)
             for (qid, repeat_index) in i:

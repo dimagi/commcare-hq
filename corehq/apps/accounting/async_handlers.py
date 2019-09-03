@@ -1,5 +1,4 @@
 import json
-import six
 
 from django.conf import settings
 from django.db.models import F, Q
@@ -15,9 +14,15 @@ from corehq.apps.accounting.models import (
     Subscriber,
     Subscription,
 )
-from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
+from corehq.apps.accounting.utils import (
+    fmt_feature_rate_dict,
+    fmt_product_rate_dict,
+)
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
+from corehq.apps.hqwebapp.async_handler import (
+    AsyncHandlerError,
+    BaseAsyncHandler,
+)
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 
 
@@ -212,7 +217,7 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         if self.search_string:
             plan_versions = plan_versions.filter(
                 plan__name__icontains=self.search_string)
-        return [(p.id, six.text_type(p)) for p in plan_versions.order_by('plan__name')]
+        return [(p.id, str(p)) for p in plan_versions.order_by('plan__name')]
 
     @property
     def new_plan_version_response(self):
@@ -450,7 +455,7 @@ class InvoiceNumberAsyncHandler(BaseSingleOptionFilterAsyncHandler):
     @property
     def invoice_number_response(self):
         return [
-            self._fmt_select2_data(six.text_type(p.id), six.text_type(p.number_on_invoice))
+            self._fmt_select2_data(str(p.id), str(p.number_on_invoice))
             for p in self.paginated_data
         ]
 
@@ -471,7 +476,7 @@ class InvoiceBalanceAsyncHandler(BaseSingleOptionFilterAsyncHandler):
     @property
     def invoice_balance_response(self):
         return [
-            self._fmt_select2_data(six.text_type(p.balance), six.text_type(p.balance))
+            self._fmt_select2_data(str(p.balance), str(p.balance))
             for p in self.paginated_data
         ]
 

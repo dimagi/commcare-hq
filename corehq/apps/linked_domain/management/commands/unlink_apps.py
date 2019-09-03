@@ -1,9 +1,9 @@
 from django.core.management.base import BaseCommand
 
 from couchdbkit import ResourceNotFound
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
-from six.moves import input
 
 
 class Command(BaseCommand):

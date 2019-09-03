@@ -1,9 +1,11 @@
 import datetime
-import sqlalchemy
 
 from django.urls import reverse
+
+import sqlalchemy
 from memoized import memoized
 from sqlagg.filters import (
+    ANDFilter,
     BasicFilter,
     BetweenFilter,
     EQFilter,
@@ -15,17 +17,19 @@ from sqlagg.filters import (
     LTFilter,
     NOTEQFilter,
     NOTNULLFilter,
-    ANDFilter,
-    ORFilter)
-
-from corehq.apps.reports.daterange import get_all_daterange_choices, get_daterange_start_end_dates
-from corehq.apps.reports.util import (
-    get_INFilter_bindparams,
-    get_INFilter_element_bindparam,
+    ORFilter,
 )
 
 from dimagi.utils.dates import DateSpan
 
+from corehq.apps.reports.daterange import (
+    get_all_daterange_choices,
+    get_daterange_start_end_dates,
+)
+from corehq.apps.reports.util import (
+    get_INFilter_bindparams,
+    get_INFilter_element_bindparam,
+)
 
 SHOW_ALL_CHOICE = '_all'  # todo: if someone wants to name an actually choice "_all" this will break
 NONE_CHOICE = "\u2400"

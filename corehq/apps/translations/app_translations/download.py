@@ -1,21 +1,21 @@
-# coding=utf-8
-
 import re
 from collections import OrderedDict
 
-import six
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ReportModule
-from corehq.apps.app_manager.xform import ItextValue, ItextOutput
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
+from corehq.apps.app_manager.xform import ItextOutput, ItextValue
 from corehq.apps.translations.app_translations.utils import (
     get_form_sheet_name,
     get_menu_row,
     get_module_sheet_name,
     get_modules_and_forms_row,
+)
+from corehq.apps.translations.const import (
+    MODULES_AND_FORMS_SHEET_NAME,
+    SINGLE_SHEET_NAME,
 )
 from corehq.apps.translations.generators import EligibleForTransifexChecker
 
@@ -274,7 +274,7 @@ def get_module_detail_graph_rows(langs, detail, list_or_detail):
         return []
 
     rows = []
-    for key, val in six.iteritems(detail.graph_configuration.locale_specific_config):
+    for key, val in detail.graph_configuration.locale_specific_config.items():
         rows.append(
             (
                 key + " (graph config)",
@@ -282,7 +282,7 @@ def get_module_detail_graph_rows(langs, detail, list_or_detail):
             ) + tuple(val.get(lang, "") for lang in langs)
         )
     for i, series in enumerate(detail.graph_configuration.series):
-        for key, val in six.iteritems(series.locale_specific_config):
+        for key, val in series.locale_specific_config.items():
             rows.append(
                 (
                     "{} {} (graph series config)".format(key, i),
@@ -341,7 +341,7 @@ def get_form_question_label_name_media(langs, form):
                 itext_items[text_id][(lang, value_form)] = value
 
     app = form.get_app()
-    for text_id, values in six.iteritems(itext_items):
+    for text_id, values in itext_items.items():
         row = [text_id]
         for value_form in ["default", "image", "audio", "video"]:
             # Get the fallback value for this form

@@ -5,10 +5,10 @@ from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.elastic import refresh_elasticsearch_index
 from corehq.apps.locations.tests.util import delete_all_locations
-from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.management.commands import add_multi_location_property
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.elastic import refresh_elasticsearch_index
 from corehq.util.test_utils import generate_cases
 
 

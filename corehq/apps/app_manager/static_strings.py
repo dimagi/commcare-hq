@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext_noop
 
-
 STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('1 Day'),
     ugettext_noop('1 hour'),

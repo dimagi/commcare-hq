@@ -1,8 +1,15 @@
-from django.core.management import BaseCommand
 import json
 import sys
-from corehq.apps.domain.models import Domain, DynamicReportSet, DynamicReportConfig
+
+from django.core.management import BaseCommand
+
 from dimagi.utils.modules import to_function
+
+from corehq.apps.domain.models import (
+    Domain,
+    DynamicReportConfig,
+    DynamicReportSet,
+)
 
 
 class Command(BaseCommand):
@@ -63,4 +70,3 @@ class Command(BaseCommand):
                               ('all' if options['all'] else 'previewers only'))
         else:
             self.stdout.write('dry run only. no changes saves (use -x)\n')
-

@@ -2,7 +2,6 @@ import getpass
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 from django.core.management.base import BaseCommand
 from pact.management.commands.constants import RETRY_LIMIT
-from six.moves import input
 
 
 class PactMigrateCommand(BaseCommand):

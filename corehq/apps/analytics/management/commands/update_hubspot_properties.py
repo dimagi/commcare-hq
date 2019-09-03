@@ -1,11 +1,15 @@
-from datetime import date, timedelta
 import json
+from datetime import date, timedelta
 
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
+
 from corehq.apps.analytics.signals import get_domain_membership_properties
-from corehq.apps.analytics.tasks import batch_track_on_hubspot, get_ab_test_properties, \
-    get_subscription_properties_by_user
+from corehq.apps.analytics.tasks import (
+    batch_track_on_hubspot,
+    get_ab_test_properties,
+    get_subscription_properties_by_user,
+)
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser
 

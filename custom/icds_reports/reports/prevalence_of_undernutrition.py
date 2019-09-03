@@ -2,7 +2,6 @@
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
@@ -80,7 +79,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         data_for_map[on_map_name]['weighed'] += weighed
         data_for_map[on_map_name]['original_name'].append(name)
 
-    for data_for_location in six.itervalues(data_for_map):
+    for data_for_location in data_for_map.values():
         numerator = data_for_location['moderately_underweight'] + data_for_location['severely_underweight']
         value = numerator * 100 / (data_for_location['weighed'] or 1)
         if value < 20:
@@ -211,7 +210,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
             'loc_name': key,
             'percent': value
         }
-        for key, value in six.iteritems(best_worst)
+        for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(all_locations_sorted_by_name, key=lambda x: x['percent'])
@@ -225,7 +224,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                         'y': value['y'] / float(value['weighed'] or 1),
                         'weighed': value['weighed'],
                         'unweighed': value['unweighed'],
-                    } for key, value in six.iteritems(data['peach'])
+                    } for key, value in data['peach'].items()
                 ],
                 "key": "% Normal",
                 "strokeWidth": 2,
@@ -239,7 +238,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                         'y': value['y'] / float(value['weighed'] or 1),
                         'weighed': value['weighed'],
                         'unweighed': value['unweighed'],
-                    } for key, value in six.iteritems(data['orange'])
+                    } for key, value in data['orange'].items()
                 ],
                 "key": "% Moderately Underweight (-2 SD)",
                 "strokeWidth": 2,
@@ -253,7 +252,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                         'y': value['y'] / float(value['weighed'] or 1),
                         'weighed': value['weighed'],
                         'unweighed': value['unweighed'],
-                    } for key, value in six.iteritems(data['red'])
+                    } for key, value in data['red'].items()
                 ],
                 "key": "% Severely Underweight (-3 SD) ",
                 "strokeWidth": 2,

@@ -1,16 +1,19 @@
 from datetime import datetime
+from distutils.version import StrictVersion
+from itertools import groupby
 from zipfile import ZipFile
-from couchdbkit.exceptions import ResourceNotFound, BadValueError
-from corehq.apps.app_manager.const import APP_V2
+
+from couchdbkit.exceptions import BadValueError, ResourceNotFound
+
 from dimagi.ext.couchdbkit import *
+
+from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
 from corehq.apps.domain import SHARED_DOMAIN
 from corehq.blobs import CODES as BLOB_CODES
 from corehq.blobs.mixin import BlobMixin
 from corehq.util.quickcache import quickcache
-from itertools import groupby
-from distutils.version import StrictVersion
 
 
 class SemanticVersionProperty(StringProperty):

@@ -1,16 +1,14 @@
-
 import logging
 
 from django.core.management.base import BaseCommand, CommandError
 from django.core.paginator import Paginator
 from django.db.models import Count
 
+from couchforms.models import UnfinishedSubmissionStub
+
 from corehq.form_processor.reprocess import reprocess_unfinished_stub
 from corehq.util.log import with_progress_bar
-from corehq.util.markup import SimpleTableWriter
-from corehq.util.markup import TableRowFormatter
-from couchforms.models import UnfinishedSubmissionStub
-from six.moves import input
+from corehq.util.markup import SimpleTableWriter, TableRowFormatter
 
 MODES = [
     'stats',

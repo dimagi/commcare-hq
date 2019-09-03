@@ -1,14 +1,13 @@
 import logging
-import requests
 from io import BytesIO, StringIO
 
+from django.core.management.base import BaseCommand, CommandError
+
+import requests
 from jenkinsapi.jenkins import Jenkins
+from memoized import memoized
 
 from corehq.apps.builds.models import CommCareBuild
-from django.core.management.base import BaseCommand, CommandError
-from memoized import memoized
-from six.moves import input
-import six
 
 
 class Command(BaseCommand):
@@ -79,7 +78,7 @@ class Command(BaseCommand):
     @memoized
     def jenkin_projects(self):
         print("Pinging Jenkins build server. Pelase wait...")
-        return list(six.iterkeys(self.build_server))
+        return list(self.build_server.keys())
 
     @property
     @memoized

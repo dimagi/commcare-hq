@@ -2,7 +2,6 @@
 import json
 from collections import Counter
 
-import six
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 
@@ -97,7 +96,7 @@ def get_flattened_case_properties(domain, include_parent_properties=False):
     property_counts = Counter(item for sublist in all_properties_by_type.values() for item in sublist)
     all_properties = [
         {'name': value, 'case_type': case_type, 'count': property_counts[value]}
-        for case_type, values in six.iteritems(all_properties_by_type)
+        for case_type, values in all_properties_by_type.items()
         for value in values
     ]
     return all_properties

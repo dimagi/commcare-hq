@@ -1,20 +1,20 @@
-from copy import copy
 import hashlib
 import json
 import logging
 import mimetypes
+from copy import copy
 from datetime import datetime
 from io import BytesIO
 
+from django.template.defaultfilters import filesizeformat
+from django.urls import reverse
+from django.utils.translation import ugettext as _
+
 import magic
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from django.template.defaultfilters import filesizeformat
+from memoized import memoized
+from PIL import Image
 
-from corehq import privileges
-from corehq import toggles
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.hqmedia.exceptions import BadMediaFileException
-from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -30,18 +30,16 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
-from memoized import memoized
-from django.urls import reverse
-from django.utils.translation import ugettext as _
-from PIL import Image
 
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.domain import SHARED_DOMAIN
-from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
-from corehq.blobs.mixin import BlobMixin, CODES
-import six
+from corehq.apps.domain.models import LICENSE_LINKS, LICENSES
+from corehq.apps.hqmedia.exceptions import BadMediaFileException
+from corehq.blobs.mixin import CODES, BlobMixin
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -469,9 +467,8 @@ class ApplicationMediaReference(object):
                  form_name=None, form_order=None, media_class=None,
                  is_menu_media=False, app_lang=None, use_default_media=False):
 
-        if not isinstance(path, six.string_types):
+        if not isinstance(path, str):
             path = ''
-        soft_assert_type_text(path)
         self.path = path.strip()
 
         if not issubclass(media_class, CommCareMultimedia):
@@ -676,7 +673,7 @@ class ModuleMediaMixin(MediaMixin):
             for column in details.get_columns():
                 if column.format == 'enum-image':
                     for map_item in column.enum:
-                        for lang, icon in six.iteritems(map_item.value):
+                        for lang, icon in map_item.value.items():
                             if icon == old_path:
                                 map_item.value[lang] = new_path
                                 count += 1
@@ -1014,5 +1011,3 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 has_restored = True
                 del self.archived_media[LOGO_ARCHIVE_KEY][slug]
         return has_restored
-
-

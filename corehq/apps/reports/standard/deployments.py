@@ -1,19 +1,14 @@
-# coding=utf-8
-
 from collections import namedtuple
 from datetime import date, datetime, timedelta
 
 from django.contrib.humanize.templatetags.humanize import naturaltime
-
 from django.db.models import Q
-
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
-from six.moves import range
 
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.dates import safe_strftime

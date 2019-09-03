@@ -8,8 +8,6 @@ from requests.exceptions import ConnectionError
 
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DateTimeProperty, DictProperty
 from dimagi.utils.couch.database import get_db
-import six
-from six.moves import range
 
 
 class PaginationEventHandler(object):
@@ -87,6 +85,16 @@ class ArgsProvider(object):
         :returns: tuple of args list and kwargs dict"""
         raise NotImplementedError
 
+    def adjust_results(self, results, args, kwargs):
+        """Adjust results given args and kwargs used to retrieve them
+
+        :param results: list of results loaded with `args` and `kwargs`.
+        :param args: args used to load results.
+        :param kwargs: kwargs used to load results.
+        :returns: adjusted list of results.
+        """
+        return results
+
     def get_next_args(self, last_item, *last_args, **last_kwargs):
         """Return the next set of args and kwargs
 
@@ -143,6 +151,7 @@ def paginate_function(data_function, args_provider, event_handler=None):
                 continue
             raise
 
+        results = args_provider.adjust_results(results, args, kwargs)
         event_handler.page(results)
         for item in results:
             yield item
@@ -177,7 +186,7 @@ def unpack_jsonobject(json_object):
         return {unpack_jsonobject(x) for x in json_object}
     elif isinstance(json_object, JsonDict):
         return {
-            unpack_jsonobject(k): unpack_jsonobject(v) for k, v in six.iteritems(json_object)
+            unpack_jsonobject(k): unpack_jsonobject(v) for k, v in json_object.items()
         }
     return json_object
 
@@ -193,6 +202,9 @@ class ResumableArgsProvider(ArgsProvider):
         if self.resume:
             return unpack_jsonobject(self.resume_args), unpack_jsonobject(self.resume_kwargs)
         return self.args_provider.get_initial_args()
+
+    def adjust_results(self, results, args, kwargs):
+        return self.args_provider.adjust_results(results, args, kwargs)
 
     def get_next_args(self, last_item, *last_args, **last_kwargs):
         return self.args_provider.get_next_args(last_item, *last_args, **last_kwargs)
@@ -258,7 +270,7 @@ class ResumableFunctionIterator(object):
 
         retried = {}
         while self.state.retry != retried:
-            for item_id, retries in six.iteritems(self.state.retry):
+            for item_id, retries in self.state.retry.items():
                 if retries == retried.get(item_id):
                     continue  # skip already retried (successfully)
                 retried[item_id] = retries

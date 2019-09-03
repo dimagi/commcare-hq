@@ -1,32 +1,31 @@
-from captcha.fields import CaptchaField
+import re
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
+# https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
+from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _, ugettext
+from django.utils.translation import ugettext
+from django.utils.translation import ugettext_lazy as _
+
+from captcha.fields import CaptchaField
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
 
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.domain.forms import clean_password, NoAutocompleteMixin
+from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.utils import decode_password
 from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
-from corehq.apps.users.models import CouchUser
 from corehq.apps.users.forms import RoleForm
+from corehq.apps.users.models import CouchUser
 
-# https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
-from django.utils.functional import lazy
-import six
-import re
-
-from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
-from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.util.python_compatibility import soft_assert_type_text
-
-mark_safe_lazy = lazy(mark_safe, six.text_type)
+mark_safe_lazy = lazy(mark_safe, str)
 
 
 class RegisterWebUserForm(forms.Form):
@@ -273,8 +272,7 @@ class RegisterWebUserForm(forms.Form):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], six.string_types):
-                soft_assert_type_text(self.cleaned_data[field])
+            if isinstance(self.cleaned_data[field], str):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -310,8 +308,7 @@ class DomainRegistrationForm(forms.Form):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], six.string_types):
-                soft_assert_type_text(self.cleaned_data[field])
+            if isinstance(self.cleaned_data[field], str):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -386,8 +383,7 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], six.string_types):
-                soft_assert_type_text(self.cleaned_data[field])
+            if isinstance(self.cleaned_data[field], str):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -408,8 +404,7 @@ class _BaseForm(object):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], six.string_types):
-                soft_assert_type_text(self.cleaned_data[field])
+            if isinstance(self.cleaned_data[field], str):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 

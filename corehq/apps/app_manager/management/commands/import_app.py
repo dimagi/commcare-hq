@@ -1,8 +1,11 @@
 from getpass import getpass
+
 from django.core.management.base import BaseCommand, CommandError
 from django.urls import reverse
+
 import requests
 from requests.auth import HTTPDigestAuth
+
 from corehq.apps.app_manager.models import import_app
 
 

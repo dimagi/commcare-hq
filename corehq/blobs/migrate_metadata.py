@@ -1,8 +1,6 @@
-
 from functools import partial
 from itertools import groupby
 
-import six
 from couchdbkit import ResourceNotFound
 from django.db import connections
 
@@ -103,7 +101,7 @@ def make_migrators(mod):
                     "attachments": obj._attachments,
                 })
             with connections[db].cursor() as cursor:
-                for name, meta in six.iteritems(obj.external_blobs):
+                for name, meta in obj.external_blobs.items():
                     if meta.blobmeta_id is not None:
                         # blobmeta already saved
                         continue

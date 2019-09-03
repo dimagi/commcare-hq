@@ -1,33 +1,42 @@
 import base64
 import json
 
-import six
+from django.test import Client, TestCase
 
-from corehq.apps.accounting.models import (BillingAccount, DefaultProductPlan,
-    SoftwarePlanEdition, SubscriptionAdjustment, Subscription)
+from django_prbac.models import Role
+from mock import Mock, patch
+
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+    SubscriptionAdjustment,
+)
 from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.messages import (
     _MESSAGES,
+    MSG_MOBILE_WORKER_ANDROID_INVITATION,
     MSG_MOBILE_WORKER_INVITATION_START,
     MSG_MOBILE_WORKER_JAVA_INVITATION,
-    MSG_MOBILE_WORKER_ANDROID_INVITATION,
-    MSG_REGISTRATION_WELCOME_MOBILE_WORKER,
     MSG_REGISTRATION_INSTALL_COMMCARE,
+    MSG_REGISTRATION_WELCOME_MOBILE_WORKER,
 )
-from corehq.apps.sms.models import (SQLMobileBackendMapping, SelfRegistrationInvitation,
-    SMS, OUTGOING, PhoneNumber)
+from corehq.apps.sms.models import (
+    OUTGOING,
+    SMS,
+    PhoneNumber,
+    SelfRegistrationInvitation,
+    SQLMobileBackendMapping,
+)
 from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from django_prbac.models import Role
-from django.test import Client, TestCase
-from mock import patch, Mock
-
 
 DUMMY_APP_ODK_URL = 'http://localhost/testapp'
 DUMMY_REGISTRATION_URL = 'http://localhost/register'
@@ -614,12 +623,8 @@ class RegistrationAPITestCase(TestCase):
                 {'app_id': 123},
             )
             self.assertEqual(response.status_code, 400)
-            if six.PY3:
-                self.assertEqual(response.content.decode('utf-8'),
-                    '{"sms_user_registration": {"app_id": "Expected type: str"}}')
-            else:
-                self.assertEqual(response.content.decode('utf-8'),
-                    '{"sms_user_registration": {"app_id": "Expected type: basestring"}}')
+            self.assertEqual(response.content.decode('utf-8'),
+                '{"sms_user_registration": {"app_id": "Expected type: str"}}')
 
             response = self.make_api_post(
                 self.domain1,

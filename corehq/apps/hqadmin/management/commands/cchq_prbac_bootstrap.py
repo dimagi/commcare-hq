@@ -1,17 +1,12 @@
-# Use modern Python
-
-# Standard library imports
 import logging
 
-# Django imports
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
-# External imports
+from django_prbac.models import Grant, Role
+
 from corehq import privileges
 from corehq.apps.accounting.utils import ensure_grants, log_removed_grants
-from django_prbac.models import Grant, Role
-from six.moves import input
 
 logger = logging.getLogger(__name__)
 
@@ -238,4 +233,3 @@ class Command(BaseCommand):
         'advanced_plan_v0': advanced_plan_features,
         'enterprise_plan_v0': enterprise_plan_features,
     }
-

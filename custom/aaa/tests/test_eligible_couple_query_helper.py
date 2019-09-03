@@ -3,8 +3,6 @@ from datetime import date
 
 from django.test.testcases import TestCase
 
-from six.moves import range
-
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from custom.aaa.dbaccessors import EligibleCoupleQueryHelper

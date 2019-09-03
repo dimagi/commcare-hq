@@ -1,16 +1,23 @@
 import hashlib
-import mock
 import re
-from lxml.etree import tostring
 
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateInstanceIdError
+import mock
+from lxml.etree import tostring
+
+import commcare_translations
+from corehq.apps.app_manager.exceptions import (
+    DuplicateInstanceIdError,
+    SuiteValidationError,
+)
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     CaseSearch,
     CaseSearchProperty,
+    CustomAssertion,
+    CustomInstance,
     DetailColumn,
     FormActionCondition,
     GraphConfiguration,
@@ -24,19 +31,19 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     SortElement,
     UpdateCaseAction,
-    CustomInstance,
-    CustomAssertion,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled, parse_normalize
-from corehq.apps.app_manager.xpath import (
-    session_var,
+from corehq.apps.app_manager.tests.util import (
+    SuiteMixin,
+    TestXmlMixin,
+    commtrack_enabled,
+    parse_normalize,
 )
+from corehq.apps.app_manager.xpath import session_var
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
-import commcare_translations
 
 
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):

@@ -1,11 +1,16 @@
 from django.test import TestCase
+
 from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.mock import CaseFactory
+
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.processing import rebuild_stock_state
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    LedgerAccessors,
+)
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference

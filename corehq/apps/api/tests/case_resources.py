@@ -2,6 +2,7 @@
 import json
 import uuid
 from datetime import datetime
+
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
@@ -9,7 +10,7 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.api.models import ESCase
-from corehq.apps.api.resources import v0_4, v0_3
+from corehq.apps.api.resources import v0_3, v0_4
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser

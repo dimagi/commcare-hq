@@ -3,7 +3,10 @@
 from django.core.management import BaseCommand
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_current_app
+from corehq.apps.app_manager.dbaccessors import (
+    get_app_ids_in_domain,
+    get_current_app,
+)
 from corehq.util.log import with_progress_bar
 
 

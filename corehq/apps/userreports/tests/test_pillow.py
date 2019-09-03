@@ -1,34 +1,51 @@
-
 import decimal
 import uuid
 from datetime import datetime, timedelta
 
+from django.test import SimpleTestCase, TestCase, override_settings
+
 import mock
-from django.test import TestCase, SimpleTestCase, override_settings
-from six.moves import range
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
+from pillow_retry.models import PillowError
+
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
+from corehq.apps.userreports.data_source_providers import (
+    MockDataSourceProvider,
+)
 from corehq.apps.userreports.exceptions import StaleRebuildError
-from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator, Validation, InvalidUCRData
-from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
-    ConfigurableReportTableManagerMixin, \
-    ConfigurableReportPillowProcessor
-from corehq.apps.userreports.tasks import rebuild_indicators, queue_async_indicators
-from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
-    doc_to_change, get_data_source_with_related_doc_type, skip_domain_filter_patch
+from corehq.apps.userreports.models import (
+    AsyncIndicator,
+    DataSourceConfiguration,
+    InvalidUCRData,
+    Validation,
+)
+from corehq.apps.userreports.pillow import (
+    REBUILD_CHECK_INTERVAL,
+    ConfigurableReportPillowProcessor,
+    ConfigurableReportTableManagerMixin,
+)
+from corehq.apps.userreports.tasks import (
+    queue_async_indicators,
+    rebuild_indicators,
+)
+from corehq.apps.userreports.tests.utils import (
+    doc_to_change,
+    get_data_source_with_related_doc_type,
+    get_sample_data_source,
+    get_sample_doc_and_indicators,
+    skip_domain_filter_patch,
+)
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.pillows.case import get_case_pillow
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import softer_assert
-from pillow_retry.models import PillowError
 
 
 def setup_module():

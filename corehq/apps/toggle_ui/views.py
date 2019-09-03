@@ -1,26 +1,32 @@
+import decimal
 import json
 from collections import Counter
-from couchdbkit.exceptions import ResourceNotFound
-import decimal
+
 from django.conf import settings
 from django.contrib import messages
-from django.urls import reverse
 from django.http.response import Http404, HttpResponse
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
+
+from couchdbkit.exceptions import ResourceNotFound
+
 from couchforms.analytics import get_last_form_submission_received
+from toggle.models import Toggle
+from toggle.shortcuts import parse_toggle
+
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
+from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.apps.users.models import CouchUser
-from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.toggles import (
     ALL_NAMESPACES,
     ALL_TAG_GROUPS,
-    NAMESPACE_USER,
     NAMESPACE_DOMAIN,
+    NAMESPACE_USER,
     TAG_CUSTOM,
     TAG_DEPRECATED,
     TAG_INTERNAL,
@@ -29,9 +35,6 @@ from corehq.toggles import (
     all_toggles,
 )
 from corehq.util.soft_assert import soft_assert
-from toggle.models import Toggle
-from toggle.shortcuts import parse_toggle
-import six
 
 NOT_FOUND = "Not Found"
 
@@ -309,7 +312,7 @@ def _format_date(date):
 
 def _get_most_recently_used(last_used):
     """Returns the name and date of the most recently used toggle"""
-    last_used = {k: v for k, v in six.iteritems(last_used) if v != NOT_FOUND}
+    last_used = {k: v for k, v in last_used.items() if v != NOT_FOUND}
     most_recently_used = sorted(last_used, key=last_used.get, reverse=True)
     return {
         'name': most_recently_used[0],

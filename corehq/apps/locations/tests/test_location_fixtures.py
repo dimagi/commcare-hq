@@ -1,39 +1,62 @@
-
-from collections import namedtuple
-import uuid
-import mock
 import os
+import uuid
+from collections import namedtuple
+from datetime import datetime, timedelta
 from xml.etree import cElementTree as ElementTree
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
-from corehq.apps.locations.views import LocationFieldsView
 
+from django.test import TestCase
+
+import mock
+
+from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.restore import RestoreParams
+from casexml.apps.phone.tests.utils import (
+    call_fixture_generator,
+    create_restore_user,
+)
+
+from corehq.apps.app_manager.tests.util import (
+    TestXmlMixin,
+    extract_xml_partial,
+)
+from corehq.apps.commtrack.tests.util import bootstrap_domain
+from corehq.apps.custom_data_fields.models import (
+    CustomDataField,
+    CustomDataFieldsDefinition,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.views import LocationFieldsView
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import flag_enabled, generate_cases
 
-from datetime import datetime, timedelta
-from django.test import TestCase
-from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
-from casexml.apps.phone.restore import RestoreParams
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.tests.util import bootstrap_domain
-from corehq.apps.users.models import CommCareUser
-
-from corehq.apps.app_manager.tests.util import TestXmlMixin, extract_xml_partial
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-
+from ..fixtures import (
+    LocationSet,
+    _get_location_data_fields,
+    _location_to_fixture,
+    flat_location_fixture_generator,
+    get_location_fixture_queryset,
+    location_fixture_generator,
+    related_locations_fixture_generator,
+    should_sync_flat_fixture,
+    should_sync_hierarchical_fixture,
+    should_sync_locations,
+)
+from ..models import (
+    LocationFixtureConfiguration,
+    LocationRelation,
+    LocationType,
+    SQLLocation,
+    make_location,
+)
 from .util import (
-    setup_location_types_with_structure,
-    setup_locations_with_structure,
+    LocationHierarchyTestCase,
     LocationStructure,
     LocationTypeStructure,
-    LocationHierarchyTestCase
+    setup_location_types_with_structure,
+    setup_locations_with_structure,
 )
-from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
-    flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchical_fixture, \
-    _get_location_data_fields, get_location_fixture_queryset, related_locations_fixture_generator
-from ..models import SQLLocation, LocationType, make_location, LocationFixtureConfiguration, LocationRelation
-import six
 
 EMPTY_LOCATION_FIXTURE_TEMPLATE = """
 <fixture id='commtrack:locations' user_id='{}'>
@@ -149,7 +172,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
         }
-        self.assertEquals(location_data, {k: six.text_type(v) for k, v in location.metadata.items()})
+        self.assertEquals(location_data, {k: str(v) for k, v in location.metadata.items()})
 
     def test_simple_location_fixture(self):
         self.user._couch_user.set_location(self.locations['Suffolk'])

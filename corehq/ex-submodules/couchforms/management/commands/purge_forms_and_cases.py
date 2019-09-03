@@ -1,10 +1,11 @@
-import csv342 as csv
+import csv
 
 from django.core.management.base import BaseCommand, CommandError
 from django.http import Http404
 
 from corehq.apps.app_manager.models import Application
 from casexml.apps.case.xform import get_case_ids_from_form
+from corehq.form_processor.exceptions import NotAllowed
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.apps.app_manager.dbaccessors import get_app
 from dimagi.utils.django.management import are_you_sure
@@ -51,6 +52,7 @@ though deletion would be re-confirmed so dont panic
         self.case_accessors = CaseAccessors(self.domain)
 
     def ensure_prerequisites(self, domain, app_id, version_number, test_run):
+        NotAllowed.check(domain)
         self.domain = domain
         self.app_id = app_id
         self.version_number = version_number

@@ -1,7 +1,6 @@
 from datetime import datetime
 from django.core.management.base import BaseCommand
 from casexml.apps.case.mock import CaseFactory
-from six.moves import range
 
 
 class Command(BaseCommand):

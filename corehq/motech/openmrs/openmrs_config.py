@@ -1,21 +1,9 @@
-
-import six
 from itertools import chain
 from operator import eq
 
-from jsonpath_rw import (
-    Child,
-    Fields,
-    Slice,
-    Union,
-    Where,
-    parse as parse_jsonpath,
-)
+from jsonpath_rw import Child, Fields, Slice, Union, Where
+from jsonpath_rw import parse as parse_jsonpath
 
-from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
-from corehq.motech.openmrs.finders import PatientFinder
-from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
-from corehq.motech.value_source import ValueSource
 from dimagi.ext.couchdbkit import (
     DocumentSchema,
     ListProperty,
@@ -23,6 +11,11 @@ from dimagi.ext.couchdbkit import (
     SchemaProperty,
     StringProperty,
 )
+
+from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
+from corehq.motech.openmrs.finders import PatientFinder
+from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
+from corehq.motech.value_source import ValueSource
 
 
 class OpenmrsCaseConfig(DocumentSchema):
@@ -154,9 +147,9 @@ class OpenmrsCaseConfig(DocumentSchema):
             data.pop('id_matchers')
         # Set default data types for known properties
         for property_, value_source in chain(
-            six.iteritems(data.get('person_properties', {})),
-            six.iteritems(data.get('person_preferred_name', {})),
-            six.iteritems(data.get('person_preferred_address', {})),
+            data.get('person_properties', {}).items(),
+            data.get('person_preferred_name', {}).items(),
+            data.get('person_preferred_address', {}).items(),
         ):
             data_type = OPENMRS_PROPERTIES[property_]
             value_source.setdefault('external_data_type', data_type)

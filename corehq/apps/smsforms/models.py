@@ -1,23 +1,24 @@
 import uuid
 from datetime import timedelta
-import six
-from corehq.apps.sms.util import strip_plus
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.messaging.scheduling.util import utcnow
-from couchdbkit import MultipleResultsFound
+
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import ugettext_noop
-from six.moves import zip
 
+from couchdbkit import MultipleResultsFound
+
+from corehq.apps.sms.util import strip_plus
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.messaging.scheduling.util import utcnow
+
+from . import signals
 
 XFORMS_SESSION_SMS = "SMS"
 XFORMS_SESSION_IVR = "IVR"
 XFORMS_SESSION_TYPES = [XFORMS_SESSION_SMS, XFORMS_SESSION_IVR]
 
 
-@six.python_2_unicode_compatible
 class SQLXFormsSession(models.Model):
     """
     Keeps information about an SMS XForm session.
@@ -240,6 +241,3 @@ class SQLXFormsSession(models.Model):
 
 def get_session_by_session_id(id):
     return SQLXFormsSession.by_session_id(id)
-
-
-from . import signals

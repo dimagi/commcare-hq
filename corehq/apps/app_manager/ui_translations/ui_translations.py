@@ -6,9 +6,6 @@ from distutils.version import StrictVersion
 
 from django.utils.translation import ugettext as _
 
-import six
-from six.moves import range
-
 from couchexport.export import export_raw_to_writer
 
 from commcare_translations import load_translations
@@ -35,7 +32,7 @@ def process_ui_translation_upload(app, trans_file):
     try:
         workbook = get_workbook(trans_file)
     except WorkbookJSONError as e:
-        error_properties.append(six.text_type(e))
+        error_properties.append(str(e))
         return trans_dict, error_properties, warnings
 
     commcare_version = get_commcare_version_from_workbook(workbook.wb)
@@ -49,16 +46,49 @@ def process_ui_translation_upload(app, trans_file):
     default_trans = get_default_translations_for_download(app, commcare_version)
     lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
 
+    # Find all of the ${0}-looking values in a translation.
+    # Returns list like ["${0}", "${1}", ...]
+    def _get_params(translation):
+        if not translation:
+            return []
+        return re.findall(r"\$.*?}", translation)
+
+    # Create a string version of all parameters in a translation, suitable both for
+    # comparison and for displaying in an error message.
+    def _get_params_text(params):
+        if not params:
+            return "no parameters"
+
+        # Reduce parameter list to the numbers alone, a set like {'0', '1', '2'}
+        numbers = {re.sub(r'\D', '', p) for p in params}
+
+        # Sort numbers, so that re-ordering parameters doesn't trigger error
+        numbers = sorted(numbers)
+
+        # Re-join numbers into a string for display
+        return ", ".join(["${{{}}}".format(num) for num in numbers])
+
     for row in translations:
         if row["property"] not in commcare_ui_strings:
             # Add a warning for  unknown properties, but still add them to the translation dict
             warnings.append(row["property"] + " is not a known CommCare UI string, but we added it anyway")
+        default_params_text = _get_params_text(_get_params(default_trans.get(row["property"])))
         for lang in app.langs:
             if row.get(lang):
-                all_parameters = re.findall(r"\$.*?}", row[lang])
-                for param in all_parameters:
+                params = _get_params(row[lang])
+                params_text = _get_params_text(params)
+                for param in params:
                     if not re.match(r"\$\{[0-9]+}", param):
-                        error_properties.append(row["property"] + ' - ' + row[lang])
+                        error_properties.append(_("""
+                            Could not understand '{param}' in {lang} value of {prop}.
+                        """).format(param=param, lang=lang, prop=row["property"]))
+                if params_text != default_params_text:
+                    error_properties.append(_("""
+                        Property {prop} should contain {expected} but {lang} value contains {actual}.
+                    """).format(prop=row["property"],
+                                expected=default_params_text,
+                                lang=lang,
+                                actual=params_text))
                 if not (lang_with_defaults == lang and
                         row[lang] == default_trans.get(row["property"], "")):
                     trans_dict[lang].update({row["property"]: row[lang]})
@@ -86,7 +116,7 @@ def build_ui_translation_download_file(app):
     for i, lang in enumerate(app.langs):
         index = i + 1
         trans_dict = app.translations.get(lang, {})
-        for prop, trans in six.iteritems(trans_dict):
+        for prop, trans in trans_dict.items():
             if prop in blacklist:
                 continue
             if prop not in row_dict:

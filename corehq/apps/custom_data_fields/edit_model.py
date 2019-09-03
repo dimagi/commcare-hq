@@ -1,20 +1,24 @@
 import json
 import re
 
+from django import forms
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
 from django.shortcuts import redirect
-from django.utils.translation import ugettext as _, ugettext_lazy
-from django import forms
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
-from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD, REGEX_FIELD_VALIDATION
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
 from memoized import memoized
 
-from .models import (CustomDataFieldsDefinition, CustomDataField,
-                     validate_reserved_words)
-import six
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD, REGEX_FIELD_VALIDATION
+
+from .models import (
+    CustomDataField,
+    CustomDataFieldsDefinition,
+    validate_reserved_words,
+)
 
 
 class CustomDataFieldsForm(forms.Form):
@@ -126,7 +130,7 @@ class CustomDataModelMixin(object):
 
     @classmethod
     def page_name(cls):
-        return _("Edit {} Fields").format(six.text_type(cls.entity_string))
+        return _("Edit {} Fields").format(str(cls.entity_string))
 
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain,
@@ -196,7 +200,7 @@ class CustomDataModelMixin(object):
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
             msg = _("{} fields saved successfully").format(
-                six.text_type(self.entity_string)
+                str(self.entity_string)
             )
             messages.success(request, msg)
             return redirect(self.urlname, self.domain)

@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 
 from ..forms import AuthenticateAsForm
 from ..views.users import AuthenticateAs

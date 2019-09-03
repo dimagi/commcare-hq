@@ -7,8 +7,12 @@ from datetime import datetime
 import sqlalchemy
 from sqlalchemy.dialects.postgresql import insert
 
-from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM, AGG_WINDOW_END_PARAM, \
-    TimePeriodAggregationWindow, get_time_period_class
+from corehq.apps.aggregate_ucrs.aggregations import (
+    AGG_WINDOW_END_PARAM,
+    AGG_WINDOW_START_PARAM,
+    TimePeriodAggregationWindow,
+    get_time_period_class,
+)
 from corehq.apps.userreports.util import get_indicator_adapter
 
 AggregationParam = namedtuple('AggregationParam', 'name value mapped_column_id')

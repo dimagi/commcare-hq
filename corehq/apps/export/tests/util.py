@@ -1,13 +1,12 @@
 import json
 import uuid
 
+
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
+
 from corehq.apps.export.export import get_export_file
 from corehq.util.files import TransientTempfile
-
-import six
-from six.moves import map
 
 DOMAIN = "export-file-domain"
 DEFAULT_USER = "user1"
@@ -56,7 +55,7 @@ def assertContainsExportItems(item_tuples, export_group_schema):
     extra = actual - item_set
     if missing or extra:
         def prettify(list_of_tuples):
-            return '\n  '.join(map(six.text_type, list_of_tuples))
+            return '\n  '.join(map(str, list_of_tuples))
         raise AssertionError("Contains items:\n  {}\nMissing items:\n  {}\nExtra items:\n {}"
                              .format(prettify(actual), prettify(missing), prettify(extra)))
 

@@ -1,4 +1,3 @@
-
 import os
 import re
 from datetime import date, datetime, time
@@ -6,10 +5,8 @@ from decimal import Decimal
 
 from django.test.testcases import TestCase, override_settings
 
-import six
 import sqlalchemy
 from freezegun import freeze_time
-from six.moves import zip
 
 from custom.icds_reports.exceptions import LocationRemovedException
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -83,7 +80,7 @@ class AggregationScriptTestBase(CSVTestCase):
                         row[idx] = value.strftime('%Y-%m-%d')
                     elif isinstance(value, time):
                         row[idx] = value.strftime("%H:%M:%S.%f").rstrip('0').rstrip('.')
-                    elif isinstance(value, six.integer_types):
+                    elif isinstance(value, int):
                         row[idx] = str(value)
                     elif isinstance(value, (float, Decimal)):
                         row[idx] = self._convert_decimal_to_string(row[idx])

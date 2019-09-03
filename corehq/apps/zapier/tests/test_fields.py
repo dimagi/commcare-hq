@@ -1,5 +1,6 @@
-from django.test.testcases import TestCase, SimpleTestCase
 from django.test.client import Client
+from django.test.testcases import SimpleTestCase, TestCase
+
 from tastypie.resources import Resource
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory

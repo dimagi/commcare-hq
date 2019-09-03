@@ -1,7 +1,8 @@
 
-from django.db import models, migrations
-import django.db.models.deletion
 from decimal import Decimal
+
+import django.db.models.deletion
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):

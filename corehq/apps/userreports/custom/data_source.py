@@ -1,15 +1,17 @@
 
 from abc import ABCMeta, abstractmethod
+
 from django.utils.decorators import method_decorator
+
 from memoized import memoized
-import six
+
+from dimagi.utils.modules import to_function
 
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
 from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
 from corehq.apps.userreports.util import get_indicator_adapter
-from dimagi.utils.modules import to_function
 
 
 class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, ReportDataSource):
@@ -94,7 +96,7 @@ class ConfigurableReportCustomSQLDataSourceHelper(object):
         }
 
 
-class ConfigurableReportCustomQueryProvider(six.with_metaclass(ABCMeta, object)):
+class ConfigurableReportCustomQueryProvider(metaclass=ABCMeta):
     @abstractmethod
     def get_data(self, start, limit):
         """This method is run before transformations defined in the UCR occur,

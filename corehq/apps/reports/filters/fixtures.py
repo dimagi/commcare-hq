@@ -1,6 +1,10 @@
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
-from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
+
+from corehq.apps.locations.util import (
+    load_locs_json,
+    location_hierarchy_config,
+)
 from corehq.apps.reports.filters.base import BaseReportFilter
 from custom.icds_reports.utils import icds_pre_release_features
 

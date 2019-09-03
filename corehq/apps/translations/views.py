@@ -1,12 +1,9 @@
-
 import io
 
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-
-import six
 
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -38,10 +35,7 @@ from corehq.apps.translations.app_translations.utils import (
 from corehq.apps.translations.utils import (
     update_app_translations_from_trans_dict,
 )
-from corehq.util.workbook_json.excel import (
-    WorkbookJSONError,
-    get_workbook,
-)
+from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
 
 @no_conflict_require_POST
@@ -108,7 +102,7 @@ def download_bulk_app_translations(request, domain, app_id):
         sheets = get_bulk_app_sheets_by_name(app, eligible_for_transifex_only=skip_blacklisted)
 
     temp = io.BytesIO()
-    data = [(k, v) for k, v in six.iteritems(sheets)]
+    data = [(k, v) for k, v in sheets.items()]
     export_raw(headers, data, temp)
     filename = '{app_name} v.{app_version} - App Translations{lang}{transifex_only}'.format(
         app_name=app.name,
@@ -130,7 +124,7 @@ def upload_bulk_app_translations(request, domain, app_id):
     try:
         workbook = get_workbook(request.file)
     except WorkbookJSONError as e:
-        messages.error(request, six.text_type(e))
+        messages.error(request, str(e))
     else:
         if validate:
             msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)

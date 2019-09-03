@@ -1,20 +1,19 @@
 import logging
 
+from tastypie import fields
+from tastypie.exceptions import NotFound
+from tastypie.resources import ModelResource, Resource
+
+from dimagi.utils.dates import force_to_datetime
+
+from corehq.apps.accounting.models import Subscription
+from corehq.apps.api.resources import CouchResourceMixin, HqBaseResource
 from corehq.apps.api.resources.auth import AdminAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.serializers import XFormInstanceSerializer
-from corehq.apps.data_analytics.models import MALTRow, GIRRow
+from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
-from corehq.apps.accounting.models import Subscription
-from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
 from corehq.apps.es.domains import DomainES
-
-from tastypie import fields
-from tastypie.exceptions import NotFound
-from tastypie.resources import Resource, ModelResource
-
-from dimagi.utils.dates import force_to_datetime
-from six.moves import map
 
 
 def _get_domain(bundle):

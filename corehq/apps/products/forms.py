@@ -1,13 +1,14 @@
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout
+import json
+
 from django import forms
 from django.utils.translation import ugettext_noop
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout
 
-from corehq.apps.programs.models import Program
-from corehq.apps.products.models import Product
 from corehq.apps.commtrack.util import all_sms_codes
-import json
+from corehq.apps.products.models import SQLProduct
+from corehq.apps.programs.models import Program
 
 
 class CurrencyField(forms.DecimalField):
@@ -64,8 +65,13 @@ class ProductForm(forms.Form):
     def clean_name(self):
         name = self.cleaned_data['name']
 
-        other_products = [p for p in Product.by_domain(self.product.domain) if p._id != self.product._id]
-        if name in [p.name for p in other_products]:
+        num_other_products_with_name = (
+            SQLProduct.active_objects
+            .filter(domain=self.product.domain, name=name)
+            .exclude(product_id=self.product._id)
+        ).count()
+
+        if num_other_products_with_name:
             raise forms.ValidationError('name already in use')
 
         return name

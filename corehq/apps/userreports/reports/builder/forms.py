@@ -1,56 +1,66 @@
 
-from abc import ABCMeta, abstractproperty
-from collections import namedtuple, OrderedDict
 import datetime
 import uuid
-from django.conf import settings
+from abc import ABCMeta, abstractproperty
+from collections import OrderedDict, namedtuple
+
 from django import forms
+from django.conf import settings
 from django.utils.translation import ugettext as _
-from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
-from corehq.apps.userreports.app_manager.data_source_meta import get_app_data_source_meta, \
-    APP_DATA_SOURCE_TYPE_VALUES, REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES, DATA_SOURCE_TYPE_RAW
-from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE
 
-from corehq.apps.domain.models import DomainAuditRecordEntry
-
-from corehq.apps.userreports.reports.builder.columns import (
-    QuestionColumnOption,
-    CountColumn,
-    MultiselectQuestionColumnOption,
-    FormMetaColumnOption,
-    OwnernameComputedCasePropertyOption,
-    UsernameComputedCasePropertyOption,
-    CasePropertyColumnOption,
-    RawPropertyColumnOption)
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
-from corehq.apps.hqwebapp import crispy as hqcrispy
+from memoized import memoized
 
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    get_case_properties,
+)
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.app_manager.models import Application
-
+from corehq.apps.domain.models import DomainAuditRecordEntry
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.userreports import tasks
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    APP_DATA_SOURCE_TYPE_VALUES,
+    DATA_SOURCE_TYPE_RAW,
+    REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
+    get_app_data_source_meta,
+)
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
+from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE
+from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.models import (
     DataSourceBuildInformation,
     DataSourceConfiguration,
     DataSourceMeta,
     ReportConfiguration,
     ReportMeta,
-    get_datasource_config_infer_type, guess_data_source_type)
+    get_datasource_config_infer_type,
+    guess_data_source_type,
+)
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
     get_filter_format_from_question_type,
 )
-from corehq.apps.userreports.exceptions import BadBuilderConfigError
+from corehq.apps.userreports.reports.builder.columns import (
+    CasePropertyColumnOption,
+    CountColumn,
+    FormMetaColumnOption,
+    MultiselectQuestionColumnOption,
+    OwnernameComputedCasePropertyOption,
+    QuestionColumnOption,
+    RawPropertyColumnOption,
+    UsernameComputedCasePropertyOption,
+)
 from corehq.apps.userreports.reports.builder.const import (
     COMPUTED_OWNER_NAME_PROPERTY_ID,
     COMPUTED_USER_NAME_PROPERTY_ID,
     PROPERTY_TYPE_CASE_PROP,
     PROPERTY_TYPE_META,
     PROPERTY_TYPE_QUESTION,
+    PROPERTY_TYPE_RAW,
     UCR_AGG_AVG,
     UCR_AGG_EXPAND,
     UCR_AGG_SIMPLE,
@@ -59,14 +69,14 @@ from corehq.apps.userreports.reports.builder.const import (
     UI_AGG_COUNT_PER_CHOICE,
     UI_AGG_GROUP_BY,
     UI_AGG_SUM,
-    PROPERTY_TYPE_RAW)
-from corehq.apps.userreports.reports.builder.sources import get_source_type_from_report_config
+)
+from corehq.apps.userreports.reports.builder.sources import (
+    get_source_type_from_report_config,
+)
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.toggles import SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER
-from memoized import memoized
-import six
 
 # This dict maps filter types from the report builder frontend to UCR filter types
 REPORT_BUILDER_FILTER_TYPE_MAP = {
@@ -237,7 +247,7 @@ class DataSourceProperty(object):
         return self.to_report_column_option()._get_indicator(ui_aggregation)
 
 
-class ReportBuilderDataSourceInterface(six.with_metaclass(ABCMeta)):
+class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
     """
     Abstract interface to a data source in report builder.
 
@@ -343,7 +353,7 @@ class ReportBuilderDataSourceReference(ReportBuilderDataSourceInterface):
     @property
     def report_column_options(self):
         options = OrderedDict()
-        for id_, prop in six.iteritems(self.data_source_properties):
+        for id_, prop in self.data_source_properties.items():
             options[id_] = prop.to_report_column_option()
 
         return options
@@ -621,7 +631,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
     @memoized
     def report_column_options(self):
         options = OrderedDict()
-        for id_, prop in six.iteritems(self.data_source_properties):
+        for id_, prop in self.data_source_properties.items():
             options[id_] = prop.to_report_column_option()
 
         # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
@@ -912,7 +922,7 @@ class ConfigureNewReportBase(forms.Form):
                     self._is_multiselect_chart_report,
                 )
                 if data_source.configured_indicators != indicators:
-                    for property_name, value in six.iteritems(self._get_data_source_configuration_kwargs()):
+                    for property_name, value in self._get_data_source_configuration_kwargs().items():
                         setattr(data_source, property_name, value)
                     data_source.save()
                     tasks.rebuild_indicators.delay(data_source._id, source='report_builder_update')

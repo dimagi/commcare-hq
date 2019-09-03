@@ -1,34 +1,42 @@
-from celery.schedules import crontab
-from celery.task import task, periodic_task
-from celery.utils.log import get_task_logger
-from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule,
-    CaseRuleActionResult,
-    DomainCaseRuleRun,
-    AUTO_UPDATE_XMLNS,
-    CaseRuleSubmission)
-from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.apps.domain.models import Domain
-from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
-from corehq.util.decorators import serial_task
 from datetime import datetime, timedelta
 
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.utils.general import should_use_sql_backend
 from django.conf import settings
 from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
-from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_or_restore_forms
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from .interfaces import FormManagementMode, BulkFormManagementInterface
-from .dispatcher import EditDataInterfaceDispatcher
-from corehq.util.log import send_HTML_email
+from celery.schedules import crontab
+from celery.task import periodic_task, task
+from celery.utils.log import get_task_logger
+
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_error
-import six
 
+from corehq.apps.data_interfaces.models import (
+    AUTO_UPDATE_XMLNS,
+    AutomaticUpdateRule,
+    CaseRuleActionResult,
+    CaseRuleSubmission,
+    DomainCaseRuleRun,
+)
+from corehq.apps.data_interfaces.utils import (
+    add_cases_to_case_group,
+    archive_or_restore_forms,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
+from corehq.util.decorators import serial_task
+from corehq.util.log import send_HTML_email
+
+from .dispatcher import EditDataInterfaceDispatcher
+from .interfaces import BulkFormManagementInterface, FormManagementMode
 
 logger = get_task_logger('data_interfaces')
 ONE_HOUR = 60 * 60
@@ -134,7 +142,7 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, db=None):
     all_rules = list(AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE))
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
 
-    for case_type, rules in six.iteritems(rules_by_case_type):
+    for case_type, rules in rules_by_case_type.items():
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
         for case in AutomaticUpdateRule.iter_cases(domain, case_type, boundary_date, db=db):
             migration_in_progress, last_migration_check_time = check_data_migration_in_progress(domain,

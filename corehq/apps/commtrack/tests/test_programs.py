@@ -1,11 +1,15 @@
-
-import six
 from django.test import TestCase
-from corehq.apps.commtrack.tests.util import bootstrap_domain, bootstrap_products, TEST_DOMAIN
-from corehq.apps.programs.models import Program
-from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.commtrack.util import make_program
+
 from couchdbkit import ResourceNotFound
+
+from corehq.apps.commtrack.tests.util import (
+    TEST_DOMAIN,
+    bootstrap_domain,
+    bootstrap_products,
+)
+from corehq.apps.commtrack.util import make_program
+from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.programs.models import Program
 
 
 class ProgramsTest(TestCase):
@@ -26,7 +30,7 @@ class ProgramsTest(TestCase):
         with self.assertRaises(Exception) as context:
             self.default_program.delete()
 
-        self.assertEqual(six.text_type(context.exception), 'You cannot delete the default program')
+        self.assertEqual(str(context.exception), 'You cannot delete the default program')
 
         # assign some product to the new program
         self.products[0].program_id = self.new_program._id

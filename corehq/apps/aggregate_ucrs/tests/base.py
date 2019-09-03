@@ -1,4 +1,5 @@
 import os
+
 import yaml
 
 from corehq.apps.aggregate_ucrs.parser import AggregationSpec

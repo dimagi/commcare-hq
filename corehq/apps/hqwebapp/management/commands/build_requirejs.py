@@ -2,16 +2,17 @@ import json
 import logging
 import os
 import re
-import six
 import subprocess
-import yaml
 from collections import defaultdict
-from django.conf import settings
 from shutil import copyfile
 from subprocess import call
 
-from corehq.apps.hqwebapp.management.commands.resource_static import Command as ResourceStaticCommand
+from django.conf import settings
 
+import yaml
+
+from corehq.apps.hqwebapp.management.commands.resource_static import \
+    Command as ResourceStaticCommand
 
 logger = logging.getLogger('__name__')
 ROOT_DIR = settings.FILEPATH
@@ -89,7 +90,7 @@ class Command(ResourceStaticCommand):
             fout.write("requirejs.config({ paths: %s });" % json.dumps({
                 file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3],
                                              ".js?version=%s" % version if version else "")
-                for file, version in six.iteritems(resource_versions)
+                for file, version in resource_versions.items()
                 if file.endswith(".js") and not file.startswith("formdesigner")
             }, indent=2))
         resource_versions["hqwebapp/js/resource_versions.js"] = self.get_hash(filename)
@@ -103,13 +104,13 @@ def _confirm_or_exit():
     (out, err) = proc.communicate()
     out = out.decode('utf-8')
     if out:
-        confirm = six.moves.input("You have unstaged changes to the following files: \n{} "
-                                  "This script overwrites some static files. "
-                                  "Are you sure you want to continue (y/n)? ".format(out))
+        confirm = input("You have unstaged changes to the following files: \n{} "
+                        "This script overwrites some static files. "
+                        "Are you sure you want to continue (y/n)? ".format(out))
         if confirm[0].lower() != 'y':
             exit()
-    confirm = six.moves.input("You are running locally. Have you already run "
-                              "`./manage.py collectstatic --noinput && ./manage.py compilejsi18n` (y/n)? ")
+    confirm = input("You are running locally. Have you already run "
+                    "`./manage.py collectstatic --noinput && ./manage.py compilejsi18n` (y/n)? ")
     if confirm[0].lower() != 'y':
         exit()
 

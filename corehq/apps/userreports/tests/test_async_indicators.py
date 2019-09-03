@@ -1,17 +1,18 @@
+import uuid
+
+from django.test import SimpleTestCase, TestCase
 
 import mock
-import uuid
-from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
-from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator
-from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
-from corehq.apps.userreports.tests.utils import load_data_from_db
+from corehq.apps.userreports.models import (
+    AsyncIndicator,
+    DataSourceConfiguration,
+)
 from corehq.apps.userreports.tasks import build_async_indicators
-from six.moves import range
-
-import six
+from corehq.apps.userreports.tests.utils import load_data_from_db
+from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 
 
 class RunAsynchronousTest(SimpleTestCase):
@@ -99,7 +100,7 @@ class TestBulkUpdate(TestCase):
         AsyncIndicator.objects.bulk_create([
             AsyncIndicator(
                 doc_id=doc_id, doc_type=doc_type, domain=domain, indicator_config_ids=sorted(config_ids))
-            for doc_id, config_ids in six.iteritems(initial_data)
+            for doc_id, config_ids in initial_data.items()
         ])
         updated_data = {
             'd2': ['c2'],

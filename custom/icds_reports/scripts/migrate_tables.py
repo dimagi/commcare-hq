@@ -8,8 +8,6 @@ import sys
 from datetime import datetime
 from time import sleep
 
-from six.moves import input
-
 logger = logging.getLogger(__name__)
 
 

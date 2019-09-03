@@ -4,10 +4,14 @@ from itertools import chain
 
 from memoized import memoized
 
-from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff, MISSING
+from corehq.apps.tzmigration.timezonemigration import (
+    MISSING,
+    FormJsonDiff,
+    is_datetime_string,
+    json_diff,
+)
 
 from .diffrule import Ignore
-
 
 load_ignore_rules = memoized(lambda: ignore_rules)
 
@@ -288,6 +292,7 @@ ignore_rules = {
         ignore_renamed('uid', 'instanceID'),
     ],
     'XFormInstance-Deleted': [
+        Ignore('missing', 'deletion_id', old=MISSING, new=None),
         ignore_renamed('-deletion_id', 'deletion_id'),
         ignore_renamed('-deletion_date', 'deleted_on'),
     ],

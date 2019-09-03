@@ -1,6 +1,4 @@
 from corehq.apps.es.cases import CaseES
-from corehq.util.python_compatibility import soft_assert_type_text
-import six
 
 
 def scroll_case_ids_by_domain_and_case_type(domain, case_type, chunk_size=100):
@@ -19,9 +17,8 @@ def scroll_case_ids_by_domain_and_case_type(domain, case_type, chunk_size=100):
     result = []
 
     for case_id in query.scroll():
-        if not isinstance(case_id, six.string_types):
+        if not isinstance(case_id, str):
             raise ValueError("Something is wrong with the query, expected ids only")
-        soft_assert_type_text(case_id)
 
         result.append(case_id)
         if len(result) >= chunk_size:

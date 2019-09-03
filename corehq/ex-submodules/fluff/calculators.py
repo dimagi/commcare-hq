@@ -3,7 +3,6 @@ import logging
 import datetime
 from dimagi.utils.parsing import json_format_date
 from .exceptions import EmitterTypeError
-import six
 
 
 class CalculatorMeta(type):
@@ -32,7 +31,7 @@ class CalculatorMeta(type):
         return cls
 
 
-class Calculator(six.with_metaclass(CalculatorMeta, object)):
+class Calculator(metaclass=CalculatorMeta):
     window = None
 
     # set by IndicatorDocumentMeta

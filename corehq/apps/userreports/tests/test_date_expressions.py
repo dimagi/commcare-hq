@@ -1,4 +1,5 @@
 from datetime import date, datetime
+
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.util.test_utils import generate_cases

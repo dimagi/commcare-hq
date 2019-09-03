@@ -1,35 +1,46 @@
-import re
 import json
+import re
+
+from django import forms
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.forms.fields import *
+from django.forms.forms import Form
+from django.urls import reverse
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
 from couchdbkit.exceptions import ResourceNotFound
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.layout import Div
-from django import forms
-from django.urls import reverse
-from django.forms.forms import Form
-from django.forms.fields import *
-from crispy_forms import layout as crispy
-from crispy_forms import bootstrap as twbscrispy
-from django.utils.safestring import mark_safe
+
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.django.fields import TrimmedCharField
+
+from corehq.apps.app_manager.dbaccessors import get_built_app_ids
+from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.models import DayTimeWindow
+from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.widgets import SelectToggle
-from corehq.apps.app_manager.dbaccessors import get_built_app_ids
-from corehq.apps.app_manager.models import Application
-from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD, SQLMobileBackend
-from django.core.exceptions import ValidationError
-from corehq.apps.reminders.forms import validate_time
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.sms.util import (validate_phone_number, strip_plus,
-    get_sms_backend_classes, ALLOWED_SURVEY_DATE_FORMATS)
-from corehq.apps.domain.models import DayTimeWindow
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from corehq.util.python_compatibility import soft_assert_type_text
-from dimagi.utils.django.fields import TrimmedCharField
-from dimagi.utils.couch.database import iter_docs
-from django.conf import settings
-import six
+from corehq.apps.reminders.forms import validate_time
+from corehq.apps.sms.models import (
+    FORWARD_ALL,
+    FORWARD_BY_KEYWORD,
+    SQLMobileBackend,
+)
+from corehq.apps.sms.util import (
+    ALLOWED_SURVEY_DATE_FORMATS,
+    get_sms_backend_classes,
+    strip_plus,
+    validate_phone_number,
+)
+from corehq.apps.users.models import CommCareUser
 
 FORWARDING_CHOICES = (
     (FORWARD_ALL, ugettext_noop("All messages")),
@@ -615,10 +626,8 @@ class SettingsForm(Form):
         current_values = {}
         for field_name in self.fields.keys():
             value = self[field_name].value()
-            if field_name in ["restricted_sms_times_json",
-                "sms_conversation_times_json"]:
-                if isinstance(value, six.string_types):
-                    soft_assert_type_text(value)
+            if field_name in ["restricted_sms_times_json", "sms_conversation_times_json"]:
+                if isinstance(value, str):
                     current_values[field_name] = json.loads(value)
                 else:
                     current_values[field_name] = value
@@ -773,7 +782,7 @@ class SettingsForm(Form):
             group = Group.get(object_id)
             if group.doc_type == 'Group' and group.domain == self._cchq_domain and group.case_sharing:
                 return group
-            elif group.is_deleted():
+            elif group.is_deleted:
                 return None
         except ResourceNotFound:
             pass

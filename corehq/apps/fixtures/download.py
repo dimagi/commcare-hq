@@ -1,20 +1,23 @@
 import io
-
-from couchdbkit import ResourceNotFound
 from datetime import datetime, timedelta
 
 from django.template.defaultfilters import yesno
 from django.utils.translation import ugettext as _
 
-from corehq.apps.fixtures.exceptions import FixtureDownloadError
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, _id_from_doc
-from corehq.apps.fixtures.upload import DELETE_HEADER
+from couchdbkit import ResourceNotFound
+
 from couchexport.export import export_raw
 from couchexport.models import Format
-
 from soil import DownloadBase
 from soil.util import expose_cached_download
-from six.moves import range
+
+from corehq.apps.fixtures.exceptions import FixtureDownloadError
+from corehq.apps.fixtures.models import (
+    FixtureDataItem,
+    FixtureDataType,
+    _id_from_doc,
+)
+from corehq.apps.fixtures.upload import DELETE_HEADER
 
 
 def prepare_fixture_download(table_ids, domain, task, download_id):

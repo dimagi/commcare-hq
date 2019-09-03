@@ -13,7 +13,6 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColu
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin, ProjectReportParametersMixin
 from corehq.apps.users.util import raw_username
 from .definitions import *
-import six
 
 
 NO_VALUE = '\u2014'
@@ -75,7 +74,7 @@ def hf_message_content(report):
             'msgs': list(_messages(data)),
         }
     return {
-        'hf_messages': [_user_section(u, v) for u, v in six.iteritems(report.records)]
+        'hf_messages': [_user_section(u, v) for u, v in report.records.items()]
     }
 
 
@@ -618,7 +617,7 @@ class WeeklyForms(SqlData):
         weekly = {}
 
         def update_row(row1, row2):
-            for key, value in six.iteritems(row1):
+            for key, value in row1.items():
                 if key not in ['date', 'user_id', 'hf', 'district']:
                     row2[key] += int(value)
         for user_data in last_submisions.values():

@@ -2,8 +2,6 @@
 from django.core.management.base import BaseCommand
 
 from pillowtop.models import KafkaCheckpoint
-from six.moves import input
-from six.moves import range
 
 
 class Command(BaseCommand):

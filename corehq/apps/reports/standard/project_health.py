@@ -1,20 +1,24 @@
-from collections import namedtuple
 import datetime
-from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.data_analytics.models import MALTRow
-from corehq.apps.domain.models import Domain
-from corehq.apps.reports.standard import ProjectReport
-from corehq.apps.hqwebapp.decorators import use_nvd3
-from corehq.apps.users.util import raw_username
+from collections import namedtuple
+from itertools import chain
+
+from django.db.models import Sum
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from memoized import memoized
+
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
-from memoized import memoized
+
+from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.domain.models import Domain
 from corehq.apps.es.groups import GroupES
 from corehq.apps.es.users import UserES
-from itertools import chain
+from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
-from django.db.models import Sum
-from six.moves import range
+from corehq.apps.reports.standard import ProjectReport
+from corehq.apps.users.util import raw_username
 
 
 def get_performance_threshold(domain_name):

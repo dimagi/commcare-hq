@@ -1,49 +1,54 @@
-from django.http import Http404
-from django.http import HttpResponseRedirect
-from django.urls import reverse
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
-from corehq.apps.app_manager.const import APP_V1
-from corehq.apps.app_manager.exceptions import FormNotFoundException
+from django.urls import reverse
 
-from corehq.apps.app_manager.views.modules import get_module_template, \
-    get_module_view_context
-from corehq import privileges
-from corehq.apps.app_manager.forms import CopyApplicationForm
-from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.views.apps import get_apps_base_context, \
-    get_app_view_context
-from corehq.apps.app_manager.views.forms import \
-    get_form_view_context_and_template
-from corehq.apps.app_manager.views.releases import get_releases_context
-from corehq.apps.app_manager.views.utils import bail, set_lang_cookie
-from corehq.apps.hqmedia.controller import (
-    MultimediaImageUploadController,
-    MultimediaAudioUploadController,
-)
-from corehq.apps.domain.models import Domain
-from corehq.apps.hqmedia.models import (
-    ApplicationMediaReference,
-    CommCareImage,
-)
-from corehq.apps.hqmedia.views import (
-    ProcessImageFileUploadView,
-    ProcessAudioFileUploadView,
-)
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, is_linked_domain
-from corehq.apps.app_manager.util import get_commcare_versions, is_remote_app
-from corehq import toggles
-from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
-from corehq.apps.cloudcare.utils import should_show_preview_app
-from corehq.util.soft_assert import soft_assert
+from django_prbac.utils import has_privilege
+
 from dimagi.utils.couch.resource_conflict import retry_resource
+
+from corehq import privileges, toggles
+from corehq.apps.app_manager import add_ons
+from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.exceptions import FormNotFoundException
+from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
     ANDROID_LOGO_PROPERTY_MAPPING,
+    CustomIcon,
     ModuleNotFoundException,
     ReportModule,
-    CustomIcon)
-from django_prbac.utils import has_privilege
-import six
+)
+from corehq.apps.app_manager.util import get_commcare_versions, is_remote_app
+from corehq.apps.app_manager.views.apps import (
+    get_app_view_context,
+    get_apps_base_context,
+)
+from corehq.apps.app_manager.views.forms import (
+    get_form_view_context_and_template,
+)
+from corehq.apps.app_manager.views.modules import (
+    get_module_template,
+    get_module_view_context,
+)
+from corehq.apps.app_manager.views.releases import get_releases_context
+from corehq.apps.app_manager.views.utils import bail, set_lang_cookie
+from corehq.apps.cloudcare.utils import should_show_preview_app
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqmedia.controller import (
+    MultimediaAudioUploadController,
+    MultimediaImageUploadController,
+)
+from corehq.apps.hqmedia.models import ApplicationMediaReference, CommCareImage
+from corehq.apps.hqmedia.views import (
+    ProcessAudioFileUploadView,
+    ProcessImageFileUploadView,
+)
+from corehq.apps.linked_domain.dbaccessors import (
+    get_domain_master_link,
+    is_linked_domain,
+)
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.util.soft_assert import soft_assert
 
 
 @retry_resource(3)
@@ -225,7 +230,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             'multimedia': {
                 "object_map": app.get_object_map(),
                 'upload_managers': uploaders,
-                'upload_managers_js': {type: u.js_options for type, u in six.iteritems(uploaders)},
+                'upload_managers_js': {type: u.js_options for type, u in uploaders.items()},
             }
         })
         context['module_icon'] = None
