@@ -22,9 +22,6 @@ from couchforms.models import doc_types as form_doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
-from pillowtop.reindexer.change_providers.couch import (
-    CouchDomainDocTypeChangeProvider,
-)
 
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
