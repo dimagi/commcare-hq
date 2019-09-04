@@ -28,8 +28,13 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
     if user_id in WEIRD_USER_IDS:
         user_id = None
 
-    if (user_id and not _user_exists(user_id)
-            and not doc_exists_in_es(USER_INDEX_INFO, user_id)):
+    if not user_id:
+        return
+
+    if not _user_exists_in_couch(user_id):
+        return
+
+    if not doc_exists_in_es(USER_INDEX_INFO, user_id):
         doc_type = "AdminUser" if username == "admin" else "UnknownUser"
         doc = {
             "_id": user_id,
@@ -64,7 +69,7 @@ def transform_user_for_elasticsearch(doc_dict):
 
 
 @quickcache(['user_id'])
-def _user_exists(user_id):
+def _user_exists_in_couch(user_id):
     return CouchUser.get_db().doc_exist(user_id)
 
 
