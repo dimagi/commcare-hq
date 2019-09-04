@@ -1,7 +1,8 @@
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from psycopg2._psycopg import IntegrityError
 
+import settings
 from custom.icds_reports import tests as icds_tests
 
 
@@ -9,6 +10,9 @@ class Command(BaseCommand):
     help = "Populates your local database with test data for the dashboard."
 
     def handle(self, *args, **options):
+        if not settings.DEBUG:
+            raise CommandError("This command is only allowed in DEBUG mode to prevent accidental data deletion")
+
         proceed_str = input(
             '=================================================\n'
             'This command deletes a lot of things, including: \n'
