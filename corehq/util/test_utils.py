@@ -103,11 +103,11 @@ class TestFileMixin(object):
 
     @classmethod
     def get_json(cls, name, override_path=None):
-        return json.loads(cls.get_file(name, '.json', override_path).encode('utf-8'))
+        return json.loads(cls.get_file(name, '.json', override_path))
 
     @classmethod
     def get_xml(cls, name, override_path=None):
-        return cls.get_file(name, '.xml', override_path)
+        return cls.get_file(name, '.xml', override_path).encode('utf-8')
 
 
 class flag_enabled(object):
