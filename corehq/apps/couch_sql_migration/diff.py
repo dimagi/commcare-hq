@@ -13,151 +13,7 @@ from corehq.apps.tzmigration.timezonemigration import (
 
 from .diffrule import Ignore
 
-load_ignore_rules = memoized(lambda: {
-    'XFormInstance*': [
-        Ignore(path='_rev', new=MISSING),
-        Ignore(path='migrating_blobs_from_couch', new=MISSING),
-        Ignore(path='#export_tag', new=MISSING),
-        Ignore(path='computed_', new=MISSING),
-        Ignore(path='state', old=MISSING),
-        Ignore(path='computed_modified_on_', new=MISSING),
-        Ignore(path='deprecated_form_id', old=MISSING, new=None),
-        Ignore(path='path', new=MISSING),
-        Ignore(path='user_id', old=MISSING),
-        Ignore(path='external_blobs', new=MISSING),
-        Ignore(type='type', path=('openrosa_headers', 'HTTP_X_OPENROSA_VERSION')),
-        Ignore(path='problem', old=MISSING, new=None),
-        Ignore(path='problem', old='', new=None),
-        Ignore(path='orig_id', old=MISSING, new=None),
-        Ignore(path='edited_on', old=MISSING, new=None),
-        Ignore(path='repeats', old=MISSING),  # report records save in form
-        Ignore(path='form_migrated_from_undefined_xmlns', new=MISSING),
-        Ignore(type='missing', old=None, new=MISSING),
-
-        # FORM_IGNORED_DIFFS
-        Ignore('missing', ('history', '[*]', 'doc_type'), old='XFormOperation', new=MISSING),
-        Ignore('diff', 'doc_type', old='HQSubmission', new='XFormInstance'),
-        Ignore('missing', 'deleted_on', old=MISSING, new=None),
-        Ignore('missing', 'location_', new=MISSING),
-        Ignore('type', 'xmlns', old=None, new=''),
-        Ignore('type', 'initial_processing_complete', old=None, new=True),
-        Ignore('missing', 'backend_id', old=MISSING, new='sql'),
-        Ignore('missing', 'location_id', new=MISSING, check=is_supply_point),
-        Ignore('missing', '_attachments', new=MISSING),
-        Ignore('type', 'server_modified_on', old=None),
-
-        Ignore('diff', check=has_date_values),
-        Ignore(check=is_text_xmlns),
-    ],
-    'XFormInstance': [
-        ignore_renamed('uid', 'instanceID'),
-    ],
-    'XFormInstance-Deleted': [
-        Ignore('missing', 'deletion_id', old=MISSING, new=None),
-        ignore_renamed('-deletion_id', 'deletion_id'),
-        ignore_renamed('-deletion_date', 'deleted_on'),
-    ],
-    'HQSubmission': [],
-    'XFormArchived': [],
-    'XFormError': [],
-    'XFormDuplicate': [],
-    'XFormDeprecated': [
-        ignore_renamed('deprecated_date', 'edited_on'),
-    ],
-    'CommCareCase*': [
-        Ignore(path='_rev', new=MISSING),
-        Ignore(path='initial_processing_complete', new=MISSING),
-        Ignore(check=is_case_actions),  # ignore case actions
-        Ignore(path='id', old=MISSING),
-        Ignore(path='@xmlns'),  # legacy
-        Ignore(path='_attachments', new=MISSING),
-        Ignore(path='external_blobs', new=MISSING),
-        Ignore(path='#export_tag', new=MISSING),
-        Ignore(path='computed_', new=MISSING),
-        Ignore(path='version', new=MISSING),
-        Ignore(path='deleted', old=MISSING),
-        Ignore(path='export_tag', new=MISSING),
-        Ignore(path='computed_modified_on_', new=MISSING),
-        Ignore(path='case_id'),  # legacy
-        Ignore(path='@case_id'),  # legacy
-        Ignore(path='case_json', old=MISSING),
-        Ignore(path='modified_by', old=MISSING),
-        # legacy bug left cases with no owner_id
-        Ignore('diff', 'owner_id', old=''),
-        Ignore('type', 'owner_id', old=None),
-        Ignore('type', 'user_id', old=None),
-        Ignore('type', 'opened_on', old=None),
-        Ignore('type', 'opened_by', old=MISSING),
-        # The form that created the case was archived, but the opened_by
-        # field was not updated as part of the subsequent rebuild.
-        # `CouchCaseUpdateStrategy.reset_case_state()` does not reset
-        # opened_by or opened_on (the latter is ignored by has_date_values).
-        Ignore(path='opened_by', check=is_case_without_create_action),
-        # form has case block with no actions
-        Ignore('set_mismatch', ('xform_ids', '[*]'), old=''),
-        Ignore('missing', 'case_attachments', old=MISSING, new={}),
-        Ignore('missing', old=None, new=MISSING),
-
-        # CASE_IGNORED_DIFFS
-        Ignore('type', 'name', old='', new=None),
-        Ignore('type', 'closed_by', old='', new=None),
-        Ignore('missing', 'location_id', old=MISSING, new=None),
-        Ignore('missing', 'referrals', new=MISSING),
-        Ignore('missing', 'location_', new=MISSING),
-        Ignore('type', 'type', old=None, new=''),
-        # this happens for cases where the creation form has been archived but the case still has other forms
-        Ignore('type', 'owner_id', old=None, new=''),
-        Ignore('missing', 'closed_by', old=MISSING, new=None),
-        Ignore('type', 'external_id', old='', new=None),
-        Ignore('missing', 'deleted_on', old=MISSING, new=None),
-        Ignore('missing', 'backend_id', old=MISSING, new='sql'),
-
-        Ignore(path=('indices', '[*]', 'case_id'), old=MISSING),
-        Ignore('missing', ('indices', '[*]', 'doc_type'), old='CommCareCaseIndex', new=MISSING),
-        Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),  # defaulted on SQL
-
-        Ignore(path=('actions', '[*]')),
-
-        Ignore('diff', check=has_date_values),
-        ignore_renamed('hq_user_id', 'external_id'),
-        Ignore(path=('xform_ids', '[*]'), check=xform_ids_order),
-        Ignore(check=case_attachments),
-        Ignore(check=case_index_order),
-    ],
-    'CommCareCase': [
-        # couch case was deleted and then restored - SQL case won't have deletion properties
-        Ignore('missing', '-deletion_id', new=MISSING),
-        Ignore('missing', '-deletion_date', new=MISSING),
-
-        ignore_renamed('@user_id', 'user_id'),
-        ignore_renamed('@date_modified', 'modified_on'),
-    ],
-    'CommCareCase-Deleted': [
-        Ignore('type', 'modified_on', old=None),
-        Ignore('missing', '-deletion_id', old=MISSING, new=None),
-        Ignore('missing', 'deletion_id', old=MISSING, new=None),
-        Ignore('complex', ('-deletion_id', 'deletion_id'), old=MISSING, new=None),
-        Ignore('missing', '-deletion_date', old=MISSING, new=None),
-        Ignore('missing', 'deleted_on', old=MISSING),
-        ignore_renamed('-deletion_id', 'deletion_id'),
-        ignore_renamed('-deletion_date', 'deleted_on'),
-    ],
-    'LedgerValue': [
-        Ignore(path='_id'),  # couch != SQL
-    ],
-    'case_attachment': [
-        Ignore(path='attachment_properties', new=MISSING),
-        Ignore(path='attachment_from', new=MISSING),
-        Ignore(path='attachment_src', new=MISSING),
-        Ignore(path='content_type', old=MISSING),
-        Ignore(path='doc_type', new=MISSING),
-        Ignore(path='server_mime', new=MISSING),
-        Ignore(path='attachment_name', new=MISSING),
-        Ignore(path='server_md5', new=MISSING),
-        ignore_renamed('attachment_size', 'content_length'),
-        ignore_renamed('identifier', 'name'),
-    ]
-})
+load_ignore_rules = memoized(lambda: ignore_rules)
 
 
 def filter_form_diffs(couch_form, sql_form, diffs):
@@ -395,3 +251,150 @@ def is_supply_point(old_obj, new_obj, rule, diff):
 def is_case_without_create_action(old_obj, new_obj, rule, diff):
     from casexml.apps.case.const import CASE_ACTION_CREATE as CREATE
     return all(a.get("action_type") != CREATE for a in old_obj.get("actions", []))
+
+
+ignore_rules = {
+    'XFormInstance*': [
+        Ignore(path='_rev', new=MISSING),
+        Ignore(path='migrating_blobs_from_couch', new=MISSING),
+        Ignore(path='#export_tag', new=MISSING),
+        Ignore(path='computed_', new=MISSING),
+        Ignore(path='state', old=MISSING),
+        Ignore(path='computed_modified_on_', new=MISSING),
+        Ignore(path='deprecated_form_id', old=MISSING, new=None),
+        Ignore(path='path', new=MISSING),
+        Ignore(path='user_id', old=MISSING),
+        Ignore(path='external_blobs', new=MISSING),
+        Ignore(type='type', path=('openrosa_headers', 'HTTP_X_OPENROSA_VERSION')),
+        Ignore(path='problem', old=MISSING, new=None),
+        Ignore(path='problem', old='', new=None),
+        Ignore(path='orig_id', old=MISSING, new=None),
+        Ignore(path='edited_on', old=MISSING, new=None),
+        Ignore(path='repeats', old=MISSING),  # report records save in form
+        Ignore(path='form_migrated_from_undefined_xmlns', new=MISSING),
+        Ignore(type='missing', old=None, new=MISSING),
+
+        # FORM_IGNORED_DIFFS
+        Ignore('missing', ('history', '[*]', 'doc_type'), old='XFormOperation', new=MISSING),
+        Ignore('diff', 'doc_type', old='HQSubmission', new='XFormInstance'),
+        Ignore('missing', 'deleted_on', old=MISSING, new=None),
+        Ignore('missing', 'location_', new=MISSING),
+        Ignore('type', 'xmlns', old=None, new=''),
+        Ignore('type', 'initial_processing_complete', old=None, new=True),
+        Ignore('missing', 'backend_id', old=MISSING, new='sql'),
+        Ignore('missing', 'location_id', new=MISSING, check=is_supply_point),
+        Ignore('missing', '_attachments', new=MISSING),
+        Ignore('type', 'server_modified_on', old=None),
+
+        Ignore('diff', check=has_date_values),
+        Ignore(check=is_text_xmlns),
+    ],
+    'XFormInstance': [
+        ignore_renamed('uid', 'instanceID'),
+    ],
+    'XFormInstance-Deleted': [
+        Ignore('missing', 'deletion_id', old=MISSING, new=None),
+        ignore_renamed('-deletion_id', 'deletion_id'),
+        ignore_renamed('-deletion_date', 'deleted_on'),
+    ],
+    'HQSubmission': [],
+    'XFormArchived': [],
+    'XFormError': [],
+    'XFormDuplicate': [],
+    'XFormDeprecated': [
+        ignore_renamed('deprecated_date', 'edited_on'),
+    ],
+    'CommCareCase*': [
+        Ignore(path='_rev', new=MISSING),
+        Ignore(path='initial_processing_complete', new=MISSING),
+        Ignore(check=is_case_actions),  # ignore case actions
+        Ignore(path='id', old=MISSING),
+        Ignore(path='@xmlns'),  # legacy
+        Ignore(path='_attachments', new=MISSING),
+        Ignore(path='external_blobs', new=MISSING),
+        Ignore(path='#export_tag', new=MISSING),
+        Ignore(path='computed_', new=MISSING),
+        Ignore(path='version', new=MISSING),
+        Ignore(path='deleted', old=MISSING),
+        Ignore(path='export_tag', new=MISSING),
+        Ignore(path='computed_modified_on_', new=MISSING),
+        Ignore(path='case_id'),  # legacy
+        Ignore(path='@case_id'),  # legacy
+        Ignore(path='case_json', old=MISSING),
+        Ignore(path='modified_by', old=MISSING),
+        # legacy bug left cases with no owner_id
+        Ignore('diff', 'owner_id', old=''),
+        Ignore('type', 'owner_id', old=None),
+        Ignore('type', 'user_id', old=None),
+        Ignore('type', 'opened_on', old=None),
+        Ignore('type', 'opened_by', old=MISSING),
+        # The form that created the case was archived, but the opened_by
+        # field was not updated as part of the subsequent rebuild.
+        # `CouchCaseUpdateStrategy.reset_case_state()` does not reset
+        # opened_by or opened_on (the latter is ignored by has_date_values).
+        Ignore(path='opened_by', check=is_case_without_create_action),
+        # form has case block with no actions
+        Ignore('set_mismatch', ('xform_ids', '[*]'), old=''),
+        Ignore('missing', 'case_attachments', old=MISSING, new={}),
+        Ignore('missing', old=None, new=MISSING),
+
+        # CASE_IGNORED_DIFFS
+        Ignore('type', 'name', old='', new=None),
+        Ignore('type', 'closed_by', old='', new=None),
+        Ignore('missing', 'location_id', old=MISSING, new=None),
+        Ignore('missing', 'referrals', new=MISSING),
+        Ignore('missing', 'location_', new=MISSING),
+        Ignore('type', 'type', old=None, new=''),
+        # this happens for cases where the creation form has been archived but the case still has other forms
+        Ignore('type', 'owner_id', old=None, new=''),
+        Ignore('missing', 'closed_by', old=MISSING, new=None),
+        Ignore('type', 'external_id', old='', new=None),
+        Ignore('missing', 'deleted_on', old=MISSING, new=None),
+        Ignore('missing', 'backend_id', old=MISSING, new='sql'),
+
+        Ignore(path=('indices', '[*]', 'case_id'), old=MISSING),
+        Ignore('missing', ('indices', '[*]', 'doc_type'), old='CommCareCaseIndex', new=MISSING),
+        Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),  # defaulted on SQL
+
+        Ignore(path=('actions', '[*]')),
+
+        Ignore('diff', check=has_date_values),
+        ignore_renamed('hq_user_id', 'external_id'),
+        Ignore(path=('xform_ids', '[*]'), check=xform_ids_order),
+        Ignore(check=case_attachments),
+        Ignore(check=case_index_order),
+    ],
+    'CommCareCase': [
+        # couch case was deleted and then restored - SQL case won't have deletion properties
+        Ignore('missing', '-deletion_id', new=MISSING),
+        Ignore('missing', '-deletion_date', new=MISSING),
+
+        ignore_renamed('@user_id', 'user_id'),
+        ignore_renamed('@date_modified', 'modified_on'),
+    ],
+    'CommCareCase-Deleted': [
+        Ignore('type', 'modified_on', old=None),
+        Ignore('missing', '-deletion_id', old=MISSING, new=None),
+        Ignore('missing', 'deletion_id', old=MISSING, new=None),
+        Ignore('complex', ('-deletion_id', 'deletion_id'), old=MISSING, new=None),
+        Ignore('missing', '-deletion_date', old=MISSING, new=None),
+        Ignore('missing', 'deleted_on', old=MISSING),
+        ignore_renamed('-deletion_id', 'deletion_id'),
+        ignore_renamed('-deletion_date', 'deleted_on'),
+    ],
+    'LedgerValue': [
+        Ignore(path='_id'),  # couch != SQL
+    ],
+    'case_attachment': [
+        Ignore(path='attachment_properties', new=MISSING),
+        Ignore(path='attachment_from', new=MISSING),
+        Ignore(path='attachment_src', new=MISSING),
+        Ignore(path='content_type', old=MISSING),
+        Ignore(path='doc_type', new=MISSING),
+        Ignore(path='server_mime', new=MISSING),
+        Ignore(path='attachment_name', new=MISSING),
+        Ignore(path='server_md5', new=MISSING),
+        ignore_renamed('attachment_size', 'content_length'),
+        ignore_renamed('identifier', 'name'),
+    ]
+}
