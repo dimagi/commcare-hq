@@ -95,7 +95,7 @@ class Command(ResourceStaticCommand):
             }, indent=2))
         resource_versions["hqwebapp/js/resource_versions.js"] = self.get_hash(filename)
 
-        self.update_resources(resource_versions, overwrite=False)
+        self.output_resources(resource_versions, overwrite=False)
 
 
 def _confirm_or_exit():
