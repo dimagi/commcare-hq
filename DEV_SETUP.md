@@ -138,8 +138,7 @@ You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
 
-To set up elasticsearch indexes run the following (Ignore warnings
-related to Raven for the following two commands.):
+To set up elasticsearch indexes run the following:
 
     $ ./manage.py ptop_preindex
 
