@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-from __future__ import unicode_literals
 from corehq import toggles
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.conf import settings
@@ -76,7 +74,7 @@ class MessagingRuleProgressHelper(object):
 
     def is_canceled(self):
         """Check if task has been canceled"""
-        self.client.get(self.rule_cancellation_key) is not None
+        return self.client.get(self.rule_cancellation_key) is not None
 
     @staticmethod
     def _int_or_zero(value):

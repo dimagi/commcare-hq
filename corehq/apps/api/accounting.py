@@ -1,18 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django_prbac.models import Role
+from tastypie import fields
 from tastypie.fields import ToManyField
 from tastypie.resources import ModelResource
-from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVersion, LineItem, PaymentMethod, \
-    BillingAccount, BillingContactInfo, Currency, PaymentRecord, SoftwareProductRate, \
-    SoftwarePlan, DefaultProductPlan, CreditAdjustment, Subscription, CreditLine, Subscriber, \
-    SubscriptionAdjustment, BillingRecord, Invoice, CustomerInvoice
+
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    BillingContactInfo,
+    BillingRecord,
+    CreditAdjustment,
+    CreditLine,
+    Currency,
+    CustomerInvoice,
+    DefaultProductPlan,
+    Feature,
+    FeatureRate,
+    Invoice,
+    LineItem,
+    PaymentMethod,
+    PaymentRecord,
+    SoftwarePlan,
+    SoftwarePlanVersion,
+    SoftwareProductRate,
+    Subscriber,
+    Subscription,
+    SubscriptionAdjustment,
+)
 from corehq.apps.api.resources.auth import AdminAuthentication
-from tastypie import fields
-
-
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from django_prbac.models import Role
-import six
 
 
 class AccToManyField(ToManyField):
@@ -67,7 +81,7 @@ class AccountingCurrencyResource(ModelResource):
 
     def build_filters(self, filters=None):
         update = {}
-        for key, val in six.iteritems(filters):
+        for key, val in filters.items():
             args = key.split('__')
             if args and args[0] == 'last_modified':
                 k = 'date_updated__%s' % args[1]

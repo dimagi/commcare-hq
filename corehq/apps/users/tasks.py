@@ -1,32 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 
-import six
+from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
-from django.urls import reverse
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from couchdbkit import ResourceConflict, BulkSaveError
+from couchdbkit import BulkSaveError, ResourceConflict
+
 from casexml.apps.case.mock import CaseBlock
-
-from corehq import toggles
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.models import UserArchivedRebuild
+from casexml.apps.case.xform import get_case_ids_from_form
 from couchforms.exceptions import UnexpectedDeletedXForm
-from corehq.apps.domain.models import Domain
-from django.utils.html import format_html
-
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
-from casexml.apps.case.xform import get_case_ids_from_form
-from six.moves import map
+
+from corehq import toggles
+from corehq.apps.domain.models import Domain
+from corehq.form_processor.exceptions import CaseNotFound, NotAllowed
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.form_processor.models import UserArchivedRebuild
 
 logger = get_task_logger(__name__)
 
@@ -48,7 +48,7 @@ def bulk_upload_async(domain, user_specs, group_specs):
     }
 
 
-@task(serializer='pickle', )
+@task(serializer='pickle')
 def bulk_download_users_async(domain, download_id, user_filters):
     from corehq.apps.users.bulkupload import dump_users_and_groups, GroupNameError
     errors = []
@@ -95,6 +95,7 @@ def bulk_download_users_async(domain, download_id, user_filters):
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
+    NotAllowed.check(domain)
     CaseAccessors(domain).soft_delete_cases(list(case_ids), deletion_date, deletion_id)
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
@@ -277,7 +278,7 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
         reset_demo_user_restore(user, domain)
         results = {'errors': []}
     except Exception as e:
-        notify_exception(None, message=six.text_type(e))
+        notify_exception(None, message=str(e))
         results = {'errors': [
             _("Something went wrong in creating restore for the user. Please try again or report an issue")
         ]}
@@ -297,8 +298,8 @@ def update_domain_date(user_id, domain):
     from corehq.apps.users.models import WebUser
     user = WebUser.get_by_user_id(user_id, domain)
     domain_membership = user.get_domain_membership(domain)
-    if domain_membership:
-        domain_membership.last_accessed = datetime.today().date()
+    today = datetime.today().date()
+    if (domain_membership and domain_membership.last_accessed
+            and today > domain_membership.last_accessed):
+        domain_membership.last_accessed = today
         user.save()
-    else:
-        logger.error("DomainMembership does not exist for user %s in domain %s" % (user.name, domain))

@@ -1,29 +1,31 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
-from decimal import Decimal
 import itertools
+from decimal import Decimal
 from io import BytesIO
 from tempfile import NamedTemporaryFile
 
-
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
-from django.contrib.postgres.fields import ArrayField
 from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils.translation import ugettext_lazy as _
-from django_prbac.models import Role
 
 import jsonfield
 import stripe
-
-from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
+from django_prbac.models import Role
 from memoized import memoized
+
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    SafeSaveDocument,
+    StringProperty,
+)
 from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.emails import send_subscription_change_alert
@@ -45,8 +47,8 @@ from corehq.apps.accounting.subscription_changes import (
     DomainUpgradeActionHandler,
 )
 from corehq.apps.accounting.utils import (
-    ensure_domain_instance,
     EXCHANGE_RATE_DECIMAL_PLACES,
+    ensure_domain_instance,
     fmt_dollar_amount,
     get_account_name_from_default_name,
     get_address_from_invoice,
@@ -62,15 +64,14 @@ from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
-from corehq.blobs.mixin import BlobMixin, CODES
+from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
+from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
-from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
-import six
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -80,11 +81,6 @@ SMALL_INVOICE_THRESHOLD = 100
 UNLIMITED_FEATURE_USAGE = -1
 
 MINIMUM_SUBSCRIPTION_LENGTH = 30
-
-_soft_assert_domain_not_loaded = soft_assert(
-    to='{}@{}'.format('npellegrino', 'dimagi.com'),
-    exponential_backoff=False,
-)
 
 _soft_assert_contact_emails_missing = soft_assert(
     to=['{}@{}'.format(email, 'dimagi.com') for email in [
@@ -615,7 +611,6 @@ class BillingContactInfo(models.Model):
             return "%s %s" % (self.first_name, self.last_name)
 
 
-@six.python_2_unicode_compatible
 class SoftwareProductRate(models.Model):
     """
     Represents the monthly fixed fee for a software product.
@@ -640,9 +635,6 @@ class SoftwareProductRate(models.Model):
             if not getattr(self, field) == getattr(other, field):
                 return False
         return True
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     @classmethod
     def new_rate(cls, product_name, monthly_fee, save=True):
@@ -674,7 +666,6 @@ class Feature(models.Model):
             return FeatureRate() if default_instance else None  # the defaults
 
 
-@six.python_2_unicode_compatible
 class FeatureRate(models.Model):
     """
     Links a feature to a monthly fee, monthly limit, and a per-excess fee for exceeding the monthly limit.
@@ -707,9 +698,6 @@ class FeatureRate(models.Model):
             if not getattr(self, field) == getattr(other, field):
                 return False
         return True
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     @classmethod
     def new_rate(cls, feature_name, feature_type,
@@ -818,7 +806,6 @@ class DefaultProductPlan(models.Model):
         return None if return_plan else SoftwarePlanEdition.ENTERPRISE
 
 
-@six.python_2_unicode_compatible
 class SoftwarePlanVersion(models.Model):
     """
     Links a plan to its rates and provides versioning information.
@@ -935,7 +922,6 @@ class SubscriberManager(models.Manager):
             return None
 
 
-@six.python_2_unicode_compatible
 class Subscriber(models.Model):
     """
     The objects that can be subscribed to a Subscription.
@@ -1003,10 +989,6 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
-        _soft_assert_domain_not_loaded(
-            isinstance(self.domain, six.text_type), "domain type is %s" % type(self.domain))  # TODO remove April 1
-
-
         if new_plan_version is None:
             new_plan_version = DefaultProductPlan.get_default_plan_version()
 
@@ -1130,9 +1112,6 @@ class Subscription(models.Model):
             and other.subscriber.pk == self.subscriber.pk
             and other.account.pk == self.account.pk
         )
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def save(self, *args, **kwargs):
         """
@@ -1583,7 +1562,7 @@ class Subscription(models.Model):
                 DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
             'base_url': get_site_domain(),
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
-            'sales_email': settings.REPORT_BUILDER_ADD_ON_EMAIL
+            'sales_email': settings.SALES_EMAIL,
         }
 
         if self.account.is_customer_billing_account:
@@ -1806,7 +1785,7 @@ class Subscription(models.Model):
         if date_end is not None:
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
         if future_subscriptions.count() > 0:
-            raise NewSubscriptionError(six.text_type(
+            raise NewSubscriptionError(str(
                 _(
                     "There is already a subscription '%(sub)s' that has an end date "
                     "that conflicts with the start and end dates of this "
@@ -3146,7 +3125,6 @@ class LineItem(models.Model):
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, line_item=self)
 
 
-@six.python_2_unicode_compatible
 class CreditLine(models.Model):
     """
     The amount of money in USD that exists can can be applied toward a specific account,
@@ -3375,7 +3353,7 @@ class CreditLine(models.Model):
             if not permit_inactive and not credit_line.is_active and not invoice:
                 raise CreditLineError(
                     "Could not add credit to CreditLine %s because it is "
-                    "inactive." % six.text_type(credit_line)
+                    "inactive." % str(credit_line)
                 )
             is_new = False
         except cls.MultipleObjectsReturned as e:
@@ -3389,7 +3367,7 @@ class CreditLine(models.Model):
                     'feature': (" | Feature %s" % feature_type
                                 if feature_type is not None else ""),
                     'product': (" | Product" if is_product else ""),
-                    'error': six.text_type(e),
+                    'error': str(e),
                 }
             )
         except cls.DoesNotExist:

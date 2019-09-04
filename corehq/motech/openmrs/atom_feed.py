@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import re
 import uuid
@@ -9,10 +7,10 @@ import pytz
 from dateutil import parser as dateutil_parser
 from dateutil.tz import tzutc
 from lxml import etree
-from requests import RequestException
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
+
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
@@ -30,7 +28,7 @@ from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.motech.openmrs.repeaters import AtomFeedStatus
 from corehq.util.soft_assert import soft_assert
-
+from requests import RequestException
 
 _assert = soft_assert(['@'.join(('nhooper', 'dimagi.com'))])
 

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import logging
 from collections import defaultdict
@@ -7,9 +5,12 @@ from datetime import datetime
 
 from django.db.models import Q
 
-from corehq.apps.domain_migration_flags.exceptions import DomainMigrationProgressError
+from corehq.apps.domain_migration_flags.exceptions import (
+    DomainMigrationProgressError,
+)
 from corehq.toggles import DATA_MIGRATION
 from corehq.util.quickcache import quickcache
+
 from .models import DomainMigrationProgress, MigrationStatus
 
 log = logging.getLogger(__name__)
@@ -17,7 +18,10 @@ log = logging.getLogger(__name__)
 
 def set_migration_started(domain, slug, dry_run=False):
     progress, _ = DomainMigrationProgress.objects.get_or_create(domain=domain, migration_slug=slug)
-    if progress.migration_status == MigrationStatus.NOT_STARTED:
+    if (
+        progress.migration_status == MigrationStatus.NOT_STARTED
+        or progress.migration_status == MigrationStatus.DRY_RUN
+    ):
         progress.migration_status = MigrationStatus.DRY_RUN if dry_run else MigrationStatus.IN_PROGRESS
         progress.started_on = datetime.utcnow()
         progress.save()

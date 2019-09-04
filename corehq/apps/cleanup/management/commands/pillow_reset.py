@@ -1,19 +1,14 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from datetime import datetime
-from couchdbkit import ResourceNotFound
+
 from django.core.management.base import BaseCommand
-from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
+
+from couchdbkit import ResourceNotFound
+
+from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.utils import get_pillow_by_name
-import six
-from six.moves import input
-from io import open
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 class Command(BaseCommand):
@@ -38,8 +33,7 @@ class Command(BaseCommand):
                     continue
 
                 def _fmt(seq_id):
-                    if isinstance(seq_id, six.string_types) and len(seq_id) > 20:
-                        soft_assert_type_text(seq_id)
+                    if isinstance(seq_id, str) and len(seq_id) > 20:
                         return '{}...'.format(seq_id[:20])
                     else:
                         return seq_id

@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division
-from __future__ import unicode_literals
 from datetime import datetime
 
 from collections import defaultdict, OrderedDict
@@ -13,7 +11,6 @@ from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import percent_adolescent_girls_enrolled_help_text
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
-import six
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -133,7 +130,7 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
             'valid': valid,
             'all': all_adolescent
         }
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         chart_data['blue'].append([
@@ -216,7 +213,7 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
             'loc_name': key,
             'value': sum(value) / len(value),
         }
-        for key, value in six.iteritems(best_worst)
+        for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_value_and_name = sorted(
@@ -230,7 +227,7 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'],
                         'all': value['all']
-                    } for key, value in six.iteritems(data['blue'])
+                    } for key, value in data['blue'].items()
                 ],
                 "key": "Total number of adolescent girls who are enrolled for Anganwadi Services",
                 "strokeWidth": 2,

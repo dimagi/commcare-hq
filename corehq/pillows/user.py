@@ -1,9 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import copy
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
-from corehq.apps.groups.models import Group
+from corehq.apps.groups.dbaccessors import get_group_id_name_map_by_user
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
@@ -19,7 +17,6 @@ from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor, PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
-import six
 
 
 def update_unknown_user_from_form_if_necessary(es, doc_dict):
@@ -52,12 +49,13 @@ def transform_user_for_elasticsearch(doc_dict):
         doc['base_username'] = doc['username'].split("@")[0]
     else:
         doc['base_username'] = doc['username']
-    groups = Group.by_user(doc['_id'], wrap=False, include_names=True)
-    doc['__group_ids'] = [group['group_id'] for group in groups]
-    doc['__group_names'] = [group['name'] for group in groups]
+
+    results = get_group_id_name_map_by_user(doc['_id'])
+    doc['__group_ids'] = [res.id for res in results]
+    doc['__group_names'] = [res.name for res in results]
     doc['user_data_es'] = []
     if 'user_data' in doc:
-        for key, value in six.iteritems(doc['user_data']):
+        for key, value in doc['user_data'].items():
             doc['user_data_es'].append({
                 'key': key,
                 'value': value,
@@ -134,6 +132,7 @@ def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
     user_processor = get_user_es_processor()
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_providers=[DynamicDataSourceProvider('CommCareUser'), StaticDataSourceProvider('CommCareUser')],
+        run_migrations=(process_num == 0),  # only first process runs migrations
     )
     change_feed = KafkaChangeFeed(
         topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num

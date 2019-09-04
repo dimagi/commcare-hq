@@ -6,7 +6,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
-    vm.filters = ['gender', 'age', 'ageServiceDeliveryDashboard'];
+    vm.filters = ['gender', 'age'];
     vm.step = $routeParams.step;
     vm.userLocationId = userLocationId;
     vm.selectedLocations = [];

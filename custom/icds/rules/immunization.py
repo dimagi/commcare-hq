@@ -26,8 +26,6 @@ These utils can be used to calculate when immunizations are due for a given
 "tasks_type" == "pregnancy"), or a child (case property "tasks_type" == "child").
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.models import CommCareCaseIndexSQL
@@ -38,7 +36,6 @@ from custom.icds.case_relationships import (
 )
 from custom.icds.rules.util import get_date, todays_date
 from datetime import datetime, date, timedelta
-import six
 
 
 def _validate_tasks_case_and_immunization_product(tasks_case, immunization_product):
@@ -66,7 +63,7 @@ def get_tasks_case_immunization_ledger_values(tasks_case):
     if tasks_case.type != 'tasks':
         raise ValueError("Expected 'tasks' case")
 
-    return LedgerAccessorSQL.get_ledger_values_for_cases([tasks_case.case_id], section_id='immuns')
+    return LedgerAccessorSQL.get_ledger_values_for_cases([tasks_case.case_id], section_ids=['immuns'])
 
 
 def get_immunization_date(ledger_value):
@@ -152,7 +149,7 @@ def immunization_is_due(tasks_case, anchor_date, immunization_product, all_immun
     if product_schedule_flag:
         tasks_case_schedule_flag = tasks_case.get_case_property('schedule_flag')
         if (
-            not isinstance(tasks_case_schedule_flag, (six.text_type, bytes)) or
+            not isinstance(tasks_case_schedule_flag, (str, bytes)) or
             product_schedule_flag not in tasks_case_schedule_flag
         ):
             return False

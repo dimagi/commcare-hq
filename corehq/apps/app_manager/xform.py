@@ -1,34 +1,44 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import defaultdict, OrderedDict
-from functools import wraps
-import logging
-
+import collections
 import itertools
+import logging
+import re
+from collections import OrderedDict, defaultdict
+from functools import wraps
+
 from django.utils.translation import ugettext_lazy as _
 
-from casexml.apps.case.xml import V2_NAMESPACE
+from lxml import etree as ET
+from memoized import memoized
+
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
+from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+
 from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
-    SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
-    CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE,
+    CASE_ID,
+    SCHEDULE_CURRENT_VISIT_NUMBER,
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
+    SCHEDULE_LAST_VISIT,
+    SCHEDULE_LAST_VISIT_DATE,
+    SCHEDULE_NEXT_DUE,
+    SCHEDULE_PHASE,
+    SCHEDULE_UNSCHEDULED_VISIT,
+    USERCASE_ID,
 )
 from corehq.apps.app_manager.xpath import XPath
-from lxml import etree as ET
-
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
 from corehq.toggles import DONT_INDEX_SAME_CASETYPE
 from corehq.util.view_utils import get_request
-from memoized import memoized
-from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
-from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
-import collections
-import re
-import six
 
+from .exceptions import (
+    BindNotFound,
+    CaseError,
+    XFormException,
+    XFormValidationError,
+    XFormValidationFailed,
+)
+from .xpath import CaseIDXPath, QualifiedScheduleFormXPath, session_var
 
 VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio', 'markdown')
 
@@ -36,7 +46,7 @@ VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio'
 def parse_xml(string):
     # Work around: ValueError: Unicode strings with encoding
     # declaration are not supported.
-    if isinstance(string, six.text_type):
+    if isinstance(string, str):
         string = string.encode("utf-8")
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
@@ -171,7 +181,7 @@ class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):
         if isinstance(xml, bytes):
             xml = xml.decode('utf-8')
-        if isinstance(xml, six.text_type):
+        if isinstance(xml, str):
             self.xml = parse_xml(xml) if xml else None
         else:
             self.xml = xml
@@ -268,9 +278,6 @@ class ItextNodeGroup(object):
 
         return True
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     def __hash__(self):
         return hash(''.join(["{0}{1}".format(n.lang, n.rendered_values) for n in self.nodes.values()]))
 
@@ -304,7 +311,7 @@ class ItextOutput(object):
         return context.get(self.ref)
 
 
-class ItextValue(six.text_type):
+class ItextValue(str):
 
     def __new__(cls, parts):
         return super(ItextValue, cls).__new__(cls, cls._render(parts))
@@ -587,7 +594,7 @@ def autoset_owner_id_for_advanced_action(action):
 
 
 def validate_xform(domain, source):
-    if isinstance(source, six.text_type):
+    if isinstance(source, str):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
@@ -627,11 +634,7 @@ class XForm(WrappedNode):
         self._scheduler_case_updates_populated = False
 
     def __str__(self):
-        text = ET.tostring(self.xml).decode('utf-8') if self.xml is not None else ''
-        if six.PY3:
-            return text
-        else:
-            return text.encode('utf-8')
+        return ET.tostring(self.xml).decode('utf-8') if self.xml is not None else ''
 
     @property
     @raise_if_none("Can't find <model>")
@@ -670,7 +673,7 @@ class XForm(WrappedNode):
     def media_references(self, form, lang=None):
         lang_condition = '[@lang="%s"]' % lang if lang else ''
         nodes = self.itext_node.findall('{f}translation%s/{f}text/{f}value[@form="%s"]' % (lang_condition, form))
-        return list(set([six.text_type(n.text) for n in nodes]))
+        return list(set([str(n.text) for n in nodes]))
 
     @property
     def odk_intents(self):
@@ -813,12 +816,12 @@ class XForm(WrappedNode):
                 if key.startswith(vellum_ns):
                     del node.attrib[key]
 
-    def add_missing_instances(self, domain):
+    def add_missing_instances(self, app):
         from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
         instance_declarations = self._get_instance_ids()
         missing_unknown_instances = set()
         instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(
-            domain, [self.render().decode('utf-8')])
+            app, [self.render().decode('utf-8')])
         for instance_id in unknown_instance_ids:
             if instance_id not in instance_declarations:
                 missing_unknown_instances.add(instance_id)
@@ -1079,7 +1082,7 @@ class XForm(WrappedNode):
         group_contexts = sorted(group_contexts, reverse=True)
 
         save_to_case_nodes = {}
-        for path, data_node in six.iteritems(leaf_data_nodes):
+        for path, data_node in leaf_data_nodes.items():
             if path not in excluded_paths:
                 bind = self.get_bind(path)
 
@@ -1130,7 +1133,7 @@ class XForm(WrappedNode):
 
                 questions.append(question)
 
-        for path, node_info in six.iteritems(save_to_case_nodes):
+        for path, node_info in save_to_case_nodes.items():
             data_node = node_info['data_node']
             try:
                 case_node = next(data_node.iterancestors('{cx2}case'))

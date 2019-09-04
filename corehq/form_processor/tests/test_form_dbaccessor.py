@@ -1,14 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from datetime import datetime
 from io import BytesIO
 
+from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
-from django.db import connections
 from django.test import TestCase
+from testil import eq
 
-import settings
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
@@ -18,7 +16,7 @@ from corehq.blobs.tests.util import TemporaryS3BlobDB, TemporaryFilesystemBlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import ARCHIVE_FORM, FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
 from corehq.form_processor.parsers.form import apply_deprecation
@@ -30,8 +28,6 @@ from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMet
 from corehq.sql_db.routers import db_for_read_write
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
-from six.moves import range
-from io import open
 
 DOMAIN = 'test-form-accessor'
 
@@ -144,8 +140,8 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual([], operations)
 
         # don't call form.archive to avoid sending the signals
-        FormAccessorSQL.archive_form(form, user_id='user1')
-        FormAccessorSQL.unarchive_form(form, user_id='user2')
+        self.archive_form(form, user_id='user1')
+        self.unarchive_form(form, user_id='user2')
 
         operations = FormAccessorSQL.get_form_operations(form.form_id)
         self.assertEqual(2, len(operations))
@@ -200,7 +196,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual({form1.form_id, form2.form_id}, set(form_ids))
 
         # change state of form1
-        FormAccessorSQL.archive_form(form1, 'user1')
+        self.archive_form(form1, 'user1')
 
         # check filtering by state
         form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(DOMAIN, 'XFormArchived')
@@ -231,7 +227,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(form1.form_id, forms[0].form_id)
 
         # change state of form1
-        FormAccessorSQL.archive_form(form1, 'user1')
+        self.archive_form(form1, 'user1')
 
         # check filtering by state
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormArchived', 2)
@@ -274,7 +270,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(1, len(transactions))
         self.assertFalse(transactions[0].revoked)
 
-        FormAccessorSQL.archive_form(form, 'user1')
+        self.archive_form(form, 'user1')
         form = FormAccessorSQL.get_form(form.form_id)
         self.assertEqual(XFormInstanceSQL.ARCHIVED, form.state)
         operations = form.history
@@ -283,10 +279,10 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual('user1', operations[0].user_id)
 
         transactions = CaseAccessorSQL.get_transactions(case_id)
-        self.assertEqual(1, len(transactions))
+        self.assertEqual(1, len(transactions), transactions)
         self.assertTrue(transactions[0].revoked)
 
-        FormAccessorSQL.unarchive_form(form, 'user2')
+        self.unarchive_form(form, 'user2')
         form = FormAccessorSQL.get_form(form.form_id)
         self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
         operations = form.history
@@ -384,6 +380,14 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual('user1', form.user_id)
         return form
 
+    @staticmethod
+    def archive_form(form, user_id):
+        FormAccessorSQL.set_archived_state(form, True, user_id)
+
+    @staticmethod
+    def unarchive_form(form, user_id):
+        FormAccessorSQL.set_archived_state(form, False, user_id)
+
 
 class FormAccessorsTests(TestCase, TestXmlMixin):
 
@@ -419,23 +423,79 @@ class FormAccessorsTests(TestCase, TestXmlMixin):
     def test_update_responses(self):
         formxml = FormSubmissionBuilder(
             form_id='123',
-            form_properties={'breakfast': 'toast', 'lunch': 'sandwich'}
+            form_properties={
+                'breakfast': 'toast',   # Simple questions
+                'lunch': 'sandwich',
+                'cell': {               # Simple group
+                    'cytoplasm': 'squishy',
+                    'organelles': 'grainy',
+                },
+                'shelves': [            # Simple repeat group
+                    {'position': 'top'},
+                    {'position': 'middle'},
+                    {'position': 'bottom'},
+                ],
+                'grandparent': [        # Repeat group with child group
+                    {'name': 'Haruki'},
+                    {'name': 'Sugako'},
+                    {
+                        'name': 'Emma',
+                        'parent': {
+                            'name': 'Haruki',
+                            'child': {
+                                'name': 'Nao',
+                            },
+                        }
+                    },
+                ],
+                'body': [               # Repeat group with child repeat group
+                    {'arm': [
+                        {'elbow': '1'},
+                        {'finger': '5'},
+                    ]},
+                    {'leg': [
+                        {'knee': '1'},
+                        {'toe': '5'},
+                    ]},
+                ],
+            }
         ).as_xml_string()
         pic = UploadedFile(BytesIO(b"fake"), 'pic.jpg', content_type='image/jpeg')
         xform = submit_form_locally(formxml, DOMAIN, attachments={"image": pic}).xform
 
-        updates = {'breakfast': 'fruit'}
+        updates = {
+            'breakfast': 'fruit',
+            'cell/organelles': 'bulbous',
+            'shelves[1]/position': 'third',
+            'shelves[3]/position': 'first',
+            'grandparent[1]/name': 'Haruki #1',
+            'grandparent[3]/name': 'Ema',
+            'grandparent[3]/parent/name': 'Haruki #2',
+            'grandparent[3]/parent/child/name': 'Nao-chan',
+            'body[1]/arm[1]/elbow': '2',
+            'body[2]/leg[2]/toe': '10',
+        }
         errors = FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
         form = FormAccessors(DOMAIN).get_form(xform.form_id)
         self.assertEqual(0, len(errors))
         self.assertEqual('fruit', form.form_data['breakfast'])
         self.assertEqual('sandwich', form.form_data['lunch'])
+        self.assertEqual('squishy', form.form_data['cell']['cytoplasm'])
+        self.assertEqual('bulbous', form.form_data['cell']['organelles'])
+        self.assertEqual('third', form.form_data['shelves'][0]['position'])
+        self.assertEqual('middle', form.form_data['shelves'][1]['position'])
+        self.assertEqual('first', form.form_data['shelves'][2]['position'])
+        self.assertEqual('Haruki #1', form.form_data['grandparent'][0]['name'])
+        self.assertEqual('Sugako', form.form_data['grandparent'][1]['name'])
+        self.assertEqual('Ema', form.form_data['grandparent'][2]['name'])
+        self.assertEqual('Haruki #2', form.form_data['grandparent'][2]['parent']['name'])
+        self.assertEqual('Nao-chan', form.form_data['grandparent'][2]['parent']['child']['name'])
+        self.assertEqual('2', form.form_data['body'][0]['arm'][0]['elbow'])
+        self.assertEqual('5', form.form_data['body'][0]['arm'][1]['finger'])
+        self.assertEqual('1', form.form_data['body'][1]['leg'][0]['knee'])
+        self.assertEqual('10', form.form_data['body'][1]['leg'][1]['toe'])
         self.assertIn("image", form.attachments)
         self.assertEqual(form.get_attachment("image"), b"fake")
-        self.assertXmlEqual(
-            form.get_attachment("form.xml").decode('utf-8'),
-            formxml.replace("toast", "fruit"),
-        )
 
     def test_update_responses_error(self):
         formxml = FormSubmissionBuilder(
@@ -508,6 +568,11 @@ class DeleteAtachmentsS3DBTests(DeleteAttachmentsFSDBTests):
         self.s3db.close()
         super(DeleteAtachmentsS3DBTests, self).tearDown()
 
+
+def test_archive_form_system_action():
+    eq(ARCHIVE_FORM, "archive_form",
+        "Changing the value of this constant will break all "
+        "'archive_form' system action forms in existence.")
 
 
 def _simulate_form_edit():

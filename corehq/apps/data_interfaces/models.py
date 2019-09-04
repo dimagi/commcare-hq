@@ -1,73 +1,83 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-import jsonfield
-import pytz
 import re
 from collections import defaultdict
+from copy import deepcopy
+from datetime import date, datetime, time, timedelta
+
+from django.conf import settings
+from django.contrib.postgres.fields import JSONField
+from django.db import models, transaction
+from django.db.models import Q
+from django.utils.translation import ugettext_lazy
+
+import jsonfield
+import pytz
+from couchdbkit.exceptions import ResourceNotFound
+from dateutil.parser import parse
+from jsonobject.api import JsonObject
+from jsonobject.properties import (
+    BooleanProperty,
+    IntegerProperty,
+    StringProperty,
+)
+from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_case_updates
-from copy import deepcopy
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
+
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
+from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import CommCareCaseSQL
-from corehq.messaging.scheduling.const import (
-    VISIT_WINDOW_START,
-    VISIT_WINDOW_END,
-    VISIT_WINDOW_DUE_DATE,
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
 )
+from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.messaging.scheduling.const import (
+    VISIT_WINDOW_DUE_DATE,
+    VISIT_WINDOW_END,
+    VISIT_WINDOW_START,
+)
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
-    TimedSchedule,
+    CustomContent,
+    EmailContent,
     Schedule,
     SMSContent,
-    EmailContent,
     SMSSurveyContent,
-    CustomContent,
-)
-from corehq.messaging.scheduling.tasks import (
-    refresh_case_alert_schedule_instances,
-    refresh_case_timed_schedule_instances,
-    delete_case_alert_schedule_instances,
-    delete_case_timed_schedule_instances,
+    TimedSchedule,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
     get_case_timed_schedule_instances_for_schedule_id,
 )
-from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
-from corehq.sql_db.util import run_query_across_partitioned_databases, get_db_aliases_for_partitioned_query
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    CaseScheduleInstanceMixin,
+)
+from corehq.messaging.scheduling.tasks import (
+    delete_case_alert_schedule_instances,
+    delete_case_timed_schedule_instances,
+    refresh_case_alert_schedule_instances,
+    refresh_case_timed_schedule_instances,
+)
+from corehq.sql_db.util import (
+    get_db_aliases_for_partitioned_query,
+    paginate_query,
+    paginate_query_across_partitioned_databases,
+)
 from corehq.util.log import with_progress_bar
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
-from couchdbkit.exceptions import ResourceNotFound
-from datetime import date, datetime, time, timedelta
-from dateutil.parser import parse
-from dimagi.utils.chunked import chunked
-from dimagi.utils.couch import CriticalSection
-from memoized import memoized
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.modules import to_function
-from django.conf import settings
-from django.contrib.postgres.fields import JSONField
-from django.db import models, transaction
-from django.db.models import Q
-from corehq.apps.hqcase.utils import update_case
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
-from django.utils.translation import ugettext_lazy
-from jsonobject.api import JsonObject
-from jsonobject.properties import StringProperty, BooleanProperty, IntegerProperty
-import six
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
@@ -76,19 +86,14 @@ AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 def _try_date_conversion(date_or_string):
     if isinstance(date_or_string, bytes):
         date_or_string = date_or_string.decode('utf-8')
-    if (
-        isinstance(date_or_string, six.text_type) and
-        ALLOWED_DATE_REGEX.match(date_or_string)
-    ):
+    if isinstance(date_or_string, str) and ALLOWED_DATE_REGEX.match(date_or_string):
         try:
             return parse(date_or_string)
         except ValueError:
             pass
-
     return date_or_string
 
 
-@six.python_2_unicode_compatible
 class AutomaticUpdateRule(models.Model):
     # Used when the rule performs case update actions
     WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
@@ -126,7 +131,7 @@ class AutomaticUpdateRule(models.Model):
         pass
 
     def __str__(self):
-        return six.text_type("rule: '{s.name}', id: {s.id}, domain: {s.domain}").format(s=self)
+        return f"rule: '{self.name}', id: {self.id}, domain: {self.domain}"
 
     @property
     def references_parent_case(self):
@@ -481,14 +486,14 @@ class AutomaticUpdateRule(models.Model):
         return date
 
     @classmethod
-    def get_case_ids(cls, domain, case_type, boundary_date=None, db=None):
+    def iter_cases(cls, domain, case_type, boundary_date=None, db=None):
         if should_use_sql_backend(domain):
-            return cls._get_case_ids_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
+            return cls._iter_cases_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
         else:
-            return cls._get_case_ids_from_es(domain, case_type, boundary_date=boundary_date)
+            return cls._iter_cases_from_es(domain, case_type, boundary_date=boundary_date)
 
     @classmethod
-    def _get_case_ids_from_postgres(cls, domain, case_type, boundary_date=None, db=None):
+    def _iter_cases_from_postgres(cls, domain, case_type, boundary_date=None, db=None):
         q_expression = Q(
             domain=domain,
             type=case_type,
@@ -500,11 +505,16 @@ class AutomaticUpdateRule(models.Model):
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
 
         if db:
-            for c_id in CommCareCaseSQL.objects.using(db).filter(q_expression).values_list('case_id', flat=True):
-                yield c_id
+            return paginate_query(db, CommCareCaseSQL, q_expression, load_source='auto_update_rule')
         else:
-            for c_id in run_query_across_partitioned_databases(CommCareCaseSQL, q_expression, values=['case_id']):
-                yield c_id
+            return paginate_query_across_partitioned_databases(
+                CommCareCaseSQL, q_expression, load_source='auto_update_rule'
+            )
+
+    @classmethod
+    def _iter_cases_from_es(cls, domain, case_type, boundary_date=None):
+        case_ids = list(cls._get_case_ids_from_es(domain, case_type, boundary_date))
+        return CaseAccessors(domain).iter_cases(case_ids)
 
     @classmethod
     def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
@@ -519,9 +529,8 @@ class AutomaticUpdateRule(models.Model):
             query = query.server_modified_range(lte=boundary_date)
 
         for case_id in query.scroll():
-            if not isinstance(case_id, six.string_types):
+            if not isinstance(case_id, str):
                 raise ValueError("Something is wrong with the query, expected ids only")
-            soft_assert_type_text(case_id)
 
             yield case_id
 
@@ -829,8 +838,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
         for value in values:
             if value is None:
                 continue
-            if isinstance(value, six.string_types) and not value.strip():
-                soft_assert_type_text(value)
+            if isinstance(value, str) and not value.strip():
                 continue
             return True
 
@@ -846,10 +854,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
             return False
 
         for value in self.get_case_values(case):
-            if six.PY2 and isinstance(value, bytes):
-                value = value.decode('utf-8')
-            if isinstance(value, (six.text_type, bytes)):
-                soft_assert_type_text(value)
+            if isinstance(value, str):
                 try:
                     if regex.match(value):
                         return True
@@ -948,9 +953,6 @@ class CaseRuleActionResult(object):
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     __hash__ = None
 

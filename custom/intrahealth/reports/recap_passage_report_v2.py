@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from memoized import memoized
 
 from custom.intrahealth.filters import YeksiNaaLocationFilter2, FRMonthFilter, FRYearFilter

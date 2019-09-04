@@ -1,11 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
-from __future__ import absolute_import
-from django.db import migrations, models
-from corehq.sql_db.operations import RawSQLMigration
-
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
@@ -14,5 +8,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0009_add_new_indicators'),
     ]
 
-    operations = [
-    ]
+    operations = []

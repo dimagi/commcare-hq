@@ -1,18 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
-from django.test import SimpleTestCase
 import os
+
+from django.test import SimpleTestCase
 
 from mock import patch
 
 from corehq.apps.app_manager.models import Application, CaseList, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from io import open
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
+@patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
 class BuildErrorsTest(SimpleTestCase):
 
     @staticmethod

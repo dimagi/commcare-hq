@@ -1,11 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from decimal import Decimal
 
 from corehq.apps.accounting.models import (
+    UNLIMITED_FEATURE_USAGE,
     FeatureType,
     SoftwarePlanEdition,
-    UNLIMITED_FEATURE_USAGE,
 )
 
 BOOTSTRAP_CONFIG = {

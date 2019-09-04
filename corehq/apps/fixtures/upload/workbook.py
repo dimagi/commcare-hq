@@ -1,17 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
+
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import FixtureTypeField
 from corehq.apps.fixtures.upload.const import DELETE_HEADER
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.util.workbook_json.excel import (
-    get_workbook as excel_get_workbook,
     WorkbookJSONError,
     WorksheetNotFound,
 )
-import six
+from corehq.util.workbook_json.excel import get_workbook as excel_get_workbook
 
 
 def get_workbook(file_or_filename):
@@ -27,7 +25,7 @@ class _FixtureWorkbook(object):
         try:
             self.workbook = excel_get_workbook(file_or_filename)
         except WorkbookJSONError as e:
-            raise FixtureUploadError([six.text_type(e)])
+            raise FixtureUploadError([str(e)])
 
     def get_types_sheet(self):
         try:
@@ -106,7 +104,7 @@ class _FixtureTableDefinition(object):
             return is_indexed
 
         def is_number(text):
-            text = six.text_type(text)
+            text = str(text)
             try:
                 float(text)
                 return True

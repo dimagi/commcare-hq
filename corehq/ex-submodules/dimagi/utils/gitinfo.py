@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import re
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
 
 
 def git_file_deltas(git_dir, commit, compare=None):
@@ -12,8 +10,8 @@ def git_file_deltas(git_dir, commit, compare=None):
 
 def sub_git_remote_url(git_dir):
     args = ['config', '--get', "remote.origin.url"]
-    p = sub_git_cmd(git_dir, args)
-    gitout = p.stdout.read().decode('utf-8').strip()
+    with sub_git_cmd(git_dir, args) as p:
+        gitout = p.stdout.read().decode('utf-8').strip()
     return gitout
 
 
@@ -61,8 +59,9 @@ def sub_get_current_branch(git_dir):
         '--abbrev-ref',
         'HEAD'
     ]
-    p = sub_git_cmd(git_dir, args)
-    return p.stdout.read().strip()
+    with sub_git_cmd(git_dir, args) as p:
+        gitout = p.stdout.read().decode('utf-8').strip()
+    return gitout
 
 
 def get_project_snapshot(git_dir, submodules=False, log_count=1, submodule_count=1):
@@ -103,9 +102,9 @@ def sub_git_info(git_dir, log_count=1):
             '-z',
             '--pretty=format:%s' % line_by_line_format
     ]
-    p = sub_git_cmd(git_dir, args)
+    with sub_git_cmd(git_dir, args) as p:
+        gitout = p.stdout.read().decode('utf-8').strip()
     url = sub_git_remote_url(git_dir)
-    gitout = p.stdout.read().decode('utf-8').strip()
     all_raw_revs = gitout.split('\0')
 
     def parse_rev_block(block_text):
@@ -141,8 +140,8 @@ def sub_git_submodules(git_dir, log_count=1):
     Using shell, get the active submodule info
     """
     args =['submodule', 'status' ]
-    p = sub_git_cmd(git_dir, args)
-    gitout = p.stdout.read().split('\n')
+    with sub_git_cmd(git_dir, args) as p:
+        gitout = p.stdout.read().decode('utf-8').strip()
 
     for x in gitout:
         splits = x.strip().split(' ')

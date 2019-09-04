@@ -1,20 +1,19 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 
-from couchdbkit import Database, BulkSaveError
 from django.core.management.base import BaseCommand, CommandError
+
+from couchdbkit import BulkSaveError, Database
+
 from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.domainsync.config import DocumentTransform, save
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.util.couch_helpers import OverrideDB
-from couchforms.models import XFormInstance
-from dimagi.utils.chunked import chunked
-
 
 CHUNK_SIZE = 100
 

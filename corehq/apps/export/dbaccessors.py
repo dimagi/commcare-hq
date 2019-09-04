@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from dimagi.utils.couch.database import safe_delete
-from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.parsing import json_format_datetime
+
+from corehq.util.test_utils import unit_testing_only
 
 
 def get_latest_case_export_schema(domain, case_type):
@@ -79,6 +78,13 @@ def get_form_exports_by_domain(domain):
 def get_odata_case_configs_by_domain(domain):
     return [
         config for config in get_case_exports_by_domain(domain)
+        if config.is_odata_config
+    ]
+
+
+def get_odata_form_configs_by_domain(domain):
+    return [
+        config for config in get_form_exports_by_domain(domain)
         if config.is_odata_config
     ]
 

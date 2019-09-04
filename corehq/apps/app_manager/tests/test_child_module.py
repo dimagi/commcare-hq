@@ -1,15 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.test import SimpleTestCase
+
 from mock import patch
 
-from corehq.apps.app_manager.tests.app_factory import AppFactory
-from django.test import SimpleTestCase
+from corehq.apps.app_manager.const import WORKFLOW_PREVIOUS
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Module,
     PreloadAction,
 )
-from corehq.apps.app_manager.const import WORKFLOW_PREVIOUS
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 DOMAIN = 'domain'
@@ -70,6 +69,7 @@ class ModuleAsChildTestBase(TestXmlMixin):
 
     @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
     def test_deleted_parent(self, *args):
         self.module_1.root_module_id = "unknownmodule"
 
@@ -81,6 +81,7 @@ class ModuleAsChildTestBase(TestXmlMixin):
 
     @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.builds.models.BuildSpec.supports_j2me', return_value=False)
     def test_circular_relation(self, *args):
         self.module_0.root_module_id = self.module_1.unique_id
         cycle_error = {

@@ -1,18 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import defaultdict
-import re
-
-from memoized import memoized
-from django.utils.translation import ugettext_noop, ugettext
 import os
+import re
+from collections import defaultdict
+
+from django.utils.translation import ugettext, ugettext_noop
+
 import yaml
-import six
-from io import open
+from memoized import memoized
 
 from corehq.apps.app_manager.util import app_doc_types
-from corehq.apps.builds.models import CommCareBuildConfig
-from corehq.util.python_compatibility import soft_assert_type_text
 
 PROFILE_SETTINGS_TO_TRANSLATE = [
     'name',
@@ -29,11 +24,9 @@ LAYOUT_SETTINGS_TO_TRANSLATE = [
 
 def _translate_setting(setting, prop):
     value = setting[prop]
-    if not isinstance(value, six.string_types):
+    if not isinstance(value, str):
         return [ugettext(v) for v in value]
     else:
-        if six.PY3:
-            soft_assert_type_text(value)
         return ugettext(value)
 
 
@@ -71,7 +64,7 @@ def _load_commcare_settings_layout(app):
         layout = yaml.safe_load(f)
 
     doc_type = app.get_doc_type()
-    j2me_enabled = app.build_spec.version in [i.build.version for i in CommCareBuildConfig.j2me_enabled_configs()]
+    j2me_section_ids = ['app-settings-j2me-properties', 'app-settings-j2me-ui']
     for section in layout:
         # i18n; not statically analyzable
         section['title'] = ugettext_noop(section['title'])
@@ -96,7 +89,7 @@ def _load_commcare_settings_layout(app):
                 if prop in setting:
                     setting[prop] = _translate_setting(setting, prop)
 
-        if not j2me_enabled and section['id'] in ['app-settings-j2me-properties', 'app-settings-j2me-ui']:
+        if not app.build_spec.supports_j2me() and section['id'] in j2me_section_ids:
             section['always_show'] = False
 
     if settings:

@@ -1,10 +1,7 @@
-from __future__ import absolute_import, division
 
-from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
@@ -102,10 +99,10 @@ def get_registered_household_sector_data(domain, config, loc_level, location_id,
         row_values = {
             'household': household
         }
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
-    for name, value_dict in six.iteritems(tooltips_data):
+    for name, value_dict in tooltips_data.items():
         chart_data['blue'].append([name, value_dict['household'] or 0])
 
     for sql_location in loc_children:
@@ -180,7 +177,7 @@ def get_registered_household_data_chart(domain, config, loc_level, show_test=Fal
             'loc_name': key,
             'value': sum(value) / len(value)
         }
-        for key, value in six.iteritems(best_worst)
+        for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_value_and_name = sorted(
@@ -194,7 +191,7 @@ def get_registered_household_data_chart(domain, config, loc_level, show_test=Fal
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in six.iteritems(data['blue'])
+                    } for key, value in data['blue'].items()
                 ],
                 "key": "Registered Households",
                 "strokeWidth": 2,

@@ -1,14 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 import sqlalchemy
 from sqlagg import SumWhen
+
 from fluff import TYPE_STRING
 from fluff.util import get_column_type
 
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.sql.util import decode_column_name
+
 
 def column_to_sql(column):
     column_name = decode_column_name(column)

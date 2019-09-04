@@ -1,13 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from contextlib import contextmanager
 from zipfile import BadZipfile
 from datetime import datetime, time
-from io import open
 
 from memoized import memoized
 import openpyxl
-import six
 from openpyxl.utils.datetime import from_excel
 from openpyxl.utils.exceptions import InvalidFileException
 
@@ -34,13 +30,13 @@ def open_xlsx_workbook(filename):
         try:
             openpyxl_workbook = openpyxl.load_workbook(f, read_only=True, data_only=True)
         except InvalidFileException as e:
-            raise SpreadsheetFileInvalidError(six.text_type(e))
+            raise SpreadsheetFileInvalidError(str(e))
         except BadZipfile as e:
             f.seek(0)
             if f.read(8) == XLSX_ENCRYPTED_MARKER:
                 raise SpreadsheetFileEncrypted('Workbook is encrypted')
             else:
-                raise SpreadsheetFileInvalidError(six.text_type(e))
+                raise SpreadsheetFileInvalidError(str(e))
         yield _XLSXWorkbookAdaptor(openpyxl_workbook).to_workbook()
 
 

@@ -1,20 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-from couchdbkit import ResourceNotFound
 from django.http import Http404
 
+from couchdbkit import ResourceNotFound
+
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
-
-import six
-
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.toggles import MESSAGE_LOG_METADATA
 
 
 def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
     is_deleted = True
-    for app_id, version in six.iteritems(app_ids_and_versions):
+    for app_id, version in app_ids_and_versions.items():
         occurrence = last_occurrences.get(app_id)
         if occurrence is not None and occurrence >= version:
             is_deleted = False

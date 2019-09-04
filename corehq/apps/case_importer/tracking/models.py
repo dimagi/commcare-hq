@@ -1,15 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from django.db import models
+
 from jsonfield import JSONField
 from memoized import memoized
+
+from soil.util import get_task
 
 from corehq.apps.case_importer.tracking.task_status import (
     TaskStatus,
     get_task_status_json,
 )
-from soil.util import get_task
 
 MAX_COMMENT_LENGTH = 2048
 

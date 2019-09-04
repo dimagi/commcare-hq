@@ -1,30 +1,37 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import hashlib
-import json
-
-from django.core.serializers.json import DjangoJSONEncoder
 from jsonobject.base_properties import DefaultProperty
 from simpleeval import InvalidExpression
-import six
 
+from dimagi.ext.jsonobject import (
+    DictProperty,
+    JsonObject,
+    ListProperty,
+    StringProperty,
+)
+from pillowtop.dao.exceptions import DocumentNotFoundError
+
+from corehq.apps.change_feed.data_sources import (
+    get_document_store_for_doc_type,
+)
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
-from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX, NAMED_EXPRESSION_PREFIX
+from corehq.apps.userreports.const import (
+    NAMED_EXPRESSION_PREFIX,
+    XFORM_CACHE_KEY_PREFIX,
+)
+from corehq.apps.userreports.datatypes import DataTypeProperty
 from corehq.apps.userreports.decorators import ucr_context_cache
-from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.expressions.getters import (
+    safe_recursive_lookup,
+    transform_from_datatype,
+)
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
+from corehq.apps.userreports.specs import EvaluationContext, TypeProperty
+from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.couch import get_db_by_doc_type
-from corehq.apps.userreports.expressions.getters import transform_from_datatype, safe_recursive_lookup
-from corehq.apps.userreports.datatypes import DataTypeProperty
-from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
-from corehq.apps.userreports.util import add_tabbed_text
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.util.python_compatibility import soft_assert_type_text
-from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
-from pillowtop.dao.exceptions import DocumentNotFoundError
+from corehq.util.couch import get_db_by_doc_type
+
 from .utils import eval_statements
 
 
@@ -141,7 +148,7 @@ class PropertyPathGetterSpec(JsonObject):
     is specified, "string" will be used.
     """
     type = TypeProperty('property_path')
-    property_path = ListProperty(six.text_type, required=True)
+    property_path = ListProperty(str, required=True)
     datatype = DataTypeProperty(required=False)
 
     def __call__(self, item, context=None):
@@ -601,10 +608,8 @@ class DictExpressionSpec(JsonObject):
 
     def configure(self, compiled_properties):
         for key in compiled_properties:
-            if not isinstance(key, (six.text_type, bytes)):
+            if not isinstance(key, str):
                 raise BadSpecError("Properties in a dict expression must be strings!")
-            if six.PY3:
-                soft_assert_type_text(key)
         self._compiled_properties = compiled_properties
 
     def __call__(self, item, context=None):
@@ -900,9 +905,8 @@ class SplitStringExpressionSpec(JsonObject):
 
     def __call__(self, item, context=None):
         string_value = self._string_expression(item, context)
-        if not isinstance(string_value, six.string_types):
+        if not isinstance(string_value, str):
             return None
-        soft_assert_type_text(string_value)
 
         index_value = None
         if self.index_expression is not None:

@@ -1,29 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from decimal import Decimal
 from xml.etree import cElementTree as ElementTree
-import six
 
 
-def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=None):
+def simple_fixture_generator(restore_user, id, name, fields, data, user_id=None):
     """
     Fixture generator used to build commtrack related fixtures such
     as products and programs.
     """
-    project = restore_user.project
-    if not project or not project.commtrack_enabled:
-        return []
-
-    # expand this here to prevent two separate couch calls
-    data = data_fn()
-
-    if not should_sync(data, last_sync):
-        return []
-
     name_plural = "{}s".format(name)
     root = ElementTree.Element('fixture',
                                {
                                    'id': id,
-                                   'user_id': restore_user.user_id
+                                   'user_id': user_id or restore_user.user_id
                                })
     list_elem = ElementTree.Element(name_plural)
     root.append(list_elem)
@@ -43,31 +31,14 @@ def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=
                 if val:
                     for k, v in val.items():
                         sub_el = ElementTree.Element(k)
-                        sub_el.text = six.text_type(v if v is not None else '')
+                        sub_el.text = str(v if v is not None else '')
                         field_elem.append(sub_el)
 
                     item_elem.append(field_elem)
             else:
-                field_elem.text = six.text_type(val if val is not None else '')
+                if isinstance(val, Decimal):
+                    val = val.normalize()
+                field_elem.text = str(val if val is not None else '')
                 item_elem.append(field_elem)
 
     return [root]
-
-
-def should_sync(data, last_sync):
-    """
-    Determine if a data collection needs to be synced.
-    """
-
-    # definitely sync if we haven't synced before
-    if not last_sync or not last_sync.date:
-        return True
-
-    # check if any items have been modified since last sync
-    for data_item in data:
-        # >= used because if they are the same second, who knows
-        # which actually happened first
-        if not data_item.last_modified or data_item.last_modified >= last_sync.date:
-            return True
-
-    return False

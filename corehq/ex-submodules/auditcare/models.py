@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import copy
 import hashlib
 import json
@@ -19,8 +17,6 @@ from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 
 from auditcare import utils
-import six
-from io import open
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +49,6 @@ STANDARD_HEADER_KEYS = ['X_FORWARDED_FOR', 'X_FORWARDED_HOST', 'X_FORWARDED_SERV
    'HTTP_ACCEPT', 'REMOTE_ADDR', 'HTTP_ACCEPT_LANGUAGE', 'CONTENT_TYPE', 'HTTP_ACCEPT_ENCODING']
 
 
-@six.python_2_unicode_compatible
 class AuditEvent(Document):
     user = StringProperty() #the user committing the action
     base_type = StringProperty(default="AuditEvent") #for subclassing this needs to stay consistent
@@ -155,7 +150,7 @@ class ModelActionAudit(AuditEvent):
             #if it's an existing version, then save it
             instance_copy.pop('_rev')
             json_string = json.dumps(instance_copy)
-        return hashlib.sha1(json_string.encode('utf-8') if six.PY3 else json_string).hexdigest()
+        return hashlib.sha1(json_string.encode('utf-8')).hexdigest()
 
     def compute_changes(self, save=False):
         """
@@ -281,7 +276,7 @@ class ModelActionAudit(AuditEvent):
     @classmethod
     def audit_django_save(cls, model_class, instance, instance_json, user):
         audit = cls.create_audit(cls, user)
-        instance_id = six.text_type(instance.id)
+        instance_id = str(instance.id)
         revision_id = None
         cls._save_model_audit(audit, instance_id, instance_json, revision_id, model_class.__name__, is_django=True)
 

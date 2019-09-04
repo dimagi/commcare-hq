@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
 
@@ -41,7 +39,7 @@ class THRFormV2AggHelper(BaseICDSAggregationHelper):
                 state_id,
                 supervisor_id,
                 awc_id,
-                COUNT(*) FILTER (WHERE photo_thr_packets_distributed is not null) as thr_distribution_image_count,
+                COUNT(*) FILTER (WHERE NULLIF(photo_thr_packets_distributed,'') is not null) as thr_distribution_image_count,
                 %(start_date)s::DATE AS month
                 FROM "{ucr_tablename}"
                 WHERE submitted_on >= %(start_date)s AND submitted_on < %(end_date)s

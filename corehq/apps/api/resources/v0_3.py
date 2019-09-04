@@ -1,18 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import es_search, ElasticAPIQuerySet, CaseES
+
+from corehq.apps.api.es import CaseES, ElasticAPIQuerySet, es_search
 from corehq.apps.api.models import ESCase
-from corehq.apps.api.resources import DomainSpecificResourceMixin
-from corehq.apps.api.resources import HqBaseResource
+from corehq.apps.api.resources import (
+    DomainSpecificResourceMixin,
+    HqBaseResource,
+)
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.util import object_does_not_exist, get_obj
+from corehq.apps.api.util import get_obj, object_does_not_exist
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -68,7 +67,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         try:
             es_query = es_search(bundle.request, domain)
         except Http400 as e:
-            raise BadRequest(six.text_type(e))
+            raise BadRequest(str(e))
 
         return ElasticAPIQuerySet(
             payload=es_query,

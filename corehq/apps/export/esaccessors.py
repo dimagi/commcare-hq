@@ -1,13 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 from elasticsearch import ElasticsearchException
 
 from corehq.apps.es import CaseES, FormES, GroupES, LedgerES
-from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
+from corehq.apps.es.aggregations import (
+    AggregationTerm,
+    NestedTermAggregationsHelper,
+)
 from corehq.apps.es.sms import SMSES
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.elastic import ES_EXPORT_INSTANCE, get_es_new
 
 
@@ -45,8 +43,7 @@ def get_groups_user_ids(group_ids):
 
     results = []
     for user_list in q.values_list("users", flat=True):
-        if isinstance(user_list, six.string_types):
-            soft_assert_type_text(user_list)
+        if isinstance(user_list, str):
             results.append(user_list)
         else:
             results.extend(user_list)

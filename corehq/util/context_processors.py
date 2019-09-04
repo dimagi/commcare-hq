@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import datetime
 
-import six
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
@@ -15,7 +12,6 @@ from corehq.apps.analytics import ab_tests
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
-from corehq.util.python_compatibility import soft_assert_type_text
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -43,6 +39,7 @@ def is_commtrack(project, request):
 
 
 def get_per_domain_context(project, request=None):
+    from corehq import toggles
     custom_logo_url = None
     if (project and project.has_custom_logo and
             domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)):
@@ -57,7 +54,11 @@ def get_per_domain_context(project, request=None):
             allow_report_an_issue = True
         else:
             domain_name = request.couch_user.domain
-            allow_report_an_issue = request.couch_user.has_permission(domain_name, 'report_an_issue')
+            role = request.couch_user.get_domain_membership(domain_name).role
+            if not role and toggles.ICDS.enabled(domain_name):
+                allow_report_an_issue = False
+            else:
+                allow_report_an_issue = request.couch_user.has_permission(domain_name, 'report_an_issue')
     else:
         allow_report_an_issue = True
 
@@ -161,10 +162,23 @@ def commcare_hq_names(request=None):
     }
 
 
+def emails(request=None):
+    """
+    Emails commonly referenced in user-facing templates.
+    Please use (and add to) these references rather than hard-coding or adding
+    a page-specific context variable.
+    """
+    return {
+        'SALES_EMAIL': settings.SALES_EMAIL,
+        'SUPPORT_EMAIL': settings.SUPPORT_EMAIL,
+        'PRIVACY_EMAIL': settings.PRIVACY_EMAIL,
+        'INVOICING_CONTACT_EMAIL': settings.INVOICING_CONTACT_EMAIL,
+    }
+
+
 def _get_cc_name(request, var):
     value = getattr(settings, var)
-    if isinstance(value, six.string_types):
-        soft_assert_type_text(value)
+    if isinstance(value, str):
         return value
 
     if request is None:

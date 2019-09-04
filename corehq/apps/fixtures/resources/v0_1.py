@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals
 
 from couchdbkit import ResourceNotFound
 from tastypie import fields as tp_f
@@ -204,10 +203,10 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
         return ImmediateHttpResponse(response=HttpAccepted())
 
     def obj_create(self, bundle, request=None, **kwargs):
-        if 'data_type_id' not in bundle.data:
-            raise BadRequest("data_type_id must be specified")
+        data_type_id = bundle.data.get('data_type_id', None)
 
-        data_type_id = bundle.data['data_type_id']
+        if not data_type_id:
+            raise BadRequest("data_type_id must be specified")
 
         try:
             FixtureDataType.get(data_type_id)

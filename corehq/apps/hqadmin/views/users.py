@@ -1,13 +1,8 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import itertools
 import uuid
 from collections import Counter
 from datetime import datetime, timedelta
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
@@ -22,35 +17,44 @@ from django.http import (
     StreamingHttpResponse,
 )
 from django.http.response import Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy, ugettext as _
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 from django.views.generic import FormView, TemplateView, View
+
+from couchdbkit.exceptions import ResourceNotFound
 from lxml import etree
 from lxml.builder import E
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from couchforms.openrosa_response import RESPONSE_XMLNS
+from dimagi.utils.django.email import send_HTML_email
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import (
-    check_lockout, domain_admin_required, login_or_basic, require_superuser)
-from corehq.apps.hqmedia.tasks import build_application_zip_v2
+    check_lockout,
+    domain_admin_required,
+    login_or_basic,
+    require_superuser,
+)
+from corehq.apps.hqadmin.forms import (
+    AuthenticateAsForm,
+    DisableTwoFactorForm,
+    DisableUserForm,
+    SuperuserManagementForm,
+)
+from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
+from corehq.apps.hqmedia.tasks import build_application_zip
 from corehq.apps.ota.views import get_restore_params, get_restore_response
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.util import reverse
 from corehq.util.timer import TimingContext
-from couchforms.openrosa_response import RESPONSE_XMLNS
-from dimagi.utils.django.email import send_HTML_email
-
-from corehq.apps.hqadmin.forms import (
-    AuthenticateAsForm, SuperuserManagementForm, DisableTwoFactorForm, DisableUserForm)
-from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
-
-from six.moves import filter
 
 
 class UserAdministration(BaseAdminSectionView):
@@ -544,7 +548,7 @@ class AppBuildTimingsView(TemplateView):
             assert not errors, errors
 
             with app.timing_context("build_zip"):
-                build_application_zip_v2(
+                build_application_zip(
                     include_multimedia_files=True,
                     include_index_files=True,
                     domain=app.domain,

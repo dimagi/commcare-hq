@@ -1,18 +1,12 @@
-# Use modern Python
-from __future__ import absolute_import, print_function, unicode_literals
-
-# Standard library imports
 import logging
 
-# Django imports
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
-# External imports
+from django_prbac.models import Grant, Role
+
 from corehq import privileges
 from corehq.apps.accounting.utils import ensure_grants, log_removed_grants
-from django_prbac.models import Grant, Role
-from six.moves import input
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +145,13 @@ class Command(BaseCommand):
         Role(slug=privileges.ZAPIER_INTEGRATION, name='Zapier Integration',
              description='Allows domains to use zapier (zapier.com) integration'),
         Role(slug=privileges.LOGIN_AS, name='Login As for App Preview',
-                     description='Allows domains to use the login as feature of app preview')
+             description='Allows domains to use the login as feature of app preview'),
+        Role(slug=privileges.CASE_SHARING_GROUPS,
+             name='Case Sharing via Groups',
+             description='Allows turning on case sharing between members in a group.'),
+        Role(slug=privileges.CHILD_CASES,
+             name='Child Cases',
+             description='Allows for use of child cases / subcases in applications.'),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -170,9 +170,13 @@ class Command(BaseCommand):
     community_plan_v0_features = [
         privileges.EXCEL_DASHBOARD,
         privileges.DAILY_SAVED_EXPORT,
+        privileges.CASE_SHARING_GROUPS,
+        privileges.CHILD_CASES,
     ]
 
     community_plan_v1_features = [
+        privileges.CASE_SHARING_GROUPS,
+        privileges.CHILD_CASES,
     ]
 
     standard_plan_features = community_plan_v0_features + [
@@ -229,4 +233,3 @@ class Command(BaseCommand):
         'advanced_plan_v0': advanced_plan_features,
         'enterprise_plan_v0': enterprise_plan_features,
     }
-

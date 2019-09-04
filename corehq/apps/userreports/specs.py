@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
-from dimagi.ext.jsonobject import StringProperty
 from datetime import datetime
+
+from dimagi.ext.jsonobject import StringProperty
 
 
 def TypeProperty(value):

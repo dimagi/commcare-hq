@@ -1,23 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import collections
+import json
+
 from django import forms
-from django.forms.fields import MultiValueField, CharField
+from django.forms.fields import CharField, MultiValueField
 from django.forms.utils import flatatt
-from django.forms.widgets import (
-    CheckboxInput,
-    Input,
-    TextInput,
-    MultiWidget,
-)
+from django.forms.widgets import CheckboxInput, Input, MultiWidget, TextInput
 from django.template.loader import render_to_string
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
-import json
 from django.utils.translation import ugettext_noop
+
 from dimagi.utils.dates import DateSpan
-import six
-from six.moves import range
+
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import html_attr
 
 
@@ -59,7 +53,7 @@ class _Select2AjaxMixin():
         self._initial = val
 
     def _clean_initial(self, val):
-        if isinstance(val, collections.Sequence) and not isinstance(val, (str, six.text_type)):
+        if isinstance(val, collections.Sequence) and not isinstance(val, (str, str)):
             # if its a tuple or list
             return {"id": val[0], "text": val[1]}
         elif val is None:
@@ -78,7 +72,7 @@ class Select2Ajax(_Select2AjaxMixin, forms.Select):
 
     def render(self, name, value, attrs=None):
         attrs.update({
-            'class': 'form-control hqwebapp-select2-ajax-v4',
+            'class': 'form-control hqwebapp-select2-ajax',
             'data-initial': json.dumps(self._initial if self._initial is not None else self._clean_initial(value)),
             'data-endpoint': self.url,
             'data-page-size': self.page_size,

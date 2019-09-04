@@ -1,39 +1,40 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 from collections import OrderedDict
 from uuid import uuid4
 
+from django.test import Client, TestCase
 from django.urls import reverse
-from django.test import TestCase, Client
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+
+from flaky import flaky
 from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.tests.util import delete_all_cases
+from casexml.apps.case.util import post_case_blocks
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from pillowtop.es_utils import initialize_index_and_mapping
+
 from corehq.apps.case_search.models import (
     CLAIM_CASE_TYPE,
-    CaseSearchConfig,
     SEARCH_QUERY_ADDITION_KEY,
+    CaseSearchConfig,
     CaseSearchQueryAddition,
     IgnorePatterns,
 )
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new, ES_DEFAULT_INSTANCE
-from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.apps.case_search.utils import CaseSearchCriteria
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.users.models import CommCareUser
+from corehq.elastic import ES_DEFAULT_INSTANCE, get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import (
-    CASE_SEARCH_INDEX_INFO,
     CASE_SEARCH_INDEX,
+    CASE_SEARCH_INDEX_INFO,
     CASE_SEARCH_MAX_RESULTS,
 )
 from corehq.util.elastic import ensure_index_deleted
-from pillowtop.es_utils import initialize_index_and_mapping
 
 DOMAIN = 'swashbucklers'
 USERNAME = 'testy_mctestface'
@@ -358,6 +359,7 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.content.decode('utf-8'), 'You have already claimed that case')
 
+    @flaky
     @run_with_all_backends
     def test_claim_restore_as(self):
         """Server should assign cases to the correct user

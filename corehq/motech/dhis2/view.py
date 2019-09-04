@@ -1,29 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
+
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy, ugettext as _
-from django.views.decorators.http import require_POST, require_http_methods
-from django.shortcuts import render
-import six
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+from django.views.decorators.http import require_http_methods, require_POST
+
+from memoized import memoized
+
+from dimagi.utils.web import json_response
+
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.motech.dhis2.dbaccessors import (
+    get_dataset_maps,
+    get_dhis2_connection,
+)
 from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig
-from corehq.motech.requests import Requests
-from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
-from corehq.motech.dhis2.forms import Dhis2ConnectionForm, Dhis2ConfigForm
-from corehq.motech.dhis2.models import DataValueMap, DataSetMap
+from corehq.motech.dhis2.forms import Dhis2ConfigForm, Dhis2ConnectionForm
+from corehq.motech.dhis2.models import DataSetMap, DataValueMap
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.dhis2.tasks import send_datasets
-from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from memoized import memoized
-from dimagi.utils.web import json_response
-from six.moves import range
-from six.moves import map
+from corehq.motech.requests import Requests
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
@@ -65,8 +68,9 @@ class DataSetMapView(BaseProjectSettingsView):
 
     def post(self, request, *args, **kwargs):
 
-        def update_dataset_map(instance, dict_):
-            for key, value in dict_.items():
+        def update_dataset_map(instance, new_dataset_map):
+            new_dataset_map.pop('domain', None)  # Make sure a user cannot change the value of "domain"
+            for key, value in new_dataset_map.items():
                 if key == 'datavalue_maps':
                     value = [DataValueMap(**v) for v in value]
                 instance[key] = value
@@ -96,10 +100,22 @@ class DataSetMapView(BaseProjectSettingsView):
 
     @property
     def page_context(self):
-        dataset_maps = [d.to_json() for d in get_dataset_maps(self.request.domain)]
+
+        def to_json(dataset_map):
+            dataset_map = dataset_map.to_json()
+            del(dataset_map['_id'])
+            del(dataset_map['_rev'])
+            del(dataset_map['doc_type'])
+            del(dataset_map['domain'])
+            for datavalue_map in dataset_map['datavalue_maps']:
+                del(datavalue_map['doc_type'])
+            return dataset_map
+
+        dataset_maps = [to_json(d) for d in get_dataset_maps(self.request.domain)]
         return {
             'dataset_maps': dataset_maps,
             'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
+            'is_json_ui': int(self.request.GET.get('json', 0)),
         }
 
 
@@ -145,8 +161,6 @@ def dhis2_edit_config(request, domain, repeater_id):
         form_configs = json.dumps([
             form_config.to_json() for form_config in repeater.dhis2_config.form_configs
         ])
-        if six.PY2:
-            form_configs = form_configs.decode('utf-8')
         form = Dhis2ConfigForm(
             data={
                 'form_configs': form_configs,

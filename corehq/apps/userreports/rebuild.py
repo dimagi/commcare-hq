@@ -1,22 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from collections import defaultdict, namedtuple
 
 import attr
 from alembic.autogenerate import compare_metadata
 from alembic.operations import Operations
 
+from dimagi.utils.couch import get_redis_client
+from fluff.signals import (
+    DiffTypes,
+    get_migration_context,
+    get_tables_to_rebuild,
+    reformat_alembic_diffs,
+)
+
 from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.apps.userreports.models import id_is_static
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.couch import get_redis_client
-from fluff.signals import (
-    get_migration_context,
-    reformat_alembic_diffs,
-    get_tables_to_rebuild,
-    DiffTypes)
-from six.moves import zip
 
 
 def get_redis_key_for_config(config):

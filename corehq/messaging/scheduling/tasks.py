@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from celery.task import task
 from corehq.messaging.scheduling.models import (
     ImmediateBroadcast,
@@ -36,7 +34,6 @@ from corehq.util.celery_utils import no_result_task
 from datetime import datetime
 from dimagi.utils.couch import CriticalSection
 from django.conf import settings
-import six
 
 
 class ScheduleInstanceRefresher(object):
@@ -56,7 +53,7 @@ class ScheduleInstanceRefresher(object):
     @staticmethod
     def _get_any_value_or_none(from_dict):
         if from_dict:
-            return six.next(six.itervalues(from_dict))
+            return next(iter(from_dict.values()))
 
         return None
 
@@ -141,7 +138,7 @@ class ScheduleInstanceRefresher(object):
                     (self.create_new_instance_for_recipient(recipient_type, recipient_id), True)
                 )
 
-        for recipient_type_and_id, instance in six.iteritems(self.existing_instances):
+        for recipient_type_and_id, instance in self.existing_instances.items():
             if recipient_type_and_id in self.new_recipients:
                 needs_saving = self.handle_existing_instance(instance)
                 refreshed_list.append((instance, needs_saving))
@@ -218,10 +215,7 @@ class CaseAlertScheduleInstanceRefresher(ScheduleInstanceRefresher):
                 recipient_type,
                 recipient_id
             )
-
-            if self.action_definition.reset_case_property_name:
-                handle_case_alert_schedule_instance_reset(instance, self.schedule, self.reset_case_property_value)
-
+            self.handle_existing_instance(instance)
             return instance
         else:
             return CaseAlertScheduleInstance.create_for_recipient(

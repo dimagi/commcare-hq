@@ -1,20 +1,23 @@
-from __future__ import absolute_import, unicode_literals
 
 import os
 import sys
-import six
-from io import open
 from zipfile import ZipFile
 
-from celery.task import task
 from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
 from django.core.mail.message import EmailMessage
 from django.template.defaultfilters import linebreaksbr
 
+import six
+from celery.task import task
+
 from corehq.apps.translations.generators import AppTranslationsGenerator
-from corehq.apps.translations.integrations.transifex.parser import TranslationsParser
-from corehq.apps.translations.integrations.transifex.project_migrator import ProjectMigrator
+from corehq.apps.translations.integrations.transifex.parser import (
+    TranslationsParser,
+)
+from corehq.apps.translations.integrations.transifex.project_migrator import (
+    ProjectMigrator,
+)
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
 
 

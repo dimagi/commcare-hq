@@ -1,9 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.utils.translation import ugettext_lazy
+
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.models import HQToggle
-from django.utils.translation import ugettext_lazy
-import six
 
 
 class SubmitToggle(HQToggle):
@@ -41,7 +39,7 @@ class SubmissionTypeFilter(BaseReportFilter):
 
     @classmethod
     def use_filter(cls, filter):
-        return [SubmitToggle(i, six.text_type(i) in filter, name, cls.doc_types[i]) for i, name in
+        return [SubmitToggle(i, str(i) in filter, name, cls.doc_types[i]) for i, name in
                 enumerate(cls.human_readable)]
 
     @classmethod

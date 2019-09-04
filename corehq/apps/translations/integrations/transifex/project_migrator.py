@@ -1,28 +1,28 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import copy
 import datetime
-import polib
 import tempfile
-
-from memoized import memoized
 from collections import OrderedDict
 
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
+import polib
+from memoized import memoized
+
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.translations.integrations.transifex.client import (
+    TransifexApiClient,
+)
+from corehq.apps.translations.integrations.transifex.const import (
+    SOURCE_LANGUAGE_MAPPING,
+    TRANSIFEX_SLUG_PREFIX_MAPPING,
+)
 from corehq.apps.translations.integrations.transifex.exceptions import (
     InvalidProjectMigration,
     ResourceMissing,
 )
 from corehq.apps.translations.models import TransifexProject
-from corehq.apps.translations.integrations.transifex.client import TransifexApiClient
-from corehq.apps.translations.integrations.transifex.const import (
-    SOURCE_LANGUAGE_MAPPING,
-    TRANSIFEX_SLUG_PREFIX_MAPPING,
-)
 
 
 class ProjectMigrator(object):
@@ -105,7 +105,7 @@ class ProjectMigrator(object):
         responses = {}
         # the project source lang, which is the app default language should be the first to update.
         # HQ keeps the default lang on top and hence it should be the first one here
-        assert translations.keys()[0] == self.target_app_default_lang
+        assert list(translations.keys())[0] == self.target_app_default_lang
         for lang_code in translations:
             responses[lang_code] = self._upload_translation(translations[lang_code], lang_code)
         return responses

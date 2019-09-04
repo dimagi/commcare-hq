@@ -1,26 +1,22 @@
-from __future__ import print_function
-from __future__ import absolute_import
 # http://www.gevent.org/gevent.monkey.html#module-gevent.monkey
-from __future__ import unicode_literals
-from gevent import monkey
-monkey.patch_all()
-
-import gevent
-import six
-
 from datetime import datetime
-from six.moves import map
 
+from django.conf import settings
 from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
-from django.conf import settings
 
-from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import FACTORIES_BY_SLUG
+import gevent
+from gevent import monkey
+
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
+    FACTORIES_BY_SLUG,
+)
 from corehq.elastic import get_es_new
 from corehq.pillows.user import add_demo_user_to_user_index
 from corehq.pillows.utils import get_all_expected_es_indices
 from corehq.util.log import get_traceback_string
-from corehq.util.python_compatibility import soft_assert_type_text
+
+monkey.patch_all()
 
 
 def get_reindex_commands(alias_name):
@@ -52,8 +48,7 @@ def do_reindex(alias_name, reset):
     print("Starting pillow preindex %s" % alias_name)
     reindex_commands = get_reindex_commands(alias_name)
     for reindex_command in reindex_commands:
-        if isinstance(reindex_command, six.string_types):
-            soft_assert_type_text(reindex_command)
+        if isinstance(reindex_command, str):
             kwargs = {"reset": True} if reset else {}
             FACTORIES_BY_SLUG[reindex_command](**kwargs).build().reindex()
         else:
@@ -87,7 +82,7 @@ class Command(BaseCommand):
             return
 
         print("Reindexing:\n\t", end=' ')
-        print('\n\t'.join(map(six.text_type, indices_needing_reindex)))
+        print('\n\t'.join(map(str, indices_needing_reindex)))
 
         preindex_message = """
         Heads up!
@@ -97,9 +92,9 @@ class Command(BaseCommand):
 
         This may take a while, so don't deploy until all these have reported finishing.
             """ % (
-                settings.EMAIL_SUBJECT_PREFIX,
-                '\n\t'.join(map(six.text_type, indices_needing_reindex))
-            )
+            settings.EMAIL_SUBJECT_PREFIX,
+            '\n\t'.join(map(str, indices_needing_reindex))
+        )
 
         mail_admins("Pillow preindexing starting", preindex_message)
         start = datetime.utcnow()
@@ -131,7 +126,7 @@ class Command(BaseCommand):
                 mail_admins(
                     "Pillow preindexing completed",
                     "Reindexing %s took %s seconds" % (
-                        ', '.join(map(six.text_type, indices_needing_reindex)),
+                        ', '.join(map(str, indices_needing_reindex)),
                         (datetime.utcnow() - start).seconds
                     )
                 )

@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-import six
 import sys
 from collections import defaultdict
 from itertools import islice
@@ -25,8 +20,6 @@ from corehq.util.view_utils import get_request
 from corehq.util.datadog.utils import get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
-from six.moves import range
-from io import open
 
 
 def clean_exception(exception):
@@ -40,7 +33,7 @@ def clean_exception(exception):
     # couchdbkit doesn't provide a better way for us to catch this exception
     if (
         isinstance(exception, AssertionError) and
-        six.text_type(exception).startswith('received an invalid response of type')
+        str(exception).startswith('received an invalid response of type')
     ):
         message = ("It looks like couch returned an invalid response to "
                    "couchdbkit.  This could contain sensitive information, "
@@ -307,12 +300,8 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
 
 
 def get_traceback_string():
-    if six.PY3:
-        from io import StringIO
-        f = StringIO()
-    else:
-        from cStringIO import StringIO
-        f = StringIO()
+    from io import StringIO
+    f = StringIO()
     traceback.print_exc(file=f)
     return f.getvalue()
 

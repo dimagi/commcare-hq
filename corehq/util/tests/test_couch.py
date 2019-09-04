@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from django.http import Http404
@@ -12,7 +10,6 @@ from corehq.util.exceptions import DocumentClassNotFound
 
 from ..couch import (get_document_or_404, IterDB, iter_update, IterUpdateError,
         DocUpdate, get_document_class_by_doc_type)
-from six.moves import range
 
 
 class MockDb(object):

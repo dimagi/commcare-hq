@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
-from django.urls import reverse
 from django.test import TestCase
 from django.test.client import Client
+from django.urls import reverse
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
-from corehq.apps.app_manager.models import Application
-from corehq.elastic import send_to_elasticsearch, get_es_new
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.elastic import delete_es_index
 from corehq.util.test_utils import flag_enabled
-from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 
 
 class TestPaginateReleases(TestCase):
@@ -53,21 +51,21 @@ class TestPaginateReleases(TestCase):
         delete_es_index(APP_INDEX_INFO.index)
         super(TestPaginateReleases, cls).tearDownClass()
 
-    def get_target_commcare_flavor_on_releases_page(self, only_released=False):
+    def get_commcare_flavor_on_releases_page(self, only_released=False):
         url = reverse('paginate_releases', args=(self.domain_name, self.app.get_id))
         if only_released:
             url += "?only_show_released=true"
         response = self.client.get(url)
-        return response.json()['apps'][0]['target_commcare_flavor']
+        return response.json()['apps'][0]['commcare_flavor']
 
-    def test_target_commcare_flavor(self):
+    def test_commcare_flavor(self):
         self.client.login(username=self.username, password=self.password)
         # Couch View Test
-        self.assertEqual(self.get_target_commcare_flavor_on_releases_page(), 'none')
+        self.assertEqual(self.get_commcare_flavor_on_releases_page(), None)
         # ES Search Test
-        self.assertEqual(self.get_target_commcare_flavor_on_releases_page(only_released=True), 'none')
+        self.assertEqual(self.get_commcare_flavor_on_releases_page(only_released=True), None)
         with flag_enabled('TARGET_COMMCARE_FLAVOR'):
             # Couch View Test
-            self.assertEqual(self.get_target_commcare_flavor_on_releases_page(), 'commcare_lts')
+            self.assertEqual(self.get_commcare_flavor_on_releases_page(), 'commcare_lts')
             # ES Search Test
-            self.assertEqual(self.get_target_commcare_flavor_on_releases_page(only_released=True), 'commcare_lts')
+            self.assertEqual(self.get_commcare_flavor_on_releases_page(only_released=True), 'commcare_lts')

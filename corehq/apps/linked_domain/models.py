@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
-from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime
 
-import jsonobject
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
+from django.utils.translation import ugettext as _
+
+import jsonobject
 
 from corehq.apps.linked_domain.const import LINKED_MODELS
 from corehq.apps.linked_domain.exceptions import DomainLinkError
@@ -34,7 +33,9 @@ class DomainLink(models.Model):
     deleted = models.BooleanField(default=False)
 
     # used for linking across remote instances of HQ
-    remote_base_url = models.CharField(max_length=255, null=True, blank=True)
+    remote_base_url = models.CharField(max_length=255, null=True, blank=True,
+                                       help_text=_("should be the full link with the trailing /. "
+                                                   "Example: https://www.commcarehq.org/"))
     remote_username = models.CharField(max_length=255, null=True, blank=True)
     remote_api_key = models.CharField(max_length=255, null=True, blank=True)
 

@@ -9,8 +9,28 @@
 
 {% initial_page_data 'dataset_maps' dataset_maps %}
 {% initial_page_data 'send_data_url' send_data_url %}
+{% initial_page_data 'is_json_ui' is_json_ui %}
 
-{% include 'dhis2/partials/dhis2_dataset_map_templates.html' %}
+{% if is_json_ui %}
+  <div class="text-right">
+    <a href="?json=0">
+      <button type="button" class="btn btn-default">
+        {% trans "Switch to HTML interface" %}
+      </button>
+    </a>
+  </div>
+  {% include 'dhis2/partials/json_dhis2_dataset_map_template.html' %}
+
+{% else %}
+  <div class="text-right">
+    <a href="?json=1">
+      <button type="button" class="btn btn-default">
+        {% trans "Switch to JSON interface" %}
+      </button>
+    </a>
+  </div>
+  {% include 'dhis2/partials/dhis2_dataset_map_templates.html' %}
+{% endif %}
 
 <form id="dataset-maps"
       class="form-horizontal"
@@ -20,7 +40,8 @@
     <div data-bind="template: {
                         name: 'dataset_map_template',
                         foreach: dataSetMaps,
-                        as: 'dataSetMap'
+                        as: 'dataSetMap',
+                        afterRender: initDataSetMapTemplate
                     }"></div>
 
     <p>

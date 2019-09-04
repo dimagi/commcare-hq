@@ -1,35 +1,41 @@
-from __future__ import absolute_import, division
-from __future__ import unicode_literals
+import math
+
 from django.conf import settings
-from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.http.response import Http404
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
-import math
+from django_prbac.utils import has_privilege
+
+from dimagi.utils.web import json_response
 
 from corehq import privileges
 from corehq.apps.accounting.mixins import BillingModalsMixin
-from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import (
+    domain_has_apps,
+    get_brief_apps_in_domain,
+)
 from corehq.apps.dashboard.models import (
     AppsPaginator,
     DataPaginator,
     ReportsPaginator,
     Tile,
-    Tile,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
 from corehq.apps.domain.views.settings import DefaultProjectSettingsView
-from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+from corehq.apps.locations.permissions import (
+    location_safe,
+    user_can_edit_location_types,
+)
 from corehq.apps.users.views import DefaultProjectUserSettingsView
-from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
 from corehq.util.context_processors import commcare_hq_names
-from dimagi.utils.web import json_response
-from django_prbac.utils import has_privilege
 
 
 @login_and_domain_required
@@ -46,9 +52,6 @@ def default_dashboard_url(request, domain):
 
     if couch_user and user_has_custom_top_menu(domain, couch_user):
         return reverse('saved_reports', args=[domain])
-
-    if not domain_has_apps(domain):
-        return reverse('default_app', args=[domain])
 
     return reverse(DomainDashboardView.urlname, args=[domain])
 

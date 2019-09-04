@@ -1,9 +1,5 @@
-from __future__ import absolute_import, unicode_literals
-
 import traceback
 
-from six import string_types
-from six.moves import filter
 import re
 from django.conf import settings
 from django.db.utils import OperationalError
@@ -19,6 +15,7 @@ RATE_LIMITED_EXCEPTIONS = {
 
     'corehq.elastic.ESError': 'elastic',
     'elasticsearch.exceptions.ConnectionTimeout': 'elastic',
+    'TransportError': 'elastic',
 
     'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
 
@@ -27,9 +24,9 @@ RATE_LIMITED_EXCEPTIONS = {
     'redis.exceptions.ConnectionError': 'redis',
     'ClusterDownError': 'redis',
 
-    'botocore.exceptions.ClientError': 'riak',
-    'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
-    'botocore.vendored.requests.exceptions.ReadTimeout': 'riak',
+    'botocore.exceptions.ClientError': 'blobdb',
+    'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'blobdb',
+    'botocore.vendored.requests.exceptions.ReadTimeout': 'blobdb',
 
     'celery.beat.SchedulingError': 'celery-beat',
 
@@ -41,6 +38,7 @@ RATE_LIMIT_BY_PACKAGE = {
     # exception: (python package prefix, rate limit key)
     'requests.exceptions.ConnectionError': ('cloudant', 'couchdb'),
     'requests.exceptions.HTTPError': ('cloudant', 'couchdb'),
+    'builtins.BrokenPipeError': ('amqp', 'rabbitmq'),
 }
 
 
@@ -80,7 +78,7 @@ class HQSanitzeSystemPasswordsProcessor(SanitizePasswordsProcessor):
 
     def sanitize(self, key, value):
         value = super(HQSanitzeSystemPasswordsProcessor, self).sanitize(key, value)
-        if value and isinstance(value, string_types):
+        if value and isinstance(value, str):
             return self._regex.sub(self.MASK, value)
         return value
 

@@ -1,10 +1,6 @@
-# coding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 from abc import abstractmethod, ABCMeta
 
-import six
 import sys
 from django.utils.html import format_html, escape
 from django.utils.safestring import mark_safe
@@ -67,7 +63,7 @@ class SimpleTableWriter(object):
             self.output.write(self.row_formatter.format_row(row))
 
 
-class RowFormatter(six.with_metaclass(ABCMeta)):
+class RowFormatter(metaclass=ABCMeta):
     @abstractmethod
     def get_template(self, num_cols):
         raise NotImplementedError

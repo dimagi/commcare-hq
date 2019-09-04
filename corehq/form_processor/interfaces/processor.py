@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 import re
 from collections import namedtuple
@@ -18,7 +16,6 @@ from corehq.form_processor.exceptions import (
 )
 from memoized import memoized
 from ..utils import should_use_sql_backend
-import six
 
 CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
 ProcessedForms = namedtuple('ProcessedForms', ['submitted', 'deprecated'])
@@ -159,7 +156,7 @@ class FormProcessorInterface(object):
 
         errors = []
         xml = xform.get_xml_element()
-        for question, response in six.iteritems(value_responses_map):
+        for question, response in value_responses_map.items():
             try:
                 update_response(xml, question, response, xmlns=xform.xmlns)
             except XFormQuestionValueNotFound:
@@ -187,7 +184,7 @@ class FormProcessorInterface(object):
             raise
         except KafkaPublishingError as e:
             from corehq.form_processor.submission_post import notify_submission_error
-            notify_submission_error(forms.submitted, e, 'Error publishing to Kafka')
+            notify_submission_error(forms.submitted, 'Error publishing to Kafka')
             raise PostSaveError(e)
         except Exception as e:
             from corehq.form_processor.submission_post import handle_unexpected_error

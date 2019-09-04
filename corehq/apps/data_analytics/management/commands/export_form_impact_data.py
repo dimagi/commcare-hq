@@ -1,21 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import csv342 as csv
 from collections import defaultdict
 
+from django.core.management.base import BaseCommand
+
+import csv
 import dateutil
 from dateutil.relativedelta import relativedelta
 
-from django.core.management.base import BaseCommand
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.data_analytics.esaccessors import get_forms_for_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.log import with_progress_bar
-
-from dimagi.utils.chunked import chunked
-import six
-from io import open
 
 
 class Command(BaseCommand):
@@ -57,7 +53,7 @@ class Command(BaseCommand):
                     for form in forms:
                         user_id = form['form']['meta']['userID']
                         user_dict[user_id].append(form)
-                    for user_id, forms in six.iteritems(user_dict):
+                    for user_id, forms in user_dict.items():
                         has_two_forms_submitted = False
                         has_case = False
                         unique_forms = set()

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 
 from django.conf import settings
@@ -7,7 +5,6 @@ from django.conf import settings
 from corehq.util.log import get_sanitized_request_repr
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert.core import SoftAssert
-import six
 
 logger = logging.getLogger('soft_asserts')
 
@@ -67,7 +64,7 @@ def soft_assert(to=None, notify_admins=False,
     """
 
     assert not isinstance(to, bytes)
-    if isinstance(to, six.text_type):
+    if isinstance(to, str):
         to = [to]
 
     if to is None:

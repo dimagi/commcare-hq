@@ -5,7 +5,6 @@
     "ace-builds": "1.3.3",
     "angular": "1.4.4",
     "angular-bootstrap": "^2.5.0",
-    "angular-bootstrap-legacy": "0.11.2",
     "angular-datamaps": "^0.1.2",
     "angular-datatables": "0.5.6",
     "angular-nvd3": "1.0.9",

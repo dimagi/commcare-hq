@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.messaging.smsbackends.telerivet.views import TelerivetSetupView, incoming_message
 from django.conf.urls import url
 from .views import create_backend, get_last_inbound_sms, send_sample_sms

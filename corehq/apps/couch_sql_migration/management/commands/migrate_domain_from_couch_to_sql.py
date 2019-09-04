@@ -1,16 +1,15 @@
-# encoding: utf-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import logging
-from itertools import groupby
+import os
+import sys
+from itertools import groupby, zip_longest
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from six.moves import input, zip_longest
+
 from sqlalchemy.exc import OperationalError
+
+from couchforms.dbaccessors import get_form_ids_by_type
+from couchforms.models import XFormInstance, doc_types
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     CASE_DOC_TYPES,
@@ -37,8 +36,6 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import shell_green, shell_red
-from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms.models import XFormInstance, doc_types
 
 log = logging.getLogger('main_couch_sql_datamigration')
 
@@ -72,42 +69,76 @@ class Command(BaseCommand):
         parser.add_argument('--debug', action='store_true', default=False)
         parser.add_argument('--verbose', action='store_true', default=False,
             help="Show verbose stats output.")
-        parser.add_argument('--log-dir', help="""
-            Directory for couch2sql logs, which are not written if this is not
-            provided. Standard HQ logs will be used regardless of this setting.
-        """)
-        parser.add_argument('--dry-run', action='store_true', default=False,
+        parser.add_argument('--state-dir',
+            default=os.environ.get("CCHQ_MIGRATION_STATE_DIR"),
+            required="CCHQ_MIGRATION_STATE_DIR" not in os.environ,
+            help="""
+                Directory for couch2sql logs and migration state. This must not
+                reside on an NFS volume for migration state consistency.
+                Can be set in environment: CCHQ_MIGRATION_STATE_DIR
+            """)
+        parser.add_argument('--live',
+            dest="live_migrate", action='store_true', default=False,
             help='''
                 Do migration in a way that will not be seen by
                 `any_migrations_in_progress(...)` so it does not block
                 operations like syncs, form submissions, sms activity,
-                etc. Dry-run migrations cannot be committed.
+                etc. A "live" migration will stop when it encounters a
+                form that has been submitted within an hour of the
+                current time. Live migrations can be resumed after
+                interruption or to top off a previous live migration by
+                processing unmigrated forms that are older than one
+                hour. Migration state must be present in the state
+                directory to resume. A live migration may be followed by
+                a normal (non-live) migration, which will commit the
+                result if all goes well.
+            ''')
+        parser.add_argument('--no-diff-process',
+            dest='diff_process', action='store_false', default=True,
+            help='''
+                Migrate forms and diff cases in the same process. The
+                case diff queue will run in a separate process if this
+                option is not specified.
             ''')
 
     def handle(self, domain, action, **options):
         if should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
-        for opt in ["no_input", "verbose", "dry_run"]:
+        for opt in ["no_input", "verbose", "state_dir", "live_migrate", "diff_process"]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('--no-input only allowed for unit testing')
-        if action != MIGRATE and self.dry_run:
-            raise CommandError("--dry-run only allowed for `MIGRATE`")
+        if action != MIGRATE and self.live_migrate:
+            raise CommandError("--live only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
 
-        setup_logging(options['log_dir'], options['debug'])
+        setup_logging(self.state_dir, options['debug'])
         getattr(self, "do_" + action)(domain)
 
     def do_MIGRATE(self, domain):
-        set_couch_sql_migration_started(domain, self.dry_run)
-        do_couch_to_sql_migration(domain, with_progress=not self.no_input)
+        set_couch_sql_migration_started(domain, self.live_migrate)
+        do_couch_to_sql_migration(
+            domain,
+            self.state_dir,
+            with_progress=not self.no_input,
+            live_migrate=self.live_migrate,
+            diff_process=self.diff_process,
+        )
 
-        has_diffs = self.print_stats(domain, short=True, diffs_only=True)
+        return_code = 0
+        if self.live_migrate:
+            print("Live migration completed.")
+            has_diffs = True
+        else:
+            has_diffs = self.print_stats(domain, short=True, diffs_only=True)
+            return_code = int(has_diffs)
         if has_diffs:
-            print("\nRun `diff` or `stats --verbose` for more details.\n")
+            print("\nRun `diff` or `stats [--verbose]` for more details.\n")
+        if return_code:
+            sys.exit(return_code)
 
     def do_reset(self, domain):
         if not self.no_input:
@@ -116,7 +147,7 @@ class Command(BaseCommand):
                 "Are you sure you want to continue?".format(domain)
             )
         set_couch_sql_migration_not_started(domain)
-        blow_away_migration(domain)
+        blow_away_migration(domain, self.state_dir)
 
     def do_COMMIT(self, domain):
         if not couch_sql_migration_in_progress(domain, include_dry_runs=False):
@@ -133,7 +164,7 @@ class Command(BaseCommand):
         self.print_stats(domain, short=not self.verbose)
 
     def do_diff(self, domain):
-        db = open_state_db(domain)
+        db = open_state_db(domain, self.state_dir)
         diffs = sorted(db.get_diffs(), key=lambda d: d.kind)
         for doc_type, diffs in groupby(diffs, key=lambda d: d.kind):
             print('-' * 50, "Diffs for {}".format(doc_type), '-' * 50)
@@ -143,7 +174,7 @@ class Command(BaseCommand):
     def print_stats(self, domain, short=True, diffs_only=False):
         status = get_couch_sql_migration_status(domain)
         print("Couch to SQL migration status for {}: {}".format(domain, status))
-        db = open_state_db(domain)
+        db = open_state_db(domain, self.state_dir)
         try:
             diff_stats = db.get_diff_stats()
         except OperationalError:
@@ -152,6 +183,9 @@ class Command(BaseCommand):
         has_diffs = False
         for doc_type in doc_types():
             form_ids_in_couch = set(get_form_ids_by_type(domain, doc_type))
+            if doc_type == "XFormInstance":
+                form_ids_in_couch.update(get_doc_ids_in_domain_by_type(
+                    domain, "HQSubmission", XFormInstance.get_db()))
             form_ids_in_sql = set(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type))
             diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
             has_diffs |= self._print_status(
@@ -171,8 +205,10 @@ class Command(BaseCommand):
         ZERO = Counts(0, 0)
         if db.has_doc_counts():
             doc_counts = db.get_doc_counts()
+            couch_missing_cases = doc_counts.get("CommCareCase-couch", ZERO).missing
         else:
             doc_counts = None
+            couch_missing_cases = 0
         for doc_type in CASE_DOC_TYPES:
             if doc_counts is not None:
                 counts = doc_counts.get(doc_type, ZERO)
@@ -198,6 +234,12 @@ class Command(BaseCommand):
                 short,
                 diffs_only,
             )
+            if doc_type == "CommCareCase" and couch_missing_cases:
+                has_diffs = True
+                print(shell_red("%s cases could not be loaded from Couch" % couch_missing_cases))
+                if not short:
+                    for case_id in db.get_missing_doc_ids("CommCareCase-couch"):
+                        print(case_id)
 
         if diff_stats:
             for key, counts in diff_stats.items():
@@ -253,9 +295,9 @@ def _confirm(message):
         raise CommandError('abort')
 
 
-def blow_away_migration(domain):
+def blow_away_migration(domain, state_dir):
     assert not should_use_sql_backend(domain)
-    delete_state_db(domain)
+    delete_state_db(domain, state_dir)
 
     for doc_type in doc_types():
         sql_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type)

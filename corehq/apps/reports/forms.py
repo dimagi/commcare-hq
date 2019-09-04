@@ -1,21 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.utils.translation import ugettext
-from corehq.apps.hqwebapp.crispy import FormActions, B3MultiField
-import langcodes
-
 from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.hqwebapp.fields import MultiEmailField
-from corehq.apps.hqwebapp.widgets import SelectToggle
-from corehq.apps.userreports.reports.view import ConfigurableReportView
+
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from corehq.apps.saved_reports.models import ReportConfig, ReportNotification, \
-    DEFAULT_REPORT_NOTIF_SUBJECT
-from six.moves import range
+
+import langcodes
+from corehq.apps.hqwebapp.crispy import B3MultiField, FormActions
+from corehq.apps.hqwebapp.fields import MultiEmailField
+from corehq.apps.hqwebapp.widgets import SelectToggle
+from corehq.apps.saved_reports.models import (
+    DEFAULT_REPORT_NOTIF_SUBJECT,
+    ReportConfig,
+    ReportNotification,
+)
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 
 
 class SavedReportConfigForm(forms.Form):

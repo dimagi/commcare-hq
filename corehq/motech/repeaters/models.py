@@ -1,40 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import warnings
 from datetime import datetime, timedelta
 
-import six
+from django.utils.translation import ugettext_lazy as _
+
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
-from requests.exceptions import Timeout, ConnectionError
 
-from casexml.apps.case.xml import V2, LEGAL_VERSIONS
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.motech.const import ALGO_AES
-from corehq.motech.repeaters.repeater_generators import (
-    FormRepeaterXMLPayloadGenerator,
-    FormRepeaterJsonPayloadGenerator,
-    CaseRepeaterXMLPayloadGenerator,
-    CaseRepeaterJsonPayloadGenerator,
-    ShortFormRepeaterJsonPayloadGenerator,
-    AppStructureGenerator,
-    UserPayloadGenerator,
-    LocationPayloadGenerator,
-)
-from corehq.motech.utils import b64_aes_decrypt
-from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT, REPEATER_SUCCESS_COUNT
-from corehq.util.quickcache import quickcache
+from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -48,20 +24,50 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.post import simple_post
+
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.motech.const import ALGO_AES
+from corehq.motech.repeaters.repeater_generators import (
+    AppStructureGenerator,
+    CaseRepeaterJsonPayloadGenerator,
+    CaseRepeaterXMLPayloadGenerator,
+    FormRepeaterJsonPayloadGenerator,
+    FormRepeaterXMLPayloadGenerator,
+    LocationPayloadGenerator,
+    ShortFormRepeaterJsonPayloadGenerator,
+    UserPayloadGenerator,
+)
+from corehq.motech.utils import b64_aes_decrypt
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.metrics import (
+    REPEATER_ERROR_COUNT,
+    REPEATER_SUCCESS_COUNT,
+)
+from corehq.util.quickcache import quickcache
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
+from requests.exceptions import ConnectionError, Timeout
+
 from .const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
-    RECORD_FAILURE_STATE,
-    RECORD_SUCCESS_STATE,
-    RECORD_PENDING_STATE,
-    RECORD_CANCELLED_STATE,
     POST_TIMEOUT,
+    RECORD_CANCELLED_STATE,
+    RECORD_FAILURE_STATE,
+    RECORD_PENDING_STATE,
+    RECORD_SUCCESS_STATE,
 )
 from .dbaccessors import (
-    get_pending_repeat_record_count,
+    get_cancelled_repeat_record_count,
     get_failure_repeat_record_count,
+    get_pending_repeat_record_count,
     get_success_repeat_record_count,
-    get_cancelled_repeat_record_count
 )
 from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
@@ -320,7 +326,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         if isinstance(result, Exception):
             attempt = repeat_record.handle_exception(result)
             self.generator.handle_exception(result, repeat_record)
-        elif 200 <= result.status_code < 300:
+        elif _is_response(result) and 200 <= result.status_code < 300 or result is True:
             attempt = repeat_record.handle_success(result)
             self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:
@@ -339,7 +345,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
         return self.__class__.__name__
 
 
-@six.python_2_unicode_compatible
 class FormRepeater(Repeater):
     """
     Record that forms should be repeated to a new url
@@ -395,7 +400,6 @@ class FormRepeater(Repeater):
         return "forwarding forms to: %s" % self.url
 
 
-@six.python_2_unicode_compatible
 class CaseRepeater(Repeater):
     """
     Record that cases should be repeated to a new url
@@ -467,7 +471,6 @@ class UpdateCaseRepeater(CaseRepeater):
         return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
 
 
-@six.python_2_unicode_compatible
 class ShortFormRepeater(Repeater):
     """
     Record that form id & case ids should be repeated to a new url
@@ -506,7 +509,6 @@ class AppStructureRepeater(Repeater):
         return None
 
 
-@six.python_2_unicode_compatible
 class UserRepeater(Repeater):
     friendly_name = _("Forward Users")
 
@@ -520,7 +522,6 @@ class UserRepeater(Repeater):
         return "forwarding users to: %s" % self.url
 
 
-@six.python_2_unicode_compatible
 class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
 
@@ -697,7 +698,7 @@ class RepeatRecord(Document):
         return RepeatRecordAttempt(
             cancelled=True,
             datetime=now,
-            failure_reason=six.text_type(exception),
+            failure_reason=str(exception),
             success_response=None,
             next_check=None,
             succeeded=False,
@@ -722,23 +723,35 @@ class RepeatRecord(Document):
 
     @staticmethod
     def _format_response(response):
+        if not _is_response(response):
+            return None
+        response_body = getattr(response, "text", "")
         return '{}: {}.\n{}'.format(
-            response.status_code, response.reason, getattr(response, 'content', None))
+            response.status_code, response.reason, response_body)
 
     def handle_success(self, response):
-        """Do something with the response if the repeater succeeds
+        """
+        Log success in Datadog and return a success RepeatRecordAttempt.
+
+        ``response`` can be a Requests response instance, or True if the
+        payload did not result in an API call.
         """
         now = datetime.utcnow()
-        log_repeater_success_in_datadog(
-            self.domain,
-            response.status_code if response else None,
-            self.repeater_type
-        )
+        if _is_response(response):
+            # ^^^ Don't bother logging success in Datadog if the payload
+            # did not need to be sent. (This can happen with DHIS2 if
+            # the form that triggered the forwarder doesn't contain data
+            # for a DHIS2 Event.)
+            log_repeater_success_in_datadog(
+                self.domain,
+                response.status_code,
+                self.repeater_type
+            )
         return RepeatRecordAttempt(
             cancelled=False,
             datetime=now,
             failure_reason=None,
-            success_response=self._format_response(response) if response else None,
+            success_response=self._format_response(response),
             next_check=None,
             succeeded=True,
             info=self.get_attempt_info(),
@@ -752,7 +765,7 @@ class RepeatRecord(Document):
     def handle_exception(self, exception):
         """handle internal exceptions
         """
-        return self._make_failure_attempt(six.text_type(exception), None)
+        return self._make_failure_attempt(str(exception), None)
 
     def _make_failure_attempt(self, reason, response):
         log_repeater_error_in_datadog(self.domain, response.status_code if response else None,
@@ -811,6 +824,14 @@ class RepeatRecord(Document):
         self.next_check = datetime.utcnow()
 
 
+def _is_response(duck):
+    """
+    Returns True if ``duck`` has the attributes of a Requests response
+    instance that this module uses, otherwise False.
+    """
+    return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
+
+
 # import signals
 # Do not remove this import, its required for the signals code to run even though not explicitly used in this file
-from corehq.motech.repeaters import signals
+from corehq.motech.repeaters import signals  # pylint: disable=unused-import,F401

@@ -1,13 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import logging
 import sys
 from functools import cmp_to_key
 
 from django.utils.translation import ugettext as _
 
-import six
 from ddtrace import tracer
 from iso8601 import iso8601
 
@@ -29,7 +25,7 @@ from corehq.apps.couch_sql_migration.progress import (
     couch_sql_migration_in_progress,
 )
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.exceptions import AttachmentNotFound
+from corehq.form_processor.exceptions import AttachmentNotFound, StockProcessingError
 from corehq.form_processor.models import (
     CaseAttachmentSQL,
     CaseTransaction,
@@ -77,10 +73,12 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def apply_action_intents(self, primary_intent, deprecation_intent=None):
         # for now we only allow commtrack actions to be processed this way so just assert that's the case
         if primary_intent:
-            assert primary_intent.action_type == CASE_ACTION_COMMTRACK
+            if primary_intent.action_type != CASE_ACTION_COMMTRACK:
+                raise StockProcessingError('intent not of expected type: {}'.format(primary_intent.action_type))
             transaction = CaseTransaction.ledger_transaction(self.case, primary_intent.form)
             if deprecation_intent:
-                assert transaction.is_saved()
+                if not transaction.is_saved():
+                    raise StockProcessingError('Deprecated transaction not saved')
             elif transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
                 # hack: clear the sync log id so this modification always counts
                 # since consumption data could change server-side
@@ -329,7 +327,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         try:
             self.reconcile_transactions()
         except ReconciliationError as e:
-            reconciliation_soft_assert(False, "ReconciliationError: %s" % six.text_type(e))
+            reconciliation_soft_assert(False, "ReconciliationError: %s" % str(e))
 
         return True
 

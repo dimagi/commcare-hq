@@ -1,20 +1,26 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import copy
 import json
+import socket
+
 from django.conf import settings
 from django.http import Http404
+
+import requests
+import six.moves.http_client
 from requests import HTTPError
 from six.moves.urllib.parse import urlparse
-import six.moves.http_client
-import socket
-import copy
+
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
-from corehq.form_processor.utils.general import use_sqlite_backend
-from corehq.util.hmac_request import get_hmac_digest, convert_to_bytestring_if_unicode
 from corehq.apps.formplayer_api.smsforms.exceptions import BadDataError
 from corehq.apps.formplayer_api.utils import get_formplayer_url
-import requests
+from corehq.form_processor.utils.general import use_sqlite_backend
+from corehq.util.hmac_request import (
+    convert_to_bytestring_if_unicode,
+    get_hmac_digest,
+)
+
+
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
 backend for various sets of tasks.
@@ -367,7 +373,7 @@ def get_raw_instance(session_id, domain=None, auth=None):
         "action":"get-instance",
         "session-id": session_id,
         "domain": domain
-        }
+    }
 
     response = post_data(json.dumps(data), auth)
     if "error" in response:

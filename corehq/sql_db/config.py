@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 
 from django.conf import settings
@@ -7,10 +5,8 @@ from jsonobject.api import JsonObject
 from jsonobject.properties import IntegerProperty, StringProperty
 
 from memoized import memoized
-from six.moves import zip
 from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError, \
     NoSuchShardDatabaseError
-from six.moves import range
 
 FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'
@@ -27,9 +23,6 @@ class LooslyEqualJsonObject(object):
 
     def __hash__(self):
         return hash(json.dumps(self._obj, sort_keys=True))
-
-    def __ne__(self, other):
-        return not self == other
 
 
 class ShardMeta(JsonObject, LooslyEqualJsonObject):
@@ -187,12 +180,3 @@ def _get_config():
 
 
 partition_config = _get_config()
-
-
-def get_sql_db_aliases_in_use():
-    if settings.USE_PARTITIONED_DATABASE:
-        using = partition_config.get_form_processing_dbs()
-    else:
-        using = ['default']  # use the default database
-
-    return using

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import fluff
 from custom.m4change.constants import BOOKED_AND_UNBOOKED_DELIVERY_FORMS
 from custom.m4change.user_calcs import get_date_delivery, get_received_on, form_passes_filter_date_delivery, \

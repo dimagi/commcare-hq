@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from corehq.warehouse.models.dimensions import (
     UserDim,
     GroupDim,

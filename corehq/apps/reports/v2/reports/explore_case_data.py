@@ -1,14 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy
 
 from corehq import toggles
 from corehq.apps.case_search.const import (
-    SPECIAL_CASE_PROPERTIES_MAP,
     CASE_COMPUTED_METADATA,
+    SPECIAL_CASE_PROPERTIES_MAP,
 )
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
+from corehq.apps.es import CaseSearchES
+from corehq.apps.es import cases as case_es
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
@@ -23,10 +23,10 @@ from corehq.apps.reports.v2.filters.case_report import (
     CaseTypeReportFilter,
 )
 from corehq.apps.reports.v2.filters.xpath_column import (
-    TextXpathColumnFilter,
-    NumericXpathColumnFilter,
-    DateXpathColumnFilter,
     ColumnXpathExpressionBuilder,
+    DateXpathColumnFilter,
+    NumericXpathColumnFilter,
+    TextXpathColumnFilter,
 )
 from corehq.apps.reports.v2.formatters.cases import CaseDataFormatter
 from corehq.apps.reports.v2.models import (
@@ -34,7 +34,10 @@ from corehq.apps.reports.v2.models import (
     ColumnMeta,
     ReportFilterData,
 )
-from corehq.apps.es import CaseSearchES, cases as case_es
+from corehq.feature_previews import (
+    EXPLORE_CASE_DATA_PREVIEW,
+    is_eligible_for_ecd_preview,
+)
 
 
 class ExploreCaseDataReport(BaseReport):
@@ -73,8 +76,14 @@ class ExploreCaseDataReport(BaseReport):
     ]
 
     @property
+    def can_view_ecd_preview(self):
+        return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self.request) and
+                is_eligible_for_ecd_preview(self.request))
+
+    @property
     def has_permission(self):
-        return (toggles.EXPLORE_CASE_DATA.enabled_for_request(self.request)
+        return ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self.request)
+                 or self.can_view_ecd_preview)
                 and self.request.couch_user.can_edit_data())
 
     @property

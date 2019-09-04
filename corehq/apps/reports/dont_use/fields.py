@@ -2,14 +2,15 @@
 DO NOT WRITE ANY NEW FUNCTIONALITY BASED ON THIS FILE
 This is being kept around only to support legacy reports
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.template.loader import render_to_string
-import pytz
-import warnings
-from django.utils.translation import ugettext_noop
 import uuid
-from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS, CSS_FIELD_CLASS
+import warnings
+
+from django.template.loader import render_to_string
+from django.utils.translation import ugettext_noop
+
+import pytz
+
+from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS, CSS_LABEL_CLASS
 
 
 class ReportField(object):

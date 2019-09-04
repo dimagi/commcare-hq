@@ -1,18 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime, timedelta
-import pytz
-import attr
+
 from django.conf import settings
 
+import attr
+import pytz
+
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
+from corehq.apps.es.domains import DomainES
 from corehq.elastic import ESError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.quickcache import quickcache
-from corehq.util.timezones.conversions import UserTime, ServerTime
+from corehq.util.timezones.conversions import ServerTime, UserTime
 
 
 @attr.s

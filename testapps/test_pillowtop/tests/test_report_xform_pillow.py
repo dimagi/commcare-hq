@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import override_settings, TestCase
 from elasticsearch.exceptions import ConnectionError
 
@@ -14,7 +12,6 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, get_form_ready_to_save
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
-from six.moves import range
 
 DOMAIN = 'report-xform-pillowtest-domain'
 

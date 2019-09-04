@@ -19,7 +19,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         info: 'Total AWCs that have launched ICDS-CAS. ' +
         'AWCs are considered launched after submitting at least one Household Registration form.',
     };
-    vm.filters = ['age', 'gender', 'ageServiceDeliveryDashboard'];
+    vm.filters = ['age', 'gender'];
 
     vm.templatePopup = function(loc, row) {
         var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';

@@ -1,11 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 import os
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.sync_docs import DesignInfo
-import six
 
 
 PREINDEX_PLUGINS = {}
@@ -15,7 +12,7 @@ def register_preindex_plugin(plugin):
     PREINDEX_PLUGINS[plugin.app_label] = plugin
 
 
-class PreindexPlugin(six.with_metaclass(ABCMeta, object)):
+class PreindexPlugin(metaclass=ABCMeta):
 
     synced = False
 

@@ -1,15 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.groups.models import dt_no_Z_re
+from datetime import datetime
+
+from django.utils.translation import ugettext as _
+
 from dimagi.ext.couchdbkit import (
-    Document,
-    StringProperty,
     BooleanProperty,
     DateTimeProperty,
+    Document,
+    StringProperty,
 )
-from datetime import datetime
+
+from corehq.apps.groups.models import dt_no_Z_re
 from corehq.apps.products.models import Product, SQLProduct
-from django.utils.translation import ugettext as _
 
 
 class Program(Document):
@@ -34,8 +35,8 @@ class Program(Document):
 
     def save(self, *args, **kwargs):
         self.last_modified = datetime.utcnow()
-
-        return super(Program, self).save(*args, **kwargs)
+        super(Program, self).save(*args, **kwargs)
+        self.clear_caches(self.domain)
 
     @classmethod
     def by_domain(cls, domain, wrap=True):
@@ -84,7 +85,8 @@ class Program(Document):
         # bulk update sqlproducts
         sql_products.update(program_id=default._id)
 
-        return super(Program, self).delete()
+        super(Program, self).delete()
+        self.clear_caches(self.domain)
 
     def unarchive(self):
         """
@@ -106,3 +108,9 @@ class Program(Document):
         return (SQLProduct.objects
                 .filter(domain=self.domain, program_id=self.get_id)
                 .count())
+
+    @classmethod
+    def clear_caches(cls, domain):
+        from casexml.apps.phone.utils import clear_fixture_cache
+        from corehq.apps.programs.fixtures import PROGRAM_FIXTURE_BUCKET
+        clear_fixture_cache(domain, PROGRAM_FIXTURE_BUCKET)

@@ -1,16 +1,26 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
+from django.http import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+)
 from django.urls import reverse
+
 from tastypie import fields
 from tastypie.authentication import Authentication
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.xform import get_case_updates
-from corehq.apps.api.es import XFormES, ElasticAPIQuerySet, es_search
-from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
-from corehq.apps.api.models import ESXFormInstance, ESCase
+from couchforms.models import doc_types
+
+from corehq.apps.api.es import ElasticAPIQuerySet, XFormES, es_search
+from corehq.apps.api.fields import (
+    ToManyDictField,
+    ToManyDocumentsField,
+    ToManyListDictField,
+    UseIfRequested,
+)
+from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -19,14 +29,25 @@ from corehq.apps.api.resources import (
     v0_1,
     v0_3,
 )
-from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication, \
-    LoginAndDomainAuthentication
+from corehq.apps.api.resources.auth import (
+    DomainAdminAuthentication,
+    LoginAndDomainAuthentication,
+    RequirePermissionAuthentication,
+)
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_1 import _safe_bool
-from corehq.apps.api.serializers import CommCareCaseSerializer, XFormInstanceSerializer
-from corehq.apps.api.util import get_object_or_not_exist, get_obj
-from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_all_built_app_results
+from corehq.apps.api.serializers import (
+    CommCareCaseSerializer,
+    XFormInstanceSerializer,
+)
+from corehq.apps.api.util import get_obj, get_object_or_not_exist
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    get_case_properties,
+)
+from corehq.apps.app_manager.dbaccessors import (
+    get_all_built_app_results,
+    get_apps_in_domain,
+)
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, Permissions
@@ -35,9 +56,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.util.view_utils import absolute_reverse
-from couchforms.models import doc_types
 from no_exceptions.exceptions import Http400
-import six
 
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
@@ -133,7 +152,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         try:
             es_query = es_search(bundle.request, domain, ['include_archived'])
         except Http400 as e:
-            raise BadRequest(six.text_type(e))
+            raise BadRequest(str(e))
         if include_archived:
             es_query['filter']['and'].append({'or': [
                 {'term': {'doc_type': 'xforminstance'}},
@@ -160,7 +179,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'form'
-        ordering = ['received_on', 'server_modified_on']
+        ordering = ['received_on', 'server_modified_on', 'indexed_on']
         serializer = XFormInstanceSerializer(formats=['json'])
 
 
@@ -274,7 +293,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 1000
         serializer = CommCareCaseSerializer()
-        ordering = ['server_date_modified', 'date_modified']
+        ordering = ['server_date_modified', 'date_modified', 'indexed_on']
         object_class = ESCase
 
 
@@ -440,7 +459,7 @@ class ApplicationResource(BaseApplicationResource):
             return dehydrated
         except Exception as e:
             return {
-                'error': six.text_type(e)
+                'error': str(e)
             }
 
     def dehydrate_modules(self, bundle):

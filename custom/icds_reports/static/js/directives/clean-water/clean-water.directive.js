@@ -19,7 +19,7 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     vm.data = {
         legendTitle: 'Percentage',
     };
-    vm.filters = ['gender', 'age', 'ageServiceDeliveryDashboard'];
+    vm.filters = ['gender', 'age'];
     vm.rightLegend = {
         info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a source of clean drinking water. ',
     };

@@ -1,42 +1,36 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
-from datetime import datetime
+from datetime import datetime, timedelta
+
+from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.es import (
-    FormES,
-    UserES,
-    GroupES,
     CaseES,
-    filters,
-    aggregations,
-    LedgerES,
     CaseSearchES,
+    FormES,
+    GroupES,
+    UserES,
+    aggregations,
+    filters,
 )
 from corehq.apps.es.aggregations import (
-    TermsAggregation,
-    ExtendedStatsAggregation,
-    TopHitsAggregation,
-    MissingAggregation,
     MISSING_KEY,
-    AggregationTerm, NestedTermAggregationsHelper, SumAggregation)
-from corehq.apps.export.const import CASE_SCROLL_SIZE
-from corehq.apps.es.forms import (
-    submitted as submitted_filter,
-    completed as completed_filter,
-    xmlns as xmlns_filter,
+    ExtendedStatsAggregation,
+    MissingAggregation,
+    TermsAggregation,
+    TopHitsAggregation,
 )
-from corehq.apps.es.cases import (
-    closed_range as closed_range_filter,
-    case_type as case_type_filter,
+from corehq.apps.es.cases import case_type as case_type_filter
+from corehq.apps.es.cases import closed_range as closed_range_filter
+from corehq.apps.es.forms import completed as completed_filter
+from corehq.apps.es.forms import submitted as submitted_filter
+from corehq.apps.es.forms import xmlns as xmlns_filter
+from corehq.apps.export.const import (
+    CASE_SCROLL_SIZE,
+    MAX_MULTIMEDIA_EXPORT_SIZE,
 )
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.elastic import ES_DEFAULT_INSTANCE, ES_EXPORT_INSTANCE
 from corehq.util.quickcache import quickcache
-from dimagi.utils.parsing import string_to_datetime
-import six
-from six.moves import map
 
 PagedResult = namedtuple('PagedResult', 'total hits')
 
@@ -65,7 +59,7 @@ def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_a
     aggregations = query.run().aggregations
     buckets_dict = aggregations.user_id.buckets_dict
     result = {}
-    for user_id, bucket in six.iteritems(buckets_dict):
+    for user_id, bucket in buckets_dict.items():
         result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['form']['meta']['timeEnd'])
     return result
 
@@ -227,7 +221,7 @@ def get_last_form_submissions_by_user(domain, user_ids, app_id=None, xmlns=None)
         result[MISSING_KEY] = aggregations.missing_user_id.bucket.top_hits_last_form_submissions.hits
 
     buckets_dict = aggregations.user_id.buckets_dict
-    for user_id, bucket in six.iteritems(buckets_dict):
+    for user_id, bucket in buckets_dict.items():
         result[user_id] = bucket.top_hits_last_form_submissions.hits
 
     return result
@@ -258,7 +252,7 @@ def get_last_forms_by_app(user_id):
 
     buckets_dict = aggregations.app_id.buckets_dict
     result = []
-    for app_id, bucket in six.iteritems(buckets_dict):
+    for app_id, bucket in buckets_dict.items():
         result.append(bucket.top_hits_last_form_submissions.hits[0])
 
     return result
@@ -479,7 +473,7 @@ def get_form_duration_stats_by_user(
         result[MISSING_KEY] = aggregations.missing_user_id.bucket.duration_stats.result
 
     buckets_dict = aggregations.user_id.buckets_dict
-    for user_id, bucket in six.iteritems(buckets_dict):
+    for user_id, bucket in buckets_dict.items():
         result[user_id] = bucket.duration_stats.result
     return result
 
@@ -574,76 +568,43 @@ def get_username_in_last_form_user_id_submitted(domain, user_id):
         return user_submissions[0]['form']['meta'].get('username', None)
 
 
-def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None, pagination=None):
-    # todo: figure out why this causes circular import
-    from corehq.apps.reports.commtrack.util import StockLedgerValueWrapper
-    query = (LedgerES()
-             .domain(domain)
-             .section(section_id)
-             .case(case_ids))
-    if pagination:
-        query = query.size(pagination.count).start(pagination.start)
-    if entry_ids:
-        query = query.entry(entry_ids)
-
-    return [StockLedgerValueWrapper.wrap(row) for row in query.run().hits]
-
-
-def products_with_ledgers(domain, case_ids, section_id, entry_ids=None):
-    # returns entry ids/product ids that have associated ledgers
-    query = LedgerES().domain(domain).section(section_id).case(case_ids)
-    if entry_ids:
-        query = query.entry(entry_ids)
-    return set(query.values_list('entry_id', flat=True))
-
-
-def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
-    # todo: figure out why this causes circular import
-    query = LedgerES().domain(domain).section(section_id).case(case_ids)
-    if entry_ids:
-        query = query.entry(entry_ids)
-
-    terms = [
-        AggregationTerm('entry_id', 'entry_id'),
-    ]
-    return NestedTermAggregationsHelper(
-        base_query=query,
-        terms=terms,
-        inner_most_aggregation=SumAggregation('balance', 'balance'),
-    ).get_data()
-
-
-def get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, user_types=None, group=None):
+def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
+    enddate = datespan.enddate + timedelta(days=1)
     query = (FormES()
              .domain(domain)
              .app(app_id)
              .xmlns(xmlns)
-             .submitted(gte=startdate, lte=enddate)
+             .submitted(gte=datespan.startdate, lte=enddate)
              .remove_default_filter("has_user")
              .source(['_id', 'external_blobs']))
 
     if user_types:
         query = query.user_type(user_types)
 
-    if group:
-        results = (GroupES()
-            .domain(domain)
-            .group_ids([group])
-            .source(['users'])).run().hits
-        assert len(results) <= 1
-        user_ids = results[0]['users']
-        query = query.user_id(user_ids)
-
-    form_ids = set()
     for form in query.scroll():
         try:
-            for attachment in _get_attachment_dicts_from_form(form):
+            for attachment in form.get('external_blobs', {}).values():
                 if attachment['content_type'] != "text/xml":
-                    form_ids.add(form['_id'])
+                    yield form
                     continue
         except AttributeError:
             pass
-    return form_ids
+
+
+def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types):
+    return {
+        form['_id'] for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types)
+    }
+
+
+def media_export_is_too_big(domain, app_id, xmlns, datespan, user_types):
+    size = 0
+    for form in _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):
+        for attachment in form.get('external_blobs', {}).values():
+            size += attachment.get('content_length', 0)
+            if size > MAX_MULTIMEDIA_EXPORT_SIZE:
+                return True
+    return False
 
 
 def scroll_case_names(domain, case_ids):
@@ -653,12 +614,6 @@ def scroll_case_names(domain, case_ids):
             .source(['name', '_id'])
             .size(CASE_SCROLL_SIZE))
     return query.scroll()
-
-
-def _get_attachment_dicts_from_form(form):
-    if 'external_blobs' in form:
-        return list(form['external_blobs'].values())
-    return []
 
 
 @quickcache(['domain', 'use_case_search'], timeout=24 * 3600)

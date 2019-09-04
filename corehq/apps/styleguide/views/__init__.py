@@ -1,14 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
-from io import open
 import os
 
-from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import *
-from corehq.apps.styleguide.example_forms import BasicCrispyForm, CheckboxesForm
+
+from corehq.apps.styleguide.example_forms import (
+    BasicCrispyForm,
+    CheckboxesForm,
+)
 
 
 def styleguide_default(request):

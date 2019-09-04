@@ -1,8 +1,4 @@
-from __future__ import absolute_import  # this package has a module named 'xml'
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod, abstractproperty
-
-import six
 
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.phone.models import OTARestoreUser
@@ -12,7 +8,7 @@ from dimagi.utils.modules import to_function
 import itertools
 
 
-class FixtureProvider(six.with_metaclass(ABCMeta)):
+class FixtureProvider(metaclass=ABCMeta):
     @abstractproperty
     def id(self):
         """ID of the fixture"""
@@ -66,16 +62,3 @@ class FixtureGenerator(object):
 
 
 generator = FixtureGenerator()
-
-
-def _get_restore_state(restore_user):
-    from casexml.apps.phone.restore import RestoreState
-    from casexml.apps.phone.restore import RestoreParams
-    params = RestoreParams(version=V2)
-    return RestoreState(
-        restore_user.project,
-        restore_user,
-        params,
-        is_async=False,
-        overwrite_cache=False
-    )

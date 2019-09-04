@@ -1,15 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import io
 from collections import namedtuple
 
 from django.db import models, transaction
 
 from casexml.apps.phone.restore import stream_response
+
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.util.quickcache import quickcache
-import six
 
 
 class DemoUserRestore(models.Model):
@@ -72,7 +70,7 @@ class DemoUserRestore(models.Model):
 
     def _write_restore_blob(self, restore, db, domain):
 
-        if isinstance(restore, six.text_type):
+        if isinstance(restore, str):
             restore = io.BytesIO(restore.encode("utf-8"))
         elif isinstance(restore, bytes):
             restore = io.BytesIO(restore)

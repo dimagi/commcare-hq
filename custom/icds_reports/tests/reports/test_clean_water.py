@@ -1,6 +1,4 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.messages import awcs_reported_clean_drinking_water_help_text
@@ -10,7 +8,7 @@ from django.test import TestCase
 from custom.icds_reports.const import ChartColors, MapColors
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestCleanWater(TestCase):
 
     def test_map_data(self):

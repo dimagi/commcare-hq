@@ -1,12 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
-from django.core.management.base import BaseCommand
 from django.conf import settings
-from celery import Celery
-import requests
+from django.core.management.base import BaseCommand
 
-from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
+import requests
+from celery import Celery
+
+from corehq.apps.hqadmin.utils import parse_celery_pings, parse_celery_workers
 
 
 class Command(BaseCommand):

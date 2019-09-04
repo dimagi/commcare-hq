@@ -1,11 +1,9 @@
-from __future__ import absolute_import, unicode_literals
 
 import datetime
 import re
 
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from jsonobject.base import DefaultProperty
 
 from dimagi.ext.jsonobject import (
@@ -325,7 +323,7 @@ class CaseFormMeta(JsonObject):
     form_id = StringProperty()
     load_questions = ListProperty(ConditionalFormQuestionResponse)
     save_questions = ListProperty(ConditionalFormQuestionResponse)
-    errors = ListProperty(six.text_type)
+    errors = ListProperty(str)
 
 
 class CaseDetailMeta(JsonObject):
@@ -534,7 +532,7 @@ class AppCaseMetadata(JsonObject):
                 props = self.get_property_list(root_case_type, field)
         except CaseMetaException as e:
             props = [self.add_property_error(root_case_type, field, form_id=None, message=None)]
-            error = six.text_type(e)
+            error = str(e)
         for prop in props:
             prop.add_detail(detail_type, module_id, column.header, column.useXpathExpression, error)
 

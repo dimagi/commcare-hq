@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import io
 import json
 
@@ -20,12 +18,10 @@ from corehq.apps.userreports.reports.util import ReportExport
 from corehq.apps.userreports.reports.view import CustomConfigurableReport
 from corehq.apps.userreports.util import get_table_name
 from corehq.util.soft_assert import soft_assert
-from six.moves import range
 from custom.utils.utils import clean_IN_filter_value
 
 # Copied from custom/abt/reports/data_sources/supervisory.json
 MAX_LOCATION_COLUMNS = 350
-_soft_assert_location_columns = soft_assert('{}@{}'.format('npellegrino', 'dimagi.com'))
 
 
 def _invert_table(table):
@@ -62,12 +58,6 @@ class FormattedSupervisoryReport(CustomConfigurableReport):
         )
         data[0][1] = _invert_table(
             inverted_incident_and_total_columns + sorted_inverted_location_columns
-        )
-
-        _soft_assert_location_columns(
-            len(sorted_inverted_location_columns) < MAX_LOCATION_COLUMNS,
-            'Must increase number of allowed location columns in '
-            'custom/abt/reports/data_sources/supervisory.json'
         )
         data[0][1] = table
         return data

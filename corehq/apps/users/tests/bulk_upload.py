@@ -1,20 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from copy import deepcopy
+
 from django.test import SimpleTestCase, TestCase
+
+from mock import patch
+
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.bulkupload import (
+    UserUploadError,
     check_duplicate_usernames,
     check_existing_usernames,
-    UserUploadError,
-    create_or_update_users_and_groups
+    create_or_update_users_and_groups,
 )
-from corehq.apps.users.tasks import bulk_upload_async
-from corehq.apps.users.models import CommCareUser, UserRole, Permissions
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.domain.models import Domain
-from mock import patch
+from corehq.apps.users.models import CommCareUser, Permissions, UserRole
+from corehq.apps.users.tasks import bulk_upload_async
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):

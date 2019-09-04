@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from django.http import HttpRequest, HttpResponseBadRequest
 from dimagi.utils.dates import DateSpan

@@ -1,14 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import six
-
-
 class FakeTwilioMessage(object):
     status = 'sent'
 
     def __init__(self, price, num_segments=1):
         self.price = price
-        self.num_segments = six.text_type(num_segments)
+        self.num_segments = str(num_segments)
 
     def fetch(self):
         return self

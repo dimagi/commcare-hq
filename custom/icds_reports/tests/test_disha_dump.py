@@ -1,11 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 import json
 import mock
 
 from datetime import date
-from io import open
 
 from django.test import TestCase
 
@@ -30,7 +27,7 @@ class DishaFileBuildTest(TestCase):
         with TransientTempfile() as temp_path:
             dump = DishaDump(state, month)
             with open(temp_path, 'w+b') as f:
-                dump._write_data_in_chunks(f)
+                dump._write_data(f)
             with open(temp_path, 'r', encoding='utf-8') as f:
                 expected_json = {
                     'month': str(month),

@@ -1,30 +1,43 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from functools import cmp_to_key
+
+from dimagi.utils.logging import notify_exception
+
+from corehq import toggles
+from corehq.apps.app_manager.models import Form
+from corehq.apps.formplayer_api.smsforms.api import (
+    TouchformsError,
+    current_question,
+)
+from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
     send_sms_to_verified_number,
 )
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from dimagi.utils.logging import notify_exception
-from corehq.apps.smsforms.app import get_responses, start_session
-from corehq.apps.sms.models import WORKFLOW_KEYWORD, MessagingEvent, Keyword, KeywordAction
-from corehq.apps.sms.messages import *
 from corehq.apps.sms.handlers.form_session import validate_answer
-from corehq.apps.sms.util import touchforms_error_is_config_error, get_formplayer_exception
+from corehq.apps.sms.messages import *
+from corehq.apps.sms.models import (
+    WORKFLOW_KEYWORD,
+    Keyword,
+    KeywordAction,
+    MessagingEvent,
+)
+from corehq.apps.sms.util import (
+    get_formplayer_exception,
+    touchforms_error_is_config_error,
+)
+from corehq.apps.smsforms.app import get_responses, start_session
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.groups.models import Group
-from corehq.apps.formplayer_api.smsforms.api import current_question, TouchformsError
-from corehq.apps.app_manager.models import Form
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.models import SMSContent, SMSSurveyContent
-from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
-from corehq import toggles
-from six.moves import filter
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    ScheduleInstance,
+)
 
 
 class StructuredSMSException(Exception):
@@ -594,7 +607,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
         subevent.save()
 
     # Process structured sms actions first
-    actions = sorted(survey_keyword.keywordaction_set.all(), cmp=cmp_fcn)
+    actions = sorted(survey_keyword.keywordaction_set.all(), key=cmp_to_key(cmp_fcn))
     for survey_keyword_action in actions:
         if survey_keyword_action.recipient == KeywordAction.RECIPIENT_SENDER:
             contact = sender

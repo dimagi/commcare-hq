@@ -1,6 +1,4 @@
-from __future__ import absolute_import
 
-from __future__ import unicode_literals
 import functools
 import itertools
 import logging
@@ -17,7 +15,6 @@ import csiphash
 import re
 
 import operator
-import six
 from ddtrace import tracer
 from django.conf import settings
 from django.db import connections, InternalError, transaction
@@ -36,7 +33,9 @@ from corehq.form_processor.exceptions import (
     AttachmentNotFound,
     CaseSaveError,
     LedgerSaveError,
-    LedgerValueNotFound)
+    LedgerValueNotFound,
+    NotAllowed,
+)
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor,
     AbstractFormAccessor,
@@ -58,12 +57,14 @@ from corehq.form_processor.utils.sql import (
     fetchone_as_namedtuple,
     fetchall_as_namedtuple
 )
-from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
+from corehq.sql_db.config import partition_config
 from corehq.sql_db.routers import db_for_read_write, get_cursor
-from corehq.sql_db.util import split_list_by_db_partition
+from corehq.sql_db.util import (
+    split_list_by_db_partition,
+    get_db_aliases_for_partitioned_query,
+)
 from corehq.util.datadog.utils import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
-from corehq.util.soft_assert import soft_assert
 from dimagi.utils.chunked import chunked
 
 doc_type_to_state = {
@@ -153,7 +154,7 @@ class ShardAccessor(object):
 
     @staticmethod
     def hash_doc_id_python(doc_id):
-        if isinstance(doc_id, six.text_type):
+        if isinstance(doc_id, str):
             doc_id = doc_id.encode('utf-8')
         elif isinstance(doc_id, UUID):
             # Hash the 16-byte string
@@ -205,7 +206,7 @@ class ShardAccessor(object):
 DocIds = namedtuple('DocIds', 'doc_id primary_key')
 
 
-class ReindexAccessor(six.with_metaclass(ABCMeta)):
+class ReindexAccessor(metaclass=ABCMeta):
     primary_key_field_name = 'id'
 
     def __init__(self, limit_db_aliases=None):
@@ -220,7 +221,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
     @property
     def sql_db_aliases(self):
-        all_db_aliases = get_sql_db_aliases_in_use() if self.is_sharded() \
+        all_db_aliases = get_db_aliases_for_partitioned_query() if self.is_sharded() \
             else [db_for_read_write(self.model_class)]
         if self.limit_db_aliases:
             db_aliases = list(set(all_db_aliases) & set(self.limit_db_aliases))
@@ -408,19 +409,20 @@ class FormAccessorSQL(AbstractFormAccessor):
             XFormInstanceSQL,
             Q(last_modified__gt=start_datetime, last_modified__lte=end_datetime),
             annotate=annotate,
+            load_source='forms_by_last_modified'
         )
 
     @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):
-        from corehq.sql_db.util import run_query_across_partitioned_databases
+        from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
         q_expr = Q(domain=domain) & Q(state=XFormInstanceSQL.NORMAL)
         if xmlns:
             q_expr &= Q(xmlns=xmlns)
 
-        for form_id in run_query_across_partitioned_databases(
-                XFormInstanceSQL, q_expr, values=['form_id']):
-            yield form_id
+        for form_id in paginate_query_across_partitioned_databases(
+                XFormInstanceSQL, q_expr, values=['form_id'], load_source='formids_by_xmlns'):
+            yield form_id[0]
 
     @staticmethod
     def get_with_attachments(form_id):
@@ -497,6 +499,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def hard_delete_forms(domain, form_ids, delete_attachments=True):
         assert isinstance(form_ids, list)
+        NotAllowed.check(domain)
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
@@ -522,24 +525,11 @@ class FormAccessorSQL(AbstractFormAccessor):
         return deleted_count
 
     @staticmethod
-    def archive_form(form, user_id):
-        from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, user_id, archive=True)
-        form.state = XFormInstanceSQL.ARCHIVED
-        publish_form_saved(form)
-
-    @staticmethod
-    def unarchive_form(form, user_id):
-        from corehq.form_processor.change_publishers import publish_form_saved
-        FormAccessorSQL._archive_unarchive_form(form, user_id, archive=False)
-        form.state = XFormInstanceSQL.NORMAL
-        publish_form_saved(form)
-
-    @staticmethod
     def soft_undelete_forms(domain, form_ids):
         from corehq.form_processor.change_publishers import publish_form_saved
 
         assert isinstance(form_ids, list)
+        NotAllowed.check(domain)
         problem = 'Restored on {}'.format(datetime.utcnow())
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
@@ -572,6 +562,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         from corehq.form_processor.change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
+        NotAllowed.check(domain)
         deletion_date = deletion_date or datetime.utcnow()
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
@@ -588,7 +579,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     @transaction.atomic
-    def _archive_unarchive_form(form, user_id, archive):
+    def set_archived_state(form, archive, user_id):
         from casexml.apps.case.xform import get_case_ids_from_form
         form_id = form.form_id
         case_ids = list(get_case_ids_from_form(form))
@@ -596,6 +587,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)',
                            [case_ids, form_id, archive])
+        form.state = XFormInstanceSQL.ARCHIVED if archive else XFormInstanceSQL.NORMAL
 
     @staticmethod
     @transaction.atomic
@@ -895,6 +887,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
+        NotAllowed.check(domain)
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT hard_delete_cases(%s, %s) as deleted_count', [domain, case_ids])
             results = fetchall_as_namedtuple(cursor)
@@ -1095,7 +1088,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return []
 
         extension_case_ids = set()
-        for db_name in get_sql_db_aliases_in_use():
+        for db_name in get_db_aliases_for_partitioned_query():
             query = CommCareCaseIndexSQL.objects.using(db_name).filter(
                 domain=domain,
                 relationship_id=CommCareCaseIndexSQL.EXTENSION,
@@ -1141,6 +1134,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         from corehq.form_processor.change_publishers import publish_case_saved
 
         assert isinstance(case_ids, list)
+        NotAllowed.check(domain)
 
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
@@ -1310,20 +1304,25 @@ class LedgerReindexAccessor(ReindexAccessor):
 class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
-    def get_ledger_values_for_cases(case_ids, section_id=None, entry_id=None, date_start=None, date_end=None):
+    def get_ledger_values_for_cases(case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
         assert isinstance(case_ids, list)
         if not case_ids:
             return []
 
+        if section_ids:
+            assert isinstance(section_ids, list)
+        if entry_ids:
+            assert isinstance(entry_ids, list)
+
         return list(LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_cases(%s, %s, %s, %s, %s)',
-            [case_ids, section_id, entry_id, date_start, date_end]
+            'SELECT * FROM get_ledger_values_for_cases_2(%s, %s, %s, %s, %s)',
+            [case_ids, section_ids, entry_ids, date_start, date_end]
         ))
 
     @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_cases(%s)',
+            'SELECT * FROM get_ledger_values_for_cases_2(%s)',
             [[case_id]]
         ))
 
@@ -1402,7 +1401,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):
         ledger_values = LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_cases(%s)',
+            'SELECT * FROM get_ledger_values_for_cases_2(%s)',
             [case_ids]
         )
         ret = {case_id: {} for case_id in case_ids}

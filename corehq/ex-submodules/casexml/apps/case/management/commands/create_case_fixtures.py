@@ -1,14 +1,8 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, print_function, unicode_literals
-
 import random
 import uuid
 
 import faker
-import six
 from django.core.management.base import BaseCommand
-from six.moves import range
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -149,7 +143,7 @@ class Command(BaseCommand):
             'car': ['name', 'licence_plate', 'color'],
             'maintenance_record': ['name', 'date_performed', 'notes'],
         }
-        for case_type, props in six.iteritems(dictionary):
+        for case_type, props in dictionary.items():
             add_properties_to_data_dictionary(domain, case_type, props)
 
     def _generate_sample_app(self, domain):

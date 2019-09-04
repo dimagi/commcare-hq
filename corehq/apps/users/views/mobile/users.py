@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import csv342 as csv
 import io
 import json
+import re
 from collections import defaultdict
 from datetime import datetime
 
@@ -11,29 +9,28 @@ from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
+from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import View, TemplateView
+from django.views.generic import TemplateView, View
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-import re
-
-from memoized import memoized
-
-from corehq.apps.hqwebapp.crispy import make_form_readonly
-from dimagi.utils.web import json_response
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
+from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from memoized import memoized
+
+from dimagi.utils.web import json_response
+from soil import DownloadBase
 from soil.exceptions import TaskFailedError
-from soil.util import get_download_context, expose_cached_download
+from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -50,55 +47,70 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.crispy import make_form_readonly
+from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
-from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
+from corehq.apps.locations.permissions import (
+    location_safe,
+    user_can_access_location_id,
+)
+from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.hqwebapp.decorators import (
-    use_angular_js,
-    use_multiselect,
-)
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.bulkupload import (
+    UserUploadError,
     check_duplicate_usernames,
     check_existing_usernames,
     check_headers,
-    UserUploadError,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
 )
+from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.forms import (
-    CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
-    MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
-    SelfRegistrationForm, SetUserPasswordForm,
-    CommCareUserFilterForm
+    CommCareAccountForm,
+    CommCareUserFilterForm,
+    CommCareUserFormSet,
+    CommtrackUserForm,
+    ConfirmExtraUserChargesForm,
+    MultipleSelectionForm,
+    NewMobileWorkerForm,
+    SelfRegistrationForm,
+    SetUserPasswordForm,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task, \
-    bulk_download_users_async
-from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
-from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
-from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
-from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
+from corehq.apps.users.tasks import (
+    bulk_download_users_async,
+    bulk_upload_async,
+    reset_demo_user_restore_task,
+    turn_on_demo_mode_task,
+)
+from corehq.apps.users.util import (
+    can_add_extra_mobile_workers,
+    format_username,
+)
+from corehq.apps.users.views import (
+    BaseEditUserView,
+    BaseUserSettingsView,
+    get_domain_languages,
+)
+from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
-    enforce_string_type,
-    get_workbook,
     StringTypeRequiredError,
     WorkbookJSONError,
     WorksheetNotFound,
+    enforce_string_type,
+    get_workbook,
 )
-from soil import DownloadBase
+
 from .custom_data_fields import UserFieldsView
-import six
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -170,6 +182,11 @@ class EditCommCareUserView(BaseEditUserView):
         return self.editable_user_id == self.couch_user._id
 
     @property
+    def is_delete_allowed(self):
+        from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
+        return not couch_sql_migration_in_progress(self.domain)
+
+    @property
     @memoized
     def reset_password_form(self):
         return SetUserPasswordForm(self.request.project, self.editable_user_id, user="")
@@ -179,7 +196,7 @@ class EditCommCareUserView(BaseEditUserView):
     def groups(self):
         if not self.editable_user:
             return []
-        return Group.by_user(self.editable_user)
+        return Group.by_user_id(self.editable_user_id)
 
     @property
     @memoized
@@ -231,6 +248,7 @@ class EditCommCareUserView(BaseEditUserView):
             'group_form': self.group_form,
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
+            'is_delete_allowed': self.is_delete_allowed,
             'data_fields_form': self.form_user_update.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
             'can_create_groups': (
@@ -568,12 +586,11 @@ def update_user_data(request, domain, couch_user_id):
 
 
 @location_safe
-class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
+class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
-    @use_angular_js
     @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
@@ -610,7 +627,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
             required_only=True,
-            angular_model="mobileWorker.customFields",
+            ko_model="custom_fields",
         )
 
     @property
@@ -622,17 +639,16 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
-            'custom_fields': [f.slug for f in self.custom_data.fields],
-            'custom_field_names': [f.label for f in self.custom_data.fields],
+            'custom_field_slugs': [f.slug for f in self.custom_data.fields],
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
+            'draconian_security': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'pagination_limit_cookie_name': (
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
-            'location_url': reverse('child_locations_for_select2', args=[self.domain]),
             'bulk_download_url': bulk_download_url
         }
 
@@ -684,20 +700,13 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             return {
                 'error': _("You do not have permission to create mobile workers.")
             }
-        fields = [
-            'username',
-            'password',
-            'first_name',
-            'last_name',
-            'location_id',
-        ]
 
         try:
             self._ensure_proper_request(in_data)
-            form_data = self._construct_form_data(in_data, fields)
+            form_data = self._construct_form_data(in_data)
         except InvalidMobileWorkerRequest as e:
             return {
-                'error': six.text_type(e)
+                'error': str(e)
             }
 
         self.request.POST = form_data
@@ -710,15 +719,12 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
 
         return {
             'success': True,
-            'editUrl': reverse(
-                EditCommCareUserView.urlname,
-                args=[self.domain, couch_user.userID]
-            )
+            'user_id': couch_user.userID,
         }
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
-        password = self.new_mobile_worker_form.cleaned_data['password']
+        password = self.new_mobile_worker_form.cleaned_data['new_password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
@@ -738,21 +744,24 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
         if not self.can_add_extra_users:
             raise InvalidMobileWorkerRequest(_("No Permission."))
 
-        if 'mobileWorker' not in in_data:
+        if 'user' not in in_data:
             raise InvalidMobileWorkerRequest(_("Please provide mobile worker data."))
 
         return None
 
-    def _construct_form_data(self, in_data, fields):
-
+    def _construct_form_data(self, in_data):
         try:
-            user_data = in_data['mobileWorker']
-            form_data = {}
-            for k, v in user_data.get('customFields', {}).items():
+            user_data = in_data['user']
+            form_data = {
+                'username': user_data.get('username'),
+                'new_password': user_data.get('password'),
+                'first_name': user_data.get('first_name'),
+                'last_name': user_data.get('last_name'),
+                'location_id': user_data.get('location_id'),
+                'domain': self.domain,
+            }
+            for k, v in user_data.get('custom_fields', {}).items():
                 form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
-            for f in fields:
-                form_data[f] = user_data.get(f)
-            form_data['domain'] = self.domain
             return form_data
         except Exception as e:
             raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
@@ -760,12 +769,14 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
 
 @require_can_edit_commcare_users
 @require_POST
+@location_safe
 def activate_commcare_user(request, domain, user_id):
     return _modify_user_status(request, domain, user_id, True)
 
 
 @require_can_edit_commcare_users
 @require_POST
+@location_safe
 def deactivate_commcare_user(request, domain, user_id):
     return _modify_user_status(request, domain, user_id, False)
 
@@ -884,7 +895,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
     def post(self, request, *args, **kwargs):
         if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
             username = self.new_commcare_user_form.cleaned_data['username']
-            password = self.new_commcare_user_form.cleaned_data['password']
+            password = self.new_commcare_user_form.cleaned_data['password_1']
             phone_number = self.new_commcare_user_form.cleaned_data['phone_number']
 
             user = CommCareUser.create(
@@ -948,7 +959,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
         except WorkbookJSONError as e:
-            messages.error(request, six.text_type(e))
+            messages.error(request, str(e))
             return self.get(request, *args, **kwargs)
 
         try:
@@ -967,7 +978,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             check_headers(self.user_specs)
         except UserUploadError as e:
-            messages.error(request, _(six.text_type(e)))
+            messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         # convert to list here because iterator destroys the row once it has
@@ -988,13 +999,13 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             check_existing_usernames(self.user_specs, self.domain)
         except UserUploadError as e:
-            messages.error(request, _(six.text_type(e)))
+            messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         try:
             check_duplicate_usernames(self.user_specs)
         except UserUploadError as e:
-            messages.error(request, _(six.text_type(e)))
+            messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)

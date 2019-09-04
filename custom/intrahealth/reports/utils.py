@@ -1,6 +1,4 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import calendar
 from datetime import datetime
 from corehq.apps.products.models import SQLProduct
@@ -13,9 +11,6 @@ from custom.intrahealth.sqldata import NombreData, TauxConsommationData
 from django.utils.translation import ugettext as _
 from memoized import memoized
 from dimagi.utils.parsing import json_format_date
-from six.moves import zip
-from six.moves import range
-import six
 
 
 def get_localized_months():
@@ -122,7 +117,7 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
         if isinstance(self.data_source, (NombreData, TauxConsommationData)):
             result = {}
             ppss = set()
-            for k, v in six.iteritems(data):
+            for k, v in data.items():
                 ppss.add(k[-2])
                 if 'region_id' in self.data_source.config:
                     helper_tuple = (k[2], k[1], k[0])

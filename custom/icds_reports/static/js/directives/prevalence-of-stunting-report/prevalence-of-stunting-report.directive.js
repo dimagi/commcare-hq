@@ -31,7 +31,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.filters = ['ageServiceDeliveryDashboard'];
+    vm.filters = [];
 
     vm.chosenFilters = function() {
         var defaultAge = '0 - 5 years';

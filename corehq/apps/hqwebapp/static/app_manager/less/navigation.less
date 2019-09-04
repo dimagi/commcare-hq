@@ -234,11 +234,17 @@ nav.appmanager-content {
     }
   }
   // Form in child module
-  > .appnav-menu-nested > li > .appnav-item a.appnav-title {
-    margin-left: @nesting-indent;
-    margin-right: -@nesting-indent;
-    > .appnav-drag-icon {
-        right: @nesting-indent + @drag-icon-right;
+  > .appnav-menu-nested > li > .appnav-item {
+    > a.appnav-title {
+      margin-left: @nesting-indent;
+      margin-right: -@nesting-indent;
+      width: @appnav-width - @appnav-trash-width - @appnav-secondary-width - @nesting-indent;
+      > .appnav-drag-icon {
+        right: @drag-icon-right;
+      }
+    }
+    > .appnav-settings {
+      margin-left: @nesting-indent;
     }
   }
 }

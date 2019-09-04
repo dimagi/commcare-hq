@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
+from contextlib import contextmanager
 import threading
 
 from django.conf import settings
@@ -109,7 +108,7 @@ def db_for_read_write(model, write=True):
     elif app_label == SYNCLOGS_APP:
         return settings.SYNCLOGS_SQL_DB_ALIAS
     elif app_label == ICDS_REPORTS_APP:
-        if forced_citus():
+        if forced_citus() or getattr(settings, 'ICDS_USE_CITUS', False):
             engine_id = ICDS_UCR_CITUS_ENGINE_ID
         else:
             engine_id = ICDS_UCR_ENGINE_ID
@@ -143,9 +142,17 @@ def get_cursor(model):
     return connections[db].cursor()
 
 
-def force_citus_engine():
-    _thread_local.force_citus = True
+@contextmanager
+def force_citus_engine(force=False):
+    if force:
+        _thread_local.force_citus = True
+    yield
+    _thread_local.force_citus = False
 
 
 def forced_citus():
     return getattr(_thread_local, 'force_citus', False)
+
+
+def use_citus_for_request():
+    _thread_local.force_citus = True

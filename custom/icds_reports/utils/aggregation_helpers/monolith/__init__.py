@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 
 from .agg_awc import AggAwcHelper
 from .agg_awc_daily import AggAwcDailyAggregationHelper
@@ -31,68 +27,34 @@ from .thr_forms_child_health import THRFormsChildHealthAggregationHelper
 from .thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
 from .thr_form_v2 import  THRFormV2AggHelper
 
-if six.PY3:
-    __all__ = (
-        'AggAwcHelper',
-        'AggAwcDailyAggregationHelper',
-        'AggCcsRecordAggregationHelper',
-        'AggChildHealthAggregationHelper',
-        'AggLsHelper',
-        'AwcInfrastructureAggregationHelper',
-        'AwcMbtHelper',
-        'AwwIncentiveAggregationHelper',
-        'BirthPreparednessFormsAggregationHelper',
-        'CcsMbtHelper',
-        'CcsRecordMonthlyAggregationHelper',
-        'ChildHealthMbtHelper',
-        'ChildHealthMonthlyAggregationHelper',
-        'ComplementaryFormsAggregationHelper',
-        'ComplementaryFormsCcsRecordAggregationHelper',
-        'DailyAttendanceAggregationHelper',
-        'DailyFeedingFormsChildHealthAggregationHelper',
-        'DeliveryFormsAggregationHelper',
-        'GrowthMonitoringFormsAggregationHelper',
-        'InactiveAwwsAggregationHelper',
-        'LocationAggregationHelper',
-        'LSAwcMgtFormAggHelper',
-        'LSBeneficiaryFormAggHelper',
-        'LSVhndFormAggHelper',
-        'PostnatalCareFormsCcsRecordAggregationHelper',
-        'PostnatalCareFormsChildHealthAggregationHelper',
-        'THRFormsCcsRecordAggregationHelper',
-        'THRFormsChildHealthAggregationHelper',
-        'THRFormV2AggHelper',
-    )
-
-else:
-    __all__ = (
-        b'AggAwcHelper',
-        b'AggAwcDailyAggregationHelper',
-        b'AggCcsRecordAggregationHelper',
-        b'AggChildHealthAggregationHelper',
-        b'AggLsHelper',
-        b'AwcInfrastructureAggregationHelper',
-        b'AwcMbtHelper',
-        b'AwwIncentiveAggregationHelper',
-        b'BirthPreparednessFormsAggregationHelper',
-        b'CcsMbtHelper',
-        b'CcsRecordMonthlyAggregationHelper',
-        b'ChildHealthMbtHelper',
-        b'ChildHealthMonthlyAggregationHelper',
-        b'ComplementaryFormsAggregationHelper',
-        b'ComplementaryFormsCcsRecordAggregationHelper',
-        b'DailyAttendanceAggregationHelper',
-        b'DailyFeedingFormsChildHealthAggregationHelper',
-        b'DeliveryFormsAggregationHelper',
-        b'GrowthMonitoringFormsAggregationHelper',
-        b'InactiveAwwsAggregationHelper',
-        b'LocationAggregationHelper',
-        b'LSAwcMgtFormAggHelper',
-        b'LSBeneficiaryFormAggHelper',
-        b'LSVhndFormAggHelper',
-        b'PostnatalCareFormsCcsRecordAggregationHelper',
-        b'PostnatalCareFormsChildHealthAggregationHelper',
-        b'THRFormsCcsRecordAggregationHelper',
-        b'THRFormsChildHealthAggregationHelper',
-        b'THRFormV2AggHelper'
-    )
+__all__ = (
+    'AggAwcHelper',
+    'AggAwcDailyAggregationHelper',
+    'AggCcsRecordAggregationHelper',
+    'AggChildHealthAggregationHelper',
+    'AggLsHelper',
+    'AwcInfrastructureAggregationHelper',
+    'AwcMbtHelper',
+    'AwwIncentiveAggregationHelper',
+    'BirthPreparednessFormsAggregationHelper',
+    'CcsMbtHelper',
+    'CcsRecordMonthlyAggregationHelper',
+    'ChildHealthMbtHelper',
+    'ChildHealthMonthlyAggregationHelper',
+    'ComplementaryFormsAggregationHelper',
+    'ComplementaryFormsCcsRecordAggregationHelper',
+    'DailyAttendanceAggregationHelper',
+    'DailyFeedingFormsChildHealthAggregationHelper',
+    'DeliveryFormsAggregationHelper',
+    'GrowthMonitoringFormsAggregationHelper',
+    'InactiveAwwsAggregationHelper',
+    'LocationAggregationHelper',
+    'LSAwcMgtFormAggHelper',
+    'LSBeneficiaryFormAggHelper',
+    'LSVhndFormAggHelper',
+    'PostnatalCareFormsCcsRecordAggregationHelper',
+    'PostnatalCareFormsChildHealthAggregationHelper',
+    'THRFormsCcsRecordAggregationHelper',
+    'THRFormsChildHealthAggregationHelper',
+    'THRFormV2AggHelper',
+)

@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from bs4 import BeautifulSoup
+from django.test import Client, TestCase
 from django.urls import reverse
-from django.test import TestCase, Client
+
+from bs4 import BeautifulSoup
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser

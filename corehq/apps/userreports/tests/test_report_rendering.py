@@ -1,11 +1,8 @@
-# coding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from django.test import SimpleTestCase
 
-from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.reports.util import ReportExport
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 
 
 class VeryFakeReportExport(ReportExport):

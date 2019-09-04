@@ -1,6 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import csv342 as csv
+import csv
 
 from django.core.management import BaseCommand
 
@@ -10,7 +8,6 @@ from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.chunked import chunked
 
 from corehq.util.log import with_progress_bar
-from io import open
 
 CHILD_PROPERTIES = ['case_id', 'owner_id', 'opened_on', 'modified_on',
                     'name', 'aadhar_number', 'dob', 'died']

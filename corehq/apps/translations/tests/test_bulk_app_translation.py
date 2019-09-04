@@ -1,19 +1,16 @@
-# coding=utf-8
-from __future__ import absolute_import, unicode_literals
-
 import os
 import tempfile
+from collections import OrderedDict, defaultdict
 from io import BytesIO
 
 from django.test import SimpleTestCase
 
 from mock import patch
-from six.moves import zip
 
 from couchexport.export import export_raw
 from couchexport.models import Format
 
-from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.models import Application, Module, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.translations.app_translations.download import (
@@ -44,11 +41,9 @@ from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
     SINGLE_SHEET_NAME,
 )
+from corehq.apps.translations.generators import EligibleForTransifexChecker
 from corehq.util.test_utils import flag_enabled
-from corehq.util.workbook_json.excel import (
-    WorkbookJSONReader,
-    get_workbook,
-)
+from corehq.util.workbook_json.excel import WorkbookJSONReader, get_workbook
 
 EXCEL_HEADERS = (
     (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'image_en',
@@ -1263,6 +1258,44 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             self.assertEqual(actual_sheet, expected_sheet)
         self.assertEqual(actual_workbook, self.expected_workbook)
 
+    def test_bulk_app_sheet_blacklisted(self):
+
+        def blacklist_without_display_text(self):
+            menu1_id = self.app.modules[0].unique_id
+            return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}}
+
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_without_display_text):
+            menu1_sheet = get_bulk_app_sheets_by_name(self.app, eligible_for_transifex_only=True)['menu1']
+        self.assertNotIn(('name', 'detail', 'Name'), menu1_sheet)
+        self.assertIn(('name', 'list', 'Name'), menu1_sheet)
+
+    def test_bulk_app_sheet_blacklisted_text(self):
+
+        def blacklist_with_display_text(self):
+            menu1_id = self.app.modules[0].unique_id
+            return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}}
+
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_with_display_text):
+            menu1_sheet = get_bulk_app_sheets_by_name(self.app, eligible_for_transifex_only=True)['menu1']
+        self.assertNotIn(('name', 'detail', 'Name'), menu1_sheet)
+        self.assertIn(('name', 'list', 'Name'), menu1_sheet)
+
+    def test_bulk_app_sheet_skipped_label(self):
+
+        def get_labels_to_skip(self):
+            menu1_form1_id = self.app.modules[0].forms[0].unique_id
+            return defaultdict(set, {menu1_form1_id: {'What_does_this_look_like-label'}})
+
+        with patch.object(EligibleForTransifexChecker, 'get_labels_to_skip', get_labels_to_skip), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', lambda self: {}):
+            menu1_form1_sheet = get_bulk_app_sheets_by_name(self.app,
+                                                            eligible_for_transifex_only=True)['menu1_form1']
+        self.assertNotIn(['What_does_this_look_like-label', 'What does this look like?',
+                          'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''], menu1_form1_sheet)
+        self.assertIn(['no_media-label', 'No media', '', '', ''], menu1_form1_sheet)
+
     def test_bulk_app_single_sheet_rows(self):
         sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0])[SINGLE_SHEET_NAME]
         self.assertListEqual(sheet, [
@@ -1328,6 +1361,46 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu6_form1', '', '', '', 'Advanced Form', None, None, '', '2b9c856ba2ea4ec1ab8743af299c1627'],
             ['menu6_form1', '', '', 'this_form_does_nothing-label', 'This form does nothing.', '', '', '', ''],
             ['menu6_form2', '', '', '', 'Shadow Form', '', '', '', 'c42e1a50123c43f2bd1e364f5fa61379']])
+
+    def test_bulk_app_single_sheet_blacklisted(self):
+
+        def blacklist_without_display_text(self):
+            menu1_id = self.app.modules[0].unique_id
+            return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}}
+
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_without_display_text):
+            sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
+                                                      eligible_for_transifex_only=True)[SINGLE_SHEET_NAME]
+        self.assertNotIn(['menu1', 'name', 'detail', '', 'Name', '', '', '', ''], sheet)
+        self.assertIn(['menu1', 'name', 'list', '', 'Name', '', '', '', ''], sheet)
+
+    def test_bulk_app_single_sheet_blacklisted_text(self):
+
+        def blacklist_with_display_text(self):
+            menu1_id = self.app.modules[0].unique_id
+            return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}}
+
+        with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', blacklist_with_display_text):
+            sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
+                                                      eligible_for_transifex_only=True)[SINGLE_SHEET_NAME]
+        self.assertNotIn(['menu1', 'name', 'detail', '', 'Name', '', '', '', ''], sheet)
+        self.assertIn(['menu1', 'name', 'list', '', 'Name', '', '', '', ''], sheet)
+
+    def test_bulk_app_single_sheet_skipped_label(self):
+
+        def get_labels_to_skip(self):
+            menu1_form1_id = self.app.modules[0].forms[0].unique_id
+            return defaultdict(set, {menu1_form1_id: {'What_does_this_look_like-label'}})
+
+        with patch.object(EligibleForTransifexChecker, 'get_labels_to_skip', get_labels_to_skip), \
+                patch.object(EligibleForTransifexChecker, '_get_blacklist', lambda self: {}):
+            sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0],
+                                                      eligible_for_transifex_only=True)[SINGLE_SHEET_NAME]
+        self.assertNotIn(['menu1_form1', '', '', 'What_does_this_look_like-label', 'What does this look like?',
+             'jr://file/commcare/image/data/What_does_this_look_like.png', '', '', ''], sheet)
+        self.assertIn(['menu1_form1', '', '', 'no_media-label', 'No media', '', '', '', ''], sheet)
 
 
 class RenameLangTest(SimpleTestCase):
@@ -1432,3 +1505,93 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
             self.maxDiff = None
             self.assertEqual(save_xform_patch.call_args[0][2].decode('utf-8'), expected_xform)
+
+
+class ReportModuleTest(BulkAppTranslationTestBase):
+    headers = [
+        ['Menus_and_forms', ['Type', 'menu_or_form', 'default_en', 'image_en', 'audio_en', 'unique_id']],
+        ['menu1', ['case_property', 'list_or_detail', 'default_en']],
+    ]
+
+    def setUp(self):
+        factory = AppFactory(build_version='2.43.0')
+        module = factory.new_report_module('reports')
+        module.report_configs = [
+            ReportAppConfig(
+                report_id='123abc',
+                header={"en": "My Report"},
+                localized_description={"en": "This report has data"},
+                use_xpath_description=False,
+                uuid='789ghi',
+            ),
+            ReportAppConfig(
+                report_id='123abc',
+                header={"en": "My Other Report"},
+                localized_description={"en": "do not use this"},
+                xpath_description="1 + 2",
+                use_xpath_description=True,
+                uuid='345cde',
+            ),
+        ]
+        self.app = factory.app
+
+    def test_download(self):
+        actual_headers = get_bulk_app_sheet_headers(self.app)
+        actual_sheets = get_bulk_app_sheets_by_name(self.app)
+
+        self.assertEqual(actual_headers, self.headers)
+        self.assertEqual(actual_sheets, OrderedDict({
+            'Menus_and_forms': [['Menu', 'menu1', 'reports module', '', '', 'reports_module']],
+            'menu1': [
+                ('Report 0 Display Text', 'list', 'My Report'),
+                ('Report 0 Description', 'list', 'This report has data'),
+                ('Report 1 Display Text', 'list', 'My Other Report'),
+            ]
+        }))
+
+    def test_upload(self):
+        data = (
+            ("Menus_and_forms", ('Menu', 'menu1', 'reports module', '', '', 'reports_module')),
+            ("menu1", (('Report 0 Display Text', 'list', 'My Report has changed'),
+                       ('Report 0 Description', 'list', 'This report still has data'),
+                       ('Report 1 Display Text', 'list', 'My Other Report has also changed'),
+                       ('Report 1 Description', 'list', 'You cannot update this'))),
+        )
+        messages = [
+            "Found row for Report 1 Description, but this report uses an xpath description, "
+            "which is not localizable. Description not updated.",
+            "App Translations Updated!",
+        ]
+        self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
+        module = self.app.get_module(0)
+        self.assertEqual(module.report_configs[0].header, {"en": "My Report has changed"})
+        self.assertEqual(module.report_configs[0].localized_description, {"en": "This report still has data"})
+        self.assertEqual(module.report_configs[1].header, {"en": "My Other Report has also changed"})
+
+    def test_upload_unexpected_reports(self):
+        data = (
+            ("Menus_and_forms", ('Menu', 'menu1', 'reports module', '', '', 'reports_module')),
+            ("menu1", (('Report 0 Display Text', 'list', 'My Report has changed'),
+                       ('Report 3 Display Text', 'list', 'This is not a real report'))),
+        )
+        messages = [
+            "Expected 2 reports for menu 1 but found row for Report 3. No changes were made for menu 1.",
+            "App Translations Updated!",
+        ]
+        self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
+        module = self.app.get_module(0)
+        self.assertEqual(module.report_configs[0].header, {"en": "My Report"})
+
+    def test_upload_unexpected_rows(self):
+        data = (
+            ("Menus_and_forms", ('Menu', 'menu1', 'reports module', '', '', 'reports_module')),
+            ("menu1", (('Report 0 Display Text', 'list', 'My Report has changed'),
+                       ('some other thing', 'list', 'this is not report-related'))),
+        )
+        messages = [
+            "Found unexpected row \"some other thing\" for menu 1. No changes were made for menu 1.",
+            "App Translations Updated!",
+        ]
+        self.upload_raw_excel_translations(self.app, self.headers, data, expected_messages=messages)
+        module = self.app.get_module(0)
+        self.assertEqual(module.report_configs[0].header, {"en": "My Report"})

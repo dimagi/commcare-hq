@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from custom.icds_reports.models.aggregate import (
     CcsRecordMonthly,
     AwcLocation,

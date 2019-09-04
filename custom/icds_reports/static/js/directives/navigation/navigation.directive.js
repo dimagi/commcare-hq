@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function NavigationController($window, $scope, $route, $routeParams, $location, stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures) {
+function NavigationController($window, $rootScope, $scope, $route, $routeParams, $location, stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -30,6 +30,7 @@ function NavigationController($window, $scope, $route, $routeParams, $location, 
         if (Object.keys(params).length > 0) {
             page_path += '?';
         }
+
         window.angular.forEach(params, function(v, k) {
             if (v === undefined || v === null) {
                 v = '';
@@ -40,7 +41,7 @@ function NavigationController($window, $scope, $route, $routeParams, $location, 
     };
 }
 
-NavigationController.$inject = ['$window', '$scope', '$route', '$routeParams', '$location', 'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
+NavigationController.$inject = ['$window', '$rootScope', '$scope', '$route', '$routeParams', '$location', 'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('navigation', function() {
     return {

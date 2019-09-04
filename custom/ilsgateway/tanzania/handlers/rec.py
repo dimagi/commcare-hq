@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from custom.ilsgateway.tanzania.handlers.zipline import ZiplineGenericHandler
 from custom.ilsgateway.tanzania.reminders import REC_CONFIRMATION, REC_ERROR, REC_HELP
 from custom.zipline.api import process_receipt_confirmation

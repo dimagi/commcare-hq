@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 from copy import deepcopy
@@ -7,11 +5,13 @@ from copy import deepcopy
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management.base import BaseCommand
 
-from corehq.apps.hqadmin.management.commands.export_domain_forms_raw import FormMetadata
+from couchforms.models import DefaultAuthContext
+
+from corehq.apps.hqadmin.management.commands.export_domain_forms_raw import (
+    FormMetadata,
+)
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from couchforms.models import DefaultAuthContext
-from io import open
 
 
 class Command(BaseCommand):

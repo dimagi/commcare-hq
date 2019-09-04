@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import io
 from base64 import b64decode
 from codecs import BOM_UTF8
@@ -8,7 +5,7 @@ import os
 import re
 import tempfile
 import zipfile
-import csv342 as csv
+import csv
 import json
 import bz2
 from collections import OrderedDict
@@ -19,11 +16,8 @@ from django.utils.functional import Promise
 import xlwt
 
 from couchexport.models import Format
-import six
 from openpyxl.styles import numbers
 from openpyxl.cell import WriteOnlyCell
-from six.moves import zip
-from six.moves import map
 
 
 MAX_XLS_COLUMNS = 256
@@ -199,7 +193,7 @@ class ExportWriter(object):
                 name = name.decode('utf8')
             elif isinstance(name, Promise):
                 # noinspection PyCompatibility
-                name = unicode(name) if six.PY2 else str(name)
+                name = str(name)
             return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", name))
 
         table_title_truncated = self.table_name_generator.next_unique(
@@ -293,7 +287,7 @@ class OnDiskExportWriter(ExportWriter):
     def _write_row(self, sheet_index, row):
 
         def _transform(val):
-            if isinstance(val, six.text_type):
+            if isinstance(val, str):
                 return val.encode("utf8")
             elif val is None:
                 return ''
@@ -335,8 +329,6 @@ class ZippedExportWriter(OnDiskExportWriter):
                 name = name.decode('utf-8')
             path = self.tables[index].get_path()
             archive_filename = self._get_archive_filename(name)
-            if six.PY2:
-                archive_filename = archive_filename.encode('utf-8')
             archive.write(path, archive_filename)
         archive.close()
         self.file.seek(0)
@@ -396,12 +388,12 @@ class Excel2007ExportWriter(ExportWriter):
         )
 
         def get_write_value(value):
-            if isinstance(value, six.integer_types + (float,)):
+            if isinstance(value, (int, float)):
                 return value
             if isinstance(value, bytes):
                 value = value.decode('utf-8')
             elif value is not None:
-                value = six.text_type(value)
+                value = str(value)
             else:
                 value = ''
             return dirty_chars.sub('?', value)
@@ -446,7 +438,7 @@ class Excel2003ExportWriter(ExportWriter):
         for i, val in enumerate(row):
             if i >= MAX_XLS_COLUMNS:
                 raise XlsLengthException()
-            sheet.write(row_index, i, six.text_type(val))
+            sheet.write(row_index, i, str(val))
         self.table_indices[sheet_index] = row_index + 1
 
     def _close(self):
@@ -496,9 +488,7 @@ class JsonExportWriter(InMemoryExportWriter):
         for tablename, data in self.tables.items():
             new_tables[self.table_names[tablename]] = {"headers":data[0], "rows": data[1:]}
 
-        json_dump = json.dumps(new_tables, cls=self.ConstantEncoder)
-        if six.PY3:
-            json_dump = json_dump.encode('utf-8')
+        json_dump = json.dumps(new_tables, cls=self.ConstantEncoder).encode('utf-8')
         self.file.write(json_dump)
 
 

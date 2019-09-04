@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, time
 import logging
 import uuid
@@ -30,7 +28,6 @@ from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
 from pact.tasks import set_schedule_case_properties
 from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
 from corehq.apps.app_manager.dbaccessors import get_latest_build_id
-from six.moves import range
 
 PACT_CLOUD_APPNAME = "PACT Cloud"
 PACT_CLOUDCARE_MODULE = "PACT Cloudcare"
@@ -236,7 +233,7 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, 
     encounter_date = etree.XML('<encounter_date>%s</encounter_date>' % json_format_date(datetime.utcnow()))
     form.append(encounter_date)
 
-    submission_xml_string = etree.tostring(form)
+    submission_xml_string = etree.tostring(form).decode('utf-8')
     if sync_token:
         extra_meta = {LAST_SYNCTOKEN_HEADER: sync_token}
     else:

@@ -1,15 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import os
-from tempfile import mkstemp
 import uuid
+from collections import namedtuple
+from tempfile import mkstemp
+
 from django.core.cache import caches
+
+from memoized import memoized
+
 from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.util import random_url_id
 from corehq.util.files import file_extention_from_filename
-from memoized import memoized
 
 BUCKET = 'case_importer'
 
@@ -86,6 +87,8 @@ class TransientFileStore(object):
     def get_tempfile_ref_for_contents(self, identifier):
         try:
             filename, content = self._get_filename_content(identifier)
+            if isinstance(content, str):
+                content = content.encode('utf-8')
         except (TypeError, ValueError):
             return None
         suffix = file_extention_from_filename(filename)

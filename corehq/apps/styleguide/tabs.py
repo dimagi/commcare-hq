@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.urls import reverse
-from django.utils.translation import ugettext_noop, ugettext as _
-from corehq.tabs.uitab import UITab
-from corehq.tabs.utils import dropdown_dict
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
 from memoized import memoized
 
@@ -19,6 +16,8 @@ from corehq.apps.styleguide.views.docs import (
     FormsSimpleCrispyFormExampleView,
     ViewsSimpleCrispyFormExampleView,
 )
+from corehq.tabs.uitab import UITab
+from corehq.tabs.utils import dropdown_dict
 
 
 class BaseSGTab(UITab):
@@ -85,4 +84,3 @@ class SGExampleTab(BaseSGTab):
             ),
         ]
         return submenu_context
-

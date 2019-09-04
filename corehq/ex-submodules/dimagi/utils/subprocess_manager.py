@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import contextlib
 import logging
 import subprocess
@@ -16,10 +14,14 @@ try:
 
     @contextlib.contextmanager
     def subprocess_context():
+        in_context = False
         try:
             with subprocess_errand_boy() as remote_subprocess:
+                in_context = True
                 yield remote_subprocess
         except IOError:
+            if in_context:
+                raise
             logger.exception("Unable to communicate with errand boy, falling back to subprocess")
             yield subprocess
 

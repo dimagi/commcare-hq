@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import mock
 from collections import Counter
 
@@ -10,7 +6,6 @@ from django.test.testcases import SimpleTestCase
 
 from corehq.sql_db.connections import ConnectionManager
 from corehq.sql_db.util import filter_out_stale_standbys
-from six.moves import range
 
 
 def _get_db_config(db_name):
@@ -99,7 +94,7 @@ class ConnectionManagerTests(SimpleTestCase):
                 [manager.get_load_balanced_read_db_alias('default') for i in range(3)]
             )
 
-    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x: {'ucr': 4}.get(x, 0))
+    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x, y: {'ucr': 4}.get(x, 0))
     def test_standby_filtering(self, *args):
         reporting_dbs = {
             'ucr_engine': {
@@ -148,7 +143,7 @@ class ConnectionManagerTests(SimpleTestCase):
         )
 
     def test_filter_out_stale_standbys(self, *args):
-        with mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x: {'ucr': 2, 'default': 4}.get(x, 0)):
+        with mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x, y: {'ucr': 2, 'default': 4}.get(x, 0)):
             self.assertEqual(
                 filter_out_stale_standbys(['ucr', 'default']),
                 ['ucr']

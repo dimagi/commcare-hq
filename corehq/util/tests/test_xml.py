@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from decimal import Decimal
 import datetime
 from django.test import SimpleTestCase

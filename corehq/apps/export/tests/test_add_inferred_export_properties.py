@@ -1,12 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.test import TestCase
 from django.core.cache import caches
+from django.test import TestCase
 
-from corehq.apps.data_dictionary.models import CaseType, CaseProperty
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.export.dbaccessors import (
+    delete_all_export_data_schemas,
+    get_case_inferred_schema,
+)
+from corehq.apps.export.models import ExportItem, ScalarItem
 from corehq.apps.export.tasks import add_inferred_export_properties
-from corehq.apps.export.dbaccessors import get_case_inferred_schema, delete_all_export_data_schemas
-from corehq.apps.export.models import ScalarItem, ExportItem
 
 
 class InferredSchemaSignalTest(TestCase):

@@ -1,10 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.contrib import admin
-from .models import TransifexOrganization
-from .forms import TransifexOrganizationForm
 
 from corehq.motech.utils import b64_aes_encrypt
+
+from .forms import TransifexOrganizationForm
+from .models import TransifexOrganization
 
 
 class TransifexOrganizationAdmin(admin.ModelAdmin):

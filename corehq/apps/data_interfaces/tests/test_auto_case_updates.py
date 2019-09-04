@@ -1,46 +1,47 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from contextlib import contextmanager
+from datetime import datetime
+
+from django.test import TestCase, override_settings
+
+from mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
+
+from corehq.apps import hqcase
 from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule,
     AUTO_UPDATE_XMLNS,
-    MatchPropertyDefinition,
-    ClosedParentDefinition,
-    CustomMatchDefinition,
-    UpdateCaseDefinition,
-    CustomActionDefinition,
-    CreateScheduleInstanceActionDefinition,
-    CaseRuleCriteria,
+    AutomaticUpdateRule,
     CaseRuleAction,
-    CaseRuleSubmission,
     CaseRuleActionResult,
-    DomainCaseRuleRun,
+    CaseRuleCriteria,
+    CaseRuleSubmission,
     CaseRuleUndoer,
+    ClosedParentDefinition,
+    CreateScheduleInstanceActionDefinition,
+    CustomActionDefinition,
+    CustomMatchDefinition,
+    DomainCaseRuleRun,
+    MatchPropertyDefinition,
+    UpdateCaseDefinition,
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from corehq.apps.domain.models import Domain
-from datetime import datetime
-
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tests.utils import (
     run_with_all_backends,
-    set_case_property_directly
+    set_case_property_directly,
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.form_processor.signals import sql_case_post_save
-
-from corehq.util.test_utils import set_parent_case as set_actual_parent_case
-from django.test import TestCase, override_settings
-from mock import patch
-
-from corehq.util.context_managers import drop_connected_signals
 from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
-from corehq.apps import hqcase
+from corehq.util.context_managers import drop_connected_signals
+from corehq.util.test_utils import set_parent_case as set_actual_parent_case
 
 
 @contextmanager
@@ -1066,8 +1067,8 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         definition.save()
 
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
-            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.get_case_ids') as case_ids_patch:
-                case_ids_patch.return_value = [case.case_id]
+            with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.iter_cases') as iter_cases_patch:
+                iter_cases_patch.return_value = [case]
                 self.assertRuleRunCount(0)
 
                 # Case does not match, nothing to update
@@ -1080,6 +1081,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
                 case = CaseAccessors(self.domain).get_case(case.case_id)
                 self.assertNotIn('result', case.dynamic_case_properties())
 
+                iter_cases_patch.return_value = [case]
                 run_case_update_rules_for_domain(self.domain)
                 self.assertRuleRunCount(2)
                 self.assertLastRuleRun(1, num_updates=1)
@@ -1087,6 +1089,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
                 self.assertEqual(case.get_case_property('result'), 'abc')
 
                 # Case matches but is already in the desired state, no update made
+                iter_cases_patch.return_value = [case]
                 run_case_update_rules_for_domain(self.domain)
                 self.assertRuleRunCount(3)
                 self.assertLastRuleRun(1)

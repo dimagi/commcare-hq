@@ -1,9 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from testil import assert_raises
 
-from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, MISSING
+from corehq.apps.tzmigration.timezonemigration import MISSING, FormJsonDiff
 
 from ..diffrule import ANY, Ignore
 

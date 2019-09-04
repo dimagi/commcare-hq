@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
-from __future__ import absolute_import
 from django.conf import settings
 from django.db import migrations
 
 from corehq.sql_db.config import partition_config
 from corehq.sql_db.management.commands.configure_pl_proxy_cluster import get_drop_server_sql, \
     get_pl_proxy_server_config_sql, get_user_mapping_sql
-from corehq.sql_db.operations import RawSQLMigration, noop_migration
+from corehq.sql_db.operations import RawSQLMigration
+from corehq.util.django_migrations import noop_migration
 
 migrator = RawSQLMigration(('corehq', 'sql_proxy_accessors', 'sql_templates'), {
     'PL_PROXY_CLUSTER_NAME': settings.PL_PROXY_CLUSTER_NAME

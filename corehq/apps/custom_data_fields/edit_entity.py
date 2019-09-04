@@ -1,19 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import OrderedDict
+
+from django import forms
 from django.core.validators import RegexValidator
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django import forms
 
-from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
-from crispy_forms.layout import Layout, Fieldset, Div, HTML, Field
-
+from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
 from memoized import memoized
 
-from .models import (CustomDataFieldsDefinition, is_system_key,
-                     CUSTOM_DATA_FIELD_PREFIX)
-import six
+from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
+
+from .models import (
+    CUSTOM_DATA_FIELD_PREFIX,
+    CustomDataFieldsDefinition,
+    is_system_key,
+)
 
 
 def add_prefix(field_dict, prefix):
@@ -23,7 +24,7 @@ def add_prefix(field_dict, prefix):
     """
     return {
         "{}-{}".format(prefix, k): v
-        for k, v in six.iteritems(field_dict)
+        for k, v in field_dict.items()
     }
 
 
@@ -46,12 +47,12 @@ class CustomDataEditor(object):
     """
 
     def __init__(self, field_view, domain, existing_custom_data=None, post_dict=None,
-                 prefix=None, required_only=False, angular_model=None):
+                 prefix=None, required_only=False, ko_model=None):
         self.field_view = field_view
         self.domain = domain
         self.existing_custom_data = existing_custom_data
         self.required_only = required_only
-        self.angular_model = angular_model
+        self.ko_model = ko_model
         self.prefix = prefix if prefix is not None else CUSTOM_DATA_FIELD_PREFIX
         self.form = self.init_form(post_dict)
 
@@ -113,28 +114,26 @@ class CustomDataEditor(object):
     @property
     @memoized
     def fields(self):
-        return self.model.get_fields(required_only=self.required_only)
+        return list(self.model.get_fields(required_only=self.required_only))
 
     def init_form(self, post_dict=None):
         fields = OrderedDict()
         for field in self.fields:
             fields[field.slug] = self._make_field(field)
 
-        if self.angular_model:
+        if self.ko_model:
             field_names = [
-
                 Field(
                     field_name,
-                    ng_model="{}.{}".format(self.angular_model, field_name),
-                    ng_required="true" if field.required else "false"
+                    data_bind="value: {}.{}".format(self.ko_model, field_name),
                 )
                 for field_name, field in fields.items()
             ]
         else:
             field_names = list(fields)
 
-        CustomDataForm = type('CustomDataForm' if six.PY3 else b'CustomDataForm', (forms.Form,), fields)
-        if self.angular_model:
+        CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
+        if self.ko_model:
             CustomDataForm.helper = HQModalFormHelper()
         else:
             CustomDataForm.helper = HQFormHelper()

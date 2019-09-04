@@ -1,12 +1,7 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 
 from operator import attrgetter
 
 from django.core.management.base import BaseCommand
-
-import six
 
 from corehq.apps.domain_migration_flags.api import get_uncompleted_migrations
 from corehq.form_processor.utils import should_use_sql_backend
@@ -27,7 +22,7 @@ class Command(BaseCommand):
 
     def handle(self, show_stats=False, **options):
         migrations = get_uncompleted_migrations(COUCH_TO_SQL_SLUG)
-        for status, items in sorted(six.iteritems(migrations)):
+        for status, items in sorted(migrations.items()):
             print(status)
             for item in sorted(items, key=attrgetter("domain")):
                 self.print_migration(item)

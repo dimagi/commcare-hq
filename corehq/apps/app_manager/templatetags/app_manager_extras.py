@@ -1,7 +1,6 @@
-from __future__ import absolute_import
 from django import template
-from corehq.apps.app_manager.models import ReportModule
 
+from corehq.apps.app_manager.models import ReportModule
 
 register = template.Library()
 

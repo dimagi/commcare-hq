@@ -1,38 +1,44 @@
 #!/usr/bin/env python
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 import hashlib
-import jsonfield
 import uuid
-from dimagi.ext.couchdbkit import *
-
-from datetime import datetime, timedelta
-from django.db import models, transaction, IntegrityError, connection
-from django.http import Http404
 from collections import namedtuple
+from datetime import datetime, timedelta
+
+from django.db import IntegrityError, connection, models, transaction
+from django.http import Http404
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+import jsonfield
+from memoized import memoized
+
+from dimagi.ext.couchdbkit import Document, StringProperty
+from dimagi.utils.couch import CriticalSection
+
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.sms import util as smsutil
+from corehq.apps.sms.messages import (
+    MSG_MOBILE_WORKER_ANDROID_INVITATION,
+    MSG_MOBILE_WORKER_INVITATION_START,
+    MSG_MOBILE_WORKER_JAVA_INVITATION,
+    MSG_REGISTRATION_INSTALL_COMMCARE,
+    get_message,
+)
+from corehq.apps.sms.mixin import (
+    BadSMSConfigException,
+    CommCareMobileContactMixin,
+    InvalidFormatException,
+    PhoneNumberInUseException,
+    apply_leniency,
+)
+from corehq.apps.users.models import CouchUser
+from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CouchUser
-from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
-    InvalidFormatException, PhoneNumberInUseException, apply_leniency,
-    BadSMSConfigException)
-from corehq.apps.sms import util as smsutil
-from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
-    MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
-    MSG_REGISTRATION_INSTALL_COMMCARE, get_message)
-from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch import CriticalSection
-from memoized import memoized
-from django.utils.translation import ugettext_noop, ugettext_lazy
-import six
-
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -609,9 +615,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @property
     def backend(self):
         from corehq.apps.sms.util import clean_phone_number
-        if isinstance(self.backend_id, six.string_types):
-            soft_assert_type_text(self.backend_id)
-        backend_id = self.backend_id.strip() if isinstance(self.backend_id, six.string_types) else None
+        backend_id = self.backend_id.strip() if isinstance(self.backend_id, str) else None
         if backend_id:
             return SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
@@ -1856,7 +1860,6 @@ class ActiveMobileBackendManager(models.Manager):
         return super(ActiveMobileBackendManager, self).get_queryset().filter(deleted=False)
 
 
-@six.python_2_unicode_compatible
 class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     SMS = 'SMS'
     IVR = 'IVR'
@@ -2311,7 +2314,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         the rest untouched.
         """
         result = self.get_extra_fields()
-        for k, v in six.iteritems(kwargs):
+        for k, v in kwargs.items():
             if k not in self.get_available_extra_fields():
                 raise Exception("Field %s is not an available extra field for %s"
                     % (k, self.__class__.__name__))
