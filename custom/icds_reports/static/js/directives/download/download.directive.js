@@ -366,6 +366,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                     vm.selectedMonth = vm.months[0].id;
                 }
             } else if (vm.selectedYear === 2018) {
+                //if selected year is 2018 make only months from october selectable as the report is only available from october 2018
+                //also if current month selection is before october change it to october
                 vm.months = vm.months.slice(-3);
                 if (vm.selectedMonth < 10) {
                     vm.selectedMonth = 10;
@@ -429,6 +431,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else if (vm.isIncentiveReportSelected()) {
+            // if current selected year is less than 2018,
+            // change the selected year to latest as the report is not available before 2018
             if (vm.selectedYear < 2018) {
                 vm.selectedYear = new Date().getFullYear();
             }
