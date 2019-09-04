@@ -284,6 +284,7 @@ ignore_rules = {
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
         Ignore('missing', 'location_id', new=MISSING, check=is_supply_point),
         Ignore('missing', '_attachments', new=MISSING),
+        Ignore('type', 'server_modified_on', old=None),
 
         Ignore('diff', check=has_date_values),
         Ignore(check=is_text_xmlns),

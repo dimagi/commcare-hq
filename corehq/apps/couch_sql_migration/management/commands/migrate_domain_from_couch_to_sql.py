@@ -145,7 +145,7 @@ class Command(BaseCommand):
         assert Domain.get_by_name(domain)
         if domain != dst_domain:
             assert Domain.get_by_name(dst_domain)
-        setup_logging(self.state_dir, options['debug'])
+        setup_logging(self.state_dir, action.lower(), options['debug'])
         getattr(self, "do_" + action)(domain, dst_domain)
 
     def do_MIGRATE(self, domain, dst_domain):

@@ -286,6 +286,8 @@ class StateDB(DiffDB):
         ) for kind in set(missing) | set(totals)}
 
     def has_doc_counts(self):
+        if not os.path.exists(self.db_filepath):
+            return False
         return self.engine.dialect.has_table(self.engine, "doc_count")
 
     def get_missing_doc_ids(self, doc_type):
