@@ -49,11 +49,11 @@
         <script src="{% static 'angular-perfect-scrollbar/src/angular-perfect-scrollbar.js' %}"></script>
         <script src="{% static 'topojson/topojson.js' %}"></script>
         <script src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
-
+{% endcompress %}
         <script src="{% static 'js/topojsons/states_v2.topojson.js' %}"></script>
         <script src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
         <script src="{% static 'js/topojsons/blocks_v3.topojson.js' %}"></script>
-{% endcompress %}
+
 {% comment %}
 For some odd reason if we include the entire block in a single compress tag we get javascript errors
 related to angular not being defined. But if we split it here it works fine.
