@@ -16,6 +16,7 @@ from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.exceptions import MissingFormXml
 
 log = logging.getLogger(__name__)
+POOL_SIZE = 15
 
 
 class AsyncFormProcessor(object):
@@ -25,7 +26,7 @@ class AsyncFormProcessor(object):
         self.migrate_form = migrate_form
 
     def __enter__(self):
-        self.pool = Pool(15)
+        self.pool = Pool(POOL_SIZE)
         self.queues = PartiallyLockingQueue()
         form_ids = self.statedb.pop_resume_state(type(self).__name__, [])
         self._rebuild_queues(form_ids)
