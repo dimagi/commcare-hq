@@ -772,6 +772,8 @@ def edit_app_attr(request, domain, app_id, attr):
     except ValueError:
         hq_settings = request.POST
 
+    can_use_case_sharing = has_privilege(request, privileges.CASE_SHARING_GROUPS)
+
     attributes = [
         'all',
         'recipients', 'name',
@@ -804,35 +806,40 @@ def edit_app_attr(request, domain, app_id, attr):
 
     resp = {"update": {}}
     # For either type of app
+
+    def _always_allowed(x):
+        return True
+
     easy_attrs = (
-        ('build_spec', BuildSpec.from_string),
-        ('practice_mobile_worker_id', None),
-        ('case_sharing', None),
-        ('cloudcare_enabled', None),
-        ('manage_urls', None),
-        ('name', None),
-        ('platform', None),
-        ('recipients', None),
-        ('text_input', None),
-        ('use_custom_suite', None),
-        ('secure_submissions', None),
-        ('translation_strategy', None),
-        ('auto_gps_capture', None),
-        ('use_grid_menus', None),
-        ('grid_form_menus', None),
-        ('target_commcare_flavor', None),
-        ('comment', None),
-        ('custom_base_url', None),
-        ('use_j2me_endpoint', None),
-        ('mobile_ucr_restore_version', None),
-        ('location_fixture_restore', None),
+        ('build_spec', BuildSpec.from_string, _always_allowed),
+        ('practice_mobile_worker_id', None, _always_allowed),
+        ('case_sharing', None, lambda x: can_use_case_sharing or getattr(app, x)),
+        ('cloudcare_enabled', None, _always_allowed),
+        ('manage_urls', None, _always_allowed),
+        ('name', None, _always_allowed),
+        ('platform', None, _always_allowed),
+        ('recipients', None, _always_allowed),
+        ('text_input', None, _always_allowed),
+        ('use_custom_suite', None, _always_allowed),
+        ('secure_submissions', None, _always_allowed),
+        ('translation_strategy', None, _always_allowed),
+        ('auto_gps_capture', None, _always_allowed),
+        ('use_grid_menus', None, _always_allowed),
+        ('grid_form_menus', None, _always_allowed),
+        ('target_commcare_flavor', None, _always_allowed),
+        ('comment', None, _always_allowed),
+        ('custom_base_url', None, _always_allowed),
+        ('use_j2me_endpoint', None, _always_allowed),
+        ('mobile_ucr_restore_version', None, _always_allowed),
+        ('location_fixture_restore', None, _always_allowed),
     )
-    for attribute, transformation in easy_attrs:
+    for attribute, transformation, can_set_attr in easy_attrs:
         if should_edit(attribute):
             value = hq_settings[attribute]
             if transformation:
                 value = transformation(value)
-            setattr(app, attribute, value)
+            if can_set_attr(attribute):
+                setattr(app, attribute, value)
             if is_linked_app(app) and attribute in app.SUPPORTED_SETTINGS:
                 app.linked_app_attrs.update({
                     attribute: value,
