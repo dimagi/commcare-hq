@@ -402,11 +402,13 @@ class BatchProcessor(object):
             try:
                 process(self.batches[key])
             except Exception as err:
-                log.warn("batch processing error: %s: %s",
-                    type(err).__name__, err, exc_info=True)
                 if self._should_retry(key):
+                    log.warn("retrying batch on error: %s: %s",
+                        type(err).__name__, err)
                     self._process_batch(process, key)
                 else:
+                    log.exception("batch processing error: %s: %s",
+                        type(err).__name__, err)
                     raise
             else:
                 self.batches.pop(key)
