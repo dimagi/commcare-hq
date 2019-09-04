@@ -1,13 +1,16 @@
 {% extends "hqwebapp/base_section.html" %}
+{% load compress %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% block js %}{{ block.super }}
-  <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
-  <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
-  <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
-  <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
-  <script src="{% static 'hqwebapp/js/base_ace.js' %}"></script>
+  {% compress js %}
+    <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
+    <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
+    <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
+    <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/base_ace.js' %}"></script>
+  {% endcompress %}
 {% endblock %}
 
 {% block page_navigation %}
