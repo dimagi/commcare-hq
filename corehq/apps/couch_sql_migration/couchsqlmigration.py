@@ -99,8 +99,8 @@ def setup_logging(log_dir, slug, debug=False):
                 handler.setLevel(logging.DEBUG)
     if not log_dir:
         return
-    time = datetime.utcnow().strftime("%Y-%m-%d_%H.%M.%S")
-    log_file = os.path.join(log_dir, f"couch2sql_form_case_{time}_{slug}.log")
+    time = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    log_file = os.path.join(log_dir, f"couch2sql-form-case-{time}-{slug}.log")
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     handler = logging.FileHandler(log_file)
     handler.setFormatter(formatter)
