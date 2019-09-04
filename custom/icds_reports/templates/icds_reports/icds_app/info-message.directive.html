@@ -1,18 +1,18 @@
 <div class="info-message">
     <div class="alert alert-info" ng-if="$ctrl.showInfoMessage()">
-      <span ng-if="$ctrl.type === 'download-3'">
+      <span ng-if="$ctrl.type === 'downloading-available-from-3rd'">
         You are downloading the data for {$ $ctrl.previousMonth $}, {$ $ctrl.year $}. The data for {$ $ctrl.currentMonth $}, {$ $ctrl.year $} will be available beginning {$ $ctrl.currentMonth $} 3rd, {$ $ctrl.year $}.
       </span>
-      <span ng-if="$ctrl.type === 'download-7'">
+      <span ng-if="$ctrl.type === 'downloading-available-for-previous-month-from-7th'">
         You are downloading the data for {$ $ctrl.previousToPreviousMonth $}, {$ $ctrl.year $}. The data for {$ $ctrl.previousMonth $}, {$ $ctrl.year $} will be available beginning {$ $ctrl.currentMonth $} 7th, {$ $ctrl.year $}.
       </span>
-      <span ng-if="$ctrl.type === 'download-15'">
+      <span ng-if="$ctrl.type === 'downloading-available-for-previous-month-from-15th'">
         You are downloading the data for {$ $ctrl.previousToPreviousMonth $}, {$ $ctrl.year $}. The data for {$ $ctrl.previousMonth $}, {$ $ctrl.year $} will be available beginning {$ $ctrl.currentMonth $} 15th, {$ $ctrl.year $}.
       </span>
-      <span ng-if="$ctrl.type === 'download-7-last'">
+      <span ng-if="$ctrl.type === 'downloading-available-for-current-month-from-7th'">
         You are downloading the data for {$ $ctrl.previousMonth $}, {$ $ctrl.year $}. The data for {$ $ctrl.currentMonth $}, {$ $ctrl.year $} will be available beginning {$ $ctrl.nextMonth $} 7th, {$ $ctrl.year $}.
       </span>
-      <span ng-if="$ctrl.type === 'download-15-last'">
+      <span ng-if="$ctrl.type === 'downloading-available-for-current-month-from-15th'">
         You are downloading the data for {$ $ctrl.previousMonth $}, {$ $ctrl.year $}. The data for {$ $ctrl.currentMonth $}, {$ $ctrl.year $} will be available beginning {$ $ctrl.nextMonth $} 15th, {$ $ctrl.year $}.
       </span>
       <span ng-if="$ctrl.type === 'default'">

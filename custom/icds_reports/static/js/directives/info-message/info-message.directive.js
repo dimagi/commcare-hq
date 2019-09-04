@@ -21,7 +21,9 @@ function InfoMessageController($location) {
         var currentYear = new Date().getFullYear();
         var currentDate = new Date().getDate();
 
-        if (selectedMonth === currentMonth && selectedYear === currentYear && (currentDate >= start && currentDate <= end)) {
+        var displayInfoMessage = selectedMonth === currentMonth && selectedYear === currentYear && (currentDate >= start && currentDate <= end);
+
+        if (displayInfoMessage) {
             vm.previousMonth = moment().startOf('month').subtract(1, 'months').format('MMMM');
             vm.previousToPreviousMonth = moment().startOf('month').subtract(2, 'months').format('MMMM');
             vm.currentMonth = moment().format("MMMM");
