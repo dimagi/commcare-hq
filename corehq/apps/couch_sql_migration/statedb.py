@@ -53,6 +53,15 @@ def _get_state_db_filepath(domain, state_dir):
     return os.path.join(state_dir, "db", '{}-couch-sql.db'.format(domain))
 
 
+def init_ignore_path_db(domain, state_dir):
+    db_filepath = _get_ignore_path_filepath(domain, state_dir)
+    return StateDB.init(db_filepath)
+
+
+def _get_ignore_path_filepath(domain, state_dir):
+    return os.path.join(state_dir, "db", '{}-couch-sql.db'.format(domain))
+
+
 class StateDB(DiffDB):
 
     @classmethod

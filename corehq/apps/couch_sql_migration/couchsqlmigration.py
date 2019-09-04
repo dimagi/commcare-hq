@@ -93,7 +93,7 @@ from corehq.util.timer import TimingContext
 
 from .asyncforms import AsyncFormProcessor
 from .casediff import CaseDiffProcess, CaseDiffQueue
-from .statedb import init_state_db
+from .statedb import init_state_db, init_ignore_path_db
 
 log = logging.getLogger(__name__)
 
@@ -344,6 +344,7 @@ class CouchSqlDomainMigrator(object):
         self.live_migrate = live_migrate
         self.live_stopper = LiveStopper(live_migrate)
         self.statedb = init_state_db(src_domain, state_dir)
+        self.ignore_path_db = init_ignore_path_db(src_domain, state_dir)
         diff_queue = CaseDiffProcess if diff_process else CaseDiffQueue
         self.case_diff_queue = diff_queue(self.statedb)
         # exit immediately on uncaught greenlet error
@@ -559,7 +560,7 @@ class CouchSqlDomainMigrator(object):
                 key = None
             message = 'couch form ID {!r}. Attachment key {!r}.'.format(couch_form.form_id, key)
             raise MissingValueError('{} {}'.format(err, message))
-        self.statedb.add_ignore_paths(couch_form.get_id, ignore_paths)
+        self.ignore_path_db.add_ignore_paths(couch_form.get_id, ignore_paths)
         form_xml = etree.tostring(form_root, encoding='utf-8', xml_declaration=True)
         return couch_form, form_xml
 
@@ -579,7 +580,7 @@ class CouchSqlDomainMigrator(object):
         if self.same_domain():
             ignore_paths = None
         else:
-            ignore_paths = self.statedb.get_ignore_paths(couch_form.get_id) + [('domain',), ('_id',)]
+            ignore_paths = self.ignore_path_db.get_ignore_paths(couch_form.get_id) + [('domain',), ('_id',)]
         self.statedb.save_form_diffs(couch_json, sql_json, ignore_paths)
 
     def _get_case_stock_result(self, sql_form, couch_form):
