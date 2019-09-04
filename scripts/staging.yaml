@@ -58,4 +58,5 @@ branches:
   - bmb/requirejs-registration  # Biyeun Aug 30
   - sk/sentry-upgrade # SK Sep 3
   - jls/revert-resource-versions # Jenny Sept 4
+  - jls/break-up-dashboard-compression # Jenny Sept 4
 submodules: {}
