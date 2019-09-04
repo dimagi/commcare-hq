@@ -32,10 +32,15 @@ class AsyncFormProcessor(object):
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
-        if exc_type is None:
-            self._finish_processing_queues()
-        self.statedb.set_resume_state(type(self).__name__, self.queues.queue_ids)
-        self.queues = self.pool = None
+        queue_ids = self.queues.queue_ids
+        try:
+            if exc_type is None:
+                queue_ids = self._finish_processing_queues()
+            else:
+                self.pool.kill()  # stop workers -> reduce chaos in logs
+        finally:
+            self.statedb.set_resume_state(type(self).__name__, queue_ids)
+            self.queues = self.pool = None
 
     def _rebuild_queues(self, form_ids):
         for chunk in chunked(form_ids, 100, list):
@@ -105,6 +110,7 @@ class AsyncFormProcessor(object):
         unprocessed = self.queues.queue_ids
         if unprocessed:
             log.error("Unprocessed forms (unexpected): %s", unprocessed)
+        return unprocessed
 
 
 class PartiallyLockingQueue(object):
