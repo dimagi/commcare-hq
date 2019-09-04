@@ -91,7 +91,7 @@ def _update_calculated_properties():
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
 
-@periodic_task(run_every=timedelta(hours=6), queue='background_queue')
+@periodic_task(run_every=timedelta(minutes=1), queue='background_queue')
 def run_datadog_user_stats():
     all_stats = all_domain_stats()
     datadog_report_user_stats(commcare_users_by_domain=all_stats['commcare_users'])
