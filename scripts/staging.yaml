@@ -57,4 +57,5 @@ branches:
   - bmb/case-sharing  #Biyeun Aug 22
   - bmb/requirejs-registration  # Biyeun Aug 30
   - sk/sentry-upgrade # SK Sep 3
+  - jls/revert-resource-versions # Jenny Sept 4
 submodules: {}
