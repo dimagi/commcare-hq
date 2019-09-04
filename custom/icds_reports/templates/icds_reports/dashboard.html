@@ -39,6 +39,8 @@
         <script src="{% static 'angular-datatables/dist/plugins/fixedheader/angular-datatables.fixedheader.js' %}"></script>
         <script src="{% static 'angular-route/angular-route.js' %}"></script>
         <script src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
+{% endcompress %}
+{% compress js %}
         <script src="{% static 'ui-select/dist/select.js' %}"></script>
         <script src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
         <script src="{% static 'nvd3-1.8.6/build/nv.d3.js' %}"></script>
@@ -65,7 +67,8 @@ related to angular not being defined. But if we split it here it works fine.
         <script src="{% static 'js/icds_app.js' %}"></script>
         <script src="{% static 'js/filters/property-filter/property.filter.js' %}"></script>
         <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
-
+{% endcompress %}
+{% compress js %}
         <script src="{% static 'js/angular-services/maternal-child.service.js' %}"></script>
         <script src="{% static 'js/angular-services/system-usage.service.js' %}"></script>
         <script src="{% static 'js/angular-services/locations.service.js' %}"></script>
@@ -76,7 +79,8 @@ related to angular not being defined. But if we split it here it works fine.
         <script src="{% static 'js/angular-services/infrastructure.service.js' %}"></script>
         <script src="{% static 'js/angular-services/download.service.js' %}"></script>
         <script src="{% static 'js/angular-services/baseControllers.service.js' %}"></script>
-
+{% endcompress %}
+{% compress js %}
         <script src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
         <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
         <script src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>
@@ -92,6 +96,8 @@ related to angular not being defined. But if we split it here it works fine.
         <script src="{% static 'js/directives/newborn_with_low_weight/newborn_with_low_weight.directive.js' %}"></script>
         <script src="{% static 'js/directives/early_initiation_breastfeeding/early_initiation_breastfeeding.directive.js' %}"></script>
         <script src="{% static 'js/directives/service-delivery-dashboard/service-delivery-dashboard.directive.js' %}"></script>
+{% endcompress %}
+{% compress js %}
         <script src="{% static 'js/directives/awc-reports/awc-reports.directive.js' %}"></script>
         <script src="{% static 'js/directives/lady-supervisor/lady-supervisor.directive.js' %}"></script>
         <script src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
@@ -105,6 +111,8 @@ related to angular not being defined. But if we split it here it works fine.
         <script src="{% static 'js/directives/immunization_coverage/immunization_coverage.directive.js' %}"></script>
         <script src="{% static 'js/directives/awc-daily-status/awc-daily-status.directive.js' %}"></script>
         <script src="{% static 'js/directives/awcs-covered/awcs-covered.directive.js' %}"></script>
+{% endcompress %}
+{% compress js %}
         <script src="{% static 'js/directives/registered-household/registered-household.directive.js' %}"></script>
         <script src="{% static 'js/directives/enrolled-children/enrolled-children.directive.js' %}"></script>
         <script src="{% static 'js/directives/enrolled-women/enrolled-women.directive.js' %}"></script>
