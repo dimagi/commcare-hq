@@ -8,6 +8,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from sqlalchemy.exc import OperationalError
 
+from corehq.apps.domain.models import Domain
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
 
@@ -115,6 +116,7 @@ class Command(BaseCommand):
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
 
+        assert Domain.get_by_name(domain), f'Unknown domain "{domain}"'
         setup_logging(self.state_dir, action.lower(), options['debug'])
         getattr(self, "do_" + action)(domain)
 
