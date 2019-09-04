@@ -73,12 +73,19 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
     @classmethod
     def setUpClass(cls):
         super(APIResourceTest, cls).setUpClass()
-
-        Role.get_cache().clear()
-        cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
+        Role.get_cache().clear()
+        user = WebUser.get_by_username(cls.username)
+        if user:
+            user.delete()
+        for domain in Domain.get_all():
+            Subscription._get_active_subscription_by_domain.clear(Subscription, domain.name)
+            domain.delete()
+
+        cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        cls.list_endpoint = cls._get_list_endpoint()
+
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
