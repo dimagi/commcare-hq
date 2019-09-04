@@ -24,11 +24,11 @@
   "mirrored_engine_ids": [
     {
       "server_environment": "icds",
-      "engine_ids": ["icds-ucr"]
+      "engine_ids": ["icds-ucr-citus"]
     },
     {
       "server_environment": "india",
-      "engine_ids": ["icds-ucr"]
+      "engine_ids": ["icds-ucr-citus"]
     }
   ],
   "config": {
