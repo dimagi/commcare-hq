@@ -5,7 +5,7 @@ from itertools import chain, count
 
 import gevent
 from gevent.event import Event
-from gevent.pool import Pool
+from gevent.pool import Group as Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.stock.models import StockReport
@@ -70,7 +70,7 @@ class CaseDiffQueue(object):
         self.pending_cases = defaultdict(int)  # case id -> processed form count
         self.pending_loads = defaultdict(int)  # case id -> processed form count
         self.cases_to_diff = {}  # case id -> case doc (JSON)
-        self.pool = Pool(5)
+        self.pool = Pool()
         self.case_batcher = BatchProcessor(self.pool)
         self.diff_batcher = BatchProcessor(self.pool)
         self.cases = LRUDict(self.MAX_MEMORIZED_CASES)
