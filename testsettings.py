@@ -133,6 +133,7 @@ REPORTING_DATABASES = {
     'icds-ucr': 'icds-ucr',
     'icds-ucr-non-dashboard': 'icds-ucr',
     'aaa-data': 'default',
+    'icds-ucr-citus': 'icds-ucr',
 }
 
 # See comment under settings.SMS_QUEUE_ENABLED
