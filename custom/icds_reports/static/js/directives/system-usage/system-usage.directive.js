@@ -16,13 +16,6 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     vm.currentMonth = moment().format("MMMM");
     vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
 
-
-
-    angular.element(document).ready(function () {
-       console.log("System Usage");
-       console.log(isAlertActive);
-    });
-
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
     } else {
