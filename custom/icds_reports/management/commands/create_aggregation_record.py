@@ -28,7 +28,7 @@ class Command(BaseCommand):
                      .values_list('location_id', flat=True))
 
         agg_date = self.get_agg_date()
-        AggregationRecord(agg_uuid=self.agg_uuid, agg_date=agg_date, state_ids=state_ids)
+        AggregationRecord.objects.create(agg_uuid=self.agg_uuid, agg_date=agg_date, state_ids=state_ids)
 
     def get_agg_date(self):
         if self.interval == 0:
