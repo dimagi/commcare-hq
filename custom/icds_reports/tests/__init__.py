@@ -130,6 +130,7 @@ def setUpModule():
     supervisor_location_type = LocationType.objects.create(
         domain=domain.name,
         name='supervisor',
+        parent_type=state_location_type,
     )
     s1 = SQLLocation.objects.create(
         domain=domain.name,
@@ -142,6 +143,7 @@ def setUpModule():
     block_location_type = LocationType.objects.create(
         domain=domain.name,
         name='block',
+        parent_type=supervisor_location_type,
     )
     b1 = SQLLocation.objects.create(
         domain=domain.name,
