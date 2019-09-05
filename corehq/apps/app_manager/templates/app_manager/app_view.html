@@ -65,6 +65,10 @@
         disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
     "></inline-edit>
   </div>
+
+  <div class="alert alert-info">
+    {{ family_text|safe }}
+  </div>
 {% endblock %}
 
 {% block form-view %}
