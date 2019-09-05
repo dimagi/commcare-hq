@@ -1082,6 +1082,7 @@ class DishaIndicatorView(models.Model):
 class NICIndicatorsView(models.Model):
     state_id = models.TextField(primary_key=True)
     state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
 
     cases_household = models.IntegerField(blank=True, null=True)
