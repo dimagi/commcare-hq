@@ -699,6 +699,8 @@ LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 
+RUN_FORM_META_PILLOW = True
+
 # Set to True to remove the `actions` and `xform_id` fields from the
 # ES Case index. These fields contribute high load to the shard
 # databases.

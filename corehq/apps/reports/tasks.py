@@ -171,6 +171,12 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
     report_start = datetime.utcnow()
     file = report.excel_response
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
+
+    if report.domain is None:
+        # Some HQ-wide reports (e.g. accounting/smsbillables) will not have a domain associated with them
+        # This uses the user's first domain to store the file in the blobdb
+        report.domain = report.request.couch_user.get_domains()[0]
+
     hash_id = _store_excel_in_blobdb(report_class, file, report.domain)
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
@@ -199,15 +205,13 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
 
 
 def _send_email(user, report, hash_id, recipient, subject=None):
-    domain = report.domain or user.get_domains()[0]
-    link = absolute_reverse("export_report", args=[domain, str(hash_id),
+    link = absolute_reverse("export_report", args=[report.domain, str(hash_id),
                                                    report.export_format])
 
     send_report_download_email(report.name, recipient, link, subject)
 
 
 def _store_excel_in_blobdb(report_class, file, domain):
-
     key = uuid.uuid4().hex
     expired = 60 * 24 * 7  # 7 days
     db = get_blob_db()
