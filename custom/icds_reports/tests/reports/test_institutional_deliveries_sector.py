@@ -55,8 +55,8 @@ class TestInstitutionalDeliveriesSector(TestCase):
                 'st5': {'all': 0, 'original_name': ['st5'], 'children': 0, 'fillKey': '0%-20%'},
                 'st6': {'all': 0, 'original_name': ['st6'], 'children': 0, 'fillKey': '0%-20%'},
                 'st7': {'all': 0, 'original_name': ['st7'], 'children': 0, 'fillKey': '0%-20%'},
-                'st1': {'all': 5, 'original_name': ['st1'], 'children': 5, 'fillKey': '60%-100%'},
-                'st2': {'all': 9, 'original_name': ['st2'], 'children': 9, 'fillKey': '60%-100%'},
+                'st1': {'all': 9, 'original_name': ['st1'], 'children': 9, 'fillKey': '60%-100%'},
+                'st2': {'all': 11, 'original_name': ['st2'], 'children': 11, 'fillKey': '60%-100%'},
                 'st3': {'all': 0, 'original_name': ['st3'], 'children': 0, 'fillKey': '0%-20%'}
             }
         )
@@ -103,14 +103,14 @@ class TestInstitutionalDeliveriesSector(TestCase):
             [
                 {
                     'indicator': 'Total number of pregnant women who delivered in the last month:',
-                    'value': "14"
+                    'value': "20"
                 },
                 {
                     'indicator': (
                         'Total number of pregnant women who delivered in a public/private '
                         'medical facilitiy in the last month:'
                     ),
-                    'value': "14"
+                    'value': "20"
                 },
                 {
                     'indicator': (
@@ -178,9 +178,9 @@ class TestInstitutionalDeliveriesSector(TestCase):
             data['data'],
             {
                 'block_map': {
-                    'all': 5,
+                    'all': 9,
                     'original_name': ['b1', 'b2'],
-                    'children': 5,
+                    'children': 9,
                     'fillKey': '60%-100%'
                 }
             }
@@ -244,16 +244,16 @@ class TestInstitutionalDeliveriesSector(TestCase):
                                 "in_month": 0
                             },
                             {
-                                "y": 0.5555555555555556,
+                                "y": 1.0,
                                 "x": 1491004800000,
-                                "all": 9,
-                                "in_month": 5
+                                "all": 6,
+                                "in_month": 6
                             },
                             {
                                 "y": 1.0,
                                 "x": 1493596800000,
-                                "all": 14,
-                                "in_month": 14
+                                "all": 20,
+                                "in_month": 20
                             }
                         ],
                         "key": "% Institutional deliveries"
