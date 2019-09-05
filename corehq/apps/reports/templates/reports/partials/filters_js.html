@@ -1,24 +1,23 @@
-{% load compress %}
 {% load hq_shared_tags %}
 
-{% compress js %}
-  <script src="{% static 'reports/js/filters/button_group.js' %}"></script>
-  <script src="{% static 'reports/js/filters/select2s.js' %}"></script>
-  <script src="{% static 'reports/js/filters/phone_number.js' %}"></script>
-  <script src="{% static 'reports/js/filters/schedule_instance.js' %}"></script>
+{# This file may be compressed; it should contain only script tags #}
 
-  <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
-  <script src="{% static 'ace-builds/src-min-noconflict/ext-language_tools.js' %}"></script>
-  <script src="{% static 'ace-builds/src-min-noconflict/mode-xquery.js' %}"></script>
-  <script src="{% static 'Caret.js/dist/jquery.caret.min.js' %}"></script>
-  <script src="{% static 'At.js/dist/js/jquery.atwho.min.js' %}"></script>
-  <script src="{% static 'hqwebapp/js/atwho.js' %}"></script>
-  <script src="{% static 'reports/js/filters/case_list_explorer_knockout_bindings.js' %}"></script>
-  <script src="{% static 'reports/js/filters/case_list_explorer.js' %}"></script>
+<script src="{% static 'reports/js/filters/button_group.js' %}"></script>
+<script src="{% static 'reports/js/filters/select2s.js' %}"></script>
+<script src="{% static 'reports/js/filters/phone_number.js' %}"></script>
+<script src="{% static 'reports/js/filters/schedule_instance.js' %}"></script>
 
-  <script src="{% static 'locations/js/location_drilldown.js' %}"></script>
-  <script src="{% static 'reports/js/filters/drilldown_options.js' %}"></script>
-  <script src="{% static 'reports/js/filters/advanced_forms_options.js' %}"></script>
+<script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
+<script src="{% static 'ace-builds/src-min-noconflict/ext-language_tools.js' %}"></script>
+<script src="{% static 'ace-builds/src-min-noconflict/mode-xquery.js' %}"></script>
+<script src="{% static 'Caret.js/dist/jquery.caret.min.js' %}"></script>
+<script src="{% static 'At.js/dist/js/jquery.atwho.min.js' %}"></script>
+<script src="{% static 'hqwebapp/js/atwho.js' %}"></script>
+<script src="{% static 'reports/js/filters/case_list_explorer_knockout_bindings.js' %}"></script>
+<script src="{% static 'reports/js/filters/case_list_explorer.js' %}"></script>
 
-  <script src="{% static 'reports/js/filters/main.js' %}"></script>
-{% endcompress %}
+<script src="{% static 'locations/js/location_drilldown.js' %}"></script>
+<script src="{% static 'reports/js/filters/drilldown_options.js' %}"></script>
+<script src="{% static 'reports/js/filters/advanced_forms_options.js' %}"></script>
+
+<script src="{% static 'reports/js/filters/main.js' %}"></script>

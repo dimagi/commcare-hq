@@ -1,17 +1,14 @@
 {% extends "reports_core/base_template_new.html" %}
-{% load compress %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'reports/js/reports.util.js' %}"></script>
-    <script src="{% static 'reports/js/hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/report_config_models.js' %}"></script>
-    <script src="{% static 'userreports/js/configurable_report.js' %}"></script>
-    <script src="{% static 'userreports/js/build_in_progress_warning.js' %}"></script>
-  {% endcompress %}
+  <script src="{% static 'reports/js/reports.util.js' %}"></script>
+  <script src="{% static 'reports/js/hq_report.js' %}"></script>
+  <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
+  <script src="{% static 'reports/js/report_config_models.js' %}"></script>
+  <script src="{% static 'userreports/js/configurable_report.js' %}"></script>
+  <script src="{% static 'userreports/js/build_in_progress_warning.js' %}"></script>
 {% endblock %}
 
 {% block report_alerts %}
