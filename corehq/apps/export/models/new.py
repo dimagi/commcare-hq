@@ -2772,6 +2772,15 @@ class EmailExportWhenDoneRequest(models.Model):
     user_id = models.CharField(max_length=255)
 
 
+class LedgerSectionEntry(models.Model):
+    domain = models.CharField(max_length=255)
+    section_id = models.CharField(max_length=255)
+    entry_id = models.CharField(max_length=255)
+
+    class Meta(object):
+        unique_together = ('domain', 'section_id', 'entry_id')
+
+
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []
 CASE_HISTORY_TABLE = [PathNode(name='actions', is_repeat=True)]
