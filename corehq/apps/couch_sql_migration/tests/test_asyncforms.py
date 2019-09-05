@@ -1,15 +1,42 @@
-
 from django.test import SimpleTestCase
 
 import attr
 
-from ..asyncforms import PartiallyLockingQueue
+from .. import asyncforms as mod
+from ..statedb import StateDB
+
+
+class TestAsyncFormProcessor(SimpleTestCase):
+
+    def test_pool_spawn_block_in_finish_processing_queues(self):
+        def migrate_form(form, case_ids):
+            print(f"migrating {form}")
+            migrated.append(form)
+
+        def add(form, queue):
+            temp = Form(-form.form_id)
+            assert queue.queues.try_obj(form.case_ids, temp), temp
+            assert not queue.queues.try_obj(form.case_ids, form), form
+            queue.queues.release_lock_for_queue_obj(temp)
+
+        forms = [Form(n) for n in range(1, mod.POOL_SIZE * 3 + 1)]
+        migrated = []
+        statedb = StateDB.init(":memory:")
+        with mod.AsyncFormProcessor(statedb, migrate_form) as queue:
+            for form in forms:
+                add(form, queue)
+            # queue is loaded with 3x POOL_SIZE forms
+            # pool.spawn(...) will block in _finish_processing_queues
+
+        self.assertEqual(migrated, forms)
+        unprocessed = statedb.pop_resume_state(type(queue).__name__, None)
+        self.assertEqual(unprocessed, [])
 
 
 class TestLockingQueues(SimpleTestCase):
 
     def setUp(self):
-        self.queues = PartiallyLockingQueue("id", max_size=-1)
+        self.queues = mod.PartiallyLockingQueue("id", max_size=-1)
 
     def _add_to_queues(self, queue_obj_id, lock_ids):
         self.queues._add_item(lock_ids, DummyObject(queue_obj_id))
@@ -128,5 +155,13 @@ class TestLockingQueues(SimpleTestCase):
 
 @attr.s
 class DummyObject(object):
-
     id = attr.ib()
+
+
+@attr.s
+class Form(object):
+    form_id = attr.ib()
+
+    @property
+    def case_ids(self):
+        return {self.form_id}
