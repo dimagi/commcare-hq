@@ -354,25 +354,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             vm.years = _.filter(vm.yearsCopy, function (y) {
                 return y.id >= 2018;
             });
-
-            if (vm.selectedYear === latest.getFullYear()) {
-                var offset = date.getDate() < 15 ? 1 : 0;
-
-                vm.months = _.filter(vm.monthsCopy, function (month) {
-                    return month.id <= (latest.getMonth() + 1) - offset;
-                });
-
-                if (vm.selectedMonth > vm.months[0].id) {
-                    vm.selectedMonth = vm.months[0].id;
-                }
-            } else if (vm.selectedYear === 2018) {
-                //if selected year is 2018 make only months from october selectable as the report is only available from october 2018
-                //also if current month selection is before october change it to october
-                vm.months = vm.months.slice(-3);
-                if (vm.selectedMonth < 10) {
-                    vm.selectedMonth = 10;
-                }
-            }
+            vm.setAvailableAndSelectedMonthForAWWPerformanceReport();
             return;
         }
 
@@ -412,6 +394,27 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         } else {
             vm.months = vm.monthsCopy;
         }
+    };
+
+    //if selected year is 2018 make only months from october selectable as the report is only available from october 2018
+    vm.setAvailableAndSelectedMonthForAWWPerformanceReport = function() {
+        var latest = new Date();
+        if (vm.selectedYear === latest.getFullYear()) {
+                var offset = latest.getDate() < 15 ? 1 : 0;
+
+                vm.months = _.filter(vm.monthsCopy, function (month) {
+                    return month.id <= (latest.getMonth() + 1) - offset;
+                });
+
+                if (vm.selectedMonth > vm.months[0].id) {
+                    vm.selectedMonth = vm.months[0].id;
+                }
+            } else if (vm.selectedYear === 2018) {
+                vm.months = vm.months.slice(-3);
+                if (vm.selectedMonth < 10) {
+                    vm.selectedMonth = 10;
+                }
+            }
     };
 
     vm.getAwcs = function () {
