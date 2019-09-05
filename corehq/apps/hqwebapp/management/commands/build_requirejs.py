@@ -42,6 +42,8 @@ class Command(ResourceStaticCommand):
         local = options['local']
         no_optimize = options['no_optimize']
 
+        raise Exception("nope stop deploy")
+
         if local:
             _confirm_or_exit()
 
