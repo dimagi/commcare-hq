@@ -8,8 +8,6 @@ from django.core.management.base import BaseCommand
 
 import yaml
 
-from dimagi.utils import gitinfo
-
 
 class Command(BaseCommand):
     help = """
