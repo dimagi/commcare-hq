@@ -3553,7 +3553,7 @@ class ReportModule(ModuleBase):
     def get_menus(self, build_profile_id=None):
         from corehq.apps.app_manager.suite_xml.utils import get_module_enum_text, get_module_locale_id
         kwargs = {}
-        if self.get_app().enable_module_filtering and module.module_filter:
+        if self.get_app().enable_module_filtering and self.module_filter:
             kwargs['relevant'] = interpolate_xpath(self.module_filter)
 
         menu = suite_models.LocalizedMenu(
