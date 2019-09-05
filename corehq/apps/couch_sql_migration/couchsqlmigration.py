@@ -429,7 +429,11 @@ class CouchSqlDomainMigrator(object):
         couch_form, form_xml = self._map_form_ids(couch_form)
         # Get a new form ID when migrating to a different domain so that
         # form.xml attachments can be uniquely identified with parent_id
-        form_id = couch_form.form_id if self.same_domain() else str(uuid.uuid4())
+        if self.same_domain():
+            form_id = couch_form.form_id
+        else:
+            form_id = str(uuid.uuid4())
+            self.statedb.add_form_id_map(couch_form.form_id, form_id)
         try:
             if form_is_processed:
                 form_data = couch_form.form

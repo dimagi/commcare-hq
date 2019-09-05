@@ -329,6 +329,13 @@ class StateDB(DiffDB):
                                      .filter(IgnorePath.form_id == couch_form_id)
             ]
 
+    def add_form_id_map(self, couch_form_id, sql_form_id):
+        with self.session() as session:
+            session.add(FormIdMap(
+                couch_form_id=couch_form_id,
+                sql_form_id=sql_form_id,
+            ))
+
 
 class ResumeError(Exception):
     pass
@@ -391,6 +398,13 @@ class IgnorePath(Base):
     id = Column(Integer, primary_key=True)
     form_id = Column(String(50), nullable=False)
     path = Column(String(255), nullable=False)
+
+
+class FormIdMap(Base):
+    __tablename__ = "form_id_map"
+
+    couch_form_id = Column(String(50), nullable=False, primary_key=True)
+    sql_form_id = Column(String(50), nullable=False)
 
 
 diff_doc_id_idx = Index("diff_doc_id_idx", Diff.doc_id)
