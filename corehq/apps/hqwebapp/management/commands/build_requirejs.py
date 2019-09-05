@@ -11,6 +11,7 @@ from django.conf import settings
 
 import yaml
 
+from corehq.apps.hqwebapp.exceptions import ResourceVersionsNotFoundException
 from corehq.apps.hqwebapp.management.commands.resource_static import \
     Command as ResourceStaticCommand
 
@@ -45,11 +46,11 @@ class Command(ResourceStaticCommand):
         if local:
             _confirm_or_exit()
 
-        try:
-            from get_resource_versions import get_resource_versions
-            resource_versions = get_resource_versions()
-        except (ImportError, SyntaxError):
-            resource_versions = {}
+        # During deploy, resource_static should already have run and populated resource_versions
+        from get_resource_versions import get_resource_versions
+        resource_versions = get_resource_versions()
+        if (not resource_versions):
+            raise ResourceVersionsNotFoundException()
 
         config, local_js_dirs = _r_js(local=local, no_optimize=no_optimize)
 
