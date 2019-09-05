@@ -360,6 +360,8 @@ HQ_APPS = (
     'custom.hki',
     'custom.champ',
     'custom.aaa',
+
+    'custom.ccqa',
 )
 
 # any built-in management commands we want to override should go in hqscripts
@@ -1799,6 +1801,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
+    os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
 ]
 
 
@@ -1867,6 +1870,7 @@ STATIC_DATA_SOURCES = [
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
+    os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2014,6 +2018,8 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-uganda': 'custom.abt',
     'vectorlink-zambia': 'custom.abt',
     'vectorlink-zimbabwe': 'custom.abt',
+
+    'ccqa': 'custom.ccqa',
 }
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
