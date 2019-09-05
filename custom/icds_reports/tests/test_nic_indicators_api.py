@@ -1,5 +1,5 @@
 
-from datetime import datetime,date
+from datetime import datetime, date
 from django.test import TestCase
 from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 from mock import mock
@@ -35,17 +35,17 @@ class NICIndicatorTest(TestCase):
                          'cf_in_month': 20
                      },
                      {
-                        'state_name': 'st1',
-                        'state_site_code': 'st1',
-                        'month': date(2017, 5, 1),
-                        'num_launched_awcs': 9,
-                        'num_households_registered': 3633,
-                        'pregnant_enrolled': 70,
-                        'lactating_enrolled': 87,
-                        'children_enrolled': 618,
-                        'bf_at_birth': 1,
-                        'ebf_in_month': 17,
-                        'cf_in_month': 14
+                         'state_name': 'st1',
+                         'state_site_code': 'st1',
+                         'month': date(2017, 5, 1),
+                         'num_launched_awcs': 9,
+                         'num_households_registered': 3633,
+                         'pregnant_enrolled': 70,
+                         'lactating_enrolled': 87,
+                         'children_enrolled': 618,
+                         'bf_at_birth': 1,
+                         'ebf_in_month': 17,
+                         'cf_in_month': 14
                      }
                  ]},
                 data

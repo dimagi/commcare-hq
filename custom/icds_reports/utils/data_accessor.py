@@ -2,7 +2,7 @@
 from copy import deepcopy
 
 from time import sleep
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 from corehq.util.datadog.utils import create_datadog_event
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes
@@ -63,8 +63,8 @@ def get_program_summary_data_with_retrying(step, domain, config, now, include_te
 # keeping cache timeout as 2 hours as this is going to be used
 # in some script/tool which might flood us with requests
 @icds_quickcache(['use_citus'], timeout=120 * 60)
-def get_inc_indicator_api_data(use_citus = False):
-    latest_available_month = datetime(2017,5,1) - timedelta(days=1)
+def get_inc_indicator_api_data(use_citus=False):
+    latest_available_month = datetime(2017, 5, 1) - timedelta(days=1)
     first_day_month = latest_available_month.replace(day=1)
     with force_citus_engine(use_citus):
         data = NICIndicatorsView.objects.filter(month=first_day_month).all().values('state_name',
