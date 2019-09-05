@@ -336,6 +336,13 @@ class StateDB(DiffDB):
                 sql_form_id=sql_form_id,
             ))
 
+    def has_form_been_processed(self, couch_form_id):
+        with self.session() as session:
+            result = (session.query(FormIdMap)
+                             .filter(FormIdMap.couch_form_id == couch_form_id)
+                             .first())
+        return result is not None
+
 
 class ResumeError(Exception):
     pass

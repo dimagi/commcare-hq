@@ -416,6 +416,9 @@ class CouchSqlDomainMigrator(object):
         if self.same_domain():
             set_local_domain_sql_backend_override(self.src_domain)
         form_id = couch_form.form_id
+        if self.statedb.has_form_been_processed(form_id):
+            log.debug('Skipping migrated doc: XFormInstance(%s)', form_id)
+            return
         self._migrate_form_and_associated_models(couch_form)
         self.processed_docs += 1
         self.case_diff_queue.update(case_ids, form_id)
