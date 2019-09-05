@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 
 from casexml.apps.stock.models import StockTransaction
@@ -7,16 +5,15 @@ from corehq.apps.commtrack.models import StockState
 from corehq.util.translation import localize
 from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, STOCKOUT_CONFIRM, STOCKOUT_HELP
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
-import six
 
 
 class TestStockout(ILSTestScript):
 
     def test_stockout(self):
         with localize('sw'):
-            response1 = six.text_type(SOH_CONFIRM)
-            response2 = six.text_type(STOCKOUT_CONFIRM)
-            response3 = six.text_type(STOCKOUT_HELP)
+            response1 = str(SOH_CONFIRM)
+            response2 = str(STOCKOUT_CONFIRM)
+            response3 = str(STOCKOUT_HELP)
 
         supply_point_id = self.loc1.sql_location.supply_point_id
 

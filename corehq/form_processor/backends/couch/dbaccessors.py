@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from collections import namedtuple
 from datetime import datetime
 
@@ -32,7 +29,11 @@ from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
     get_last_modified_dates
-from corehq.form_processor.exceptions import AttachmentNotFound, LedgerValueNotFound
+from corehq.form_processor.exceptions import (
+    AttachmentNotFound,
+    LedgerValueNotFound,
+    NotAllowed,
+)
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent,
     AbstractLedgerAccessor)
@@ -47,7 +48,6 @@ from couchforms.dbaccessors import (
 from couchforms.models import XFormInstance, doc_types, XFormOperation
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
-import six
 
 
 class FormAccessorCouch(AbstractFormAccessor):
@@ -85,7 +85,7 @@ class FormAccessorCouch(AbstractFormAccessor):
         doc = XFormInstance.get_db().get(form_id)
         doc = doc_types()[doc['doc_type']].wrap(doc)
         if doc.external_blobs:
-            for name, meta in six.iteritems(doc.external_blobs):
+            for name, meta in doc.external_blobs.items():
                 with doc.fetch_attachment(name, stream=True) as content:
                     doc.deferred_put_attachment(
                         content,
@@ -119,15 +119,25 @@ class FormAccessorCouch(AbstractFormAccessor):
         return get_form_ids_for_user(domain, user_id)
 
     @staticmethod
+    def set_archived_state(form, archive, user_id):
+        operation = "archive" if archive else "unarchive"
+        form.doc_type = "XFormArchived" if archive else "XFormInstance"
+        form.history.append(XFormOperation(operation=operation, user=user_id))
+        # subclasses explicitly set the doc type so force regular save
+        XFormInstance.save(form)
+
+    @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         def _form_delete(doc):
             doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
+        NotAllowed.check(domain)
         return _soft_delete(XFormInstance.get_db(), form_ids, deletion_date, deletion_id, _form_delete)
 
     @staticmethod
     def soft_undelete_forms(domain, form_ids):
         def _form_undelete(doc):
             doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
+        NotAllowed.check(domain)
         return _soft_undelete(XFormInstance.get_db(), form_ids, _form_undelete)
 
     @staticmethod
@@ -268,6 +278,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):
+        NotAllowed.check(domain)
         return _soft_undelete(CommCareCase.get_db(), case_ids)
 
     @staticmethod

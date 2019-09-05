@@ -1,24 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
+import os
 from io import BytesIO
 
 from django.conf import settings
 from django.test import TestCase
+from django.test.client import Client
 from django.test.utils import override_settings
-from corehq.apps.users.models import CommCareUser
+from django.urls import reverse
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    use_sql_backend,
+)
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
-from django.test.client import Client
-from django.urls import reverse
-import os
-
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
-import six
-from io import open
 
 
 class SubmissionTest(TestCase):
@@ -60,7 +59,7 @@ class SubmissionTest(TestCase):
             expected = json.load(f)
 
         expected['_id'] = form_id
-        expected['xmlns'] = six.text_type(xmlns)
+        expected['xmlns'] = str(xmlns)
 
         return expected
 

@@ -27,16 +27,17 @@ Common Output:
             }
         }
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
-from dateutil.relativedelta import relativedelta
-from django.db.models import Q, Count
+
+from django.db.models import Count, Q
 from django.utils.translation import ugettext as _
 
-from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from dateutil.relativedelta import relativedelta
+
+from casexml.apps.stock.models import StockReport, StockTransaction
+
+from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
-from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
@@ -51,18 +52,16 @@ from corehq.apps.hqadmin.reporting.exceptions import (
     IntervalNotFoundException,
 )
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.products.models import SQLProduct
+from corehq.apps.sms.models import SQLMobileBackend
 from corehq.elastic import (
     ADD_TO_ES_FILTER,
     DATE_FIELDS,
-    es_histogram,
     ES_MAX_CLAUSE_COUNT,
+    es_histogram,
     es_query,
 )
-
-from corehq.apps.sms.models import SQLMobileBackend
-from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.util.dates import get_timestamp_millis, iso_string_to_date
-import six
 
 CASE_COUNT_UPPER_BOUND = 1000 * 1000 * 10
 COUNTRY_COUNT_UPPER_BOUND = 1000 * 1000 * 10
@@ -112,7 +111,7 @@ def get_timestep(interval):
         return relativedelta(months=1)
     elif interval == 'year':
         return relativedelta(years=1)
-    raise IntervalNotFoundException(six.text_type(interval))
+    raise IntervalNotFoundException(str(interval))
 
 
 def daterange(interval, start_date, end_date):
@@ -989,8 +988,8 @@ def _sql_to_json_data(domains, sql_data, datespan, individual_domain_limit=16):
             else:
                 histo_data[domain][tstamp] += 1
 
-    for k, v in six.iteritems(histo_data):
-        for l, w in six.iteritems(v):
+    for k, v in histo_data.items():
+        for l, w in v.items():
             ret[k].append({'count': w, 'time': l})
 
     return init_ret, ret

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockReport

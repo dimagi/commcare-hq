@@ -1,21 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import re
 from collections import defaultdict, namedtuple
 from functools import total_ordering
 from os.path import commonprefix
-import re
 from xml.sax.saxutils import unescape
 
+from memoized import memoized
+
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import (
-    RETURN_TO, )
+from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
-from corehq.apps.app_manager.suite_xml.xml_models import StackDatum, Stack, CreateFrame
-from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
-    XPath
-from memoized import memoized
-from six.moves import filter
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    CreateFrame,
+    Stack,
+    StackDatum,
+)
+from corehq.apps.app_manager.xpath import CaseIDXPath, XPath, session_var
 
 
 class WorkflowHelper(PostProcessor):
@@ -83,6 +83,8 @@ class WorkflowHelper(PostProcessor):
         target_module_id = match.group(1)
         target_form_id = match.group(2)
 
+        frame_children = []
+
         module_command = id_strings.menu_id(target_module)
         module_datums = self.get_module_datums(target_module_id)
         form_datums = module_datums[target_form_id]
@@ -104,6 +106,7 @@ class WorkflowHelper(PostProcessor):
         remaining_datums = form_datums[len(common_datums):]
 
         frame_children.extend(common_datums)
+
         if not module_only:
             frame_children.append(CommandId(command))
             frame_children.extend(remaining_datums)
@@ -593,9 +596,6 @@ class CommandId(object):
     def __eq__(self, other):
         return self.id == other.id
 
-    def __ne__(self, other):
-        return not self == other
-
     __hash__ = None
 
     def __repr__(self):
@@ -664,9 +664,6 @@ class WorkflowDatumMeta(object):
 
     def __eq__(self, other):
         return self.id == other.id
-
-    def __ne__(self, other):
-        return not self == other
 
     __hash__ = None
 

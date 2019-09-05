@@ -1,17 +1,16 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from distutils.version import LooseVersion
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand
+
+from couchdbkit.exceptions import ResourceNotFound
+
+from dimagi.utils.couch.database import iter_docs
+
 from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.suite_xml.utils import validate_suite
 from corehq.apps.app_manager.xform import XForm
 from corehq.blobs.mixin import BlobHelper
-from dimagi.utils.couch.database import iter_docs
 
 
 def premature_auto_gps(build):

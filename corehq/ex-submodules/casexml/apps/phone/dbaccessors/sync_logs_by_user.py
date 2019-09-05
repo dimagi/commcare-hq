@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
 
 

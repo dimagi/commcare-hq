@@ -1,20 +1,26 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from uuid import UUID
 import uuid
+from uuid import UUID
+
 from django.forms import model_to_dict
 from django.test import TestCase
+
 import mock
+
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+
 from corehq.apps.case_importer.do_import import do_import
-from corehq.apps.case_importer.tests.test_importer import make_worksheet_wrapper
+from corehq.apps.case_importer.tests.test_importer import (
+    make_worksheet_wrapper,
+)
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
-from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_records, \
-    get_case_ids_for_case_upload
+from corehq.apps.case_importer.tracking.dbaccessors import (
+    get_case_ids_for_case_upload,
+    get_case_upload_records,
+)
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import ImporterConfig
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser, CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 

@@ -1,6 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import OrderedDict, Counter
+from collections import Counter, OrderedDict
 
 from django.apps import apps
 from django.conf import settings
@@ -10,8 +8,11 @@ from django.db import router
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
-    SimpleFilter, UsernameFilter, UserIDFilter, FilteredModelIteratorBuilder,
-    UniqueFilteredModelIteratorBuilder
+    FilteredModelIteratorBuilder,
+    SimpleFilter,
+    UniqueFilteredModelIteratorBuilder,
+    UserIDFilter,
+    UsernameFilter,
 )
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.apps.dump_reload.util import get_model_label

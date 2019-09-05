@@ -1,62 +1,90 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from collections import namedtuple
 from itertools import chain
 
-import six
 from django.conf.urls import url
 from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
-from six.moves import map
-from tastypie import fields
-from tastypie import http
+
+from tastypie import fields, http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
-from tastypie.resources import convert_post_to_patch, ModelResource, Resource
+from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
+from phonelog.models import DeviceReportEntry
+
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.api.odata.serializers import ODataCaseSerializer, ODataFormSerializer
+from corehq.apps.api.odata.serializers import (
+    ODataCaseSerializer,
+    ODataFormSerializer,
+)
 from corehq.apps.api.odata.utils import record_feed_access_in_datadog
 from corehq.apps.api.odata.views import add_odata_headers
-from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication, \
-    ODataAuthentication
+from corehq.apps.api.resources.auth import (
+    AdminAuthentication,
+    ODataAuthentication,
+    RequirePermissionAuthentication,
+)
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
-from corehq.apps.export.esaccessors import get_case_export_base_query, get_form_export_base_query
+from corehq.apps.export.esaccessors import (
+    get_case_export_base_query,
+    get_form_export_base_query,
+)
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
-from corehq.apps.userreports.models import ReportConfiguration, \
-    StaticReportConfiguration, report_config_id_is_static
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
-from corehq.apps.userreports.reports.view import query_dict_to_dict, \
-    get_filter_values
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_id_username_pairs_by_domain
-from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
+from corehq.apps.userreports.models import (
+    ReportConfiguration,
+    StaticReportConfiguration,
+    report_config_id_is_static,
+)
+from corehq.apps.userreports.reports.data_source import (
+    ConfigurableReportDataSource,
+)
+from corehq.apps.userreports.reports.view import (
+    get_filter_values,
+    query_dict_to_dict,
+)
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_all_user_id_username_pairs_by_domain,
+)
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    Permissions,
+    UserRole,
+    WebUser,
+)
 from corehq.apps.users.util import raw_username
 from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.util import get_document_or_404
-from corehq.util.couch import get_document_or_not_found, DocumentNotFound
+from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.timer import TimingContext
-from phonelog.models import DeviceReportEntry
-from . import HqBaseResource, DomainSpecificResourceMixin
-from . import v0_1, v0_4, CouchResourceMixin
-from .pagination import NoCountingPaginator, DoesNothingPaginator
+
+from . import (
+    CouchResourceMixin,
+    DomainSpecificResourceMixin,
+    HqBaseResource,
+    v0_1,
+    v0_4,
+)
+from .pagination import DoesNothingPaginator, NoCountingPaginator
 
 MOCK_BULK_USER_ES = None
 
@@ -201,7 +229,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         except ValidationError as e:
                             if not hasattr(bundle.obj, 'errors'):
                                 bundle.obj.errors = []
-                            bundle.obj.errors.append(six.text_type(e))
+                            bundle.obj.errors.append(str(e))
                             return False
                     bundle.obj.set_password(bundle.data.get("password"))
                     should_save = True
@@ -401,7 +429,7 @@ class GroupResource(v0_4.GroupResource):
                 self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
             except AssertionError as e:
                 status = http.HttpBadRequest
-                bundle.data['_id'] = six.text_type(e)
+                bundle.data['_id'] = str(e)
             bundles_seen.append(bundle)
 
         to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
@@ -426,7 +454,7 @@ class GroupResource(v0_4.GroupResource):
                 updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
                 return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
         except AssertionError as e:
-            bundle.data['error_message'] = six.text_type(e)
+            bundle.data['error_message'] = str(e)
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
 
     def _update(self, bundle):
@@ -729,7 +757,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         try:
             report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
         except Http404 as e:
-            raise NotFound(six.text_type(e))
+            raise NotFound(str(e))
         return report_configuration
 
     def obj_get_list(self, bundle, **kwargs):
@@ -905,11 +933,13 @@ class DomainUsernames(Resource):
 class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     config_id = None
+    table_id = None
 
     def dispatch(self, request_type, request, **kwargs):
         if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
             raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
         self.config_id = kwargs['config_id']
+        self.table_id = int(kwargs.get('table_id', 0))
         with TimingContext() as timer:
             response = super(ODataCaseResource, self).dispatch(request_type, request, **kwargs)
         record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
@@ -919,6 +949,7 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         data['domain'] = request.domain
         data['config_id'] = self.config_id
         data['api_path'] = request.path
+        data['table_id'] = self.table_id
         response = super(ODataCaseResource, self).create_response(
             request, data, response_class, **response_kwargs)
         return add_odata_headers(response)
@@ -945,8 +976,10 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)/feed" % self._meta.resource_name,
-                self.wrap_view('dispatch_list'))
+            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
+                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
+                self._meta.resource_name), self.wrap_view('dispatch_list')),
         ]
 
     def determine_format(self, request):
@@ -957,11 +990,13 @@ class ODataCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
 
     config_id = None
+    table_id = None
 
     def dispatch(self, request_type, request, **kwargs):
         if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
             raise ImmediateHttpResponse(response=HttpResponseNotFound('Feature flag not enabled.'))
         self.config_id = kwargs['config_id']
+        self.table_id = int(kwargs.get('table_id', 0))
         with TimingContext() as timer:
             response = super(ODataFormResource, self).dispatch(request_type, request, **kwargs)
         record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
@@ -971,6 +1006,7 @@ class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
         data['domain'] = request.domain
         data['config_id'] = self.config_id
         data['api_path'] = request.path
+        data['table_id'] = self.table_id
         response = super(ODataFormResource, self).create_response(
             request, data, response_class, **response_kwargs)
         return add_odata_headers(response)
@@ -997,8 +1033,10 @@ class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<config_id>[\w\d_.-]+)/feed" % self._meta.resource_name,
-                self.wrap_view('dispatch_list'))
+            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/(?P<table_id>[\d]+)/feed".format(
+                self._meta.resource_name), self.wrap_view('dispatch_list')),
+            url(r"^(?P<resource_name>{})/(?P<config_id>[\w\d_.-]+)/feed".format(
+                self._meta.resource_name), self.wrap_view('dispatch_list')),
         ]
 
     def determine_format(self, request):

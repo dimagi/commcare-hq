@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import logging
 
@@ -32,7 +30,6 @@ from django.utils.translation import ugettext_lazy
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
 from six.moves.urllib.parse import urlencode
-import six
 
 logger = logging.getLogger(__name__)
 
@@ -306,7 +303,7 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
         return logs
 
     def _filter_query_by_slug(self, slug):
-        return urlencode({k: v for (k, v) in six.iteritems(self.request.GET) if not k.startswith(slug)})
+        return urlencode({k: v for (k, v) in self.request.GET.items() if not k.startswith(slug)})
 
 
 class DeviceLogDetailsReport(BaseDeviceLogReport, DeploymentsReport):

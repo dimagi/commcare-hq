@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import errno
 import json
 import os
@@ -22,8 +19,11 @@ from sqlalchemy import (
     or_,
 )
 
+from corehq.apps.tzmigration.planning import Base, DiffDB
+from corehq.apps.tzmigration.planning import PlanningDiff as Diff
+from corehq.apps.tzmigration.timezonemigration import json_diff
 
-from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
+from .diff import filter_form_diffs
 
 
 def init_state_db(domain, state_dir):
@@ -169,6 +169,10 @@ class StateDB(DiffDB):
             yield case_id
 
     def add_problem_form(self, form_id):
+        """Add form to be migrated with "unprocessed" forms
+
+        A "problem" form is an error form with normal doctype (XFormInstance)
+        """
         with self.session() as session:
             session.add(ProblemForm(id=form_id))
 
@@ -236,6 +240,12 @@ class StateDB(DiffDB):
                 for doc_id in doc_ids
             ])
 
+    def save_form_diffs(self, couch_json, sql_json):
+        diffs = json_diff(couch_json, sql_json, track_list_indices=False)
+        diffs = filter_form_diffs(couch_json, sql_json, diffs)
+        if diffs:
+            self.add_diffs(couch_json["doc_type"], couch_json["_id"], diffs)
+
     def replace_case_diffs(self, kind, case_id, diffs):
         from .couchsqlmigration import CASE_DOC_TYPES
         assert kind in CASE_DOC_TYPES, kind
@@ -275,6 +285,8 @@ class StateDB(DiffDB):
         ) for kind in set(missing) | set(totals)}
 
     def has_doc_counts(self):
+        if not os.path.exists(self.db_filepath):
+            return False
         return self.engine.dialect.has_table(self.engine, "doc_count")
 
     def get_missing_doc_ids(self, doc_type):

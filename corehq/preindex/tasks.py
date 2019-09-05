@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from celery.task.base import periodic_task
 
 from corehq.preindex.accessors import index_design_doc, get_preindex_designs

@@ -1,32 +1,37 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.conf.urls import url, include
+from django.conf.urls import include, url
 
-from corehq.apps.userreports.reports.view import DownloadUCRStatusView, ucr_download_job_poll
+from corehq.apps.userreports.reports.view import (
+    DownloadUCRStatusView,
+    ucr_download_job_poll,
+)
 from corehq.apps.userreports.views import (
-    UserConfigReportsHomeView,
-    EditConfigReportView,
     CreateConfigReportView,
-    ImportConfigReportView,
-    CreateDataSourceView,
-    EditDataSourceView,
-    PreviewDataSourceView,
     CreateDataSourceFromAppView,
+    CreateDataSourceView,
+    DataSourceDebuggerView,
     DataSourceSummaryView,
-    report_source_json,
-    delete_report,
-    data_source_json,
-    delete_data_source,
-    rebuild_data_source,
-    resume_building_data_source,
-    build_data_source_in_place,
-    export_data_source,
-    data_source_status,
-    choice_list_api,
+    EditConfigReportView,
+    EditDataSourceView,
     ExpressionDebuggerView,
+    ImportConfigReportView,
+    PreviewDataSourceView,
+    UserConfigReportsHomeView,
+    build_data_source_in_place,
+    choice_list_api,
+    data_source_json,
+    data_source_status,
+    delete_data_source,
+    delete_report,
+    evaluate_data_source,
     evaluate_expression,
+    export_data_source,
+    rebuild_data_source,
+    report_source_json,
+    resume_building_data_source,
+    undelete_data_source,
+    undelete_report,
     update_report_description,
-    undelete_data_source, undelete_report, DataSourceDebuggerView, evaluate_data_source)
+)
 
 urlpatterns = [
     url(r'^$', UserConfigReportsHomeView.as_view(),

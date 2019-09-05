@@ -16,15 +16,12 @@ Conventions followed in this file:
       sharded database (CitusDB).
 """
 
-from __future__ import absolute_import, unicode_literals
 
 import logging
 
 from django.contrib.postgres.fields import ArrayField, DateRangeField
 from django.db import connections, models
 from django.utils.decorators import classproperty
-
-from six.moves import zip
 
 from dimagi.utils.dates import force_to_date
 

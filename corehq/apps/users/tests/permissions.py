@@ -1,11 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from memoized import Memoized
-from django.test import TestCase, SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+
 import mock
+from memoized import Memoized
+
 from corehq.apps.export.views.utils import user_can_view_deid_exports
 from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions, WebUser, UserRole, DomainMembership
+from corehq.apps.users.models import (
+    DomainMembership,
+    Permissions,
+    UserRole,
+    WebUser,
+)
 from corehq.apps.users.permissions import DEID_EXPORT_PERMISSION
 
 

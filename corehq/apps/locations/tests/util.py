@@ -1,14 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
+
 from django.test import TestCase
+
 from dimagi.utils.couch.database import iter_bulk_delete
-from corehq.util.test_utils import unit_testing_only
+
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
-from corehq.apps.users.models import UserRole, Permissions
+from corehq.apps.users.models import Permissions, UserRole
+from corehq.util.test_utils import unit_testing_only
 
-from ..models import make_location, SQLLocation, LocationType
+from ..models import LocationType, SQLLocation, make_location
 
 TEST_DOMAIN = 'locations-test'
 TEST_LOCATION_TYPE = 'location'

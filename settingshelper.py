@@ -1,7 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import logging
 from collections import namedtuple
 import os
@@ -11,7 +7,6 @@ import uuid
 
 import re
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
-import six
 from raven import breadcrumbs
 from raven import fetch_git_sha
 

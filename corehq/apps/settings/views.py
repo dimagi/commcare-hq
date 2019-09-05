@@ -1,12 +1,8 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 import re
 from base64 import b64encode
 from io import BytesIO
 
-import qrcode
-import six
 from django.conf import settings
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -17,6 +13,8 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
+
+import qrcode
 from memoized import memoized
 from tastypie.models import ApiKey
 from two_factor.models import PhoneDevice
@@ -30,6 +28,9 @@ from two_factor.views import (
     SetupCompleteView,
     SetupView,
 )
+
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import json_response
 
 import langcodes
 from corehq.apps.domain.decorators import (
@@ -51,11 +52,11 @@ from corehq.apps.settings.forms import (
     HQTwoFactorMethodForm,
 )
 from corehq.apps.users.forms import AddPhoneNumberForm
-from corehq.mobile_flags import ADVANCED_SETTINGS_ACCESS, MULTIPLE_APPS_UNLIMITED
-from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.mobile_flags import (
+    ADVANCED_SETTINGS_ACCESS,
+    MULTIPLE_APPS_UNLIMITED,
+)
 from corehq.util.quickcache import quickcache
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.web import json_response
 
 
 @login_and_domain_required
@@ -176,11 +177,9 @@ class MyAccountSettingsView(BaseMyAccountView):
         }
 
     def phone_number_is_valid(self):
-        if isinstance(self.phone_number, six.string_types):
-            soft_assert_type_text(self.phone_number)
         return (
-            isinstance(self.phone_number, six.string_types) and
-            re.compile(r'^\d+$').match(self.phone_number) is not None
+            isinstance(self.phone_number, str)
+            and re.compile(r'^\d+$').match(self.phone_number) is not None
         )
 
     def process_add_phone_number(self):

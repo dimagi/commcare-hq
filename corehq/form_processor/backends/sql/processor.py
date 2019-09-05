@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import logging
 import uuid
@@ -26,7 +24,6 @@ from corehq.util.datadog.utils import case_load_counter
 from corehq import toggles
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
-import six
 
 
 class FormProcessorSQL(object):
@@ -48,7 +45,7 @@ class FormProcessorSQL(object):
 
     @classmethod
     def new_xform(cls, form_data):
-        form_id = extract_meta_instance_id(form_data) or six.text_type(uuid.uuid4())
+        form_id = extract_meta_instance_id(form_data) or str(uuid.uuid4())
 
         return XFormInstanceSQL(
             # other properties can be set post-wrap

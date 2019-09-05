@@ -1,25 +1,29 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from couchdbkit.exceptions import NoResultFound
 from django.test import TestCase
+
+from couchdbkit.exceptions import NoResultFound
+
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_all_app_ids,
     get_all_built_app_ids_and_versions,
     get_app,
+    get_app_ids_in_domain,
+    get_apps_by_id,
     get_apps_in_domain,
+    get_brief_app,
     get_brief_apps_in_domain,
     get_build_doc_by_version,
-    get_built_app_ids_for_app_id,
+    get_build_ids,
+    get_build_ids_after_version,
     get_built_app_ids_with_submissions_for_app_id,
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_current_app,
-    get_latest_build_doc,
     get_latest_app_ids_and_versions,
+    get_latest_build_doc,
     get_latest_released_app_doc,
-    get_apps_by_id,
-    get_brief_app, get_latest_released_app_version, get_app_ids_in_domain)
-from corehq.apps.app_manager.models import Application, RemoteApp, Module
+    get_latest_released_app_version,
+)
+from corehq.apps.app_manager.models import Application, Module, RemoteApp
 from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import DocTestMixin
 
@@ -137,11 +141,12 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(domain_has_apps(self.domain), True)
         self.assertEqual(domain_has_apps('somecrazydomainthathasnoapps'), False)
 
-    def test_get_built_app_ids_for_app_id(self):
-        app_ids = get_built_app_ids_for_app_id(self.domain, self.apps[0].get_id)
+    def test_get_build_ids(self):
+        app_ids = get_build_ids(self.domain, self.apps[0].get_id)
         self.assertEqual(len(app_ids), 2)
 
-        app_ids = get_built_app_ids_for_app_id(self.domain, self.apps[0].get_id, self.first_saved_version)
+    def test_get_build_ids_after_version(self):
+        app_ids = get_build_ids_after_version(self.domain, self.apps[0].get_id, self.first_saved_version)
         self.assertEqual(len(app_ids), 1)
         self.assertEqual(self.decoy_apps[1].get_id, app_ids[0])
 

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import math
 from django.test import SimpleTestCase, RequestFactory
 from django.test.utils import override_settings
@@ -8,7 +6,6 @@ from corehq.util.soft_assert.core import SoftAssert
 from corehq.util.soft_assert.api import _send_message, soft_assert
 from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.test_utils import softer_assert
-from six.moves import range
 
 
 class SoftAssertTest(SimpleTestCase):

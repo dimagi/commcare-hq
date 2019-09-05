@@ -1,18 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 
 from django.conf import settings
 from django.template.loader import render_to_string
-from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA256
-from Crypto.Signature import PKCS1_PSS
 from django.templatetags.i18n import language_name
-from django.utils.translation import activate, LANGUAGE_SESSION_KEY
+from django.utils.translation import LANGUAGE_SESSION_KEY, activate
 from django.views.decorators.debug import sensitive_variables
 
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_PSS
 from memoized import memoized
+
 from dimagi.utils.logging import notify_exception
+
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser

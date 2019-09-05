@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 import base64
 from datetime import datetime
 from uuid import uuid4

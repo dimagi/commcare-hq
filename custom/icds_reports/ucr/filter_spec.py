@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.userreports.reports.filters.factory import FilterChoiceProviderFactory
 from corehq.apps.userreports.reports.filters.values import dynamic_choice_list_url

@@ -1,22 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import pickle
 import re
 
-from sqlalchemy.exc import OperationalError
 from nose.tools import with_setup
-from testil import assert_raises, Config, eq, tempdir
+from sqlalchemy.exc import OperationalError
+from testil import Config, assert_raises, eq, tempdir
 
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as JsonDiff
 
 from ..statedb import (
     Counts,
+    ResumeError,
+    StateDB,
     delete_state_db,
     diff_doc_id_idx,
     init_state_db,
-    ResumeError,
-    StateDB,
 )
 
 

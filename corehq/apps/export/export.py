@@ -1,30 +1,21 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import contextlib
-import time
-import sys
-from collections import Counter
-
 import datetime
+import sys
+import time
+from collections import Counter
 
 from couchdbkit import ResourceConflict
 
+from couchexport.export import FormattedRow, get_writer
+from couchexport.models import Format
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
-from couchexport.export import FormattedRow, get_writer
-from couchexport.models import Format
-
+from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
-from corehq.elastic import iter_es_docs_from_query
-from corehq.toggles import PAGINATED_EXPORTS
-from corehq.util.files import safe_filename, TransientTempfile
-from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
-from corehq.util.datadog.utils import load_counter, DAY_SCALE_TIME_BUCKETS
 from corehq.apps.export.esaccessors import (
-    get_form_export_base_query,
     get_case_export_base_query,
+    get_form_export_base_query,
     get_sms_export_base_query,
 )
 from corehq.apps.export.models.new import (
@@ -32,9 +23,11 @@ from corehq.apps.export.models.new import (
     FormExportInstance,
     SMSExportInstance,
 )
-from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
-import six
-from io import open
+from corehq.elastic import iter_es_docs_from_query
+from corehq.toggles import PAGINATED_EXPORTS
+from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
+from corehq.util.datadog.utils import DAY_SCALE_TIME_BUCKETS, load_counter
+from corehq.util.files import TransientTempfile, safe_filename
 
 
 class ExportFile(object):
@@ -145,7 +138,7 @@ class _PaginatedExportWriter(object):
 
         with open(self.path, 'wb') as file_handle:
             self.writer.open(
-                six.iteritems(self._get_paginated_headers()),
+                self._get_paginated_headers().items(),
                 file_handle,
                 table_titles=self._get_paginated_table_titles(),
                 archive_basepath=self.name
@@ -227,7 +220,7 @@ class _PaginatedExportWriter(object):
             (<table.path>, <page>): (['Column1', 'Column2'],)
         }
         '''
-        return {self._paged_table_index(table): (headers,) for table, headers in six.iteritems(self.headers)}
+        return {self._paged_table_index(table): (headers,) for table, headers in self.headers.items()}
 
     def _get_paginated_table_titles(self):
         '''
@@ -243,7 +236,7 @@ class _PaginatedExportWriter(object):
         }
         '''
         paginated_table_titles = {}
-        for table, table_name in six.iteritems(self.table_names):
+        for table, table_name in self.table_names.items():
             paginated_table_titles[self._paged_table_index(table)] = '{}_{}'.format(
                 table_name, format(self.pages[table], '03')
             )

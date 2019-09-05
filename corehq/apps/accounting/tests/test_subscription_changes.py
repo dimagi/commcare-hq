@@ -1,33 +1,47 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.test import SimpleTestCase, TransactionTestCase
-from mock import patch, Mock, call
+import uuid
+from datetime import date, time
 
-from corehq.apps.accounting.models import (
-    Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
-    Subscriber)
+from django.test import SimpleTestCase, TransactionTestCase
+
+from mock import Mock, call, patch
+
 from corehq.apps.accounting.exceptions import SubscriptionAdjustmentError
-from corehq.apps.accounting.subscription_changes import DomainDowngradeActionHandler, _deactivate_schedules
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscriber,
+    Subscription,
+)
+from corehq.apps.accounting.subscription_changes import (
+    DomainDowngradeActionHandler,
+    _deactivate_schedules,
+)
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    CreateScheduleInstanceActionDefinition,
+)
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import (
-    Permissions, UserRole, UserRolePresets, WebUser, CommCareUser,
+    CommCareUser,
+    Permissions,
+    UserRole,
+    UserRolePresets,
+    WebUser,
 )
 from corehq.messaging.scheduling.models import (
+    AlertSchedule,
+    ImmediateBroadcast,
+    ScheduledBroadcast,
     SMSContent,
     SMSSurveyContent,
-    ScheduledBroadcast,
-    ImmediateBroadcast,
-    TimedSchedule,
     TimedEvent,
-    AlertSchedule,
+    TimedSchedule,
 )
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
-from datetime import date, time
-import uuid
 
 
 class TestSubscriptionEmailLogic(SimpleTestCase):

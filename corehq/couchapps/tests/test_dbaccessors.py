@@ -1,8 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import uuid
-from io import open
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase

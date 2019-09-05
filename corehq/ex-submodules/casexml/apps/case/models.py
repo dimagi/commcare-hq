@@ -4,8 +4,6 @@ Couch models for commcare cases.
 For details on casexml check out:
 http://bitbucket.org/javarosa/javarosa/wiki/casexml
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import OrderedDict
 import re
 from datetime import datetime
@@ -36,8 +34,6 @@ from dimagi.utils.couch import (
     CouchDocLockableMixIn,
     LooselyEqualDocumentSchema,
 )
-import six
-from six.moves import filter
 
 INDEX_RELATIONSHIP_CHILD = 'child'
 INDEX_RELATIONSHIP_EXTENSION = 'extension'
@@ -145,7 +141,6 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         )
 
 
-@six.python_2_unicode_compatible
 class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
                    ComputedDocumentMixin, CouchDocLockableMixIn,
                    AbstractCommCareCase, MessagingCaseContactMixin):
@@ -191,7 +186,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         _STRING_ATTRS = ('external_id', 'user_id', 'owner_id', 'opened_by',
                          'closed_by', 'type', 'name')
         if key in _STRING_ATTRS:
-            value = six.text_type(value or '')
+            value = str(value or '')
         super(CommCareCase, self).__setattr__(key, value)
 
     def __get_case_id(self):
@@ -199,7 +194,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
 
     def __set_case_id(self, id):
         self._id = id
-    
+
     case_id = property(__get_case_id, __set_case_id)
 
     def set_case_id(self, case_id):
@@ -293,10 +288,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
     @property
     def deletion_date(self):
         return getattr(self, '-deletion_date', None)
-
-    def soft_delete(self):
-        self.doc_type += DELETED_SUFFIX
-        self.save()
 
     def to_api_json(self, lite=False):
         ret = {

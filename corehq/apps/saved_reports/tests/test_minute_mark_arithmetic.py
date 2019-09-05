@@ -1,13 +1,11 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import datetime
 
 from testil import eq
 
-from corehq.apps.saved_reports.scheduled import _round_datetime_up_to_the_nearest_minute, \
-    _iter_15_minute_marks_in_range
+from corehq.apps.saved_reports.scheduled import (
+    _iter_15_minute_marks_in_range,
+    _round_datetime_up_to_the_nearest_minute,
+)
 
 
 def test_round_datetime_up_to_the_nearest_minute():

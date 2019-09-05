@@ -1,21 +1,18 @@
-from __future__ import absolute_import, unicode_literals
-
 import uuid
 from collections import Counter, defaultdict, namedtuple
 
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from couchdbkit import NoResultFound
 
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
-from corehq.apps.case_importer.exceptions import CaseRowError
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import set_task_progress
 
+from corehq.apps.case_importer.exceptions import CaseRowError
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -25,7 +22,6 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 from corehq.util.datadog.utils import case_load_counter
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 
 from . import exceptions
@@ -387,7 +383,7 @@ class _ImportResults(object):
         self._results[row_num] = self.UPDATED
 
     def to_json(self):
-        counts = Counter(six.itervalues(self._results))
+        counts = Counter(self._results.values())
         return {
             'created_count': counts.get(self.CREATED, 0),
             'match_count': counts.get(self.UPDATED, 0),
@@ -398,10 +394,7 @@ class _ImportResults(object):
 
 def _convert_field_value(value):
     # coerce to string unless it's a unicode string then we want that
-    if isinstance(value, six.text_type):
-        return value
-    else:
-        return str(value)
+    return value if isinstance(value, str) else str(value)
 
 
 def _parse_search_id(config, row):
@@ -447,8 +440,7 @@ def _populate_updated_fields(config, row):
             raise exceptions.InvalidCustomFieldNameException(
                 _('Field name "{}" is reserved').format(update_field_name))
 
-        if isinstance(update_value, six.string_types) and update_value.strip() == SCALAR_NEVER_WAS:
-            soft_assert_type_text(update_value)
+        if isinstance(update_value, str) and update_value.strip() == SCALAR_NEVER_WAS:
             # If we find any instances of blanks ('---'), convert them to an
             # actual blank value without performing any data type validation.
             # This is to be consistent with how the case export works.

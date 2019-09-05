@@ -34,19 +34,12 @@ want.
 As of this writing, there's not much else developed, but it's pretty easy to
 add support for other aggregation types and more results processing
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from copy import deepcopy
-import re
-from collections import namedtuple, defaultdict
-
 import datetime
+import re
+from collections import defaultdict, namedtuple
+from copy import deepcopy
 
 from corehq.elastic import SIZE_LIMIT
-import six
-from six.moves import filter
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 MISSING_KEY = None
 
@@ -445,10 +438,8 @@ class AggregationRange(namedtuple('AggregationRange', 'start end key')):
             if value:
                 if isinstance(value, datetime.date):
                     value = value.isoformat()
-                elif not isinstance(value, six.string_types):
-                    value = six.text_type(value)
-                else:
-                    soft_assert_type_text(value)
+                elif not isinstance(value, str):
+                    value = str(value)
                 range_[key] = value
         return range_
 

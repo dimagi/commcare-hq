@@ -1,6 +1,3 @@
-from __future__ import absolute_import, print_function
-from __future__ import unicode_literals, division
-
 import argparse
 import json
 import logging
@@ -9,9 +6,6 @@ import subprocess
 import sys
 from datetime import datetime
 from time import sleep
-
-from six.moves import input
-from io import open
 
 logger = logging.getLogger(__name__)
 

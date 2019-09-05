@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import itertools
 import logging
 from datetime import date
@@ -9,21 +6,27 @@ from django.apps import apps
 from django.db import connection, transaction
 from django.db.models import Q
 
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
-from corehq.apps.userreports.dbaccessors import delete_all_ucr_tables_for_domain
+from corehq.apps.userreports.dbaccessors import (
+    delete_all_ucr_tables_for_domain,
+)
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.log import with_progress_bar
-from dimagi.utils.chunked import chunked
 
 logger = logging.getLogger(__name__)
 

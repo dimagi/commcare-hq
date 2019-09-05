@@ -1,49 +1,48 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
-import io
 import datetime
-import re
-import pytz
+import io
 import json
+import re
+from itertools import chain
 
-from celery.utils.log import get_task_logger
-from django.http import HttpResponse, Http404, HttpResponseRedirect, JsonResponse
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseRedirect,
+    JsonResponse,
+)
+from django.shortcuts import render
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
-from django.shortcuts import render
 from django.urls import NoReverseMatch
-from corehq.apps.domain.utils import normalize_domain_name
+from django.utils.translation import ugettext
 
-from corehq.apps.reports.tasks import export_all_rows_task
-from corehq.apps.saved_reports.models import ReportConfig
-from corehq.apps.reports.datatables import DataTablesHeader
-from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.util import DatatablesParams, get_report_timezone
+from celery.utils.log import get_task_logger
+from memoized import memoized
+
+from couchexport.export import export_from_tables, get_writer
+from couchexport.shortcuts import export_response
+from dimagi.utils.modules import to_function
+from dimagi.utils.parsing import string_to_boolean
+from dimagi.utils.web import json_request, json_response
+
+from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import (
-    use_jquery_ui,
     use_datatables,
     use_daterangepicker,
+    use_jquery_ui,
     use_nvd3,
 )
-from corehq.apps.users.models import CouchUser
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.view_utils import absolute_reverse, reverse, request_as_dict
-from couchexport.export import export_from_tables
-from couchexport.shortcuts import export_response
-from memoized import memoized
-from dimagi.utils.modules import to_function
-from dimagi.utils.web import json_request, json_response
-from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import request_cache
-from django.utils.translation import ugettext
-from couchexport.export import get_writer
-import six
-from six.moves import zip
-from six.moves import range
-from itertools import chain
+from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.tasks import export_all_rows_task
+from corehq.apps.reports.util import DatatablesParams, get_report_timezone
+from corehq.apps.saved_reports.models import ReportConfig
+from corehq.apps.users.models import CouchUser
+from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
+
+from corehq import toggles
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -303,8 +302,7 @@ class GenericReportView(object):
         filters = []
         fields = self.fields
         for field in fields or []:
-            if isinstance(field, six.string_types):
-                soft_assert_type_text(field)
+            if isinstance(field, str):
                 klass = to_function(field, failhard=True)
             else:
                 klass = field
@@ -435,9 +433,7 @@ class GenericReportView(object):
         default_config = ReportConfig.default()
 
         def is_editable_datespan(field):
-            if isinstance(field, six.string_types):
-                soft_assert_type_text(field)
-            field_fn = to_function(field) if isinstance(field, six.string_types) else field
+            field_fn = to_function(field) if isinstance(field, str) else field
             return issubclass(field_fn, DatespanFilter) and field_fn.is_editable
 
         has_datespan = any([is_editable_datespan(field) for field in self.fields])
@@ -481,7 +477,8 @@ class GenericReportView(object):
             report_configs=report_configs,
             show_time_notice=self.show_time_notice,
             domain=self.domain,
-            layout_flush_content=self.flush_layout
+            layout_flush_content=self.flush_layout,
+            hasAccessToIcdsDashboardFeatures=self.icds_pre_release_features()
         )
 
     @property
@@ -503,8 +500,11 @@ class GenericReportView(object):
             'emailDefaultSubject': self.rendered_report_title,
             'type': self.dispatcher.prefix,
             'urlRoot': self.url_root,
-            'asyncUrl': async_url,
+            'asyncUrl': async_url
         }
+
+    def icds_pre_release_features(self):
+        return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user.username)
 
     def update_filter_context(self):
         """
@@ -960,8 +960,7 @@ class GenericTabularReport(GenericReportView):
         # using regex breaks values then we should use a parser instead, and
         # take the knock. Assuming we won't have values with angle brackets,
         # using regex for now.
-        if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+        if isinstance(value, str):
             return re.sub('<[^>]*?>', '', value)
         return value
 
@@ -1228,7 +1227,7 @@ class GetParamsMixin(object):
         so as to get sorting working correctly with the context of the GET params
         """
         ret = super(GetParamsMixin, self).shared_pagination_GET_params
-        for k, v in six.iterlists(self.request.GET):
+        for k, v in self.request.GET.lists():
             ret.append(dict(name=k, value=v))
         return ret
 

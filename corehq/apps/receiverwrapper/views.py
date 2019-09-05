@@ -1,39 +1,53 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 import os
 
-import six
+from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
 from couchdbkit import ResourceNotFound
-from django.http import (
-    HttpResponseBadRequest,
-    HttpResponseForbidden,
-)
+
+import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
+from couchforms import openrosa_response
+from couchforms.const import MAGIC_PROPERTY
+from couchforms.getters import MultimediaBug
+from dimagi.utils.decorators.profile import profile_prod
+from dimagi.utils.logging import notify_exception
+
+from corehq import toggles
 from corehq.apps.domain.auth import (
+    BASIC,
+    DIGEST,
+    NOAUTH,
     determine_authtype_from_request,
-    BASIC, DIGEST, NOAUTH
 )
 from corehq.apps.domain.decorators import (
-    check_domain_migration, login_or_digest_ex, login_or_basic_ex,
+    check_domain_migration,
+    login_or_basic_ex,
+    login_or_digest_ex,
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.ota.utils import handle_401_response
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
     WaivedAuthContext,
     domain_requires_auth,
 )
 from corehq.apps.receiverwrapper.util import (
-    get_app_and_build_ids,
-    from_demo_user,
-    should_ignore_submission,
     DEMO_SUBMIT_MODE,
+    from_demo_user,
+    get_app_and_build_ids,
+    should_ignore_submission,
 )
 from corehq.form_processor.exceptions import XFormLockError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
+from corehq.form_processor.utils import (
+    convert_xform_to_json,
+    should_use_sql_backend,
+)
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.datadog.metrics import (
     MULTIMEDIA_SUBMISSION_ERROR_COUNT,
@@ -41,17 +55,6 @@ from corehq.util.datadog.metrics import (
 )
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
-import couchforms
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
-
-from couchforms.const import MAGIC_PROPERTY
-from couchforms import openrosa_response
-from couchforms.getters import MultimediaBug
-from dimagi.utils.decorators.profile import profile_prod
-from dimagi.utils.logging import notify_exception
-from corehq.apps.ota.utils import handle_401_response
-from corehq import toggles
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')

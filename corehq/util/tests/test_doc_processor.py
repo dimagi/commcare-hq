@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 
 from couchdbkit import ResourceConflict, ResourceNotFound
@@ -24,7 +22,6 @@ from corehq.util.pagination import TooManyRetries
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import get_db
-from six.moves import range
 
 
 class TestResumableDocsByTypeIterator(TestCase):

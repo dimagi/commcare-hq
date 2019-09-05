@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import uuid
 from django.test import SimpleTestCase
 from corehq.util.global_request.api import set_request, get_request, get_request_domain

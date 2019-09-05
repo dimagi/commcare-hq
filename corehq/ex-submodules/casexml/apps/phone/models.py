@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
@@ -443,7 +441,6 @@ class SyncLogSQL(models.Model):
             )
 
 
-@six.python_2_unicode_compatible
 class SyncLog(AbstractSyncLog):
     """
     A log of a single sync operation.

@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 
 from corehq.apps.api.resources import v0_5

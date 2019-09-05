@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 import uuid
 import functools
 import json
@@ -574,7 +571,7 @@ class PatchMeta(type):
     """A metaclass to patch all inherited classes.
 
     Usage:
-    class BaseTest(six.with_metaclass(PatchMeta, TestCase)):
+    class BaseTest(TestCase, metaclass=PatchMeta):
         patch = mock.patch('something.do.patch', .....)
     """
 

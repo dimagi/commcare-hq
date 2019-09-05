@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -20,7 +18,6 @@ from custom.ewsghana.tasks import first_soh_reminder, second_soh_reminder, third
 from custom.ewsghana.tests.handlers.utils import EWSTestCase
 from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, \
     set_sms_notifications, user_needs_reminders
-import six
 
 TEST_DOMAIN = 'ews-reminders-test-domain'
 
@@ -35,7 +32,7 @@ def create_stock_report(location, products_quantities, date=None):
         date=date,
         server_date=date
     )
-    for product_code, quantity in six.iteritems(products_quantities):
+    for product_code, quantity in products_quantities.items():
         StockTransaction(
             stock_on_hand=Decimal(quantity),
             report=report,

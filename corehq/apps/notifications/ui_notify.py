@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
+
 from django.conf import settings
 
 from corehq.toggles import was_user_created_after
@@ -124,4 +123,9 @@ USERS_PERMISSIONS_UPDATES = StaticUINotify(
 ECD_PREVIEW_UPDATE = StaticUINotify(
     'ecd_preview_update_jul2019',
     ends_on=datetime(2019, 9, 12),
+)
+
+BI_PREVIEW_UPDATE = StaticUINotify(
+    'bi_preview_update_aug2019',
+    ends_on=datetime(2019, 11, 1),
 )

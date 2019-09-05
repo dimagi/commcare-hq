@@ -1,29 +1,39 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.safestring import mark_safe
+from django.utils.translation import get_language
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop, get_language
+from django.utils.translation import ugettext_noop
 
-from corehq.apps.es import forms as form_es, filters as es_filters
+from memoized import memoized
+
+from corehq.apps.es import filters as es_filters
+from corehq.apps.es import forms as form_es
 from corehq.apps.es.filters import match_all
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
-
-from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.apps.reports.generic import (GenericTabularReport,
-                                         ProjectInspectionReportParamsMixin,
-                                         ElasticProjectInspectionReport)
-from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
+from corehq.apps.reports.filters.users import \
+    ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.generic import (
+    ElasticProjectInspectionReport,
+    GenericTabularReport,
+    ProjectInspectionReportParamsMixin,
+)
+from corehq.apps.reports.models import HQUserType
+from corehq.apps.reports.standard import (
+    DatespanMixin,
+    ProjectReport,
+    ProjectReportParametersMixin,
+)
+from corehq.apps.reports.standard.monitoring import (
+    CompletionOrSubmissionTimeMixin,
+    MultiFormDrilldownMixin,
+)
 from corehq.apps.reports.util import datespan_from_beginning
-from corehq.const import MISSING_APP_ID
 from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.const import MISSING_APP_ID
 from corehq.toggles import SUPPORT
-from memoized import memoized
 
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):

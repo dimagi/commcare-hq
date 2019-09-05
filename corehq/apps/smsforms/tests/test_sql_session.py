@@ -1,16 +1,25 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import datetime
 import random
 import uuid
-from couchdbkit import MultipleResultsFound
+from datetime import datetime
+
 from django.test import TestCase
-from corehq.apps.sms.handlers.form_session import get_single_open_session_or_close_multiple
-from corehq.apps.smsforms.models import SQLXFormsSession, XFORMS_SESSION_TYPES, XFORMS_SESSION_SMS, \
-    XFORMS_SESSION_IVR
-from corehq.apps.smsforms.tasks import session_is_stale, handle_due_survey_action
-from mock import patch, Mock
-from six.moves import range
+
+from couchdbkit import MultipleResultsFound
+from mock import Mock, patch
+
+from corehq.apps.sms.handlers.form_session import (
+    get_single_open_session_or_close_multiple,
+)
+from corehq.apps.smsforms.models import (
+    XFORMS_SESSION_IVR,
+    XFORMS_SESSION_SMS,
+    XFORMS_SESSION_TYPES,
+    SQLXFormsSession,
+)
+from corehq.apps.smsforms.tasks import (
+    handle_due_survey_action,
+    session_is_stale,
+)
 
 
 class SQLSessionTestCase(TestCase):

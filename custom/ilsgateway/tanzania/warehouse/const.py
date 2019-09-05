@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from custom.ilsgateway.models import SupplyPointStatusTypes, SupplyPointStatusValues
 
 NEEDED_STATUS_TYPES = [SupplyPointStatusTypes.DELIVERY_FACILITY,

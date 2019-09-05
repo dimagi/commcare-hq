@@ -1,10 +1,6 @@
-from __future__ import absolute_import, division
-
-from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
@@ -134,7 +130,7 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
             'loc_name': key,
             'percent': val
         }
-        for key, val in six.iteritems(best_worst)
+        for key, val in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(
@@ -149,7 +145,7 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
                         'y': val['y'],
                         'all': val['all'],
                         'birth': val['birth']
-                    } for key, val in six.iteritems(data['blue'])
+                    } for key, val in data['blue'].items()
                 ],
                 "key": "% Early Initiation of Breastfeeding",
                 "strokeWidth": 2,

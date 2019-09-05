@@ -1,25 +1,24 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import bz2
 import logging
 from base64 import b64encode
 
-import bz2
-from crispy_forms import (
-    layout as crispy,
-    bootstrap as twbscrispy,
-)
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.userreports.ui.fields import JsonField
-from corehq.motech.dhis2.dbaccessors import get_dhis2_connection
-from corehq.motech.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY
-from corehq.motech.dhis2.models import Dhis2Connection
-from corehq.apps.hqwebapp import crispy as hqcrispy
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.userreports.ui.fields import JsonField
+from corehq.motech.dhis2.const import (
+    SEND_FREQUENCY_MONTHLY,
+    SEND_FREQUENCY_QUARTERLY,
+)
+from corehq.motech.dhis2.dbaccessors import get_dhis2_connection
+from corehq.motech.dhis2.models import Dhis2Connection
 
 SEND_FREQUENCY_CHOICES = (
     (SEND_FREQUENCY_MONTHLY, 'Monthly'),

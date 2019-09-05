@@ -1,56 +1,69 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import os
-import six
-
-from couchdbkit import ResourceConflict
+from datetime import datetime
 from distutils.version import LooseVersion
 
-from datetime import datetime
-
 from django.conf import settings
-from django.http import JsonResponse, Http404, HttpResponse, HttpResponseBadRequest
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    JsonResponse,
+)
 from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_GET, require_POST
+
+from couchdbkit import ResourceConflict
 from iso8601 import iso8601
 
-from corehq.apps.app_manager.dbaccessors import get_app_cached, get_latest_released_app_version
-from corehq.form_processor.utils.xform import adjust_text_to_datetime
-from dimagi.utils.decorators.profile import profile_prod
-from dimagi.utils.logging import notify_exception
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.phone.restore import (
+    RestoreCacheSettings,
+    RestoreConfig,
+    RestoreParams,
+)
+from dimagi.utils.decorators.profile import profile_prod
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq import toggles
-from corehq.const import OPENROSA_VERSION_MAP, ONE_DAY
-from corehq.middleware import OPENROSA_VERSION_HEADER
+from corehq.apps.app_manager.dbaccessors import (
+    get_app_cached,
+    get_latest_released_app_version,
+)
 from corehq.apps.app_manager.util import LatestAppInfo
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
-    mobile_auth,
     check_domain_migration,
+    mobile_auth,
     mobile_auth_or_formplayer,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import flatten_result
-from corehq.apps.users.models import CouchUser, DeviceAppMeta
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.users.models import CouchUser, DeviceAppMeta
+from corehq.apps.users.util import (
+    update_device_meta,
+    update_last_sync,
+    update_latest_builds,
+)
+from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.utils.xform import adjust_text_to_datetime
+from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
-from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
-from dimagi.utils.parsing import string_to_utc_datetime
 
-from .models import SerialIdBucket, MobileRecoveryMeasure
+from .models import MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
-    demo_user_restore_response, get_restore_user, is_permitted_to_restore,
-    handle_401_response)
-from corehq.apps.users.util import update_device_meta, update_latest_builds, update_last_sync
-
+    demo_user_restore_response,
+    get_restore_user,
+    handle_401_response,
+    is_permitted_to_restore,
+)
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
@@ -101,7 +114,7 @@ def search(request, domain):
 
 
 def _handle_query_merge_exception(request, exception):
-    notify_exception(request, six.text_type(exception), details=dict(
+    notify_exception(request, str(exception), details=dict(
         exception_type=type(exception),
         original_query=getattr(exception, "original_query", None),
         query_addition=getattr(exception, "query_addition", None)
@@ -110,7 +123,7 @@ def _handle_query_merge_exception(request, exception):
 
 
 def _handle_es_exception(request, exception, query_addition_debug_details):
-    notify_exception(request, six.text_type(exception), details=dict(
+    notify_exception(request, str(exception), details=dict(
         exception_type=type(exception),
         **query_addition_debug_details
     ))

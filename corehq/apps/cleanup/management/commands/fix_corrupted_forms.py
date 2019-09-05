@@ -1,11 +1,6 @@
-# encoding: utf-8
-from __future__ import absolute_import, print_function, unicode_literals
-
 import string
 
 from django.core.management import BaseCommand
-
-from six.moves import input
 
 from corehq.apps.app_manager.dbaccessors import get_app
 

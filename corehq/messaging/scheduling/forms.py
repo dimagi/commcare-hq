@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import re
 from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm, validate_case_property_name
@@ -66,15 +64,12 @@ from corehq.messaging.scheduling.models import (
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from couchdbkit import ResourceNotFound
 from langcodes import get_name as get_language_name
-import six
-from six.moves import range
-from six.moves import filter
 
 
 def validate_time(value):
     error = ValidationError(_("Please enter a valid 24-hour time in the format HH:MM"))
 
-    if not isinstance(value, (six.text_type, str)) or not re.match(r'^\d?\d:\d\d$', value):
+    if not isinstance(value, (str, str)) or not re.match(r'^\d?\d:\d\d$', value):
         raise error
 
     try:
@@ -88,7 +83,7 @@ def validate_time(value):
 def validate_date(value):
     error = ValidationError(_("Please enter a valid date in the format YYYY-MM-DD"))
 
-    if not isinstance(value, (six.text_type, str)) or not re.match(r'^\d\d\d\d-\d\d-\d\d$', value):
+    if not isinstance(value, (str, str)) or not re.match(r'^\d\d\d\d-\d\d-\d\d$', value):
         raise error
 
     try:
@@ -450,18 +445,18 @@ class ContentForm(Form):
             if content.reminder_intervals:
                 result['survey_reminder_intervals_enabled'] = 'Y'
                 result['survey_reminder_intervals'] = \
-                    ', '.join(six.text_type(i) for i in content.reminder_intervals)
+                    ', '.join(str(i) for i in content.reminder_intervals)
             else:
                 result['survey_reminder_intervals_enabled'] = 'N'
         elif isinstance(content, CustomContent):
             result['custom_sms_content_id'] = content.custom_content_id
         elif isinstance(content, IVRSurveyContent):
             result['form_unique_id'] = content.form_unique_id
-            result['ivr_intervals'] = ', '.join(six.text_type(i) for i in content.reminder_intervals)
+            result['ivr_intervals'] = ', '.join(str(i) for i in content.reminder_intervals)
             result['max_question_attempts'] = content.max_question_attempts
         elif isinstance(content, SMSCallbackContent):
             result['message'] = content.message
-            result['sms_callback_intervals'] = ', '.join(six.text_type(i) for i in content.reminder_intervals)
+            result['sms_callback_intervals'] = ', '.join(str(i) for i in content.reminder_intervals)
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -985,8 +980,8 @@ class ScheduleForm(Form):
         label=ugettext_lazy('On Days'),
         choices=(
             # The actual choices are rendered by a template
-            tuple((six.text_type(x), '') for x in range(-3, 0)) +
-            tuple((six.text_type(x), '') for x in range(1, 29))
+            tuple((str(x), '') for x in range(-3, 0)) +
+            tuple((str(x), '') for x in range(1, 29))
         )
     )
     send_time_type = ChoiceField(
@@ -1207,11 +1202,11 @@ class ScheduleForm(Form):
     def add_initial_for_weekly_schedule(self, initial):
         weekdays = self.initial_schedule.get_weekdays()
         initial['send_frequency'] = self.SEND_WEEKLY
-        initial['weekdays'] = [six.text_type(day) for day in weekdays]
+        initial['weekdays'] = [str(day) for day in weekdays]
 
     def add_initial_for_monthly_schedule(self, initial):
         initial['send_frequency'] = self.SEND_MONTHLY
-        initial['days_of_month'] = [six.text_type(e.day) for e in self.initial_schedule.memoized_events]
+        initial['days_of_month'] = [str(e.day) for e in self.initial_schedule.memoized_events]
 
     def add_initial_for_custom_daily_schedule(self, initial):
         initial['send_frequency'] = self.SEND_CUSTOM_DAILY
@@ -1294,7 +1289,7 @@ class ScheduleForm(Form):
             'case_group_recipients': case_group_recipients,
             'include_descendant_locations': self.initial_schedule.include_descendant_locations,
             'restrict_location_types': 'Y' if len(self.initial_schedule.location_type_filter) > 0 else 'N',
-            'location_types': [six.text_type(i) for i in self.initial_schedule.location_type_filter],
+            'location_types': [str(i) for i in self.initial_schedule.location_type_filter],
         })
 
     def add_initial_for_content(self, initial):
@@ -2266,7 +2261,7 @@ class ScheduleForm(Form):
             except Exception:
                 raise ValidationError(err)
             if (not isinstance(value, list) or not value or
-                    any(not isinstance(v, six.text_type) for v in value)):
+                    any(not isinstance(v, str) for v in value)):
                 raise ValidationError(err)
         else:
             value = [value]
@@ -2999,7 +2994,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     result['start_offset'] = abs(schedule.start_offset)
 
                 if schedule.start_day_of_week >= 0:
-                    result['start_day_of_week'] = six.text_type(schedule.start_day_of_week)
+                    result['start_day_of_week'] = str(schedule.start_day_of_week)
 
             if schedule.stop_date_case_property_name:
                 result['stop_date_case_property_enabled'] = self.YES

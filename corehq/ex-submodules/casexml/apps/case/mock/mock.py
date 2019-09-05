@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import copy
-import six
 import uuid
 
 from casexml.apps.case.mock import CaseBlock
@@ -21,8 +18,6 @@ class CaseStructure(object):
             self.case_id = case_id
         else:
             self.case_id = uuid.uuid4().hex
-            if six.PY2:
-                self.case_id = self.case_id.decode('utf-8')
         self.indices = indices if indices is not None else []
         self.attrs = attrs if attrs is not None else {}
         self.walk_related = walk_related  # whether to walk related cases in operations
@@ -117,8 +112,6 @@ class CaseFactory(object):
         """
         kwargs['create'] = True
         case_id = uuid.uuid4().hex
-        if six.PY2:
-            case_id = case_id.decode('utf-8')
         return self.create_or_update_case(CaseStructure(case_id=case_id, attrs=kwargs))[0]
 
     def update_case(self, case_id, **kwargs):

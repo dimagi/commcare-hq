@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from .exceptions import Error, NotFound  # noqa: F401
 
 _db = []  # singleton/global, stack for tests to push temporary dbs

@@ -1,9 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 
-import six
-from crispy_forms.layout import Submit
 from django import forms
 from django.db.models import Q
 from django.template.loader import get_template
@@ -11,30 +7,41 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
-
-from corehq.apps.hqwebapp.widgets import Select2Ajax
-from dimagi.utils.couch.database import iter_docs
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from memoized import memoized
+
+from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.commtrack.util import generate_code
 from corehq.apps.custom_data_fields.edit_entity import (
-    CustomDataEditor, get_prefixed, CUSTOM_DATA_FIELD_PREFIX)
+    CUSTOM_DATA_FIELD_PREFIX,
+    CustomDataEditor,
+    get_prefixed,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import Select2Ajax
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
-from corehq.apps.users.forms import NewMobileWorkerForm, generate_strong_password
+from corehq.apps.users.forms import (
+    NewMobileWorkerForm,
+    generate_strong_password,
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.util.quickcache import quickcache
 
-from .models import SQLLocation, LocationType, LocationFixtureConfiguration, LocationRelation
+from .models import (
+    LocationFixtureConfiguration,
+    LocationRelation,
+    LocationType,
+    SQLLocation,
+)
 from .permissions import user_can_access_location_id
 from .signals import location_edited
-from six.moves import filter
 
 
 class LocationSelectWidget(forms.Widget):
@@ -641,6 +648,6 @@ def to_list(value):
     True
 
     """
-    if hasattr(value, '__iter__') and not isinstance(value, six.string_types):
+    if hasattr(value, '__iter__') and not isinstance(value, str):
         return list(value)
     return [value]

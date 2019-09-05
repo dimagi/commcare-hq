@@ -1,11 +1,8 @@
 #source, from django-tracking
 
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf import settings
 import re
-import six
 
 # threadlocals middleware for global usage
 # if this is used elsewhere in your system, consider using that instead of this.
@@ -89,12 +86,12 @@ def dict_diff(current, prev):
     added = dict()
     changed = dict()
 
-    for key, value in six.iteritems(current):
+    for key, value in current.items():
         if key not in prev:
             removed[key] = value
         elif prev[key] != value:
             changed[key] = prev[key]
-    for key, value in six.iteritems(prev):
+    for key, value in prev.items():
         if key not in current:
             added[key] = value
     return added, removed, changed

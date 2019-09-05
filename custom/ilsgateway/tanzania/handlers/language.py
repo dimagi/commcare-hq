@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import LANGUAGE_HELP, LANGUAGE_CONFIRM, LANGUAGE_UNKNOWN
 

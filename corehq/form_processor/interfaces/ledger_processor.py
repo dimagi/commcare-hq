@@ -1,8 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
-import six
 
 
 class StockModelUpdateResult(namedtuple('StockModelUpdate', ['to_save', 'to_delete'])):
@@ -20,7 +17,7 @@ class StockModelUpdateResult(namedtuple('StockModelUpdate', ['to_save', 'to_dele
         )
 
 
-class LedgerDBInterface(six.with_metaclass(ABCMeta, object)):
+class LedgerDBInterface(metaclass=ABCMeta):
     """
     A very lightweight in-memory processing DB for ledgers, modeled after the CaseDb.
 
@@ -56,7 +53,7 @@ class LedgerDBInterface(six.with_metaclass(ABCMeta, object)):
         pass
 
 
-class LedgerProcessorInterface(six.with_metaclass(ABCMeta, object)):
+class LedgerProcessorInterface(metaclass=ABCMeta):
     def __init__(self, domain):
         self.domain = domain
 

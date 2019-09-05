@@ -236,6 +236,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             var self = {};
 
             self.caseConfig = caseConfig;
+            self.hasPrivilege = true;
 
             self.getCaseTags = function (type, action) {
                 var tags = [],

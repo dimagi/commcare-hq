@@ -1,7 +1,7 @@
-from __future__ import absolute_import
-from corehq.apps.sms.models import SMS
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.interface import ReadOnlyDocumentStore
+
+from corehq.apps.sms.models import SMS
 
 
 class ReadonlySMSDocumentStore(ReadOnlyDocumentStore):

@@ -1,20 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from io import BytesIO
 
-import mock
-import six
 from django.test import SimpleTestCase
+
+import mock
+
+from couchexport.export import export_raw
 
 from corehq.apps.app_manager.models import Application, LinkedApplication
 from corehq.apps.app_manager.ui_translations import (
     get_default_translations_for_download,
     process_ui_translation_upload,
 )
-from corehq.apps.translations.utils import update_app_translations_from_trans_dict
+from corehq.apps.translations.utils import (
+    update_app_translations_from_trans_dict,
+)
 from corehq.util.test_utils import flag_enabled
-from couchexport.export import export_raw
 
 INITIAL_TRANSLATIONS = {
     'en': {
@@ -61,7 +61,7 @@ class TestBulkUiTranslation(SimpleTestCase):
         if data is None:
             data = []
             translations = get_default_translations_for_download(self.app, 'latest')
-            for translation_key, translation_value in six.iteritems(translations):
+            for translation_key, translation_value in translations.items():
                 data.append((translation_key, translation_value))
 
         data = (('translations', tuple(data)),)

@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
+
 from corehq.apps.case_importer.do_import import _check_owner
 from corehq.apps.case_importer.exceptions import InvalidOwnerId
 from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser

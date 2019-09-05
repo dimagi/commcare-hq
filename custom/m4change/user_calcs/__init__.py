@@ -1,5 +1,4 @@
 
-from __future__ import unicode_literals
 
 
 def is_valid_user_by_case(case):

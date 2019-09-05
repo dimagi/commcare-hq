@@ -1,7 +1,3 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
 import datetime
 
@@ -19,7 +15,6 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
     percent_aadhaar_seeded_beneficiaries_help_text, percent_children_enrolled_help_text, \
     percent_pregnant_women_enrolled_help_text, percent_lactating_women_enrolled_help_text, \
     percent_adolescent_girls_enrolled_help_text
-from six.moves import filter
 
 
 class FirstDayOfMay(datetime.datetime):
@@ -1739,8 +1734,8 @@ class TestAWCReport(TestCase):
             {
                 "all": "",
                 "format": "number",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 139,
                 "label": "Registered Households",
                 "frequency": "day",
@@ -1764,9 +1759,9 @@ class TestAWCReport(TestCase):
             )['kpi'][0][1],
             {
                 "all": 5,
-                'color': 'green',
+                'color': 'red',
                 "format": "percent_and_div",
-                "percent": "Data in the previous reporting period was 0",
+                "percent": 0,
                 "value": 1,
                 "label": "Percent Aadhaar-seeded Beneficiaries",
                 "frequency": "day",
@@ -1820,8 +1815,8 @@ class TestAWCReport(TestCase):
             {
                 "all": 2,
                 "format": "percent_and_div",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 2,
                 "label": "Percent pregnant women enrolled for Anganwadi Services",
                 "frequency": "day",
@@ -1846,8 +1841,8 @@ class TestAWCReport(TestCase):
             {
                 "all": 3,
                 "format": "percent_and_div",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 3,
                 "label": "Percent lactating women enrolled for Anganwadi Services",
                 "frequency": "day",
@@ -1980,8 +1975,8 @@ class TestAWCReport(TestCase):
             {
                 "all": "",
                 "format": "number",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 139,
                 "label": "Registered Households",
                 "frequency": "day",
@@ -2005,9 +2000,9 @@ class TestAWCReport(TestCase):
             )['kpi'][0][1],
             {
                 "all": 5,
-                'color': 'green',
+                'color': 'red',
                 "format": "percent_and_div",
-                "percent": "Data in the previous reporting period was 0",
+                "percent": 0,
                 "value": 1,
                 "label": "Percent Aadhaar-seeded Beneficiaries",
                 "frequency": "day",
@@ -2061,8 +2056,8 @@ class TestAWCReport(TestCase):
             {
                 "all": 2,
                 "format": "percent_and_div",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 2,
                 "label": "Percent pregnant women enrolled for Anganwadi Services",
                 "frequency": "day",
@@ -2087,8 +2082,8 @@ class TestAWCReport(TestCase):
             {
                 "all": 3,
                 "format": "percent_and_div",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 3,
                 "label": "Percent lactating women enrolled for Anganwadi Services",
                 "frequency": "day",
@@ -2476,13 +2471,13 @@ class TestAWCReport(TestCase):
             json.dumps({
                 "draw": 1,
                 "last_month": "May 2017",
-                "recordsTotal": 27,
+                "recordsTotal": 32,
                 "months": [
                     "May 2017",
                     "Apr 2017",
                     "Mar 2017"
                 ],
-                "recordsFiltered": 27,
+                "recordsFiltered": 32,
             }, cls=DjangoJSONEncoder)
         )
 

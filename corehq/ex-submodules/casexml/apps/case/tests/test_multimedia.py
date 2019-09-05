@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, timedelta
 import uuid
 import os
@@ -24,7 +22,6 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import TestFileMixin, trap_extra_setup, flag_enabled
-from io import open
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
 CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"

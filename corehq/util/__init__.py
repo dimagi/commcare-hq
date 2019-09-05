@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from django.utils.functional import Promise
 
 from .couch import get_document_or_404

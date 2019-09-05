@@ -140,12 +140,6 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" -o "$CMD" == "py3test" ]; then
         if [ -z "$CMD" ]; then
             CMD=help
         fi
-    else
-        if [ "$CMD" == "py3test" ]; then
-            CMD=test
-            DOCKERFILE=Dockerfile-py3
-            PYTHON_VERSION=py3
-        fi
     fi
     export COMPOSE_FILE=docker/hq-compose.yml
     export COMPOSE_PROJECT_NAME=hqtest
@@ -219,7 +213,6 @@ else
 fi
 # export variables for compose file (they must be set or it complains)
 export DOCKERFILE="${DOCKERFILE:-Dockerfile}"
-export PYTHON_VERSION="${PYTHON_VERSION:-py2}"
 export JS_SETUP="${JS_SETUP:-no}"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
 export REUSE_DB="$REUSE_DB"

@@ -1,22 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from datetime import datetime, timedelta
+
+from django.conf import settings
+from django.test.utils import override_settings
+
+from mock import Mock, patch
+
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+
 from corehq.apps.domain.models import Domain
-from corehq.apps.sms.api import send_sms, incoming
+from corehq.apps.sms.api import incoming, send_sms
 from corehq.apps.sms.models import SMS, QueuedSMS
-from corehq.apps.sms.tasks import process_sms, MAX_TRIAL_SMS, passes_trial_check
+from corehq.apps.sms.tasks import (
+    MAX_TRIAL_SMS,
+    passes_trial_check,
+    process_sms,
+)
 from corehq.apps.sms.tests.util import (
     BaseSMSTest,
+    delete_domain_phone_numbers,
     setup_default_sms_test_backend,
-    delete_domain_phone_numbers
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
-from datetime import datetime, timedelta
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from django.conf import settings
-from django.test.utils import override_settings
-from mock import Mock, patch
-from six.moves import range
 
 
 def patch_datetime_api(timestamp):

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from re import findall
 
@@ -10,7 +8,6 @@ from custom.ilsgateway.tanzania.handlers.ils_stock_report_parser import Formatte
 from custom.ilsgateway.models import SupplyPointStatusTypes, SupplyPointStatusValues, SupplyPointStatus, SLABConfig
 from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE, SOH_CONFIRM, SOH_BAD_FORMAT
 from custom.ilsgateway.slab.utils import overstocked_products
-import six
 
 
 def parse_report(val):
@@ -38,36 +35,20 @@ def parse_report(val):
     [('zi', 10), ('co', 20), ('la', 30)]
     """
 
-    if six.PY3:
-        maketrans = str.maketrans
-        if isinstance(val, bytes):
-            val = val.decode('utf-8')
+    maketrans = str.maketrans
+    if isinstance(val, bytes):
+        val = val.decode('utf-8')
 
-        return [
-            (x[0], int(x[1].replace(' ', '').translate(maketrans("lLO", "110"))))
-            for x in findall(
-                "\s*(?P<code>[A-Za-z]{%(minchars)d,%(maxchars)d})\s*"
-                "(?P<quantity>[+-]?[ ]*[0-9%(numeric_letters)s]+)\s*" % {
-                    "minchars": 2,
-                    "maxchars": 4,
-                    "numeric_letters": "lLO"
-                }, val)
-        ]
-    else:
-        from strop import maketrans
-        if isinstance(val, six.text_type):
-            val = val.encode('utf-8')
-
-        return [
-            (x[0], int(x[1].translate(maketrans("lLO", "110"))))
-            for x in findall(
-                "\s*(?P<code>[A-Za-z]{%(minchars)d,%(maxchars)d})\s*"
-                "(?P<quantity>[+-]?[ ]*[0-9%(numeric_letters)s]+)\s*" % {
-                    "minchars": 2,
-                    "maxchars": 4,
-                    "numeric_letters": "lLO"
-                }, val)
-        ]
+    return [
+        (x[0], int(x[1].replace(' ', '').translate(maketrans("lLO", "110"))))
+        for x in findall(
+            "\s*(?P<code>[A-Za-z]{%(minchars)d,%(maxchars)d})\s*"
+            "(?P<quantity>[+-]?[ ]*[0-9%(numeric_letters)s]+)\s*" % {
+                "minchars": 2,
+                "maxchars": 4,
+                "numeric_letters": "lLO"
+            }, val)
+    ]
 
 
 class SohFormatter(Formatter):

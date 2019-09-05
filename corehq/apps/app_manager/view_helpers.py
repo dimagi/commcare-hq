@@ -1,12 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 from django.http import Http404
+
+from memoized import memoized
+
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.views.base import DomainViewMixin
-from memoized import memoized
-from dimagi.utils.logging import notify_exception
 
 
 class ApplicationViewMixin(DomainViewMixin):
@@ -30,5 +29,5 @@ class ApplicationViewMixin(DomainViewMixin):
         except Http404 as e:
             raise e
         except Exception as e:
-            notify_exception(self.request, message=six.text_type(e))
+            notify_exception(self.request, message=str(e))
         return None

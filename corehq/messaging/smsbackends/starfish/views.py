@@ -1,12 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.starfish.models import StarfishBackend
 from django.http import JsonResponse, HttpResponseBadRequest
-import six
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 class StarfishIncomingView(IncomingBackendView):
@@ -17,8 +12,7 @@ class StarfishIncomingView(IncomingBackendView):
         return StarfishBackend
 
     def clean_value(self, value):
-        if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+        if isinstance(value, str):
             return value.strip()
         return value
 

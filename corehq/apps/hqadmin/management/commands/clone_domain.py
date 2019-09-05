@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 
 from django.core.management.base import BaseCommand, CommandError
@@ -7,12 +5,13 @@ from django.db.models.query import Q
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.locations.models import LocationFixtureConfiguration
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
+from corehq.apps.userreports.dbaccessors import (
+    get_datasources_for_domain,
+    get_report_configs_for_domain,
+)
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.blobs.mixin import BlobMixin
-from six.moves import input
-import six
 
 types = [
     "feature_flags",
@@ -299,7 +298,7 @@ class Command(BaseCommand):
         attachments = {}
         attachment_stubs = None
         if isinstance(doc, BlobMixin) and doc.blobs:
-            attachment_stubs = {k: v.to_json() for k, v in six.iteritems(doc.blobs)}
+            attachment_stubs = {k: v.to_json() for k, v in doc.blobs.items()}
             doc['external_blobs'] = {}
             if doc._attachments:
                 del doc['_attachments']

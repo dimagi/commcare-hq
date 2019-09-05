@@ -1,15 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from collections import defaultdict
 from itertools import chain
 
 from memoized import memoized
 
-from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff, MISSING
+from corehq.apps.tzmigration.timezonemigration import (
+    MISSING,
+    FormJsonDiff,
+    is_datetime_string,
+    json_diff,
+)
 
 from .diffrule import Ignore
-
 
 load_ignore_rules = memoized(lambda: {
     'XFormInstance*': [
@@ -42,6 +43,7 @@ load_ignore_rules = memoized(lambda: {
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
         Ignore('missing', 'location_id', new=MISSING, check=is_supply_point),
         Ignore('missing', '_attachments', new=MISSING),
+        Ignore('type', 'server_modified_on', old=None),
 
         Ignore('diff', check=has_date_values),
         Ignore(check=is_text_xmlns),
@@ -50,6 +52,7 @@ load_ignore_rules = memoized(lambda: {
         ignore_renamed('uid', 'instanceID'),
     ],
     'XFormInstance-Deleted': [
+        Ignore('missing', 'deletion_id', old=MISSING, new=None),
         ignore_renamed('-deletion_id', 'deletion_id'),
         ignore_renamed('-deletion_date', 'deleted_on'),
     ],
@@ -129,6 +132,7 @@ load_ignore_rules = memoized(lambda: {
         ignore_renamed('@date_modified', 'modified_on'),
     ],
     'CommCareCase-Deleted': [
+        Ignore('type', 'modified_on', old=None),
         Ignore('missing', '-deletion_id', old=MISSING, new=None),
         Ignore('missing', 'deletion_id', old=MISSING, new=None),
         Ignore('complex', ('-deletion_id', 'deletion_id'), old=MISSING, new=None),

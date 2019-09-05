@@ -1,17 +1,10 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 import json
 from django.core.management.base import BaseCommand
 from django.db.models import Min
-from six.moves import input
 
 from pillowtop.models import KafkaCheckpoint
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_pillow_by_name
-from io import open
 
 
 PILLOW_REORG_MAPPING = {
@@ -44,7 +37,7 @@ PILLOW_REORG_MAPPING = {
 def pillow_to_checkpoint_id_mapping(reorg_mapping):
     checkpoint_mapping = {}
 
-    for new_pillow_name, old_pillows in six.iteritems(reorg_mapping):
+    for new_pillow_name, old_pillows in reorg_mapping.items():
         new_pillow = get_pillow_by_name(new_pillow_name)
         checkpoint_mapping[new_pillow.checkpoint.checkpoint_id] = []
         checkpoints = []
@@ -132,7 +125,7 @@ class Command(BaseCommand):
             self._create_checkpoints(checkpoint_id_mapping, True)
 
     def _create_checkpoints(self, checkpoint_id_mapping, skip_check):
-        for new_checkpoint_id, (old_checkpoint_ids, new_topics) in six.iteritems(checkpoint_id_mapping):
+        for new_checkpoint_id, (old_checkpoint_ids, new_topics) in checkpoint_id_mapping.items():
             print("\nCalculating checkpoints for {}\n".format(new_checkpoint_id))
             old_checkpoints = KafkaCheckpoint.objects.filter(checkpoint_id__in=old_checkpoint_ids, topic__in=new_topics)
             topic_partitions = old_checkpoints.values('topic', 'partition').distinct()

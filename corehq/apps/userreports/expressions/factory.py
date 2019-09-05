@@ -1,28 +1,52 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import functools
 import json
 
 from django.utils.translation import ugettext as _
+
 from jsonobject.exceptions import BadValueError
-import six
+
+from dimagi.utils.parsing import json_format_date, json_format_datetime
+from dimagi.utils.web import json_handler
 
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.expressions.specs import (
-    PropertyNameGetterSpec, PropertyPathGetterSpec,
-    ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec,
-    IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec,
-    NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec,
-    IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec,
-    CaseSharingGroupsExpressionSpec, ReportingGroupsExpressionSpec, CoalesceExpressionSpec,
+from corehq.apps.userreports.expressions.date_specs import (
+    AddDaysExpressionSpec,
+    AddMonthsExpressionSpec,
+    DiffDaysExpressionSpec,
+    MonthEndDateExpressionSpec,
+    MonthStartDateExpressionSpec,
 )
-from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
-    MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
-from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
-    MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec, SortItemsExpressionSpec
-from dimagi.utils.parsing import json_format_datetime, json_format_date
-from dimagi.utils.web import json_handler
+from corehq.apps.userreports.expressions.list_specs import (
+    FilterItemsExpressionSpec,
+    FlattenExpressionSpec,
+    MapItemsExpressionSpec,
+    ReduceItemsExpressionSpec,
+    SortItemsExpressionSpec,
+)
+from corehq.apps.userreports.expressions.specs import (
+    ArrayIndexExpressionSpec,
+    CaseSharingGroupsExpressionSpec,
+    CoalesceExpressionSpec,
+    ConditionalExpressionSpec,
+    ConstantGetterSpec,
+    DictExpressionSpec,
+    EvalExpressionSpec,
+    FormsExpressionSpec,
+    IdentityExpressionSpec,
+    IterationNumberExpressionSpec,
+    IteratorExpressionSpec,
+    NamedExpressionSpec,
+    NestedExpressionSpec,
+    PropertyNameGetterSpec,
+    PropertyPathGetterSpec,
+    RelatedDocExpressionSpec,
+    ReportingGroupsExpressionSpec,
+    RootDocExpressionSpec,
+    SplitStringExpressionSpec,
+    SubcasesExpressionSpec,
+    SwitchExpressionSpec,
+)
 
 
 def _make_filter(spec, context):
@@ -71,7 +95,7 @@ def _switch_expression(spec, context):
     wrapped = SwitchExpressionSpec.wrap(spec)
     wrapped.configure(
         ExpressionFactory.from_spec(wrapped.switch_on, context),
-        {k: ExpressionFactory.from_spec(v, context) for k, v in six.iteritems(wrapped.cases)},
+        {k: ExpressionFactory.from_spec(v, context) for k, v in wrapped.cases.items()},
         ExpressionFactory.from_spec(wrapped.default, context),
     )
     return wrapped

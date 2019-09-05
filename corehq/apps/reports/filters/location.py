@@ -1,14 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy
+
 from memoized import memoized
+
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.controllers import (
     LocationGroupOptionsController,
 )
-from .users import ExpandedMobileWorkerFilter
+
 from .api import EmwfOptionsView
-from django.urls import reverse
-from django.utils.translation import ugettext_lazy
+from .users import ExpandedMobileWorkerFilter
 
 
 class LocationGroupFilter(ExpandedMobileWorkerFilter):

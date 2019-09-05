@@ -1,13 +1,7 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import abc
 
-import six
 
-
-class AbstractRateCounter(six.with_metaclass(abc.ABCMeta)):
+class AbstractRateCounter(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get(self, scope):
         raise NotImplementedError()

@@ -1,9 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from dimagi.utils.parsing import json_format_datetime
+
 from corehq.apps.domain.models import Domain
 from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couch_helpers import paginate_view
-from dimagi.utils.parsing import json_format_datetime
 
 
 def get_doc_count_in_domain_by_class(domain, doc_class):

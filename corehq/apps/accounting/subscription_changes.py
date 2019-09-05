@@ -1,35 +1,37 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import json
 import time
 
-from couchdbkit import ResourceConflict
+from django.db import transaction
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _, ungettext
+from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ungettext
+
+from couchdbkit import ResourceConflict
 
 from corehq import privileges
-from corehq.apps.accounting.utils import (
-    log_accounting_error,
-    get_privileges,
-)
+from corehq.apps.accounting.utils import get_privileges, log_accounting_error
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.userreports.exceptions import (
+    DataSourceConfigurationNotFoundError,
+)
 from corehq.apps.users.models import CommCareUser, UserRole
-from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
+    AlertSchedule,
     ImmediateBroadcast,
     ScheduledBroadcast,
-    AlertSchedule,
     TimedSchedule,
 )
-from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
-from django.db import transaction
+from corehq.messaging.scheduling.tasks import (
+    refresh_alert_schedule_instances,
+    refresh_timed_schedule_instances,
+)
 
 
 class BaseModifySubscriptionHandler(object):

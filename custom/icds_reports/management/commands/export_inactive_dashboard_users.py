@@ -1,5 +1,4 @@
-from __future__ import absolute_import, unicode_literals
-import csv342 as csv
+import csv
 import re
 from datetime import datetime, timedelta
 
@@ -7,7 +6,6 @@ import os
 from django.core.management import BaseCommand
 
 from custom.icds_reports.tasks import get_dashboard_users_not_logged_in
-from io import open
 from corehq.apps.users.models import CommCareUser
 
 dashboard_uname_rx = re.compile(r'^\d*\.[a-zA-Z]*@.*')

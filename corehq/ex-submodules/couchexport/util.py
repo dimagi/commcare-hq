@@ -1,19 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import functools
 from inspect import isfunction
 import json
 from dimagi.ext.couchdbkit import Property
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_handler
-import six
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def force_tag_to_list(export_tag):
-    if isinstance(export_tag, six.string_types):
-        soft_assert_type_text(export_tag)
+    if isinstance(export_tag, str):
         export_tag = [export_tag]
     assert isinstance(export_tag, list)
     return export_tag

@@ -1,13 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+
 from dropbox import Dropbox
 from dropbox.exceptions import AuthError
 
-from .exceptions import DropboxUploadAlreadyInProgress, DropboxInvalidToken
+from .exceptions import DropboxInvalidToken, DropboxUploadAlreadyInProgress
 from .tasks import upload
 
 

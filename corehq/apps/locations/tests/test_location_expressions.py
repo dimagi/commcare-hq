@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
+
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import EvaluationContext
 

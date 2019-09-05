@@ -1,52 +1,53 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
-from mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.export.models.new import MAIN_TABLE, \
-    PathNode, _question_path_to_path_nodes
-from corehq.apps.export.tests.util import assertContainsExportItems
+from mock import patch
 
-from corehq.util.context_managers import drop_connected_signals
-from corehq.util.test_utils import softer_assert
-from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.models import (
-    XForm,
-    Application,
-    OpenSubCaseAction,
     AdvancedModule,
-    Module,
     AdvancedOpenCaseAction,
-    CaseReferences, CaseIndex, Form)
-from corehq.apps.app_manager.signals import app_post_save
-from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
-from corehq.apps.export.tasks import add_inferred_export_properties
-from corehq.apps.export.models import (
-    FormExportDataSchema,
-    CaseExportDataSchema,
-    ExportDataSchema,
-    InferredExportGroupSchema,
-    CaseInferredSchema,
-    ExportGroupSchema,
-    ExportItem,
-    GeopointItem,
-    ScalarItem,
-    LabelItem,
-    PARENT_CASE_TABLE,
+    Application,
+    CaseIndex,
+    CaseReferences,
+    Form,
+    Module,
+    OpenSubCaseAction,
+    XForm,
 )
+from corehq.apps.app_manager.signals import app_post_save
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.export.const import (
-    KNOWN_CASE_PROPERTIES,
-    PROPERTY_TAG_UPDATE,
-    FORM_DATA_SCHEMA_VERSION,
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
+    FORM_DATA_SCHEMA_VERSION,
+    KNOWN_CASE_PROPERTIES,
+    PROPERTY_TAG_UPDATE,
 )
-from six.moves import filter
-from six.moves import map
-from six.moves import zip
+from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
+from corehq.apps.export.models import (
+    PARENT_CASE_TABLE,
+    CaseExportDataSchema,
+    CaseInferredSchema,
+    ExportDataSchema,
+    ExportGroupSchema,
+    ExportItem,
+    FormExportDataSchema,
+    GeopointItem,
+    InferredExportGroupSchema,
+    LabelItem,
+    ScalarItem,
+)
+from corehq.apps.export.models.new import (
+    MAIN_TABLE,
+    PathNode,
+    _question_path_to_path_nodes,
+)
+from corehq.apps.export.tasks import add_inferred_export_properties
+from corehq.apps.export.tests.util import assertContainsExportItems
+from corehq.util.context_managers import drop_connected_signals
+from corehq.util.test_utils import softer_assert
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):

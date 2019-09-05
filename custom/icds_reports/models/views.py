@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from django.db import models
 
 from custom.icds_reports.models.manager import CitusComparisonManager

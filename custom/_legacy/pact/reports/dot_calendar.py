@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from calendar import HTMLCalendar
 from calendar import month_name
 from datetime import date, timedelta, datetime

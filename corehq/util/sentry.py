@@ -1,9 +1,5 @@
-from __future__ import absolute_import, unicode_literals
-
 import traceback
 
-from six import string_types
-from six.moves import filter
 import re
 from django.conf import settings
 from django.db.utils import OperationalError
@@ -82,7 +78,7 @@ class HQSanitzeSystemPasswordsProcessor(SanitizePasswordsProcessor):
 
     def sanitize(self, key, value):
         value = super(HQSanitzeSystemPasswordsProcessor, self).sanitize(key, value)
-        if value and isinstance(value, string_types):
+        if value and isinstance(value, str):
             return self._regex.sub(self.MASK, value)
         return value
 

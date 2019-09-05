@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 from django.test.testcases import TestCase
 from django.test.client import RequestFactory
 from django.core.urlresolvers import reverse

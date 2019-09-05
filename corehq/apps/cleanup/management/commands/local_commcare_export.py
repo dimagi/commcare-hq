@@ -1,22 +1,29 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
-import sys
-
 import os
+import sys
 from collections import namedtuple
 
-import dateutil
 from django.core.management.base import BaseCommand, CommandError
+
+import dateutil
 from requests import ConnectionError
 from tastypie.bundle import Bundle
 
-from corehq.apps.api.es import ElasticAPIQuerySet, CaseES, es_search_by_params, XFormES
+from corehq.apps.api.es import (
+    CaseES,
+    ElasticAPIQuerySet,
+    XFormES,
+    es_search_by_params,
+)
 from corehq.apps.api.models import ESCase, ESXFormInstance
-from corehq.apps.api.resources.v0_4 import CommCareCaseResource, XFormInstanceResource
-from corehq.apps.api.serializers import CommCareCaseSerializer, XFormInstanceSerializer
+from corehq.apps.api.resources.v0_4 import (
+    CommCareCaseResource,
+    XFormInstanceResource,
+)
+from corehq.apps.api.serializers import (
+    CommCareCaseSerializer,
+    XFormInstanceSerializer,
+)
 from corehq.elastic import ESError
 
 

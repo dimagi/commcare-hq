@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import print_function
 from django.core.management.base import BaseCommand
 
 from couchdbkit import ResourceNotFound
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
-from six.moves import input
 
 
 class Command(BaseCommand):

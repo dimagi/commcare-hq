@@ -1,8 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
+
 from corehq.apps.userreports.sql import get_column_name
-from corehq.apps.userreports.util import get_table_name, truncate_value, UCR_TABLE_PREFIX
+from corehq.apps.userreports.util import (
+    UCR_TABLE_PREFIX,
+    get_table_name,
+    truncate_value,
+)
 
 
 class UtilitiesTestCase(SimpleTestCase):

@@ -104,6 +104,19 @@
                                           {% endblocktrans %}">
                                     </span>
               </th>
+              {% if commtrack_enabled %}
+                <th>
+                  {% trans "Tracks Stock" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Tracks Stock" %}"
+                        data-content="{% blocktrans %}
+                                        Does this location keep inventory and track stock?
+                                        Note that changing this property will update all
+                                        locations of this level accordingly.
+                                      {% endblocktrans %}">
+                  </span>
+                </th>
+              {% endif %}
               <th>
                 {% trans "Owns Cases" %}
                 <span class="hq-help-template"

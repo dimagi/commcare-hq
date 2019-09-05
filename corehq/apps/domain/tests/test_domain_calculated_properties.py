@@ -1,17 +1,16 @@
-from __future__ import print_function, unicode_literals
-from __future__ import absolute_import
 import json
 
 from django.test import TestCase
 
-from corehq.apps.domain.models import Domain
+from pillowtop.es_utils import initialize_index_and_mapping
+
 from corehq.apps.domain.calculations import all_domain_stats, calced_props
+from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class DomainCalculatedPropertiesTest(TestCase):

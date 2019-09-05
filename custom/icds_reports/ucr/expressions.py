@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 
 from jsonobject.base_properties import DefaultProperty
 from quickcache.django_quickcache import get_django_quickcache
-from six.moves import filter
 
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.case.xform import extract_case_blocks

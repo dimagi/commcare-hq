@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 
 from django.core.management.base import BaseCommand
+
 from couchdbkit.client import Database
 
 logger = logging.getLogger(__name__)

@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from datetime import date
+
 import sqlalchemy
 from sqlalchemy import *
-from datetime import date
 
 from corehq.sql_db.connections import connection_manager
 

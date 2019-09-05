@@ -1,13 +1,7 @@
 #!/usr/bin/python
 
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import sys
 import os
-from six.moves import zip
-from io import open
 
 
 def get_stats(path, build_slug):
@@ -35,7 +29,7 @@ def get_templates(col_widths):
     col_1 = '{{:<{}}}'.format(col_widths[0])
     col_n = ''.join('{{:<{}}}'.format(width) for width in col_widths[1:])
     row_template = col_1 + col_n
-    
+
     return header_template, row_template
 
 

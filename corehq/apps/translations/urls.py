@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from django.conf.urls import url
 
 from corehq.apps.translations.integrations.transifex.views import (
@@ -8,9 +5,9 @@ from corehq.apps.translations.integrations.transifex.views import (
     BlacklistTranslations,
     ConvertTranslations,
     DownloadTranslations,
+    MigrateTransifexProject,
     PullResource,
     delete_translation_blacklist,
-    MigrateTransifexProject,
 )
 
 urlpatterns = [

@@ -1,16 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import functools
 from couchdbkit.ext.django import schema
 import datetime
 import sqlalchemy
 
-from corehq.util.python_compatibility import soft_assert_type_text
 from .util import get_indicator_model, default_null_value_placeholder
 from .calculators import Calculator
 from .const import ALL_TYPES, TYPE_STRING
-import six
-from six.moves import zip
 
 
 class FlatField(schema.StringProperty):
@@ -33,8 +28,7 @@ class FlatField(schema.StringProperty):
 
     def calculate(self, item):
         result = self.fn(item)
-        assert isinstance(result, six.string_types)
-        soft_assert_type_text(result)
+        assert isinstance(result, str), type(result)
         return result
 
 
@@ -81,7 +75,7 @@ class IndicatorDocumentMeta(schema.DocumentMeta):
         return cls
 
 
-class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Document)):
+class IndicatorDocument(schema.Document, metaclass=IndicatorDocumentMeta):
 
     base_doc = 'IndicatorDocument'
 
@@ -114,8 +108,7 @@ class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Documen
     @property
     def wrapped_group_by(self):
         def _wrap_if_necessary(string_or_attribute_getter):
-            if isinstance(string_or_attribute_getter, six.string_types):
-                soft_assert_type_text(string_or_attribute_getter)
+            if isinstance(string_or_attribute_getter, str):
                 getter = AttributeGetter(string_or_attribute_getter)
             else:
                 getter = string_or_attribute_getter
@@ -275,9 +268,6 @@ class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Documen
 
                 def __eq__(x, y):
                     return x.__key() == y.__key()
-
-                def __ne__(self, other):
-                    return not self.__eq__(other)
 
                 def __hash__(self):
                     return hash(self.__key())

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.form_processor.tests.utils import partitioned
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,

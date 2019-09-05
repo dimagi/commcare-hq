@@ -1,8 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from celery.task import task
-from corehq.pillows.case_search import delete_case_search_cases, \
-    CaseSearchReindexerFactory
+
+from corehq.pillows.case_search import (
+    CaseSearchReindexerFactory,
+    delete_case_search_cases,
+)
 
 
 @task(serializer='pickle')

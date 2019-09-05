@@ -1,9 +1,8 @@
-from __future__ import absolute_import
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (
-    send_sms_to_verified_number,
     MessageMetadata,
     add_msg_tags,
+    send_sms_to_verified_number,
 )
 from corehq.apps.sms.models import WORKFLOW_DEFAULT, MessagingEvent
 

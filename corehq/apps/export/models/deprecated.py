@@ -1,18 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import hashlib
+
 from couchdbkit.exceptions import ResourceNotFound
+
 from dimagi.ext.couchdbkit import (
-    Document, DocumentSchema, ListProperty, StringProperty,
-    IntegerProperty, SetProperty, SchemaDictProperty
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    SchemaDictProperty,
+    SetProperty,
+    StringProperty,
 )
+from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.app_manager.dbaccessors import get_build_ids_after_version
 from corehq.apps.app_manager.exceptions import AppManagerException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import is_remote_app
-from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id
-from dimagi.utils.couch.database import iter_docs
-import six
-from six.moves import map
 
 
 class QuestionMeta(DocumentSchema):
@@ -37,8 +41,8 @@ class FormQuestionSchema(Document):
     xmlns = StringProperty(required=True)
 
     last_processed_version = IntegerProperty(default=0)
-    processed_apps = SetProperty(six.text_type)
-    apps_with_errors = SetProperty(six.text_type)
+    processed_apps = SetProperty(str)
+    apps_with_errors = SetProperty(str)
     question_schema = SchemaDictProperty(QuestionMeta)
 
     class Meta(object):
@@ -93,7 +97,7 @@ class FormQuestionSchema(Document):
             self._id = self._get_id(self.domain, self.app_id, self.xmlns)
 
     def update_schema(self):
-        all_app_ids = get_built_app_ids_for_app_id(
+        all_app_ids = get_build_ids_after_version(
             self.domain,
             self.app_id,
             self.last_processed_version

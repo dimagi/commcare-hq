@@ -1,26 +1,24 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from copy import deepcopy
 
 from django.test.testcases import SimpleTestCase
 
 from corehq.apps.es import filters
 from corehq.apps.es.aggregations import (
-    TermsAggregation,
+    AggregationRange,
+    AggregationTerm,
+    ExtendedStatsAggregation,
     FilterAggregation,
     FiltersAggregation,
-    RangeAggregation,
-    AggregationRange,
-    StatsAggregation,
-    ExtendedStatsAggregation,
-    TopHitsAggregation,
     MissingAggregation,
     NestedAggregation,
-    SumAggregation,
     NestedTermAggregationsHelper,
-    AggregationTerm,
+    RangeAggregation,
+    StatsAggregation,
+    SumAggregation,
+    TermsAggregation,
+    TopHitsAggregation,
 )
-from corehq.apps.es.es_query import HQESQuery, ESQuerySet
+from corehq.apps.es.es_query import ESQuerySet, HQESQuery
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT
 

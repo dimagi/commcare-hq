@@ -1,42 +1,44 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from io import BytesIO
-from django.http.response import HttpResponseServerError
-from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
-from corehq.util.files import file_extention_from_filename
-from couchexport.writers import Excel2007ExportWriter
-from couchexport.models import Format
-from couchdbkit import ResourceNotFound
-from corehq.apps.commtrack.util import get_or_create_default_program
-from django.views.decorators.http import require_POST
-from django.urls import reverse
-from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.utils.translation import ugettext as _, ugettext_noop
+
 from django.contrib import messages
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http.response import HttpResponseServerError
+from django.shortcuts import render
+from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+from django.views.decorators.http import require_POST
+
+from couchdbkit import ResourceNotFound
+from memoized import memoized
+
+from couchexport.models import Format
+from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.web import json_response
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
-from dimagi.utils.web import json_response
-from dimagi.utils.couch.database import iter_docs
-from memoized import memoized
-from corehq.apps.products.tasks import import_products_async
-from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.products.forms import ProductForm
+
+from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
+from corehq.apps.commtrack.util import (
+    encode_if_needed,
+    get_or_create_default_program,
+)
 from corehq.apps.commtrack.views import BaseCommTrackManageView
-from corehq.apps.commtrack.util import encode_if_needed
-from corehq.apps.programs.models import Program
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
 )
-import six
-from six.moves import range
-from six.moves import map
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.products.forms import ProductForm
+from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.tasks import import_products_async
+from corehq.apps.programs.models import Program
+from corehq.util.files import file_extention_from_filename
 
 
 @require_POST
@@ -364,7 +366,7 @@ def download_products(request, domain):
         model_data = {}
         uncategorized_data = {}
 
-        for prop, val in six.iteritems(product.product_data):
+        for prop, val in product.product_data.items():
             if prop in product_data_fields:
                 model_data['data: ' + prop] = encode_if_needed(val)
             else:
@@ -373,7 +375,8 @@ def download_products(request, domain):
         return model_data, uncategorized_data
 
     def _get_products(domain):
-        for p_doc in iter_docs(Product.get_db(), Product.ids_by_domain(domain)):
+        product_ids = SQLProduct.objects.filter(domain=domain).product_ids()
+        for p_doc in iter_docs(Product.get_db(), product_ids):
             # filter out archived products from export
             if not ('is_archived' in p_doc and p_doc['is_archived']):
                 yield Product.wrap(p_doc)

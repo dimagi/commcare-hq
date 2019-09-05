@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 
 from django.test import TestCase
+
 from elasticsearch.exceptions import ConnectionError
 from mock import patch
 
@@ -11,25 +10,24 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import create_real_cases_from_dummy_cases
 from couchforms.models import XFormInstance
 from pillowtop.es_utils import initialize_index_and_mapping
-from testapps.test_pillowtop.utils import process_pillow_changes
 
 from corehq.apps.hqcase.analytics import (
-    get_number_of_cases_in_domain_of_type,
     get_number_of_cases_in_domain,
+    get_number_of_cases_in_domain_of_type,
 )
 from corehq.apps.hqcase.dbaccessors import (
     get_all_case_owner_ids,
-    get_cases_in_domain,
     get_case_ids_in_domain,
     get_case_ids_in_domain_by_owner,
+    get_cases_in_domain,
 )
-from corehq.elastic import get_es_new, EsMeta
+from corehq.elastic import EsMeta, get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
-from six.moves import range
+from corehq.util.test_utils import create_and_save_a_case, trap_extra_setup
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 
 class DBAccessorsTest(TestCase):
