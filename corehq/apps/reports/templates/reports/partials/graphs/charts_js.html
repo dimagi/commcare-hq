@@ -1,8 +1,6 @@
-{% load compress %}
 {% load hq_shared_tags %}
+{# This file may be compressed; it should contain only script tags #}
 
-{% compress js %}
-  <script src="{% static 'reports/js/charts/pie_chart.js' %}"></script>
-  <script src="{% static 'reports/js/charts/multibar_chart.js' %}"></script>
-  <script src="{% static 'reports/js/charts/main.js' %}"></script>
-{% endcompress %}
+<script src="{% static 'reports/js/charts/pie_chart.js' %}"></script>
+<script src="{% static 'reports/js/charts/multibar_chart.js' %}"></script>
+<script src="{% static 'reports/js/charts/main.js' %}"></script>
