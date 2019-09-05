@@ -2492,7 +2492,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_pregnant_first_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.date', FirstDayOfMayDate):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_awc_report_pregnant(
                 start=0,
                 length=10,
@@ -2525,7 +2525,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_pregnant_details_first_record_first_trimester(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.date', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_pregnant_details(
                 case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
                 awc_id='a15'
@@ -2536,7 +2536,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_pregnant_details_first_record_second_trimester(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.date', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_pregnant_details(
                 case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
                 awc_id='a15'
@@ -2567,7 +2567,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_pregnant_details_first_record_third_trimester(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.date', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_pregnant_details(
                 case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
                 awc_id='a15'
