@@ -1,4 +1,3 @@
-
 import datetime
 
 from django.utils.functional import cached_property

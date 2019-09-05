@@ -1,4 +1,3 @@
-
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_released_app,

@@ -1,4 +1,3 @@
-
 from django.core.serializers.python import Deserializer
 from django.test import SimpleTestCase
 

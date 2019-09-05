@@ -1,4 +1,3 @@
-
 from couchdbkit.exceptions import ResourceNotFound
 from jsonobject.exceptions import WrappingAttributeError
 

@@ -1,4 +1,3 @@
-
 from django.urls import NoReverseMatch
 from django.utils import html
 from django.utils.translation import ugettext as _

@@ -1,4 +1,3 @@
-
 from collections import OrderedDict
 
 from dateutil.rrule import rrule, MONTHLY

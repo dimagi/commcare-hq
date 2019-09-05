@@ -1,4 +1,3 @@
-
 import ghdiff
 from memoized import memoized
 

@@ -1,4 +1,3 @@
-
 from django.test import TestCase
 
 from custom.icds_reports.reports.service_delivery_dashboard import get_service_delivery_data

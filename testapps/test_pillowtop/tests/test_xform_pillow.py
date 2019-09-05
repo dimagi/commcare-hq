@@ -1,4 +1,3 @@
-
 from decimal import Decimal
 
 from django.test.testcases import SimpleTestCase, TestCase

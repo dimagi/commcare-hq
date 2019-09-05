@@ -1,4 +1,3 @@
-
 from django.test import TestCase
 
 from custom.icds_reports.messages import percent_children_enrolled_help_text, \

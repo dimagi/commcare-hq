@@ -1,4 +1,3 @@
-
 from custom.champ.tests.utils import ChampTestCase
 from custom.champ.views import PrevisionVsAchievementsTableView
 

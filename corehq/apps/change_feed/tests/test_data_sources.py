@@ -1,4 +1,3 @@
-
 from django.test import SimpleTestCase, override_settings
 
 from casexml.apps.phone.document_store import ReadonlySyncLogDocumentStore

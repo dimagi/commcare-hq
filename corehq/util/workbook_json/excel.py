@@ -1,4 +1,3 @@
-
 import io
 from zipfile import BadZipfile
 from tempfile import NamedTemporaryFile

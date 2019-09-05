@@ -1,5 +1,3 @@
-
-
 from django.test.utils import override_settings
 
 from django.test import TestCase

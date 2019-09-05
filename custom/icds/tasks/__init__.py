@@ -1,4 +1,3 @@
-
 from datetime import timedelta, datetime
 from celery.schedules import crontab
 from celery.task import periodic_task

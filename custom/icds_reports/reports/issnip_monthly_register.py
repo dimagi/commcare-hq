@@ -1,5 +1,3 @@
-
-
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, CcsRecordMonthly, \
     AggChildHealthMonthly, ChildHealthMonthly, AggCcsRecordMonthly

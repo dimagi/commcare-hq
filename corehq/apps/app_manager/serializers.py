@@ -1,4 +1,3 @@
-
 from rest_framework import serializers
 
 from corehq.apps.app_manager.models import LatestEnabledBuildProfiles

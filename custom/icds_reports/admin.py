@@ -1,4 +1,3 @@
-
 from django.contrib import admin
 
 from custom.icds_reports.models import AggregateSQLProfile
