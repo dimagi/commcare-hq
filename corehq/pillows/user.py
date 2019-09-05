@@ -31,7 +31,7 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
     if not user_id:
         return
 
-    if not _user_exists_in_couch(user_id):
+    if _user_exists_in_couch(user_id):
         return
 
     if not doc_exists_in_es(USER_INDEX_INFO, user_id):
