@@ -13,7 +13,7 @@ from dimagi.utils.chunked import chunked
 
 import boto3
 from botocore.client import Config
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, HTTPClientError
 from botocore.utils import fix_s3_host
 
 DEFAULT_S3_BUCKET = "blobdb"
@@ -210,7 +210,7 @@ def get_file_size(fileobj):
 def maybe_not_found(throw=None):
     try:
         yield
-    except ClientError as err:
+    except (ClientError, HTTPClientError) as err:
         if not is_not_found(err):
             raise
         datadog_counter('commcare.blobdb.notfound')
