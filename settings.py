@@ -198,7 +198,6 @@ DEFAULT_APPS = (
     'two_factor',
     'ws4redis',
     'statici18n',
-    'raven.contrib.django.raven_compat',
     'django_user_agents',
 )
 
@@ -863,10 +862,12 @@ CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
 
-SENTRY_PUBLIC_KEY = None
-SENTRY_PRIVATE_KEY = None
-SENTRY_PROJECT_ID = None
-SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
+SENTRY_DSN = None
+SENTRY_REPOSITORY = 'dimagi/commcare-hq'
+SENTRY_ORGANIZATION_SLUG = 'dimagi'
+SENTRY_PROJECT_SLUG = 'commcarehq'
+
+# used for creating releases and deploys
 SENTRY_API_KEY = None
 
 OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
@@ -1098,10 +1099,6 @@ LOGGING = {
         'null': {
             'class': 'logging.NullHandler',
         },
-        'sentry': {
-            'level': 'ERROR',
-            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
-        },
         'soft_asserts': {
             "level": "DEBUG",
             'class': 'logging.handlers.RotatingFileHandler',
@@ -1130,7 +1127,7 @@ LOGGING = {
             'propagate': False,
         },
         'django': {
-            'handlers': ['sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1145,7 +1142,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1198,11 +1195,6 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'WARNING',
             'propagate': True
-        },
-        'sentry.errors.uncaught': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
         },
         'soft_asserts': {
             'handlers': ['soft_asserts', 'console'],
@@ -2090,18 +2082,38 @@ REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
 }
 
-SENTRY_CONFIGURED = False
-_raven_config = helper.configure_sentry(
-    BASE_DIR,
-    SERVER_ENVIRONMENT,
-    SENTRY_PUBLIC_KEY,
-    SENTRY_PRIVATE_KEY,
-    SENTRY_PROJECT_ID
-)
-if _raven_config:
-    RAVEN_CONFIG = _raven_config
+if not SENTRY_DSN:
+    pub_key = globals().get('SENTRY_PUBLIC_KEY')
+    priv_key = globals().get('SENTRY_PRIVATE_KEY')
+    project_id = globals().get('SENTRY_PROJECT_ID')
+    if pub_key and priv_key and project_id:
+        SENTRY_DSN = 'https://{pub_key}:{priv_key}@sentry.io/{project_id}'.format(
+            pub_key=pub_key,
+            priv_key=priv_key,
+            project_id=project_id
+        )
+
+        import warnings
+        warnings.warn(inspect.cleandoc(f"""SENTRY configuration has changed
+
+            Please replace SENTRY_PUBLIC_KEY, SENTRY_PRIVATE_KEY, SENTRY_PROJECT_ID with SENTRY_DSN:
+
+            SENTRY_DSN = {SENTRY_DSN}
+
+            The following settings are also recommended:
+                SENTRY_ORGANIZATION_SLUG
+                SENTRY_PROJECT_SLUG
+                SENTRY_REPOSITORY
+
+            SENTRY_QUERY_URL is not longer needed.
+            """), DeprecationWarning)
+
+if SENTRY_DSN:
+    if 'SENTRY_QUERY_URL' not in globals():
+        SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
+    helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
     SENTRY_CONFIGURED = True
-    SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
+
 
 CSRF_COOKIE_HTTPONLY = True
 if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
