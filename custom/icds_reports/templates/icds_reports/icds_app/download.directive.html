@@ -7,7 +7,10 @@
     <info-message></info-message>
     <div class="report-content report-content-without-message">
         <div class="alert alert-info" ng-show="$ctrl.showWarning()">
-            <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
+            <strong>Info!</strong> You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month.
+        </div>
+        <div class="alert alert-info" ng-show="$ctrl.isChildBeneficiaryListSelected()">
+            <strong>Info!</strong> This report contains growth monitoring information for children up to 5 years old.
         </div>
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isChildBeneficiaryListSelected() && $ctrl.hasErrors()">
             <strong>Please make the following selections before you can export:</strong>
