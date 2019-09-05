@@ -178,7 +178,7 @@ class BlobStream(RawIOBase):
         return self._blob_db()
 
 
-def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
+def is_not_found(err, not_found_codes=("NoSuchKey", "NoSuchBucket", "404")):
     return (err.response["Error"]["Code"] in not_found_codes or
         err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes)
 
