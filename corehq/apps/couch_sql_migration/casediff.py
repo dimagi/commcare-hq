@@ -264,14 +264,14 @@ class CaseDiffQueue(object):
 
     def _load_resume_state(self):
         state = self.statedb.pop_resume_state(type(self).__name__, {})
+        if "num_diffed_cases" in state:
+            self.num_diffed_cases = state["num_diffed_cases"]
         if "to_diff" in state:
             for chunk in chunked(state["to_diff"], self.BATCH_SIZE, list):
                 self.diff_batcher.spawn(self._enqueue_cases, chunk)
         if "pending" in state:
             for chunk in chunked(state["pending"].items(), self.BATCH_SIZE, list):
                 self._async_load_cases(dict(chunk))
-        if "num_diffed_cases" in state:
-            self.num_diffed_cases = state["num_diffed_cases"]
 
     def run_status_logger(self):
         """Start periodic status logger in a greenlet
