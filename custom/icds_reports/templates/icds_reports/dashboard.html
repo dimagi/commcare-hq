@@ -50,6 +50,11 @@
         <script src="{% static 'topojson/topojson.js' %}"></script>
         <script src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
 {% endcompress %}
+{% comment %}
+These topojson files are excluded from compression because:
+ 1. They are large and cause out of memory errors on some environments
+ 2. They are likely already sufficiently compressed
+{% endcomment %}
         <script src="{% static 'js/topojsons/states_v2.topojson.js' %}"></script>
         <script src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
         <script src="{% static 'js/topojsons/blocks_v3.topojson.js' %}"></script>
