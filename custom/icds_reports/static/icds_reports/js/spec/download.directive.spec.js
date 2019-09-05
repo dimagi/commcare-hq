@@ -20,6 +20,7 @@ describe('Download Directive', function () {
                 ['awc', ['supervisor']],
             ]);
             $provide.constant("haveAccessToFeatures", false);
+        $provide.constant("isAlertActive", false);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -258,6 +259,7 @@ describe('Download Directive', function () {
                 ['state', [null]],
                 ['supervisor', ['block']]]);
             $provide.constant("haveAccessToFeatures", true);
+            $provide.constant("isAlertActive", false);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -363,6 +365,7 @@ describe('Download Directive', function () {
                 ['state', [null]],
                 ['supervisor', ['block']]]);
             $provide.constant("haveAccessToFeatures", false);
+            $provide.constant("isAlertActive", false);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {

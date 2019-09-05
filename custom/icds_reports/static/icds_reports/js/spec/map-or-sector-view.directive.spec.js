@@ -13,6 +13,7 @@ describe('Map Or Sector View Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("isAlertActive", false);
     }));
 
     beforeEach(inject(function ($controller, _$location_, storageService, locationsService) {
