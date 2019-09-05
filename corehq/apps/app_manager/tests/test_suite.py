@@ -10,7 +10,6 @@ import commcare_translations
 from corehq.apps.app_manager.exceptions import (
     DuplicateInstanceIdError,
     SuiteValidationError,
-    SuiteError,
 )
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -1000,7 +999,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module, form = factory.new_advanced_module("my_module", "person")
         # This should be 'm0_case_short'
         module.case_details.short.custom_xml = '<detail id="m1_case_short"></detail>'
-        with self.assertRaises(SuiteError):
+        with self.assertRaises(SuiteValidationError):
             factory.app.create_suite()
 
     def test_subcase_repeat_mixed(self):
