@@ -9,6 +9,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.sql_db.routers import use_citus_for_request
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models.util import AggregationRecord
+from custom.icds_reports.tasks import setup_aggregation
 
 class Command(BaseCommand):
     help = "Creates aggregation record. Used by airflow"
@@ -29,6 +30,7 @@ class Command(BaseCommand):
 
         agg_date = self.get_agg_date()
         AggregationRecord.objects.create(agg_uuid=self.agg_uuid, agg_date=agg_date, state_ids=state_ids)
+        setup_aggregation(agg_date)
 
     def get_agg_date(self):
         if self.interval == 0:
