@@ -3550,10 +3550,10 @@ class ReportModule(ModuleBase):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
-    def get_menus(self, supports_module_filter=False, build_profile_id=None):
+    def get_menus(self, build_profile_id=None):
         from corehq.apps.app_manager.suite_xml.utils import get_module_enum_text, get_module_locale_id
         kwargs = {}
-        if supports_module_filter:
+        if self.get_app().enable_module_filtering and module.module_filter:
             kwargs['relevant'] = interpolate_xpath(self.module_filter)
 
         menu = suite_models.LocalizedMenu(
