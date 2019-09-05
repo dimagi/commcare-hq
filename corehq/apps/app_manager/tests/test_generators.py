@@ -1,4 +1,3 @@
-
 import os
 
 from django.test.testcases import SimpleTestCase

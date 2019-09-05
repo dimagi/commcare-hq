@@ -1,4 +1,3 @@
-
 from collections import OrderedDict
 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup

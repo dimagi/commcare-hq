@@ -1,4 +1,3 @@
-
 from contextlib import contextmanager
 
 from django.http import HttpRequest

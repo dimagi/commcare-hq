@@ -1,4 +1,3 @@
-
 from collections import namedtuple
 
 # Case properties nested documents

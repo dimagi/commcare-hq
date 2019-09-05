@@ -1,4 +1,3 @@
-
 import gzip
 import json
 from datetime import datetime

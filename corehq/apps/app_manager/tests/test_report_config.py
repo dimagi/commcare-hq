@@ -1,4 +1,3 @@
-
 import os
 from collections import OrderedDict
 from xml.etree import cElementTree as ElementTree

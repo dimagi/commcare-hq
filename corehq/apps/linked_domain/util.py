@@ -1,5 +1,3 @@
-
-
 from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound

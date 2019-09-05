@@ -1,4 +1,3 @@
-
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, RawFilter, ORFilter, LTE
