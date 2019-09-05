@@ -1771,41 +1771,29 @@ class DishaAPIView(View):
 class NICIndicatorAPIView(View):
 
     def message(self, message_name):
-        state_names = ", ".join(self.valid_states.keys())
         error_messages = {
-            "missing_date": "Please specify valid month and year",
-            "invalid_month": "Please specify a month that's older than or same as current month",
-            "invalid_state": "Please specify one of {} as state_name".format(state_names),
             "unknown_error": "Unknown Error occured",
             "no_data": "Data does not exists"
         }
 
-        return {"message": error_messages[message_name]}
+        return error_messages[message_name]
 
     def get(self, request, *args, **kwargs):
-        try:
-            month = int(request.GET.get('month'))
-            year = int(request.GET.get('year'))
-        except (ValueError, TypeError):
-            return JsonResponse(self.message('missing_date'), status=400)
-
-        query_month = date(year, month, 1)
-
-        if query_month > date.today():
-            return JsonResponse(self.message('invalid_month'),  status=400)
-
-        state_name = self.request.GET.get('state_name')
-        if state_name not in self.valid_states:
-            return JsonResponse(self.message('invalid_state'), status=400)
 
         try:
-            state_id = self.valid_states[state_name]
-            data = get_inc_indicator_api_data(state_id, month_formatter(query_month))
-            return JsonResponse(data)
+            data = get_inc_indicator_api_data()
+            response = {'isSuccess': True,
+                        'message': 'Data Sent Successfully',
+                        'Result': {
+                            'response': data
+                        }}
+            return JsonResponse(response)
         except NICIndicatorsView.DoesNotExist:
-            return JsonResponse(self.message('no_data'), status=500)
+            response = dict(isSuccess=False, message=self.message('no_data'))
+            return JsonResponse(response, status=500)
         except AttributeError:
-            return JsonResponse(self.message('unknown_error'), status=500)
+            response = dict(isSuccess=False, message=self.message('unknown_error'))
+            return JsonResponse(response, status=500)
 
     @property
     @icds_quickcache([])
