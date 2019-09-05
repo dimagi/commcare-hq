@@ -119,7 +119,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 3, name: 'Demographics'},
         {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
-        {id: 6, name: 'Child Beneficiary List'},
+        {id: 6, name: 'Child Growth Monitoring List'},
         {id: 7, name: 'ICDS-CAS Monthly Register'},
         {id: 8, name: 'AWW Performance Report'},
         {id: 9, name: 'LS Performance Report'},
