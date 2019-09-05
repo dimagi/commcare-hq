@@ -22,7 +22,7 @@ class Command(BaseCommand):
         use_citus_for_request()
         self.agg_uuid = agg_uuid
         self.run_date = run_date
-        self.interval = interval
+        self.interval = int(interval)
         state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
