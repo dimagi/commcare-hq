@@ -1,4 +1,5 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -6,15 +7,14 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-  <script src="{% static 'reports/js/hq_report.js' %}"></script>
-  <script src="{% static 'reports/js/reports.util.js' %}"></script>
   {% include 'reports/partials/filters_js.html' %}
-  <script src="{% static 'reports/js/reports.async.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-  <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
-  <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
+  {% compress js %}
+    <script src="{% static 'reports/js/hq_report.js' %}"></script>
+    <script src="{% static 'reports/js/reports.util.js' %}"></script>
+    <script src="{% static 'reports/js/reports.async.js' %}"></script>
+    <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
+    <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
+  {% endcompress %}
 {% endblock %}
 
 {% block page_navigation %}
