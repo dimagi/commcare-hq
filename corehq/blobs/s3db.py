@@ -210,9 +210,12 @@ def get_file_size(fileobj):
 def maybe_not_found(throw=None):
     try:
         yield
-    except (ClientError, HTTPClientError) as err:
+    except ClientError as err:
         if not is_not_found(err):
             raise
         datadog_counter('commcare.blobdb.notfound')
+        if throw is not None:
+            raise throw
+    except HTTPClientError:
         if throw is not None:
             raise throw
