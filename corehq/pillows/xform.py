@@ -200,10 +200,9 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     )
     if ucr_configs:
         ucr_processor.bootstrap(ucr_configs)
-    processors = [
-        xform_to_es_processor,
-        unknown_user_form_processor
-    ]
+    processors = [xform_to_es_processor]
+    if settings.RUN_UNKNOWN_USER_PILLOW:
+        processors.append(unknown_user_form_processor)
     if settings.RUN_FORM_META_PILLOW:
         processors.append(form_meta_processor)
     if not settings.ENTERPRISE_MODE:
