@@ -67,15 +67,15 @@ def _update_ledger_section_entry_combinations(ledger):
     if (ledger['section_id'], ledger['entry_id']) in current_combos:
         return
 
-    # clear the lru_cache so that next time a ledger is saved, we get the combinations
-    _get_ledger_section_combinations.cache_clear()
-
     # use get_or_create because this may be created by another parallel process
     LedgerSectionEntry.objects.get_or_create(
         domain=ledger['domain'],
         section_id=ledger['section_id'],
         entry_id=ledger['entry_id'],
     )
+
+    # clear the lru_cache so that next time a ledger is saved, we get the combinations
+    _get_ledger_section_combinations.cache_clear()
 
 
 @lru_cache()
