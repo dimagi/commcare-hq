@@ -113,7 +113,7 @@ def request_new_domain(request, form, is_new_user=True):
         new_domain.save()  # we need to get the name from the _id
 
     with transaction.atomic():
-        if is_new_user:
+        if is_new_user and not settings.ENABLE_NEW_TRIAL_EXPERIENCE:
             # Only new-user domains are eligible for Advanced trial
             # domains with no subscription are equivalent to be on free Community plan
             create_30_day_advanced_trial(new_domain, current_user.username)
