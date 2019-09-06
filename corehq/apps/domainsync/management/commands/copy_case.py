@@ -1,4 +1,3 @@
-
 from django.core.management.base import BaseCommand, CommandError
 
 from casexml.apps.case.dbaccessors import get_reverse_indices

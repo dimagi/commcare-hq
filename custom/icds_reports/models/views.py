@@ -1,4 +1,3 @@
-
 from django.db import models
 
 from custom.icds_reports.models.manager import CitusComparisonManager

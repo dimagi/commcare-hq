@@ -1,4 +1,3 @@
-
 import io
 import logging
 import os
@@ -15,15 +14,12 @@ from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 
 import csv
-import six
 from celery import chain
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from dateutil import parser as date_parser
 from gevent.pool import Pool
-
-from six.moves import range
 
 from corehq.util.celery_utils import periodic_task_on_envs
 from couchexport.export import export_from_tables
@@ -148,7 +144,6 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.mbt import (
     CcsMbtHelper,
     ChildHealthMbtHelper,
 )
-from six.moves import zip
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -968,7 +963,7 @@ def icds_data_validation(day):
 
 def _send_data_validation_email(csv_columns, month, bad_data):
     # intentionally using length here because the query will need to evaluate anyway to send the CSV file
-    if all(len(v) == 0 for _, v in six.iteritems(bad_data)):
+    if all(len(v) == 0 for _, v in bad_data.items()):
         return
 
     bad_wasting_awcs = bad_data.get('bad_wasting_awcs', [])
@@ -1041,7 +1036,7 @@ def _get_value(data, field):
     queue='icds_aggregation_queue'
 )
 def collect_inactive_awws_task():
-    collect_inactive_awws().delay()
+    collect_inactive_awws.delay()
     if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
         collect_inactive_awws.delay(force_citus=True)
 

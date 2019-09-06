@@ -2,8 +2,6 @@ from datetime import datetime
 
 from django.test import SimpleTestCase
 
-from six.moves import range
-
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
 

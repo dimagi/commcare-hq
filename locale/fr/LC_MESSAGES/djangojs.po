@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-27 18:49+0000\n"
+"POT-Creation-Date: 2019-09-03 19:52+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2784,24 +2784,24 @@ msgstr ""
 msgid "Show previous versions"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:94
+#: corehq/apps/export/static/export/js/create_export.js:100
 msgid "<%= count %> form submission available."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:96
+#: corehq/apps/export/static/export/js/create_export.js:102
 msgid "<%= count %> form submissions available."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:107
+#: corehq/apps/export/static/export/js/create_export.js:113
 msgid "User Registration"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:276
+#: corehq/apps/export/static/export/js/create_export.js:297
 msgid ""
 "There was an issue fetching data. Please check your internet connection."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:311
+#: corehq/apps/export/static/export/js/create_export.js:332
 msgid "There is an issue communicating with the server at this time."
 msgstr ""
 
@@ -2829,16 +2829,16 @@ msgstr ""
 msgid "There was an error downloading your export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:118
+#: corehq/apps/export/static/export/js/export_list.js:157
 msgid "Download Requested"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:407
-#: corehq/apps/export/static/export/js/export_list.js:414
+#: corehq/apps/export/static/export/js/export_list.js:446
+#: corehq/apps/export/static/export/js/export_list.js:453
 msgid "Invalid date format"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/export_list.js:538
+#: corehq/apps/export/static/export/js/export_list.js:591
 msgid "Problem saving dashboard feed filters"
 msgstr ""
 
@@ -2890,19 +2890,19 @@ msgid ""
 "<strong>Edit and Export</strong>: All users can edit and export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:632
+#: corehq/apps/export/static/export/js/models.js:649
 msgid "The table path should end with []"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:743
+#: corehq/apps/export/static/export/js/models.js:760
 msgid "Sensitive ID"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:745
+#: corehq/apps/export/static/export/js/models.js:762
 msgid "Sensitive Date"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:747
+#: corehq/apps/export/static/export/js/models.js:764
 msgid "None"
 msgstr ""
 
@@ -3518,28 +3518,29 @@ msgid ""
 "minimum length of 8 characters."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:75
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:78
 msgid "Available Groups"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:76
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:79
 msgid "Groups with this User"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:77
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:80
 msgid "Search Group..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:88
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:91
 msgid "Group membership has changed."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/filtered_download.js:22
-#, javascript-format
-msgid "Download %s User"
-msgid_plural "Download %s Users"
-msgstr[0] ""
-msgstr[1] ""
+#: corehq/apps/users/static/users/js/filtered_download.js:31
+msgid "Download <%= count %> user"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/filtered_download.js:31
+msgid "Download <%= count %> users"
+msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js:285
 msgid "Checking availability..."
@@ -3799,4 +3800,20 @@ msgstr ""
 
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "show"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "hide"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "toggle"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/main-components.js:30
+msgid "6.0.65"
 msgstr ""

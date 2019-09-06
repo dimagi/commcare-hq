@@ -1,4 +1,3 @@
-
 import time
 
 from ddtrace import tracer

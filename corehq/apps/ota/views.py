@@ -1,4 +1,3 @@
-
 import os
 from datetime import datetime
 from distutils.version import LooseVersion
@@ -14,7 +13,6 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
-import six
 from couchdbkit import ResourceConflict
 from iso8601 import iso8601
 
@@ -116,7 +114,7 @@ def search(request, domain):
 
 
 def _handle_query_merge_exception(request, exception):
-    notify_exception(request, six.text_type(exception), details=dict(
+    notify_exception(request, str(exception), details=dict(
         exception_type=type(exception),
         original_query=getattr(exception, "original_query", None),
         query_addition=getattr(exception, "query_addition", None)
@@ -125,7 +123,7 @@ def _handle_query_merge_exception(request, exception):
 
 
 def _handle_es_exception(request, exception, query_addition_debug_details):
-    notify_exception(request, six.text_type(exception), details=dict(
+    notify_exception(request, str(exception), details=dict(
         exception_type=type(exception),
         **query_addition_debug_details
     ))

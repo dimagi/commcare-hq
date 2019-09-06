@@ -1,4 +1,3 @@
-
 from abc import ABCMeta, abstractmethod
 
 from django.utils.decorators import method_decorator

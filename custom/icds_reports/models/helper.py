@@ -1,4 +1,3 @@
-
 from django.db import models
 
 from corehq.blobs import CODES, get_blob_db

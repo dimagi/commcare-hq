@@ -7,7 +7,6 @@ from django.test import SimpleTestCase, TestCase, override_settings
 
 import attr
 from mock import Mock, patch
-from six.moves import range
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -90,13 +89,13 @@ class BaseRepeaterTest(TestCase):
             create=True,
             case_type="repeater_case",
             case_name="ABC 123",
-        ).as_string()
+        ).as_text()
 
         update_case_block = CaseBlock(
             case_id=CASE_ID,
             create=False,
             case_name="ABC 234",
-        ).as_string()
+        ).as_text()
 
         cls.instance_id = uuid.uuid4().hex
         cls.xform_xml = XFORM_XML_TEMPLATE.format(
@@ -504,7 +503,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_type="planet",
             owner_id="owner",
             user_id=black_list_user_id
-        ).as_string()
+        ).as_text()
         xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
             black_list_user_id,
@@ -522,7 +521,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_type="planet",
             owner_id="owner",
             user_id="normal_user"
-        ).as_string()
+        ).as_text()
         xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
             USER_ID,
@@ -539,7 +538,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_type="planet",
             owner_id="owner",
             user_id=black_list_user_id,
-        ).as_string()
+        ).as_text()
         xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
             black_list_user_id,
@@ -555,7 +554,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_type="planet",
             owner_id="owner",
             user_id="normal_user",
-        ).as_string()
+        ).as_text()
         xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
             USER_ID,

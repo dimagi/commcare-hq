@@ -13,7 +13,6 @@ from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tests.handlers.utils import prepare_domain
 from custom.ilsgateway.tests.utils import bootstrap_user
-import six
 
 TEST_DOMAIN = 'randr-reminder'
 
@@ -75,7 +74,7 @@ class TestReminders(TestCase):
         self.assertEqual(statuses.count(), 1)
 
         smses = SMS.objects.all()
-        self.assertEqual(smses.first().text, six.text_type(DELIVERY_REMINDER_FACILITY))
+        self.assertEqual(smses.first().text, str(DELIVERY_REMINDER_FACILITY))
         self.assertEqual(
             statuses.values_list('location_id', flat=True)[0], self.facility2.get_id
         )
@@ -94,7 +93,7 @@ class TestReminders(TestCase):
         self.assertEqual(statuses.count(), 1)
 
         smses = SMS.objects.all()
-        self.assertEqual(smses.first().text, six.text_type(DELIVERY_REMINDER_DISTRICT))
+        self.assertEqual(smses.first().text, str(DELIVERY_REMINDER_DISTRICT))
         self.assertEqual(
             statuses.values_list('location_id', flat=True)[0], self.district.get_id
         )
@@ -111,7 +110,7 @@ class TestReminders(TestCase):
         self.assertEqual(SMS.objects.count(), 2)
 
         smses = SMS.objects.all()
-        self.assertEqual(smses.first().text, six.text_type(REMINDER_STOCKONHAND))
+        self.assertEqual(smses.first().text, str(REMINDER_STOCKONHAND))
 
         statuses = SupplyPointStatus.objects.filter(status_type=SupplyPointStatusTypes.SOH_FACILITY)
         self.assertEqual(statuses.count(), 2)

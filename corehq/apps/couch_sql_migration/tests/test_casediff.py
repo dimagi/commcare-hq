@@ -1,8 +1,9 @@
-
 import logging
+import os
 from collections import defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
+from glob import glob
 
 from django.test import SimpleTestCase
 
@@ -403,7 +404,10 @@ class TestCaseDiffProcess(SimpleTestCase):
         super(TestCaseDiffProcess, cls).tearDownClass()
 
     def tearDown(self):
-        delete_state_db("test", self.state_dir)
+        db_paths = glob(os.path.join(self.state_dir, "db", "*"))
+        for path in db_paths + self.get_log_files():
+            assert os.path.isabs(path), path
+            os.remove(path)
         super(TestCaseDiffProcess, self).tearDown()
 
     def test_process(self):
@@ -423,6 +427,14 @@ class TestCaseDiffProcess(SimpleTestCase):
             proc2.enqueue({"case": "data"})
             self.assertEqual(self.get_status(proc2), [0, 2, 0])
 
+    def test_process_not_allowed(self):
+        with init_state_db("test", self.state_dir) as statedb:
+            with mod.CaseDiffQueue(statedb):
+                pass
+        with init_state_db("test", self.state_dir) as statedb:
+            with self.assertRaises(mod.ProcessNotAllowed):
+                mod.CaseDiffProcess(statedb)
+
     def test_fake_case_diff_queue_interface(self):
         tested = set()
         for name in dir(FakeCaseDiffQueue):
@@ -436,12 +448,23 @@ class TestCaseDiffProcess(SimpleTestCase):
 
     @contextmanager
     def process(self):
-        with init_state_db("test", self.state_dir) as statedb, mod.CaseDiffProcess(
-            statedb,
-            status_interval=1,
-            queue_class=FakeCaseDiffQueue,
-        ) as proc:
-            yield proc
+        try:
+            with init_state_db("test", self.state_dir) as statedb, mod.CaseDiffProcess(
+                statedb,
+                status_interval=1,
+                queue_class=FakeCaseDiffQueue,
+            ) as proc:
+                yield proc
+        finally:
+            print(f"{' diff process logs ':-^40}")
+            for log_file in self.get_log_files():
+                print("#", log_file)
+                with open(log_file, encoding="utf-8") as fh:
+                    print(fh.read())
+            print(f"{' end diff process logs ':-^40}")
+
+    def get_log_files(self):
+        return glob(os.path.join(self.state_dir, "*-casediff.log"))
 
     @staticmethod
     def get_status(proc):

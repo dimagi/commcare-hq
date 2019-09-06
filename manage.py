@@ -120,14 +120,13 @@ def patch_jsonfield():
     """Patch the ``to_python`` method of JSONField
     See https://github.com/bradjasper/django-jsonfield/pull/173 for more details
     """
-    import six
     import json
     from django.core.exceptions import ValidationError
     from django.utils.translation import ugettext_lazy as _
     from jsonfield import JSONField
 
     def to_python(self, value):
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             try:
                 return json.loads(value, **self.load_kwargs)
             except ValueError:

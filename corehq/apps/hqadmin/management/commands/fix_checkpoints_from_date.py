@@ -1,4 +1,3 @@
-
 import argparse
 import difflib
 import pprint
@@ -6,8 +5,6 @@ import re
 from datetime import datetime
 
 from django.core.management import BaseCommand, CommandError
-
-from six.moves import input
 
 from pillowtop.models import str_to_kafka_seq
 from pillowtop.utils import get_all_pillow_instances

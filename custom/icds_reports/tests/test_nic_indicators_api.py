@@ -1,4 +1,3 @@
-
 from datetime import date
 from django.test import TestCase
 from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data

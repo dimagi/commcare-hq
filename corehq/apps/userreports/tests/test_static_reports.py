@@ -5,7 +5,6 @@ from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
 from mock import MagicMock, patch
-from six.moves import filter
 
 from corehq.apps.userreports.models import (
     StaticDataSourceConfiguration,

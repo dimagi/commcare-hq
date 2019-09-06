@@ -1,4 +1,3 @@
-
 from itertools import chain
 
 from dimagi.ext.couchdbkit import (

@@ -1,4 +1,3 @@
-
 import json
 
 from django.contrib.messages import get_messages

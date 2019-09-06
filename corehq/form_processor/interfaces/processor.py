@@ -16,7 +16,6 @@ from corehq.form_processor.exceptions import (
 )
 from memoized import memoized
 from ..utils import should_use_sql_backend
-import six
 
 CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
 ProcessedForms = namedtuple('ProcessedForms', ['submitted', 'deprecated'])
@@ -157,7 +156,7 @@ class FormProcessorInterface(object):
 
         errors = []
         xml = xform.get_xml_element()
-        for question, response in six.iteritems(value_responses_map):
+        for question, response in value_responses_map.items():
             try:
                 update_response(xml, question, response, xmlns=xform.xmlns)
             except XFormQuestionValueNotFound:

@@ -8,6 +8,7 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
+    SINGLE_SHEET_STATIC_HEADERS,
     SINGLE_SHEET_NAME,
 )
 from corehq.apps.translations.generators import EligibleForTransifexChecker
@@ -37,11 +38,8 @@ def get_bulk_app_sheet_headers(app, lang=None, eligible_for_transifex_only=False
     lang_list = default_lang_list + image_lang_list + audio_lang_list + video_lang_list
 
     if lang:
-        return ((SINGLE_SHEET_NAME, (
-            'menu_or_form',
-            'case_property',        # modules only
-            'list_or_detail',       # modules only
-            'label',                # forms only
+        return ((SINGLE_SHEET_NAME, tuple(
+            SINGLE_SHEET_STATIC_HEADERS
         ) + tuple(lang_list) + ('unique_id',)),)
 
     headers = []

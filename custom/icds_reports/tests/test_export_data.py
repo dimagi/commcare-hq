@@ -1,4 +1,3 @@
-
 from datetime import date, datetime
 import json
 from custom.icds_reports.utils import india_now

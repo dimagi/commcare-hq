@@ -2,7 +2,6 @@ import re
 from collections import defaultdict
 
 from lxml import html
-from six.moves import zip
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
@@ -169,7 +168,7 @@ def save_match_ids(case, case_config, patient):
         update=case_update,
         **kwargs
     )
-    submit_case_blocks([case_block.as_string()], case.domain, xmlns=XMLNS_OPENMRS)
+    submit_case_blocks([case_block.as_text()], case.domain, xmlns=XMLNS_OPENMRS)
 
 
 def create_patient(requests, info, case_config):

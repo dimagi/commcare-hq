@@ -1,13 +1,10 @@
-
 import uuid
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
-import six
 from couchdbkit import BulkSaveError, ResourceNotFound
 from requests import HTTPError
-from six.moves import range
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import CouchTransaction
@@ -307,7 +304,7 @@ def _process_item_field(field, data_item):
         return FieldList(
             field_list=[FixtureItemField(
                 # using unicode here, to cast ints, and multi-language strings
-                field_value=six.text_type(data_item['field'][field.field_name]),
+                field_value=str(data_item['field'][field.field_name]),
                 properties={}
             )]
         )
@@ -318,8 +315,8 @@ def _process_item_field(field, data_item):
     prop_dict = data_item[field.field_name]
     for x in range(0, prop_combo_len):
         fix_item_field = FixtureItemField(
-            field_value=six.text_type(field_prop_combos[x]),
-            properties={prop: six.text_type(prop_dict[prop][x]) for prop in prop_dict}
+            field_value=str(field_prop_combos[x]),
+            properties={prop: str(prop_dict[prop][x]) for prop in prop_dict}
         )
         field_list.append(fix_item_field)
     return FieldList(

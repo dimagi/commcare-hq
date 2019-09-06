@@ -1,4 +1,3 @@
-
 import inspect
 
 from django.core.management.base import BaseCommand

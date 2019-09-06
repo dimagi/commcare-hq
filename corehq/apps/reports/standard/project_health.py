@@ -7,7 +7,6 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 from memoized import memoized
-from six.moves import range
 
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months

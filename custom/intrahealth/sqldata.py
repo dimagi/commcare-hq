@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import datetime
 
 import sqlalchemy
@@ -34,9 +32,7 @@ from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.utils.utils import clean_IN_filter_value
 from memoized import memoized
 from dimagi.utils.parsing import json_format_date
-import six
 from functools import reduce
-from six.moves import range
 
 PRODUCT_NAMES = {
     'diu': ["diu"],
@@ -102,7 +98,7 @@ class BaseSqlData(SqlData):
             for i in range(num_cols):
                 colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
                 columns = [r.get('sort_key') for r in colrows if
-                           isinstance(r.get('sort_key'), six.integer_types + (float,))]
+                           isinstance(r.get('sort_key'), (int, float))]
                 if len(columns):
                     total_row.append(reduce(lambda x, y: x + y, columns, 0))
                 else:
@@ -595,7 +591,7 @@ class TauxConsommationData(BaseSqlData):
                     columns = [
                         r.get('sort_key')
                         for r in colrows
-                        if isinstance(r.get('sort_key'), six.integer_types)
+                        if isinstance(r.get('sort_key'), int)
                     ]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
@@ -663,7 +659,7 @@ class NombreData(BaseSqlData):
                 else:
                     colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
                     columns = [r.get('sort_key') for r in colrows if
-                               isinstance(r.get('sort_key'), six.integer_types + (float,))]
+                               isinstance(r.get('sort_key'), (float, int))]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
                     else:

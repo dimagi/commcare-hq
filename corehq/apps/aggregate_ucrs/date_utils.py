@@ -1,4 +1,3 @@
-
 from abc import ABCMeta, abstractmethod, abstractproperty
 from datetime import datetime, timedelta
 

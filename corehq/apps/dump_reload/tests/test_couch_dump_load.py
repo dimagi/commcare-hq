@@ -9,7 +9,6 @@ from django.test import SimpleTestCase, TestCase
 
 from couchdbkit.exceptions import ResourceNotFound
 from mock import Mock
-from six.moves import range
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs

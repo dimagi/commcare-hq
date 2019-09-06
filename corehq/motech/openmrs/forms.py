@@ -6,7 +6,6 @@ from django.utils.translation import ugettext as _
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-from six.moves import map
 
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.openmrs.const import (

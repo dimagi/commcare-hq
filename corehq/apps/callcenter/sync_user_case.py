@@ -4,8 +4,6 @@ from xml.etree import cElementTree as ElementTree
 
 from django.core.cache import cache
 
-import six
-
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.couch import CriticalSection
 
@@ -148,8 +146,8 @@ def _get_changed_fields(case, fields):
     def _to_unicode(val):
         if isinstance(val, bytes):
             return val.decode('utf8')
-        elif not isinstance(val, six.text_type):
-            return six.text_type(val)
+        elif not isinstance(val, str):
+            return str(val)
         return val
 
     def _not_same(val1, val2):

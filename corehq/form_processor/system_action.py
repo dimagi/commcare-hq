@@ -61,12 +61,18 @@ def submit_system_action(name, args, args_json, domain):
             domain,
             xmlns=SYSTEM_ACTION_XMLNS,
             device_id=name,
+            form_extras={"auth_context": SystemActionContext},
         )
     do_system_action(name, args)
 
 
 system_action.submit = submit_system_action
 SYSTEM_ACTION_XMLNS = "http://commcarehq.org/system/action"
+
+
+def verify_system_action(form, auth_context):
+    if auth_context is not SystemActionContext:
+        raise UnauthorizedSystemAction(repr(form))
 
 
 def do_system_action(name, args):
@@ -83,3 +89,18 @@ def do_system_action(name, args):
 
 # global system actions registry
 _actions = {}
+
+
+class SystemActionContext(object):
+
+    @staticmethod
+    def to_json():
+        return {}
+
+    @staticmethod
+    def is_valid():
+        return True
+
+
+class UnauthorizedSystemAction(Exception):
+    pass

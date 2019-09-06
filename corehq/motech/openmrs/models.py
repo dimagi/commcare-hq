@@ -1,5 +1,3 @@
-from django.utils.encoding import python_2_unicode_compatible
-
 from dimagi.ext.couchdbkit import (
     DictProperty,
     Document,
@@ -28,7 +26,6 @@ class ColumnMapping(DocumentSchema):
     data_type = StringProperty(choices=DATA_TYPES, required=False)
 
 
-@python_2_unicode_compatible
 class OpenmrsImporter(Document):
     """
     Import cases from an OpenMRS instance using a report

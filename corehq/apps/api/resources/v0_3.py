@@ -1,5 +1,3 @@
-
-import six
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 
@@ -69,7 +67,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         try:
             es_query = es_search(bundle.request, domain)
         except Http400 as e:
-            raise BadRequest(six.text_type(e))
+            raise BadRequest(str(e))
 
         return ElasticAPIQuerySet(
             payload=es_query,

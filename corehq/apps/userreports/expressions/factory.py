@@ -4,7 +4,6 @@ import json
 
 from django.utils.translation import ugettext as _
 
-import six
 from jsonobject.exceptions import BadValueError
 
 from dimagi.utils.parsing import json_format_date, json_format_datetime
@@ -96,7 +95,7 @@ def _switch_expression(spec, context):
     wrapped = SwitchExpressionSpec.wrap(spec)
     wrapped.configure(
         ExpressionFactory.from_spec(wrapped.switch_on, context),
-        {k: ExpressionFactory.from_spec(v, context) for k, v in six.iteritems(wrapped.cases)},
+        {k: ExpressionFactory.from_spec(v, context) for k, v in wrapped.cases.items()},
         ExpressionFactory.from_spec(wrapped.default, context),
     )
     return wrapped

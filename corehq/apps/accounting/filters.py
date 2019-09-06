@@ -5,7 +5,6 @@ from django.urls import reverse
 from django.utils.translation import ugettext_noop as _
 
 from dateutil.relativedelta import relativedelta
-from six.moves import range
 
 from dimagi.utils.dates import DateSpan
 

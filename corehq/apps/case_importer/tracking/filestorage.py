@@ -5,7 +5,6 @@ from tempfile import mkstemp
 
 from django.core.cache import caches
 
-import six
 from memoized import memoized
 
 from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
@@ -88,7 +87,7 @@ class TransientFileStore(object):
     def get_tempfile_ref_for_contents(self, identifier):
         try:
             filename, content = self._get_filename_content(identifier)
-            if isinstance(content, six.text_type):
+            if isinstance(content, str):
                 content = content.encode('utf-8')
         except (TypeError, ValueError):
             return None

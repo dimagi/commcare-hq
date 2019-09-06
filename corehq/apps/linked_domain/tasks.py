@@ -1,4 +1,3 @@
-
 from celery.task import task
 
 from corehq.apps.linked_domain.util import (

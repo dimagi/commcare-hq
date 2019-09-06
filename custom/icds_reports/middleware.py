@@ -1,4 +1,3 @@
-
 from django.utils.deprecation import MiddlewareMixin
 
 from corehq import toggles

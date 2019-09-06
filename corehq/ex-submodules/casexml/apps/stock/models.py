@@ -1,11 +1,9 @@
 import math
-import six
 from django.db import models
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.models import TruncatingCharField
 
 
-@six.python_2_unicode_compatible
 class StockReport(models.Model):
     form_id = models.CharField(max_length=100, db_index=True)
     date = models.DateTimeField(db_index=True)
@@ -43,7 +41,6 @@ class ConsumptionMixin(object):
         return self.type == const.TRANSACTION_TYPE_STOCKONHAND and not self.is_stockout
 
 
-@six.python_2_unicode_compatible
 class StockTransaction(models.Model, ConsumptionMixin):
     report = models.ForeignKey(StockReport, on_delete=models.CASCADE)
     sql_product = models.ForeignKey(SQLProduct, on_delete=models.CASCADE)

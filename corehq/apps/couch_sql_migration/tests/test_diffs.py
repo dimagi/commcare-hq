@@ -503,6 +503,17 @@ class DiffTestCases(SimpleTestCase):
         }
         self._test_form_diff_filter(couch_doc, sql_doc)
 
+    def test_form_server_modified_on_diff(self):
+        couch_form = {
+            "doc_type": "XFormInstance",
+            "server_modified_on": None,
+        }
+        sql_form = {
+            "doc_type": "XFormInstance",
+            "server_modified_on": "2019-09-03T18:33:32.777366Z",
+        }
+        self._test_form_diff_filter(couch_form, sql_form)
+
     def test_form_with_opened_by_diff(self):
         couch_case = {
             "doc_type": "XFormInstance",

@@ -1,4 +1,3 @@
-
 import json
 
 from django.test import SimpleTestCase, TestCase, override_settings

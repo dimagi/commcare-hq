@@ -1,4 +1,3 @@
-
 import functools
 import gzip
 import json

@@ -1,12 +1,11 @@
 import logging
 import os
 import sys
-from itertools import groupby
+from itertools import groupby, zip_longest
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from six.moves import input, zip_longest
 from sqlalchemy.exc import OperationalError
 
 from couchforms.dbaccessors import get_form_ids_by_type
@@ -116,7 +115,7 @@ class Command(BaseCommand):
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
 
-        setup_logging(self.state_dir, options['debug'])
+        setup_logging(self.state_dir, action.lower(), options['debug'])
         getattr(self, "do_" + action)(domain)
 
     def do_MIGRATE(self, domain):

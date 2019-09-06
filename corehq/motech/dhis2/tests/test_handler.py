@@ -3,7 +3,6 @@ import json
 from django.test.testcases import TestCase
 
 from fakecouch import FakeCouchDb
-from six.moves import map
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation

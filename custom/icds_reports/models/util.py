@@ -1,4 +1,3 @@
-
 import architect
 import uuid
 

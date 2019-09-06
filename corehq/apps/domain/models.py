@@ -16,11 +16,8 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from couchdbkit import PreconditionFailed
 from memoized import memoized
-from six import unichr
-from six.moves import map
 
 from couchforms.analytics import domain_has_submission_in_last_30_days
 from dimagi.ext.couchdbkit import (
@@ -280,7 +277,6 @@ class DayTimeWindow(DocumentSchema):
     end_time = TimeProperty()
 
 
-@six.python_2_unicode_compatible
 class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     """
         Domain is the highest level collection of people/stuff
@@ -531,11 +527,11 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     @classmethod
     def field_by_prefix(cls, field, prefix=''):
-        # unichr(0xfff8) is something close to the highest character available
+        # chr(0xfff8) is something close to the highest character available
         res = cls.view("domain/fields_by_prefix",
                        group=True,
                        startkey=[field, True, prefix],
-                       endkey=[field, True, "%s%c" % (prefix, unichr(0xfff8)), {}])
+                       endkey=[field, True, "%s%c" % (prefix, chr(0xfff8)), {}])
         vals = [(d['value'], d['key'][2]) for d in res]
         vals.sort(reverse=True)
         return [(v[1], v[0]) for v in vals]

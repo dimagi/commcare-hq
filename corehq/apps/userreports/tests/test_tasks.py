@@ -2,8 +2,6 @@ from datetime import datetime
 
 from django.test import SimpleTestCase
 
-from six.moves import range
-
 from corehq.apps.userreports.tasks import time_in_range
 
 TEST_SETTINGS = {

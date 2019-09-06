@@ -1,4 +1,3 @@
-
 import inspect
 
 from celery.task import task
@@ -8,7 +7,6 @@ import requests
 from corehq.util.global_request import get_request
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
-from six.moves import zip
 
 
 class ContextDecorator(object):

@@ -6,7 +6,6 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from couchdbkit import ResourceConflict, ResourceNotFound
-from six.moves import range
 from six.moves.urllib.parse import urlparse
 
 from dimagi.utils.couch.database import iter_docs

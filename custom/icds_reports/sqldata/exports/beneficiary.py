@@ -1,5 +1,3 @@
-
-import six
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, RawFilter, ORFilter, LTE
@@ -61,7 +59,7 @@ class BeneficiaryExport(ExportableMixin, IcdsSqlData):
     @property
     def filters(self):
         filters = [LTE('age_in_months', '5_years')]
-        for key, value in six.iteritems(self.config):
+        for key, value in self.config.items():
             if key == 'domain' or key == '5_years':
                 continue
             elif key == 'filters':

@@ -6,9 +6,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from memoized import memoized
-from six.moves import range
 
 from dimagi.utils.dates import DateSpan
 
@@ -151,7 +149,7 @@ class DatespanFilter(BaseFilter):
             startdate = date_or_nothing(startdate)
             enddate = date_or_nothing(enddate)
         except (ValueError, TypeError) as e:
-            raise FilterValueException('Error parsing date parameters: {}'.format(six.text_type(e)))
+            raise FilterValueException('Error parsing date parameters: {}'.format(str(e)))
 
         if startdate or enddate:
             return DateSpan(startdate, enddate, inclusive=date_range_inclusive)
@@ -262,7 +260,7 @@ class NumericFilter(BaseFilter):
             assert operator in ["=", "!=", "<", "<=", ">", ">="]
             assert isinstance(operand, float) or isinstance(operand, int)
         except AssertionError as e:
-            raise FilterValueException('Error parsing numeric filter parameters: {}'.format(six.text_type(e)))
+            raise FilterValueException('Error parsing numeric filter parameters: {}'.format(str(e)))
 
         return {"operator": operator, "operand": operand}
 
@@ -393,7 +391,7 @@ class DynamicChoiceListFilter(BaseFilter):
     def value(self, **kwargs):
         from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
         from corehq.apps.userreports.expressions.getters import transform_from_datatype
-        selection = six.text_type(kwargs.get(self.name, ""))
+        selection = str(kwargs.get(self.name, ""))
         user = kwargs.get(REQUEST_USER_KEY, None)
         if selection:
             choices = selection.split(CHOICE_DELIMITER)

@@ -103,7 +103,7 @@ class TestFileMixin(object):
 
     @classmethod
     def get_json(cls, name, override_path=None):
-        return json.loads(cls.get_file(name, '.json', override_path).encode('utf-8'))
+        return json.loads(cls.get_file(name, '.json', override_path))
 
     @classmethod
     def get_xml(cls, name, override_path=None):
@@ -417,7 +417,7 @@ def _create_case(domain, **kwargs):
     from casexml.apps.case.mock import CaseBlock
     from corehq.apps.hqcase.utils import submit_case_blocks
     return submit_case_blocks(
-        [CaseBlock(**kwargs).as_string().decode('utf-8')], domain=domain
+        [CaseBlock(**kwargs).as_text()], domain=domain
     )
 
 
