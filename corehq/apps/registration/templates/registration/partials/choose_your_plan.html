@@ -33,13 +33,28 @@
           {% endblocktrans %}
         </p>
         <div class="plan-cta">
-          <a href="#" class="btn btn-default">
-            <i class="fa fa-play-circle"></i>
-            {% blocktrans %}
-              Watch Demo
-            {% endblocktrans %}
-          </a><br />
-          <a href="#" class="btn btn-primary">
+          <script src="//fast.wistia.com/embed/medias/jzm3ggrinr.jsonp" async></script>
+          <script src="//fast.wistia.com/assets/external/E-v1.js" async></script>
+          <span class="wistia_embed
+                       wistia_async_jzm3ggrinr
+                       popover=true
+                       popoverPreventScroll=true
+                       popoverBorderRadius=10
+                       popoverOverlayOpacity=.75
+                       playbar=true
+                       smallPlayButton=true
+                       volumeControl=false
+                       settingsControl=false
+                       fullscreenButton=true
+                       controlsVisibleOnLoad=false
+                       popoverContent=link">
+            <a href="#" class="btn btn-default">
+              <i class="fa fa-play-circle"></i>
+              {% blocktrans %}
+                Watch Demo
+              {% endblocktrans %}
+            </a>
+          </span>
             {% blocktrans %}
               Get Trial
             {% endblocktrans %}
