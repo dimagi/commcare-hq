@@ -45,6 +45,8 @@ import httpagentparser
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 from urllib.parse import urlparse
+
+from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
@@ -157,6 +159,7 @@ def server_error(request, template_name='500.html'):
             'STATIC_URL': settings.STATIC_URL,
             'domain': domain,
             '500traceback': traceback_key,
+            'sentry_event_id': last_event_id(),
         },
         request=request,
     ))
@@ -634,7 +637,7 @@ class BugReportView(View):
             'scale_backend': '<unknown>',
             'has_handoff_info': '<unknown>',
             'project_description': '<unknown>',
-            'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+            'sentry_error': '{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL', ''), report['sentry_id'])
         }
         if domain_object:
             current_project_description = domain_object.project_description if domain_object else None
