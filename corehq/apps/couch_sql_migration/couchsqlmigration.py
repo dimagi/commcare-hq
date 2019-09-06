@@ -429,7 +429,6 @@ class CouchSqlDomainMigrator(object):
         Copies `couch_form` into a new sql form
         """
         sql_form = None
-        couch_form, form_xml = self._map_form_ids(couch_form)
         # Get a new form ID when migrating to a different domain so that
         # form.xml attachments can be uniquely identified with parent_id
         if self.same_domain():
@@ -438,6 +437,7 @@ class CouchSqlDomainMigrator(object):
             form_id = str(uuid.uuid4())
             self.statedb.add_form_id_map(couch_form.form_id, form_id)
         try:
+            couch_form, form_xml = self._map_form_ids(couch_form)
             if form_is_processed:
                 form_data = couch_form.form
                 with force_phone_timezones_should_be_processed():
@@ -466,6 +466,12 @@ class CouchSqlDomainMigrator(object):
             else:
                 case_stock_result = None
             _save_migrated_models(sql_form, case_stock_result)
+        except MissingFormXml:
+            # Raised in self._map_form_ids(couch_form) if form does not have form.xml attachment
+            exc_info = sys.exc_info()
+            proc = "" if form_is_processed else " unprocessed"
+            log.error("Error migrating%s form %s",
+                proc, couch_form.form_id, exc_info=exc_info)
         except IntegrityError:
             exc_info = sys.exc_info()
             try:
@@ -555,7 +561,7 @@ class CouchSqlDomainMigrator(object):
             return couch_form, None
 
         form_json = couch_form.form
-        form_xml = couch_form.get_xml()
+        form_xml = couch_form.get_xml()  # Raises MissingFormXml if form does not have form.xml attachment
         form_root = etree.XML(form_xml)
         ignore_paths = []
         try:
