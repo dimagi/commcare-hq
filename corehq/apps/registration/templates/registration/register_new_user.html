@@ -133,3 +133,9 @@
     </div> {# .row #}
   </div> {# .container #}
 {% endblock %}
+
+{% block modals %}{{ block.super }}
+  {% if is_saas_environment and is_new_trial_experience %}
+    {% include "registration/partials/start_trial_modal.html" %}
+  {% endif %}
+{% endblock modals %}
