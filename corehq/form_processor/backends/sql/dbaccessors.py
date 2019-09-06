@@ -498,7 +498,6 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def hard_delete_forms(domain, form_ids, delete_attachments=True):
         assert isinstance(form_ids, list)
-        NotAllowed.check(domain)
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
@@ -886,7 +885,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
-        NotAllowed.check(domain)
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT hard_delete_cases(%s, %s) as deleted_count', [domain, case_ids])
             results = fetchall_as_namedtuple(cursor)

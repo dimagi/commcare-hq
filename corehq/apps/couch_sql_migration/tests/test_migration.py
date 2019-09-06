@@ -945,6 +945,27 @@ class MigrationTestCase(BaseMigrationTestCase):
             return f"{data['name']} {json.loads(data['args'])[0]}"
         return form.form_id
 
+    def test_migrate_hard_deleted_entities_after_live_migration(self):
+        from casexml.apps.case.cleanup import safe_hard_delete
+        self.submit_form(make_test_form("form-1"), timedelta(minutes=-95))
+        self.submit_form(make_test_form("form-2"), timedelta(minutes=-90)).soft_delete()
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(live=True)
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        safe_hard_delete(self._get_case("test-case"))
+
+        self._do_migration_and_assert_flags(self.domain_name)
+        deleted = FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain_name)
+        self.assertEqual(set(deleted), {"form-2"})
+        self.assertEqual(self._get_form_ids(), set())
+        self.assertEqual(self._get_case_ids(), set())
+        self.assertEqual(
+            {self._describe(f) for f in self._iter_forms("XFormArchived")},
+            {"hard_delete_case_and_forms test-case"}
+        )
+        self._compare_diffs([])
+
     def test_migrate_deleted_form_after_live_migration(self):
         self.submit_form(make_test_form("form-1"), timedelta(minutes=-95))
         self.submit_form(make_test_form("form-2"), timedelta(minutes=-90)).soft_delete()
@@ -953,8 +974,6 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assert_backend("sql")
         with self.assertRaises(NotAllowed):
             self._get_form("form-1").soft_delete()
-        with self.assertRaises(NotAllowed):
-            FormAccessorSQL.hard_delete_forms(self.domain_name, ["form-1"])
         with self.assertRaises(NotAllowed):
             FormAccessors(self.domain_name).soft_undelete_forms(["form-2"])
         self.assertEqual(self._get_form_ids(), {"form-1"})
@@ -1011,20 +1030,16 @@ class MigrationTestCase(BaseMigrationTestCase):
             self._do_migration(live=True)
         self.assert_backend("sql")
         with self.assertRaises(NotAllowed):
-            CaseAccessorSQL.hard_delete_cases(self.domain_name, ["test-case"])
-        with self.assertRaises(NotAllowed):
-            FormProcessorSQL.hard_delete_case_and_forms(self.domain_name, None, [form])
-        with self.assertRaises(NotAllowed):
             CaseAccessors(self.domain_name).soft_undelete_cases(["test-case"])
 
         clear_local_domain_sql_backend_override(self.domain_name)
         self.assert_backend("couch")
         with self.assertRaises(NotAllowed):
-            FormProcessorCouch.hard_delete_case_and_forms(self.domain_name, "non", "sense")
-        with self.assertRaises(NotAllowed):
             call_command("delete_related_cases", self.domain_name, "test-case")
         with self.assertRaises(NotAllowed):
             call_command("purge_forms_and_cases", self.domain_name, "app", "1", "nope")
+        with self.assertRaises(NotAllowed):
+            call_command("hard_delete_forms_and_cases_in_domain", self.domain_name)
         with self.assertRaises(NotAllowed):
             delete_exploded_cases(self.domain_name, "boom")
         with self.assertRaises(NotAllowed):
