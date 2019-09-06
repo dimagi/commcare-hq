@@ -380,6 +380,7 @@ def _iter_couch_form_ids(domain):
 
 
 def _iter_sql_forms(domain):
+    # TODO: Use statedb to get IDs of migrated forms.
     for doc_type in doc_types():
         form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type)
         for form_ids_chunk in chunked(form_ids, 500):
@@ -388,6 +389,7 @@ def _iter_sql_forms(domain):
 
 
 def _iter_sql_cases(domain):
+    # TODO: Store case IDs in statedb
     for get_case_ids_func in [
         CaseAccessorSQL.get_case_ids_in_domain,
         CaseAccessorSQL.get_deleted_case_ids_in_domain
