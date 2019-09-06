@@ -34,7 +34,6 @@ from corehq.apps.couch_sql_migration.statedb import (
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.blobs import CODES, get_blob_db
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -357,34 +356,9 @@ def blow_away_migration(domain, dst_domain, state_dir):
 
 
 def _commit_src_domain(domain):
-    """
-    Form IDs are the same in both `domain` and `dst_domain`.
-    We must delete the form.xml attachments in `domain` so
-    that they are not returned by BlobMeta.get_for_parent(),
-    BlobMeta.get_for_parents(), and
-    BlobMeta.get(parent_id, type_code, name) when called for
-    forms in `dst_domain`.
-    """
-    blob_db = get_blob_db()
-
     # Prevent any more changes on the Couch domain:
     toggles.DATA_MIGRATION.set(domain, True)
     set_couch_sql_migration_not_started(domain)
-    for form_id in _iter_couch_form_ids(domain):
-        metas = blob_db.metadb.get_for_parent(
-            parent_id=form_id,
-            type_code=CODES.form_xml,
-        )
-        keys = {meta.key for meta in metas}
-        if len(metas) != len(keys):
-            print(f'DUPLICATE META KEYS for form {form_id}!')
-            log.error(f'DUPLICATE META KEYS for form {form_id}!')
-            continue
-        for meta in metas:
-            # `get_for_parent()` will return meta for both `domain`
-            # and `dst_domain` forms. Don't delete the wrong forms.
-            if meta.domain == domain:
-                blob_db.delete(key=meta.key)
 
 
 def _commit_dst_domain(domain):
