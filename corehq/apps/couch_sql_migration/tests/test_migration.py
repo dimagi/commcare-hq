@@ -178,9 +178,9 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
                 .get_all_form_ids_in_domain(doc_type=doc_type))
         return set(ids)
 
-    def _iter_forms(self, form_ids):
+    def _iter_forms(self, doc_type='XFormInstance'):
         db = FormAccessors(domain=self.domain_name)
-        for form_id in form_ids:
+        for form_id in self._get_form_ids(doc_type):
             yield db.get_form(form_id)
 
     def _get_form(self, form_id):
@@ -853,12 +853,15 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         clear_local_domain_sql_backend_override(self.domain_name)
         self.assert_backend("couch")
-        self.submit_form(make_test_form("archived")).archive(trigger_signals=False)
+        self.submit_form(make_test_form("archived")).archive()
 
         self._do_migration_and_assert_flags(self.domain_name)
-        self._compare_diffs([])
         self.assertEqual(self._get_form_ids("XFormError"), {"im-a-bad-form"})
-        self.assertEqual(self._get_form_ids("XFormArchived"), {"archived"})
+        self.assertEqual(
+            {self._describe(f) for f in self._iter_forms("XFormArchived")},
+            {"archived", "archive_form archived"}
+        )
+        self._compare_diffs([])
 
     def test_edit_form_after_live_migration(self):
         self.assert_backend("couch")
@@ -898,11 +901,11 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._get_form("arch-1").archive()
 
         self._do_migration_and_assert_flags(self.domain_name)
+        self.assertFalse(self._get_form_ids())
         self.assertEqual(
-            {self._describe(f) for f in self._iter_forms(self._get_form_ids())},
-            {"archive_form arch-1"},
+            {self._describe(f) for f in self._iter_forms("XFormArchived")},
+            {"arch-1", "arch-2", "archive_form arch-1"}
         )
-        self.assertEqual(self._get_form_ids("XFormArchived"), {"arch-1", "arch-2"})
         self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"test-case"})
         self._compare_diffs([])
 
@@ -922,8 +925,12 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(
-            {self._describe(f) for f in self._iter_forms(self._get_form_ids())},
-            {"form", "archive_form arch", "arch"},
+            {self._describe(f) for f in self._iter_forms()},
+            {"form", "arch"},
+        )
+        self.assertEqual(
+            {self._describe(f) for f in self._iter_forms("XFormArchived")},
+            {"archive_form arch"}
         )
         self.assertEqual(self._get_case_ids(), {"test-case"})
         # diff because "arch" was originally migrated as an "unprocessed_form"
