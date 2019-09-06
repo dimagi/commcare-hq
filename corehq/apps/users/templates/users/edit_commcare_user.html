@@ -23,6 +23,7 @@
   {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% initial_page_data "is_currently_logged_in_user" is_currently_logged_in_user %}
   {% initial_page_data "path" request.path %}
+  {% initial_page_data "is_delete_allowed" is_delete_allowed %}
   {% if couch_user.is_demo_user %}
     <p class="alert alert-warning">
       {% trans "This user is marked as a demo user.  All forms submitted by this user will be ignored and not appear in reports or data exports" %}
