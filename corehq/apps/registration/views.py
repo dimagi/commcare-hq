@@ -266,7 +266,7 @@ class UserRegistrationView(BasePageView):
                 FeatureMeta(_("Guaranteed 1:1 support"), False, None),
                 FeatureMeta(_("Dedicated customer success"), False, None),
             ],
-            "pricing_url": "#",
+            "pricing_url": "//dimagi.com/commcare/pricing",
         }
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(
