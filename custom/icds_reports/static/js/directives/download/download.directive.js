@@ -58,6 +58,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         });
     });
 
+
     if (vm.selectedYear === new Date().getFullYear()) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
             return month.id <= new Date().getMonth() + 1;
@@ -76,6 +77,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             id: year,
         });
     }
+
     vm.years = vm.yearsCopy;
     vm.queuedTask = false;
     vm.selectedIndicator = 1;
@@ -345,9 +347,15 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.onSelectYear = function (year) {
         var date = new Date();
         var latest = date;
+        vm.years = vm.yearsCopy;
+        vm.months = vm.monthsCopy;
+
         if (vm.isIncentiveReportSelected()) {
-            var offset = date.getDate() < 15 ? 2 : 1;
-            latest.setMonth(date.getMonth() - offset);
+            vm.years = _.filter(vm.yearsCopy, function (y) {
+                return y.id >= 2018;
+            });
+            vm.setAvailableAndSelectedMonthForAWWPerformanceReport();
+            return;
         }
 
         if (year.id > latest.getFullYear()) {
@@ -388,6 +396,31 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
+    //if selected year is 2018 make only months from october selectable as the report is only available from october 2018
+    vm.setAvailableAndSelectedMonthForAWWPerformanceReport = function () {
+        var today = new Date();
+        if (vm.selectedYear === today.getFullYear()) {
+            vm.setMonthToPreviousIfBeforeThe15th(today);
+
+            if (vm.selectedMonth > vm.months[0].id) {
+                vm.selectedMonth = vm.months[0].id;
+            }
+        } else if (vm.selectedYear === 2018) {
+            vm.months = vm.months.slice(-3);
+            if (vm.selectedMonth < 10) {
+                vm.selectedMonth = 10;
+            }
+        }
+    };
+
+    vm.setMonthToPreviousIfBeforeThe15th = function (date) {
+        var offset = date.getDate() < 15 ? 1 : 0;
+
+        vm.months = _.filter(vm.monthsCopy, function (month) {
+            return month.id <= (date.getMonth() + 1) - offset;
+        });
+    };
+
     vm.getAwcs = function () {
         vm.myPromise = locationsService.getAncestors();
     };
@@ -404,6 +437,13 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         if (vm.isChildBeneficiaryListSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
+        } else if (vm.isIncentiveReportSelected()) {
+            // if current selected year is less than 2018,
+            // change the selected year to latest as the report is not available before 2018
+            if (vm.selectedYear < 2018) {
+                vm.selectedYear = new Date().getFullYear();
+            }
+            vm.onSelectYear({'id': vm.selectedYear});
         } else {
             if (vm.isTakeHomeRationReportSelected()) {
                 var currentYear  = new Date().getFullYear();
