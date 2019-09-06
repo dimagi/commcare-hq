@@ -397,24 +397,28 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     //if selected year is 2018 make only months from october selectable as the report is only available from october 2018
-    vm.setAvailableAndSelectedMonthForAWWPerformanceReport = function() {
-        var latest = new Date();
-        if (vm.selectedYear === latest.getFullYear()) {
-                var offset = latest.getDate() < 15 ? 1 : 0;
+    vm.setAvailableAndSelectedMonthForAWWPerformanceReport = function () {
+        var today = new Date();
+        if (vm.selectedYear === today.getFullYear()) {
+            vm.setMonthToPreviousIfBeforeThe15th(today);
 
-                vm.months = _.filter(vm.monthsCopy, function (month) {
-                    return month.id <= (latest.getMonth() + 1) - offset;
-                });
-
-                if (vm.selectedMonth > vm.months[0].id) {
-                    vm.selectedMonth = vm.months[0].id;
-                }
-            } else if (vm.selectedYear === 2018) {
-                vm.months = vm.months.slice(-3);
-                if (vm.selectedMonth < 10) {
-                    vm.selectedMonth = 10;
-                }
+            if (vm.selectedMonth > vm.months[0].id) {
+                vm.selectedMonth = vm.months[0].id;
             }
+        } else if (vm.selectedYear === 2018) {
+            vm.months = vm.months.slice(-3);
+            if (vm.selectedMonth < 10) {
+                vm.selectedMonth = 10;
+            }
+        }
+    };
+
+    vm.setMonthToPreviousIfBeforeThe15th = function (date) {
+        var offset = date.getDate() < 15 ? 1 : 0;
+
+        vm.months = _.filter(vm.monthsCopy, function (month) {
+            return month.id <= (date.getMonth() + 1) - offset;
+        });
     };
 
     vm.getAwcs = function () {
