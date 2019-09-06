@@ -624,7 +624,10 @@ class CouchSqlDomainMigrator(object):
         self._log_unprocessed_forms_processed_count()
 
     def _migrate_unprocessed_form(self, couch_form_json):
-        log.debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
+        if self.statedb.has_form_been_processed(couch_form_json['_id']):
+            log.debug(f"Skipping migrated doc: {couch_form_json['doc_type']}({couch_form_json['_id']})")
+            return
+        log.debug(f"Processing doc: {couch_form_json['doc_type']}({couch_form_json['_id']})")
         couch_form = _wrap_form(couch_form_json)
         self._migrate_form_and_associated_models(couch_form, form_is_processed=False)
         self.processed_docs += 1
