@@ -39,7 +39,8 @@ hqDefine("users/js/mobile_workers",[
     googleAnalytics,
     nicEncoder,
     RMI,
-    zxcvbn
+    zxcvbn,
+    components
 ) {
     'use strict';
     // These are used as css classes, so the values of success/warning/error need to be what they are.
@@ -50,6 +51,8 @@ hqDefine("users/js/mobile_workers",[
         WARNING: 'warning',
         ERROR: 'danger',
     };
+
+    
 
     var rmi = function () {};
 
@@ -436,7 +439,10 @@ hqDefine("users/js/mobile_workers",[
         rmi = function (remoteMethod, data) {
             return rmiInvoker("", data, {headers: {"DjNg-Remote-Method": remoteMethod}});
         };
-        $("#users-list").koApplyBindings(usersListModel());
+        var usersList = usersListModel();
+        $("#users-list").koApplyBindings(usersList);
+        console.log("users list");
+        console.log(usersList);
 
         var newUserCreation = newUserCreationModel({
             custom_field_slugs: initialPageData.get('custom_field_slugs'),
@@ -449,5 +455,8 @@ hqDefine("users/js/mobile_workers",[
         $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
         $("#new-user-modal").koApplyBindings(newUserCreation);
         $("#new-users-list").koApplyBindings(newUserCreation);
+        console.log("new users list");
+        console.log(newUserCreation);
+        console.log($("#new-users-list"));
     });
 });
