@@ -1,18 +1,15 @@
 {% extends 'hqwebapp/two_column.html' %}
-{% load compress %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% block title %}Edit Config : DHIS2 :: {% endblock %}
 {% block js %}{{ block.super }}
-  {% compress js %}
     <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
     <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
     <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
     <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
     <script src="{% static 'hqwebapp/js/base_ace.js' %}"></script>
-  {% endcompress %}
 {% endblock %}
 
 {% block page_content %}
-  {% crispy form %}
+{% crispy form %}
 {% endblock %}

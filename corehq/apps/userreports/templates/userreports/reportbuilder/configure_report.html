@@ -1,5 +1,4 @@
 {% extends "userreports/base_report_builder.html" %}
-{% load compress %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -13,14 +12,12 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
-    <script src="{% static 'userreports/js/constants.js' %}"></script>
-    <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
-    <script src="{% static 'userreports/js/report_config.js' %}"></script>
-    <script src="{% static 'userreports/js/utils.js' %}"></script>
-    <script src="{% static 'userreports/js/configure_report.js' %}"></script>
-  {% endcompress %}
+  <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
+  <script src="{% static 'userreports/js/constants.js' %}"></script>
+  <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
+  <script src="{% static 'userreports/js/report_config.js' %}"></script>
+  <script src="{% static 'userreports/js/utils.js' %}"></script>
+  <script src="{% static 'userreports/js/configure_report.js' %}"></script>
 {% endblock %}
 
 {% block pre_page_content %}{% endblock %}{# Avoid the spacer #}

@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function MainController($scope, $route, $routeParams, $location, $uibModal, $window, $http, reportAnIssueUrl, isWebUser, userLocationId) {
+function MainController($scope, $route, $routeParams, $location, $uibModal, $window, $http, reportAnIssueUrl, isWebUser, userLocationId, isAlertActive) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -10,6 +10,10 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     $scope.healthCollapsed = true;
     $scope.isWebUser = isWebUser;
     $scope.dateChanged = false;
+
+    angular.element(document).ready(function () {
+       $scope.updateCssClasses();
+    });
 
     var locationParams = $location.search();
     var newKey;
@@ -34,9 +38,9 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     };
 
     $scope.updateCssClasses = function () {
-        if (window.angular.element('.alert-maintenance').children().length === 1) {
-            var elementsToUpdate = ['left-menu', 'fixed-title', 'fixes-filters', 'main-container'];
-
+        // 'fixes-filters'
+        if (isAlertActive) {
+            var elementsToUpdate = ['left-menu', 'fixed-title', 'main-container'];
             _.each(elementsToUpdate, function (element) {
                 window.angular.element('.' + element).addClass(element + '-with-alert');
             });
@@ -110,6 +114,7 @@ MainController.$inject = [
     'reportAnIssueUrl',
     'isWebUser',
     'userLocationId',
+    'isAlertActive',
 ];
 
 window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])

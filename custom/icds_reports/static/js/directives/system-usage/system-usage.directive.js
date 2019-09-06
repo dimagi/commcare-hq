@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function SystemUsageController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations) {
+function SystemUsageController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations, isAlertActive) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -10,6 +10,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     vm.step = $routeParams.step;
     vm.userLocationId = userLocationId;
     vm.selectedLocations = [];
+    vm.isAlertActive = isAlertActive;
 
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
     vm.currentMonth = moment().format("MMMM");
@@ -125,7 +126,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     vm.getDataForStep(vm.step);
 }
 
-SystemUsageController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
+SystemUsageController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive('systemUsage', function() {
     return {
