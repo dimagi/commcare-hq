@@ -75,14 +75,17 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
 
     @cached_property
     def data_providers(self):
-        table_provider = RecapPassageTwoTables(config=self.config)
-        return [
-            table_provider.sumup_context,
-            table_provider.billed_consumption_context,
-            table_provider.actual_consumption_context,
-            table_provider.amt_delivered_convenience_context,
-            table_provider.display_total_stock_context,
-        ]
+        if self.needs_filters:
+            return []
+        else:
+            table_provider = RecapPassageTwoTables(config=self.config)
+            return [
+                table_provider.sumup_context,
+                table_provider.billed_consumption_context,
+                table_provider.actual_consumption_context,
+                table_provider.amt_delivered_convenience_context,
+                table_provider.display_total_stock_context,
+            ]
 
     def get_report_context(self, table_context):
         self.data_source = table_context
