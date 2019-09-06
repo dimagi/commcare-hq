@@ -11,8 +11,102 @@
         <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
         <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
         <script src="{% static 'repeaters/js/repeat_record_report.js' %}"></script>
+        <script>
+          var items = document.getElementsByName('xform_ids');
+          var all = document.getElementById('select_all');
+          var cancel_all = document.getElementById('cancel_all');
+          var requeue_all = document.getElementById('requeue_all');
+
+          function selectItems() {
+              for (var i = 0; i < items.length; i++) {
+                  if (items[i].type == 'checkbox')
+                  items[i].checked = true;
+              }
+          }
+
+          function unSelectItems() {
+              for (var i = 0; i < items.length; i++) {
+                if (items[i].type == 'checkbox')
+                  items[i].checked = false;
+              }
+          }
+
+          function bothSelects() {
+              if (all.checked) {
+                  selectItems();
+                  uncheck(cancel_all, requeue_all);
+              } else {
+                  unSelectItems();
+              }
+          }
+
+          function selectRequeue() {
+              unSelectItems();
+              uncheck(all, cancel_all);
+              checkMultipleItems('requeue');
+          }
+
+          function selectCallable() {
+              unSelectItems();
+              uncheck(all, requeue_all);
+              checkMultipleItems('cancel');
+          }
+
+          function uncheck(checkbox1, checkbox2) {
+              checkbox1.checked = false;
+              checkbox2.checked = false;
+          }
+
+          function checkMultipleItems(action) {
+              for (var i = 0; i < items.length; i++) {
+                var id = items[i].value;
+                var query = '[data-record-id="' + id + '"][class="btn btn-default '+ action +'-record-payload"]';
+                var button = document.querySelector(query);
+                if (button != null && items[i].type == 'checkbox') {
+                    if (items[i].checked)
+                        items[i].checked = false;
+                    else
+                        items[i].checked = true;
+                }
+              }
+          }
+        </script>
     {% endcompress %}
 {% endblock js %}
+
+{% block filter_panel %} {{ block.super }}
+  <div>
+      {% if total > 0 %}
+        <div id ="form_options" class="well form-inline" style="margin: 1em">
+          <div>
+            <button id="resendAll" class="btn btn-default">Resend Checked</button>
+            <button id="cancelAll" class="btn btn-default">Cancel Checked</button>
+            <button id="requeueAll" class="btn btn-default">Requeue Checked</button>
+            <label class="checkbox" >
+              <input type="checkbox" id="select_all" onclick="bothSelects()" style="margin-left: 1em;">
+                {% blocktrans %}Select all {{ total }} forms{% endblocktrans %}
+            </label>
+            <label class="checkbox" >
+              <input type="checkbox" id="cancel_all" onclick="selectCallable()" style="margin-left: 1em;">
+                {% blocktrans %}Select {{ total_cancel }} cancellable forms{% endblocktrans %}
+            </label>
+            <label class="checkbox" >
+              <input type="checkbox" id="requeue_all" onclick="selectRequeue()" style="margin-left: 1em;">
+                {% blocktrans %}Select {{ total_requeue }} requeue forms{% endblocktrans %}
+            </label>
+          </div>
+{#          <div id="count_indicator">#}
+{#            <span class="label label-default">#}
+{#                {% blocktrans %}(<span class="selectedCount ">0</span> forms selected){% endblocktrans %}#}
+{#            </span>#}
+{#          </div>#}
+          <input type="hidden" id="all_ids" value="{{ all_ids }}">
+          <input type="hidden" id="cancel_ids" value="{{ cancel_ids }}">
+          <input type="hidden" id="requeue_ids" value="{{ requeue_ids }}">
+        </div>
+      {% endif %}
+  </div>
+{% endblock %}
 
 {% block additional_initial_page_data %} {{ block.super }}
     {% registerurl 'repeat_record' domain %}

@@ -4,6 +4,7 @@ from django.http import Http404, HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View
@@ -12,6 +13,7 @@ import pytz
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
+from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
 from dimagi.utils.web import json_response
 
 from corehq import toggles
@@ -55,6 +57,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
         'corehq.apps.reports.filters.simple.RepeaterPayloadIdFilter',
     ]
+
+    all_ids = ''
+    cancel_ids = ''
+    requeue_ids = ''
 
     def _make_cancel_payload_button(self, record_id):
         return '''
@@ -149,7 +155,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return [
             r for r in get_repeat_records_by_payload_id(self.domain, self.payload_id)
             if (not self.repeater_id or r.repeater_id == self.repeater_id)
-            and (not self.state or r.state == self.state)
+               and (not self.state or r.state == self.state)
         ]
 
     @property
@@ -186,7 +192,12 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         )
 
     def _make_row(self, record):
+        checkbox = mark_safe(
+            """<input type="checkbox" class="xform-checkbox"
+            value="{}" name="xform_ids"/>""".format(record.get_id)
+        )
         row = [
+            checkbox,
             self._make_state_label(record),
             record.repeater.get_url(record) if record.repeater else _('Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
@@ -194,19 +205,34 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             render_to_string('repeaters/partials/attempt_history.html', {'record': record}),
             self._make_view_payload_button(record.get_id),
             self._make_resend_payload_button(record.get_id),
-            self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
-            else self._make_cancel_payload_button(record.get_id) if not record.cancelled
-            and not record.succeeded
-            else None
         ]
 
+        self.all_ids += '{} '.format(record.get_id)
+        if record.cancelled and not record.succeeded:
+            row.append(self._make_requeue_payload_button(record.get_id))
+            self.requeue_ids += '{} '.format(record.get_id)
+        elif not record.cancelled and not record.succeeded:
+            row.append(self._make_cancel_payload_button(record.get_id))
+            self.cancel_ids += '{} '.format(record.get_id)
+        else:
+            row.append(None)
+
         if toggles.SUPPORT.enabled_for_request(self.request):
-            row.insert(1, self._payload_id_and_search_link(record.payload_id))
+            row.insert(2, self._payload_id_and_search_link(record.payload_id))
         return row
 
     @property
     def headers(self):
         columns = [
+            DataTablesColumn(
+                mark_safe(
+                    """
+                    Select  <a onclick="selectItems()" class="select-visible btn btn-xs btn-default">all</a>
+                    <a onclick="unSelectItems()" class="select-none btn btn-xs btn-default">none</a>
+                    """
+                ),
+                sortable=False, span=3
+            ),
             DataTablesColumn(_('Status')),
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
@@ -224,15 +250,23 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     @property
     def report_context(self):
         context = super(DomainForwardingRepeatRecords, self).report_context
+        total = len(self.rows)
+        total_cancel = len(self.cancel_ids.split(' ')) - 1
+        total_requeue = len(self.requeue_ids.split(' ')) - 1
         context.update(
             email_bulk_payload_form=EmailBulkPayload(domain=self.domain),
+            total=total,
+            total_cancel=total_cancel,
+            total_requeue=total_requeue,
+            all_ids=self.all_ids,
+            cancel_ids=self.cancel_ids,
+            requeue_ids=self.requeue_ids,
         )
         return context
 
 
 @method_decorator(domain_admin_required, name='dispatch')
 class RepeatRecordView(View):
-
     urlname = 'repeat_record'
     http_method_names = ['get', 'post']
 
@@ -271,38 +305,55 @@ class RepeatRecordView(View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
-        record_id = request.POST.get('record_id')
-        record = self.get_record_or_404(request, domain, record_id)
-        record.fire(force_send=True)
-        return json_response({
-            'success': record.succeeded,
-            'failure_reason': record.failure_reason,
-        })
+        records = _get_records(request)
+        json_responses = []
+        for record in records:
+            record = self.get_record_or_404(request, domain, record)
+            record.fire(force_send=True)
+            json_responses.append({
+                'success': record.succeeded,
+                'failure_reason': record.failure_reason,
+            })
+
+        return json_responses
 
 
 @require_POST
 @require_can_edit_web_users
 def cancel_repeat_record(request, domain):
-    try:
-        record = RepeatRecord.get(request.POST.get('record_id'))
-    except ResourceNotFound:
-        return HttpResponse(status=404)
-    record.cancel()
-    record.save()
-    if not record.cancelled:
-        return HttpResponse(status=400)
+    records = _get_records(request)
+    for record_id in records:
+        try:
+            record = RepeatRecord.get(record_id)
+        except ResourceNotFound:
+            return HttpResponse(status=404)
+        record.cancel()
+        record.save()
+        if not record.cancelled:
+            return HttpResponse(status=400)
     return HttpResponse('OK')
 
 
 @require_POST
 @require_can_edit_web_users
 def requeue_repeat_record(request, domain):
-    try:
-        record = RepeatRecord.get(request.POST.get('record_id'))
-    except ResourceNotFound:
-        return HttpResponse(status=404)
-    record.requeue()
-    record.save()
-    if record.cancelled:
-        return HttpResponse(status=400)
+    records = _get_records(request)
+    for record_id in records:
+        try:
+            record = RepeatRecord.get(record_id)
+        except ResourceNotFound:
+            return HttpResponse(status=404)
+        record.requeue()
+        record.save()
+        if record.cancelled:
+            return HttpResponse(status=400)
     return HttpResponse('OK')
+
+
+def _get_records(request):
+    records = request.POST.get('record_id')
+    records_ids = records.split(' ')
+    if records_ids[-1] == '':
+        records_ids.pop()
+
+    return records_ids
