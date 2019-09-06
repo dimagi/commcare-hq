@@ -1,4 +1,3 @@
-
 from django.conf import settings
 from six.moves import range
 

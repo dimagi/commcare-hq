@@ -1,4 +1,3 @@
-
 from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app_version

@@ -1,4 +1,3 @@
-
 import architect
 
 from django.db import models, transaction

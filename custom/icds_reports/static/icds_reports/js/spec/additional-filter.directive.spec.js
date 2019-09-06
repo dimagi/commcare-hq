@@ -14,6 +14,7 @@ describe('Additional Filter Controller', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("isAlertActive", false);
     }));
 
     beforeEach(function () {
@@ -74,6 +75,7 @@ describe('Additional Modal Controller', function () {
         ]);
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToFeatures", false);
+        $provide.constant("isAlertActive", false);
     }));
 
     var scope, modalInstance, controller, $uibModal, $location;
@@ -178,6 +180,7 @@ describe('Additional Modal Controller feature flag enabled', function () {
         ]);
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToFeatures", true);
+        $provide.constant("isAlertActive", false);
     }));
 
     var scope, modalInstance, controller, $uibModal, $location;

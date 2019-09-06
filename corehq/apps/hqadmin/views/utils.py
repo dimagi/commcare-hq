@@ -1,4 +1,3 @@
-
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_lazy
 

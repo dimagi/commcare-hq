@@ -1,4 +1,3 @@
-
 from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
 from corehq.apps.locations.resources.v0_1 import InternalLocationResource
 from custom.ewsghana.resources.v0_1 import EWSLocationResource

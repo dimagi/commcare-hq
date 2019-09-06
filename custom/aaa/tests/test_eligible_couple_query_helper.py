@@ -1,4 +1,3 @@
-
 from datetime import date
 
 from django.test.testcases import TestCase

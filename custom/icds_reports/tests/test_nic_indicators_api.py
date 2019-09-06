@@ -1,10 +1,8 @@
-
 from datetime import datetime, date
 from freezegun import freeze_time
 
 from django.test import TestCase
 from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
-from mock import mock
 
 
 @freeze_time("2017-05-02")

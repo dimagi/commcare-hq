@@ -1,4 +1,3 @@
-
 from django.conf import settings
 from django.db import transaction
 from corehq.apps.users.util import format_username

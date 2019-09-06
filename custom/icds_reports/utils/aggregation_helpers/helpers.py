@@ -1,4 +1,3 @@
-
 import attr
 from django.conf import settings
 

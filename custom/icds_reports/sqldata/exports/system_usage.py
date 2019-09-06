@@ -1,4 +1,3 @@
-
 from sqlagg.columns import SumColumn, SimpleColumn
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn

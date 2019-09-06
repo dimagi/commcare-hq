@@ -5,15 +5,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+{% compress css %}
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
-        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
-        <link type="text/css"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'font-awesome/css/font-awesome.css' %}"/>
-
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3-1.8.6/build/nv.d3.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/css/angular-datatables.min.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/plugins/bootstrap/datatables.bootstrap.min.css' %}">
@@ -21,6 +16,8 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'perfect-scrollbar/css/perfect-scrollbar.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
+{% endcompress %}
+
         {% include 'analytics/google.html' %}
         {% javascript_libraries underscore=True hq=True %}
         <script src="{% static 'autotrack/autotrack.js' %}"></script>
@@ -29,6 +26,7 @@
             window.ga('require', 'outboundLinkTracker');
             window.ga('require', 'urlChangeTracker');
         </script>
+{% compress js %}
         <script src="{% static 'd3-3.5.17/d3.js' %}"></script>
         <script src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
         <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
@@ -49,14 +47,23 @@
         <script src="{% static 'angular-leaflet-directive/dist/angular-leaflet-directive.js' %}"></script>
         <script src="{% static 'perfect-scrollbar/js/perfect-scrollbar.jquery.min.js' %}"></script>
         <script src="{% static 'angular-perfect-scrollbar/src/angular-perfect-scrollbar.js' %}"></script>
-
         <script src="{% static 'topojson/topojson.js' %}"></script>
         <script src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
-
+{% endcompress %}
+{% comment %}
+These topojson files are excluded from compression because:
+ 1. They are large and cause out of memory errors on some environments
+ 2. They are likely already sufficiently compressed
+{% endcomment %}
         <script src="{% static 'js/topojsons/states_v2.topojson.js' %}"></script>
         <script src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
         <script src="{% static 'js/topojsons/blocks_v3.topojson.js' %}"></script>
 
+{% comment %}
+For some odd reason if we include the entire block in a single compress tag we get javascript errors
+related to angular not being defined. But if we split it here it works fine.
+{% endcomment %}
+{% compress js %}
         <script src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
         <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
 
@@ -117,6 +124,7 @@
         <script src="{% static 'js/directives/cas-export/cas-export.directive.js' %}"></script>
         <script src="{% static 'js/directives/access-denied/access-denied.directive.js' %}"></script>
         <script src="{% static 'js/directives/info-message/info-message.directive.js' %}"></script>
+{% endcompress %}
 </head>
 <body>
 
@@ -125,7 +133,7 @@
 
         <div class="row">
           <div class="col-md-12">
-            <div class="row alert-maintenance" style="height: 50px;">
+            <div class="row alert-maintenance">
               {% maintenance_alert request False %}
             </div>
             <div class="row">
@@ -311,6 +319,7 @@
 
 {% block js-inline %}{% endblock js-inline %}
 <script>
+    angular.module('icdsApp').constant('isAlertActive', window.angular.element('.alert-maintenance').children().length === 1);
     angular.module('icdsApp').constant('locationHierarchy', {{ location_hierarchy | JSON }});
     angular.module('icdsApp').constant('userLocationId', {{ user_location_id | JSON }});
     angular.module('icdsApp').constant('allUserLocationId', {{ all_user_location_id | JSON }});
