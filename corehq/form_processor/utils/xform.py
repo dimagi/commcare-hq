@@ -58,7 +58,7 @@ class FormSubmissionBuilder(object):
         self.form_properties = form_properties or {}
 
     def as_xml_string(self):
-        case_block_xml = ''.join(cb.as_string().decode('utf-8') for cb in self.case_blocks)
+        case_block_xml = ''.join(cb.as_text() for cb in self.case_blocks)
         form_properties_xml = build_form_xml_from_property_dict(self.form_properties)
         form_xml = self.form_template.format(
             uuid=self.form_id, form_properties=form_properties_xml, case_block=case_block_xml,
