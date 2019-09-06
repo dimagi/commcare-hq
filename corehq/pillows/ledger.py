@@ -78,7 +78,7 @@ def _update_ledger_section_entry_combinations(ledger):
     )
 
 
-@lru_cache
+@lru_cache()
 def _get_ledger_section_combinations(domain):
     return list(LedgerSectionEntry.objects.filter(domain=domain).values_list('section_id', 'entry_id').all())
 
