@@ -1,7 +1,7 @@
 /* global moment */
 
 function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
-    downloadService) {
+    downloadService, isAlertActive) {
     var vm = this;
 
     vm.months = [];
@@ -12,6 +12,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.previousTaskFailed = null;
     $rootScope.report_link = '';
+    vm.isAlertActive = isAlertActive;
 
     var getTaskStatus = function () {
         downloadService.getStatus(vm.task_id).then(function (resp) {
@@ -569,7 +570,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 }
 
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
-    'haveAccessToFeatures', 'downloadService'];
+    'haveAccessToFeatures', 'downloadService', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

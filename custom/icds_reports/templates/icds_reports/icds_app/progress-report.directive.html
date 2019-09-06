@@ -1,7 +1,7 @@
 {% load static %}
 
 <div class="progress-report-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row no-margin fixes-filters" ng-init="updateCssClasses()">
+    <div class="row no-margin fixes-filters" ng-class="{'fixes-filters-with-alert': $ctrl.isAlertActive}">
         <div class="col-md-5">
             <div class="row">
                 <span class="breadcrump-element pointer" ng-click="$ctrl.goBack()">
