@@ -16,24 +16,40 @@ hqDefine('registration/js/register_new_user', [
 ) {
     'use strict';
 
-    $('#js-start-trial').click(function (e) {
-        e.preventDefault();
-        $('#registration-start-container').hide();
-        $('#registration-form-container').fadeIn();
+    if (initialPageData.get('is_new_trial_experience')) {
+        $('#js-create-account').click(function (e) {
+            e.preventDefault();
+            $('#registration-choose-plan-container').hide();
+            $('#registration-form-container').fadeIn();
 
-        $('#back-to-start-btn').removeClass('hide');
-    });
+            $('#back-to-start-btn').removeClass('hide');
+        });
 
-    $('#back-to-start-btn').click(function () {
-        $('#registration-form-container').hide();
-        $('#registration-start-container').fadeIn();
-    });
+        $('#back-to-start-btn').click(function () {
+            $('#registration-form-container').hide();
+            $('#registration-choose-plan-container').fadeIn();
+        });
+    } else {
+        $('#js-start-trial').click(function (e) {
+            e.preventDefault();
+            $('#registration-start-container').hide();
+            $('#registration-form-container').fadeIn();
 
-    $('.view-features').click(function (e) {
-        e.preventDefault();
+            $('#back-to-start-btn').removeClass('hide');
+        });
 
-        $('.tile-wrapper').addClass('show-features');
-    });
+        $('.view-features').click(function (e) {
+            e.preventDefault();
+
+            $('.tile-wrapper').addClass('show-features');
+        });
+
+        $('#back-to-start-btn').click(function () {
+            $('#registration-form-container').hide();
+            $('#registration-start-container').fadeIn();
+        });
+    }
+
 
     kissmetrics.whenReadyAlways(function () {
 
