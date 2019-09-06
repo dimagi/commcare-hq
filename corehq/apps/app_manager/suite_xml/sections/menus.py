@@ -136,7 +136,8 @@ class MenuContributor(SuiteContributorByModule):
                                     XPath(id_module.root_module.module_filter).paren(force=True)))
                             else:
                                 relevancy = id_module.root_module.module_filter
-                        menu_kwargs['relevant'] = interpolate_xpath(relevancy)
+                        if relevancy:
+                            menu_kwargs['relevant'] = interpolate_xpath(relevancy)
 
                     if self.app.enable_localized_menu_media:
                         module_custom_icon = module.custom_icon
