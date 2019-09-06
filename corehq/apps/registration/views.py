@@ -476,7 +476,7 @@ def confirm_domain(request, guid=''):
         track_confirmed_account_on_hubspot.delay(requesting_user)
         request.session['CONFIRM'] = True
 
-        if settings.IS_SAAS_ENVIRONMENT:
+        if settings.IS_SAAS_ENVIRONMENT and not settings.ENABLE_NEW_TRIAL_EXPERIENCE:
             # For AppCues v3, land new user in Web Apps
             view_name = get_cloudcare_urlname(requested_domain.name)
         return HttpResponseRedirect(reverse(view_name, args=view_args))
