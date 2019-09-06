@@ -64,7 +64,7 @@ def get_program_summary_data_with_retrying(step, domain, config, now, include_te
 # in some script/tool which might flood us with requests
 @icds_quickcache(['use_citus'], timeout=120 * 60)
 def get_inc_indicator_api_data(use_citus=False):
-    latest_available_month = datetime(2017, 5, 1) - timedelta(days=1)
+    latest_available_month = datetime.utcnow() - timedelta(days=1)
     first_day_month = latest_available_month.replace(day=1)
     with force_citus_engine(use_citus):
         data = NICIndicatorsView.objects.filter(month=first_day_month).all().values('state_name',
