@@ -3,25 +3,16 @@ import os
 import sys
 from itertools import groupby, zip_longest
 
-import six
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from six.moves import input, zip_longest
 from sqlalchemy.exc import OperationalError
 
-from corehq.apps.domain.models import Domain
-from corehq.blobs import get_blob_db, CODES
-from corehq.form_processor.change_publishers import publish_case_saved, publish_form_saved
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
+from dimagi.utils.chunked import chunked
 
 from corehq import toggles
-from sqlalchemy.exc import OperationalError
-
-from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms.models import XFormInstance, doc_types
-
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     CASE_DOC_TYPES,
     do_couch_to_sql_migration,
@@ -41,14 +32,19 @@ from corehq.apps.couch_sql_migration.statedb import (
     open_state_db,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.blobs import CODES, get_blob_db
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
 )
+from corehq.form_processor.change_publishers import (
+    publish_case_saved,
+    publish_form_saved,
+)
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import shell_green, shell_red
-from dimagi.utils.chunked import chunked
 
 log = logging.getLogger('main_couch_sql_datamigration')
 
@@ -404,7 +400,7 @@ def _commit_dst_domain(domain):
 
 
 def _iter_couch_form_ids(domain):
-    for doc_type, class_ in six.iteritems(doc_types()):
+    for doc_type, class_ in doc_types().items():
         for form_id in get_form_ids_by_type(domain, doc_type):
             yield form_id
 
