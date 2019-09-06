@@ -60,27 +60,19 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
-            $.post({
-                url: initialPageData.reverse("repeat_record"),
-                data: { record_id: recordId },
-                success: function (data) {
-                    $btn.removeSpinnerFromButton();
-                    if (data.success) {
-                        $btn.text(gettext('Success!'));
-                        $btn.addClass('btn-success');
-                    } else {
-                        $btn.text(gettext('Failed'));
-                        $btn.addClass('btn-danger');
-                        $('#payload-error-modal').modal('show');
-                        $('#payload-error-modal .error-message').text(data.failure_reason);
-                    }
-                },
-                error: function () {
-                    $btn.removeSpinnerFromButton();
-                    $btn.text(gettext('Failed to send'));
-                    $btn.addClass('btn-danger');
-                },
-            });
+            post_resend($btn, recordId);
+        });
+
+        $('#resendAll').on('click', function () {
+            var $btn = $(this),
+                itemsToResend = get_checkboxes();
+
+            if (itemsToResend != '') {
+                $btn.disableButton();
+                post_resend($btn, itemsToResend);
+            } else {
+                alert('You need to select at least one checkbox!');
+            }
         });
 
         $('#report-content').on('click', '.cancel-record-payload', function () {
@@ -88,20 +80,19 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
-            $.post({
-                url: initialPageData.reverse('cancel_repeat_record'),
-                data: { record_id: recordId },
-                success: function () {
-                    $btn.removeSpinnerFromButton();
-                    $btn.text(gettext('Success!'));
-                    $btn.addClass('btn-success');
-                },
-                error: function () {
-                    $btn.removeSpinnerFromButton();
-                    $btn.text(gettext('Failed to cancel'));
-                    $btn.addClass('btn-danger');
-                },
-            });
+            post_other($btn, recordId, 'cancel');
+        });
+
+        $('#cancelAll').on('click', function () {
+            var $btn = $(this),
+                itemsToResend = get_checkboxes();
+
+            if (itemsToResend != '') {
+                $btn.disableButton();
+                post_other($btn, itemsToResend, 'cancel');
+            } else {
+                alert('You need to select at least one checkbox!');
+            }
         });
 
         $('#report-content').on('click', '.requeue-record-payload', function () {
@@ -109,20 +100,80 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
+            post_other($btn, recordId, 'requeue');
+        });
+
+        $('#requeueAll').on('click', function () {
+            var $btn = $(this),
+                itemsToResend = get_checkboxes();
+
+            if (itemsToResend != '') {
+                $btn.disableButton();
+                post_other($btn, itemsToResend, 'requeue');
+            } else {
+                alert('You need to select at least one checkbox!');
+            }
+        });
+
+        function get_checkboxes() {
+            if ($('#select_all').checked == true) {
+                return $('#all_ids').value;
+            } else if ($('#cancel_all').checked == true) {
+                return $('#cancel_ids').value;
+            } else if ($('#requeue_all').checked == true) {
+                return $('#requeue_ids').value;
+            } else {
+                var items = document.getElementsByName('xform_ids'),
+                    itemsToResend = '';
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].type == 'checkbox' && items[i].checked == true) {
+                        itemsToResend += items[i].value + ' '
+                    }
+                }
+
+                return itemsToResend;
+            }
+        }
+
+        function post_resend(btn, arg) {
             $.post({
-                url: initialPageData.reverse("requeue_repeat_record"),
-                data: { record_id: recordId },
-                success: function () {
-                    $btn.removeSpinnerFromButton();
-                    $btn.text(gettext('Success!'));
-                    $btn.addClass('btn-success');
+                url: initialPageData.reverse("repeat_record"),
+                data: { record_id: arg },
+                success: function (data) {
+                    btn.removeSpinnerFromButton();
+                    if (data.success) {
+                        btn.text(gettext('Success!'));
+                        btn.addClass('btn-success');
+                    } else {
+                        btn.text(gettext('Failed'));
+                        btn.addClass('btn-danger');
+                        $('#payload-error-modal').modal('show');
+                        $('#payload-error-modal .error-message').text(data.failure_reason);
+                    }
                 },
                 error: function () {
-                    $btn.removeSpinnerFromButton();
-                    $btn.text(gettext('Failed to cancel'));
-                    $btn.addClass('btn-danger');
+                    btn.removeSpinnerFromButton();
+                    btn.text(gettext('Failed to send'));
+                    btn.addClass('btn-danger');
                 },
             });
-        });
+        }
+
+        function post_other(btn, arg, action) {
+            $.post({
+                url: initialPageData.reverse(action + '_repeat_record'),
+                data: { record_id: arg },
+                success: function () {
+                    btn.removeSpinnerFromButton();
+                    btn.text(gettext('Success!'));
+                    btn.addClass('btn-success');
+                },
+                error: function () {
+                    btn.removeSpinnerFromButton();
+                    btn.text(gettext('Failed to cancel'));
+                    btn.addClass('btn-danger');
+                },
+            });
+        }
     });
 });
