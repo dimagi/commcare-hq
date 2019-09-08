@@ -443,36 +443,30 @@ class _OwnerAccessor(object):
         self.user = user
         self.id_cache = {}
         self.name_cache = {}
-        self.is_restricted = user.has_permission(domain, 'access_all_locations')
 
     def check_owner(self, owner):
-        owner_is_user = isinstance(owner, CouchUser) and owner.is_member_of(self.domain)
-        owner_is_casesharing_group = isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(self.domain)
-        if not (owner_is_user or owner_is_casesharing_group or self._is_valid_location_owner(owner)):
+        is_valid_user = isinstance(owner, CouchUser) and owner.is_member_of(self.domain)
+        is_valid_group = isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(self.domain)
+        is_valid_location = (isinstance(owner, SQLLocation)
+                             and owner.domain == self.domain
+                             and owner.location_type.shares_cases)
+        if not (is_valid_user or is_valid_group or is_valid_location):
             raise exceptions.InvalidOwnerId('owner_id')
-        if self.is_restricted and not self._location_is_accessible(owner):
+        if not self._location_is_accessible(owner):
             raise exceptions.InvalidLocation('owner_id')
         return True
 
-    def _is_valid_location_owner(self, owner):
-        return (
-            isinstance(owner, SQLLocation) and
-            owner.domain == self.domain and
-            owner.location_type.shares_cases
-        )
-
     def _location_is_accessible(self, owner):
         return (
-            owner._id == self.user.user_id or
-            owner._id in self._locations_accessible_to_user or
-            (
-                hasattr(owner, 'get_location_id')  # is a user, not a location
-                and owner.get_location_id(self.domain) in self._locations_accessible_to_user
-            )
+            self.user.has_permission(self.domain, 'access_all_locations')
+            or (isinstance(owner, CouchUser)
+                and owner.get_location_id(self.domain) in self._accessible_locations)
+            or (isinstance(owner, SQLLocation)
+                and owner.location_id in self._accessible_locations)
         )
 
     @cached_property
-    def _locations_accessible_to_user(self):
+    def _accessible_locations(self):
         return set(
             SQLLocation.objects
             .accessible_to_user(self.domain, self.user)
