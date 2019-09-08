@@ -47,7 +47,7 @@ class _Importer(object):
 
         self.results = _ImportResults()
 
-        self.owner_accessor = _OwnerAccessor(domain)
+        self.owner_accessor = _OwnerAccessor(domain, self.user)
         self.uncreated_external_ids = set()
         self._unsubmitted_caseblocks = []
 
@@ -79,7 +79,6 @@ class _Importer(object):
             domain=self.domain,
             user_id=self.user.user_id,
             owner_accessor=self.owner_accessor,
-            locations=self.locations_accessible_to_user,
         )
         if row.relies_on_uncreated_case(self.uncreated_external_ids):
             self.commit_caseblocks()
@@ -103,16 +102,6 @@ class _Importer(object):
     @cached_property
     def user(self):
         return CouchUser.get_by_user_id(self.config.couch_user_id, self.domain)
-
-    @cached_property
-    def locations_accessible_to_user(self):
-        if self.user.has_permission(self.domain, 'access_all_locations'):
-            return ALL_LOCATIONS
-        return set(
-            SQLLocation.objects
-            .accessible_to_user(self.domain, self.user)
-            .values_list('location_id', flat=True)
-        )
 
     def add_caseblock(self, caseblock):
         self._unsubmitted_caseblocks.append(caseblock)
@@ -166,14 +155,13 @@ class _Importer(object):
 
 
 class _CaseImportRow(object):
-    def __init__(self, search_id, fields_to_update, config, domain, user_id, owner_accessor, locations):
+    def __init__(self, search_id, fields_to_update, config, domain, user_id, owner_accessor):
         self.search_id = search_id
         self.fields_to_update = fields_to_update
         self.config = config
         self.domain = domain
         self.user_id = user_id
         self.owner_accessor = owner_accessor
-        self.accessible_locations = locations
 
         self.case_name = fields_to_update.pop('name', None)
         self.external_id = fields_to_update.pop('external_id', None)
@@ -249,7 +237,7 @@ class _CaseImportRow(object):
 
         owner = get_wrapped_owner(owner_id)
         try:
-            self.owner_accessor.check_owner(owner, self.user_id, self.accessible_locations)
+            self.owner_accessor.check_owner(owner)
         except CaseRowError as err:
             id_cache[owner_id] = err
             raise
@@ -450,17 +438,19 @@ def _populate_updated_fields(config, row):
 
 
 class _OwnerAccessor(object):
-    def __init__(self, domain):
+    def __init__(self, domain, user):
         self.domain = domain
+        self.user = user
         self.id_cache = {}
         self.name_cache = {}
+        self.is_restricted = user.has_permission(domain, 'access_all_locations')
 
-    def check_owner(self, owner, user_id=None, locations=ALL_LOCATIONS):
+    def check_owner(self, owner):
         owner_is_user = isinstance(owner, CouchUser) and owner.is_member_of(self.domain)
         owner_is_casesharing_group = isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(self.domain)
         if not (owner_is_user or owner_is_casesharing_group or self._is_valid_location_owner(owner)):
             raise exceptions.InvalidOwnerId('owner_id')
-        if not self._is_owner_location_accessible_to_user(owner, user_id, locations):
+        if self.is_restricted and not self._location_is_accessible(owner):
             raise exceptions.InvalidLocation('owner_id')
         return True
 
@@ -471,15 +461,22 @@ class _OwnerAccessor(object):
             owner.location_type.shares_cases
         )
 
-    def _is_owner_location_accessible_to_user(self, owner, user_id, locations_accessible_to_user):
+    def _location_is_accessible(self, owner):
         return (
-            owner._id == user_id or
-            locations_accessible_to_user == ALL_LOCATIONS or
-            owner._id in locations_accessible_to_user or
+            owner._id == self.user.user_id or
+            owner._id in self._locations_accessible_to_user or
             (
                 hasattr(owner, 'get_location_id')  # is a user, not a location
-                and owner.get_location_id(self.domain) in locations_accessible_to_user
+                and owner.get_location_id(self.domain) in self._locations_accessible_to_user
             )
+        )
+
+    @cached_property
+    def _locations_accessible_to_user(self):
+        return set(
+            SQLLocation.objects
+            .accessible_to_user(self.domain, self.user)
+            .values_list('location_id', flat=True)
         )
 
     def get_id_from_name(self, name):
