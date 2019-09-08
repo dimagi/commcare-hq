@@ -202,23 +202,14 @@ class _CaseImportRow(object):
         return not self.existing_case
 
     def _get_owner_id(self):
-        owner_id = self.uploaded_owner_id
         if self.uploaded_owner_name:
-            # If an owner name was provided, use the id of the provided or
-            # owner rather than the uploaded_owner_id
-            try:
-                owner_id = self.owner_accessor.get_id_from_name(self.uploaded_owner_name)
-            except SQLLocation.MultipleObjectsReturned:
-                raise exceptions.DuplicateLocationName()
-
-            if not owner_id:
-                raise exceptions.InvalidOwnerName('owner_name')
-
-        if owner_id:
-            self.owner_accessor.check_owner_id(owner_id)
-
-        # if they didn't supply an owner, default to current user
-        return owner_id or self.user_id
+            return self.owner_accessor.get_id_from_name(self.uploaded_owner_name)
+        else:
+            owner_id = self.uploaded_owner_id
+            if owner_id:
+                self.owner_accessor.check_owner_id(owner_id)
+            # if they didn't supply an owner, default to current user
+            return owner_id or self.user_id
 
     def _get_parent_index(self):
         for column, search_field, search_id in [
@@ -430,27 +421,31 @@ class _OwnerAccessor(object):
         group, then location
         '''
 
-        def get_from_user(name):
+        def get_user(name):
             try:
                 name_as_address = name
                 if '@' not in name_as_address:
                     name_as_address = format_username(name, self.domain)
-                user = CouchUser.get_by_username(name_as_address)
-                return getattr(user, 'couch_id', None)
+                return CouchUser.get_by_username(name_as_address)
             except NoResultFound:
                 return None
 
-        def get_from_group(name):
-            group = Group.by_name(self.domain, name, one=True)
-            return getattr(group, 'get_id', None)
+        def get_group(name):
+            return Group.by_name(self.domain, name, one=True)
 
-        def get_from_location(name):
+        def get_location(name):
             try:
-                return SQLLocation.objects.get_from_user_input(self.domain, name).location_id
+                return SQLLocation.objects.get_from_user_input(self.domain, name)
             except SQLLocation.DoesNotExist:
                 return None
+            except SQLLocation.MultipleObjectsReturned:
+                raise exceptions.DuplicateLocationName()
 
-        return get_from_user(name) or get_from_group(name) or get_from_location(name)
+        owner = get_user(name) or get_group(name) or get_location(name)
+        if not owner:
+            raise exceptions.InvalidOwnerName('owner_name')
+        self._check_owner(owner, 'owner_name')
+        return owner._id
 
     def check_owner_id(self, owner_id):
         return cached_function_call(self._check_owner_id, owner_id, self.id_cache)
@@ -463,18 +458,18 @@ class _OwnerAccessor(object):
         Returns True if owner ID is valid.
         """
         owner = get_wrapped_owner(owner_id)
-        self.check_owner(owner)
+        self._check_owner(owner, 'owner_id')
 
-    def check_owner(self, owner):
+    def _check_owner(self, owner, owner_field):
         is_valid_user = isinstance(owner, CouchUser) and owner.is_member_of(self.domain)
         is_valid_group = isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(self.domain)
         is_valid_location = (isinstance(owner, SQLLocation)
                              and owner.domain == self.domain
                              and owner.location_type.shares_cases)
         if not (is_valid_user or is_valid_group or is_valid_location):
-            raise exceptions.InvalidOwnerId('owner_id')
+            raise exceptions.InvalidOwnerId(owner_field)
         if not self._location_is_accessible(owner):
-            raise exceptions.InvalidLocation('owner_id')
+            raise exceptions.InvalidLocation(owner_field)
         return True
 
     def _location_is_accessible(self, owner):
