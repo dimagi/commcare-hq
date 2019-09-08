@@ -198,3 +198,8 @@ class DeviceLogRequest(models.Model):
     username = models.CharField(max_length=255)
     device_id = models.CharField(max_length=255)
     created_on = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        from corehq.apps.ota.views import get_device_log_requests
+        super().save(*args, **kwargs)
+        get_device_log_requests.reset_cache()

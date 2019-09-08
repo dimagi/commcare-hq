@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 
 from .models import DemoUserRestore, MobileRecoveryMeasure, DeviceLogRequest
-from .views import get_recovery_measures_cached, get_device_log_requests
+from .views import get_recovery_measures_cached
 
 
 class DemoUserRestoreAdmin(admin.ModelAdmin):
@@ -68,10 +68,6 @@ class DeviceLogRequestAdmin(admin.ModelAdmin):
     model = DeviceLogRequest
     list_display = ['domain', 'username', 'device_id', 'created_on']
     list_filter = ['domain', 'username']
-
-    def save_model(self, *args, **kwargs):
-        super(DeviceLogRequestAdmin, self).save_model(*args, **kwargs)
-        get_device_log_requests.reset_cache()
 
 
 admin.site.register(DemoUserRestore, DemoUserRestoreAdmin)
