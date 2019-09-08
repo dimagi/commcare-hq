@@ -490,7 +490,7 @@ class SubmissionPost(object):
         ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.NO_DEVICE_LOG_ENVS
         if self.force_logs or not ignore_device_logs:
             try:
-                process_device_log(self.domain, device_log_form)
+                process_device_log(self.domain, device_log_form, self.force_logs)
             except Exception as e:
                 notify_exception(None, "Error processing device log", details={
                     'xml': self.instance,
