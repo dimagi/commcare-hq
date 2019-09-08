@@ -444,35 +444,6 @@ class _OwnerAccessor(object):
         self.id_cache = {}
         self.name_cache = {}
 
-    def check_owner(self, owner):
-        is_valid_user = isinstance(owner, CouchUser) and owner.is_member_of(self.domain)
-        is_valid_group = isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(self.domain)
-        is_valid_location = (isinstance(owner, SQLLocation)
-                             and owner.domain == self.domain
-                             and owner.location_type.shares_cases)
-        if not (is_valid_user or is_valid_group or is_valid_location):
-            raise exceptions.InvalidOwnerId('owner_id')
-        if not self._location_is_accessible(owner):
-            raise exceptions.InvalidLocation('owner_id')
-        return True
-
-    def _location_is_accessible(self, owner):
-        return (
-            self.user.has_permission(self.domain, 'access_all_locations')
-            or (isinstance(owner, CouchUser)
-                and owner.get_location_id(self.domain) in self._accessible_locations)
-            or (isinstance(owner, SQLLocation)
-                and owner.location_id in self._accessible_locations)
-        )
-
-    @cached_property
-    def _accessible_locations(self):
-        return set(
-            SQLLocation.objects
-            .accessible_to_user(self.domain, self.user)
-            .values_list('location_id', flat=True)
-        )
-
     def get_id_from_name(self, name):
         '''
         :param name: A username, group name, or location name/site_code
@@ -506,3 +477,32 @@ class _OwnerAccessor(object):
         id = get_from_user(name) or get_from_group(name) or get_from_location(name)
         self.name_cache[name] = id
         return id
+
+    def check_owner(self, owner):
+        is_valid_user = isinstance(owner, CouchUser) and owner.is_member_of(self.domain)
+        is_valid_group = isinstance(owner, Group) and owner.case_sharing and owner.is_member_of(self.domain)
+        is_valid_location = (isinstance(owner, SQLLocation)
+                             and owner.domain == self.domain
+                             and owner.location_type.shares_cases)
+        if not (is_valid_user or is_valid_group or is_valid_location):
+            raise exceptions.InvalidOwnerId('owner_id')
+        if not self._location_is_accessible(owner):
+            raise exceptions.InvalidLocation('owner_id')
+        return True
+
+    def _location_is_accessible(self, owner):
+        return (
+            self.user.has_permission(self.domain, 'access_all_locations')
+            or (isinstance(owner, CouchUser)
+                and owner.get_location_id(self.domain) in self._accessible_locations)
+            or (isinstance(owner, SQLLocation)
+                and owner.location_id in self._accessible_locations)
+        )
+
+    @cached_property
+    def _accessible_locations(self):
+        return set(
+            SQLLocation.objects
+            .accessible_to_user(self.domain, self.user)
+            .values_list('location_id', flat=True)
+        )
