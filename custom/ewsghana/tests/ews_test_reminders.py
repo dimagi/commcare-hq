@@ -22,7 +22,7 @@ class EWSTestReminders(EWSTestCase):
     def setUp(self):
         super(EWSTestReminders, self).setUp()
         self.facility = make_loc('test-faciity', 'Test Facility', TEST_DOMAIN, 'Polyclinic')
-        self.commodity = make_product(TEST_DOMAIN, 'Drug A', '_ab', unit='cycle')
+        self.commodity = make_product(TEST_DOMAIN, 'Drug A', 'ab', unit='cycle')
         self.commodity2 = make_product(TEST_DOMAIN, 'Drug B', 'cd', unit='cycle')
         self.sql_facility = self.facility.sql_location
         self.sql_facility.products = []
