@@ -10,8 +10,6 @@ from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, use_sql_backend
 from corehq.sql_db.config import partition_config
-import six
-from six.moves import range
 
 DOMAIN = 'sharding-test'
 
@@ -89,7 +87,7 @@ class ShardingTests(TestCase):
         from corehq.sql_db.util import get_db_alias_for_partitioned_doc, new_id_in_same_dbalias
         for i in range(10):
             # test multiple times to test a wider probability
-            f1_id = six.text_type(uuid4())
+            f1_id = str(uuid4())
             old_db_alias = get_db_alias_for_partitioned_doc(f1_id)
             f2_id = new_id_in_same_dbalias(f1_id)
             new_db_alias = get_db_alias_for_partitioned_doc(f2_id)
@@ -176,7 +174,7 @@ class ShardAccessorTests(TestCase):
 
         csiphash_hashes = ShardAccessor.hash_doc_ids_python(doc_ids)
         self.assertEquals(len(csiphash_hashes), N)
-        self.assertTrue(all(isinstance(hash_, six.integer_types) for hash_ in csiphash_hashes.values()))
+        self.assertTrue(all(isinstance(hash_, int) for hash_ in csiphash_hashes.values()))
 
         N_shards = 1024
         part_mask = N_shards - 1

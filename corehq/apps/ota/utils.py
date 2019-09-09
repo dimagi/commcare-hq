@@ -1,10 +1,7 @@
-
-
 from functools import wraps
 
 from django.utils.translation import ugettext as _
 
-import six
 from couchdbkit import ResourceConflict
 
 from casexml.apps.case.xml import V2
@@ -47,7 +44,7 @@ def turn_on_demo_mode(commcare_user, domain):
         reset_demo_user_restore(commcare_user, domain)
         return {'errors': []}
     except Exception as e:
-        notify_exception(None, message=six.text_type(e))
+        notify_exception(None, message=str(e))
         return {'errors': [
             _("Something went wrong in creating restore for the user. Please try again or report an issue")
         ]}
@@ -126,7 +123,7 @@ def is_permitted_to_restore(domain, couch_user, as_user_obj):
             _ensure_accessible_location(domain, couch_user, as_user_obj)
             _ensure_edit_data_permission(domain, couch_user)
     except RestorePermissionDenied as e:
-        return False, six.text_type(e)
+        return False, str(e)
     else:
         return True, None
 

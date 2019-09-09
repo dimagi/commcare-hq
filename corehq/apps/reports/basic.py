@@ -2,9 +2,6 @@ from functools import reduce
 
 from django.conf import settings
 
-import six
-from six.moves import range
-
 from dimagi.utils.couch.database import get_db
 
 from corehq.apps.reports.datatables import (
@@ -111,7 +108,7 @@ class ColumnCollector(type):
         return super(ColumnCollector, cls).__new__(cls, name, bases, attrs)
 
 
-class BasicTabularReport(six.with_metaclass(ColumnCollector, GenericTabularReport)):
+class BasicTabularReport(GenericTabularReport, metaclass=ColumnCollector):
     update_after = False
 
     @property
@@ -173,7 +170,7 @@ class SummingTabularReport(BasicTabularReport):
         total_row = []
         for i in range(num_cols):
             colrows = [cr[i] for cr in ret if isinstance(cr[i], dict)]
-            colnums = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types)]
+            colnums = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), int)]
             total_row.append(reduce(lambda x, y: x+ y, colnums, 0))
         self.total_row = total_row
         return ret

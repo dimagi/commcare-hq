@@ -10,10 +10,8 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
 
-import six
 from couchdbkit import ResourceNotFound
 from memoized import memoized
-from six.moves import map, range
 
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter

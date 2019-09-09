@@ -1,9 +1,7 @@
-
 from django.core.management.base import BaseCommand
 
 from fluff.pillow import FluffPillowProcessor
 from pillowtop.utils import get_pillow_by_name
-from six.moves import input
 
 
 class Command(BaseCommand):

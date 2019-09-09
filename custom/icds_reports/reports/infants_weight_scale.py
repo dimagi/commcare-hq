@@ -1,8 +1,6 @@
-
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
@@ -128,7 +126,7 @@ def get_infants_weight_scale_data_chart(domain, config, loc_level, show_test=Fal
             'loc_name': key,
             'percent': (value['in_month'] * 100) / float(value['all'] or 1)
         }
-        for key, value in six.iteritems(best_worst)
+        for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(
@@ -142,7 +140,7 @@ def get_infants_weight_scale_data_chart(domain, config, loc_level, show_test=Fal
                         'x': key,
                         'y': value['in_month'] / float(value['all'] or 1),
                         'in_month': value['in_month']
-                    } for key, value in six.iteritems(data['blue'])
+                    } for key, value in data['blue'].items()
                 ],
                 "key": "Percentage of AWCs that reported having a weighing scale for infants",
                 "strokeWidth": 2,
@@ -197,7 +195,7 @@ def get_infants_weight_scale_sector_data(domain, config, loc_level, location_id,
             'all': valid or 0
         }
 
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         value = (in_month or 0) / float(valid or 1)

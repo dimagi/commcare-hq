@@ -1,11 +1,8 @@
-
 import uuid
 from datetime import datetime, timedelta
 
 from django.test import TestCase
 from django.test.client import RequestFactory
-
-from six.moves import zip
 
 from dimagi.utils.dates import DateSpan
 

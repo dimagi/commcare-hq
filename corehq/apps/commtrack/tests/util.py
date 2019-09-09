@@ -1,6 +1,5 @@
 from datetime import datetime
 
-import six
 from lxml import etree
 
 from casexml.apps.phone.utils import MockDevice
@@ -40,7 +39,7 @@ ROAMING_USER = {
 
 FIXED_USER = {
     'username': TEST_USER + '-fixed',
-    'phone_number': six.text_type(int(TEST_NUMBER) + 1),
+    'phone_number': str(int(TEST_NUMBER) + 1),
     'first_name': 'fixed',
     'last_name': 'reporter',
     'user_data': {},

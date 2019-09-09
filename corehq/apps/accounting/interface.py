@@ -7,7 +7,6 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from memoized import memoized
-from six.moves import map
 
 from couchexport.models import Format
 

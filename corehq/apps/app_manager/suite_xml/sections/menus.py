@@ -26,6 +26,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xpath import (
     CaseIDXPath,
     QualifiedScheduleFormXPath,
+    XPath,
     interpolate_xpath,
     session_var,
 )
@@ -90,17 +91,14 @@ class MenuContributor(SuiteContributorByModule):
             if hasattr(module, 'case_list') and module.case_list.show:
                 yield Command(id=id_strings.case_list_command(module))
 
-        supports_module_filter = self.app.enable_module_filtering and module.module_filter
-
         menus = []
         if hasattr(module, 'get_menus'):
-            for menu in module.get_menus(supports_module_filter=supports_module_filter,
-                                         build_profile_id=self.build_profile_id):
+            for menu in module.get_menus(build_profile_id=self.build_profile_id):
                 menus.append(menu)
         else:
             from corehq.apps.app_manager.models import ShadowModule
-            id_modules = [module]
-            root_modules = []
+            id_modules = [module]       # the current module and all of its shadows
+            root_modules = []           # the current module's parent and all of that parent's shadows
 
             shadow_modules = [m for m in self.app.get_modules()
                               if isinstance(m, ShadowModule) and m.source_module_id]
@@ -127,8 +125,19 @@ class MenuContributor(SuiteContributorByModule):
                         suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
                     menu_kwargs.update({'id': id_strings.menu_id(id_module, suffix)})
 
-                    if supports_module_filter:
-                        menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
+                    # Determine relevancy
+                    if self.app.enable_module_filtering:
+                        relevancy = id_module.module_filter
+                        # If module has a parent, incorporate the parent's relevancy.
+                        # This is only necessary when the child uses display only forms.
+                        if id_module.put_in_root and id_module.root_module and id_module.root_module.module_filter:
+                            if relevancy:
+                                relevancy = str(XPath.and_(XPath(relevancy).paren(force=True),
+                                    XPath(id_module.root_module.module_filter).paren(force=True)))
+                            else:
+                                relevancy = id_module.root_module.module_filter
+                        if relevancy:
+                            menu_kwargs['relevant'] = interpolate_xpath(relevancy)
 
                     if self.app.enable_localized_menu_media:
                         module_custom_icon = module.custom_icon

@@ -5,8 +5,6 @@ from elasticsearch.exceptions import NotFoundError
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
 from pillowtop.es_utils import assume_alias
-from six.moves import input
-import six
 
 
 class Command(BaseCommand):
@@ -46,7 +44,7 @@ class Command(BaseCommand):
                 'CODE RED!!!',
                 'Really delete ALL the elastic indices and pillow checkpoints?',
                 'The following indices will be affected:',
-                '\n'.join([six.text_type(index_info) for index_info in es_indices]),
+                '\n'.join([str(index_info) for index_info in es_indices]),
                 'This is a PERMANENT action. (Type "code red" to continue):',
                 '',
             ])).lower() == 'code red':

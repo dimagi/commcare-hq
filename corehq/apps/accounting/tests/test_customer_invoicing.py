@@ -6,7 +6,6 @@ from django.test import TestCase
 
 from dateutil import relativedelta
 from mock import Mock
-from six.moves import range
 
 from dimagi.utils.dates import add_months_to_date
 

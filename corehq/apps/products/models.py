@@ -5,9 +5,7 @@ from django.db import models
 from django.utils.translation import ugettext as _
 
 import jsonfield
-import six
 from couchdbkit.exceptions import ResourceNotFound
-from six.moves import map
 
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -163,8 +161,8 @@ class Product(Document):
     @classmethod
     def _export_attrs(cls):
         return [
-            ('name', six.text_type),
-            ('unit', six.text_type),
+            ('name', str),
+            ('unit', str),
             'description',
             'category',
             ('program_id', str),
@@ -283,7 +281,6 @@ class OnlyActiveProductManager(ProductManager):
         return super(OnlyActiveProductManager, self).get_queryset().filter(is_archived=False)
 
 
-@six.python_2_unicode_compatible
 class SQLProduct(models.Model):
     """
     A SQL based clone of couch Products.

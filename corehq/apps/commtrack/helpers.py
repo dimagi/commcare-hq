@@ -67,7 +67,7 @@ def update_supply_point_from_location(supply_point, location):
 
 def _submit_commtrack_caseblock(domain, caseblock, source):
     submit_case_blocks(
-        caseblock.as_string().decode('utf-8'),
+        caseblock.as_text(),
         domain,
         const.COMMTRACK_USERNAME,
         const.get_commtrack_user_id(domain),

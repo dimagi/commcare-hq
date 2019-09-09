@@ -1,4 +1,3 @@
-
 import mock
 from django.template.defaultfilters import linebreaksbr
 from django.test import SimpleTestCase

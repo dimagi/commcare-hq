@@ -18,7 +18,6 @@ from couchexport.shortcuts import export_response
 from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 from custom.utils.utils import clean_IN_filter_value
-import six
 
 NUM_LAUNCHED_AWCS = 'Number of launched AWCs (ever submitted at least one HH reg form)'
 NUM_OF_DAYS_AWC_WAS_OPEN = 'Number of days AWC was open in the given month'
@@ -39,12 +38,14 @@ FILTER_BY_LIST = {
 
 
 class ExportableMixin(object):
-    def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
+    def __init__(self, config=None, loc_level=1, show_test=False, beta=False, use_excluded_states=True):
         self.config = config
         self.loc_level = loc_level
-        self.excluded_states = get_test_state_locations_id(self.domain)
-        self.config['excluded_states'] = self.excluded_states
-        clean_IN_filter_value(self.config, 'excluded_states')
+        self.use_excluded_states = use_excluded_states
+        if use_excluded_states:
+            self.excluded_states = get_test_state_locations_id(self.domain)
+            self.config['excluded_states'] = self.excluded_states
+            clean_IN_filter_value(self.config, 'excluded_states')
         self.show_test = show_test
         self.beta = beta
 
@@ -62,12 +63,15 @@ class ExportableMixin(object):
     @property
     def filters(self):
         filters = []
-        infilter_params = get_INFilter_bindparams('excluded_states', self.excluded_states)
+        if self.use_excluded_states:
+            infilter_params = get_INFilter_bindparams('excluded_states', self.excluded_states)
+        else:
+            infilter_params = tuple()
 
         if not self.show_test:
             filters.append(NOT(IN('state_id', infilter_params)))
 
-        for key, value in six.iteritems(self.config):
+        for key, value in self.config.items():
             if key == 'domain' or key in infilter_params or 'age' in key:
                 continue
             filters.append(EQ(key, key))

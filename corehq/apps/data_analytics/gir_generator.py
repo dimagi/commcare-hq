@@ -1,7 +1,6 @@
 import datetime
 from collections import defaultdict, namedtuple
 
-import six
 from django_countries.data import COUNTRIES
 
 from dimagi.utils.dates import add_months
@@ -52,7 +51,7 @@ class GIRTableGenerator(object):
                 domains_by_name[domain.name] = latest_domain
             else:
                 domains_by_name[domain.name] = domain
-        for _, domain in six.iteritems(domains_by_name):
+        for domain in domains_by_name.values():
             for monthspan in self.monthspan_list:
                 gir_dict = GIRTableGenerator.get_gir_dict_for_domain_and_monthspan(domain, monthspan)
                 rows.append(gir_dict)
@@ -133,7 +132,7 @@ class GIRTableGenerator(object):
             'month': monthspan.startdate,
             'domain_name': domain.name,
             'country':
-                ', '.join([six.text_type(COUNTRIES.get(abbr, abbr)) for abbr in domain.deployment.countries]),
+                ', '.join([str(COUNTRIES.get(abbr, abbr)) for abbr in domain.deployment.countries]),
             'sector': domain.internal.area,
             'subsector': domain.internal.sub_area,
             'bu': GIRTableGenerator.get_bu(domain),

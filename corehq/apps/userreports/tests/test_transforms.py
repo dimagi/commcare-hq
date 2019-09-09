@@ -2,7 +2,6 @@ from datetime import date, datetime, timedelta
 
 from django.test import SimpleTestCase
 
-import six
 from mock import patch
 
 from corehq.apps.userreports.exceptions import BadSpecError

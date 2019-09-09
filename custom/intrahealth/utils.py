@@ -20,7 +20,6 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.fluff.calculators.xform import FormPropertyFilter, IN
 from corehq.util.translation import localize
 from custom.intrahealth import PRODUCT_MAPPING, PRODUCT_NAMES
-import six
 
 
 COMMANDE_COMBINED = 'commande_combined'
@@ -75,7 +74,7 @@ def get_products_id(form, property):
 
 def get_rupture_products(form):
     result = []
-    for k, v in six.iteritems(form.form):
+    for k, v in form.form.items():
         if re.match("^rupture.*hv$", k):
             result.append(PRODUCT_MAPPING[k[8:-3]])
     return result
@@ -83,7 +82,7 @@ def get_rupture_products(form):
 
 def get_rupture_products_ids(form):
     result = []
-    for k, v in six.iteritems(form.form):
+    for k, v in form.form.items():
         if re.match("^rupture.*hv$", k):
             product_name = PRODUCT_NAMES.get(PRODUCT_MAPPING[k[8:-3]].lower())
             if product_name is not None:
@@ -154,7 +153,7 @@ def get_location_by_type(form, type):
             return loc
     for loc_id in loc.lineage:
         loc = get_location(loc_id)
-        if six.text_type(loc.location_type_name).lower().replace(" ", "") == type:
+        if str(loc.location_type_name).lower().replace(" ", "") == type:
             return loc
 
 

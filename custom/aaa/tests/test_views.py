@@ -1,4 +1,3 @@
-
 import inspect
 
 from django.views.generic.base import View

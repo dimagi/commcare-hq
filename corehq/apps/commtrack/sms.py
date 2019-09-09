@@ -6,7 +6,6 @@ from decimal import Decimal
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from lxml import etree
 
 from dimagi.utils.couch.loosechange import map_reduce
@@ -59,7 +58,7 @@ def handle(verified_contact, text, msg):
     except Exception as e:
         if settings.UNIT_TESTING or settings.DEBUG:
             raise
-        send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % six.text_type(e))
+        send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
         return True
 
     process(domain_obj.name, data)
@@ -475,7 +474,7 @@ def send_confirmation(v, data):
     msg = 'received stock report for %s(%s) %s' % (
         static_loc.site_code,
         truncate(location_name, 20),
-        ' '.join(sorted(summarize_action(a, txs) for a, txs in six.iteritems(tx_by_action)))
+        ' '.join(sorted(summarize_action(a, txs) for a, txs in tx_by_action.items()))
     )
 
     send_sms_to_verified_number(v, msg, metadata=metadata)

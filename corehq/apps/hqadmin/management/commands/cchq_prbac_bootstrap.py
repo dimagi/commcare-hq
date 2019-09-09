@@ -1,16 +1,10 @@
-# Use modern Python
-
-# Standard library imports
 import logging
 
-# Django imports
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
 from django_prbac.models import Grant, Role
-from six.moves import input
 
-# External imports
 from corehq import privileges
 from corehq.apps.accounting.utils import ensure_grants, log_removed_grants
 

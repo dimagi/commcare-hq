@@ -1,7 +1,5 @@
-
 from django.test import TestCase
 
-import six
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.commtrack.tests.util import (
@@ -32,7 +30,7 @@ class ProgramsTest(TestCase):
         with self.assertRaises(Exception) as context:
             self.default_program.delete()
 
-        self.assertEqual(six.text_type(context.exception), 'You cannot delete the default program')
+        self.assertEqual(str(context.exception), 'You cannot delete the default program')
 
         # assign some product to the new program
         self.products[0].program_id = self.new_program._id

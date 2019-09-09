@@ -7,7 +7,6 @@ from django.test.client import Client
 from django.test.utils import override_settings
 
 from mock import patch
-from six.moves import range
 from six.moves.urllib.parse import urlencode
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client

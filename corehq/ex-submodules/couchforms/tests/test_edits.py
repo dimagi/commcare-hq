@@ -185,7 +185,7 @@ class EditFormTest(TestCase, TestFileMixin):
             update={
                 'property': 'original value'
             }
-        ).as_string().decode('utf-8')
+        ).as_text()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # validate some assumptions
@@ -208,7 +208,7 @@ class EditFormTest(TestCase, TestFileMixin):
             update={
                 'property': 'edited value'
             }
-        ).as_string().decode('utf-8')
+        ).as_text()
         xform, _ = submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         case = self.casedb.get_case(case_id)
@@ -229,7 +229,7 @@ class EditFormTest(TestCase, TestFileMixin):
             create=True,
             case_id=case_id,
             case_type='person',
-        ).as_string().decode('utf-8')
+        ).as_text()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # submit an edit form with a bad case update (for example a bad ID)
@@ -237,7 +237,7 @@ class EditFormTest(TestCase, TestFileMixin):
             create=True,
             case_id='',
             case_type='person',
-        ).as_string().decode('utf-8')
+        ).as_text()
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         xform = self.formdb.get_form(form_id)
@@ -256,7 +256,7 @@ class EditFormTest(TestCase, TestFileMixin):
             case_id=case_id,
             case_type='person',
             owner_id=owner_id,
-        ).as_string().decode('utf-8')
+        ).as_text()
         create_form_id = submit_case_blocks(case_block, domain=self.domain)[0].form_id
 
         # validate that worked
@@ -277,7 +277,7 @@ class EditFormTest(TestCase, TestFileMixin):
             update={
                 'property': 'first value',
             }
-        ).as_string().decode('utf-8')
+        ).as_text()
         edit_form_id = submit_case_blocks(case_block, domain=self.domain)[0].form_id
 
         # validate that worked
@@ -298,7 +298,7 @@ class EditFormTest(TestCase, TestFileMixin):
             update={
                 'property': 'final value',
             }
-        ).as_string().decode('utf-8')
+        ).as_text()
         second_edit_form_id = submit_case_blocks(case_block, domain=self.domain)[0].form_id
 
         # validate that worked
@@ -321,7 +321,7 @@ class EditFormTest(TestCase, TestFileMixin):
                 'property': 'edited value',
                 'added_property': 'added value',
             }
-        ).as_string().decode('utf-8')
+        ).as_text()
         submit_case_blocks(case_block, domain=self.domain, form_id=edit_form_id)
 
         # ensure that the middle edit stays in the right place and is applied
@@ -349,7 +349,7 @@ class EditFormTest(TestCase, TestFileMixin):
             case_id=case1_id,
             case_type='person',
             owner_id='owner1',
-        ).as_string().decode('utf-8')
+        ).as_text()
         xform, cases = submit_case_blocks(case_block, domain=self.domain, xmlns=xmlns1, form_id=form_id)
 
         self.assertTrue(xform.is_normal)
@@ -360,7 +360,7 @@ class EditFormTest(TestCase, TestFileMixin):
             case_id=case2_id,
             case_type='goat',
             owner_id='owner1',
-        ).as_string().decode('utf-8')
+        ).as_text()
         # submit new form with same form ID but different XMLNS
         xform, cases = submit_case_blocks(case_block, domain=self.domain, xmlns=xmlns2, form_id=form_id)
 

@@ -12,7 +12,6 @@ from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_he
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
     get_child_locations, person_has_aadhaar_column, person_is_beneficiary_column
-import six
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
@@ -113,7 +112,7 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
             'in_month': in_month or 0,
             'all': valid or 0
         }
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         value = (in_month or 0) / float(valid or 1)
@@ -196,7 +195,7 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False, beta=False
         {
             'loc_name': key,
             'percent': (value['in_month'] * 100) / float(value['all'] or 1),
-        } for key, value in six.iteritems(best_worst)
+        } for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(
@@ -210,7 +209,7 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False, beta=False
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in six.iteritems(data['blue'])
+                    } for key, value in data['blue'].items()
                 ],
                 "key": "Percentage of beneficiaries with Aadhaar numbers",
                 "strokeWidth": 2,

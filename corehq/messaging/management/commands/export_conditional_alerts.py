@@ -15,7 +15,6 @@ from django.core.management.base import BaseCommand, CommandError
 import copy
 import json
 import jsonobject
-import six
 
 
 SIMPLE_SMS_DAILY_SCHEDULE_WITH_TIME = 1
@@ -43,16 +42,16 @@ class ExtraSchedulingOptions(jsonobject.JsonObject):
     active = jsonobject.BooleanProperty()
     include_descendant_locations = jsonobject.BooleanProperty()
     default_language_code = jsonobject.StringProperty()
-    custom_metadata = jsonobject.DictProperty(six.text_type)
+    custom_metadata = jsonobject.DictProperty(str)
     use_utc_as_default_timezone = jsonobject.BooleanProperty()
-    user_data_filter = jsonobject.DictProperty(jsonobject.ListProperty(six.text_type))
+    user_data_filter = jsonobject.DictProperty(jsonobject.ListProperty(str))
     stop_date_case_property_name = jsonobject.StringProperty()
 
 
 class SimpleSMSDailyScheduleWithTime(jsonobject.JsonObject):
     schedule_type = SIMPLE_SMS_DAILY_SCHEDULE_WITH_TIME
     time = jsonobject.TimeProperty()
-    message = jsonobject.DictProperty(six.text_type)
+    message = jsonobject.DictProperty(str)
     total_iterations = jsonobject.IntegerProperty()
     start_offset = jsonobject.IntegerProperty()
     start_day_of_week = jsonobject.IntegerProperty()
@@ -62,7 +61,7 @@ class SimpleSMSDailyScheduleWithTime(jsonobject.JsonObject):
 
 class SimpleSMSAlertSchedule(jsonobject.JsonObject):
     schedule_type = SIMPLE_SMS_ALERT_SCHEDULE
-    message = jsonobject.DictProperty(six.text_type)
+    message = jsonobject.DictProperty(str)
     extra_options = jsonobject.ObjectProperty(ExtraSchedulingOptions)
 
 

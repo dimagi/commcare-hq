@@ -1,4 +1,3 @@
-
 from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_GROWTH_MONITORING_TABLE

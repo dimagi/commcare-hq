@@ -1,8 +1,6 @@
-
 import json
 
 from memoized import memoized
-from six.moves import map
 
 from corehq.apps.es import GroupES, UserES, groups
 from corehq.apps.locations.models import SQLLocation

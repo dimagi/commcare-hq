@@ -1,6 +1,4 @@
-
 import attr
-import six
 
 
 class AnyType(object):
@@ -39,11 +37,11 @@ class Ignore(object):
     """
 
     def _convert_path(value):
-        if isinstance(value, six.text_type):
+        if isinstance(value, str):
             return (value,)
         if value is ANY:
             return value
-        assert all(isinstance(v, six.text_type) or v is ANY for v in value), \
+        assert all(isinstance(v, str) or v is ANY for v in value), \
             "invalid path: {}".format(value)
         assert isinstance(value, tuple) or value is ANY, repr(value)
         return value

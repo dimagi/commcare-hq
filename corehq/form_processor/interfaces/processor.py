@@ -15,11 +15,12 @@ from corehq.form_processor.exceptions import (
     XFormQuestionValueNotFound,
 )
 from memoized import memoized
+from ..system_action import system_action
 from ..utils import should_use_sql_backend
-import six
 
 CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
 ProcessedForms = namedtuple('ProcessedForms', ['submitted', 'deprecated'])
+HARD_DELETE_CASE_AND_FORMS = "hard_delete_case_and_forms"
 
 
 class FormProcessorInterface(object):
@@ -157,7 +158,7 @@ class FormProcessorInterface(object):
 
         errors = []
         xml = xform.get_xml_element()
-        for question, response in six.iteritems(value_responses_map):
+        for question, response in value_responses_map.items():
             try:
                 update_response(xml, question, response, xmlns=xform.xmlns)
             except XFormQuestionValueNotFound:
@@ -199,10 +200,18 @@ class FormProcessorInterface(object):
             raise
 
     def hard_delete_case_and_forms(self, case, xforms):
+        assert case.domain == self.domain, (case.domain, self.domain)
+        args = [case, xforms]
+        args_json = [case.case_id, [f.form_id for f in xforms]]
+        system_action.submit(HARD_DELETE_CASE_AND_FORMS, args, args_json, self.domain)
+
+    @system_action(HARD_DELETE_CASE_AND_FORMS)
+    def _hard_delete_case_and_forms(case, xforms):
         domain = case.domain
         all_domains = {domain} | {xform.domain for xform in xforms}
         assert len(all_domains) == 1, all_domains
-        self.processor.hard_delete_case_and_forms(domain, case, xforms)
+        processor = FormProcessorInterface(domain).processor
+        processor.hard_delete_case_and_forms(domain, case, xforms)
 
     def apply_deprecation(self, existing_xform, new_xform):
         return self.processor.apply_deprecation(existing_xform, new_xform)

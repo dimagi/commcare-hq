@@ -1,6 +1,5 @@
 import sys
 import yaml
-from six.moves import range
 
 
 def checkyaml(filename):

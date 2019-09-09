@@ -5,7 +5,6 @@ from django.http import (
 )
 from django.urls import reverse
 
-import six
 from tastypie import fields
 from tastypie.authentication import Authentication
 from tastypie.bundle import Bundle
@@ -153,7 +152,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         try:
             es_query = es_search(bundle.request, domain, ['include_archived'])
         except Http400 as e:
-            raise BadRequest(six.text_type(e))
+            raise BadRequest(str(e))
         if include_archived:
             es_query['filter']['and'].append({'or': [
                 {'term': {'doc_type': 'xforminstance'}},
@@ -460,7 +459,7 @@ class ApplicationResource(BaseApplicationResource):
             return dehydrated
         except Exception as e:
             return {
-                'error': six.text_type(e)
+                'error': str(e)
             }
 
     def dehydrate_modules(self, bundle):

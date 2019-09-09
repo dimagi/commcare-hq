@@ -1,4 +1,3 @@
-
 from nose.plugins.skip import SkipTest
 from testil import assert_raises, eq
 

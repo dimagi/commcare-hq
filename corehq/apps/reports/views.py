@@ -154,6 +154,7 @@ from corehq.util.timezones.utils import (
     get_timezone_for_request,
     get_timezone_for_user,
 )
+from corehq.util import cmp
 from corehq.util.view_utils import (
     absolute_reverse,
     get_case_or_404,
@@ -1044,18 +1045,21 @@ class CaseDataView(BaseProjectReportSectionView):
         tz_offset_ms = int(timezone.utcoffset(the_time_is_now).total_seconds()) * 1000
         tz_abbrev = timezone.localize(the_time_is_now).tzname()
 
-        # ledgers
+        product_name_by_id = {
+            product['product_id']: product['name']
+            for product in SQLProduct.objects.filter(domain=self.domain).values('product_id', 'name').all()
+        }
+
         def _product_name(product_id):
-            try:
-                return SQLProduct.objects.get(product_id=product_id).name
-            except SQLProduct.DoesNotExist:
-                return (_('Unknown Product ("{}")').format(product_id))
+            return product_name_by_id.get(product_id, _('Unknown Product ("{}")').format(product_id))
 
         ledger_map = LedgerAccessors(self.domain).get_case_ledger_state(self.case_id, ensure_form_id=True)
-        for section, product_map in ledger_map.items():
-            product_tuples = sorted(
-                (_product_name(product_id), product_map[product_id]) for product_id in product_map
-            )
+        for section, entry_map in ledger_map.items():
+            product_tuples = [
+                (_product_name(product_id), entry_map[product_id])
+                for product_id in entry_map
+            ]
+            product_tuples.sort(key=lambda product_name, entry_state: product_name)
             ledger_map[section] = product_tuples
 
         repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)

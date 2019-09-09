@@ -1,4 +1,3 @@
-
 import json
 
 from corehq.apps.api.resources import v0_5

@@ -2,7 +2,6 @@ from random import randint
 
 from django.test import TestCase
 
-import six
 from mock import patch
 
 from corehq.apps.accounting.tests.generator import init_default_currency
@@ -152,7 +151,7 @@ class TestUsageFee(TestCase):
         SmsUsageFeeCriteria.objects.all().delete()
         SmsGatewayFee.objects.all().delete()
         self.currency_usd.delete()
-        for api_id, backend_id in six.iteritems(self.backend_ids):
+        for api_id, backend_id in self.backend_ids.items():
             SQLMobileBackend.load(backend_id, is_couch_id=True).delete()
 
         FakeTwilioMessageFactory.backend_message_id_to_price = {}

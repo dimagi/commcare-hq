@@ -1,4 +1,3 @@
-
 import re
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -6,7 +5,6 @@ from django.db import connections
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.config import partition_config, parse_existing_shard, get_shards_to_update
-from six.moves import input
 
 SHARD_OPTION_RX = re.compile(r'^p[\d+]')
 

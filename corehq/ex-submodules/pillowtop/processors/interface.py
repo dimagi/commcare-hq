@@ -1,8 +1,7 @@
 from abc import ABCMeta, abstractmethod
-import six
 
 
-class PillowProcessor(six.with_metaclass(ABCMeta, object)):
+class PillowProcessor(metaclass=ABCMeta):
     supports_batch_processing = False
 
     @abstractmethod

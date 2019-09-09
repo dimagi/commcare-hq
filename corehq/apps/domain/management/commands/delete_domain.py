@@ -1,7 +1,4 @@
-
 from django.core.management.base import BaseCommand
-
-from six.moves import input
 
 from corehq.apps.domain.models import Domain
 

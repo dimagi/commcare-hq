@@ -7,7 +7,6 @@ from django.test import SimpleTestCase
 from elasticsearch.exceptions import ConnectionError
 from mock import patch
 from openpyxl import load_workbook
-from six.moves import range
 
 from couchexport.export import get_writer
 from couchexport.models import Format

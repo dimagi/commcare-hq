@@ -2,7 +2,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-import six
 from memoized import memoized
 
 from dimagi.utils.couch.loosechange import map_reduce
@@ -11,7 +10,7 @@ from corehq.apps.commtrack.models import CommtrackActionConfig, CommtrackConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.reports.analytics.esaccessors import (
+from corehq.apps.reports.analytics.dbaccessors import (
     get_wrapped_ledger_values,
     products_with_ledgers,
 )
@@ -189,7 +188,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         """
         product_name_map = self._product_name_mapping
         # sort
-        sorted_product_name_map = sorted(six.iteritems(product_name_map),
+        sorted_product_name_map = sorted(product_name_map.items(),
                                          key=lambda name_map: name_map[1],
                                          reverse=self._desc_product_order)
         # product to filter
@@ -477,7 +476,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
                                        data=case_iter())
 
         status_counts = dict((loc_id, self.status_tally(statuses))
-                             for loc_id, statuses in six.iteritems(status_by_agg_site))
+                             for loc_id, statuses in status_by_agg_site.items())
 
         master_tally = self.status_tally([site['reporting_status'] for site in statuses])
 

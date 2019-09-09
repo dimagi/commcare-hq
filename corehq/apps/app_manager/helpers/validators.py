@@ -31,6 +31,7 @@ from corehq.apps.app_manager.exceptions import (
     LocationXpathValidationError,
     ModuleIdMissingException,
     ModuleNotFoundException,
+    ParentModuleReferenceError,
     PracticeUserException,
     SuiteValidationError,
     UserCaseXPathValidationError,
@@ -87,7 +88,7 @@ class ApplicationBaseValidator(object):
                 'form': ucve.form,
             })
         except (AppEditingError, XFormValidationError, XFormException,
-                PermissionDenied, SuiteValidationError) as e:
+                ParentModuleReferenceError, PermissionDenied, SuiteValidationError) as e:
             errors.append({'type': 'error', 'message': str(e)})
         return errors
 

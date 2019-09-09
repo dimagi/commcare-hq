@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-27 18:49+0000\n"
+"POT-Creation-Date: 2019-09-03 19:52+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -2929,24 +2929,24 @@ msgstr "Ocultar versiones anteriores"
 msgid "Show previous versions"
 msgstr "Mostrar versiones anteriores"
 
-#: corehq/apps/export/static/export/js/create_export.js:94
+#: corehq/apps/export/static/export/js/create_export.js:100
 msgid "<%= count %> form submission available."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:96
+#: corehq/apps/export/static/export/js/create_export.js:102
 msgid "<%= count %> form submissions available."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:107
+#: corehq/apps/export/static/export/js/create_export.js:113
 msgid "User Registration"
 msgstr "Registro de Usuario"
 
-#: corehq/apps/export/static/export/js/create_export.js:276
+#: corehq/apps/export/static/export/js/create_export.js:297
 msgid ""
 "There was an issue fetching data. Please check your internet connection."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:311
+#: corehq/apps/export/static/export/js/create_export.js:332
 msgid "There is an issue communicating with the server at this time."
 msgstr "Hay un problema de comunicación con el servidor en este momento."
 
@@ -2975,16 +2975,16 @@ msgstr ""
 msgid "There was an error downloading your export."
 msgstr "Ocurrió un error al descargar su exportación."
 
-#: corehq/apps/export/static/export/js/export_list.js:118
+#: corehq/apps/export/static/export/js/export_list.js:157
 msgid "Download Requested"
 msgstr "Descarga Solicitada"
 
-#: corehq/apps/export/static/export/js/export_list.js:407
-#: corehq/apps/export/static/export/js/export_list.js:414
+#: corehq/apps/export/static/export/js/export_list.js:446
+#: corehq/apps/export/static/export/js/export_list.js:453
 msgid "Invalid date format"
 msgstr "Formato de fecha inválido"
 
-#: corehq/apps/export/static/export/js/export_list.js:538
+#: corehq/apps/export/static/export/js/export_list.js:591
 msgid "Problem saving dashboard feed filters"
 msgstr "Ocurrió un problema al guardar filtros de alimentación del tablero"
 
@@ -3036,19 +3036,19 @@ msgid ""
 "<strong>Edit and Export</strong>: All users can edit and export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:632
+#: corehq/apps/export/static/export/js/models.js:649
 msgid "The table path should end with []"
 msgstr "La ruta de la tabla debe terminar con []"
 
-#: corehq/apps/export/static/export/js/models.js:743
+#: corehq/apps/export/static/export/js/models.js:760
 msgid "Sensitive ID"
 msgstr "ID Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:745
+#: corehq/apps/export/static/export/js/models.js:762
 msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:747
+#: corehq/apps/export/static/export/js/models.js:764
 msgid "None"
 msgstr "Ninguna"
 
@@ -3713,28 +3713,29 @@ msgstr ""
 "Requisitos para la Contraseña: 1 caracter especial, 1 número, 1  letra "
 "mayúscula, y largo mínimo de 8 caracteres."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:75
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:78
 msgid "Available Groups"
 msgstr "Grupos Disponibles"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:76
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:79
 msgid "Groups with this User"
 msgstr "Grupos con este Usuario"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:77
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:80
 msgid "Search Group..."
 msgstr "Buscar Grupo..."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:88
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:91
 msgid "Group membership has changed."
 msgstr "La membresía del grupo ha cambiado."
 
-#: corehq/apps/users/static/users/js/filtered_download.js:22
-#, javascript-format
-msgid "Download %s User"
-msgid_plural "Download %s Users"
-msgstr[0] ""
-msgstr[1] ""
+#: corehq/apps/users/static/users/js/filtered_download.js:31
+msgid "Download <%= count %> user"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/filtered_download.js:31
+msgid "Download <%= count %> users"
+msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js:285
 msgid "Checking availability..."
@@ -3996,4 +3997,20 @@ msgstr ""
 
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "show"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "hide"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "toggle"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/main-components.js:30
+msgid "6.0.65"
 msgstr ""

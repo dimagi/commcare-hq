@@ -1,4 +1,3 @@
-
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.util import get_indicator_adapter

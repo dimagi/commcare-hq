@@ -1,4 +1,3 @@
-
 import json
 import os
 import uuid
@@ -7,7 +6,6 @@ from collections import OrderedDict
 from django.test import SimpleTestCase
 from django.test.testcases import TestCase
 
-import six
 import yaml
 from mock import patch
 
@@ -268,7 +266,7 @@ class ReadableFormdataTest(SimpleTestCase):
             'readable_forms', '{}.submission.json'.format(slug))
         result_file = os.path.join(
             os.path.dirname(__file__),
-            'readable_forms', '{}.{}.result.yaml'.format(slug, 'py3' if six.PY3 else 'py2'))
+            'readable_forms', '{}.py3.result.yaml'.format(slug))
         with open(xform_file) as f:
             xform = f.read()
         with open(submission_file) as f:

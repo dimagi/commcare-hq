@@ -1,4 +1,3 @@
-
 from django.db import migrations, models
 
 # Functions from the following migrations need manual copying.
