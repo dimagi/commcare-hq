@@ -3,7 +3,7 @@ import mock
 
 from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.locations.tests.util import delete_all_locations
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import WebUser
@@ -56,7 +56,7 @@ class MissingReportNotificationTestCase(EWSTestCase):
 
         delete_domain_phone_numbers(self.TEST_DOMAIN)
 
-        for product in Product.by_domain(self.TEST_DOMAIN):
+        for product in SQLProduct.objects.filter(domain=self.TEST_DOMAIN):
             product.delete()
 
         super(MissingReportNotificationTestCase, self).tearDown()
@@ -189,7 +189,7 @@ class StockoutReportNotificationTestCase(EWSTestCase):
 
         delete_domain_phone_numbers(self.TEST_DOMAIN)
 
-        for product in Product.by_domain(self.TEST_DOMAIN):
+        for product in SQLProduct.objects.filter(domain=self.TEST_DOMAIN):
             product.delete()
 
         super(StockoutReportNotificationTestCase, self).tearDown()
@@ -314,7 +314,7 @@ class UrgentStockoutNotificationTestCase(EWSTestCase):
 
         delete_domain_phone_numbers(self.TEST_DOMAIN)
 
-        for product in Product.by_domain(self.TEST_DOMAIN):
+        for product in SQLProduct.objects.filter(domain=self.TEST_DOMAIN):
             product.delete()
 
         super(UrgentStockoutNotificationTestCase, self).tearDown()
@@ -479,7 +479,7 @@ class UrgentNonReportingNotificationTestCase(EWSTestCase):
 
         delete_domain_phone_numbers(self.TEST_DOMAIN)
 
-        for product in Product.by_domain(self.TEST_DOMAIN):
+        for product in SQLProduct.objects.filter(domain=self.TEST_DOMAIN):
             product.delete()
 
         super(UrgentNonReportingNotificationTestCase, self).tearDown()

@@ -13,7 +13,7 @@ from corehq.apps.commtrack.tests.util import make_loc, make_product
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.models import SMS, OUTGOING, PhoneNumber
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
@@ -223,7 +223,7 @@ class EWSScriptTest(EWSTestCase, TestScript):
         CommCareUser.get_by_username('super').delete()
         FacilityInCharge.objects.all().delete()
         LocationType.objects.all().delete()
-        for product in Product.by_domain(TEST_DOMAIN):
+        for product in SQLProduct.objects.filter(domain=TEST_DOMAIN):
             product.delete()
         SQLProduct.objects.all().delete()
         EWSGhanaConfig.for_domain(TEST_DOMAIN).delete()

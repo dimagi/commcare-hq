@@ -370,6 +370,11 @@ class SQLProduct(models.Model):
         product.save()
         self.is_archived = False
 
+    def delete(self):
+        super().delete()
+        product = Product.get(self.product_id)
+        product.delete()
+
 
 PRODUCT_EXPORT_ATTRS = [
     ('name', str),

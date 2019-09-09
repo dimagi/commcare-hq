@@ -4,7 +4,7 @@ from corehq.apps.commtrack.tests.util import make_product
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import CommCareUser
@@ -126,7 +126,7 @@ class ILSTestScript(TestScript):
                 for user in users
             ])
 
-        for product in Product.by_domain(TEST_DOMAIN):
+        for product in SQLProduct.objects.filter(domain=TEST_DOMAIN):
             product.delete()
         SQLProduct.objects.all().delete()
         ils_gateway_config = ILSGatewayConfig.for_domain(TEST_DOMAIN)
