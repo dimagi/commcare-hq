@@ -189,11 +189,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
         date = date or start_time.date()
         monthly_dates = []
 
-        # probably this should be run one time, for now I leave this in aggregations script (not a big cost)
-        # but remove issues when someone add new table to mapping, also we don't need to add new rows manually
-        # on production servers
-        _update_ucr_table_mapping()
-
         first_day_of_month = date.replace(day=1)
         for interval in range(intervals - 1, 0, -1):
             # calculate the last day of the previous months to send to the aggregation script
@@ -201,6 +196,11 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
             monthly_dates.append(first_day_next_month - relativedelta(days=1))
 
         monthly_dates.append(date)
+
+        # probably this should be run one time, for now I leave this in aggregations script (not a big cost)
+        # but remove issues when someone add new table to mapping, also we don't need to add new rows manually
+        # on production servers
+        _update_ucr_table_mapping()
 
         db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
         if db_alias:
