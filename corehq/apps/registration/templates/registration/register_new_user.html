@@ -4,6 +4,8 @@
 {% load compress %}
 {% load crispy_forms_tags %}
 
+{% requirejs_main 'registration/js/register_new_user' %}
+
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
 
 {% block head %}{{ block.super }}
@@ -28,15 +30,6 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
-    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/password_validators.ko.js' %}"></script>
-    <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
-    <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
-    <script src="{% static 'registration/js/register_new_user.js' %}"></script>
-  {% endcompress %}
   {% if is_saas_environment %}
     <!-- Google Code for Destination Lead Conversion Page -->
     <script>
@@ -55,7 +48,6 @@
         <img height="1" width="1" style="border-style:none;" alt="" src="//www.googleadservices.com/pagead/conversion/941515958/?label=glkzCMmv73UQtsn5wAM&amp;guid=ON&amp;script=0"/>
       </div>
     </noscript>
-
     <!-- linked in -->
     <script>
       _linkedin_data_partner_id = "63907";
@@ -65,7 +57,7 @@
       b.type = "text/javascript";b.async = true;
       b.src = "https://snap.licdn.com/li.lms-analytics/insight.min.js";
       s.parentNode.insertBefore(b, s);})();
-  </script>
+    </script>
     <noscript>
       <img height="1" width="1" style="display:none;" alt="" src="https://dc.ads.linkedin.com/collect/?pid=63907&fmt=gif" />
     </noscript>
