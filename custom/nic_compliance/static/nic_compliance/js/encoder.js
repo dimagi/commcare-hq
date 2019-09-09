@@ -8,7 +8,7 @@ hqDefine('nic_compliance/js/encoder', [
     initialPageData
 ) {
     'use strict';
-
+    console.log('loaded encoder');
     var HexParser = function () {
         var self = {};
 
