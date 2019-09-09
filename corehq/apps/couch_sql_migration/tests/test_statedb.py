@@ -1,4 +1,5 @@
 import pickle
+import os
 import re
 
 from nose.tools import with_setup
@@ -11,9 +12,11 @@ from ..statedb import (
     Counts,
     ResumeError,
     StateDB,
+    _get_state_db_filepath,
     delete_state_db,
     diff_doc_id_idx,
     init_state_db,
+    open_state_db,
 )
 from .. import statedb as mod
 
@@ -50,6 +53,28 @@ def test_db_unique_id():
     delete_db()
     with init_db(memory=False) as db:
         assert db.unique_id != uid, uid
+
+
+@with_setup(teardown=delete_db)
+def test_open_state_db():
+    with open_state_db("test", state_dir) as db:
+        with assert_raises(OperationalError):
+            db.unique_id
+        with assert_raises(OperationalError):
+            db.get_diff_stats()
+        with assert_raises(OperationalError):
+            db.set("key", 1)
+    assert not os.path.exists(_get_state_db_filepath("test", state_dir))
+    with init_db(memory=False) as db:
+        uid = db.unique_id
+        eq(db.get("key"), None)
+        db.set("key", 2)
+    with open_state_db("test", state_dir) as db:
+        eq(db.unique_id, uid)
+        eq(db.get_diff_stats(), {})
+        eq(db.get("key"), 2)
+        with assert_raises(OperationalError):
+            db.set("key", 3)
 
 
 def test_update_cases():

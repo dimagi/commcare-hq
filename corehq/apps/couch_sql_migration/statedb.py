@@ -34,10 +34,11 @@ def init_state_db(domain, state_dir):
 
 
 def open_state_db(domain, state_dir):
+    """Open state db in read-only mode"""
     db_filepath = _get_state_db_filepath(domain, state_dir)
     if not os.path.exists(db_filepath):
         db_filepath = ":memory:"
-    return StateDB.open(db_filepath)
+    return StateDB.open(db_filepath, readonly=True)
 
 
 def delete_state_db(domain, state_dir):
