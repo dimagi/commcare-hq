@@ -11,13 +11,13 @@ class NICIndicatorTest(TestCase):
     def test_file_content(self):
         get_inc_indicator_api_data.clear(use_citus=True)
         data = get_inc_indicator_api_data()
-        self.assertEqual(
+        self.assertCountEqual(
             {'scheme_code': 'C002',
              'total_launched_awcs': 20,
              'dataarray1': [
                  {
                      'state_name': 'st2',
-                     'state_site_code': 'st2',
+                     'site_id': 'st2',
                      'month': date(2017, 5, 1),
                      'num_launched_awcs': 11,
                      'num_households_registered': 3331,
@@ -30,7 +30,7 @@ class NICIndicatorTest(TestCase):
                  },
                  {
                      'state_name': 'st1',
-                     'state_site_code': 'st1',
+                     'site_id': 'st1',
                      'month': date(2017, 5, 1),
                      'num_launched_awcs': 9,
                      'num_households_registered': 3633,

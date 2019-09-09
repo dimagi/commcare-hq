@@ -67,7 +67,7 @@ def get_inc_indicator_api_data(use_citus=False):
     first_day_month = latest_available_month.replace(day=1)
     with force_citus_engine(use_citus):
         data = NICIndicatorsView.objects.filter(month=first_day_month).all().values('state_name',
-                                                                                    'state_site_code',
+                                                                                    'state_id',
                                                                                     'month',
                                                                                     'num_launched_awcs',
                                                                                     'cases_household',
@@ -84,7 +84,7 @@ def get_inc_indicator_api_data(use_citus=False):
             total_launched_awcs += row['num_launched_awcs'] if row['num_launched_awcs'] else 0
             nic_data.append({
                 'state_name': row['state_name'],
-                'state_site_code': row['state_site_code'],
+                'state_id': row['state_id'],
                 'month': row['month'],
                 'num_launched_awcs': row['num_launched_awcs'],
                 'num_households_registered': row['cases_household'],
