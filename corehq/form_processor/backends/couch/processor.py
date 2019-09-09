@@ -80,7 +80,6 @@ class FormProcessorCouch(object):
 
     @classmethod
     def hard_delete_case_and_forms(cls, domain, case, xforms):
-        NotAllowed.check(domain)
         docs = [case._doc] + [f._doc for f in xforms]
         case.get_db().bulk_delete(docs)
 

@@ -3,6 +3,7 @@ import logging
 from xml.sax.saxutils import escape
 
 from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
+from corehq.form_processor.models import XFormInstanceSQL
 
 log = logging.getLogger(__name__)
 
@@ -70,9 +71,15 @@ system_action.submit = submit_system_action
 SYSTEM_ACTION_XMLNS = "http://commcarehq.org/system/action"
 
 
-def verify_system_action(form, auth_context):
+def handle_system_action(form, auth_context):
     if auth_context is not SystemActionContext:
         raise UnauthorizedSystemAction(repr(form))
+    # put form in archived state so it does not appear in exports
+    assert form.xmlns == SYSTEM_ACTION_XMLNS, repr(form)
+    if isinstance(form, XFormInstanceSQL):
+        form.state = XFormInstanceSQL.ARCHIVED
+    else:
+        form.doc_type = "XFormArchived"
 
 
 def do_system_action(name, args):
