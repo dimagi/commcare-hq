@@ -43,7 +43,7 @@ class StockStateTest(TestCase):
 
         cls.loc = util.make_loc('loc1', domain=cls.domain)
         cls.sp = cls.loc.linked_supply_point()
-        cls.products = SQLProduct.active_objects.filter(domain=cls.domain).order_by('product_id')
+        cls.products = list(SQLProduct.active_objects.filter(domain=cls.domain).order_by('product_id'))
 
         cls.process_ledger_changes = process_pillow_changes('LedgerToElasticsearchPillow')
 
