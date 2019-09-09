@@ -7,7 +7,8 @@ from django.core.cache import cache
 from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 
-from custom.icds_reports.tasks.models.util import AggregationRecord
+from corehq.sql_db.routers import use_citus_for_request
+from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.tasks import (
     _aggregate_gm_forms, _aggregate_df_forms, _aggregate_cf_forms, _aggregate_ccs_cf_forms,
     _aggregate_child_health_thr_forms, _aggregate_ccs_record_thr_forms, _aggregate_child_health_pnc_forms,
@@ -74,6 +75,7 @@ class Command(BaseCommand):
         parser.add_argument('agg_uuid')
 
     def handle(self, query_name, agg_uuid, **options):
+        use_citus_for_request()
         self.function_map = {}
         self.setup_tasks()
         agg_record = AggregationRecord.objects.get(agg_uuid=agg_uuid)
