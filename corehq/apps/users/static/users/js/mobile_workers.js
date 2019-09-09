@@ -461,4 +461,10 @@ hqDefine("users/js/mobile_workers",[
         console.log(newUserCreation);
         console.log($("#new-users-list"));
     });
+
+    return {
+        newUserCreationModel: newUserCreationModel,
+        userModel: userModel,
+        usersListModel: usersListModel,
+    };
 });
