@@ -352,6 +352,7 @@ class SQLProduct(models.Model):
         Mark a product as archived. This will cause it (and its data)
         to not show up in default Couch and SQL views.
         """
+        self.is_archived = True
         product = Product.get(self.product_id)
         product.is_archived = True
         product.save()
@@ -367,6 +368,7 @@ class SQLProduct(models.Model):
         product = Product.get(self.product_id)
         product.is_archived = False
         product.save()
+        self.is_archived = False
 
 
 PRODUCT_EXPORT_ATTRS = [
