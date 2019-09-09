@@ -1,4 +1,3 @@
-/* global RMI, zxcvbn */
 /**
  *  This file controls the mobile workers list page, which lists existing mobile workers
  *  and allows creation of new ones. It contains the following models and applies their
@@ -19,7 +18,31 @@
  *  - Independently of password validation, if the server setting OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE is on,
  *    passwords are encrypted before the new user is sent to the server for creation.
  */
-hqDefine("users/js/mobile_workers", function () {
+hqDefine("users/js/mobile_workers",[
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/assert_properties',
+    'analytix/js/google',
+    'nic_compliance/js/encoder',
+    'jquery.rmi/jquery.rmi',
+    'zxcvbn/dist/zxcvbn',
+    'hqwebapp/js/components.ko', // for pagination
+    'select2/dist/js/select2.full.min',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    assertProperties,
+    googleAnalytics,
+    nicEncoder,
+    RMI,
+    zxcvbn,
+    components
+) {
+    'use strict';
     // These are used as css classes, so the values of success/warning/error need to be what they are.
     var STATUS = {
         NONE: '',
@@ -28,6 +51,8 @@ hqDefine("users/js/mobile_workers", function () {
         WARNING: 'warning',
         ERROR: 'danger',
     };
+
+    
 
     var rmi = function () {};
 
@@ -54,7 +79,7 @@ hqDefine("users/js/mobile_workers", function () {
         self.action_error = ko.observable('');  // error when activating/deactivating a user
 
         self.edit_url = ko.computed(function () {
-            return hqImport("hqwebapp/js/initial_page_data").reverse('edit_commcare_user', self.user_id());
+            return initialPageData.reverse('edit_commcare_user', self.user_id());
         });
 
         self.is_active.subscribe(function (newValue) {
@@ -64,7 +89,7 @@ hqDefine("users/js/mobile_workers", function () {
             $modal.find(".btn").addSpinnerToButton();
             $.ajax({
                 method: 'POST',
-                url: hqImport("hqwebapp/js/initial_page_data").reverse(urlName, self.user_id()),
+                url: initialPageData.reverse(urlName, self.user_id()),
                 success: function (data) {
                     $modal.modal('hide');
                     if (data.success) {
@@ -121,7 +146,7 @@ hqDefine("users/js/mobile_workers", function () {
             self.showPaginationSpinner(true);
             $.ajax({
                 method: 'GET',
-                url: hqImport("hqwebapp/js/initial_page_data").reverse('paginate_mobile_workers'),
+                url: initialPageData.reverse('paginate_mobile_workers'),
                 data: {
                     page: page || 1,
                     query: self.query(),
@@ -157,7 +182,7 @@ hqDefine("users/js/mobile_workers", function () {
     };
 
     var newUserCreationModel = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assertRequired(options, [
+        assertProperties.assertRequired(options, [
             'custom_field_slugs',
             'draconian_security',
             'implement_password_obfuscation',
@@ -351,7 +376,7 @@ hqDefine("users/js/mobile_workers", function () {
                 },
             });
 
-            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Mobile Worker', '');
+            googleAnalytics.track.event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
 
         self.allowSubmit = ko.computed(function () {
@@ -390,7 +415,7 @@ hqDefine("users/js/mobile_workers", function () {
             self.newUsers.push(newUser);
             newUser.creation_status(STATUS.PENDING);
             if (self.implementPasswordObfuscation()) {
-                newUser.password(hqImport("nic_compliance/js/encoder")().encode(newUser.password()));
+                newUser.password(nicEncoder().encode(newUser.password()));
             }
             rmi('create_mobile_worker', {
                 user: ko.mapping.toJS(newUser),
@@ -410,13 +435,14 @@ hqDefine("users/js/mobile_workers", function () {
     };
 
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            rmiInvoker = RMI(initialPageData.reverse('mobile_workers'), $("#csrfTokenContainer").val());
+        var rmiInvoker = RMI(initialPageData.reverse('mobile_workers'), $("#csrfTokenContainer").val());
         rmi = function (remoteMethod, data) {
             return rmiInvoker("", data, {headers: {"DjNg-Remote-Method": remoteMethod}});
         };
-
-        $("#users-list").koApplyBindings(usersListModel());
+        var usersList = usersListModel();
+        $("#users-list").koApplyBindings(usersList);
+        console.log("users list");
+        console.log(usersList);
 
         var newUserCreation = newUserCreationModel({
             custom_field_slugs: initialPageData.get('custom_field_slugs'),
@@ -429,5 +455,8 @@ hqDefine("users/js/mobile_workers", function () {
         $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
         $("#new-user-modal").koApplyBindings(newUserCreation);
         $("#new-users-list").koApplyBindings(newUserCreation);
+        console.log("new users list");
+        console.log(newUserCreation);
+        console.log($("#new-users-list"));
     });
 });
