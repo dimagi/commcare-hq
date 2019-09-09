@@ -1,4 +1,5 @@
 import uuid
+import warnings
 from datetime import datetime
 from decimal import Decimal
 
@@ -311,11 +312,26 @@ class SQLProduct(models.Model):
 
     @property
     def get_id(self):
+        warnings.warn(
+            "get_id should be changed to product_id",
+            DeprecationWarning,
+        )
+        return self.product_id
+
+    @property
+    def _id(self):
+        warnings.warn(
+            "_id should be changed to product_id",
+            DeprecationWarning,
+        )
         return self.product_id
 
     @property
     def unit(self):
-        # For compatibility with Product
+        warnings.warn(
+            "unit should be changed to units",
+            DeprecationWarning,
+        )
         return self.units
 
     class Meta(object):
