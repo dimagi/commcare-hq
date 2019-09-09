@@ -10,8 +10,10 @@ from corehq.apps.es.aggregations import (
 )
 from corehq.apps.es.ledgers import LedgerES
 from corehq.apps.export.models.new import LedgerSectionEntry
+from corehq.util.django_migrations import skip_on_fresh_install
 
 
+@skip_on_fresh_install
 def initialize_ledger_combinations(apps, schema_editor):
     terms = [
         AggregationTerm('domain', 'domain'),
