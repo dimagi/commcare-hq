@@ -123,6 +123,16 @@ def setUpModule():
         location_id='st7',
         location_type=state_location_type
     )
+    # exercise the logic that excludes test states by creating one
+    test_state = SQLLocation.objects.create(
+        domain=domain.name,
+        name='test_state',
+        location_id='test_state',
+        location_type=state_location_type,
+        metadata={
+            'is_test_location': 'test',
+        }
+    )
 
     supervisor_location_type = LocationType.objects.create(
         domain=domain.name,
