@@ -342,8 +342,8 @@ def dom_calc(calc_tag, dom, extra_arg=''):
 
 @quickcache([], timeout=60 * 60)
 def all_domain_stats():
-    webuser_counts = defaultdict(lambda: 0)
-    commcare_counts = defaultdict(lambda: 0)
+    webuser_counts = defaultdict(int)
+    commcare_counts = defaultdict(int)
 
     for row in CouchUser.get_db().view('users/by_domain', startkey=["active"],
                              endkey=["active", {}], group_level=3).all():
