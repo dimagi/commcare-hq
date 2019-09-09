@@ -4,17 +4,8 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block js %}{{ block.super }}
-  <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
-  {% include 'hqwebapp/includes/ui_element_js.html' %}
-  {% if strong_mobile_passwords and not hide_password_feedback %}
-    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-    <script src="{% static 'registration/js/password.js' %}"></script>
-  {% endif %}
-  <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
-  <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
-  <script src="{% static 'users/js/edit_commcare_user.js' %}"></script>
-{% endblock %}
+
+{% requirejs_main 'users/js/edit_commcare_user' %}
 
 {% block page_content %}
   {% initial_page_data "couch_user_id" couch_user.user_id %}
