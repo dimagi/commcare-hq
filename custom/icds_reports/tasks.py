@@ -1320,7 +1320,7 @@ def _child_health_monthly_aggregation(day, state_ids):
     pool = Pool(10)
     for query, params in helper.pre_aggregation_queries():
         pool.spawn(_child_health_helper, query, params)
-        pool.join()
+    pool.join()
 
     with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
