@@ -2610,13 +2610,7 @@ class StockExportColumn(ExportColumn):
     @property
     @memoized
     def _column_tuples(self):
-        return list(
-            LedgerSectionEntry.objects
-            .filter(domain=self.domain)
-            .order_by('entry_id', 'section_id')
-            .values_list('entry_id', 'section_id')
-            .all()
-        )
+        return get_ledger_section_entry_combinations(self.domain)
 
     def _get_product_name(self, product_id):
         try:
@@ -2776,6 +2770,16 @@ class LedgerSectionEntry(models.Model):
 
     class Meta(object):
         unique_together = ('domain', 'section_id', 'entry_id')
+
+
+def get_ledger_section_entry_combinations(domain):
+    return list(
+        LedgerSectionEntry.objects
+        .filter(domain=domain)
+        .order_by('entry_id', 'section_id')
+        .values_list('entry_id', 'section_id')
+        .all()
+    )
 
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
