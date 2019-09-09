@@ -7,7 +7,9 @@ hqDefine('nic_compliance/js/encoder', [
     _,
     initialPageData
 ) {
-    function HexParser() {
+    'use strict';
+
+    var HexParser = function () {
         var self = {};
 
         function paddingStr() {
@@ -38,7 +40,7 @@ hqDefine('nic_compliance/js/encoder', [
         };
 
         return self;
-    }
+    };
 
     $(function(){
         if (initialPageData.get("implement_password_obfuscation")) {
