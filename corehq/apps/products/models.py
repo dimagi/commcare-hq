@@ -370,8 +370,8 @@ class SQLProduct(models.Model):
 
 
 PRODUCT_EXPORT_ATTRS = [
-    ('name', six.text_type),
-    ('unit', six.text_type),
+    ('name', str),
+    ('unit', str),
     'description',
     'category',
     ('program_id', str),
