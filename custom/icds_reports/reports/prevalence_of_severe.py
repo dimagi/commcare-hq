@@ -129,7 +129,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
                     'value': indian_formatted_number(weighed_for_all_locations)
                 },
                 {
-                    'indicator': 'Total Children{} with height measured in given month:'
+                    'indicator': 'Total Children{} with weight and height measured in given month:'
                     .format(chosen_filters),
                     'value': indian_formatted_number(measured_for_all_locations)
                 },
