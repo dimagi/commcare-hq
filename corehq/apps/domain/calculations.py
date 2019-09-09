@@ -346,7 +346,7 @@ def all_domain_stats():
     commcare_counts = defaultdict(int)
 
     for row in CouchUser.get_db().view('users/by_domain', startkey=["active"],
-                             endkey=["active", {}], group_level=3).all():
+                                       endkey=["active", {}], group_level=3).all():
         _, domain, doc_type = row['key']
         value = row['value']
         {
