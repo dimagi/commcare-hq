@@ -109,7 +109,6 @@ jsonpath-rw==1.4.0
 kafka-python==1.4.4
 kombu==4.2.2.post1
 laboratory==0.2.0
-line_profiler==1.0
 linecache2==1.0.0         # via traceback2
 lxml==4.3.3
 mako==1.0.9               # via alembic
