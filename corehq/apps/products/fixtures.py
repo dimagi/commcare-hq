@@ -21,14 +21,6 @@ PRODUCT_FIELDS = [
 
 CUSTOM_DATA_SLUG = 'product_data'
 
-PRODUCT_FIXTURE_BUCKET = 'product_fixture'
-PRODUCT_FIXTURE_BUCKET_INDEXED = 'product_fixture-indexed'
-
-ALL_CACHE_PREFIXES = [
-    PRODUCT_FIXTURE_BUCKET,
-    PRODUCT_FIXTURE_BUCKET_INDEXED
-]
-
 
 def product_fixture_generator_json(domain):
     if not SQLProduct.objects.filter(domain=domain).exists():
