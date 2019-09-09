@@ -342,9 +342,7 @@ class SQLProduct(models.Model):
         to not show up in default Couch and SQL views.
         """
         self.is_archived = True
-        product = Product.get(self.product_id)
-        product.is_archived = True
-        product.save()
+        self.save()
 
     def unarchive(self):
         """
@@ -354,15 +352,8 @@ class SQLProduct(models.Model):
         if self.code:
             if SQLProduct.active_objects.filter(domain=self.domain, code=self.code).exists():
                 raise DuplicateProductCodeException()
-        product = Product.get(self.product_id)
-        product.is_archived = False
-        product.save()
         self.is_archived = False
-
-    def delete(self):
-        super().delete()
-        product = Product.get(self.product_id)
-        product.delete()
+        self.save()
 
     @classmethod
     def from_excel(cls, row, custom_data_validator):

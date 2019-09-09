@@ -1,11 +1,7 @@
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.groups.tests.test_groups import WrapGroupTestMixin
-from corehq.apps.products.models import Product, SQLProduct
-
-
-class WrapProductTest(WrapGroupTestMixin, SimpleTestCase):
-    document_class = Product
+from corehq.apps.products.models import SQLProduct
 
 
 class TestActiveProductManager(TestCase):

@@ -8,7 +8,7 @@ from corehq.apps.commtrack.tests.util import (
     bootstrap_products,
 )
 from corehq.apps.commtrack.util import make_program
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 
 
@@ -17,7 +17,7 @@ class ProgramsTest(TestCase):
         self.domain = bootstrap_domain(TEST_DOMAIN)
         self.addCleanup(self.domain.delete)
         bootstrap_products(self.domain.name)
-        self.products = sorted(Product.by_domain(self.domain.name), key=lambda p: p._id)
+        self.products = list(SQLProduct.active_objects.filter(domain=self.domain.name).order_by('product_id'))
         self.default_program = Program.by_domain(self.domain.name, wrap=True).one()
         self.new_program = make_program(
             self.domain.name,
@@ -49,7 +49,7 @@ class ProgramsTest(TestCase):
         )
         self.assertEqual(
             self.new_program._id,
-            SQLProduct.objects.get(product_id=self.products[0]._id).program_id
+            SQLProduct.objects.get(product_id=self.products[0].product_id).program_id
         )
 
         # stash the id before we delete
@@ -63,5 +63,5 @@ class ProgramsTest(TestCase):
         self.assertEqual(3, self.default_program.get_products_count())
         self.assertEqual(
             self.default_program._id,
-            SQLProduct.objects.get(product_id=self.products[0]._id).program_id
+            SQLProduct.objects.get(product_id=self.products[0].product_id).program_id
         )

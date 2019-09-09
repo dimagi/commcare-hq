@@ -15,7 +15,7 @@ from casexml.apps.phone.tests.utils import (
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.commtrack.tests import util
 from corehq.apps.products.fixtures import product_fixture_generator
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.programs.models import Program
 
@@ -50,10 +50,10 @@ class FixtureTest(TestCase, TestXmlMixin):
 
     def generate_product_xml(self, user, randomize_data=True):
         products = []
-        product_list = Product.by_domain(user.domain)
+        product_list = SQLProduct.active_objects.filter(domain=user.domain)
         self._initialize_product_names(len(product_list))
         for i, product in enumerate(product_list):
-            product_id = product._id
+            product_id = product.product_id
             product_name = next(self.product_names)
             product_unit = self._random_string(20)
             product_code = self._random_string(20)
@@ -102,7 +102,7 @@ class FixtureTest(TestCase, TestXmlMixin):
             )
 
             product.name = product_name
-            product.unit = product_unit
+            product.units = product_unit
             product.code = product_code
             product.description = product_description
             product.category = product_category
@@ -160,7 +160,7 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         expected_xml = self.generate_product_fixture_xml(user)
 
-        product_list = Product.by_domain(user.domain)
+        product_list = SQLProduct.objects.filter(domain=user.domain)
         self._initialize_product_names(len(product_list))
 
         fixture_original = call_fixture_generator(product_fixture_generator, user)[1]
