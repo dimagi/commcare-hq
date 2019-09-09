@@ -115,7 +115,8 @@ class Command(BaseCommand):
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
 
-        setup_logging(self.state_dir, action.lower(), options['debug'])
+        slug = f"{action.lower()}-{domain}"
+        setup_logging(self.state_dir, slug, options['debug'])
         getattr(self, "do_" + action)(domain)
 
     def do_MIGRATE(self, domain):
