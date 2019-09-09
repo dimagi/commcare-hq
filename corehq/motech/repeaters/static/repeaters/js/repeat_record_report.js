@@ -1,6 +1,7 @@
 /* globals ace */
 hqDefine('repeaters/js/repeat_record_report', function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        popUp = $('#areYouSure'), action = '';
 
     $(function () {
         $('#report-content').on('click', '.toggle-next-attempt', function (e) {
@@ -64,15 +65,8 @@ hqDefine('repeaters/js/repeat_record_report', function () {
         });
 
         $('#resendAll').on('click', function () {
-            var $btn = $(this),
-                itemsToResend = get_checkboxes();
-
-            if (itemsToResend != '') {
-                $btn.disableButton();
-                post_resend($btn, itemsToResend);
-            } else {
-                alert('You need to select at least one checkbox!');
-            }
+            action = 'resend';
+            popUp.css('display', 'block');
         });
 
         $('#report-content').on('click', '.cancel-record-payload', function () {
@@ -84,15 +78,8 @@ hqDefine('repeaters/js/repeat_record_report', function () {
         });
 
         $('#cancelAll').on('click', function () {
-            var $btn = $(this),
-                itemsToResend = get_checkboxes();
-
-            if (itemsToResend != '') {
-                $btn.disableButton();
-                post_other($btn, itemsToResend, 'cancel');
-            } else {
-                alert('You need to select at least one checkbox!');
-            }
+            action = 'cancel';
+            popUp.css('display', 'block');
         });
 
         $('#report-content').on('click', '.requeue-record-payload', function () {
@@ -104,15 +91,35 @@ hqDefine('repeaters/js/repeat_record_report', function () {
         });
 
         $('#requeueAll').on('click', function () {
-            var $btn = $(this),
-                itemsToResend = get_checkboxes();
+            action = 'requeue';
+            popUp.css('display', 'block');
+        });
 
-            if (itemsToResend != '') {
-                $btn.disableButton();
-                post_other($btn, itemsToResend, 'requeue');
+        $('#sendConfirm').on('click', function () {
+            var itemsToSend = get_checkboxes(), $btn;
+
+            popUp.css('display', 'none');
+            if (itemsToSend != '') {
+                if (action == 'resend') {
+                    $btn = $('#resendAll');
+                    $btn.disableButton();
+                    post_resend($btn, itemsToSend);
+                } else if (action == 'cancel') {
+                    $btn = $('#cancelAll');
+                    $btn.disableButton();
+                    post_other($btn, itemsToSend, action);
+                } else if (action == 'requeue') {
+                    $btn = $('#requeueAll');
+                    $btn.disableButton();
+                    post_other($btn, itemsToSend, action);
+                }
             } else {
-                alert('You need to select at least one checkbox!');
+                $('#warning').css('display', 'block');
             }
+        });
+
+        $('#sendCancel').on('click', function () {
+            popUp.css('display', 'none');
         });
 
         function get_checkboxes() {
@@ -124,14 +131,14 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                 return $('#requeue_ids').value;
             } else {
                 var items = document.getElementsByName('xform_ids'),
-                    itemsToResend = '';
+                    itemsToSend = '';
                 for (var i = 0; i < items.length; i++) {
                     if (items[i].type == 'checkbox' && items[i].checked == true) {
-                        itemsToResend += items[i].value + ' '
+                        itemsToSend += items[i].value + ' '
                     }
                 }
 
-                return itemsToResend;
+                return itemsToSend;
             }
         }
 

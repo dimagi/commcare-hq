@@ -95,16 +95,27 @@
                 {% blocktrans %}Select {{ total_requeue }} requeue forms{% endblocktrans %}
             </label>
           </div>
-{#          <div id="count_indicator">#}
-{#            <span class="label label-default">#}
-{#                {% blocktrans %}(<span class="selectedCount ">0</span> forms selected){% endblocktrans %}#}
-{#            </span>#}
-{#          </div>#}
           <input type="hidden" id="all_ids" value="{{ all_ids }}">
           <input type="hidden" id="cancel_ids" value="{{ cancel_ids }}">
           <input type="hidden" id="requeue_ids" value="{{ requeue_ids }}">
         </div>
       {% endif %}
+  </div>
+  <div id="warning" class="alert alert-warning" style="display: none;">
+    <p><strong>You need to select at least one checkbox!</strong></p>
+  </div>
+  <div id="areYouSure" style="position: fixed; width: 100%; height: 100%; z-index: 99; display: none;
+                              overflow: hidden; background: rgba(0, 0, 0, 0.5); filter: alpha(opacity=50);
+                              top: 0; left: 0;">
+    <div class="well" style="position: fixed; top: 50%; left: 50%; width: 400px;
+                             height: 200px; margin-left: -200px; margin-top: -100px;
+                             z-index: 100; text-align: center">
+      <h3><strong>Are you sure you want to do that?</strong></h3>
+      <div style="margin-top: 18%;">
+        <button id="sendConfirm" style="margin-right: 5em;" class="btn btn-default">Yes</button>
+        <button id="sendCancel" class="btn btn-default">No</button>
+      </div>
+    </div>
   </div>
 {% endblock %}
 
