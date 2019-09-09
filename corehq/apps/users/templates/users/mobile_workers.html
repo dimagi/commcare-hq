@@ -4,15 +4,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}
-  {% if strong_mobile_passwords %}
-    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-  {% endif %}
-  {% compress js %}
-    <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
-    <script src="{% static 'users/js/mobile_workers.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
+{% requirejs_main 'users/js/mobile_workers' %}
 
 {% block page_content %}
   {% initial_page_data 'can_access_all_locations' can_access_all_locations %}
@@ -170,7 +162,7 @@
                 <a data-bind="attr: {href: edit_url}, visible: user_id">
                   <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
                 </a>
-              </td-->
+              </td>
               <td data-bind="attr: {class: creation_status}, text: first_name"></td>
               <td data-bind="attr: {class: creation_status}, text: last_name"></td>
               <td data-bind="attr: {class: creation_status}">
