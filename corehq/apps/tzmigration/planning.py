@@ -1,6 +1,5 @@
 import json
 import sqlite3
-from sqlite3 import dbapi2 as sqlite
 
 from sqlalchemy import (
     Column,
@@ -88,7 +87,6 @@ class BaseDB(object):
 
     def __init__(self, db_filepath):
         self.db_filepath = db_filepath
-        self._connection = None
         self.engine = create_engine(
             'sqlite+pysqlite:///{}'.format(db_filepath), module=sqlite)
         self.Session = sessionmaker(bind=self.engine)
@@ -108,12 +106,6 @@ class BaseDB(object):
     @classmethod
     def open(cls, db_filepath):
         return cls(db_filepath)
-
-    @property
-    def connection(self):
-        if not self._connection:
-            self._connection = sqlite3.connect(self.db_filepath)
-        return self._connection
 
 
 class DiffDB(BaseDB):

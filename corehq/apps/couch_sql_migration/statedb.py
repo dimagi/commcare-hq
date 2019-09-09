@@ -69,8 +69,6 @@ class StateDB(DiffDB):
 
     def close(self):
         self.engine.dispose()
-        if self._connection is not None:
-            self._connection.close()
 
     @contextmanager
     def session(self, session=None):
