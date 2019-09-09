@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 
 
@@ -21,7 +21,7 @@ def import_products(domain, importer):
 
     for row in importer.worksheet:
         try:
-            p = Product.from_excel(row, custom_data_validator)
+            p = SQLProduct.from_excel(row, custom_data_validator)
         except Exception as e:
             results['errors'].append(
                 _('Failed to import product {name}: {ex}'.format(
@@ -73,15 +73,11 @@ def import_products(domain, importer):
         to_save.append(p)
 
         if len(to_save) > 500:
-            Product.bulk_save(to_save)
-            for couch_product in to_save:
-                couch_product.sync_to_sql()
+            SQLProduct.objects.bulk_create(to_save)
             to_save = []
 
     if to_save:
-        Product.bulk_save(to_save)
-        for couch_product in to_save:
-            couch_product.sync_to_sql()
+        SQLProduct.objects.bulk_create(to_save)
 
     if product_count:
         results['messages'].insert(

@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from decimal import Decimal
 
@@ -362,6 +363,51 @@ class SQLProduct(models.Model):
         super().delete()
         product = Product.get(self.product_id)
         product.delete()
+
+    @classmethod
+    def from_excel(cls, row, custom_data_validator):
+        if not row:
+            return None
+
+        id = row.get('id')
+        if id:
+            try:
+                product = cls.objects.get(location_id=id)
+            except ResourceNotFound:
+                raise InvalidProductException(
+                    _("Product with ID '{product_id}' could not be found!").format(product_id=id)
+                )
+        else:
+            product = cls()
+
+        product.code = str(row.get('product_id') or uuid.uuid4().hex)
+
+        for attr in PRODUCT_EXPORT_ATTRS:
+            key = attr[0] if isinstance(attr, tuple) else attr
+            if key in row:
+                val = row[key]
+                if val is None:
+                    val = ''
+                if isinstance(attr, tuple):
+                    val = attr[1](val)
+                setattr(product, key, val)
+            else:
+                break
+
+        if not product.code:
+            raise InvalidProductException(_('Product ID is a required field and cannot be blank!'))
+        if not product.name:
+            raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
+
+        custom_data = row.get('data', {})
+        error = custom_data_validator(custom_data)
+        if error:
+            raise InvalidProductException(error)
+
+        product.product_data = custom_data
+        product.product_data.update(row.get('uncategorized_data', {}))
+
+        return product
 
 
 PRODUCT_EXPORT_ATTRS = [
