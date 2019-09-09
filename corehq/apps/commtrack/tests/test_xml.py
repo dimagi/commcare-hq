@@ -587,7 +587,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
         super(CommTrackSyncTest, self).setUp()
         self.group = Group(domain=util.TEST_DOMAIN, name='commtrack-folks',
                            users=[self.user._id], case_sharing=True)
-        self.group.product_id = self.sp.owner_id
+        self.group._id = self.sp.owner_id
         self.group.save()
 
         self.restore_user = self.user.to_ota_restore_user()
