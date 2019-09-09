@@ -36,5 +36,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(initialize_ledger_combinations),
+        migrations.RunPython(initialize_ledger_combinations, elidable=True),
     ]
