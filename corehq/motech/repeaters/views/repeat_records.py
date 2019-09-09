@@ -193,7 +193,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     def _make_row(self, record):
         checkbox = mark_safe(
-            """<input type="checkbox" class="xform-checkbox"
+            """<input type="checkbox" onclick="uncheckAlls()" class="xform-checkbox"
             value="{}" name="xform_ids"/>""".format(record.get_id)
         )
         row = [

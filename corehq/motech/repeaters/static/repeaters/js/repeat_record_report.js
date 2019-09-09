@@ -66,7 +66,7 @@ hqDefine('repeaters/js/repeat_record_report', function () {
 
         $('#resendAll').on('click', function () {
             action = 'resend';
-            popUp.css('display', 'block');
+            perform_action();
         });
 
         $('#report-content').on('click', '.cancel-record-payload', function () {
@@ -79,7 +79,7 @@ hqDefine('repeaters/js/repeat_record_report', function () {
 
         $('#cancelAll').on('click', function () {
             action = 'cancel';
-            popUp.css('display', 'block');
+            perform_action();
         });
 
         $('#report-content').on('click', '.requeue-record-payload', function () {
@@ -92,35 +92,80 @@ hqDefine('repeaters/js/repeat_record_report', function () {
 
         $('#requeueAll').on('click', function () {
             action = 'requeue';
-            popUp.css('display', 'block');
+            perform_action();
         });
 
         $('#sendConfirm').on('click', function () {
             var itemsToSend = get_checkboxes(), $btn;
 
             popUp.css('display', 'none');
-            if (itemsToSend != '') {
-                if (action == 'resend') {
-                    $btn = $('#resendAll');
-                    $btn.disableButton();
-                    post_resend($btn, itemsToSend);
-                } else if (action == 'cancel') {
-                    $btn = $('#cancelAll');
-                    $btn.disableButton();
-                    post_other($btn, itemsToSend, action);
-                } else if (action == 'requeue') {
-                    $btn = $('#requeueAll');
-                    $btn.disableButton();
-                    post_other($btn, itemsToSend, action);
-                }
-            } else {
-                $('#warning').css('display', 'block');
+            if (action == 'resend') {
+                $btn = $('#resendAll');
+                $btn.disableButton();
+                post_resend($btn, itemsToSend);
+            } else if (action == 'cancel') {
+                $btn = $('#cancelAll');
+                $btn.disableButton();
+                post_other($btn, itemsToSend, action);
+            } else if (action == 'requeue') {
+                $btn = $('#requeueAll');
+                $btn.disableButton();
+                post_other($btn, itemsToSend, action);
             }
         });
 
         $('#sendCancel').on('click', function () {
             popUp.css('display', 'none');
         });
+
+        function perform_action() {
+            if (is_anything_checked()) {
+                if (is_action_possible_for_checked_items()) {
+                    $('#warning').css('display', 'none');
+                    $('#notAllowed').css('display', 'none');
+                    popUp.css('display', 'block');
+                }
+                else {
+                    $('#warning').css('display', 'none');
+                    $('#notAllowed').css('display', 'block');
+                }
+            } else {
+                $('#notAllowed').css('display', 'none');
+                $('#warning').css('display', 'block');
+            }
+        }
+
+        function is_anything_checked() {
+            var items = document.getElementsByName('xform_ids'),
+                flags = [$('#select_all'), $('#cancel_all'), $('#requeue_all')];
+
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].checked)
+                    return true;
+            }
+
+            for (i = 0; i < flags.length; i++) {
+                if (flags[i].checked)
+                    return true;
+            }
+
+            return false;
+        }
+
+        function is_action_possible_for_checked_items() {
+            var items = document.getElementsByName('xform_ids');
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].checked) {
+                    var id = items[i].value;
+                    var query = '[data-record-id="' + id + '"][class="btn btn-default ' + action + '-record-payload"]';
+                    var button = document.querySelector(query);
+                    if (button == null)
+                        return false;
+                }
+            }
+
+            return true;
+        }
 
         function get_checkboxes() {
             if ($('#select_all').checked == true) {

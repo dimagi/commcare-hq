@@ -43,18 +43,32 @@
           function selectRequeue() {
               unSelectItems();
               uncheck(all, cancel_all);
-              checkMultipleItems('requeue');
+              if (requeue_all.checked) {
+                  checkMultipleItems('requeue');
+              } else {
+                  unSelectItems();
+              }
           }
 
           function selectCallable() {
               unSelectItems();
               uncheck(all, requeue_all);
-              checkMultipleItems('cancel');
+              if (cancel_all.checked) {
+                  checkMultipleItems('cancel');
+              } else {
+                  unSelectItems();
+              }
           }
 
           function uncheck(checkbox1, checkbox2) {
               checkbox1.checked = false;
               checkbox2.checked = false;
+          }
+
+          function uncheckAlls() {
+              all.checked = false;
+              cancel_all.checked = false;
+              requeue_all.checked = false;
           }
 
           function checkMultipleItems(action) {
@@ -102,7 +116,10 @@
       {% endif %}
   </div>
   <div id="warning" class="alert alert-warning" style="display: none;">
-    <p><strong>You need to select at least one checkbox!</strong></p>
+    <p><strong>You need to select at least one payload!</strong></p>
+  </div>
+  <div id="notAllowed" class="alert alert-warning" style="display: none;">
+    <p><strong>This action is not allowed for some of selected payloads!</strong></p>
   </div>
   <div id="areYouSure" style="position: fixed; width: 100%; height: 100%; z-index: 99; display: none;
                               overflow: hidden; background: rgba(0, 0, 0, 0.5); filter: alpha(opacity=50);
