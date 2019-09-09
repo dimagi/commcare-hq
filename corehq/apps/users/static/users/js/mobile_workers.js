@@ -43,6 +43,7 @@ hqDefine("users/js/mobile_workers",[
     components
 ) {
     'use strict';
+    console.log('loaded module');
     // These are used as css classes, so the values of success/warning/error need to be what they are.
     var STATUS = {
         NONE: '',
@@ -52,10 +53,8 @@ hqDefine("users/js/mobile_workers",[
         ERROR: 'danger',
     };
 
-    
-
     var rmi = function () {};
-
+    console.log('user model');
     var userModel = function (options) {
         options = options || {};
         options = _.defaults(options, {
@@ -107,7 +106,7 @@ hqDefine("users/js/mobile_workers",[
 
         return self;
     };
-
+    console.log('users list model');
     var usersListModel = function () {
         var self = {};
         self.users = ko.observableArray([]);
@@ -180,6 +179,7 @@ hqDefine("users/js/mobile_workers",[
 
         return self;
     };
+    console.log('newUserCreationModel');
 
     var newUserCreationModel = function (options) {
         assertProperties.assertRequired(options, [
@@ -433,8 +433,10 @@ hqDefine("users/js/mobile_workers",[
 
         return self;
     };
+    console.log('init area');
 
     $(function () {
+        console.log('begin init');
         var rmiInvoker = RMI(initialPageData.reverse('mobile_workers'), $("#csrfTokenContainer").val());
         rmi = function (remoteMethod, data) {
             return rmiInvoker("", data, {headers: {"DjNg-Remote-Method": remoteMethod}});
