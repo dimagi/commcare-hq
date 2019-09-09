@@ -9,8 +9,24 @@ from corehq.apps.domain.dbaccessors import (
 
 
 def group_by_domain(domain):
+    return get_groups_in_domain(domain)
+
+
+def get_groups_in_domain(domain, limit=None, skip=None):
     from corehq.apps.groups.models import Group
-    return get_docs_in_domain_by_class(domain, Group)
+    kwargs = {}
+    if limit is not None:
+        kwargs['limit'] = limit
+    if skip is not None:
+        kwargs['skip'] = skip
+
+    return Group.view(
+        'groups/by_name',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=True,
+        **kwargs
+    ).all()
 
 
 def _group_by_name(domain, name, **kwargs):
