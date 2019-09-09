@@ -181,19 +181,6 @@ SQL_FUNCTION_PATHS = [
 ]
 
 
-@periodic_task(run_every=crontab(minute=15, hour=18),
-               acks_late=True, queue='icds_aggregation_queue')
-def run_move_ucr_data_into_aggregation_tables_task():
-    move_ucr_data_into_aggregation_tables.delay()
-
-
-@periodic_task(run_every=crontab(minute=45, hour=17),
-               acks_late=True, queue='icds_aggregation_queue')
-def run_citus_move_ucr_data_into_aggregation_tables_task():
-    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
-        move_ucr_data_into_aggregation_tables.delay(force_citus=True)
-
-
 @serial_task('{force_citus}', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=False):
     with force_citus_engine(force_citus):
