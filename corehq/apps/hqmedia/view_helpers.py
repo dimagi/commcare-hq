@@ -76,7 +76,7 @@ def update_multimedia_paths(app, paths):
     for old_path, new_path in paths.items():
         for module in app.modules:
             success_counts[module.unique_id] += module.rename_media(old_path, new_path)
-            for form in module.forms:
+            for form in module.get_forms():
                 update_count = form.rename_media(old_path, new_path)
                 if update_count:
                     dirty_xform_ids.add(form.unique_id)
@@ -84,8 +84,8 @@ def update_multimedia_paths(app, paths):
 
     # Update any form xml that changed
     for module in app.modules:
-        for form in module.forms:
-            if form.unique_id in dirty_xform_ids:
+        for form in module.get_forms():
+            if form.unique_id in dirty_xform_ids and form.form_type != 'shadow_form':
                 form.source = etree.tostring(form.memoized_xform().xml).decode('utf-8')
 
     # Update app's master map of multimedia

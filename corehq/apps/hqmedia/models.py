@@ -725,7 +725,9 @@ class FormMediaMixin(MediaMixin):
         count = 0
 
         count += self.rename_menu_media(self, old_path, new_path)
-        count += self.memoized_xform().rename_media(old_path, new_path)
+
+        if self.form_type != 'shadow_form':
+            count += self.memoized_xform().rename_media(old_path, new_path)
 
         return count
 
