@@ -1,3 +1,4 @@
+import re
 import uuid
 from collections import defaultdict
 from functools import wraps
@@ -98,6 +99,30 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
             break
 
         filter_expression = {'{}__gt'.format(sort_col): value}
+
+
+def estimate_row_count(model_class, q_expression):
+    """Estimate number of rows returned by a query summed across all partitions
+
+    Source:
+    https://www.citusdata.com/blog/2016/10/12/count-performance/#dup_counts_estimated_filtered
+    """
+    def count(db_name):
+        with db.connections[db_name].cursor() as cursor:
+            cursor.execute(sql, params)
+            lines = [line for line, in cursor.fetchall()]
+            for line in lines:
+                match = rows_expr.search(line)
+                if match:
+                    return int(match.group(1))
+            explain_lines = '\n'.join(lines)
+            raise RuntimeError(f"rows estimate not found:\n{explain_lines}")
+
+    rows_expr = re.compile(r" rows=(\d+) ")
+    query = model_class.objects.using('default').filter(q_expression)
+    sql, params = query.query.sql_with_params()
+    sql = f"EXPLAIN {sql}"
+    return sum(count(db) for db in get_db_aliases_for_partitioned_query())
 
 
 def split_list_by_db_partition(partition_values):
