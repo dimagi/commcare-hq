@@ -101,11 +101,22 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
         filter_expression = {'{}__gt'.format(sort_col): value}
 
 
-def estimate_row_count(model_class, q_expression):
-    """Estimate number of rows returned by a query summed across all partitions
+def estimate_partitioned_row_count(model_class, q_expression):
+    """Estimate query row count summed across all partitions"""
+    db_names = get_db_aliases_for_partitioned_query()
+    query = model_class.objects.using(db_names[0]).filter(q_expression)
+    return estimate_row_count(query, db_names)
+
+
+def estimate_row_count(query, db_name="default"):
+    """Estimate query row count
 
     Source:
     https://www.citusdata.com/blog/2016/10/12/count-performance/#dup_counts_estimated_filtered
+
+    :param query: A queryset or two-tuple `(<SQL string>, <bind params>)`.
+    :param db_name: A database name (str) or sequence of database names
+    to query. The sum of counts from all databases will be returned.
     """
     def count(db_name):
         with db.connections[db_name].cursor() as cursor:
@@ -115,14 +126,17 @@ def estimate_row_count(model_class, q_expression):
                 match = rows_expr.search(line)
                 if match:
                     return int(match.group(1))
-            explain_lines = '\n'.join(lines)
-            raise RuntimeError(f"rows estimate not found:\n{explain_lines}")
+            return 0
 
     rows_expr = re.compile(r" rows=(\d+) ")
-    query = model_class.objects.using('default').filter(q_expression)
-    sql, params = query.query.sql_with_params()
+    if hasattr(query, "query"):
+        sql, params = query.query.sql_with_params()
+    else:
+        sql, params = query
     sql = f"EXPLAIN {sql}"
-    return sum(count(db) for db in get_db_aliases_for_partitioned_query())
+    if isinstance(db_name, str):
+        return count(db_name)
+    return sum(count(db) for db in db_name)
 
 
 def split_list_by_db_partition(partition_values):

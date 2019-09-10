@@ -39,7 +39,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.sql_db.util import (
-    estimate_row_count,
+    estimate_partitioned_row_count,
     paginate_query_across_partitioned_databases,
 )
 from corehq.util.log import with_progress_bar
@@ -321,7 +321,7 @@ def blow_away_migration(domain, state_dir):
 
 def iter_chunks(model_class, field, domain, chunk_size=5000):
     where = Q(domain=domain)
-    row_count = estimate_row_count(model_class, where)
+    row_count = estimate_partitioned_row_count(model_class, where)
     rows = paginate_query_across_partitioned_databases(
         model_class,
         where,
