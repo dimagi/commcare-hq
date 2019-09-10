@@ -284,8 +284,10 @@ class SumoLogicLog(object):
 
 def clear_device_log_request(domain, xform):
     from corehq.apps.ota.models import DeviceLogRequest
+    user_subreport = _get_logs(xform.form_data, 'user_subreport', 'user')
+    username = (user_subreport[0].get('username') if user_subreport
+                else cached_user_id_to_username(xform.user_id))
     device_id = xform.form_data.get('device_id')
-    username = cached_user_id_to_username(xform.user_id)
     try:
         if not (username and device_id):
             raise DeviceLogRequest.DoesNotExist()
