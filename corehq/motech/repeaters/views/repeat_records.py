@@ -249,7 +249,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('Cancel or Requeue payload'))
         ]
         if toggles.SUPPORT.enabled_for_request(self.request):
-            columns.insert(1, DataTablesColumn(_('Payload ID')))
+            columns.insert(2, DataTablesColumn(_('Payload ID')))
 
         return DataTablesHeader(*columns)
 
