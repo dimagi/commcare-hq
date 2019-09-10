@@ -308,9 +308,11 @@ def blow_away_migration(domain, state_dir):
     assert not should_use_sql_backend(domain)
     delete_state_db(domain, state_dir)
 
+    log.info("deleting forms...")
     for form_ids in iter_chunks(XFormInstanceSQL, "form_id", domain):
         FormAccessorSQL.hard_delete_forms(domain, form_ids, delete_attachments=False)
 
+    log.info("deleting cases...")
     for case_ids in iter_chunks(CommCareCaseSQL, "case_id", domain):
         CaseAccessorSQL.hard_delete_cases(domain, case_ids)
 
@@ -318,7 +320,6 @@ def blow_away_migration(domain, state_dir):
 
 
 def iter_chunks(model_class, field, domain, chunk_size=5000):
-    model_name = model_class.__name__
     where = Q(domain=domain)
     row_count = estimate_row_count(model_class, where)
     rows = paginate_query_across_partitioned_databases(
@@ -327,6 +328,6 @@ def iter_chunks(model_class, field, domain, chunk_size=5000):
         values=[field],
         load_source='couch_to_sql_migration',
     )
-    rows = (f for f, in rows)  # unpack row (a single field)
-    rows = with_progress_bar(rows, row_count, prefix=model_name, oneline="concise")
+    rows = (f for f, in rows)  # unpack rows (each has a single field)
+    rows = with_progress_bar(rows, row_count, oneline="concise")
     yield from chunked(rows, chunk_size, list)

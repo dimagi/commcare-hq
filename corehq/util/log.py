@@ -243,12 +243,14 @@ def display_seconds(seconds):
 
 
 def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
-                      stream=None, step=None):
+                      stream=None, step=timedelta(seconds=10)):
     """Turns 'iterable' into a generator which prints a progress bar.
 
     :param oneline: Set to False to print each update on a new line.
         Useful if there will be other things printing to the terminal.
         Set to "concise" to use exactly one line for all output.
+    :param step: progress update interval as `timedelta` or `int`
+    (number of items iterated). Defaults to 10 seconds if not specified.
     """
     if stream is None:
         stream = sys.stdout
@@ -285,14 +287,17 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
 
     if oneline != "concise":
         print("Started at {:%Y-%m-%d %H:%M:%S}".format(start), file=stream)
-    if step is None:
-        step = length // granularity
+    next_update = datetime.now() - timedelta(hours=1)
     i = -1
     try:
         for i, x in enumerate(iterable):
             yield x
-            if i % step == 0:
+            if isinstance(step, int):
+                if i % step == 0:
+                    draw(i)
+            elif datetime.now() > next_update:
                 draw(i)
+                next_update = datetime.now() + step
     finally:
         draw(i + 1, done=True)
     if oneline != "concise":
