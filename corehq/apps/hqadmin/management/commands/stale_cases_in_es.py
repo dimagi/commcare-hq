@@ -25,8 +25,12 @@ class Command(BaseCommand):
         parser.add_argument('domain')
 
     def handle(self, domain, **options):
-        for case_id in get_server_modified_on_for_domain(domain):
-            print(case_id)
+        for case_id, es_date, couch_date in get_server_modified_on_for_domain(domain):
+            print("{id},{es_date},{couch_date}".format(
+                id=case_id,
+                es_date=es_date or "",
+                couch_date=couch_date
+            ))
 
 
 def get_server_modified_on_for_domain(domain):
@@ -47,7 +51,7 @@ def get_server_modified_on_for_domain(domain):
             .domain(domain)
             .case_ids(case_ids)
             .values_list('_id', 'server_modified_on'))
-        es_modified_on_by_ids = {_id: modified_on for _id, modified_on in results }
+        es_modified_on_by_ids = dict(results)
         for row in chunk:
             case_id, couch_modified_on = row['id'], row['value']
             if iso_string_to_datetime(couch_modified_on) > start_time:
