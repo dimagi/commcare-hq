@@ -27,6 +27,7 @@
     "bootstrap-switch": "3.3.2",
     "bootstrap-timepicker": "0.5.1",
     "bootstrap3-typeahead": "~3.1.1",
+    "domReady": "2.0.1",
     "jquery": "3.2.1",
     "jquery-2.2.4": "jquery#2.2.4",
     "jquery-color": "2.1.2",
