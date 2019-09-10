@@ -5480,7 +5480,7 @@ class RecapPassageOneData(IntraHealthSqlData):
                 'rows': rows,
                 'title': location,
                 'headers': self.get_headers(),
-                'comment':  date,
+                'comment': date,
             }
 
         return pps_visits
@@ -5495,7 +5495,7 @@ class RecapPassageOneData(IntraHealthSqlData):
         valid_products = self.program_products
         for row in rows:
             if valid_products and \
-                row['product_id'] not in valid_products:
+               row['product_id'] not in valid_products:
                 continue
 
             data['Total Facture'] += self.get_value(row['amount_billed'])
@@ -5544,12 +5544,11 @@ class RecapPassageOneData(IntraHealthSqlData):
         return headers
 
     def sort_rows_by_visit(self, rows):
-        rows_by_visit = defaultdict(list) # Aggregated by doc_id
+        rows_by_visit = defaultdict(list)
         for row in rows:
-                rows_by_visit[row['visit']].append(row)
+            rows_by_visit[row['visit']].append(row)
 
         return rows_by_visit
-
 
 
 class RecapPassageTwoData(RecapPassageOneData):
@@ -5570,8 +5569,7 @@ class RecapPassageTwoData(RecapPassageOneData):
         columns = super(RecapPassageTwoData, self).columns
         if self.loc_id != 'pps_id':
             columns.extend([
-                DatabaseColumn(_('PPS_Id'), SimpleColumn('pps_id')),
-#                DatabaseColumn(_('PPS_Name'), SimpleColumn('pps_name')),
+                DatabaseColumn(_('PPS_Id'), SimpleColumn('pps_id'))
             ])
         columns.extend([
             DatabaseColumn(_('Doc_id'), SimpleColumn('doc_id')),
