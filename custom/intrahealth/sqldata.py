@@ -5349,7 +5349,7 @@ class RecapPassageOneData(IntraHealthSqlData):
             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
             DatabaseColumn(_("Product name"), SimpleColumn('product_name')),
             DatabaseColumn(_("Product id"), SimpleColumn('product_id')),
-            DatabaseColumn(_('Doc_id'), SimpleColumn('doc_id',  alias='visit')),
+            DatabaseColumn(_('Doc_id'), SimpleColumn('doc_id', alias='visit')),
             DatabaseColumn(_("Precedent"), SumColumn('old_stock_pps')),
             DatabaseColumn(_("Old stock total"), SumColumn('old_stock_total')),
             DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('total_stock')),
@@ -5422,7 +5422,6 @@ class RecapPassageOneData(IntraHealthSqlData):
         valid_products = self.program_products
         pps_visits = {}
 
-
         for doc_id, rows in rows_by_visit.items():
             data = {}
             product_names = set()
@@ -5433,7 +5432,7 @@ class RecapPassageOneData(IntraHealthSqlData):
                 product_name = row['product_name']
                 product_id = row['product_id']
                 if valid_products and \
-                    product_id not in valid_products:
+                   product_id not in valid_products:
                     continue
                 product_names.add(product_name)
                 if not data.get(product_name):
@@ -5473,7 +5472,7 @@ class RecapPassageOneData(IntraHealthSqlData):
                 rows.append(next_row)
 
             amount_billed_sum = sum([data[product]['amount_billed'] for product in self.product_names])
-            facturation_fill = len(rows[0])-2
+            facturation_fill = len(rows[0]) - 2
             facturation_group = ['Facturation Groupe', amount_billed_sum]
             facturation_group.extend([' ' for _ in range(facturation_fill)])
             rows.append(facturation_group)
