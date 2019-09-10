@@ -1,5 +1,7 @@
 import json
+from urllib.parse import SplitResult
 
+import urllib3
 from django.http import Http404, HttpResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -13,7 +15,8 @@ import pytz
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
+from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
+from corehq.apps.data_interfaces.tasks import task_operation_on_payloads
 from dimagi.utils.web import json_response
 
 from corehq import toggles
@@ -34,11 +37,16 @@ from corehq.motech.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
+    _get_startkey_endkey_all_records
 )
 from corehq.motech.repeaters.forms import EmailBulkPayload
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
+
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
+
+from soil.util import expose_cached_download
 
 
 class DomainForwardingRepeatRecords(GenericTabularReport):
@@ -58,9 +66,8 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         'corehq.apps.reports.filters.simple.RepeaterPayloadIdFilter',
     ]
 
-    all_ids = ''
-    cancel_ids = ''
-    requeue_ids = ''
+    total_requeue = 0
+    total_cancel = 0
 
     def _make_cancel_payload_button(self, record_id):
         return '''
@@ -207,13 +214,12 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             self._make_resend_payload_button(record.get_id),
         ]
 
-        self.all_ids += '{} '.format(record.get_id)
         if record.cancelled and not record.succeeded:
             row.append(self._make_requeue_payload_button(record.get_id))
-            self.requeue_ids += '{} '.format(record.get_id)
+            self.total_requeue += 1
         elif not record.cancelled and not record.succeeded:
             row.append(self._make_cancel_payload_button(record.get_id))
-            self.cancel_ids += '{} '.format(record.get_id)
+            self.total_cancel += 1
         else:
             row.append(None)
 
@@ -251,16 +257,17 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def report_context(self):
         context = super(DomainForwardingRepeatRecords, self).report_context
         total = len(self.rows)
-        total_cancel = len(self.cancel_ids.split(' ')) - 1
-        total_requeue = len(self.requeue_ids.split(' ')) - 1
+        form_query_string = self.request.GET.urlencode()
+        form_query_string_requeue = _change_record_state(form_query_string, 'CANCELLED')
+        form_query_string_cancellable = _change_record_state(form_query_string, 'PENDING')
         context.update(
             email_bulk_payload_form=EmailBulkPayload(domain=self.domain),
             total=total,
-            total_cancel=total_cancel,
-            total_requeue=total_requeue,
-            all_ids=self.all_ids,
-            cancel_ids=self.cancel_ids,
-            requeue_ids=self.requeue_ids,
+            total_cancel=self.total_cancel,
+            total_requeue=self.total_requeue,
+            form_query_string=form_query_string,
+            form_query_string_cancellable=form_query_string_cancellable,
+            form_query_string_requeue=form_query_string_requeue,
         )
         return context
 
@@ -305,48 +312,45 @@ class RepeatRecordView(View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
-        records = _get_records(request)
-        json_responses = []
-        for record in records:
-            record = self.get_record_or_404(request, domain, record)
-            record.fire(force_send=True)
-            json_responses.append({
-                'success': record.succeeded,
-                'failure_reason': record.failure_reason,
-            })
+        flag = _get_flag(request)
+        if flag:
+            records = _get_ids(request, domain)
+        else:
+            records = _get_records(request)
+        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
+        task = task_operation_on_payloads.delay(records, domain, action='resend')
+        task_ref.set_task(task)
 
-        return json_responses
+        return HttpResponse('OK')
 
 
 @require_POST
 @require_can_edit_web_users
 def cancel_repeat_record(request, domain):
-    records = _get_records(request)
-    for record_id in records:
-        try:
-            record = RepeatRecord.get(record_id)
-        except ResourceNotFound:
-            return HttpResponse(status=404)
-        record.cancel()
-        record.save()
-        if not record.cancelled:
-            return HttpResponse(status=400)
+    flag = _get_flag(request)
+    if flag == 'cancel_all':
+        records = _get_ids(request, domain)
+    else:
+        records = _get_records(request)
+    task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
+    task = task_operation_on_payloads.delay(records, domain, action='cancel')
+    task_ref.set_task(task)
+
     return HttpResponse('OK')
 
 
 @require_POST
 @require_can_edit_web_users
 def requeue_repeat_record(request, domain):
-    records = _get_records(request)
-    for record_id in records:
-        try:
-            record = RepeatRecord.get(record_id)
-        except ResourceNotFound:
-            return HttpResponse(status=404)
-        record.requeue()
-        record.save()
-        if record.cancelled:
-            return HttpResponse(status=400)
+    flag = _get_flag(request)
+    if flag == 'requeue_all':
+        records = _get_ids(request, domain)
+    else:
+        records = _get_records(request)
+    task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
+    task = task_operation_on_payloads.delay(records, domain, action='requeue')
+    task_ref.set_task(task)
+
     return HttpResponse('OK')
 
 
@@ -357,3 +361,68 @@ def _get_records(request):
         records_ids.pop()
 
     return records_ids
+
+
+def _get_query(request):
+    query = request.POST.get('record_id')
+    return query
+
+
+def _get_flag(request):
+    flag = request.POST.get('flag')
+    return flag
+
+
+def _change_record_state(base_string, string_to_add):
+    string_to_look_for = 'record_state='
+    pos_start = 0
+    pos_end = 0
+    for r in range(len(base_string)):
+        if base_string[r:r+13] == string_to_look_for:
+            pos_start = r + 13
+            break
+
+    string_to_look_for = '&payload_id='
+    the_rest_of_string = base_string[pos_start:]
+    for r in range(len(the_rest_of_string)):
+        if the_rest_of_string[r:r+12] == string_to_look_for:
+            pos_end = r
+            break
+
+    string_to_return = base_string[:pos_start] + string_to_add + the_rest_of_string[pos_end:]
+
+    return string_to_return
+
+
+def _get_ids(request, domain):
+    query = _get_query(request)
+    form_query_string = six.moves.urllib.parse.unquote(query)
+    data = _url_parameters_to_dict(form_query_string)
+    if data['payload_id']:
+        results = get_repeat_records_by_payload_id(domain, data['payload_id'])
+    else:
+        kwargs = {
+            'include_docs': True,
+            'reduce': False,
+            'descending': True,
+        }
+        kwargs.update(_get_startkey_endkey_all_records(domain, data['repeater']))
+        results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
+    ids = [x['id'] for x in results]
+
+    return ids
+
+
+def _url_parameters_to_dict(url_params):
+    dict_to_return = {}
+    while True:
+        pos_one = url_params.find('=')
+        pos_two = url_params.find('&')
+        key = url_params[:pos_one]
+        value = url_params[pos_one+1:pos_two]
+        dict_to_return[key] = value
+        if pos_two == -1:
+            break
+        url_params = url_params[pos_two+1:]
+
+    return dict_to_return

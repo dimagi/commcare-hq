@@ -1,7 +1,10 @@
 /* globals ace */
 hqDefine('repeaters/js/repeat_record_report', function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        popUp = $('#areYouSure'), action = '';
+        select_all = document.getElementById('select_all'),
+        cancel_all = document.getElementById('cancel_all'),
+        requeue_all = document.getElementById('requeue_all'),
+        popUp = $('#areYouSure'), action = '', flag = '';
 
     $(function () {
         $('#report-content').on('click', '.toggle-next-attempt', function (e) {
@@ -136,16 +139,21 @@ hqDefine('repeaters/js/repeat_record_report', function () {
         }
 
         function is_anything_checked() {
-            var items = document.getElementsByName('xform_ids'),
-                flags = [$('#select_all'), $('#cancel_all'), $('#requeue_all')];
+            var items = document.getElementsByName('xform_ids');
+
+            if (select_all.checked) {
+                flag = 'select_all';
+                return true;
+            } else if (cancel_all.checked) {
+                flag = 'cancel_all';
+                return true;
+            } else if (requeue_all.checked) {
+                flag = 'requeue_all';
+                return true;
+            }
 
             for (var i = 0; i < items.length; i++) {
                 if (items[i].checked)
-                    return true;
-            }
-
-            for (i = 0; i < flags.length; i++) {
-                if (flags[i].checked)
                     return true;
             }
 
@@ -168,12 +176,12 @@ hqDefine('repeaters/js/repeat_record_report', function () {
         }
 
         function get_checkboxes() {
-            if ($('#select_all').checked == true) {
-                return $('#all_ids').value;
-            } else if ($('#cancel_all').checked == true) {
-                return $('#cancel_ids').value;
-            } else if ($('#requeue_all').checked == true) {
-                return $('#requeue_ids').value;
+            if (select_all.checked) {
+                return select_all.value;
+            } else if (cancel_all.checked) {
+                return cancel_all.value;
+            } else if (requeue_all.checked) {
+                return requeue_all.value;
             } else {
                 var items = document.getElementsByName('xform_ids'),
                     itemsToSend = '';
@@ -190,7 +198,10 @@ hqDefine('repeaters/js/repeat_record_report', function () {
         function post_resend(btn, arg) {
             $.post({
                 url: initialPageData.reverse("repeat_record"),
-                data: { record_id: arg },
+                data: {
+                    record_id: arg,
+                    flag: flag,
+                },
                 success: function (data) {
                     btn.removeSpinnerFromButton();
                     if (data.success) {
@@ -214,7 +225,10 @@ hqDefine('repeaters/js/repeat_record_report', function () {
         function post_other(btn, arg, action) {
             $.post({
                 url: initialPageData.reverse(action + '_repeat_record'),
-                data: { record_id: arg },
+                data: {
+                    record_id: arg,
+                    flag: flag,
+                },
                 success: function () {
                     btn.removeSpinnerFromButton();
                     btn.text(gettext('Success!'));
