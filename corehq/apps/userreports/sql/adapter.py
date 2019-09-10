@@ -268,14 +268,29 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             session.execute(delete)
 
     def _citus_bulk_delete(self, docs, column):
+        """
+        When a delete is run on a distrbuted table, it grabs an exclusive write
+        lock on the entire table unless the shard column is also provided.
+
+        This function performs extra work to get the shard column so we are not
+        blocked on deletes.
+        """
+
         SHARDABLE_DOC_TYPES = ('XFormArchived', 'XFormDuplicate')
         table = self.get_table()
         # todo group by the sharding column and issue bulk_delete
         for doc in docs:
             delete = table.delete().where(table.c.doc_id == doc['_id'])
             if doc.get('doc_type') in SHARDABLE_DOC_TYPES:
+                # get_all_values ignores duplicate and archived forms because
+                # the implicit filtering on all data sources filters doc_types
+                # get_all_values saves no changes to the original doc database
+                # so we change the doc_type locally to get the sharded column
+
+                tmp_doc = doc.copy()
+                tmp_doc['doc_type'] = 'XFormInstance'
                 # todo only get sharding column's value
-                rows = self.get_all_values(doc)
+                rows = self.get_all_values(tmp_doc)
                 if rows and rows[0].get(column):
                     delete = delete.where(table.c.get(column) == rows[column])
             with self.session_context() as session:
