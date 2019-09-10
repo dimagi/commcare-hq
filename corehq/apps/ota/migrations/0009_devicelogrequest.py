@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.db import migrations, models
 
 
@@ -19,5 +17,9 @@ class Migration(migrations.Migration):
                 ('device_id', models.CharField(max_length=255)),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
             ],
+        ),
+        migrations.AlterUniqueTogether(
+            name='devicelogrequest',
+            unique_together=set([('domain', 'username', 'device_id')]),
         ),
     ]

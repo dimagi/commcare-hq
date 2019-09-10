@@ -199,6 +199,9 @@ class DeviceLogRequest(models.Model):
     device_id = models.CharField(max_length=255)
     created_on = models.DateTimeField(auto_now_add=True)
 
+    class Meta(object):
+        unique_together = ('domain', 'username', 'device_id')
+
     def save(self, *args, **kwargs):
         from corehq.apps.ota.views import get_device_log_requests
         super().save(*args, **kwargs)
