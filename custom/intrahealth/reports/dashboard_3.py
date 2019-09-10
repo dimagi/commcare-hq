@@ -1,4 +1,3 @@
-# coding=utf-8
 from custom.intrahealth.filters import YeksiNaaLocationFilter, MonthsDateFilter, ProgramFilter
 from custom.intrahealth.sqldata import SatisfactionRateAfterDeliveryData, ValuationOfPNAStockPerProductData
 from custom.intrahealth.utils import MultiReport

@@ -1,26 +1,46 @@
-from datetime import date
+from datetime import datetime, date
+from freezegun import freeze_time
+
 from django.test import TestCase
 from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 
 
+@freeze_time("2017-05-02")
 class NICIndicatorTest(TestCase):
 
     def test_file_content(self):
-        self.maxDiff = None
-        state_id = 'st1'
-        month = '2017-05-01'
-        data = get_inc_indicator_api_data(state_id, month)
-
-        self.assertEqual(
-            {'num_households_registered': 3633,
-             'lactating_enrolled': 87,
-             'ebf_in_month': 17,
-             'children_enrolled': 618,
-             'num_launched_awcs': 9,
-             'state': u'st1',
-             'pregnant_enrolled': 70,
-             'cf_in_month': 14,
-             'bf_at_birth': 1,
-             'month': date(2017, 5, 1)},
+        get_inc_indicator_api_data.clear(use_citus=True)
+        data = get_inc_indicator_api_data()
+        self.assertCountEqual(
+            {'scheme_code': 'C002',
+             'total_launched_awcs': 20,
+             'dataarray1': [
+                 {
+                     'state_name': 'st2',
+                     'site_id': 'st2',
+                     'month': date(2017, 5, 1),
+                     'num_launched_awcs': 11,
+                     'num_households_registered': 3331,
+                     'pregnant_enrolled': 85,
+                     'lactating_enrolled': 79,
+                     'children_enrolled': 669,
+                     'bf_at_birth': 1,
+                     'ebf_in_month': 11,
+                     'cf_in_month': 20
+                 },
+                 {
+                     'state_name': 'st1',
+                     'site_id': 'st1',
+                     'month': date(2017, 5, 1),
+                     'num_launched_awcs': 9,
+                     'num_households_registered': 3633,
+                     'pregnant_enrolled': 70,
+                     'lactating_enrolled': 87,
+                     'children_enrolled': 618,
+                     'bf_at_birth': 1,
+                     'ebf_in_month': 17,
+                     'cf_in_month': 14
+                 }
+             ]},
             data
         )

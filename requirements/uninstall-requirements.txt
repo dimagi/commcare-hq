@@ -14,3 +14,4 @@ ConcurrentLogHandler
 xhtml2pdf
 celery  # Remove once we are back to regular celery releases
 subprocess32
+eventlet

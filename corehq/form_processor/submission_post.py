@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import logging
 from collections import namedtuple
 
@@ -31,7 +29,7 @@ from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
-from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, verify_system_action
+from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
 from corehq.util.datadog.utils import form_load_counter
@@ -230,7 +228,7 @@ class SubmissionPost(object):
             return FormProcessingResult(response, None, [], [], 'submission_error_log')
 
         if submitted_form.xmlns == SYSTEM_ACTION_XMLNS:
-            verify_system_action(submitted_form, self.auth_context)
+            return self.handle_system_action(submitted_form)
 
         if submitted_form.xmlns == DEVICE_LOG_XMLNS:
             return self.process_device_log(submitted_form)
@@ -482,6 +480,13 @@ class SubmissionPost(object):
             nature=ResponseNature.SUBMIT_ERROR,
             status=500,
         ).response()
+
+    @tracer.wrap(name='submission.handle_system_action')
+    def handle_system_action(self, form):
+        handle_system_action(form, self.auth_context)
+        self.interface.save_processed_models([form])
+        response = HttpResponse(status=201)
+        return FormProcessingResult(response, form, [], [], 'system-action')
 
     @tracer.wrap(name='submission.process_device_log')
     def process_device_log(self, device_log_form):

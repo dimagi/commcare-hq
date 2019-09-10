@@ -1610,6 +1610,14 @@ ICDS_NIC_INDICATOR_API = StaticToggle(
     relevant_environments={'icds', 'india'},
 )
 
+AP_WEBSERVICE = StaticToggle(
+    'ap_webservice',
+    'ICDS: ENABLE AP webservice',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
+)
+
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS/ICDS: Allow blank case tags',

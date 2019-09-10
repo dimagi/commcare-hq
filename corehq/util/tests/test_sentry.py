@@ -1,4 +1,3 @@
-# coding=utf-8
 import uuid
 from django.test import SimpleTestCase, override_settings
 from corehq.util.sentry import HQSanitzeSystemPasswords

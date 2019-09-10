@@ -19,7 +19,7 @@ class ModuleAsChildTestBase(TestXmlMixin):
     child_module_class = None
 
     def setUp(self):
-        self.factory = AppFactory(build_version='2.9.0', domain=DOMAIN)
+        self.factory = AppFactory(build_version='2.20.0', domain=DOMAIN)
         self.module_0, _ = self.factory.new_basic_module('parent', 'gold-fish')
         self.module_1, _ = self.factory.new_module(self.child_module_class, 'child', 'guppy', parent_module=self.module_0)
 
@@ -275,6 +275,32 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         </partial>
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[@id='m1']")
+
+    def test_menu_display_conditions(self):
+        """
+        If child uses display only forms, suite should incorporate parent's display condition.
+        """
+        self.module_0.module_filter = "int(double(now())) mod 2 = 0"
+        self.module_1.module_filter = "int(double(now())) mod 3 = 0"
+        self.module_1.put_in_root = True
+
+        XML = """
+        <partial>
+          <menu id="m0" relevant="int(double(now())) mod 2 = 0">
+            <text>
+              <locale id="modules.m0"/>
+            </text>
+            <command id="m0-f0"/>
+          </menu>
+          <menu id="m0" relevant="(int(double(now())) mod 3 = 0) and (int(double(now())) mod 2 = 0)">
+            <text>
+              <locale id="modules.m0"/>
+            </text>
+            <command id="m1-f0"/>
+          </menu>
+        </partial>
+        """
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
     def test_child_module_no_forms_show_case_list(self):
         m0f0 = self.module_0.get_form(0)
