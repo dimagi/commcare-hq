@@ -334,6 +334,10 @@ nvd3#sectorChart > div.title.h4 {
     color: #ffffff !important;
 }
 
+.report-content.icds-dashboard-title-fix {
+    padding-top: 100px;
+}
+
 .report-content-without-message {
     padding: 20px 20px 80px;
 }
