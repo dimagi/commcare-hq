@@ -89,7 +89,6 @@ class Command(BaseCommand):
         elif query.by_state == NO_STATES:
             query.func(agg_date)
         else:
-            state_ids
             query.func(agg_date, state_ids)
 
     def setup_tasks(self):
