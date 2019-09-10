@@ -243,13 +243,15 @@ def display_seconds(seconds):
 
 
 def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
-                      stream=sys.stdout, step=None):
+                      stream=None, step=None):
     """Turns 'iterable' into a generator which prints a progress bar.
 
     :param oneline: Set to False to print each update on a new line.
         Useful if there will be other things printing to the terminal.
         Set to "concise" to use exactly one line for all output.
     """
+    if stream is None:
+        stream = sys.stdout
     if length is None:
         if hasattr(iterable, "__len__"):
             length = len(iterable)
