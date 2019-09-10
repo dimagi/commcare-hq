@@ -112,7 +112,9 @@ def get_case_pillow(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
         checkpoint_callback=ucr_processor
     )
-    processors = [case_to_es_processor, case_search_processor, CaseMessagingSyncProcessor()]
+    processors = [case_to_es_processor, CaseMessagingSyncProcessor()]
+    if settings.RUN_CASE_SEARCH_PILLOW:
+        processors.append(case_search_processor)
     if not settings.ENTERPRISE_MODE:
         processors.append(get_case_to_report_es_processor())
     if not skip_ucr:

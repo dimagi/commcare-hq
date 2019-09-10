@@ -1,4 +1,3 @@
-
 from contextlib import contextmanager
 from datetime import date
 
@@ -480,7 +479,8 @@ class AggAwc(models.Model, AggregateMixin):
     valid_visits = models.IntegerField(null=True)
     expected_visits = models.IntegerField(null=True)
     thr_distribution_image_count = models.IntegerField(null=True)
-
+    num_mother_thr_21_days = models.IntegerField(null=True)
+    num_mother_thr_eligible = models.IntegerField(null=True)
     objects = CitusComparisonManager()
 
     class Meta:

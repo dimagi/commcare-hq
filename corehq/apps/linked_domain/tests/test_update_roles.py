@@ -1,4 +1,3 @@
-
 from mock import patch
 
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest

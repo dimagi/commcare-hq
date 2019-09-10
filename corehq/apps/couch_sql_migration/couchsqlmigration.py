@@ -93,7 +93,7 @@ CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
 
 
-def setup_logging(log_dir, debug=False):
+def setup_logging(log_dir, slug, debug=False):
     if debug:
         assert log.level <= logging.DEBUG, log.level
         logging.root.setLevel(logging.DEBUG)
@@ -103,7 +103,7 @@ def setup_logging(log_dir, debug=False):
     if not log_dir:
         return
     time = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-    log_file = os.path.join(log_dir, "couch2sql-form-case-{}.log".format(time))
+    log_file = os.path.join(log_dir, f"couch2sql-form-case-{time}-{slug}.log")
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     handler = logging.FileHandler(log_file)
     handler.setFormatter(formatter)
@@ -186,12 +186,12 @@ class CouchSqlDomainMigrator(object):
                     adjust_datetimes(form_data)
                 xmlns = form_data.get("@xmlns", "")
                 user_id = extract_meta_user_id(form_data)
-                if xmlns == SYSTEM_ACTION_XMLNS:
-                    for form_id, case_ids in do_system_action(couch_form):
-                        self.case_diff_queue.update(case_ids, form_id)
             else:
                 xmlns = couch_form.xmlns
                 user_id = couch_form.user_id
+            if xmlns == SYSTEM_ACTION_XMLNS:
+                for form_id, case_ids in do_system_action(couch_form):
+                    self.case_diff_queue.update(case_ids, form_id)
             sql_form = XFormInstanceSQL(
                 form_id=couch_form.form_id,
                 domain=self.domain,
@@ -749,7 +749,7 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
         key_date = results[-1]['key'][-1]
         if key_date is None:
             return  # ...except when it isn't :(
-        key_date = datetime.strptime(key_date, ISO_DATETIME_FORMAT)
+        key_date = self._convert_date(key_date)
         if self.should_stop(key_date):
             raise StopToResume
 
@@ -759,6 +759,14 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
 
     def _cache_key(self):
         return "couchsqlmigration.%s" % self.domain
+
+    @staticmethod
+    def _convert_date(value):
+        try:
+            return datetime.strptime(value, ISO_DATETIME_FORMAT)
+        except ValueError:
+            sans_micros = ISO_DATETIME_FORMAT.replace(".%f", "")
+            return datetime.strptime(value, sans_micros)
 
     def stop(self):
         if self.should_stop is not None:

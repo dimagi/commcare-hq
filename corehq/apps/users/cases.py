@@ -1,4 +1,3 @@
-
 import numbers
 
 from couchdbkit import ResourceNotFound

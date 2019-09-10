@@ -1,4 +1,3 @@
-
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn, SumWhen
 from sqlagg.filters import BETWEEN, IN, NOT

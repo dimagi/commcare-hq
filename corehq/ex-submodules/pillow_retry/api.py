@@ -1,4 +1,3 @@
-
 import sys
 
 from memoized import memoized

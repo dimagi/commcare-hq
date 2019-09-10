@@ -1046,7 +1046,7 @@ class CaseDataView(BaseProjectReportSectionView):
         tz_abbrev = timezone.localize(the_time_is_now).tzname()
 
         product_name_by_id = {
-            product.product_id: product.name
+            product['product_id']: product['name']
             for product in SQLProduct.objects.filter(domain=self.domain).values('product_id', 'name').all()
         }
 

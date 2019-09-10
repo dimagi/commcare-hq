@@ -1,4 +1,3 @@
-
 from distutils.version import LooseVersion
 
 from django.urls import reverse

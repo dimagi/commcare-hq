@@ -1,4 +1,3 @@
-
 from distutils.version import LooseVersion
 
 from corehq.apps.app_manager import id_strings

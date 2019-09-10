@@ -1,4 +1,3 @@
-
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 from custom.icds_reports.models.views import TakeHomeRationMonthly

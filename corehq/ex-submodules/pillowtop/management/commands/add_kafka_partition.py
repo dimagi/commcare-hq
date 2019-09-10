@@ -1,4 +1,3 @@
-
 from django.core.management.base import BaseCommand
 
 from pillowtop.models import KafkaCheckpoint

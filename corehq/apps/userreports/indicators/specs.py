@@ -1,4 +1,3 @@
-
 from jsonobject import DefaultProperty
 from jsonobject.exceptions import BadValueError
 

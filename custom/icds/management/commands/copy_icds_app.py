@@ -1,4 +1,3 @@
-
 from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_build_doc_by_version, wrap_app
@@ -27,7 +26,7 @@ class Command(BaseCommand):
 
         new_app.save()
         print("App succesfully copied, you can view it at\n{}".format(
-            absolute_reverse('view_app', args=[domain, new_app.get_id])
+            absolute_reverse('view_app', args=[target_domain, new_app.get_id])
         ))
 
 

@@ -1,4 +1,3 @@
-
 import json
 
 from corehq.apps.api.tests.utils import APIResourceTest
