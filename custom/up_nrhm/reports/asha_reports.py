@@ -1,12 +1,13 @@
 import calendar
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport
+from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.users.models import CommCareUser
 from corehq.util.translation import localize
 from custom.up_nrhm.reports import LangMixin
 from custom.up_nrhm.filters import DrillDownOptionFilter, SampleFormatFilter, ASHAMonthFilter,\
-    NRHMDatespanFilter, NRHMDatespanMixin, LanguageFilter
+    LanguageFilter
 from custom.up_nrhm.reports.asha_facilitators_report import ASHAFacilitatorsReport
 from custom.up_nrhm.reports.asha_functionality_checklist_report import ASHAFunctionalityChecklistReport
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
@@ -25,9 +26,9 @@ def total_rows(report):
     return {}
 
 
-class ASHAReports(GenericTabularReport, NRHMDatespanMixin, CustomProjectReport, LangMixin):
+class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport, LangMixin):
     fields = [SampleFormatFilter, LanguageFilter,
-              NRHMDatespanFilter, DrillDownOptionFilter,
+              DatespanFilter, DrillDownOptionFilter,
               ASHAMonthFilter, YearFilter]
     name = ugettext_noop("ASHA Sangini Reports")
     slug = "asha_reports"
