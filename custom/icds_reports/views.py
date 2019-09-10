@@ -1802,6 +1802,13 @@ class NICIndicatorAPIView(View):
 
 
 @location_safe
+@method_decorator([api_auth, toggles.AP_WEBSERVICE.required_decorator()], name='dispatch')
+class APWebservice(View):
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({'message': 'Connection Successful'})
+
+
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class CasDataExport(View):
     def post(self, request, *args, **kwargs):
