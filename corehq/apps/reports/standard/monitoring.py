@@ -1442,6 +1442,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         group_ids = []
         for group_id in self.request.GET.getlist('group'):
             if group_id and group_id != '_all':
+                # ReportConfig objects saved from JS could have this delimiter
                 group_ids.extend(group_id.split(CHOICE_DELIMITER))
         return group_ids
 
