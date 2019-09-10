@@ -276,7 +276,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             if doc.get('doc_type') in SHARDABLE_DOC_TYPES:
                 # todo only get sharding column's value
                 rows = self.get_all_values(doc)
-                if rows.get(column):
+                if rows and rows[0].get(column):
                     delete = delete.where(table.c.get(column) == rows[column])
             with self.session_context() as session:
                 session.execute(delete)
