@@ -1805,7 +1805,7 @@ class NICIndicatorAPIView(View):
 @method_decorator([api_auth, toggles.AP_WEBSERVICE.required_decorator()], name='dispatch')
 class APWebservice(View):
     def get(self, request, *args, **kwargs):
-            return JsonResponse({'message': 'Connection Successful'})
+        return JsonResponse({'message': 'Connection Successful'})
 
 
 @location_safe
