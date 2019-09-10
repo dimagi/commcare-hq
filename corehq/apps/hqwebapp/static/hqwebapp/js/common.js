@@ -7,4 +7,5 @@ hqDefine("hqwebapp/js/common", [
     'hqwebapp/js/django',
 ], function () {
     // nothing to do, this is just to define the major common dependencies for HQ
+    console.log("loaded hqwebapp/js/common");
 });
