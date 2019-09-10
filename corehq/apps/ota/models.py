@@ -204,6 +204,10 @@ class DeviceLogRequest(models.Model):
     class Meta(object):
         unique_together = ('domain', 'username', 'device_id')
 
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        _all_device_log_requests.reset_cache()
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         _all_device_log_requests.reset_cache()
