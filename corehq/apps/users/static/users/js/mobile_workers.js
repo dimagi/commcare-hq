@@ -30,6 +30,7 @@ hqDefine("users/js/mobile_workers",[
     'zxcvbn/dist/zxcvbn',
     'hqwebapp/js/components.ko', // for pagination
     'select2/dist/js/select2.full.min',
+    'domReady!'
 ], function (
     $,
     ko,
