@@ -327,6 +327,7 @@ def iter_chunks(model_class, field, domain, chunk_size=5000):
         where,
         values=[field],
         load_source='couch_to_sql_migration',
+        query_size=chunk_size,
     )
     rows = (f for f, in rows)  # unpack rows (each has a single field)
     rows = with_progress_bar(rows, row_count, oneline="concise")
