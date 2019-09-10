@@ -406,10 +406,12 @@
 
     {% if requirejs_main %}
       <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-      <script src="{% static 'requirejs/require.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
+      {% compress js %}
+        <script src="{% static 'requirejs/require.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
+      {% endcompress %}
       <script>
         requirejs.config({
           deps: ['knockout', 'ko.mapping'],
@@ -449,8 +451,10 @@
     {# JavaScript Display Logic Libaries #}
 
     {% if request.couch_user and not requirejs_main %}
-      <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
-      <script src="{% static 'notifications/js/notifications_service_main.js' %}"></script>
+      {% compress js %}
+        <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
+        <script src="{% static 'notifications/js/notifications_service_main.js' %}"></script>
+      {% endcompress %}
     {% endif %}
 
     {% if not requirejs_main %}
@@ -525,8 +529,10 @@
     {% endif %}
 
     {% if request.use_ko_validation and not requirejs_main %}
-      <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
+      {% compress js %}
+        <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
+      {% endcompress %}
     {% endif %}
 
     {% if is_demo_visible %}
