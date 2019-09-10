@@ -149,7 +149,7 @@ def get_commcare_version_from_appversion_text(appversion_text):
     patterns = [
         r'version "([\d.]+)"',
         r'"([\d.]+)"\s+\(\d+\)',
-        r'([\d.]+)"\(',
+        r'"\s*([\d.]+)\s*"',
     ]
     return _first_group_match(appversion_text, patterns)
 
