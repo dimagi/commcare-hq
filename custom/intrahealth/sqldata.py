@@ -5314,7 +5314,7 @@ class RecapPassageOneData(IntraHealthSqlData):
 
     @property
     def group_by(self):
-        return ['real_date_repeat', 'product_id', 'pps_name', self.loc_name,self.loc_id, 'product_name', 'visit']
+        return ['real_date_repeat', 'product_id', 'pps_name', self.loc_id, 'product_name', 'visit']
 
     @property
     def program_products(self):
