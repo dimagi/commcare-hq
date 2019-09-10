@@ -56,7 +56,7 @@ branches:
   - jls/reveal-family-id # Jenny Aug 27
   - bmb/case-sharing  #Biyeun Aug 22
   #- bmb/requirejs-registration  # Biyeun Aug 30
-  - bmb/requirejs-registration-debug  # Biyeun Sep 6
+  - bmb/requirejs-registration  # Biyeun Sep 6
   - sk/sentry-upgrade # SK Sep 3
   - jls/use-compress-more # Jenny Sept 5
 submodules: {}
