@@ -36,6 +36,7 @@ class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport, Lang
     default_rows = 20
     printable = True
     sortable = False
+    base_template = 'up_nrhm/base_template.html'
     report_template_path = "up_nrhm/asha_report.html"
     extra_context_providers = [total_rows]
     no_value = '--'
