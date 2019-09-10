@@ -17,6 +17,7 @@ hqDefine("hqwebapp/js/components.ko", [
     selectToggle,
     feedback
 ) {
+    console.log('loaded components');
     var components = {
         'inline-edit': inlineEdit,
         'pagination': pagination,
