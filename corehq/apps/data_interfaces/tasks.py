@@ -22,7 +22,7 @@ from corehq.apps.data_interfaces.models import (
 from corehq.apps.data_interfaces.utils import (
     add_cases_to_case_group,
     archive_or_restore_forms,
-)
+    operation_on_payloads)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -196,3 +196,18 @@ def delete_old_rule_submission_logs():
     start = datetime.utcnow()
     max_age = start - timedelta(days=90)
     CaseRuleSubmission.objects.filter(created_on__lt=max_age).delete()
+
+
+@task(serializer='pickle')
+def task_operation_on_payloads(payload_ids, domain, action=''):
+    task = task_operation_on_payloads
+
+    if not payload_ids:
+        return {'messages': {'errors': [_('No Payloads are supplied')]}}
+
+    if not action:
+        return {'messages': {'errors': [_('No action specified')]}}
+
+    response = operation_on_payloads(payload_ids, domain, action, task)
+
+    return response
