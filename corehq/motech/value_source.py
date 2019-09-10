@@ -246,7 +246,10 @@ class FormQuestionMap(FormQuestion):
 
 def get_form_question_values(form_json):
     """
-    Returns question-value pairs to result where questions are given as "/data/foo/bar"
+    Given form JSON, returns question-value pairs, where questions are
+    formatted "/data/foo/bar".
+
+    e.g. Question "bar" in group "foo" has value "baz":
 
     >>> get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
     {'/data/foo/bar': 'baz'}
