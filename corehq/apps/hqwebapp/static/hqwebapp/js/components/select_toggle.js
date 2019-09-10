@@ -30,6 +30,7 @@ hqDefine('hqwebapp/js/components/select_toggle', [
             // Attributes passed on to the input
             self.name = params.name || '';
             self.id = params.id || '';
+            self.disabled = params.disabled || false;
 
             // Data
             self.value = ko.isObservable(params.value) ? params.value : ko.observable(params.value);
@@ -45,7 +46,7 @@ hqDefine('hqwebapp/js/components/select_toggle', [
                         return id === self.value();
                     }),
                     click: function (model, e) {
-                        if (model.id !== self.value()) {
+                        if (model.id !== self.value() && !self.disabled) {
                             self.value(model.id);
                             $(e.currentTarget).closest(".ko-select-toggle").find("select").trigger("change");
                         }
