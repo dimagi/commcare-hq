@@ -222,7 +222,4 @@ class DeviceLogRequest(models.Model):
 def _all_device_log_requests():
     # This is expected to be very small, usually empty, but it's accessed
     # every heartbeat request, so it's memoized to the Django process
-    return {
-        (r.domain, r.username, r.device_id)
-        for r in DeviceLogRequest.objects.all()
-    }
+    return set(DeviceLogRequest.objects.values_list('domain', 'username', 'device_id'))
