@@ -76,12 +76,11 @@ class Command(BaseCommand):
 
     def handle(self, query_name, agg_uuid, **options):
         use_citus_for_request()
-        self.function_map = {}
-        self.setup_tasks()
+        function_map = self.setup_tasks()
         agg_record = AggregationRecord.objects.get(agg_uuid=agg_uuid)
         agg_date = agg_record.agg_date
         state_ids = agg_record.state_ids
-        query = self.function_map[query_name]
+        query = function_map[query_name]
         if query.by_state == SINGLE_STATE:
             pool = Pool(10)
             for state in state_ids:
@@ -94,9 +93,11 @@ class Command(BaseCommand):
             query.func(agg_date, state_ids)
 
     def setup_tasks(self):
+        function_map = {}
         for name, func in STATE_TASKS.items():
-            self.function_map[name] = AggregationQuery(SINGLE_STATE, func)
+            function_map[name] = AggregationQuery(SINGLE_STATE, func)
         for name, func in NORMAL_TASKS.items():
-            self.function_map[name] = AggregationQuery(NO_STATES, func)
+            function_map[name] = AggregationQuery(NO_STATES, func)
         for name, func in ALL_STATES_TASKS.items():
-            self.function_map[name] = AggregationQuery(ALL_STATES, func)
+            function_map[name] = AggregationQuery(ALL_STATES, func)
+        return function_map
