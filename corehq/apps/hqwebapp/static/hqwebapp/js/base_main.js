@@ -15,4 +15,5 @@ hqDefine("hqwebapp/js/base_main", [
     'hqwebapp/js/mobile_experience_warning',
 ], function() {
     // nothing to do, this is just to define the dependencies for hqwebapp/base.html
+    console.log("loaded hqwebapp/js/base_main");
 });
