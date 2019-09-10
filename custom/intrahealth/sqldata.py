@@ -5473,7 +5473,10 @@ class RecapPassageOneData(IntraHealthSqlData):
                 rows.append(next_row)
 
             amount_billed_sum = sum([data[product]['amount_billed'] for product in self.product_names])
-            rows.append(['Facturation Groupe', amount_billed_sum])
+            facturation_fill = len(rows[0])-2
+            facturation_group = ['Facturation Groupe', amount_billed_sum]
+            facturation_group.extend([' ' for _ in range(facturation_fill)])
+            rows.append(facturation_group)
             pps_visits[doc_id] = {
                 'rows': rows,
                 'title': location,
