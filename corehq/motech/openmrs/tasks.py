@@ -3,10 +3,10 @@ Tasks are used to pull data from OpenMRS. They either use OpenMRS's
 Reporting REST API to import cases on a regular basis (like weekly), or
 its Atom Feed (daily or more) to track changes.
 """
-import time
 import uuid
 from collections import namedtuple
 from datetime import datetime
+from functools import partial
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -85,8 +85,10 @@ def get_openmrs_patients(requests, importer, location=None):
 
 
 def get_case_properties(patient, importer):
+    as_isoformat = partial(posix_milliseconds_to_isoformat,
+                           tz=importer.get_timezone())
     cast = {
-        POSIX_MILLISECONDS: posix_milliseconds_to_isoformat,
+        POSIX_MILLISECONDS: as_isoformat,
     }
     name_columns = importer.name_columns.split(' ')
     case_name = ' '.join([patient[column] for column in name_columns])
