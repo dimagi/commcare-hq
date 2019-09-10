@@ -5,6 +5,7 @@ hqDefine('users/js/edit_commcare_user', [
     'hqwebapp/js/alert_user',
     'analytix/js/google',
     'hqwebapp/js/multiselect_utils',
+    'locations/js/widgets',
     'jquery-textchange/jquery.textchange',
     'hqwebapp/js/widgets',
     'registration/js/password',
