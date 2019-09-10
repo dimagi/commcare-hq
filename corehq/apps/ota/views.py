@@ -27,7 +27,6 @@ from casexml.apps.phone.restore import (
 from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_utc_datetime
-from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
@@ -368,19 +367,11 @@ def update_user_reporting_data(app_build_id, app_id, couch_user, request):
 
 
 def _should_force_log_submission(request):
-    return (
+    return DeviceLogRequest.is_pending(
         request.domain,
         request.couch_user.username,
         request.GET.get('device_id', ''),
-    ) in get_device_log_requests()
-
-
-@memoized
-def get_device_log_requests():
-    return {
-        (r.domain, r.username, r.device_id)
-        for r in DeviceLogRequest.objects.all()
-    }
+    )
 
 
 @location_safe

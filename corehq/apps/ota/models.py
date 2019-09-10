@@ -3,6 +3,8 @@ from collections import namedtuple
 
 from django.db import models, transaction
 
+from memoized import memoized
+
 from casexml.apps.phone.restore import stream_response
 
 from corehq.blobs import CODES, get_blob_db
@@ -203,6 +205,20 @@ class DeviceLogRequest(models.Model):
         unique_together = ('domain', 'username', 'device_id')
 
     def save(self, *args, **kwargs):
-        from corehq.apps.ota.views import get_device_log_requests
         super().save(*args, **kwargs)
-        get_device_log_requests.reset_cache()
+        _all_device_log_requests.reset_cache()
+
+    @classmethod
+    def is_pending(cls, domain, username, device_id):
+        """Is there a pending device log request matching these params?"""
+        return (domain, username, device_id) in _all_device_log_requests()
+
+
+@memoized
+def _all_device_log_requests():
+    # This is expected to be very small, usually empty, but it's accessed
+    # every heartbeat request, so it's memoized to the Django process
+    return {
+        (r.domain, r.username, r.device_id)
+        for r in DeviceLogRequest.objects.all()
+    }
