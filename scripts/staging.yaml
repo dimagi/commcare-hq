@@ -9,7 +9,7 @@
 # to check if your branch causes any conflicts before rebuilding
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
-#     $ scripts/rebuildstaging
+#     $ scripts/commit-staging --push
 #     $ commcare-cloud staging fab deploy
 # Above commands commands can be run without the flag as well.
 
