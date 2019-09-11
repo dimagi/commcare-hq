@@ -23,7 +23,9 @@ from corehq.apps.data_interfaces.models import (
 from corehq.apps.data_interfaces.utils import (
     add_cases_to_case_group,
     archive_or_restore_forms,
-    operation_on_payloads)
+    operate_on_payloads,
+    generate_ids_and_operate_on_payloads,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -194,8 +196,8 @@ def delete_old_rule_submission_logs():
 
 
 @task(serializer='pickle')
-def task_operation_on_payloads(payload_ids, domain, action=''):
-    task = task_operation_on_payloads
+def task_operate_on_payloads(payload_ids, domain, action=''):
+    task = task_operate_on_payloads
 
     if not payload_ids:
         return {'messages': {'errors': [_('No Payloads are supplied')]}}
@@ -203,6 +205,21 @@ def task_operation_on_payloads(payload_ids, domain, action=''):
     if not action:
         return {'messages': {'errors': [_('No action specified')]}}
 
-    response = operation_on_payloads(payload_ids, domain, action, task)
+    response = operate_on_payloads(payload_ids, domain, action, task)
+
+    return response
+
+
+@task(serializer='pickle')
+def task_generate_ids_and_operate_on_payloads(data, domain, action=''):
+    task = task_generate_ids_and_operate_on_payloads
+
+    if not data:
+        return {'messages': {'errors': [_('No data is supplied')]}}
+
+    if not action:
+        return {'messages': {'errors': [_('No action specified')]}}
+
+    response = generate_ids_and_operate_on_payloads(data, domain, action, task)
 
     return response
