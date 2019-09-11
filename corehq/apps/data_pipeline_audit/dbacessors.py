@@ -1,6 +1,9 @@
 from collections import Counter
+from datetime import date, timedelta
+from django.db.models import Count
 
 import dateutil
+import six
 
 from casexml.apps.case.models import CommCareCase
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -16,6 +19,7 @@ from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.warehouse.models.facts import FormFact
 
 
 def get_es_counts_by_doc_type(domain, es_indices=None, extra_filters=None):
@@ -258,3 +262,22 @@ def _get_user_base_doc_filter(doc_type):
         return {"term": {
             "base_doc": "couchuser-deleted" if deleted else "couchuser"
         }}
+
+
+def xform_counts_for_app_in_last_month(app):
+    """
+    Count number of submissions grouped by module, form in a given app.
+    """
+    last_month_end = date.today().replace(day=1) - timedelta(days=1)
+    last_month_start = last_month_end.replace(day=1)
+    result = FormFact.objects.filter(
+        app_id=app._id, received_on__gte=last_month_start, received_on__lte=last_month_end
+    ).values('xmlns').annotate(total=Count('xmlns'))
+    count_by_xmlns = {x['xmlns']: x['total'] for x in result}
+    ret = [('Module Name', 'Form Name', 'Number of forms')]
+    for module in app.modules:
+        for form in module.get_forms():
+            ret.append((module.default_name(), form.default_name(), count_by_xmlns.pop(form.xmlns, 0)))
+    for xmlns, count in six.iteritems(count_by_xmlns):
+        ret.append(("Unknown module", xmlns, count))
+    return ret
