@@ -278,9 +278,9 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
         SHARDABLE_DOC_TYPES = ('XFormArchived', 'XFormDuplicate')
         table = self.get_table()
-        # todo group by the sharding column and issue bulk_delete
+        doc_ids_to_delete = []
+
         for doc in docs:
-            delete = table.delete().where(table.c.doc_id == doc['_id'])
             if doc.get('doc_type') in SHARDABLE_DOC_TYPES:
                 # get_all_values ignores duplicate and archived forms because
                 # the implicit filtering on all data sources filters doc_types
@@ -292,7 +292,15 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 # todo only get sharding column's value
                 rows = self.get_all_values(tmp_doc)
                 if rows and rows[0].get(column):
+                    delete = table.delete().where(table.c.doc_id == doc['_id'])
                     delete = delete.where(table.c.get(column) == rows[column])
+                    with self.session_context() as session:
+                        session.execute(delete)
+
+            doc_ids_to_delete.append(tmp_doc['_id'])
+
+        if doc_ids_to_delete:
+            delete = table.delete().where(table.c.doc_id.in_(doc_ids_to_delete))
             with self.session_context() as session:
                 session.execute(delete)
 
