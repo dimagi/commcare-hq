@@ -1,18 +1,24 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 
-import mock
 from django.test import SimpleTestCase
-from corehq.apps.export.models import FormExportInstance, TableConfiguration, ExportColumn, ScalarItem, PathNode
+
+import mock
+
+from couchforms.models import XFormInstance
+
+from corehq.apps.export.models import (
+    ExportColumn,
+    FormExportInstance,
+    PathNode,
+    ScalarItem,
+    TableConfiguration,
+)
 from corehq.apps.reports.tasks import (
     _extract_form_attachment_info,
     _get_export_properties,
 )
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.models import XFormInstanceSQL
-from couchforms.models import XFormInstance
 
 
 class FormMultimediaExportTest(SimpleTestCase):

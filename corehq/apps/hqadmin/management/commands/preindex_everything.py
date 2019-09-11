@@ -1,15 +1,12 @@
-from __future__ import print_function
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
-from django.core.management import call_command
-
-from django.core.management.base import BaseCommand
-from django.core.mail import mail_admins
-from django.core import cache
 from django.conf import settings
-from dimagi.utils import gitinfo
+from django.core import cache
+from django.core.mail import mail_admins
+from django.core.management import call_command
+from django.core.management.base import BaseCommand
+
 import gevent
+
+from dimagi.utils import gitinfo
 
 from corehq.util.log import get_traceback_string
 

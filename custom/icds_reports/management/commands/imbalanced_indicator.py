@@ -1,8 +1,4 @@
-from __future__ import absolute_import, print_function
-from __future__ import unicode_literals
-
 import dateutil
-import six
 
 from django.core.management.base import BaseCommand
 from django.db import connections
@@ -22,7 +18,7 @@ class Command(BaseCommand):
         indicator_ratio = []
 
         for indicator in indicator_list:
-            input_month = six.text_type(dateutil.parser.parse(input_month).date().replace(day=1))
+            input_month = str(dateutil.parser.parse(input_month).date().replace(day=1))
             query = self.prepare_query(indicator, input_month)
             ratio_check = self.execute_query(query)
             ratio_check = [(indicator["indicators"][i]['indicator'], res) for i, res in enumerate(ratio_check)]

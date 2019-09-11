@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import sys
 import traceback
 from contextlib import contextmanager
-from io import open
 
 import six
 
@@ -17,7 +14,7 @@ def tee_output(stream):
     context manager.
     """
     if stream:
-        filepath = stream if isinstance(stream, six.text_type) else None
+        filepath = stream if isinstance(stream, str) else None
         if filepath:
             stream = open(filepath, "a", buffering=1, encoding='utf-8')
         real_stdout = sys.stdout

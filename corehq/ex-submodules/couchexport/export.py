@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from contextlib import contextmanager
 import itertools
 from couchexport.exceptions import SchemaMismatchException,\
@@ -7,10 +5,6 @@ from couchexport.exceptions import SchemaMismatchException,\
 from django.conf import settings
 from couchexport.models import Format
 from couchexport import writers
-import six
-from six.moves import range
-from six.moves import map
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def get_writer(format):
@@ -100,7 +94,6 @@ def export_raw_to_writer(headers, data, file, format=Format.XLS_2007,
     writer.close()
 
 
-@six.python_2_unicode_compatible
 class Constant(object):
 
     def __init__(self, message):
@@ -109,13 +102,14 @@ class Constant(object):
     def __str__(self):
         return self.message
 
-SCALAR_NEVER_WAS = settings.COUCHEXPORT_SCALAR_NEVER_WAS \
-                    if hasattr(settings, "COUCHEXPORT_SCALAR_NEVER_WAS") \
-                    else "---"
 
-LIST_NEVER_WAS = settings.COUCHEXPORT_LIST_NEVER_WAS \
-                    if hasattr(settings, "COUCHEXPORT_LIST_NEVER_WAS") \
-                    else "this list never existed"
+SCALAR_NEVER_WAS = (settings.COUCHEXPORT_SCALAR_NEVER_WAS
+    if hasattr(settings, "COUCHEXPORT_SCALAR_NEVER_WAS")
+    else "---")
+
+LIST_NEVER_WAS = (settings.COUCHEXPORT_LIST_NEVER_WAS
+    if hasattr(settings, "COUCHEXPORT_LIST_NEVER_WAS")
+    else "this list never existed")
 
 scalar_never_was = Constant(SCALAR_NEVER_WAS)
 list_never_was = Constant(LIST_NEVER_WAS)
@@ -133,6 +127,7 @@ def render_never_was(schema):
         return list_never_was
     else:
         return scalar_never_was
+
 
 unknown_type = None
 
@@ -176,9 +171,8 @@ def fit_to_schema(doc, schema):
     if schema == "string":
         if not doc:
             doc = ""
-        if not isinstance(doc, six.string_types):
-            doc = six.text_type(doc)
-        soft_assert_type_text(doc)
+        if not isinstance(doc, str):
+            doc = str(doc)
         return doc
 
 
@@ -222,8 +216,7 @@ def _create_intermediate_tables(docs, schema):
         column = []
         id = []
         for k in path:
-            if isinstance(k, six.string_types):
-                soft_assert_type_text(k)
+            if isinstance(k, str):
                 if k:
                     column.append(k)
             else:
@@ -285,18 +278,16 @@ class FormattedRow(object):
 
     @property
     def formatted_id(self):
-        if isinstance(self.id, six.string_types):
-            soft_assert_type_text(self.id)
+        if isinstance(self.id, str):
             return self.id
-        return self.separator.join(map(six.text_type, self.id))
+        return self.separator.join(map(str, self.id))
 
     def include_compound_id(self):
         return len(self.compound_id) > 1
 
     @property
     def compound_id(self):
-        if isinstance(self.id, six.string_types):
-            soft_assert_type_text(self.id)
+        if isinstance(self.id, str):
             return [self.id]
         return self.id
 
@@ -333,8 +324,7 @@ class FormattedRow(object):
             except StopIteration:
                 return rows
             rows = itertools.chain([first_entry], rows)
-            if first_entry and (not hasattr(first_entry, '__iter__') or isinstance(first_entry, six.string_types)):
-                soft_assert_type_text(first_entry)
+            if first_entry and (not hasattr(first_entry, '__iter__') or isinstance(first_entry, str)):
                 # `rows` is actually just a single row, so wrap it
                 return [rows]
             return rows
@@ -370,8 +360,7 @@ def _format_tables(tables, id_label='id', separator='.', include_headers=True,
             id_key = [id_label]
             id_len = len(list(table)[0])  # this is a proxy for the complexity of the ID
             if id_len > 1:
-                id_key += ["{id}__{count}".format(id=id_label, count=i) \
-                           for i in range(id_len)]
+                id_key += ["{id}__{count}".format(id=id_label, count=i) for i in range(id_len)]
             header_vals = [separator.join(key) for key in keys]
             new_table.append(FormattedRow(header_vals, id_key, separator,
                                           is_header_row=True))

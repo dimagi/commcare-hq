@@ -1,26 +1,57 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import division
+import datetime
 
 from django.utils.functional import cached_property
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.graph_models import MultiBarChart, Axis
+from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
-from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter
+from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter, DateRangeFilter
 from custom.intrahealth.sqldata import ConsommationPerProductData
+from dimagi.utils.dates import force_to_date
+
+from custom.intrahealth.utils import PNAMultiBarChart
 
 
 class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
-    name = "Consommation"
-    slug = 'consommation_report'
+    name = "Consommation par Produit"
+    slug = 'consommation_par_produit_report'
     comment = 'Consommation de la gamme par produit'
     default_rows = 10
+    exportable = True
 
     report_template_path = 'yeksi_naa/tabular_report.html'
+
+    @property
+    def export_table(self):
+        report = [
+            [
+                self.name,
+                [],
+            ]
+        ]
+        headers = [x.html for x in self.headers]
+        rows = self.calculate_rows()
+        report[0][1].append(headers)
+
+        for row in rows:
+            location_name = row[0]
+            location_name = location_name.replace('<b>', '')
+            location_name = location_name.replace('</b>', '')
+
+            row_to_return = [location_name]
+
+            rows_length = len(row)
+            for r in range(1, rows_length):
+                value = row[r]['html']
+                value = value.replace('<b>', '')
+                value = value.replace('</b>', '')
+                row_to_return.append(value)
+
+            report[0][1].append(row_to_return)
+
+        return report
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
@@ -28,7 +59,7 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
 
     @property
     def fields(self):
-        return [ProgramsAndProductsFilter, YeksiNaaLocationFilter]
+        return [DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter]
 
     @cached_property
     def rendered_report_title(self):
@@ -36,13 +67,13 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
 
     @property
     def report_context(self):
-        context = {
-            'report': self.get_report_context(),
-            'title': self.name,
-            'charts': self.charts
-        }
-
-        return context
+        if not self.needs_filters:
+            return {
+                'report': self.get_report_context(),
+                'charts': self.charts,
+                'title': self.name
+            }
+        return {}
 
     @property
     def selected_location(self):
@@ -100,16 +131,16 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
             rows = self.calculate_rows()
             headers = self.headers
 
-        context = dict(
-            report_table=dict(
-                title=self.name,
-                slug=self.slug,
-                comment=self.comment,
-                headers=headers,
-                rows=rows,
-                default_rows=self.default_rows,
-            )
-        )
+        context = {
+            'report_table': {
+                'title': self.name,
+                'slug': self.slug,
+                'comment': self.comment,
+                'headers': headers,
+                'rows': rows,
+                'default_rows': self.default_rows,
+            }
+        }
 
         return context
 
@@ -181,7 +212,7 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
             return consumptions_to_return
 
         def calculate_total_row(locations_with_products):
-            total_row_to_return = ['<b>NATIONAL</b>']
+            total_row_to_return = ['<b>SYNTHESE</b>']
             data_for_total_row = []
 
             for location, products in locations_with_products.items():
@@ -211,9 +242,11 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
 
     @property
     def charts(self):
-        chart = MultiBarChart(None, Axis('Location'), Axis('Amount', format='i'))
-        chart.height = 400
-        chart.marginBottom = 100
+        chart = PNAMultiBarChart(None, Axis('Location'), Axis('Amount', format='i'))
+        chart.height = 550
+        chart.marginBottom = 150
+        chart.rotateLabels = -45
+        chart.showControls = False
 
         def data_to_chart(stocks_list):
             stocks_to_return = []
@@ -272,9 +305,19 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
 
     @property
     def config(self):
-        config = dict(
-            domain=self.domain,
-        )
+        config = {
+            'domain': self.domain,
+        }
+        if self.request.GET.get('startdate'):
+            startdate = force_to_date(self.request.GET.get('startdate'))
+        else:
+            startdate = datetime.datetime.now()
+        if self.request.GET.get('enddate'):
+            enddate = force_to_date(self.request.GET.get('enddate'))
+        else:
+            enddate = datetime.datetime.now()
+        config['startdate'] = startdate
+        config['enddate'] = enddate
         config['product_program'] = self.request.GET.get('product_program')
         config['product_product'] = self.request.GET.get('product_product')
         config['selected_location'] = self.request.GET.get('location_id')

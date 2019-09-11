@@ -1,30 +1,37 @@
-# coding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
+import os
 import uuid
 
-from mock import patch
-from memoized import memoized
-import os
+from django.test import SimpleTestCase, TestCase
 
-from django.test import TestCase, SimpleTestCase
+from memoized import memoized
+from mock import patch
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_build_ids
-from corehq.apps.app_manager.models import Application, DetailColumn, import_app, ApplicationBase, Module, \
-    ReportModule, ReportAppConfig
-from corehq.apps.app_manager.tasks import autogenerate_build, prune_auto_generated_builds
+from corehq.apps.app_manager.models import (
+    Application,
+    ApplicationBase,
+    DetailColumn,
+    Module,
+    ReportAppConfig,
+    ReportModule,
+    import_app,
+)
+from corehq.apps.app_manager.tasks import (
+    autogenerate_build,
+    prune_auto_generated_builds,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import add_build, patch_default_builds, TestXmlMixin
+from corehq.apps.app_manager.tests.util import (
+    TestXmlMixin,
+    add_build,
+    patch_default_builds,
+)
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.apps import load_app_from_slug
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.tests.utils import get_sample_report_config
-
-from six.moves import zip
-from six.moves import range
-from io import open
 
 
 class AppManagerTest(TestCase, TestXmlMixin):

@@ -1,26 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import uuid
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.test.testcases import TestCase
+
+from couchdbkit.exceptions import ResourceNotFound
 from mock import patch
 
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import (
     Application,
-    Module,
     LinkedApplication,
+    Module,
     ReportAppConfig,
     ReportModule,
-)
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
-from corehq.apps.linked_domain.exceptions import ActionNotPermitted
-from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
-from corehq.apps.linked_domain.remote_accessors import (
-    _convert_app_from_remote_linking_source,
-    fetch_remote_media,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.utils import (
@@ -29,12 +21,17 @@ from corehq.apps.app_manager.views.utils import (
     update_linked_app,
 )
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
-from corehq.apps.linked_domain.util import (
-    convert_app_for_remote_linking,
-    _get_missing_multimedia,
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+from corehq.apps.linked_domain.exceptions import ActionNotPermitted
+from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
+from corehq.apps.linked_domain.remote_accessors import (
+    _convert_app_from_remote_linking_source,
+    fetch_remote_media,
 )
-from io import open
-
+from corehq.apps.linked_domain.util import (
+    _get_missing_multimedia,
+    convert_app_for_remote_linking,
+)
 from corehq.util.test_utils import flag_enabled, softer_assert
 
 
@@ -249,11 +246,11 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.addCleanup(linked_app.delete)
 
         master_app.add_module(Module.new_module('M1', None))
-        copy1 = self._make_master1_build(True)
+        copy1 = self._make_build(master_app, True)
 
         master_app.add_module(Module.new_module('M2', None))
         master_app.save()  # increment version number
-        self._make_master1_build(True)
+        self._make_build(master_app, True)
 
         update_linked_app(linked_app, 'test_update_from_specific_build', master_build=copy1)
         linked_app = LinkedApplication.get(linked_app._id)

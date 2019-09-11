@@ -1,16 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import cgi
-from django.utils.translation import ugettext_noop
+
+from django.conf import settings
 from django.utils.translation import ugettext as _
-from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
-    ProjectReportParametersMixin
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util.timezones.conversions import ServerTime
-from corehq.util.view_utils import absolute_reverse
+from django.utils.translation import ugettext_noop
+
+from casexml.apps.case.models import CommCareCase
+
 from corehq.apps.ivr.models import Call
+from corehq.apps.reminders.util import get_form_name
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.standard import (
+    DatespanMixin,
+    ProjectReport,
+    ProjectReportParametersMixin,
+)
+from corehq.apps.reports.standard.sms import BaseCommConnectLogReport
+from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.sms.models import (
     CALLBACK_MISSED,
     CALLBACK_PENDING,
@@ -20,13 +26,11 @@ from corehq.apps.sms.models import (
     ExpectedCallback,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.reports.standard.sms import BaseCommConnectLogReport
 from corehq.apps.users.models import CouchUser
-from casexml.apps.case.models import CommCareCase
-from django.conf import settings
-from corehq.apps.reminders.util import get_form_name
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.view_utils import absolute_reverse
 
 
 @quickcache(['domain'], timeout=60 * 60)

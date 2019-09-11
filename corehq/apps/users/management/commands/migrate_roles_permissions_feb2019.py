@@ -1,9 +1,8 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
-from corehq.apps.users.models import UserRole
+
 from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.users.models import UserRole
 
 
 class Command(BaseCommand):

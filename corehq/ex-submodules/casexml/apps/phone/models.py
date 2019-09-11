@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
@@ -443,7 +441,6 @@ class SyncLogSQL(models.Model):
             )
 
 
-@six.python_2_unicode_compatible
 class SyncLog(AbstractSyncLog):
     """
     A log of a single sync operation.
@@ -1015,7 +1012,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         #     if xform_id and not _domain_has_legacy_toggle_set():
         #         # unblocking http://manage.dimagi.com/default.asp?185850
         #         _assert = soft_assert(send_to_ops=False, log_to_file=True, exponential_backoff=True,
-        #                               fail_if_debug=True, include_breadcrumbs=True)
+        #                               fail_if_debug=True)
         #         _assert(index in (all_to_remove | set([checked_case_id])),
         #                 "expected {} in {} but wasn't".format(index, all_to_remove))
 

@@ -1,6 +1,3 @@
-from __future__ import absolute_import, print_function
-from __future__ import unicode_literals
-
 from collections import defaultdict
 
 from django.core.management.base import BaseCommand

@@ -1,8 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.fixtures.dbaccessors import get_fixture_data_types_in_domain
-from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
-    FixtureDataItem, FieldList, FixtureItemField, FixtureOwnership
+from corehq.apps.fixtures.models import (
+    FieldList,
+    FixtureDataItem,
+    FixtureDataType,
+    FixtureItemField,
+    FixtureOwnership,
+    FixtureTypeField,
+)
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser
 

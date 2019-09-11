@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from sqlagg.columns import SumColumn, SimpleColumn
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn

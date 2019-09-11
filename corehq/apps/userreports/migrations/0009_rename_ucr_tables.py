@@ -1,15 +1,16 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import print_function
-
 import sys
 from collections import defaultdict
 
 from django.db import migrations
 
-from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
-from corehq.apps.userreports.util import get_table_name, LEGACY_UCR_TABLE_PREFIX
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    StaticDataSourceConfiguration,
+)
+from corehq.apps.userreports.util import (
+    LEGACY_UCR_TABLE_PREFIX,
+    get_table_name,
+)
 from corehq.sql_db.connections import connection_manager
 from corehq.util.django_migrations import skip_on_fresh_install
 

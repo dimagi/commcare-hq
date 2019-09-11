@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
-import six
 from django.urls import reverse
 from corehq import privileges
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
@@ -205,7 +202,7 @@ def _safely_get_report_configs(project_name):
             try:
                 configs.append(ReportConfiguration.get(config_id))
             except BadSpecError as e:
-                logging.error("%s with report config %s" % (six.text_type(e), config_id))
+                logging.error("%s with report config %s" % (str(e), config_id))
 
     try:
         configs.extend(StaticReportConfiguration.by_domain(project_name))
@@ -241,8 +238,6 @@ def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
 
     config_id = config._id.decode('utf-8') if isinstance(config._id, bytes) else config._id
     type_name = 'DynamicReport{}'.format(config_id)
-    if six.PY2:
-        type_name = type_name.encode('utf-8')
     return type(type_name, (GenericReportView,), {
         'name': config.title,
         'description': config.description or None,

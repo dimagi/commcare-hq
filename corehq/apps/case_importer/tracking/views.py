@@ -1,7 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
-from io import open
-
 from django.db import transaction
 from django.http import (
     HttpResponseBadRequest,

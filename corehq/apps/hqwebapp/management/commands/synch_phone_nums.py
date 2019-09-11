@@ -1,19 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import print_function
-
 import time
 
 from django.core.management.base import BaseCommand
 
+from corehq.apps.couch_sql_migration.couchsqlmigration import (
+    CASE_DOC_TYPES,
+    _iter_changes,
+)
+from corehq.apps.sms.tasks import \
+    sync_user_phone_numbers as sms_sync_user_phone_numbers
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.sms.tasks import sync_user_phone_numbers as sms_sync_user_phone_numbers
-from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, iter_all_rows
-from corehq.messaging.tasks import sync_case_for_messaging
-from corehq.util.log import with_progress_bar
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseReindexAccessor,
+    iter_all_rows,
+)
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.apps.couch_sql_migration.couchsqlmigration import CASE_DOC_TYPES, _iter_changes
+from corehq.messaging.tasks import sync_case_for_messaging
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):

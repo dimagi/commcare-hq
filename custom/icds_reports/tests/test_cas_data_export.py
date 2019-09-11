@@ -1,15 +1,10 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
-
 from custom.icds_reports.queries import get_cas_data_blob_file
 
 import io
 import os
-import csv342 as csv
+import csv
 
 from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
-from six.moves import zip
 
 
 class TestLocationView(CSVTestCase):

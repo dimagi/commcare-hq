@@ -1,16 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from datetime import datetime
 
 from django.utils.translation import ugettext as _
+
 from memoized import memoized
+
+from couchexport.export import export_from_tables
 
 from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.models import get_report_config
 from corehq.toggles import INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS
 from corehq.util.timezones.utils import get_timezone_for_domain
-from couchexport.export import export_from_tables
 
 
 def get_expanded_columns(column_configs, data_source_config):

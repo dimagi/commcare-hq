@@ -1,10 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf import settings
+
 from casexml.apps.phone.document_store import ReadonlySyncLogDocumentStore
+from couchforms.models import all_known_formlike_doc_types
+from pillowtop.dao.couch import CouchDocumentStore
+
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
-from corehq.apps.locations.document_store import ReadonlyLocationDocumentStore, LOCATION_DOC_TYPE
+from corehq.apps.locations.document_store import (
+    LOCATION_DOC_TYPE,
+    ReadonlyLocationDocumentStore,
+)
 from corehq.apps.sms.document_stores import ReadonlySMSDocumentStore
 from corehq.form_processor.document_stores import (
     DocStoreLoadTracker,
@@ -22,8 +27,6 @@ from corehq.util.datadog.utils import (
     sms_load_counter,
 )
 from corehq.util.exceptions import DatabaseNotFound
-from couchforms.models import all_known_formlike_doc_types
-from pillowtop.dao.couch import CouchDocumentStore
 
 SOURCE_COUCH = 'couch'
 SOURCE_SQL = 'sql'

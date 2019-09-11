@@ -1,30 +1,51 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import datetime, date
+from datetime import date, datetime
 
 from django.http import HttpRequest, QueryDict
 from django.test import SimpleTestCase, TestCase
 from django.utils.http import urlencode
 
-from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
+from dimagi.utils.dates import DateSpan
+
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
+from corehq.apps.locations.util import (
+    load_locs_json,
+    location_hierarchy_config,
+)
 from corehq.apps.reports_core.exceptions import FilterValueException
-from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
-    NumericFilter, DynamicChoiceListFilter, Choice, PreFilter, LocationDrilldownFilter, REQUEST_USER_KEY
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.reports_core.filters import (
+    REQUEST_USER_KEY,
+    Choice,
+    ChoiceListFilter,
+    DatespanFilter,
+    DynamicChoiceListFilter,
+    LocationDrilldownFilter,
+    NumericFilter,
+    PreFilter,
+)
 from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
-    CHOICE_DELIMITER, NumericFilterValue, DateFilterValue, PreFilterValue, LocationDrilldownFilterValue
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters.specs import create_filter_value
-from corehq.apps.userreports.reports.view import ConfigurableReportView, query_dict_to_dict
+from corehq.apps.userreports.reports.filters.values import (
+    CHOICE_DELIMITER,
+    SHOW_ALL_CHOICE,
+    DateFilterValue,
+    LocationDrilldownFilterValue,
+    NumericFilterValue,
+    PreFilterValue,
+)
+from corehq.apps.userreports.reports.view import (
+    ConfigurableReportView,
+    query_dict_to_dict,
+)
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
-from dimagi.utils.dates import DateSpan
-import six
+from corehq.apps.users.models import CommCareUser
 
 
 class FilterTestCase(SimpleTestCase):
@@ -251,7 +272,7 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for key, adapter in six.iteritems(cls.adapters):
+        for key, adapter in cls.adapters.items():
             adapter.drop_table()
         cls._delete_everything()
         super(DateFilterDBTest, cls).tearDownClass()

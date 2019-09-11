@@ -1,37 +1,35 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
+from django.conf import settings
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
-from elasticsearch import TransportError
 
-from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
-from corehq.apps.reports.standard.cases.utils import (
-    query_all_project_data,
-    query_deactivated_data,
-    get_case_owners,
-    query_location_restricted_cases,
-)
-from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util.timezones.conversions import PhoneTime
+from elasticsearch import TransportError
 from memoized import memoized
 
 from corehq.apps.es import cases as case_es
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.api import ReportDataSource
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
-from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin
+from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
+from corehq.apps.reports.standard.cases.utils import (
+    get_case_owners,
+    query_all_project_data,
+    query_deactivated_data,
+    query_location_restricted_cases,
+)
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.elastic import ESError
 from corehq.toggles import CASE_LIST_EXPLORER
+from corehq.util.timezones.conversions import PhoneTime
 
-from .data_sources import CaseInfo, CaseDisplay
+from .data_sources import CaseDisplay, CaseInfo
 
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
@@ -184,8 +182,18 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
         ]
 
     @property
-    def view_response(self):
+    def can_upgrade_to_case_list_explorer(self):
+        if settings.ENTERPRISE_MODE:
+            return False
+
         if self.request.couch_user.is_dimagi and not CASE_LIST_EXPLORER.enabled(self.domain):
+            return True
+
+        return False
+
+    @property
+    def view_response(self):
+        if self.can_upgrade_to_case_list_explorer:
             messages.warning(
                 self.request,
                 'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/ccinternal/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',

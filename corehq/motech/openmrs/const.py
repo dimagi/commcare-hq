@@ -1,12 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import logging
-import six
 from itertools import chain
 
 from django.utils.translation import ugettext_lazy as _
-
 
 LOG_LEVEL_CHOICES = (
     (99, 'Disable logging'),
@@ -14,9 +9,11 @@ LOG_LEVEL_CHOICES = (
     (logging.INFO, 'Info'),
 )
 
+IMPORT_FREQUENCY_DAILY = 'daily'
 IMPORT_FREQUENCY_WEEKLY = 'weekly'
 IMPORT_FREQUENCY_MONTHLY = 'monthly'
 IMPORT_FREQUENCY_CHOICES = (
+    (IMPORT_FREQUENCY_DAILY, _('Daily')),
     (IMPORT_FREQUENCY_WEEKLY, _('Weekly')),
     (IMPORT_FREQUENCY_MONTHLY, _('Monthly')),
 )
@@ -125,7 +122,7 @@ ADDRESS_PROPERTIES = {
     'endDate': OPENMRS_DATA_TYPE_DATETIME,
 }
 OPENMRS_PROPERTIES = dict(chain(
-    six.iteritems(PERSON_PROPERTIES),
-    six.iteritems(NAME_PROPERTIES),
-    six.iteritems(ADDRESS_PROPERTIES),
+    PERSON_PROPERTIES.items(),
+    NAME_PROPERTIES.items(),
+    ADDRESS_PROPERTIES.items(),
 ))

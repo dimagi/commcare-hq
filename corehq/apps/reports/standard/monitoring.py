@@ -1,38 +1,34 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import datetime
 import math
 from collections import defaultdict, namedtuple
-import six
-from django.conf import settings
-from six.moves import map, range
-from six.moves.urllib.parse import urlencode
 
-import pytz
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+
+import pytz
 from memoized import memoized
 from pygooglechart import ScatterChart
+from six.moves.urllib.parse import urlencode
 
-from corehq import toggles
-from corehq.elastic import ES_DEFAULT_INSTANCE
-from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.es import cases as case_es, filters
-from corehq.apps.es.aggregations import FilterAggregation, MissingAggregation, TermsAggregation
-from corehq.apps.locations.permissions import conditionally_location_safe, location_safe
-from corehq.apps.users.models import CommCareUser
-from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util import flatten_list
-from corehq.util.context_processors import commcare_hq_names
-from corehq.util.timezones.conversions import PhoneTime, ServerTime
-from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
-from dimagi.utils.chunked import chunked
 
+from corehq import toggles
+from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.es import cases as case_es
+from corehq.apps.es import filters
+from corehq.apps.es.aggregations import (
+    FilterAggregation,
+    MissingAggregation,
+    TermsAggregation,
+)
+from corehq.apps.locations.permissions import (
+    conditionally_location_safe,
+    location_safe,
+)
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
@@ -62,11 +58,23 @@ from corehq.apps.reports.filters.forms import (
     FormsByApplicationFilter,
 )
 from corehq.apps.reports.filters.select import CaseTypeFilter
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.users import \
+    ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import (
+    DatespanMixin,
+    ProjectReport,
+    ProjectReportParametersMixin,
+)
 from corehq.apps.reports.util import format_datatables_data, friendly_timedelta
+from corehq.apps.users.models import CommCareUser
+from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.elastic import ES_DEFAULT_INSTANCE
+from corehq.util import flatten_list
+from corehq.util.context_processors import commcare_hq_names
+from corehq.util.timezones.conversions import PhoneTime, ServerTime
+from corehq.util.view_utils import absolute_reverse
 
 TOO_MUCH_DATA = ugettext_noop(
     'The filters you selected include too much data. Please change your filters and try again'
@@ -1622,10 +1630,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         rows = []
         active_users_by_group = {
             g: len([u for u in users if report_data.submissions_by_user.get(u['user_id'])])
-            for g, users in six.iteritems(self.users_by_group)
+            for g, users in self.users_by_group.items()
         }
 
-        for group, users in six.iteritems(self.users_by_group):
+        for group, users in self.users_by_group.items():
             group_name, group_id = tuple(group.split('|'))
             if group_name == 'no_group':
                 continue

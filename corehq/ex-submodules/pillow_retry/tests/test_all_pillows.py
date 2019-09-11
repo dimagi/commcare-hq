@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 import uuid
 
 from django.conf import settings
@@ -44,10 +40,7 @@ class PillowtopRetryAllPillowsTests(TestCase):
         pillow = _pillow_instance_from_config_with_mock_process_change(pillow_config)
         if pillow.retry_errors:
             exc_class = Exception
-            if six.PY3:
-                exc_class_string = 'builtins.Exception'
-            else:
-                exc_class_string = 'exceptions.Exception'
+            exc_class_string = 'builtins.Exception'
         else:
             exc_class = DocumentMissingError
             exc_class_string = 'pillowtop.dao.exceptions.DocumentMissingError'

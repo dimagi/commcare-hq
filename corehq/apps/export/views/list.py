@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 from datetime import datetime, timedelta
 
@@ -10,14 +8,14 @@ from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from couchexport.models import Format
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
@@ -52,7 +50,10 @@ from corehq.apps.export.tasks import (
     get_saved_export_task_status,
     rebuild_saved_export,
 )
-from corehq.apps.export.views.edit import EditExportDescription, EditExportNameView
+from corehq.apps.export.views.edit import (
+    EditExportDescription,
+    EditExportNameView,
+)
 from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     user_can_view_deid_exports,
@@ -70,6 +71,7 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     has_permission_to_view_report,
 )
+from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
@@ -224,10 +226,10 @@ class ExportListHelper(object):
             'addedToBulk': False,
             'emailedExport': self._get_daily_saved_export_metadata(export),
             'odataUrl': self._get_odata_url(export),
-            'secondaryOdataUrls': self._get_secondary_odata_urls(export),
+            'additionalODataUrls': self._get_additional_odata_urls(export),
         }
 
-    def _get_secondary_odata_urls(self, export):
+    def _get_additional_odata_urls(self, export):
         urls = []
         for table_id, table in enumerate(export.tables):
             if table.selected and table_id > 0:
@@ -882,11 +884,22 @@ class ODataFeedListHelper(ExportListHelper):
     form_or_case = None
     is_deid = False
     include_saved_filters = True
-    beta_odata_feed_limit = 20
+    beta_odata_feed_limit = 10
+
+    @property
+    def create_export_form(self):
+        form = super(ODataFeedListHelper, self).create_export_form
+        form.fields['model_type'].label = _("Feed Type")
+        form.fields['model_type'].choices = [
+            ('', _("Select field type")),
+            ('case', _('Case')),
+            ('form', _('Form')),
+        ]
+        return form
 
     @property
     def create_export_form_title(self):
-        return _("Select a model to export to a feed")
+        return _("Select Feed Type")
 
     def _should_appear_in_list(self, export):
         return export['is_odata_config']
@@ -921,11 +934,13 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     lead_text = ugettext_lazy('''
         Use OData feeds to integrate your CommCare data with Power BI or Tableau.
         <a href="https://confluence.dimagi.com/display/commcarepublic/Integration+with+PowerBi+and+Tableau"
+           id="js-odata-track-learn-more"
            target="_blank">
             Learn more.
         </a><br />
         This is a Feature Preview.
         <a href="https://confluence.dimagi.com/display/commcarepublic/Feature+Previews"
+           id="js-odata-track-learn-more-preview"
            target="_blank">
             Learn more.
         </a>

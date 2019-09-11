@@ -1,24 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
+
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
 from corehq.apps.app_manager.const import (
-    USERCASE_TYPE,
-    SCHEDULE_PHASE,
-    SCHEDULE_LAST_VISIT,
-    SCHEDULE_LAST_VISIT_DATE,
-    SCHEDULE_TERMINATED,
-    SCHEDULE_MAX_DATE,
     SCHEDULE_DATE_CASE_OPENED,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
+    SCHEDULE_LAST_VISIT,
+    SCHEDULE_LAST_VISIT_DATE,
+    SCHEDULE_MAX_DATE,
+    SCHEDULE_PHASE,
+    SCHEDULE_TERMINATED,
+    USERCASE_TYPE,
 )
 from corehq.apps.app_manager.exceptions import (
     CaseXPathValidationError,
     LocationXpathValidationError,
     ScheduleError,
 )
-from django.utils.translation import ugettext as _, ugettext_lazy
-import six
-
 
 # Note that this may match strings that do not need interpolation, such as "blah == 'ellipsis...'",
 # but it should not miss any strings that do need interpolation.
@@ -114,7 +113,7 @@ def session_var(var, path='data'):
     return session.slash(var)
 
 
-class XPath(six.text_type):
+class XPath(str):
 
     def __new__(cls, string='', compound=False):
         return super(XPath, cls).__new__(cls, string)
@@ -123,7 +122,7 @@ class XPath(six.text_type):
         self.compound = compound
 
     def paren(self, force=False):
-        return six.text_type(self) if not (force or self.compound) else '({})'.format(self)
+        return str(self) if not (force or self.compound) else '({})'.format(self)
 
     def slash(self, xpath):
         if self:

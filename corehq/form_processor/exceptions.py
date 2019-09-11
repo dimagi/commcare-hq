@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -26,7 +22,6 @@ class LedgerValueNotFound(Exception):
     pass
 
 
-@six.python_2_unicode_compatible
 class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist):
 
     def __init__(self, attachment_name):
@@ -77,3 +72,13 @@ class XFormLockError(Exception):
 
 class MissingFormXml(Exception):
     pass
+
+
+class NotAllowed(Exception):
+
+    @classmethod
+    def check(cls, domain):
+        from corehq.apps.couch_sql_migration.progress import \
+            couch_sql_migration_in_progress
+        if couch_sql_migration_in_progress(domain):
+            raise cls("couch-to-SQL migration in progress")

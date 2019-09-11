@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-import six
 import sys
 from collections import defaultdict
 from itertools import islice
@@ -25,8 +20,6 @@ from corehq.util.view_utils import get_request
 from corehq.util.datadog.utils import get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
-from six.moves import range
-from io import open
 
 
 def clean_exception(exception):
@@ -40,7 +33,7 @@ def clean_exception(exception):
     # couchdbkit doesn't provide a better way for us to catch this exception
     if (
         isinstance(exception, AssertionError) and
-        six.text_type(exception).startswith('received an invalid response of type')
+        str(exception).startswith('received an invalid response of type')
     ):
         message = ("It looks like couch returned an invalid response to "
                    "couchdbkit.  This could contain sensitive information, "
@@ -250,13 +243,17 @@ def display_seconds(seconds):
 
 
 def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
-                      stream=sys.stdout, step=None):
+                      stream=None, step=timedelta(seconds=10)):
     """Turns 'iterable' into a generator which prints a progress bar.
 
     :param oneline: Set to False to print each update on a new line.
         Useful if there will be other things printing to the terminal.
         Set to "concise" to use exactly one line for all output.
+    :param step: progress update interval as `timedelta` or `int`
+    (number of items iterated). Defaults to 10 seconds if not specified.
     """
+    if stream is None:
+        stream = sys.stdout
     if length is None:
         if hasattr(iterable, "__len__"):
             length = len(iterable)
@@ -290,14 +287,17 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
 
     if oneline != "concise":
         print("Started at {:%Y-%m-%d %H:%M:%S}".format(start), file=stream)
-    if step is None:
-        step = length // granularity
+    next_update = datetime.now() - timedelta(hours=1)
     i = -1
     try:
         for i, x in enumerate(iterable):
             yield x
-            if i % step == 0:
+            if isinstance(step, int):
+                if i % step == 0:
+                    draw(i)
+            elif datetime.now() > next_update:
                 draw(i)
+                next_update = datetime.now() + step
     finally:
         draw(i + 1, done=True)
     if oneline != "concise":
@@ -307,12 +307,8 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
 
 
 def get_traceback_string():
-    if six.PY3:
-        from io import StringIO
-        f = StringIO()
-    else:
-        from cStringIO import StringIO
-        f = StringIO()
+    from io import StringIO
+    f = StringIO()
     traceback.print_exc(file=f)
     return f.getvalue()
 

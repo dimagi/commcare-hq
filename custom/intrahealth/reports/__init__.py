@@ -1,7 +1,3 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from custom.intrahealth.reports.consommation_dashboard import ConsommationReport
 from custom.intrahealth.reports.dashboard_1 import Dashboard1Report
 from custom.intrahealth.reports.disponibilite_dashboard import DisponibiliteReport
@@ -28,10 +24,12 @@ CUSTOM_REPORTS = (
         FicheConsommationReport,
         RecapPassageReport
     )),
-    ("Rapports Yeksi Naa", (
+    ('ANCIENS RAPPORTS YEKSI NAA', (
         Dashboard1Report,
         Dashboard2Report,
         Dashboard3Report,
+    )),
+    ('NOUVEAUX RAPPORTS YEKSI NAA', (
         DisponibiliteReport,
         TauxDeRuptureReport,
         ConsommationReport,
@@ -41,7 +39,7 @@ CUSTOM_REPORTS = (
         ValuerDesStocksPNADisponsibleReport,
         RecapPassageOneReport,
         RecapPassageTwoReport,
-        IndicateursDeBaseReport
+        IndicateursDeBaseReport,
     )),
     ("INFORMED PUSH MODEL REPORTS UCR", (
         TableuDeBoardReport2,

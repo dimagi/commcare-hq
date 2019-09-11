@@ -1,21 +1,18 @@
-from __future__ import absolute_import, division, unicode_literals
-
 import itertools
 import json
 import os
 import re
 import tempfile
 import zipfile
-from io import open
 from wsgiref.util import FileWrapper
 
-from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
 from celery.task import task
 from celery.utils.log import get_task_logger
 
+from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.util import expose_cached_download, expose_file_download
 

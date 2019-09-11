@@ -1,12 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from functools import partial
 
 from casexml.apps.phone.fixtures import FixtureProvider
-from casexml.apps.phone.utils import get_or_cache_global_fixture, GLOBAL_USER_ID
-from corehq.apps.programs.models import Program
+from casexml.apps.phone.utils import (
+    GLOBAL_USER_ID,
+    get_or_cache_global_fixture,
+)
+
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
+from corehq.apps.programs.models import Program
 
 PROGRAM_FIELDS = ['name', 'code']
 

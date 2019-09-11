@@ -1,10 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 from xml.etree import cElementTree as ElementTree
 
 from celery.task import task
+
 from dimagi.utils.chunked import chunked
+
 from corehq.blobs import get_blob_db
 
 BAD_SLUG_PATTERN = r"([/\\<>\s])"

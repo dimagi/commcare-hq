@@ -24,7 +24,6 @@ Common use cases for change subscribers:
     - Custom report tables
     - UCR data sources
 * Cache invalidation
-* Real-time visualizations (e.g. dimagisphere)
 
 Architecture
 ============

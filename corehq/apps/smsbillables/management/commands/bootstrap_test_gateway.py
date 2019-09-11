@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from decimal import Decimal
 
 from django.conf import settings
@@ -7,9 +5,12 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
+from corehq.apps.smsbillables.models import (
+    SmsGatewayFee,
+    SmsGatewayFeeCriteria,
+)
 from corehq.apps.smsbillables.utils import log_smsbillables_info
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 
 
 def bootstrap_test_gateway(apps):

@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 __all__ = [
     'get_migration_complete',
     'get_migration_status',

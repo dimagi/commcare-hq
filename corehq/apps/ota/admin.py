@@ -1,9 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
-from .models import DemoUserRestore, MobileRecoveryMeasure
+
+from .models import DemoUserRestore, MobileRecoveryMeasure, DeviceLogRequest
 from .views import get_recovery_measures_cached
 
 
@@ -65,5 +64,12 @@ class MobileRecoveryMeasureAdmin(admin.ModelAdmin):
         get_recovery_measures_cached.clear(obj.domain, obj.app_id)
 
 
+class DeviceLogRequestAdmin(admin.ModelAdmin):
+    model = DeviceLogRequest
+    list_display = ['domain', 'username', 'device_id', 'created_on']
+    list_filter = ['domain', 'username']
+
+
 admin.site.register(DemoUserRestore, DemoUserRestoreAdmin)
 admin.site.register(MobileRecoveryMeasure, MobileRecoveryMeasureAdmin)
+admin.site.register(DeviceLogRequest, DeviceLogRequestAdmin)

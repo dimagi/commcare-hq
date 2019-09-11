@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from decimal import Decimal
 from xml.dom import minidom
 import datetime
 from dimagi.utils.parsing import json_format_datetime
-import six
 
 
 def serialize(value):
@@ -17,8 +14,8 @@ def serialize(value):
         return value.isoformat()
     elif isinstance(value, datetime.time):
         return value.strftime('%H:%M:%S')
-    elif isinstance(value, six.integer_types + (Decimal, float)):
-        return six.text_type(value)
+    elif isinstance(value, (int, Decimal, float)):
+        return str(value)
     else:
         return value if value is not None else ""
 
@@ -27,6 +24,6 @@ def indent_xml(xml_string):
     """
     Takes an xml string and returns an indented and properly tabbed version of the string
     """
-    if isinstance(xml_string, six.text_type):
+    if isinstance(xml_string, str):
         xml_string = xml_string.encode('utf-8')
     return minidom.parseString(xml_string).toprettyxml()

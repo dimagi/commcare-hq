@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import copy
 import numbers
 import warnings
@@ -170,13 +168,6 @@ class CaseBlock(object):
 
     def as_bytes(self):
         return ElementTree.tostring(self.as_xml())
-
-    def as_string(self):
-        warnings.warn(
-            "CaseBlock.as_string is deprecated. Use CaseBlock.as_bytes or CaseBlock.as_text instead.",
-            DeprecationWarning,
-        )
-        return self.as_bytes()
 
 
 class CaseBlockError(Exception):

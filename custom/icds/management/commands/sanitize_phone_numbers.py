@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import csv342 as csv
+import csv
 import six
 import sys
 import time
@@ -11,7 +8,6 @@ from datetime import (
     date,
     timedelta,
 )
-from io import open
 from xml.etree import cElementTree as ElementTree
 
 from django.core.management.base import BaseCommand
@@ -26,7 +22,6 @@ from corehq.form_processor.backends.sql.dbaccessors import iter_all_rows
 
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.mock import CaseBlock
-from six.moves import range
 
 DOMAIN = "icds-cas"
 CASE_TYPE = "person"
@@ -149,7 +144,7 @@ class Command(BaseCommand):
                 exc = sys.exc_info()
                 exceptions_raised += 1
                 if self.log_progress:
-                    self.stdout.write("rescuing exception %s %s" % (exceptions_raised, six.text_type(e)))
+                    self.stdout.write("rescuing exception %s %s" % (exceptions_raised, str(e)))
                 if exceptions_raised > MAX_RESCUE_EXCEPTIONS_ON_UPDATE:
                     six.reraise(*exc)
                 else:

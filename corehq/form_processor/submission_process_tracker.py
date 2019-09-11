@@ -1,11 +1,5 @@
-# coding=utf-8
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 import contextlib
 import datetime
-
-from couchforms.models import UnfinishedSubmissionStub, UnfinishedArchiveStub
 
 
 class SubmissionProcessTracker(object):
@@ -34,6 +28,7 @@ class ArchiveProcessTracker(object):
 
 @contextlib.contextmanager
 def unfinished_submission(instance):
+    from couchforms.models import UnfinishedSubmissionStub
     unfinished_submission_stub = None
     if not getattr(instance, 'deprecated_form_id', None):
         # don't create stubs for form edits since we don't want to auto-reprocess them
@@ -50,6 +45,9 @@ def unfinished_submission(instance):
 
 @contextlib.contextmanager
 def unfinished_archive(instance, user_id, archive):
+    from couchforms.models import UnfinishedArchiveStub
+    # delete all other stubs for this action so that it is not overridden
+    UnfinishedArchiveStub.objects.filter(xform_id=instance.form_id).delete()
     unfinished_archive_stub = UnfinishedArchiveStub.objects.create(
         user_id=user_id,
         xform_id=instance.form_id,

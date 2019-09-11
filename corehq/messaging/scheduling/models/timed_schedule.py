@@ -1,12 +1,8 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import calendar
 import hashlib
 import json
 import random
 import re
-import six
 from copy import deepcopy
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
@@ -18,7 +14,6 @@ from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
 from django.db import models, transaction
-from six.moves import range
 
 
 class TimedSchedule(Schedule):
@@ -74,9 +69,7 @@ class TimedSchedule(Schedule):
         if self.use_utc_as_default_timezone:
             result.append('UTC_DEFAULT')
 
-        schedule_info = json.dumps(result)
-        if six.PY3:
-            schedule_info = schedule_info.encode('utf-8')
+        schedule_info = json.dumps(result).encode('utf-8')
         return hashlib.md5(schedule_info).hexdigest()
 
     @property

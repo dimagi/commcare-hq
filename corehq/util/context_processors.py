@@ -1,9 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import datetime
 
-import six
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
@@ -15,7 +11,6 @@ from corehq.apps.analytics import ab_tests
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
-from corehq.util.python_compatibility import soft_assert_type_text
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -49,20 +44,22 @@ def get_per_domain_context(project, request=None):
             domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)):
         custom_logo_url = reverse('logo', args=[project.name])
 
+    def allow_report_issue(user, domain):
+        if toggles.ICDS.enabled(domain) and user.is_commcare_user():
+            role = user.get_domain_membership(domain).role
+            if not role:
+                return False
+        return user.has_permission(domain, 'report_an_issue')
+
     if getattr(request, 'couch_user', None) and project:
-        allow_report_an_issue = request.couch_user.has_permission(project.name, 'report_an_issue')
+        allow_report_an_issue = allow_report_issue(request.couch_user, project.name)
     elif settings.ENTERPRISE_MODE:
         if not getattr(request, 'couch_user', None):
             allow_report_an_issue = False
         elif request.couch_user.is_web_user():
             allow_report_an_issue = True
         else:
-            domain_name = request.couch_user.domain
-            role = request.couch_user.get_domain_membership(domain_name).role
-            if not role and toggles.ICDS.enabled(domain_name):
-                allow_report_an_issue = False
-            else:
-                allow_report_an_issue = request.couch_user.has_permission(domain_name, 'report_an_issue')
+            allow_report_issue(request.couch_user, request.couch_user.domain)
     else:
         allow_report_an_issue = True
 
@@ -182,8 +179,7 @@ def emails(request=None):
 
 def _get_cc_name(request, var):
     value = getattr(settings, var)
-    if isinstance(value, six.string_types):
-        soft_assert_type_text(value)
+    if isinstance(value, str):
         return value
 
     if request is None:

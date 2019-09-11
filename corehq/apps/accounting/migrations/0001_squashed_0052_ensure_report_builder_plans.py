@@ -1,23 +1,24 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from __future__ import absolute_import
 from decimal import Decimal
 
 import django.core.validators
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 import jsonfield.fields
 
-from corehq.apps.accounting.bootstrap.config.enterprise import BOOTSTRAP_CONFIG as enterprise_config
-from corehq.apps.accounting.bootstrap.config.report_builder_v0 import BOOTSTRAP_CONFIG as report_builder_config
-from corehq.apps.accounting.bootstrap.config.resellers_and_managed_hosting import BOOTSTRAP_CONFIG as resellers_config
-from corehq.apps.accounting.bootstrap.config.user_buckets_jan_2017 import BOOTSTRAP_CONFIG as self_service_config
-from corehq.apps.accounting.bootstrap.utils import ensure_plans
-from corehq.apps.hqadmin.management.commands.cchq_prbac_bootstrap import cchq_prbac_bootstrap
-
 import corehq.util.mixin
+from corehq.apps.accounting.bootstrap.config.enterprise import \
+    BOOTSTRAP_CONFIG as enterprise_config
+from corehq.apps.accounting.bootstrap.config.report_builder_v0 import \
+    BOOTSTRAP_CONFIG as report_builder_config
+from corehq.apps.accounting.bootstrap.config.resellers_and_managed_hosting import \
+    BOOTSTRAP_CONFIG as resellers_config
+from corehq.apps.accounting.bootstrap.config.user_buckets_jan_2017 import \
+    BOOTSTRAP_CONFIG as self_service_config
+from corehq.apps.accounting.bootstrap.utils import ensure_plans
+from corehq.apps.hqadmin.management.commands.cchq_prbac_bootstrap import (
+    cchq_prbac_bootstrap,
+)
 
 
 def _cchq_software_plan_bootstrap(apps, schema_editor):

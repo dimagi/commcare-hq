@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.util.couch_helpers import paginate_view
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only

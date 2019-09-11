@@ -1,52 +1,35 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import division
 import json
 import uuid
 from math import ceil
 
-from django.db.models import Count
-from django.http.response import (
-    HttpResponse,
-    Http404,
-    JsonResponse
-)
-from django.http import HttpResponseRedirect
-from django_prbac.utils import has_privilege
-from django.views.generic import View
-from django.utils.decorators import method_decorator
-from django.core.exceptions import ValidationError
-
-from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
-from corehq.apps.app_manager.tasks import create_build_files_for_all_app_profiles
-from corehq.apps.app_manager.util import get_and_assert_practice_user_in_domain
-from django_prbac.decorators import requires_privilege
 from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.db.models import Count
+from django.http import HttpResponseRedirect
+from django.http.response import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy, ugettext as _
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.cache import cache_control
+from django.views.generic import View
 
 import ghdiff
-from couchdbkit import ResourceNotFound, NoResultFound
-from dimagi.utils.web import json_response
+from couchdbkit import NoResultFound, ResourceNotFound
+from django_prbac.decorators import requires_privilege
+from django_prbac.utils import has_privilege
+
 from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.web import json_response
 from phonelog.models import UserErrorEntry
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_built_app_on_hubspot
-from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
-from corehq.apps.domain.decorators import login_or_api_key, track_domain_request
-from corehq.apps.domain.views.base import LoginAndDomainMixin, DomainViewMixin
-from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.locations.permissions import location_safe
-from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
-from corehq.apps.users.permissions import can_manage_releases
-from corehq.util.timezones.utils import get_timezone_for_user
-
+from corehq.apps.analytics.tasks import (
+    track_built_app_on_hubspot,
+    track_workflow,
+)
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_cached,
@@ -56,34 +39,50 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_version,
     get_latest_released_app_version,
 )
-from corehq.apps.app_manager.models import (
-    BuildProfile,
-    LatestEnabledBuildProfiles,
-    AppReleaseByLocation,
-)
-from corehq.apps.users.models import CommCareUser
-from corehq.util.datadog.gauges import datadog_bucket_timer
-from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
+    avoid_parallel_build_request,
     no_conflict_require_POST,
     require_can_edit_apps,
     require_deploy_apps,
-    avoid_parallel_build_request,
 )
 from corehq.apps.app_manager.exceptions import (
+    BuildConflictException,
     ModuleIdMissingException,
     PracticeUserException,
-    BuildConflictException,
 )
-from corehq.apps.app_manager.models import Application, SavedAppBuild
+from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
+from corehq.apps.app_manager.models import (
+    Application,
+    AppReleaseByLocation,
+    BuildProfile,
+    LatestEnabledBuildProfiles,
+    SavedAppBuild,
+)
+from corehq.apps.app_manager.tasks import (
+    create_build_files_for_all_app_profiles,
+)
+from corehq.apps.app_manager.util import get_and_assert_practice_user_in_domain
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.models import CommCareBuildConfig
-from corehq.apps.es.apps import AppES, build_comment, version
+from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
+from corehq.apps.domain.decorators import (
+    login_or_api_key,
+    track_domain_request,
+)
+from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
 from corehq.apps.es import queries
-from corehq.apps.users.models import CouchUser
-import six
+from corehq.apps.es.apps import AppES, build_comment, version
+from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.sms.views import get_sms_autocomplete_context
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.permissions import can_manage_releases
+from corehq.util.datadog.gauges import datadog_bucket_timer
+from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.view_utils import reverse
 
 
 def _get_error_counts(domain, app_id, version_numbers):
@@ -508,7 +507,7 @@ def _get_app_diffs(first_app, second_app):
     """
     file_pairs = _get_file_pairs(first_app, second_app)
     diffs = []
-    for name, files in six.iteritems(file_pairs):
+    for name, files in file_pairs.items():
         diff_html = ghdiff.diff(files[0], files[1], n=4, css=False)
         additions, deletions = _get_change_counts(diff_html)
         if additions == 0 and deletions == 0:

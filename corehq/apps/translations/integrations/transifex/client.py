@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
 import os
 import tempfile
-from io import open
 
 import polib
 import requests
-from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
 from memoized import memoized
 
 from corehq.apps.translations.integrations.transifex.const import (
     API_USER,
     SOURCE_LANGUAGE_MAPPING,
+)
+from corehq.apps.translations.integrations.transifex.exceptions import (
+    ResourceMissing,
 )
 
 

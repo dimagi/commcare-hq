@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import time
 import uuid
 
@@ -203,8 +200,7 @@ class TimingContext(object):
 
     def __repr__(self):
         return "TimingContext(root='{}')".format(
-            self.root,
-            self.root.to_dict()
+            self.root
         )
 
 

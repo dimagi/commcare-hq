@@ -1,11 +1,7 @@
-# coding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from codecs import BOM_UTF8
 from contextlib import closing
 import io
 import os
-import six
 
 from django.test import SimpleTestCase
 from lxml import html, etree
@@ -20,7 +16,6 @@ from couchexport.writers import (
     XlsLengthException,
     ZippedExportWriter,
 )
-from six.moves import range
 
 
 class ZippedExportWriterTests(SimpleTestCase):
@@ -46,8 +41,6 @@ class ZippedExportWriterTests(SimpleTestCase):
         self.writer.table_names = {0: 'ひらがな'}
         self.writer._write_final_result()
         filename = os.path.join(self.writer.archive_basepath, 'ひらがな.csv')
-        if six.PY2:
-            filename = filename.encode('utf-8')
         mock_zip_file.write.assert_called_with('tmp', filename)
 
     def test_zipped_export_writer_utf8(self):
@@ -55,8 +48,6 @@ class ZippedExportWriterTests(SimpleTestCase):
         self.writer.table_names = {0: b'\xe3\x81\xb2\xe3\x82\x89\xe3\x81\x8c\xe3\x81\xaa'}
         self.writer._write_final_result()
         filename = os.path.join(self.writer.archive_basepath, 'ひらがな.csv')
-        if six.PY2:
-            filename = filename.encode('utf-8')
         mock_zip_file.write.assert_called_with('tmp', filename)
 
 

@@ -3,7 +3,31 @@ ICDS Dashboard
 
 Information for the custom ICDS reporting dashboard. It can be accessed at \<url\>/a/\<domain\>/icds_dashboard.
 Currently it's only possible for one domain on each environment to access this dashboard,
-so only test locally and don't add random domains to the feature flag
+so only test locally and don't add random domains to the feature flag.
+
+Dev Environment Setup
+---------------------
+The following two steps must be taken to get the dashboard to load in a development environment.
+This does not include populating any data.
+
+- [Enable the feature flag](http://localhost:8000/hq/flags/edit/dashboard_icds_reports/) for the domain you want
+  to use for testing. It's recommended to use a domain named "icds-cas" for consistency.
+- Add an `'icds-ucr'` entry to `settings.REPORTING_DATABASES` pointing at the desired key from
+  `settings.DATABASES` where you want the report data tables to live.
+
+## Local data
+
+To get local dashboard data you can run:
+
+```bash
+./manage.py populate_local_db_with_icds_dashboard_test_data
+```
+
+This will populate your local database with the locations and data used in the tests
+including the aggregate data.
+
+Note that the above command is destructive to local data and read the warnings
+before proceeding!
 
 Aggregate Data Tables
 ---------------------

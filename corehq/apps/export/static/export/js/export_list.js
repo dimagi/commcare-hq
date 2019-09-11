@@ -61,7 +61,7 @@ hqDefine("export/js/export_list", [
             'owner_username',
             'sharing',
             'odataUrl',
-            'secondaryOdataUrls',
+            'additionalODataUrls',
         ], [
             'case_type',
             'isAutoRebuildEnabled',
@@ -99,14 +99,53 @@ hqDefine("export/js/export_list", [
 
         if (options.isOData) {
             self.odataFeedUrl = exportFeedUrl(options.odataUrl);
-            self.odataSecondaryFeedUrls = ko.observableArray(_.map(options.secondaryOdataUrls, function (urlData) {
+            self.odataAdditionalFeedUrls = ko.observableArray(_.map(options.additionalODataUrls, function (urlData) {
                 urlData.url = exportFeedUrl(urlData.url);
                 return urlData;
             }));
-            self.hasSecondaryOdataFeed = ko.computed(function () {
-                return self.odataSecondaryFeedUrls().length > 0;
+            self.hasAdditionalODataFeeds = ko.computed(function () {
+                return self.odataAdditionalFeedUrls().length > 0;
             });
+            self.sendAnalyticsOpenAdditionalFeeds = function () {
+                if (options.exportType === 'form') {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Repeat Group Feeds");
+                } else {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Parent Feeds");
+                }
+            };
+            self.sendAnalyticsCloseAdditionalFeeds = function () {
+                var eventData = {
+                    "Number of feeds": self.odataAdditionalFeedUrls().length,
+                };
+                if (options.exportType === 'form') {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Close on Repeat Group Feeds modal", eventData);
+                } else {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Close on Parent Feeds modal", eventData);
+                }
+            };
         }
+
+        self.editExport = function () {
+            if (options.isOData) {
+                kissmetricsAnalytics.track.event("[BI Integration] Clicked Copy OData Feed Link");
+                setTimeout(function () {
+                    window.location.href = self.editUrl();
+                }, 250);
+            } else {
+                window.location.href = self.editUrl();
+            }
+        };
+
+        self.deleteExport = function (observable, event) {
+            if (options.isOData) {
+                kissmetricsAnalytics.track.event("[BI Integration] Deleted Feed");
+                setTimeout(function () {
+                    $(event.currentTarget).closest('form').submit();
+                }, 250);
+            } else {
+                $(event.currentTarget).closest('form').submit();
+            }
+        };
 
         self.isLocationSafeForUser = function () {
             return !self.hasEmailedExport || self.emailedExport.isLocationSafeForUser();
@@ -419,6 +458,13 @@ hqDefine("export/js/export_list", [
         // Editing filters for a saved export
         self.selectedExportModelType = ko.observable();
         self.filterModalExportId = ko.observable();
+        if (options.isOData) {
+            self.filterModalExportId.subscribe(function (value) {
+                if (value) {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Edit Filters button");
+                }
+            });
+        }
         self.locationRestrictions = ko.observableArray([]).extend({notify: 'always'});  // List of location names. Export will be restricted to these locations.
         self.formSubmitErrorMessage = ko.observable('');
         self.dateRegex = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
@@ -498,6 +544,13 @@ hqDefine("export/js/export_list", [
                 self.emwfCaseFilter(self.$emwfCaseFilter.val());
                 self.emwfFormFilter(null);
             }
+
+            kissmetricsAnalytics.track.event(
+                "[BI Integration] Clicked Save Filters button",
+                {
+                    "Date Range": self.dateRange(),
+                }
+            );
 
             $.ajax({
                 method: 'POST',

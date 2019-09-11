@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from collections import OrderedDict
 from datetime import timedelta, date
 
@@ -8,7 +5,6 @@ from decimal import Decimal
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
-import six
 
 
 def get_current_state(sql_location):
@@ -41,7 +37,7 @@ def overstocked_products(sql_location):
 
     overstocked_products_list = []
 
-    for product_code, (stock_on_hand, monthly_consumption) in six.iteritems(get_current_state(sql_location)):
+    for product_code, (stock_on_hand, monthly_consumption) in get_current_state(sql_location).items():
         if not monthly_consumption:
             continue
         remaining = stock_on_hand / Decimal(monthly_consumption)
@@ -59,7 +55,7 @@ def stockedout_products(sql_location):
         return {}
 
     stocked_out_list = []
-    for product_code, (stock_on_hand, monthly_consumption) in six.iteritems(get_current_state(sql_location)):
+    for product_code, (stock_on_hand, monthly_consumption) in get_current_state(sql_location).items():
         if stock_on_hand == 0:
             stocked_out_list.append(product_code)
 

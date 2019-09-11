@@ -1,33 +1,35 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import mock
 from collections import namedtuple
-from django.test import TestCase, SimpleTestCase
 
-from corehq.apps.export.const import PROPERTY_TAG_CASE
+from django.test import SimpleTestCase, TestCase
+
+import mock
+
 from corehq.apps.domain.models import Domain
+from corehq.apps.export.const import PROPERTY_TAG_CASE
 from corehq.apps.export.models import (
-    ExportItem,
-    StockItem,
-    MultipleChoiceItem,
-    FormExportDataSchema,
+    MAIN_TABLE,
     CaseExportDataSchema,
-    InferredSchema,
-    InferredExportGroupSchema,
-    ExportGroupSchema,
     CaseExportInstance,
+    ExportGroupSchema,
+    ExportItem,
+    FormExportDataSchema,
     FormExportInstance,
-    TableConfiguration,
+    FormExportInstanceDefaults,
+    InferredExportGroupSchema,
+    InferredSchema,
+    MultiMediaExportColumn,
+    MultipleChoiceItem,
+    PathNode,
+    ScalarItem,
     SplitExportColumn,
     StockFormExportColumn,
-    PathNode,
-    MAIN_TABLE,
-    FormExportInstanceDefaults,
-    MultiMediaExportColumn,
-    ScalarItem,
+    StockItem,
+    TableConfiguration,
 )
-from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, \
-    TOP_MAIN_FORM_TABLE_PROPERTIES
+from corehq.apps.export.system_properties import (
+    MAIN_FORM_TABLE_PROPERTIES,
+    TOP_MAIN_FORM_TABLE_PROPERTIES,
+)
 
 MockRequest = namedtuple('MockRequest', 'domain')
 

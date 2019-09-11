@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from custom.icds_reports.utils import ICDSMixin
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.datatables import DataTablesHeader
@@ -27,7 +25,7 @@ class BaseOperationalization(ICDSMixin):
                 [
                     'No. of AWCs',
                     self.awc_number,
-                    0,
+                    data['owner_id'],
                     data['owner_id']
                 ],
                 [

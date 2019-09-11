@@ -1,12 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import io
 import json
 import uuid
 
-import csv342 as csv
-from six.moves import map, range
+import csv
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import (
@@ -74,6 +70,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             while current_location['parent_id']:
                 current_location = locations_by_pk[current_location['parent_id']]
                 loc_type = current_location['location_type__code']
+                metadata = json.loads(current_location['metadata'])
                 loc.update({
                     '{}_id'.format(loc_type): current_location['location_id'],
                     '{}_name'.format(loc_type): current_location['name'].replace("\n", ""),

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 
 from django.utils import translation
@@ -32,7 +30,6 @@ from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, ILSTestScript
 from custom.ilsgateway.utils import get_sql_locations_by_domain_and_group
 from custom.ilsgateway.tests.utils import bootstrap_user
 from custom.zipline.models import EmergencyOrder
-import six
 
 
 class TestHandlers(ILSTestScript):
@@ -45,7 +42,7 @@ class TestHandlers(ILSTestScript):
 
     def test_register_facility(self):
         with localize('sw'):
-            response = six.text_type(REGISTRATION_CONFIRM)
+            response = str(REGISTRATION_CONFIRM)
 
         script = """
           5551234 > sajili Test Test d31049
@@ -64,7 +61,7 @@ class TestHandlers(ILSTestScript):
 
     def test_register_facility_with_unknown_code(self):
         with localize('sw'):
-            response = six.text_type(REGISTER_UNKNOWN_CODE)
+            response = str(REGISTER_UNKNOWN_CODE)
 
         script = """
           5551234 > sajili Test Test d00000
@@ -78,7 +75,7 @@ class TestHandlers(ILSTestScript):
 
     def test_register_district_lowercase(self):
         with localize('sw'):
-            response = six.text_type(REGISTRATION_CONFIRM_DISTRICT)
+            response = str(REGISTRATION_CONFIRM_DISTRICT)
 
         script = """
           5551234 > sajili Test Test : testdistrict
@@ -95,7 +92,7 @@ class TestHandlers(ILSTestScript):
 
     def test_register_district_uppercase(self):
         with localize('sw'):
-            response = six.text_type(REGISTRATION_CONFIRM_DISTRICT)
+            response = str(REGISTRATION_CONFIRM_DISTRICT)
 
         script = """
           5551234 > sajili Test Test : TESTDISTRICT
@@ -112,7 +109,7 @@ class TestHandlers(ILSTestScript):
 
     def test_register_district_mixed_case(self):
         with localize('sw'):
-            response = six.text_type(REGISTRATION_CONFIRM_DISTRICT)
+            response = str(REGISTRATION_CONFIRM_DISTRICT)
 
         script = """
           5551234 > sajili Test Test : TESTDISTRICT
@@ -129,7 +126,7 @@ class TestHandlers(ILSTestScript):
 
     def test_register_district_multiple_word(self):
         with localize('sw'):
-            response = six.text_type(REGISTRATION_CONFIRM_DISTRICT)
+            response = str(REGISTRATION_CONFIRM_DISTRICT)
 
         script = """
           5551234 > sajili Test Test : Test District 1
@@ -146,7 +143,7 @@ class TestHandlers(ILSTestScript):
 
     def test_register_district_multiple_word_does_not_exist(self):
         with localize('sw'):
-            response = six.text_type(REGISTER_UNKNOWN_DISTRICT)
+            response = str(REGISTER_UNKNOWN_DISTRICT)
 
         script = """
           5551234 > sajili Test Test : Test District 1213
@@ -160,7 +157,7 @@ class TestHandlers(ILSTestScript):
 
     def test_register_district_forgot_separator(self):
         with localize('sw'):
-            response = six.text_type(REGISTER_HELP)
+            response = str(REGISTER_HELP)
 
         script = """
           5551234 > sajili Test Test testdistrict
@@ -172,7 +169,7 @@ class TestHandlers(ILSTestScript):
 
     def test_register_district_forgot_code(self):
         with localize('sw'):
-            response = six.text_type(REGISTER_HELP)
+            response = str(REGISTER_HELP)
 
         script = """
           5551234 > sajili Test Test
@@ -184,7 +181,7 @@ class TestHandlers(ILSTestScript):
 
     def test_register_district_mixed_spacing_for_separator(self):
         with localize('sw'):
-            response = six.text_type(REGISTRATION_CONFIRM_DISTRICT)
+            response = str(REGISTRATION_CONFIRM_DISTRICT)
 
         script = """
           5551234 > sajili Test Test: testdistrict
@@ -221,7 +218,7 @@ class TestHandlers(ILSTestScript):
 
     def test_help_registered(self):
         with localize('sw'):
-            response = six.text_type(HELP_REGISTERED)
+            response = str(HELP_REGISTERED)
 
         script = """
           5551234 > msaada
@@ -237,7 +234,7 @@ class TestHandlers(ILSTestScript):
 
     def test_not_recognized_keyword(self):
         with localize('sw'):
-            response = six.text_type(CONTACT_SUPERVISOR)
+            response = str(CONTACT_SUPERVISOR)
         self.run_script(
             """
                 5551234 > asdsdasdassd
@@ -266,7 +263,7 @@ class TestHandlers(ILSTestScript):
 
     def test_losses_adjustments_without_soh(self):
         with localize('sw'):
-            response = six.text_type(LOSS_ADJUST_NO_SOH)
+            response = str(LOSS_ADJUST_NO_SOH)
         script = """
             5551234 > um ID -3 dp -5 IP 13
             5551234 < {0}
@@ -275,8 +272,8 @@ class TestHandlers(ILSTestScript):
 
     def test_losses_adjustments(self):
         with localize('sw'):
-            response1 = six.text_type(SOH_CONFIRM)
-            response2 = six.text_type(LOSS_ADJUST_CONFIRM)
+            response1 = str(SOH_CONFIRM)
+            response2 = str(LOSS_ADJUST_CONFIRM)
 
         sohs = {
             'id': 400,
@@ -311,8 +308,8 @@ class TestHandlers(ILSTestScript):
 
     def test_losses_adjustments_la_word(self):
         with localize('sw'):
-            response1 = six.text_type(SOH_CONFIRM)
-            response2 = six.text_type(LOSS_ADJUST_CONFIRM)
+            response1 = str(SOH_CONFIRM)
+            response2 = str(LOSS_ADJUST_CONFIRM)
 
         sohs = {
             'id': 400,
@@ -351,7 +348,7 @@ class TestHandlers(ILSTestScript):
         self.addCleanup(user.delete)
 
         with localize('sw'):
-            response = six.text_type(STOP_CONFIRM)
+            response = str(STOP_CONFIRM)
 
         script = """
           643 > stop
@@ -363,7 +360,7 @@ class TestHandlers(ILSTestScript):
 
     def test_product_aliases(self):
         with localize('sw'):
-            response = six.text_type(SOH_CONFIRM)
+            response = str(SOH_CONFIRM)
 
         script = """
             5551234 > Hmk iucd 400
@@ -385,7 +382,7 @@ class TestHandlers(ILSTestScript):
 
     def test_stock_on_hand_delimiter_standard(self):
         with localize('sw'):
-            response = six.text_type(SOH_CONFIRM)
+            response = str(SOH_CONFIRM)
 
         # standard spacing
         script = """
@@ -396,28 +393,28 @@ class TestHandlers(ILSTestScript):
 
     def test_stock_on_hand_delimiter_no_spaces(self):
         with localize('sw'):
-            response = six.text_type(SOH_CONFIRM)
+            response = str(SOH_CONFIRM)
 
         # no spaces
         script = """
             5551234 > hmk fs100md100ff100dx100bp100pc100qi100
             5551234 < %(soh_confirm)s
-        """ % {"soh_confirm": six.text_type(response)}
+        """ % {"soh_confirm": str(response)}
         self.run_script(script)
 
     def test_stock_on_hand_delimiters_mixed_spacing(self):
         with localize('sw'):
-            response = six.text_type(SOH_CONFIRM)
+            response = str(SOH_CONFIRM)
         # no spaces
         script = """
             5551234 > hmk fs100 md 100 ff100 dx  100bp   100 pc100 qi100
             5551234 < %(soh_confirm)s
-        """ % {"soh_confirm": six.text_type(response)}
+        """ % {"soh_confirm": str(response)}
         self.run_script(script)
 
     def test_stock_on_hand_delimiters_all_spaced_out(self):
         with localize('sw'):
-            response = six.text_type(SOH_CONFIRM)
+            response = str(SOH_CONFIRM)
         # all space delimited
         script = """
             5551234 > hmk fs 100 md 100 ff 100 dx 100 bp 100 pc 100 qi 100
@@ -427,7 +424,7 @@ class TestHandlers(ILSTestScript):
 
     def test_stock_on_hand_delimiters_commas(self):
         with localize('sw'):
-            response = six.text_type(SOH_CONFIRM)
+            response = str(SOH_CONFIRM)
 
         # commas
         script = """
@@ -438,7 +435,7 @@ class TestHandlers(ILSTestScript):
 
     def test_stock_on_hand_delimiters_commas_and_spaces(self):
         with localize('sw'):
-            response = six.text_type(SOH_CONFIRM)
+            response = str(SOH_CONFIRM)
 
         # commas
         script = """
@@ -449,7 +446,7 @@ class TestHandlers(ILSTestScript):
 
     def test_stock_on_hand_delimiters_extra_spaces(self):
         with localize('sw'):
-            response = six.text_type(SOH_CONFIRM)
+            response = str(SOH_CONFIRM)
 
         # extra spaces
         script = """
@@ -460,7 +457,7 @@ class TestHandlers(ILSTestScript):
 
     def test_stock_on_hand_mixed_delimiters_and_spacing(self):
         with localize('sw'):
-            response = six.text_type(SOH_CONFIRM)
+            response = str(SOH_CONFIRM)
 
         # mixed - commas, spacing
         script = """
@@ -471,7 +468,7 @@ class TestHandlers(ILSTestScript):
 
     def test_stock_on_hand_language_swahili(self):
         with localize('sw'):
-            response = six.text_type(SOH_CONFIRM)
+            response = str(SOH_CONFIRM)
         script = """
             5551234 > hmk fs100md100
             5551234 < %(soh_confirm)s
@@ -480,13 +477,13 @@ class TestHandlers(ILSTestScript):
 
     def test_stock_on_hand_language_english(self):
         with localize('en'):
-            response = six.text_type(LANGUAGE_CONFIRM)
-            response2 = six.text_type(SOH_CONFIRM)
+            response = str(LANGUAGE_CONFIRM)
+            response2 = str(SOH_CONFIRM)
 
         language_message = """
             5551234 > language en
             5551234 < {0}
-        """.format(six.text_type(response % dict(language='English')))
+        """.format(str(response % dict(language='English')))
         self.run_script(language_message)
 
         script = """
@@ -496,12 +493,12 @@ class TestHandlers(ILSTestScript):
         self.run_script(script)
 
         with localize('sw'):
-            response = six.text_type(LANGUAGE_CONFIRM)
+            response = str(LANGUAGE_CONFIRM)
 
         language_message = """
             5551234 > language sw
             5551234 < {0}
-        """.format(six.text_type(response % dict(language='Swahili')))
+        """.format(str(response % dict(language='Swahili')))
         self.run_script(language_message)
 
     def test_multiline_message(self):
@@ -531,7 +528,7 @@ class TestHandlers(ILSTestScript):
     def _verify_language(self, language, phone_number):
         previous_language = translation.get_language()
         translation.activate(language)
-        expected = six.text_type(HELP_REGISTERED)
+        expected = str(HELP_REGISTERED)
         translation.activate(previous_language)
         script = """
           %(phone)s > help
@@ -541,7 +538,7 @@ class TestHandlers(ILSTestScript):
 
     def test_language_english(self):
         with localize('en'):
-            response = six.text_type(LANGUAGE_CONFIRM)
+            response = str(LANGUAGE_CONFIRM)
         script = """
             5551234 > language en
             5551234 < %(language_confirm)s
@@ -551,7 +548,7 @@ class TestHandlers(ILSTestScript):
 
     def test_language_swahili(self):
         with localize('sw'):
-            response = six.text_type(LANGUAGE_CONFIRM)
+            response = str(LANGUAGE_CONFIRM)
         script = """
             5551234 > lugha sw
             5551234 < %(language_confirm)s
@@ -561,7 +558,7 @@ class TestHandlers(ILSTestScript):
 
     def test_language_unknown(self):
         with localize('sw'):
-            response = six.text_type(LANGUAGE_UNKNOWN)
+            response = str(LANGUAGE_UNKNOWN)
         script = """
             5551234 > language de
             5551234 < %(language_unknown)s
@@ -570,7 +567,7 @@ class TestHandlers(ILSTestScript):
 
     def test_randr_not_submitted(self):
         with localize('sw'):
-            response = six.text_type(NOT_SUBMITTED_CONFIRM)
+            response = str(NOT_SUBMITTED_CONFIRM)
 
         script = """
           5551234 > sijatuma
@@ -586,7 +583,7 @@ class TestHandlers(ILSTestScript):
 
     def test_delivery_facility_received_no_quantities_reported(self):
         with localize('sw'):
-            response = six.text_type(DELIVERY_PARTIAL_CONFIRM)
+            response = str(DELIVERY_PARTIAL_CONFIRM)
         script = """
             5551234 > nimepokea
             5551234 < {0}
@@ -601,7 +598,7 @@ class TestHandlers(ILSTestScript):
 
     def test_delivery_facility_received_quantities_reported(self):
         with localize('sw'):
-            response = six.text_type(DELIVERED_CONFIRM)
+            response = str(DELIVERED_CONFIRM)
 
         sohs = {
             'jd': 400,
@@ -619,7 +616,7 @@ class TestHandlers(ILSTestScript):
 
     def test_delivery_facility_not_received(self):
         with localize('sw'):
-            response = six.text_type(NOT_DELIVERED_CONFIRM)
+            response = str(NOT_DELIVERED_CONFIRM)
 
         script = """
             5551234 > sijapokea
@@ -635,7 +632,7 @@ class TestHandlers(ILSTestScript):
 
     def test_delivery_facility_report_product_error(self):
         with localize('sw'):
-            response = six.text_type(INVALID_PRODUCT_CODE)
+            response = str(INVALID_PRODUCT_CODE)
         script = """
             5551234 > nimepokea Ig 400 Dp 569 Ip 678
             5551234 < %(error_message)s
@@ -644,8 +641,8 @@ class TestHandlers(ILSTestScript):
 
     def test_delivery_district_received(self):
         with localize('sw'):
-            response = six.text_type(DELIVERY_CONFIRM_DISTRICT)
-            response2 = six.text_type(DELIVERY_CONFIRM_CHILDREN)
+            response = str(DELIVERY_CONFIRM_DISTRICT)
+            response2 = str(DELIVERY_CONFIRM_CHILDREN)
         script = """
           555 > nimepokea
           555 < {0}
@@ -669,7 +666,7 @@ class TestHandlers(ILSTestScript):
 
     def test_delivery_district_not_received(self):
         with localize('sw'):
-            response = six.text_type(NOT_DELIVERED_CONFIRM)
+            response = str(NOT_DELIVERED_CONFIRM)
 
         script = """
           555 > sijapokea
@@ -685,7 +682,7 @@ class TestHandlers(ILSTestScript):
 
     def test_message_initiator_help(self):
         with localize('sw'):
-            response = six.text_type(TEST_HANDLER_HELP)
+            response = str(TEST_HANDLER_HELP)
         script = """
             5551234 > test
             5551234 < %s
@@ -694,8 +691,8 @@ class TestHandlers(ILSTestScript):
 
     def test_message_initiator_losses_adjustments(self):
         with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(LOSS_ADJUST_HELP)
+            response1 = str(TEST_HANDLER_CONFIRM)
+            response2 = str(LOSS_ADJUST_HELP)
         script = """
             5551234 > test la d31049
             5551234 < %(test_handler_confirm)s
@@ -716,7 +713,7 @@ class TestHandlers(ILSTestScript):
 
     def test_message_initiator_fw(self):
         with localize('sw'):
-            response = six.text_type(TEST_HANDLER_CONFIRM)
+            response = str(TEST_HANDLER_CONFIRM)
         script = """
             5551234 > test fw D31049 %(test_message)s
             5551234 < %(test_handler_confirm)s
@@ -729,7 +726,7 @@ class TestHandlers(ILSTestScript):
 
     def test_message_initiator_bad_code(self):
         with localize('sw'):
-            response = six.text_type(TEST_HANDLER_BAD_CODE)
+            response = str(TEST_HANDLER_BAD_CODE)
         script = """
             5551234 > test la d5000000
             5551234 < %(test_bad_code)s
@@ -738,8 +735,8 @@ class TestHandlers(ILSTestScript):
 
     def test_message_initiator_delivery_facility(self):
         with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(DELIVERY_REMINDER_FACILITY)
+            response1 = str(TEST_HANDLER_CONFIRM)
+            response2 = str(DELIVERY_REMINDER_FACILITY)
         script = """
             5551234 > test delivery d31049
             5551234 < %(test_handler_confirm)s
@@ -760,8 +757,8 @@ class TestHandlers(ILSTestScript):
 
     def test_message_initiator_delivery_district(self):
         with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(DELIVERY_REMINDER_DISTRICT)
+            response1 = str(TEST_HANDLER_CONFIRM)
+            response2 = str(DELIVERY_REMINDER_DISTRICT)
         script = """
             5551234 > test delivery d10101
             5551234 < %(test_handler_confirm)s
@@ -782,8 +779,8 @@ class TestHandlers(ILSTestScript):
 
     def test_message_initiator_late_delivery_report_district(self):
         with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(DELIVERY_LATE_DISTRICT)
+            response1 = str(TEST_HANDLER_CONFIRM)
+            response2 = str(DELIVERY_LATE_DISTRICT)
         script = """
             5551234 > test latedelivery d10101
             5551234 < %(test_handler_confirm)s
@@ -792,7 +789,7 @@ class TestHandlers(ILSTestScript):
             32352 < %(response)s
             """ % {
             "test_handler_confirm": response1,
-            "response": six.text_type(response2 % {
+            "response": str(response2 % {
                 'group_name': 'changeme',
                 'group_total': 1,
                 'not_responded_count': 2,
@@ -803,8 +800,8 @@ class TestHandlers(ILSTestScript):
 
     def test_message_initiator_soh(self):
         with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(SOH_HELP_MESSAGE)
+            response1 = str(TEST_HANDLER_CONFIRM)
+            response2 = str(SOH_HELP_MESSAGE)
         script = """
             5551234 > test soh d31049
             5551234 < %(test_handler_confirm)s
@@ -830,7 +827,7 @@ class TestHandlers(ILSTestScript):
 
     def testTrans(self):
         with localize('sw'):
-            response = six.text_type(SOH_CONFIRM)
+            response = str(SOH_CONFIRM)
 
         script = """
           5551234 > trans yes
@@ -854,7 +851,7 @@ class TestHandlers(ILSTestScript):
 
     def test_soh(self):
         with localize('sw'):
-            response1 = six.text_type(SOH_CONFIRM)
+            response1 = str(SOH_CONFIRM)
         script = """
             5551234 > soh jd 400 mc 569
             5551234 < {0}
@@ -869,8 +866,8 @@ class TestHandlers(ILSTestScript):
 
     def test_soh_in_swahili(self):
         with localize('sw'):
-            response1 = six.text_type(LANGUAGE_CONFIRM)
-            response2 = six.text_type(SOH_CONFIRM)
+            response1 = str(LANGUAGE_CONFIRM)
+            response2 = str(SOH_CONFIRM)
 
         language_message = """
             5551235 > language sw
@@ -889,7 +886,7 @@ class TestHandlers(ILSTestScript):
         script = """
             5551234 > emg
             5551234 < {}
-        """.format(six.text_type(EMG_HELP))
+        """.format(str(EMG_HELP))
         self.run_script(script)
 
     @flag_enabled('EMG_AND_REC_SMS_HANDLERS')
@@ -923,7 +920,7 @@ class TestHandlers(ILSTestScript):
         script = """
             5551234 > emg dp quantity fs 50
             5551234 < {}
-        """.format(six.text_type(EMG_ERROR))
+        """.format(str(EMG_ERROR))
         self.run_script(script)
 
     @flag_enabled('EMG_AND_REC_SMS_HANDLERS')
@@ -931,7 +928,7 @@ class TestHandlers(ILSTestScript):
         script = """
             5551234 > emg dp fs 50
             5551234 < {}
-        """.format(six.text_type(EMG_ERROR))
+        """.format(str(EMG_ERROR))
         self.run_script(script)
 
     @flag_enabled('EMG_AND_REC_SMS_HANDLERS')
@@ -939,7 +936,7 @@ class TestHandlers(ILSTestScript):
         script = """
             5551234 > emg invalid_code 40 fs 50
             5551234 < {}
-        """.format(six.text_type(INVALID_PRODUCT_CODE % {'product_code': 'invalid_code'}))
+        """.format(str(INVALID_PRODUCT_CODE % {'product_code': 'invalid_code'}))
         self.run_script(script)
 
     def test_unicode_characters(self):

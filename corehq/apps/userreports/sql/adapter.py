@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import hashlib
 import itertools
 import logging
@@ -8,7 +6,6 @@ from django.utils.translation import ugettext as _
 
 import psycopg2
 import sqlalchemy
-from architect import install
 from memoized import memoized
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.declarative import declarative_base
@@ -76,17 +73,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return TemporaryTableDef
 
     def _apply_sql_addons(self):
-        distributed = False
         if self.config.sql_settings.citus_config.distribution_type:
-            distributed = self._distribute_table()
-
-        if self.config.sql_settings.partition_config:
-            if distributed:
-                logger.warning(
-                    'Skipping installing partitions since table is distributed in CitusDB: %s', self.table_id
-                )
-            else:
-                self._install_partition()
+            self._distribute_table()
 
     def _distribute_table(self):
         config = self.config.sql_settings.citus_config
@@ -108,21 +96,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             else:
                 raise ValueError("unknown distribution type: %r" % config.distribution_type)
             return True
-
-    def _install_partition(self):
-        orm_table = self._get_orm_table_with_partitioning()
-        orm_table.architect.partition.get_partition().prepare()
-
-    def _get_orm_table_with_partitioning(self):
-        config = self.config.sql_settings.partition_config[0]
-        partition = install(
-            'partition', type='range', subtype=config.subtype,
-            constraint=config.constraint, column=config.column, db=self.engine.url,
-            orm='sqlalchemy', return_null=True
-        )
-        orm_table = self.get_sqlalchemy_orm_table()
-        partition(orm_table)
-        return orm_table
 
     def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
         self.log_table_rebuild(initiated_by, source, skip=skip_log)
@@ -152,10 +125,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.session_helper.Session.remove()
         with self.engine.begin() as connection:
             table = self.get_table()
-            if self.config.sql_settings.partition_config:
-                connection.execute('DROP TABLE IF EXISTS "{tablename}" CASCADE'.format(tablename=table.name))
-            else:
-                table.drop(connection, checkfirst=True)
+            table.drop(connection, checkfirst=True)
             get_metadata(self.engine_id).remove(table)
 
     @unit_testing_only
@@ -298,15 +268,30 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             session.execute(delete)
 
     def _citus_bulk_delete(self, docs, column):
+        """
+        When a delete is run on a distrbuted table, it grabs an exclusive write
+        lock on the entire table unless the shard column is also provided.
+
+        This function performs extra work to get the shard column so we are not
+        blocked on deletes.
+        """
+
         SHARDABLE_DOC_TYPES = ('XFormArchived', 'XFormDuplicate')
         table = self.get_table()
         # todo group by the sharding column and issue bulk_delete
         for doc in docs:
             delete = table.delete().where(table.c.doc_id == doc['_id'])
             if doc.get('doc_type') in SHARDABLE_DOC_TYPES:
+                # get_all_values ignores duplicate and archived forms because
+                # the implicit filtering on all data sources filters doc_types
+                # get_all_values saves no changes to the original doc database
+                # so we change the doc_type locally to get the sharded column
+
+                tmp_doc = doc.copy()
+                tmp_doc['doc_type'] = 'XFormInstance'
                 # todo only get sharding column's value
-                rows = self.get_all_values(doc)
-                if rows.get(column):
+                rows = self.get_all_values(tmp_doc)
+                if rows and rows[0].get(column):
                     delete = delete.where(table.c.get(column) == rows[column])
             with self.session_context() as session:
                 session.execute(delete)

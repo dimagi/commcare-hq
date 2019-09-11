@@ -1,17 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import copy
 import datetime
 import json
 import logging
 
-import six
 from django.http import HttpResponse
-from django.utils.decorators import method_decorator, classonlymethod
+from django.utils.decorators import classonlymethod, method_decorator
 from django.views.generic import View
+
 from elasticsearch.exceptions import ElasticsearchException, NotFoundError
 
 from casexml.apps.case.models import CommCareCase
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import ISO_DATE_FORMAT
+
 from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.apps.api.util import object_does_not_exist
@@ -19,15 +20,17 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import ESError, get_es_new, report_and_fail_on_shard_failures
-from corehq.pillows.base import restore_property_dict, VALUE_TAG
+from corehq.elastic import (
+    ESError,
+    get_es_new,
+    report_and_fail_on_shard_failures,
+)
+from corehq.pillows.base import VALUE_TAG, restore_property_dict
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import ISO_DATE_FORMAT
 from no_exceptions.exceptions import Http400
 
 logger = logging.getLogger('es')
@@ -228,7 +231,7 @@ class ESView(View):
         try:
             raw_query = json.loads(request.body.decode('utf-8'))
         except Exception as e:
-            content_response = dict(message="Error parsing query request", exception=six.text_type(e))
+            content_response = dict(message="Error parsing query request", exception=str(e))
             response = HttpResponse(status=406, content=json.dumps(content_response))
             return response
 
@@ -611,7 +614,7 @@ class ElasticAPIQuerySet(object):
 
             return self.with_fields(payload=new_payload)
 
-        elif isinstance(idx, six.integer_types):
+        elif isinstance(idx, int):
             if idx >= 0:
                 # Leverage efficicent backend slicing
                 return list(self[idx:idx+1])[0]
@@ -738,7 +741,7 @@ def es_search_by_params(search_params, domain, reserved_query_params=None):
         try:
             payload_filter = consumer.consume_params(query_params)
         except DateTimeError as e:
-            raise Http400("Bad query parameter: {}".format(six.text_type(e)))
+            raise Http400("Bad query parameter: {}".format(str(e)))
 
         if payload_filter:
             payload["filter"]["and"].append(payload_filter)

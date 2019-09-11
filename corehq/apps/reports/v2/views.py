@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
 
-from django.http import HttpResponse, Http404
+from django.http import Http404, HttpResponse
 from django.views.decorators.http import require_POST
 
 from corehq.apps.domain.decorators import login_and_domain_required

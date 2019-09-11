@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
 
 from dimagi.ext.couchdbkit import (
@@ -16,9 +13,6 @@ class Ham(DocumentSchema):
 
     def __eq__(self, other):
         return self.doc_type == other.doc_type and self.eggs == other.eggs
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def __hash__(self):
         return hash(self.eggs)

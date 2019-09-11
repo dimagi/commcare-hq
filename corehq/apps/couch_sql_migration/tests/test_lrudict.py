@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from nose.plugins.skip import SkipTest
 from testil import assert_raises, eq
 

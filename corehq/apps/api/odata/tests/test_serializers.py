@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.test import SimpleTestCase
 
 from corehq.apps.api.odata.serializers import (

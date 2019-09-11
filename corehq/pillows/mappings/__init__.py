@@ -11,5 +11,4 @@
 #CASE_INDEX = "hqcases_3f765bd72c844d353619408862556ebd"
 
 
-from __future__ import unicode_literals
 NULL_VALUE = "__NULL__"

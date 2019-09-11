@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from functools import wraps
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -68,8 +66,6 @@ from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch import CriticalSection
 import io
-import six
-from six.moves import range
 from six.moves.urllib.parse import quote_plus
 
 
@@ -254,7 +250,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
             counts[MessagingEvent.ERROR_PHONE_OPTED_OUT] += counts[SMS.ERROR_PHONE_NUMBER_OPTED_OUT]
             del counts[SMS.ERROR_PHONE_NUMBER_OPTED_OUT]
 
-        sorted_counts = sorted(six.iteritems(counts), key=lambda item: item[1], reverse=True)
+        sorted_counts = sorted(counts.items(), key=lambda item: item[1], reverse=True)
         result['error_count_data'] = [
             {
                 'values': [
@@ -1085,7 +1081,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
         try:
             workbook = get_workbook(request.FILES['bulk_upload_file'])
         except WorkbookJSONError as e:
-            messages.error(request, six.text_type(e))
+            messages.error(request, str(e))
             return self.get(request, *args, **kwargs)
 
         msgs = upload_conditional_alert_workbook(self.domain, workbook)

@@ -1,8 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import zipfile
-import csv342 as csv
+import csv
 import io
 
 from django.test.testcases import TestCase

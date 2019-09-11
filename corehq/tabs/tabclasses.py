@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
@@ -9,7 +6,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from django_prbac.utils import has_privilege
 from memoized import memoized
-from six.moves import map
 from six.moves.urllib.parse import urlencode
 
 from corehq import privileges, toggles
@@ -1949,7 +1945,6 @@ class AdminTab(UITab):
             dropdown_dict(_("Reports"), is_header=True),
             dropdown_dict(_("Admin Reports"), url=reverse("default_admin_report")),
             dropdown_dict(_("System Info"), url=reverse("system_info")),
-            dropdown_dict(_("Submission Map"), url=reverse("dimagisphere")),
             dropdown_dict(_("Management"), is_header=True),
         ]
         try:
@@ -2050,8 +2045,6 @@ class AdminTab(UITab):
             ] + admin_operations
         sections = [
             (_('Administrative Reports'), [
-                {'title': _('Submission Map'),
-                 'url': reverse('dimagisphere')},
                 {'title': _('User List'),
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Download Malt table'),

@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 from datetime import datetime
 from django.test.testcases import TestCase
 from custom.icds_reports.views import FactSheetsReport

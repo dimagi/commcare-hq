@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from contextlib import closing
 
 from django.contrib.postgres.fields import ArrayField, JSONField

@@ -1,25 +1,25 @@
-# encoding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import doctest
 import inspect
 import os
 import re
 from datetime import datetime
 
-from dateutil.tz import tzutc, tzoffset
 from django.test import SimpleTestCase
+
+from dateutil.tz import tzoffset, tzutc
 from lxml import etree
 from mock import Mock, patch
 
 import corehq.motech.openmrs.atom_feed
 from corehq.motech.openmrs.atom_feed import (
-    get_timestamp,
     get_patient_uuid,
+    get_timestamp,
     import_encounter,
 )
-from corehq.motech.openmrs.openmrs_config import OpenmrsFormConfig, ObservationMapping
+from corehq.motech.openmrs.openmrs_config import (
+    ObservationMapping,
+    OpenmrsFormConfig,
+)
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -167,7 +167,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                 </case>"""
             case_block_re = ''.join((l.strip() for l in case_block_re.split('\n'))).replace('»', '')
             ([case_block], domain), kwargs = submit_case_blocks_patch.call_args
-            self.assertRegexpMatches(case_block.decode('utf-8'), case_block_re)
+            self.assertRegexpMatches(case_block, case_block_re)
             self.assertEqual(domain, 'test_domain')
             self.assertEqual(kwargs['device_id'], 'openmrs-atomfeed-123456')
             self.assertEqual(kwargs['xmlns'], 'http://commcarehq.org/openmrs-integration')

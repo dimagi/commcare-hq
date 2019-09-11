@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 import sys
 import uuid
@@ -114,7 +112,7 @@ class BlobMixin(Document):
         if not self._migrating_blobs_from_couch or not self._attachments:
             return self.external_blobs
         value = {name: BlobMetaRef._from_attachment(info)
-            for name, info in six.iteritems(self._attachments)}
+            for name, info in self._attachments.items()}
         value.update(self.external_blobs)
         return value
 
@@ -144,7 +142,7 @@ class BlobMixin(Document):
             raise ValueError("domain attribute or argument is required")
         old_meta = self.blobs.get(name)
 
-        if isinstance(content, six.text_type):
+        if isinstance(content, str):
             content = BytesIO(content.encode("utf-8"))
         elif isinstance(content, bytes):
             content = BytesIO(content)
@@ -260,7 +258,7 @@ class BlobMixin(Document):
             except:
                 typ, exc, tb = sys.exc_info()
                 # delete new blobs that were not saved
-                for name, meta in six.iteritems(self.external_blobs):
+                for name, meta in self.external_blobs.items():
                     old_meta = old_external_blobs.get(name)
                     if old_meta is None or meta.key != old_meta.key:
                         db.delete(key=meta.key)
@@ -274,12 +272,12 @@ class BlobMixin(Document):
                 # delete replaced blobs
                 deleted = set()
                 blobs = self.blobs
-                for name, meta in list(six.iteritems(old_external_blobs)):
+                for name, meta in list(old_external_blobs.items()):
                     if name not in blobs or meta.key != blobs[name].key:
                         db.delete(key=meta.key)
                         deleted.add(meta.key)
                 # delete newly created blobs that were overwritten or deleted
-                for key in chain.from_iterable(six.itervalues(new_deleted)):
+                for key in chain.from_iterable(new_deleted.values()):
                     if key not in deleted:
                         db.delete(key=key)
         return atomic_blobs_context()
@@ -322,7 +320,7 @@ class BlobHelper(object):
         self._attachments = doc.get("_attachments")
         self.external_blobs = {n: BlobMetaRef.wrap(
             BlobMetaRef._normalize_json(database.dbname, self._id, m.copy())
-        ) for n, m in six.iteritems(doc.get("external_blobs", {}))}
+        ) for n, m in doc.get("external_blobs", {}).items()}
 
     def __repr__(self):
         return "<%s %s domain=%s id=%s>" % (
@@ -386,7 +384,7 @@ class BlobHelper(object):
                 except:
                     self.doc["_attachments"] = self._attachments
                     self.doc["external_blobs"] = {name: meta.to_json()
-                        for name, meta in six.iteritems(self.external_blobs)}
+                        for name, meta in self.external_blobs.items()}
                     raise
         return context()
 
@@ -396,7 +394,7 @@ class BlobHelper(object):
         if "external_blobs" in self.doc:
             # because put_attachment calls self.save()
             self.doc["external_blobs"] = {name: meta.to_json()
-                for name, meta in six.iteritems(self.external_blobs)}
+                for name, meta in self.external_blobs.items()}
 
     def save(self):
         self._sync_doc()
@@ -421,7 +419,7 @@ class DeferredBlobMixin(BlobMixin):
         value = super(DeferredBlobMixin, self).blobs
         if self._deferred_blobs:
             value = dict(value)
-            for name, info in six.iteritems(self._deferred_blobs):
+            for name, info in self._deferred_blobs.items():
                 if info is not None:
                     value[name] = BlobMetaRef(
                         key=None,
@@ -485,7 +483,7 @@ class DeferredBlobMixin(BlobMixin):
 
         This method takes the same parameters as `put_attachment`.
         """
-        if isinstance(content, six.text_type):
+        if isinstance(content, str):
             content = content.encode('utf-8')
         elif not isinstance(content, bytes):
             content = content.read()
@@ -511,7 +509,7 @@ class DeferredBlobMixin(BlobMixin):
             delete_names = []
             with self.atomic_blobs(super(DeferredBlobMixin, self).save):
                 # list deferred blobs to avoid modification during iteration
-                for name, info in list(six.iteritems(self._deferred_blobs)):
+                for name, info in list(self._deferred_blobs.items()):
                     if info is not None:
                         self.put_attachment(name=name, **info)
                     else:
@@ -569,7 +567,7 @@ def bulk_atomic_blobs(docs):
         delete_blobs = []
         for doc in docs:
             if isinstance(doc, DeferredBlobMixin) and doc._deferred_blobs:
-                for name, info in list(six.iteritems(doc._deferred_blobs)):
+                for name, info in list(doc._deferred_blobs.items()):
                     if info is not None:
                         doc.put_attachment(name=name, **info)
                     else:

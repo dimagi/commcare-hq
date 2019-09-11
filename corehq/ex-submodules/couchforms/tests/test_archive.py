@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 import mock
 from datetime import datetime, timedelta
@@ -286,10 +284,9 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(0, len(xform.history))
 
         # Mock the couch and sql archive function throwing an error (so that this test works for both)
-        with mock.patch('corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.'
-                        'archive_form') \
-                as mock_operation_sql:
-            with mock.patch('couchforms.models.XFormOperation') as mock_operation_couch:
+        tmp = 'corehq.form_processor.backends.%s.dbaccessors.%s'
+        with mock.patch(tmp % ('sql', 'FormAccessorSQL.set_archived_state')) as mock_operation_sql:
+            with mock.patch(tmp % ('couch', 'XFormOperation')) as mock_operation_couch:
                 try:
                     mock_operation_sql.side_effect = Exception
                     mock_operation_couch.side_effect = Exception
@@ -348,10 +345,9 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform.archive(user_id='librarian')
 
         # Mock the couch and sql archive function throwing an error (so that this test works for both)
-        with mock.patch('corehq.form_processor.backends.sql.dbaccessors.FormAccessorSQL.'
-                        'unarchive_form') \
-                as mock_operation_sql:
-            with mock.patch('couchforms.models.XFormOperation') as mock_operation_couch:
+        tmp = 'corehq.form_processor.backends.%s.dbaccessors.%s'
+        with mock.patch(tmp % ('sql', 'FormAccessorSQL.set_archived_state')) as mock_operation_sql:
+            with mock.patch(tmp % ('couch', 'XFormOperation')) as mock_operation_couch:
                 try:
                     mock_operation_sql.side_effect = Exception
                     mock_operation_couch.side_effect = Exception

@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import glob
 import json
 import os
@@ -7,21 +5,39 @@ import re
 from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime
-from io import open
 from uuid import UUID
 
-import six
-import yaml
-from couchdbkit.exceptions import BadValueError
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import ugettext as _
+
+import yaml
+from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from memoized import memoized
 
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DecimalProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringListProperty,
+    StringProperty,
+)
+from dimagi.ext.jsonobject import JsonObject
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.modules import to_function
 
 from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
@@ -69,28 +85,9 @@ from corehq.apps.userreports.util import (
     get_indicator_adapter,
 )
 from corehq.pillows.utils import get_deleted_doc_types
-from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
+from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.quickcache import quickcache
-from dimagi.ext.couchdbkit import (
-    BooleanProperty,
-    DateTimeProperty,
-    DecimalProperty,
-    DictProperty,
-    Document,
-    DocumentSchema,
-    IntegerProperty,
-    ListProperty,
-    SchemaListProperty,
-    SchemaProperty,
-    StringListProperty,
-    StringProperty,
-)
-from dimagi.ext.jsonobject import JsonObject
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.bulk import get_docs
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.modules import to_function
 
 ID_REGEX_CHECK = re.compile(r"^[\w\-:]+$")
 
@@ -144,7 +141,7 @@ class CitusConfig(DocumentSchema):
 
 
 class SQLSettings(DocumentSchema):
-    partition_config = SchemaListProperty(SQLPartition)
+    partition_config = SchemaListProperty(SQLPartition)  # no longer used
     citus_config = SchemaProperty(CitusConfig)
     primary_key = ListProperty()
 
@@ -218,7 +215,6 @@ class MirroredEngineIds(DocumentSchema):
     engine_ids = StringListProperty()
 
 
-@six.python_2_unicode_compatible
 class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
     A data source configuration. These map 1:1 with database tables that get created.
@@ -627,7 +623,6 @@ class ReportMeta(DocumentSchema):
     builder_source_type = StringProperty(choices=REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES)
 
 
-@six.python_2_unicode_compatible
 class ReportConfiguration(QuickCachedDocumentMixin, Document):
     """
     A report configuration. These map 1:1 with reports that show up in the UI.

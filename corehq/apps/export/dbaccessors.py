@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from dimagi.utils.couch.database import safe_delete
-from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.parsing import json_format_datetime
+
+from corehq.util.test_utils import unit_testing_only
 
 
 def get_latest_case_export_schema(domain, case_type):

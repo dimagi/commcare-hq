@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.urls import reverse
 
 from corehq import toggles
@@ -22,7 +20,7 @@ class MPRReport(IcdsBaseReport):
 
     title = 'Monthly Progress Report (MPR)'
     slug = 'mpr_report'
-    name = 'Block MPR'
+    name = 'MPR'
 
     fields = [IcdsLocationFilter, ICDSMonthFilter, YearFilter]
 
@@ -52,7 +50,7 @@ class ASRReport(IcdsBaseReport):
 
     title = 'Annual Status Report (ASR)'
     slug = 'asr_report'
-    name = 'Block ASR'
+    name = 'ASR'
 
     fields = [IcdsRestrictedLocationFilter]
 

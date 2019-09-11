@@ -1,10 +1,5 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 import argparse
 import yaml
-import six
-from io import open
 
 parser = argparse.ArgumentParser(
     description='''
@@ -52,9 +47,9 @@ if __name__ == "__main__":
         doc = yaml.safe_load(f)
 
     for entry in doc:
-        for key, value in six.iteritems(entry):
+        for key, value in entry.items():
             if key in fields:
-                if not isinstance(value, six.string_types):
+                if not isinstance(value, str):
                     for v in value:
                         output.append(format_string(v, prefix))
                 else:

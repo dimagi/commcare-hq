@@ -1,29 +1,27 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import json
 import os
 import time
 
-from six.moves import zip_longest
 from django.core.management import BaseCommand
 
-from corehq.apps.change_feed.topics import get_topic_for_doc_type
-from corehq.apps.domain.dbaccessors import iter_couch_domains
-from corehq.apps.es import FormES, CaseES
-from corehq.apps.hqcase.dbaccessors import get_all_case_owner_ids
-from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
-    get_case_ids_modified_with_owner_since
-from corehq.doctypemigrations.continuous_migrate import _bulk_get_revs
-from corehq.util.dates import iso_string_to_date
-from corehq.util.log import with_progress_bar
+from itertools import zip_longest
+
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from pillowtop import get_pillow_by_name
 from pillowtop.feed.interface import ChangeMeta
-from io import open
+
+from corehq.apps.change_feed.topics import get_topic_for_doc_type
+from corehq.apps.domain.dbaccessors import iter_couch_domains
+from corehq.apps.es import CaseES, FormES
+from corehq.apps.hqcase.dbaccessors import get_all_case_owner_ids
+from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import (
+    get_case_ids_modified_with_owner_since,
+)
+from corehq.doctypemigrations.continuous_migrate import _bulk_get_revs
+from corehq.util.dates import iso_string_to_date
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):

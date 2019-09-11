@@ -1,16 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import datetime
+
+from django.conf import settings
+
 from celery.schedules import crontab
 from celery.task import periodic_task
 from celery.utils.log import get_task_logger
-import datetime
 
-from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
-from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
 from dimagi.utils.dates import DateSpan
-from corehq.util.soft_assert import soft_assert
+
+from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
+from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from corehq.util.log import send_HTML_email
-from django.conf import settings
+from corehq.util.soft_assert import soft_assert
 
 logger = get_task_logger(__name__)
 
@@ -76,4 +77,3 @@ def build_last_month_GIR():
         message,
         text_content=message
     )
-

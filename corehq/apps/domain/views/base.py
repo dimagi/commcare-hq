@@ -1,18 +1,20 @@
-from __future__ import absolute_import, unicode_literals
-
-from django.utils.decorators import method_decorator
-from django.urls import reverse
 from django.http import Http404
 from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 
+from memoized import memoized
+
 from corehq.apps.accounting.mixins import BillingModalsMixin
-from corehq.apps.users.models import Invitation
-from corehq.apps.domain.decorators import login_required, login_and_domain_required
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    login_required,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from memoized import memoized
+from corehq.apps.users.models import Invitation
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators

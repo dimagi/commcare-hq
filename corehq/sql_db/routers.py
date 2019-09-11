@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from contextlib import contextmanager
 import threading
 
@@ -110,7 +107,7 @@ def db_for_read_write(model, write=True):
     elif app_label == SYNCLOGS_APP:
         return settings.SYNCLOGS_SQL_DB_ALIAS
     elif app_label == ICDS_REPORTS_APP:
-        if forced_citus():
+        if forced_citus() or getattr(settings, 'ICDS_USE_CITUS', False):
             engine_id = ICDS_UCR_CITUS_ENGINE_ID
         else:
             engine_id = ICDS_UCR_ENGINE_ID

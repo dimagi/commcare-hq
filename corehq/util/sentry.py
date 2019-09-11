@@ -1,14 +1,8 @@
-from __future__ import absolute_import, unicode_literals
-
 import traceback
 
-from six import string_types
-from six.moves import filter
 import re
 from django.conf import settings
 from django.db.utils import OperationalError
-from raven.contrib.django import DjangoClient
-from raven.processors import SanitizePasswordsProcessor
 
 from corehq.util.cache_utils import is_rate_limited
 from corehq.util.datadog.gauges import datadog_counter
@@ -70,9 +64,10 @@ def is_pg_cancelled_query_exception(e):
     return isinstance(e, OperationalError) and PG_QUERY_CANCELLATION_ERR_MSG in e.message
 
 
-class HQSanitzeSystemPasswordsProcessor(SanitizePasswordsProcessor):
-    def __init__(self, client):
-        super(HQSanitzeSystemPasswordsProcessor, self).__init__(client)
+class HQSanitzeSystemPasswords(object):
+    MASK = '*' * 8
+
+    def __init__(self):
         couch_database_passwords = set(filter(None, [
             db['COUCH_PASSWORD'] for db in settings.COUCH_DATABASES.values()
         ]))
@@ -80,50 +75,51 @@ class HQSanitzeSystemPasswordsProcessor(SanitizePasswordsProcessor):
             couch_database_passwords
         )))
 
+    def __call__(self, event):
+        if 'exception' in event and 'values' in event['exception']:
+            # sentry's data structure is rather silly/complicated
+            for value in event['exception']['values'] or []:
+                if 'value' in value:
+                    value['value'] = self.sanitize('value', value['value'])
+        return event
+
     def sanitize(self, key, value):
-        value = super(HQSanitzeSystemPasswordsProcessor, self).sanitize(key, value)
-        if value and isinstance(value, string_types):
+        if value and isinstance(value, str):
             return self._regex.sub(self.MASK, value)
         return value
 
-    def process(self, data, **kwargs):
-        data = super(HQSanitzeSystemPasswordsProcessor, self).process(data, **kwargs)
-        if 'exception' in data and 'values' in data['exception']:
-            # sentry's data structure is rather silly/complicated
-            for value in data['exception']['values'] or []:
-                if 'value' in value:
-                    value['value'] = self.sanitize('value', value['value'])
-        return data
+
+sanitize_system_passwords = HQSanitzeSystemPasswords()
 
 
-class HQSentryClient(DjangoClient):
+def _rate_limit_exc(exc_info):
+    exc_type, exc_value, tb = exc_info
+    rate_limit_key = _get_rate_limit_key(exc_info)
+    if not rate_limit_key:
+        return False
 
-    def __init__(self, *args, **kwargs):
-        super(HQSentryClient, self).__init__(*args, **kwargs)
-        self.install_celery_hook()
+    datadog_counter('commcare.sentry.errors.rate_limited', tags=[
+        'service:{}'.format(rate_limit_key)
+    ])
+    if is_pg_cancelled_query_exception(exc_value):
+        datadog_counter('hq_custom.postgres.standby_query_canellations')
+    exponential_backoff_key = '{}_down'.format(rate_limit_key)
+    return is_rate_limited(exponential_backoff_key)
 
-    def install_celery_hook(self):
-        # https://docs.sentry.io/clients/python/integrations/celery/
-        from raven.contrib.celery import register_signal, register_logger_signal
-        register_logger_signal(self)
-        register_signal(self)
 
-    def should_capture(self, exc_info):
-        ex_value = exc_info[1]
-        capture = getattr(ex_value, 'sentry_capture', True)
-        if not capture:
-            return False
+def before_sentry_send(event, hint):
+    event = sanitize_system_passwords(event)
+    if 'exc_info' not in hint:
+        return event
 
-        if not super(HQSentryClient, self).should_capture(exc_info):
-            return False
+    exc_type, exc_value, tb = hint['exc_info']
 
-        rate_limit_key = _get_rate_limit_key(exc_info)
-        if rate_limit_key:
-            datadog_counter('commcare.sentry.errors.rate_limited', tags=[
-                'service:{}'.format(rate_limit_key)
-            ])
-            if is_pg_cancelled_query_exception(ex_value):
-                datadog_counter('hq_custom.postgres.standby_query_canellations')
-            exponential_backoff_key = '{}_down'.format(rate_limit_key)
-            return not is_rate_limited(exponential_backoff_key)
-        return True
+    if isinstance(exc_value, KeyboardInterrupt):
+        return
+
+    capture = getattr(exc_value, 'sentry_capture', True)
+    if not capture:
+        return
+
+    if not _rate_limit_exc(hint['exc_info']):
+        return event

@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import functools
 import logging
 import mimetypes
@@ -197,7 +194,7 @@ class SentryContextMiddleware(MiddlewareMixin):
     def __init__(self, get_response=None):
         super(SentryContextMiddleware, self).__init__(get_response)
         try:
-            from raven.contrib.django.raven_compat.models import client
+            from sentry_sdk import configure_scope
         except ImportError:
             raise MiddlewareNotUsed
 
@@ -205,14 +202,11 @@ class SentryContextMiddleware(MiddlewareMixin):
             raise MiddlewareNotUsed
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        from raven.contrib.django.raven_compat.models import client
+        from sentry_sdk import configure_scope
 
-        if getattr(request, 'couch_user', None):
-            client.extra_context({
-                'couch_user_id': request.couch_user.get_id
-            })
+        with configure_scope() as scope:
+            if getattr(request, 'couch_user', None):
+                scope.set_extra('couch_user_id', request.couch_user.get_id)
 
-        if getattr(request, 'domain', None):
-            client.tags_context({
-                'domain': request.domain
-            })
+            if getattr(request, 'domain', None):
+                scope.set_tag('domain', request.domain)

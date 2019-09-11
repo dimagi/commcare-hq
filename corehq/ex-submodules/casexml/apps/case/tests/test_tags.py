@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.reports.view_helpers import normalize_date
 from datetime import date, datetime

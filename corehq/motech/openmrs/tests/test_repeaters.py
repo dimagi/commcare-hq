@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import copy
 import doctest
 import json
@@ -46,7 +44,6 @@ from corehq.motech.value_source import (
     get_form_question_values,
 )
 from corehq.util.test_utils import TestFileMixin, _create_case
-
 
 DOMAIN = 'openmrs-repeater-tests'
 PATIENT_SEARCH_RESPONSE = json.loads("""{

@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from datetime import datetime, timedelta
 
 from django.db.models import Q
@@ -24,7 +21,6 @@ from custom.ewsghana.reports.utils import link_format, make_url
 from django.utils.translation import ugettext as _, ugettext_lazy
 from memoized import memoized
 from dimagi.utils.parsing import json_format_date
-import six
 
 
 class ReportingRates(ReportingRatesData):
@@ -182,7 +178,7 @@ class SummaryReportingRates(ReportingRatesData):
     def rows(self):
         rows = []
         if self.location_id and self.locations:
-            for location_name, values in six.iteritems(self.config['summary_reporting_rates']):
+            for location_name, values in self.config['summary_reporting_rates'].items():
                 url = make_url(
                     ReportingRatesReport,
                     self.config['domain'],
@@ -446,7 +442,7 @@ class ReportingRatesReport(MultiReport):
             else:
                 grouped_by_case[case_id] = {product_id}
 
-        for case_id, products in six.iteritems(grouped_by_case):
+        for case_id, products in grouped_by_case.items():
             location = SQLLocation.objects.get(
                 supply_point_id=case_id
             )
@@ -484,12 +480,12 @@ class ReportingRatesReport(MultiReport):
             'non_reporting': all_locations_count - (complete + incomplete),
             'non_reporting_table': [
                 [status['name'], status['location_id'], status['date'], key]
-                for key, status in six.iteritems(report_status)
+                for key, status in report_status.items()
                 if not status['date']
             ],
             'incomplete_table': [
                 [status['name'], status['location_id'], status['date']]
-                for key, status in six.iteritems(report_status)
+                for key, status in report_status.items()
                 if status['status'] == 'incomplete'
             ]
         }

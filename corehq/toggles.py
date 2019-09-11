@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import inspect
 from collections import namedtuple
 from functools import wraps
@@ -18,7 +14,6 @@ from couchdbkit import ResourceNotFound
 from corehq.util.quickcache import quickcache
 from toggle.models import Toggle
 from toggle.shortcuts import toggle_enabled, set_toggle
-import six
 
 Tag = namedtuple('Tag', 'name css_class description')
 TAG_CUSTOM = Tag(
@@ -233,7 +228,7 @@ def deterministic_random(input_string):
     Returns a deterministically random number between 0 and 1 based on the
     value of the string. The same input should always produce the same output.
     """
-    if isinstance(input_string, six.text_type):
+    if isinstance(input_string, str):
         input_string = input_string.encode('utf-8')
     return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 
@@ -1432,7 +1427,8 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
     "Ability to filter mobile workers based on role, location, and username when doing bulk download",
     TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
 )
 
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
@@ -1609,6 +1605,14 @@ ICDS_DISHA_API = StaticToggle(
 ICDS_NIC_INDICATOR_API = StaticToggle(
     'icds_nic_indicator_acess',
     'ICDS: Dashboard Indicator API for NIC',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
+)
+
+AP_WEBSERVICE = StaticToggle(
+    'ap_webservice',
+    'ICDS: ENABLE AP webservice',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
     relevant_environments={'icds', 'india'},

@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.messages import awcs_reported_weighing_scale_infants_help_text

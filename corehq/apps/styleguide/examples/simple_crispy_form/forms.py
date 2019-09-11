@@ -1,9 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django import forms
-from django.utils.translation import ugettext_noop, ugettext as _
-from crispy_forms import layout as crispy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
+
 from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+
 from corehq.apps.hqwebapp import crispy as hqcrispy
 
 

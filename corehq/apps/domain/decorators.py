@@ -1,51 +1,60 @@
 # Standard Library imports
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from functools import wraps
 import logging
-
-import six
+from functools import wraps
 
 # Django imports
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.urls import reverse
 from django.http import (
-    HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse, HttpRequest,
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseRedirect,
+    JsonResponse,
 )
 from django.template.response import TemplateResponse
-from django.utils.decorators import method_decorator, available_attrs
+from django.urls import reverse
+from django.utils.decorators import available_attrs, method_decorator
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 from django.views import View
 
-# External imports
-from dimagi.utils.django.request import mutable_querydict
-from django_digest.decorators import httpdigest
-from corehq.apps.domain.auth import (
-    determine_authtype_from_request, basicauth,
-    BASIC, DIGEST, API_KEY,
-    get_username_and_password_from_request, FORMPLAYER,
-    formplayer_auth, formplayer_as_user_auth, basic_or_api_key)
-
+from django_otp import match_token
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
+
+# External imports
+from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import json_response
 
-from django_otp import match_token
-
+from corehq.apps.domain.auth import (
+    API_KEY,
+    BASIC,
+    DIGEST,
+    FORMPLAYER,
+    basic_or_api_key,
+    basicauth,
+    determine_authtype_from_request,
+    formplayer_as_user_auth,
+    formplayer_auth,
+    get_username_and_password_from_request,
+)
 # CCHQ imports
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.soft_assert import soft_assert
-
+from corehq.apps.users.models import CouchUser
 ########################################################################################################
-from corehq.toggles import IS_CONTRACTOR, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
-
+from corehq.toggles import (
+    DATA_MIGRATION,
+    IS_CONTRACTOR,
+    PUBLISH_CUSTOM_REPORTS,
+    TWO_FACTOR_SUPERUSER_ROLLOUT,
+)
+from corehq.util.soft_assert import soft_assert
+from django_digest.decorators import httpdigest
 
 logger = logging.getLogger(__name__)
 
@@ -506,20 +515,18 @@ def track_domain_request(calculated_prop):
             if 'domain' in kwargs:
                 domain = kwargs['domain']
             elif (
-                    len(args) > 2 and
-                    isinstance(args[0], View) and
-                    isinstance(args[1], HttpRequest) and
-                    isinstance(args[2], six.string_types)
+                len(args) > 2
+                and isinstance(args[0], View)
+                and isinstance(args[1], HttpRequest)
+                and isinstance(args[2], str)
             ):
-                soft_assert_type_text(args[2])
                 # class-based view; args == (self, request, domain, ...)
                 domain = args[2]
             elif (
-                    len(args) > 1 and
-                    isinstance(args[0], HttpRequest) and
-                    isinstance(args[1], six.string_types)
+                len(args) > 1
+                and isinstance(args[0], HttpRequest)
+                and isinstance(args[1], str)
             ):
-                soft_assert_type_text(args[1])
                 # view function; args == (request, domain, ...)
                 domain = args[1]
             else:

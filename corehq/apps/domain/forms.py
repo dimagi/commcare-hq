@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import io
 import json
@@ -8,20 +6,6 @@ import re
 import sys
 import uuid
 
-from crispy_forms.layout import Submit
-from six.moves.urllib.parse import urlparse, parse_qs
-
-from captcha.fields import CaptchaField
-
-from corehq.apps.app_manager.exceptions import BuildNotFoundException
-from corehq.apps.callcenter.views import CallCenterOwnerOptionsView, CallCenterOptionsController
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.apps.hqwebapp.crispy import HQFormHelper
-from corehq.apps.app_manager.dbaccessors import get_app
-from crispy_forms import bootstrap as twbscrispy
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
-from dateutil.relativedelta import relativedelta
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -30,23 +14,40 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
-from django.urls import reverse
+from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.forms.fields import (ChoiceField, CharField, BooleanField,
-                                 ImageField, IntegerField, Field)
+from django.forms.fields import (
+    BooleanField,
+    CharField,
+    ChoiceField,
+    Field,
+    ImageField,
+    IntegerField,
+)
 from django.forms.widgets import Select
 from django.template.loader import render_to_string
-from django.utils.encoding import smart_str, force_bytes
+from django.urls import reverse
+from django.utils.encoding import force_bytes, smart_str
+from django.utils.functional import cached_property
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
-from django.utils.functional import cached_property
-from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+from captcha.fields import CaptchaField
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import StrictButton
+from crispy_forms.layout import Submit
+from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
+from memoized import memoized
 from PIL import Image
 from pyzxcvbn import zxcvbn
+from six.moves.urllib.parse import parse_qs, urlparse
 
 from corehq import privileges
+from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
@@ -55,50 +56,68 @@ from corehq.apps.accounting.models import (
     CreditLine,
     Currency,
     DefaultProductPlan,
+    EntryPoint,
     FeatureType,
+    FundingSource,
     PreOrPostPay,
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustmentMethod,
     SubscriptionType,
-    EntryPoint,
-    FundingSource
 )
-from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import (
     cancel_future_subscriptions,
     domain_has_privilege,
     get_account_name_from_default_name,
+    is_downgrade,
     log_accounting_error,
-    is_downgrade
 )
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_version_build_id, get_brief_apps_in_domain
+from corehq.apps.app_manager.const import (
+    AMPLIFIES_NO,
+    AMPLIFIES_NOT_SET,
+    AMPLIFIES_YES,
+)
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_apps_in_domain,
+    get_brief_apps_in_domain,
+    get_version_build_id,
+)
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.app_manager.models import (
     Application,
-    FormBase,
-    RemoteApp,
     AppReleaseByLocation,
+    FormBase,
     LatestEnabledBuildProfiles,
+    RemoteApp,
 )
-from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
-from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
-    AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
+from corehq.apps.callcenter.views import (
+    CallCenterOptionsController,
+    CallCenterOwnerOptionsView,
+)
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.domain.models import (
+    AREA_CHOICES,
+    BUSINESS_UNITS,
+    DATA_DICT,
+    LICENSES,
+    LOGO_ATTACHMENT,
+    SUB_AREA_CHOICES,
+    TransferDomainRequest,
+)
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
-from corehq.apps.users.models import WebUser, CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.permissions import can_manage_releases
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-from memoized import memoized
-import six
-from six.moves import range
-from six import unichr
-from io import open
+from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -409,7 +428,7 @@ class SnapshotSettingsForm(forms.Form):
 
     def _get_apps_to_publish(self):
         app_ids = []
-        for d, val in six.iteritems(self.data):
+        for d, val in self.data.items():
             d = d.split('-')
             if len(d) < 2:
                 continue
@@ -1287,7 +1306,7 @@ def _get_uppercase_unicode_regexp():
     # http://stackoverflow.com/a/17065040/10840
     uppers = ['[']
     for i in range(sys.maxunicode):
-        c = unichr(i)
+        c = chr(i)
         if c.isupper():
             uppers.append(c)
     uppers.append(']')
@@ -1679,7 +1698,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         except Exception as e:
             log_accounting_error(
                 "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
-                % (self.domain, self.plan_version.plan.name, six.text_type(e)),
+                % (self.domain, self.plan_version.plan.name, str(e)),
                 show_stack_trace=True,
             )
             return False
@@ -2486,6 +2505,7 @@ class ManageReleasesByAppProfileForm(forms.Form):
                                help_text=ugettext_lazy("Applicable for search only"))
 
     def __init__(self, request, domain, *args, **kwargs):
+        self.request = request
         self.domain = domain
         super(ManageReleasesByAppProfileForm, self).__init__(*args, **kwargs)
         self.fields['app_id'].choices = self.app_id_choices()
@@ -2540,6 +2560,11 @@ class ManageReleasesByAppProfileForm(forms.Form):
                 self.version_build_id
             except BuildNotFoundException as e:
                 self.add_error('version', e)
+        app_id = self.cleaned_data.get('app_id')
+        if app_id:
+            if not can_manage_releases(self.request.couch_user, self.domain, app_id):
+                self.add_error('app_id',
+                               _("You don't have permission to set restriction for this application"))
 
     def clean_build_profile_id(self):
         # ensure value is present for a post request

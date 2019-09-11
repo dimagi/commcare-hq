@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import numbers
 
 from django.utils.decorators import method_decorator

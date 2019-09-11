@@ -1,34 +1,39 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 from decimal import Decimal
-import mock
 
 from django.core import mail
 from django.db import models
+
+import mock
 
 from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import tasks
 from corehq.apps.accounting.models import (
+    SMALL_INVOICE_THRESHOLD,
     BillingAccount,
+    BillingRecord,
     Currency,
+    CustomerBillingRecord,
+    CustomerInvoice,
+    Invoice,
+    StripePaymentMethod,
     Subscription,
     SubscriptionType,
-    BillingRecord,
-    CustomerBillingRecord,
-    Invoice,
-    CustomerInvoice,
-    SMALL_INVOICE_THRESHOLD,
-    StripePaymentMethod,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.accounting.tests.generator import FakeStripeCard, FakeStripeCustomer
+from corehq.apps.accounting.tests.generator import (
+    FakeStripeCard,
+    FakeStripeCustomer,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import (
-    SmsGatewayFee, SmsGatewayFeeCriteria, SmsUsageFee, SmsUsageFeeCriteria,
     SmsBillable,
+    SmsGatewayFee,
+    SmsGatewayFeeCriteria,
+    SmsUsageFee,
+    SmsUsageFeeCriteria,
 )
 from corehq.util.dates import get_previous_month_date_range
 

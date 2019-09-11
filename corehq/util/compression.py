@@ -1,9 +1,5 @@
 # http://rosettacode.org/wiki/LZW_compression#Python
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import io
-import six
-from six.moves import range
 
 
 def decompress(compressed):
@@ -11,7 +7,7 @@ def decompress(compressed):
 
     # Build the dictionary.
     dict_size = 0x10000
-    dictionary = dict((six.unichr(i), six.unichr(i)) for i in range(dict_size))
+    dictionary = dict((chr(i), chr(i)) for i in range(dict_size))
 
     result = io.StringIO()
     w = compressed.pop(0)

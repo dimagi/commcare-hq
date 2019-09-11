@@ -1,11 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 from corehq.apps.locations.dbaccessors import get_web_users_by_location
 from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
 from custom.ewsghana.models import SQLNotification
 from custom.ewsghana.utils import send_sms, has_notifications_enabled
-import six
 
 
 class Notification(object):
@@ -47,7 +44,7 @@ class Alert(object):
     def get_message(self, user, data):
         program_id = user.get_domain_membership(self.domain).program_id
         locations = []
-        for location_name, programs in six.iteritems(data):
+        for location_name, programs in data.items():
             if self.program_clause(program_id, programs):
                 locations.append(location_name)
         if not locations:

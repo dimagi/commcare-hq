@@ -1,30 +1,33 @@
-# coding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import contextlib
+import os
 
 from django.db.utils import InternalError
 from django.test import TestCase
+from django.test.client import Client
+from django.urls import reverse
+
 from mock import patch
 
 from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.apps.users.models import WebUser
-from corehq.apps.domain.shortcuts import create_domain
-from django.test.client import Client
-from django.urls import reverse
-import os
-
-from corehq.blobs import get_blob_db
-from corehq.const import OPENROSA_VERSION_2, OPENROSA_VERSION_3
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
-from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.util.test_utils import flag_enabled, TestFileMixin
 from couchforms.models import UnfinishedSubmissionStub
 from couchforms.openrosa_response import ResponseNature
-from dimagi.utils.post import tmpfile
 from couchforms.signals import successful_form_received
-from io import open
+from dimagi.utils.post import tmpfile
+
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import WebUser
+from corehq.blobs import get_blob_db
+from corehq.const import OPENROSA_VERSION_2, OPENROSA_VERSION_3
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    use_sql_backend,
+)
+from corehq.middleware import OPENROSA_VERSION_HEADER
+from corehq.util.test_utils import TestFileMixin, flag_enabled
 
 
 class SubmissionErrorTest(TestCase, TestFileMixin):

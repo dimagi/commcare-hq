@@ -1,13 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 import hashlib
 import threading
 from copy import copy
 from mimetypes import guess_type
 from corehq.util.pagination import paginate_function, PaginationEventHandler, ArgsProvider
-import six
-from six.moves import filter
 
 
 class CouchAttachmentsBuilder(object):
@@ -73,7 +69,7 @@ class CouchAttachmentsBuilder(object):
             data = content.read()
         else:
             data = content
-        if isinstance(data, six.text_type):
+        if isinstance(data, str):
             data = data.encode('utf-8')
         if content_type is None:
             content_type = ';'.join(filter(None, guess_type(name)))
@@ -100,6 +96,47 @@ class CouchAttachmentsBuilder(object):
 
     def to_json(self):
         return copy(self._dict)
+
+
+class NoSkipArgsProvider(ArgsProvider):
+    """View pagination args provider that does not skip
+
+    This handles an edge case where the last result in the previous page
+    has been changed in a way that causes it to change position in or be
+    removed from the view. In this case the typical strategy of skipping
+    one result when loading the next page will cause a previously unseen
+    document to be skipped.
+
+    This more closely follows the pagination strategy outlined in the
+    CouchDB docs (probably updated since the old skip 1 strategy was
+    implemented--it mysteriously mentions using skip, but doesn't):
+    https://docs.couchdb.org/en/stable/ddocs/views/pagination.html#paging-alternate-method
+    """
+    def __init__(self, initial_kwargs):
+        self.initial_kwargs = initial_kwargs
+        self.next_limit = initial_kwargs['limit'] + 1
+        if self.next_limit < 2:
+            raise ValueError("bad limit: {}".format(initial_kwargs['limit']))
+        self._null = object()
+
+    def get_initial_args(self):
+        return [], self.initial_kwargs
+
+    def adjust_results(self, results, args, kwargs):
+        if results:
+            last_seen_doc_id = kwargs.get("startkey_docid", self._null)
+            if last_seen_doc_id == results[0]["id"]:
+                # drop already processed result
+                results = results[1:]
+        return results
+
+    def get_next_args(self, result, *last_args, **last_kwargs):
+        if result:
+            last_kwargs['startkey'] = result['key']
+            last_kwargs['startkey_docid'] = result['id']
+            last_kwargs['limit'] = self.next_limit
+            return [], last_kwargs
+        raise StopIteration
 
 
 class PaginatedViewArgsProvider(ArgsProvider):

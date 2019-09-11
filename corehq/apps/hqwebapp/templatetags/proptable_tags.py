@@ -8,43 +8,33 @@ Supports psuedo-tables using dls and real tables.
 
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import collections
 import datetime
-
-from corehq.util.dates import iso_string_to_datetime
-
-from dimagi.ext.jsonobject import DateProperty
-from jsonobject.exceptions import BadValueError
-from dimagi.utils.chunked import chunked
-import pytz
+from itertools import zip_longest
 
 from django import template
 from django.template.defaultfilters import yesno
-from django.template.loader import render_to_string
+from django.utils.html import conditional_escape, escape
 from django.utils.safestring import mark_safe
-from django.utils.html import escape, conditional_escape
+
+import pytz
+from jsonobject.exceptions import BadValueError
+
+from dimagi.ext.jsonobject import DateProperty
+from dimagi.utils.chunked import chunked
+from dimagi.utils.dates import safe_strftime
+
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
-from corehq.const import USER_DATETIME_FORMAT, USER_DATE_FORMAT
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.timezones.conversions import ServerTime, PhoneTime
-from dimagi.utils.dates import safe_strftime
-import six
-from six.moves import zip_longest
-from six.moves import map
+from corehq.const import USER_DATE_FORMAT, USER_DATETIME_FORMAT
+from corehq.util.dates import iso_string_to_datetime
+from corehq.util.timezones.conversions import PhoneTime, ServerTime
 
 register = template.Library()
 
 
 def _is_list_like(val):
-    if six.PY2 and isinstance(val, bytes):
-        val = val.decode('utf-8')
-    if isinstance(val, (six.text_type, bytes)):
-        soft_assert_type_text(val)
-    return (isinstance(val, collections.Iterable) and
-            not isinstance(val, six.string_types))
+    return isinstance(val, collections.Iterable) and not isinstance(val, str)
 
 
 def _parse_date_or_datetime(val):

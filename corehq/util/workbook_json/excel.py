@@ -1,17 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import io
 from zipfile import BadZipfile
 from tempfile import NamedTemporaryFile
 import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
-import six
-from six.moves import zip
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import ugettext as _
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 class InvalidExcelFileException(Exception):
@@ -75,9 +68,8 @@ class IteratorJSONReader(object):
     def get_fieldnames(self):
         obj = {}
         for field, value in zip(self.headers, [''] * len(self.headers)):
-            if not isinstance(field, six.string_types):
+            if not isinstance(field, str):
                 raise HeaderValueError('Field %s is not a string.' % field)
-            soft_assert_type_text(field)
             self.set_field_value(obj, field, value)
         return list(obj)
 
@@ -85,7 +77,7 @@ class IteratorJSONReader(object):
     def set_field_value(cls, obj, field, value):
         if isinstance(value, bytes):
             value = value.decode('utf-8')
-        if isinstance(value, six.text_type):
+        if isinstance(value, str):
             value = value.strip()
         # try dict
         try:
@@ -238,12 +230,7 @@ class WorksheetJSONReader(IteratorJSONReader):
 class WorkbookJSONReader(object):
 
     def __init__(self, file_or_filename):
-        if six.PY3:
-            check_types = (UploadedFile, io.RawIOBase, io.BufferedIOBase)
-        else:
-            from types import FileType
-            check_types = (UploadedFile, FileType, io.BytesIO)
-
+        check_types = (UploadedFile, io.RawIOBase, io.BufferedIOBase)
         if isinstance(file_or_filename, check_types):
             tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
             file_or_filename.seek(0)
@@ -253,7 +240,7 @@ class WorkbookJSONReader(object):
         try:
             self.wb = openpyxl.load_workbook(file_or_filename, read_only=True, data_only=True)
         except (BadZipfile, InvalidFileException, KeyError) as e:
-            raise InvalidExcelFileException(six.text_type(e))
+            raise InvalidExcelFileException(str(e))
         self.worksheets_by_title = {}
         self.worksheets = []
 
@@ -303,11 +290,10 @@ def format_header(path, value):
     # pretty sure making a string-builder would be slower than concatenation
     s = path[0]
     for p in path[1:]:
-        if isinstance(p, six.string_types):
-            soft_assert_type_text(p)
-            s += ': %s' % p
+        if isinstance(p, str):
+            s += f': {p}'
         elif isinstance(p, int):
-            s += ' %s' % (p + 1)
+            s += f' {p + 1}'
     if isinstance(value, bool):
         s += '?'
         value = 'yes' if value else 'no'
@@ -334,11 +320,10 @@ def alphanumeric_sort_key(key):
 
 
 def enforce_string_type(value):
-    if isinstance(value, six.string_types):
-        soft_assert_type_text(value)
+    if isinstance(value, str):
         return value
 
-    if isinstance(value, six.integer_types):
+    if isinstance(value, int):
         return str(value)
 
     # Don't try to guess for decimal types how they should be converted to string

@@ -1,7 +1,3 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import argparse
 import difflib
 import pprint
@@ -10,10 +6,10 @@ from datetime import datetime
 
 from django.core.management import BaseCommand, CommandError
 
-from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from pillowtop.models import str_to_kafka_seq
 from pillowtop.utils import get_all_pillow_instances
-from six.moves import input
+
+from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 
 
 def valid_date(s):

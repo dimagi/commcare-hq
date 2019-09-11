@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name

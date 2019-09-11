@@ -67,9 +67,6 @@ models' attachments to the blob database:
 
 That's it, you're done!
 """
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 import traceback
@@ -77,10 +74,8 @@ from base64 import b64encode
 from contextlib import contextmanager
 from datetime import timedelta
 from tempfile import mkdtemp
-from io import open
 
 import gevent
-import six
 from django.conf import settings
 from gevent.pool import Pool
 from gevent.queue import LifoQueue
@@ -140,7 +135,7 @@ the total number of migrated blobs were not found.
 
 
 def encode_content(data):
-    if isinstance(data, six.text_type):
+    if isinstance(data, str):
         data = data.encode("utf-8")
     return b64encode(data)
 
@@ -200,7 +195,7 @@ class CouchAttachmentMigrator(BaseDocMigrator):
         obj = self.blob_helper(doc, self.couchdb, self.get_type_code(doc))
         try:
             with obj.atomic_blobs():
-                for name, data in list(six.iteritems(attachments)):
+                for name, data in list(attachments.items()):
                     if name in external_blobs:
                         continue  # skip attachment already in blob db
                     if self.shared_domain:
@@ -326,7 +321,7 @@ class BlobMetaReindexAccessor(ReindexAccessor):
 
     def get_key(self, doc):
         obj = doc["_obj_not_json"]
-        assert isinstance(obj.id, six.integer_types), (type(obj.id), obj.id)
+        assert isinstance(obj.id, int), (type(obj.id), obj.id)
         # would use a tuple, but JsonObject.to_string requires dict keys to be strings
         return "%s %s" % (obj.parent_id, obj.id)
 
