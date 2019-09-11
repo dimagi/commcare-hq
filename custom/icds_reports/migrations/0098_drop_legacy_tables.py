@@ -1,4 +1,3 @@
-
 from django.db import migrations
 from django.db.migrations import RunSQL
 

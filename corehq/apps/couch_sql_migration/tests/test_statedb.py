@@ -1,5 +1,5 @@
-
 import pickle
+import os
 import re
 
 from nose.tools import with_setup
@@ -12,10 +12,13 @@ from ..statedb import (
     Counts,
     ResumeError,
     StateDB,
+    _get_state_db_filepath,
     delete_state_db,
     diff_doc_id_idx,
     init_state_db,
+    open_state_db,
 )
+from .. import statedb as mod
 
 
 def setup_module():
@@ -28,14 +31,14 @@ def teardown_module():
     _tmp.__exit__(None, None, None)
 
 
-def init_db(memory=True):
+def init_db(name="test", memory=True):
     if memory:
         return StateDB.init(":memory:")
-    return init_state_db("test", state_dir)
+    return init_state_db(name, state_dir)
 
 
-def delete_db():
-    delete_state_db("test", state_dir)
+def delete_db(name="test"):
+    delete_state_db(name, state_dir)
 
 
 @with_setup(teardown=delete_db)
@@ -50,6 +53,28 @@ def test_db_unique_id():
     delete_db()
     with init_db(memory=False) as db:
         assert db.unique_id != uid, uid
+
+
+@with_setup(teardown=delete_db)
+def test_open_state_db():
+    with open_state_db("test", state_dir) as db:
+        with assert_raises(OperationalError):
+            db.unique_id
+        with assert_raises(OperationalError):
+            db.get_diff_stats()
+        with assert_raises(OperationalError):
+            db.set("key", 1)
+    assert not os.path.exists(_get_state_db_filepath("test", state_dir))
+    with init_db(memory=False) as db:
+        uid = db.unique_id
+        eq(db.get("key"), None)
+        db.set("key", 2)
+    with open_state_db("test", state_dir) as db:
+        eq(db.unique_id, uid)
+        eq(db.get_diff_stats(), {})
+        eq(db.get("key"), 2)
+        with assert_raises(OperationalError):
+            db.set("key", 3)
 
 
 def test_update_cases():
@@ -140,9 +165,6 @@ def test_resume_state():
 
 
 def test_replace_case_diffs():
-    def make_diff(id):
-        return JsonDiff("type", "path/%s" % id, "old%s" % id, "new%s" % id)
-
     with init_db() as db:
         case_id = "865413246874321"
         # add old diffs
@@ -190,3 +212,82 @@ def test_pickle():
         assert isinstance(other, type(db)), (other, db)
         assert other is not db
         eq(db.unique_id, other.unique_id)
+
+
+def test_clone_casediff_data_from():
+    diffs = [make_diff(i) for i in range(3)]
+    try:
+        with init_db("main", memory=False) as main:
+            uid = main.unique_id
+            with init_db("cddb", memory=False) as cddb:
+                main.add_problem_form("problem")
+                main.save_form_diffs({"doc_type": "XFormInstance", "_id": "form"}, {})
+                cddb.add_processed_forms({"case": 1})
+                cddb.update_cases([
+                    Config(id="case", total_forms=1, processed_forms=1),
+                    Config(id="a", total_forms=2, processed_forms=1),
+                    Config(id="b", total_forms=2, processed_forms=1),
+                    Config(id="c", total_forms=2, processed_forms=1),
+                ])
+                cddb.add_missing_docs("CommCareCase-couch", ["missing"])
+                cddb.replace_case_diffs("CommCareCase", "a", [diffs[0]])
+                cddb.replace_case_diffs("CommCareCase-Deleted", "b", [diffs[1]])
+                cddb.add_diffs("stock state", "c/ledger", [diffs[2]])
+                cddb.increment_counter("CommCareCase", 3)           # case, a, c
+                cddb.increment_counter("CommCareCase-Deleted", 1)   # b
+                cddb.increment_counter("CommCareCase-couch", 1)     # missing
+                main.add_no_action_case_form("no-action")
+                main.set_resume_state("FormState", ["form"])
+                cddb.set_resume_state("CaseState", ["case"])
+            cddb.close()
+            main.clone_casediff_data_from(cddb.db_filepath)
+        main.close()
+
+        with StateDB.open(main.db_filepath) as db:
+            eq(list(db.iter_cases_with_unprocessed_forms()), ["a", "b", "c"])
+            eq(list(db.iter_problem_forms()), ["problem"])
+            eq(db.get_no_action_case_forms(), {"no-action"})
+            eq(db.pop_resume_state("CaseState", "nope"), ["case"])
+            eq(db.pop_resume_state("FormState", "fail"), ["form"])
+            eq(db.unique_id, uid)
+    finally:
+        delete_db("main")
+        delete_db("cddb")
+
+
+def test_clone_casediff_data_from_tables():
+    from corehq.apps.tzmigration.planning import (
+        PlanningForm,
+        PlanningCase,
+        PlanningCaseAction,
+        PlanningStockReportHelper,
+    )
+    # Any time a model is added to this list it must be analyzed for usage
+    # by the case diff process. StateDB.clone_casediff_data_from() may need
+    # to be updated.
+    eq(set(mod.Base.metadata.tables), {m.__tablename__ for m in [
+        mod.CaseForms,
+        mod.Diff,
+        mod.KeyValue,
+        mod.DocCount,
+        mod.MissingDoc,
+        mod.NoActionCaseForm,
+        mod.ProblemForm,
+        # models not used by couch-to-sql migration
+        PlanningForm,
+        PlanningCase,
+        PlanningCaseAction,
+        PlanningStockReportHelper,
+    ]})
+
+
+def test_get_set():
+    with init_db() as db:
+        eq(db.get("key"), None)
+        eq(db.get("key", "default"), "default")
+        db.set("key", True)
+        eq(db.get("key"), True)
+
+
+def make_diff(id):
+    return JsonDiff("type", "path/%s" % id, "old%s" % id, "new%s" % id)

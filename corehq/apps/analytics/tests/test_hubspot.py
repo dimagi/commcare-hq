@@ -1,4 +1,3 @@
-
 from django.test import RequestFactory, TestCase, override_settings
 
 import mock

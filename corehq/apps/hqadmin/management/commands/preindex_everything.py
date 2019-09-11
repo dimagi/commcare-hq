@@ -1,4 +1,3 @@
-
 from django.conf import settings
 from django.core import cache
 from django.core.mail import mail_admins

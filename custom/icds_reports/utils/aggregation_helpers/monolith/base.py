@@ -1,4 +1,3 @@
-
 import hashlib
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config

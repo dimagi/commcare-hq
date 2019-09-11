@@ -27,6 +27,7 @@ from corehq.form_processor.exceptions import MissingFormXml
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .lrudict import LRUDict
+from .statedb import StateDB
 
 log = logging.getLogger(__name__)
 
@@ -78,6 +79,7 @@ class CaseDiffQueue(object):
         self._is_flushing = False
 
     def __enter__(self):
+        self.statedb.set(ProcessNotAllowed.__name__, True)
         self._load_resume_state()
         self._stop_status_logger = self.run_status_logger()
         return self
@@ -264,14 +266,14 @@ class CaseDiffQueue(object):
 
     def _load_resume_state(self):
         state = self.statedb.pop_resume_state(type(self).__name__, {})
+        if "num_diffed_cases" in state:
+            self.num_diffed_cases = state["num_diffed_cases"]
         if "to_diff" in state:
             for chunk in chunked(state["to_diff"], self.BATCH_SIZE, list):
                 self.diff_batcher.spawn(self._enqueue_cases, chunk)
         if "pending" in state:
             for chunk in chunked(state["pending"].items(), self.BATCH_SIZE, list):
                 self._async_load_cases(dict(chunk))
-        if "num_diffed_cases" in state:
-            self.num_diffed_cases = state["num_diffed_cases"]
 
     def run_status_logger(self):
         """Start periodic status logger in a greenlet
@@ -433,7 +435,11 @@ class CaseDiffProcess(object):
     """Run CaseDiffQueue in a separate process"""
 
     def __init__(self, statedb, status_interval=STATUS_INTERVAL, queue_class=CaseDiffQueue):
+        if statedb.get(ProcessNotAllowed.__name__):
+            raise ProcessNotAllowed(f"{statedb.db_filepath} was previously "
+                "used directly by CaseDiffQueue")
         self.statedb = statedb
+        self.state_path = get_casediff_state_path(statedb.db_filepath)
         self.status_interval = status_interval
         self.queue_class = queue_class
 
@@ -444,7 +450,7 @@ class CaseDiffProcess(object):
         calls, self.calls = self.calls_pipe.__enter__()
         self.stats, stats = self.stats_pipe.__enter__()
         debug = log.isEnabledFor(logging.DEBUG)
-        args = (self.queue_class, calls, stats, self.statedb, debug)
+        args = (self.queue_class, calls, stats, self.state_path, debug)
         self.process = gipc.start_process(target=run_case_diff_queue, args=args)
         self.status_logger = gevent.spawn(self.run_status_logger)
         return self
@@ -459,6 +465,7 @@ class CaseDiffProcess(object):
         self.calls.put((TERMINATE, is_error))
         self.status_logger.join(timeout=30)
         self.process.join(timeout=30)
+        self.statedb.clone_casediff_data_from(self.state_path)
         self.stats_pipe.__exit__(*exc_info)
         self.calls_pipe.__exit__(*exc_info)
 
@@ -498,7 +505,13 @@ STATUS = "status"
 TERMINATE = "terminate"
 
 
-def run_case_diff_queue(queue_class, calls, stats, statedb, debug):
+def get_casediff_state_path(path):
+    assert os.path.exists(os.path.dirname(path)), path
+    assert path.endswith(".db"), path
+    return path[:-3] + "-casediff.db"
+
+
+def run_case_diff_queue(queue_class, calls, stats, state_path, debug):
     def status():
         stats.put((STATUS, queue.get_status()))
 
@@ -513,7 +526,8 @@ def run_case_diff_queue(queue_class, calls, stats, statedb, debug):
             getattr(queue, action)(*args)
 
     process_actions = {STATUS: status, TERMINATE: terminate}
-    setup_logging(statedb, debug)
+    statedb = StateDB.init(state_path)
+    setup_logging(state_path, debug)
     with calls, stats:
         try:
             with queue_class(statedb, status_interval=0) as queue:
@@ -533,9 +547,9 @@ def run_case_diff_queue(queue_class, calls, stats, statedb, debug):
             stats.put((TERMINATE, status_))
 
 
-def setup_logging(statedb, debug):
+def setup_logging(state_path, debug):
     from .couchsqlmigration import setup_logging
-    log_dir = os.path.dirname(statedb.db_filepath)
+    log_dir = os.path.dirname(state_path)
     if os.path.basename(log_dir) == "db":
         # unfortunately coupled to _get_state_db_filepath, which adds /db/
         log_dir = os.path.dirname(log_dir)
@@ -547,6 +561,10 @@ class GracefulExit(Exception):
 
 
 class ParentError(Exception):
+    pass
+
+
+class ProcessNotAllowed(Exception):
     pass
 
 

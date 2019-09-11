@@ -1,4 +1,3 @@
-
 from django.test import SimpleTestCase
 
 from corehq.apps.change_feed import data_sources, topics

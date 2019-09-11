@@ -1,4 +1,3 @@
-
 import uuid
 from copy import copy
 from datetime import date, datetime

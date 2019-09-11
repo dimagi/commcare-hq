@@ -1,4 +1,3 @@
-
 from operator import attrgetter
 
 from django.core.management.base import BaseCommand

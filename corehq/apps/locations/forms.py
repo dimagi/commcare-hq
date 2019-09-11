@@ -642,10 +642,10 @@ def to_list(value):
     Returns ``value`` as a list if it is iterable and not a string,
     otherwise returns ``value`` in a list.
 
-    >>> to_list(('foo', 'bar', 'baz')) == ['foo', 'bar', 'baz']
-    True
-    >>> to_list('foo bar baz') == ['foo bar baz']
-    True
+    >>> to_list(('foo', 'bar', 'baz'))
+    ['foo', 'bar', 'baz']
+    >>> to_list('foo bar baz')
+    ['foo bar baz']
 
     """
     if hasattr(value, '__iter__') and not isinstance(value, str):

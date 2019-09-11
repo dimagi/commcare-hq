@@ -1,4 +1,3 @@
-
 from django.test.testcases import TestCase
 
 from corehq.apps.app_manager.app_schemas.form_metadata import (

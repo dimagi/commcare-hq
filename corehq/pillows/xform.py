@@ -200,8 +200,11 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     )
     if ucr_configs:
         ucr_processor.bootstrap(ucr_configs)
-    processors = [xform_to_es_processor,
-        form_meta_processor, unknown_user_form_processor]
+    processors = [xform_to_es_processor]
+    if settings.RUN_UNKNOWN_USER_PILLOW:
+        processors.append(unknown_user_form_processor)
+    if settings.RUN_FORM_META_PILLOW:
+        processors.append(form_meta_processor)
     if not settings.ENTERPRISE_MODE:
         xform_to_report_es_processor = ElasticProcessor(
             elasticsearch=get_es_new(),
@@ -209,9 +212,9 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
             doc_prep_fn=transform_xform_for_report_forms_index,
             doc_filter_fn=report_xform_filter
         )
-        processors = [xform_to_report_es_processor] + processors
+        processors.append(xform_to_report_es_processor)
     if not skip_ucr:
-        processors = [ucr_processor] + processors
+        processors.append(ucr_processor)
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,

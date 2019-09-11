@@ -1,4 +1,3 @@
-
 import errno
 import json
 import os
@@ -20,8 +19,7 @@ from sqlalchemy import (
     or_,
 )
 
-from corehq.apps.tzmigration.planning import Base, DiffDB
-from corehq.apps.tzmigration.planning import PlanningDiff as Diff
+from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import json_diff
 
 from .diff import filter_form_diffs
@@ -36,8 +34,11 @@ def init_state_db(domain, state_dir):
 
 
 def open_state_db(domain, state_dir):
+    """Open state db in read-only mode"""
     db_filepath = _get_state_db_filepath(domain, state_dir)
-    return StateDB.open(db_filepath)
+    if not os.path.exists(db_filepath):
+        db_filepath = ":memory:"
+    return StateDB.open(db_filepath, readonly=True)
 
 
 def delete_state_db(domain, state_dir):
@@ -71,8 +72,6 @@ class StateDB(DiffDB):
 
     def close(self):
         self.engine.dispose()
-        if self._connection is not None:
-            self._connection.close()
 
     @contextmanager
     def session(self, session=None):
@@ -91,6 +90,16 @@ class StateDB(DiffDB):
     def unique_id(self):
         with self.session() as session:
             return self._get_kv("db_unique_id", session).value
+
+    def get(self, name, default=None):
+        with self.session() as session:
+            kv = self._get_kv(f"kv-{name}", session)
+            if kv is None:
+                return default
+            return json.loads(kv.value)
+
+    def set(self, name, value):
+        self._upsert(KeyValue, KeyValue.key, f"kv-{name}", json.dumps(value))
 
     def update_cases(self, case_records):
         """Update case total and processed form counts
@@ -297,6 +306,68 @@ class StateDB(DiffDB):
             .filter(MissingDoc.kind == doc_type)
         }
 
+    def clone_casediff_data_from(self, casediff_state_path):
+        """Copy casediff state into this state db
+
+        model analysis
+        - CaseForms - casediff r/w
+        - Diff - casediff w (case and stock kinds), main r/w
+        - KeyValue - casediff r/w, main r/w (different keys)
+        - DocCount - casediff w, main r
+        - MissingDoc - casediff w, main r
+        - NoActionCaseForm - main r/w
+        - ProblemForm - main r/w
+        """
+        def quote(value):
+            assert isinstance(value, str) and "'" not in value, repr(value)
+            return f"'{value}'"
+
+        def quotelist(values):
+            return f"({', '.join(quote(v) for v in values)})"
+
+        def is_id(column):
+            return column.key == "id" and isinstance(column.type, Integer)
+
+        def copy(model, session, where_expr=None):
+            where = f"WHERE {where_expr}" if where_expr else ""
+            fields = ", ".join(c.key for c in model.__table__.columns if not is_id(c))
+            session.execute(f"DELETE FROM main.{model.__tablename__} {where}")
+            session.execute(f"""
+                INSERT INTO main.{model.__tablename__} ({fields})
+                SELECT {fields} FROM cddb.{model.__tablename__} {where}
+            """)
+
+        casediff_db = type(self).open(casediff_state_path)
+        with casediff_db.session() as cddb:
+            expect_casediff_kinds = {
+                "CommCareCase",
+                "CommCareCase-Deleted",
+                "stock state",
+            }
+            casediff_kinds = {k for k, in cddb.query(Diff.kind).distinct()}
+            assert not casediff_kinds - expect_casediff_kinds, casediff_kinds
+
+            resume_keys = [
+                key for key, in cddb.query(KeyValue.key)
+                .filter(KeyValue.key.startswith("resume-"))
+            ]
+            assert all("Case" in key for key in resume_keys), resume_keys
+
+            count_kinds = [k for k, in cddb.query(DocCount.kind).distinct()]
+            assert all("CommCareCase" in k for k in count_kinds), count_kinds
+
+            missing_kinds = [m for m, in cddb.query(MissingDoc.kind).distinct()]
+            assert all("CommCareCase" in k for k in missing_kinds), missing_kinds
+        casediff_db.close()
+
+        with self.session() as session:
+            session.execute(f"ATTACH DATABASE {quote(casediff_state_path)} AS cddb")
+            copy(CaseForms, session)
+            copy(Diff, session, f"kind IN {quotelist(expect_casediff_kinds)}")
+            copy(KeyValue, session, f"key IN {quotelist(resume_keys)}")
+            copy(DocCount, session)
+            copy(MissingDoc, session)
+
 
 class ResumeError(Exception):
     pass
@@ -343,12 +414,6 @@ class NoActionCaseForm(Base):
 
 class ProblemForm(Base):
     __tablename__ = "problemform"
-
-    id = Column(String(50), nullable=False, primary_key=True)
-
-
-class UnexpectedCaseUpdate(Base):
-    __tablename__ = "unexpectedcaseupdate"
 
     id = Column(String(50), nullable=False, primary_key=True)
 

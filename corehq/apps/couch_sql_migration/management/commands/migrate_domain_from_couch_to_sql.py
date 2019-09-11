@@ -5,12 +5,14 @@ from itertools import groupby, zip_longest
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from django.db.models import Q
 
 from sqlalchemy.exc import OperationalError
 
 from corehq.apps.domain.models import Domain
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     CASE_DOC_TYPES,
@@ -35,7 +37,13 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
 )
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.sql_db.util import (
+    estimate_partitioned_row_count,
+    paginate_query_across_partitioned_databases,
+)
+from corehq.util.log import with_progress_bar
 from corehq.util.markup import shell_green, shell_red
 
 log = logging.getLogger('main_couch_sql_datamigration')
@@ -117,7 +125,8 @@ class Command(BaseCommand):
             raise CommandError("--verbose only allowed for `stats`")
 
         assert Domain.get_by_name(domain), f'Unknown domain "{domain}"'
-        setup_logging(self.state_dir, action.lower(), options['debug'])
+        slug = f"{action.lower()}-{domain}"
+        setup_logging(self.state_dir, slug, options['debug'])
         getattr(self, "do_" + action)(domain)
 
     def do_MIGRATE(self, domain):
@@ -301,16 +310,26 @@ def blow_away_migration(domain, state_dir):
     assert not should_use_sql_backend(domain)
     delete_state_db(domain, state_dir)
 
-    for doc_type in doc_types():
-        sql_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type)
-        FormAccessorSQL.hard_delete_forms(domain, sql_form_ids, delete_attachments=False)
+    log.info("deleting forms...")
+    for form_ids in iter_chunks(XFormInstanceSQL, "form_id", domain):
+        FormAccessorSQL.hard_delete_forms(domain, form_ids, delete_attachments=False)
 
-    sql_form_ids = FormAccessorSQL.get_deleted_form_ids_in_domain(domain)
-    FormAccessorSQL.hard_delete_forms(domain, sql_form_ids, delete_attachments=False)
+    log.info("deleting cases...")
+    for case_ids in iter_chunks(CommCareCaseSQL, "case_id", domain):
+        CaseAccessorSQL.hard_delete_cases(domain, case_ids)
 
-    sql_case_ids = CaseAccessorSQL.get_case_ids_in_domain(domain)
-    CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
+    log.info("blew away migration for domain %s\n", domain)
 
-    sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)
-    CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
-    log.info("blew away migration for domain {}\n".format(domain))
+
+def iter_chunks(model_class, field, domain, chunk_size=5000):
+    where = Q(domain=domain)
+    row_count = estimate_partitioned_row_count(model_class, where)
+    rows = paginate_query_across_partitioned_databases(
+        model_class,
+        where,
+        values=[field],
+        load_source='couch_to_sql_migration',
+    )
+    rows = (f for f, in rows)  # unpack rows (each has a single field)
+    rows = with_progress_bar(rows, row_count, oneline="concise")
+    yield from chunked(rows, chunk_size, list)

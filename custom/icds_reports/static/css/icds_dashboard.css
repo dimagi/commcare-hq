@@ -12,7 +12,7 @@
 }
 
 .fixed-title-with-alert {
-    top: 50px;
+    top: 70px;
 }
 
 .fixes-filters {
@@ -25,7 +25,7 @@
 }
 
 .fixes-filters-with-alert {
-    top: 92px;
+    top: 112px;
 }
 
 .fixed-dots {
@@ -287,7 +287,8 @@ nvd3#sectorChart > div.title.h4 {
 }
 
 .left-menu-with-alert {
-    top: 50px;
+    top: 70px;
+    height: calc(100vh - 70px);
 }
 
 .navbar-default {
@@ -306,13 +307,16 @@ nvd3#sectorChart > div.title.h4 {
 }
 
 .main-container-with-alert {
-    top: 50px;
+    top: 70px;
 }
 
 .alert-maintenance {
     position: fixed;
     z-index: 1;
     width: 100%;
+    height: 70px;
+    text-align: center;
+    font-size: 13px;
 }
 
 .info-message {
@@ -357,6 +361,19 @@ li {
 .nav-list > li {
     padding-left: 20px;
 }
+
+.nav-list {
+    max-height: 100%;
+}
+
+.navigation-directive {
+    height: 100%;
+}
+
+.nav-container {
+    height: 100%;
+}
+
 .pointer {
     cursor: pointer;
 }
@@ -783,7 +800,13 @@ table.no-footer {
 .scroller {
     overflow-x: hidden;
     position: relative; /* relative or absolute positioning required by Perfect Scrollbar */
-    max-height: 500px;  /* height must be limited to induce scrolling behavior */
+    height: 70%;
+}
+
+@media only screen and (max-height: 600px) {
+    .scroller {
+        height: 60%;
+    }
 }
 
 #beneficiariesTable_processing {

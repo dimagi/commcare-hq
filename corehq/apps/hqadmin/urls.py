@@ -1,4 +1,3 @@
-
 from django.conf.urls import include, url
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns

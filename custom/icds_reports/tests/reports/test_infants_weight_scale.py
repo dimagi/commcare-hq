@@ -1,4 +1,3 @@
-
 from django.test.utils import override_settings
 
 from custom.icds_reports.messages import awcs_reported_weighing_scale_infants_help_text

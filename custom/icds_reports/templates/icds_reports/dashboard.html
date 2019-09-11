@@ -5,6 +5,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+        <title>ICDS-CAS Dashboard</title>
 {% compress css %}
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
@@ -49,11 +50,16 @@
         <script src="{% static 'angular-perfect-scrollbar/src/angular-perfect-scrollbar.js' %}"></script>
         <script src="{% static 'topojson/topojson.js' %}"></script>
         <script src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
-
+{% endcompress %}
+{% comment %}
+These topojson files are excluded from compression because:
+ 1. They are large and cause out of memory errors on some environments
+ 2. They are likely already sufficiently compressed
+{% endcomment %}
         <script src="{% static 'js/topojsons/states_v2.topojson.js' %}"></script>
         <script src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
         <script src="{% static 'js/topojsons/blocks_v3.topojson.js' %}"></script>
-{% endcompress %}
+
 {% comment %}
 For some odd reason if we include the entire block in a single compress tag we get javascript errors
 related to angular not being defined. But if we split it here it works fine.
@@ -128,7 +134,7 @@ related to angular not being defined. But if we split it here it works fine.
 
         <div class="row">
           <div class="col-md-12">
-            <div class="row alert-maintenance" style="height: 50px;">
+            <div class="row alert-maintenance">
               {% maintenance_alert request False %}
             </div>
             <div class="row">
@@ -314,6 +320,7 @@ related to angular not being defined. But if we split it here it works fine.
 
 {% block js-inline %}{% endblock js-inline %}
 <script>
+    angular.module('icdsApp').constant('isAlertActive', window.angular.element('.alert-maintenance').children().length === 1);
     angular.module('icdsApp').constant('locationHierarchy', {{ location_hierarchy | JSON }});
     angular.module('icdsApp').constant('userLocationId', {{ user_location_id | JSON }});
     angular.module('icdsApp').constant('allUserLocationId', {{ all_user_location_id | JSON }});

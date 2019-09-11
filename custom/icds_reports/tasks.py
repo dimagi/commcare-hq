@@ -1,4 +1,3 @@
-
 import io
 import logging
 import os
@@ -180,19 +179,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
 ]
-
-
-@periodic_task(run_every=crontab(minute=15, hour=18),
-               acks_late=True, queue='icds_aggregation_queue')
-def run_move_ucr_data_into_aggregation_tables_task():
-    move_ucr_data_into_aggregation_tables.delay()
-
-
-@periodic_task(run_every=crontab(minute=45, hour=17),
-               acks_late=True, queue='icds_aggregation_queue')
-def run_citus_move_ucr_data_into_aggregation_tables_task():
-    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
-        move_ucr_data_into_aggregation_tables.delay(force_citus=True)
 
 
 @serial_task('{force_citus}', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
@@ -1321,7 +1307,7 @@ def _child_health_monthly_aggregation(day, state_ids):
     pool = Pool(10)
     for query, params in helper.pre_aggregation_queries():
         pool.spawn(_child_health_helper, query, params)
-        pool.join()
+    pool.join()
 
     with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))

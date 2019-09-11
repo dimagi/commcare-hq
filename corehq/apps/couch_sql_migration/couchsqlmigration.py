@@ -183,12 +183,12 @@ class CouchSqlDomainMigrator(object):
                     adjust_datetimes(form_data)
                 xmlns = form_data.get("@xmlns", "")
                 user_id = extract_meta_user_id(form_data)
-                if xmlns == SYSTEM_ACTION_XMLNS:
-                    for form_id, case_ids in do_system_action(couch_form):
-                        self.case_diff_queue.update(case_ids, form_id)
             else:
                 xmlns = couch_form.xmlns
                 user_id = couch_form.user_id
+            if xmlns == SYSTEM_ACTION_XMLNS:
+                for form_id, case_ids in do_system_action(couch_form):
+                    self.case_diff_queue.update(case_ids, form_id)
             sql_form = XFormInstanceSQL(
                 form_id=couch_form.form_id,
                 domain=self.domain,
@@ -348,7 +348,7 @@ class CouchSqlDomainMigrator(object):
 
         if self.with_progress:
             prefix = "{} ({})".format(progress_name, ', '.join(doc_types))
-            return with_progress_bar(iterable, doc_count, prefix=prefix, oneline=False)
+            return with_progress_bar(iterable, doc_count, prefix=prefix)
         else:
             log.info("{} {} ({})".format(progress_name, doc_count, ', '.join(doc_types)))
             return iterable

@@ -32,6 +32,7 @@ from corehq.motech.openmrs.atom_feed import (
 from corehq.motech.openmrs.const import (
     ATOM_FEED_NAME_ENCOUNTER,
     ATOM_FEED_NAME_PATIENT,
+    IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
     IMPORT_FREQUENCY_WEEKLY,
     OPENMRS_ATOM_FEED_POLL_INTERVAL,
@@ -188,13 +189,9 @@ def import_patients_to_domain(domain_name, force=False):
     :param domain_name: The name of the domain
     :param force: Import regardless of the configured import frequency / today's date
     """
-    today = datetime.today()
     for importer in get_openmrs_importers_by_domain(domain_name):
-        if not force and importer.import_frequency == IMPORT_FREQUENCY_WEEKLY and today.weekday() != 1:
-            continue  # Import on Tuesdays
-        if not force and importer.import_frequency == IMPORT_FREQUENCY_MONTHLY and today.day != 1:
-            continue  # Import on the first of the month
-        # TODO: ^^^ Make those configurable
+        if not _should_import_today(importer) and not force:
+            continue
 
         password = b64_aes_decrypt(importer.password)
         requests = Requests(domain_name, importer.server_url, importer.username, password)
@@ -240,6 +237,21 @@ def import_patients_to_domain(domain_name, force=False):
                 'imported cases without either owner_id or location_type_name'
             )
             continue
+
+
+def _should_import_today(importer):
+    today = datetime.today()
+    return (
+        importer.import_frequency == IMPORT_FREQUENCY_DAILY
+        or (
+            importer.import_frequency == IMPORT_FREQUENCY_WEEKLY
+            and today.weekday() == 1  # Tuesday
+        )
+        or (
+            importer.import_frequency == IMPORT_FREQUENCY_MONTHLY
+            and today.day == 1
+        )
+    )
 
 
 @periodic_task(

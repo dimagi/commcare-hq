@@ -17,6 +17,7 @@ describe('AWC Reports Directive', function () {
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToAllLocations", false);
         $provide.constant("haveAccessToFeatures", false);
+        $provide.constant("isAlertActive", false);
     }));
 
     var mockBeneficiaryDetails = {
