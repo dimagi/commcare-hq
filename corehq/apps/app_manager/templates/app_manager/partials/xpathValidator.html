@@ -1,14 +1,11 @@
-{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% compress js %}
-  <script src="{% static 'xpath/lib/biginteger.js' %}"></script>
-  <script src="{% static 'xpath/lib/schemeNumber.js' %}"></script>
-  <script src="{% static 'xpath/xpath.js' %}"></script>
-  <script src="{% static 'xpath/parser.js' %}"></script>
-  <script src="{% static 'app_manager/js/xpathConfig.js' %}"></script>
-  <script src="{% static 'app_manager/js/xpathValidator.js' %}"></script>
-{% endcompress %}
+<script src="{% static 'xpath/lib/biginteger.js' %}"></script>
+<script src="{% static 'xpath/lib/schemeNumber.js' %}"></script>
+<script src="{% static 'xpath/xpath.js' %}"></script>
+<script src="{% static 'xpath/parser.js' %}"></script>
+<script src="{% static 'app_manager/js/xpathConfig.js' %}"></script>
+<script src="{% static 'app_manager/js/xpathValidator.js' %}"></script>
 <script type="text/html" id="XPathValidator.template">
   <div class="js-xpath-input-target control-group" data-bind="css: {error: xpathValidator.error}">
     <textarea class="form-control" spellcheck="false"

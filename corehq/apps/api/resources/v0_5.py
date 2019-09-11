@@ -1013,7 +1013,7 @@ class ODataFormResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = get_document_or_404(FormExportInstance, domain, self.config_id)
-        query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=True)
+        query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=False)
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
         return query

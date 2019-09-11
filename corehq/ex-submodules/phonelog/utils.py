@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import transaction
-from corehq.apps.users.util import format_username
+from dimagi.utils.logging import notify_exception
+from corehq.apps.users.util import format_username, cached_user_id_to_username
 from corehq.apps.users.dbaccessors import get_user_id_by_username
 from .models import UserEntry, DeviceReportEntry, UserErrorEntry, ForceCloseEntry
 from .tasks import send_device_log_to_sumologic
@@ -42,11 +43,13 @@ def _get_logs(form, report_name, report_slug):
 
 
 @transaction.atomic
-def process_device_log(domain, xform):
+def process_device_log(domain, xform, force_logs):
     _process_user_subreport(xform)
     _process_log_subreport(domain, xform)
     _process_user_error_subreport(domain, xform)
     _process_force_close_subreport(domain, xform)
+    if force_logs:
+        clear_device_log_request(domain, xform)
 
 
 def _process_user_subreport(xform):
@@ -277,3 +280,26 @@ class SumoLogicLog(object):
                 device_model=log.get('device_model'),
             ) for log in logs
         ).encode('utf-8'))
+
+
+def clear_device_log_request(domain, xform):
+    from corehq.apps.ota.models import DeviceLogRequest
+    user_subreport = _get_logs(xform.form_data, 'user_subreport', 'user')
+    username = (user_subreport[0].get('username') if user_subreport
+                else cached_user_id_to_username(xform.user_id))
+    device_id = xform.form_data.get('device_id')
+    try:
+        if not (username and device_id):
+            raise DeviceLogRequest.DoesNotExist()
+        log_request = DeviceLogRequest.objects.get(
+            domain=domain,
+            username=username,
+            device_id=device_id,
+        )
+    except DeviceLogRequest.DoesNotExist:
+        msg = "Forced log submission, but no corresponding request found."
+        notify_exception(None, msg, details={
+            'domain': domain, 'device_id': device_id, 'username': username
+        })
+    else:
+        log_request.delete()

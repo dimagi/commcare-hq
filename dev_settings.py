@@ -55,10 +55,6 @@ LOCAL_LOGGING_LOGGERS = {
         'handlers': ['null'],
         'level': 'WARNING',
     },
-    'raven': {
-        'handlers': ['null'],
-        'level': 'WARNING',
-    }
 }
 
 DATABASES = {

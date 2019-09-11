@@ -404,10 +404,10 @@ class TestCaseDiffProcess(SimpleTestCase):
         super(TestCaseDiffProcess, cls).tearDownClass()
 
     def tearDown(self):
-        delete_state_db("test", self.state_dir)
-        for log_file in self.get_log_files():
-            assert os.path.isabs(log_file), log_file
-            os.remove(log_file)
+        db_paths = glob(os.path.join(self.state_dir, "db", "*"))
+        for path in db_paths + self.get_log_files():
+            assert os.path.isabs(path), path
+            os.remove(path)
         super(TestCaseDiffProcess, self).tearDown()
 
     def test_process(self):
@@ -426,6 +426,14 @@ class TestCaseDiffProcess(SimpleTestCase):
             self.assertEqual(self.get_status(proc2), [0, 1, 0])
             proc2.enqueue({"case": "data"})
             self.assertEqual(self.get_status(proc2), [0, 2, 0])
+
+    def test_process_not_allowed(self):
+        with init_state_db("test", self.state_dir) as statedb:
+            with mod.CaseDiffQueue(statedb):
+                pass
+        with init_state_db("test", self.state_dir) as statedb:
+            with self.assertRaises(mod.ProcessNotAllowed):
+                mod.CaseDiffProcess(statedb)
 
     def test_fake_case_diff_queue_interface(self):
         tested = set()

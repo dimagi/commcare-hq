@@ -1,5 +1,3 @@
-# coding=utf-8
-
 from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.exceptions import (
