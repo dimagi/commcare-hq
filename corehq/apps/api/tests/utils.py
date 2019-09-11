@@ -17,6 +17,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from corehq.elastic import get_es_new
 from corehq.util.test_utils import PatchMeta, flag_enabled
 
 
@@ -188,3 +189,17 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
         elif method == "DELETE":
             response = self.client.delete(api_url, post_data, content_type=content_type)
         return response
+
+
+class ESTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(ESTest, cls).setUpClass()
+        cls.domain = Domain.get_or_create_with_name('elastico', is_active=True)
+        cls.es = get_es_new()
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        super(ESTest, cls).tearDownClass()
