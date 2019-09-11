@@ -41,7 +41,7 @@ from corehq.motech.openmrs.const import (
 )
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.logger import logger
-from corehq.motech.openmrs.models import POSIX_MILLISECONDS
+from corehq.motech.openmrs.models import POSIX_MILLISECONDS, OpenmrsImporter
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
@@ -155,7 +155,6 @@ def import_patients_of_owner(requests, importer, domain_name, owner, location=No
     )
 
 
-@task(serializer='pickle', queue='background_queue')
 def import_patients_to_domain(domain_name, force=False):
     """
     Iterates OpenmrsImporters of a domain, and imports patients
@@ -192,51 +191,54 @@ def import_patients_to_domain(domain_name, force=False):
     for importer in get_openmrs_importers_by_domain(domain_name):
         if not _should_import_today(importer) and not force:
             continue
+        import_patients_with_importer.delay(importer.to_json())
 
+@task(serializer='pickle', queue='background_queue')
+def import_patients_with_importer(importer_json):
+        importer = OpenmrsImporter.wrap(importer_json)
         password = b64_aes_decrypt(importer.password)
-        requests = Requests(domain_name, importer.server_url, importer.username, password)
+        requests = Requests(importer.domain, importer.server_url, importer.username, password)
         if importer.location_type_name:
             try:
-                location_type = LocationType.objects.get(domain=domain_name, name=importer.location_type_name)
+                location_type = LocationType.objects.get(domain=importer.domain, name=importer.location_type_name)
             except LocationType.DoesNotExist:
                 logger.error(
                     f'No organization level named "{importer.location_type_name}" '
-                    f'found in project space "{domain_name}".'
+                    f'found in project space "{importer.domain}".'
                 )
-                continue
+                return
             if importer.location_id:
-                location = SQLLocation.objects.filter(domain=domain_name).get(importer.location_id)
+                location = SQLLocation.objects.filter(domain=importer.domain).get(importer.location_id)
                 locations = location.get_descendants.filter(location_type=location_type)
             else:
-                locations = SQLLocation.objects.filter(domain=domain_name, location_type=location_type)
+                locations = SQLLocation.objects.filter(domain=importer.domain, location_type=location_type)
             for location in locations:
                 # Assign cases to the first user in the location, not to the location itself
-                owner = get_one_commcare_user_at_location(domain_name, location.location_id)
+                owner = get_one_commcare_user_at_location(importer.domain, location.location_id)
                 if not owner:
                     logger.error(
-                        f'Project space "{domain_name}" at location '
+                        f'Project space "{importer.domain}" at location '
                         f'"{location.name}" has no user to own cases imported '
                         f'from OpenMRS Importer "{importer}"'
                     )
                     continue
-                import_patients_of_owner(requests, importer, domain_name, owner, location)
+                import_patients_of_owner(requests, importer, importer.domain, owner, location)
         elif importer.owner_id:
             try:
                 owner = CommCareUser.get(importer.owner_id)
             except ResourceNotFound:
                 logger.error(
-                    f'Project space "{domain_name}" has no user to own cases '
+                    f'Project space "{importer.domain}" has no user to own cases '
                     f'imported from OpenMRS Importer "{importer}"'
                 )
-                continue
-            import_patients_of_owner(requests, importer, domain_name, owner)
+                return
+            import_patients_of_owner(requests, importer, importer.domain, owner)
         else:
             logger.error(
-                f'Error importing patients for project space "{domain_name}" from '
+                f'Error importing patients for project space "{importer.domain}" from '
                 f'OpenMRS Importer "{importer}": Unable to determine the owner of '
                 'imported cases without either owner_id or location_type_name'
             )
-            continue
 
 
 def _should_import_today(importer):
