@@ -189,52 +189,53 @@ def import_patients_to_domain(domain_name, force=False):
         if importer.should_import_today() or force:
             import_patients_with_importer.delay(importer.to_json())
 
+
 @task(serializer='pickle', queue='background_queue')
 def import_patients_with_importer(importer_json):
-        importer = OpenmrsImporter.wrap(importer_json)
-        password = b64_aes_decrypt(importer.password)
-        requests = Requests(importer.domain, importer.server_url, importer.username, password)
-        if importer.location_type_name:
-            try:
-                location_type = LocationType.objects.get(domain=importer.domain, name=importer.location_type_name)
-            except LocationType.DoesNotExist:
-                logger.error(
-                    f'No organization level named "{importer.location_type_name}" '
-                    f'found in project space "{importer.domain}".'
-                )
-                return
-            if importer.location_id:
-                location = SQLLocation.objects.filter(domain=importer.domain).get(importer.location_id)
-                locations = location.get_descendants.filter(location_type=location_type)
-            else:
-                locations = SQLLocation.objects.filter(domain=importer.domain, location_type=location_type)
-            for location in locations:
-                # Assign cases to the first user in the location, not to the location itself
-                owner = get_one_commcare_user_at_location(importer.domain, location.location_id)
-                if not owner:
-                    logger.error(
-                        f'Project space "{importer.domain}" at location '
-                        f'"{location.name}" has no user to own cases imported '
-                        f'from OpenMRS Importer "{importer}"'
-                    )
-                    continue
-                import_patients_of_owner(requests, importer, importer.domain, owner, location)
-        elif importer.owner_id:
-            try:
-                owner = CommCareUser.get(importer.owner_id)
-            except ResourceNotFound:
-                logger.error(
-                    f'Project space "{importer.domain}" has no user to own cases '
-                    f'imported from OpenMRS Importer "{importer}"'
-                )
-                return
-            import_patients_of_owner(requests, importer, importer.domain, owner)
-        else:
+    importer = OpenmrsImporter.wrap(importer_json)
+    password = b64_aes_decrypt(importer.password)
+    requests = Requests(importer.domain, importer.server_url, importer.username, password)
+    if importer.location_type_name:
+        try:
+            location_type = LocationType.objects.get(domain=importer.domain, name=importer.location_type_name)
+        except LocationType.DoesNotExist:
             logger.error(
-                f'Error importing patients for project space "{importer.domain}" from '
-                f'OpenMRS Importer "{importer}": Unable to determine the owner of '
-                'imported cases without either owner_id or location_type_name'
+                f'No organization level named "{importer.location_type_name}" '
+                f'found in project space "{importer.domain}".'
             )
+            return
+        if importer.location_id:
+            location = SQLLocation.objects.filter(domain=importer.domain).get(importer.location_id)
+            locations = location.get_descendants.filter(location_type=location_type)
+        else:
+            locations = SQLLocation.objects.filter(domain=importer.domain, location_type=location_type)
+        for location in locations:
+            # Assign cases to the first user in the location, not to the location itself
+            owner = get_one_commcare_user_at_location(importer.domain, location.location_id)
+            if not owner:
+                logger.error(
+                    f'Project space "{importer.domain}" at location '
+                    f'"{location.name}" has no user to own cases imported '
+                    f'from OpenMRS Importer "{importer}"'
+                )
+                continue
+            import_patients_of_owner(requests, importer, importer.domain, owner, location)
+    elif importer.owner_id:
+        try:
+            owner = CommCareUser.get(importer.owner_id)
+        except ResourceNotFound:
+            logger.error(
+                f'Project space "{importer.domain}" has no user to own cases '
+                f'imported from OpenMRS Importer "{importer}"'
+            )
+            return
+        import_patients_of_owner(requests, importer, importer.domain, owner)
+    else:
+        logger.error(
+            f'Error importing patients for project space "{importer.domain}" from '
+            f'OpenMRS Importer "{importer}": Unable to determine the owner of '
+            'imported cases without either owner_id or location_type_name'
+        )
 
 
 @periodic_task(
