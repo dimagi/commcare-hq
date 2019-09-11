@@ -28,8 +28,7 @@ function MonthModalController($location, $uibModalInstance) {
     vm.selectedMonth = $location.search()['month'] !== void(0) ? parseInt($location.search()['month']) : new Date().getMonth() + 1;
     vm.selectedYear = $location.search()['year'] !== void(0) ? parseInt($location.search()['year']) : new Date().getFullYear();
 
-    var isSSDNotAvailableForGivenDate = isSDD && (vm.selectedYear < 2019 || (vm.selectedYear === 2019 && vm.selectedMonth === 1));
-    if (isSSDNotAvailableForGivenDate) {
+    if (isSDD && (vm.selectedYear < 2019 || (vm.selectedYear === 2019 && vm.selectedMonth === 1))) {
         vm.showMessage = true;
         vm.selectedYear = new Date().getFullYear();
         vm.selectedMonth = new Date().getMonth() + 1;
@@ -95,8 +94,6 @@ function MonthModalController($location, $uibModalInstance) {
 
 function MonthFilterController($scope, $location, $uibModal, storageService) {
     var vm = this;
-    vm.isSSDAvailableForGivenDate = false;
-    vm.isSSD = false;
 
     vm.getPlaceholder = function() {
 
@@ -109,8 +106,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
     };
 
     vm.open = function () {
-
-        var modalOptions = {
+        var modalInstance = $uibModal.open({
             animation: vm.animationsEnabled,
             ariaLabelledBy: 'modal-title',
             ariaDescribedBy: 'modal-body',
@@ -119,14 +115,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
             controllerAs: '$ctrl',
             resolve: {
             },
-        };
-
-        if (vm.isSSD && !vm.isSSDAvailableForGivenDate) {
-            modalOptions['backdrop'] = 'static';
-            modalOptions['keyboard'] = false;
-        }
-
-        var modalInstance = $uibModal.open(modalOptions);
+        });
 
         modalInstance.result.then(function (data) {
             $location.search('month', data['month']);
@@ -139,11 +128,13 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
     vm.init = function () {
         var month = parseInt($location.search()['month']);
         var year = parseInt($location.search()['year']);
+        var displayModal = true;
 
-        vm.isSSD = $location.path().indexOf('service_delivery_dashboard') !== -1;
-        vm.isSSDAvailableForGivenDate = year > 2019 || (year === 2019  &&  month > 1);
+        if (year > 2019 || (year === 2019  &&  month > 1)) {
+            displayModal = false;
+        }
 
-        if (vm.isSSD && !vm.isSSDAvailableForGivenDate) {
+        if ($location.path().indexOf('service_delivery_dashboard') !== -1 && displayModal) {
             vm.open();
         }
     };
