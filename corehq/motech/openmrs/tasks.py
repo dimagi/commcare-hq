@@ -189,9 +189,8 @@ def import_patients_to_domain(domain_name, force=False):
     :param force: Import regardless of the configured import frequency / today's date
     """
     for importer in get_openmrs_importers_by_domain(domain_name):
-        if not _should_import_today(importer) and not force:
-            continue
-        import_patients_with_importer.delay(importer.to_json())
+        if _should_import_today(importer) or force:
+            import_patients_with_importer.delay(importer.to_json())
 
 @task(serializer='pickle', queue='background_queue')
 def import_patients_with_importer(importer_json):
