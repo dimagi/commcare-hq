@@ -67,11 +67,23 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     if not settings.ENTERPRISE_MODE:
-        if not submission_rate_limiter.allow_usage(domain):
-            datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
+        try:
+            if not submission_rate_limiter.allow_usage(domain):
+                datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
+                    'domain:{}'.format(domain),
+                ])
+            submission_rate_limiter.report_usage(domain)
+        except Exception:
+            # Prevent rate limiting logic from ever blocking as submission if it errors
+            # until it is proven to be a stable and essential part of our system.
+            # Instead, report the issue to sentry and track the overall count on datadog
+            notify_exception(request, "Exception raised in the rate limiter")
+            datadog_counter('commcare.xform_submissions.rate_limiter_errors', tags=[
                 'domain:{}'.format(domain),
             ])
-        submission_rate_limiter.report_usage(domain)
+            if settings.UNIT_TESTING:
+                raise
+
     metric_tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
         'domain:{}'.format(domain),
