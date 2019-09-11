@@ -306,9 +306,7 @@ def step_calculator(length, granularity):
 
     Approximates two updates per output granularity (dot) with update
     interval bounded at 0.1s <= t <= 5m. This assumes a uniform
-    iteration rate. It could be improved to calculate the next wait
-    based on a window of recent iterations, which would yield nicer
-    output for non-uniform iteration rates.
+    iteration rate.
     """
     def should_update(i):
         assert i, "divide by zero protection"
