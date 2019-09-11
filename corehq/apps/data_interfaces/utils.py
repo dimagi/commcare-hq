@@ -2,6 +2,7 @@ from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound
 
+from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id, _get_startkey_endkey_all_records
 from corehq.motech.repeaters.models import RepeatRecord
 from soil import DownloadBase
 
@@ -103,19 +104,7 @@ def property_references_parent(case_property):
     )
 
 
-def operation_on_payloads(payload_ids, domain, action, task=None, from_excel=False):
-
-    def validate_record(r):
-        try:
-            payload = RepeatRecord.get(r)
-        except ResourceNotFound:
-            return False
-
-        if payload.domain != domain:
-            return False
-
-        return payload
-
+def operate_on_payloads(payload_ids, domain, action, task=None, from_excel=False):
     response = {
         'errors': [],
         'success': [],
@@ -127,7 +116,7 @@ def operation_on_payloads(payload_ids, domain, action, task=None, from_excel=Fal
         DownloadBase.set_progress(task, 0, len(payload_ids))
 
     for payload_id in payload_ids:
-        valid_record = validate_record(payload_id)
+        valid_record = _validate_record(payload_id, domain)
 
         if valid_record:
             try:
@@ -157,3 +146,41 @@ def operation_on_payloads(payload_ids, domain, action, task=None, from_excel=Fal
         _("Successfully {action} {count} form(s)".format(action=action, count=success_count))
 
     return {"messages": response}
+
+
+def generate_ids_and_operate_on_payloads(data, domain, action, task=None, from_excel=False):
+
+    payload_ids = _get_ids(data, domain)
+
+    response = operate_on_payloads(payload_ids, domain, action, task, from_excel)
+
+    return {"messages": response}
+
+
+def _get_ids(data, domain):
+    if not data:
+        return []
+
+    if data.get('payload_id', None):
+        results = get_repeat_records_by_payload_id(domain, data['payload_id'])
+    else:
+        kwargs = {
+            'include_docs': True,
+            'reduce': False,
+            'descending': True,
+        }
+        kwargs.update(_get_startkey_endkey_all_records(domain, data['repeater']))
+        results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
+    ids = [x['id'] for x in results]
+
+    return ids
+
+
+def _validate_record(r, domain):
+    try:
+        payload = RepeatRecord.get(r)
+    except ResourceNotFound:
+        return False
+    if payload.domain != domain:
+        return False
+    return payload

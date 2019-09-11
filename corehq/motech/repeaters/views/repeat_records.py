@@ -15,8 +15,7 @@ import pytz
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
-from corehq.apps.data_interfaces.tasks import task_operation_on_payloads
+from corehq.apps.data_interfaces.tasks import task_operate_on_payloads, task_generate_ids_and_operate_on_payloads
 from dimagi.utils.web import json_response
 
 from corehq import toggles
@@ -37,7 +36,6 @@ from corehq.motech.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
-    _get_startkey_endkey_all_records
 )
 from corehq.motech.repeaters.forms import EmailBulkPayload
 from corehq.motech.repeaters.models import RepeatRecord
@@ -314,12 +312,9 @@ class RepeatRecordView(View):
         # Retriggers a repeat record
         flag = _get_flag(request)
         if flag:
-            records = _get_ids(request, domain)
+            _schedule_task_with_flag(request, domain, 'resend')
         else:
-            records = _get_records(request)
-        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-        task = task_operation_on_payloads.delay(records, domain, action='resend')
-        task_ref.set_task(task)
+            _schedule_task_without_flag(request, domain, 'resend')
 
         return HttpResponse('OK')
 
@@ -329,12 +324,9 @@ class RepeatRecordView(View):
 def cancel_repeat_record(request, domain):
     flag = _get_flag(request)
     if flag == 'cancel_all':
-        records = _get_ids(request, domain)
+        _schedule_task_with_flag(request, domain, 'cancel')
     else:
-        records = _get_records(request)
-    task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    task = task_operation_on_payloads.delay(records, domain, action='cancel')
-    task_ref.set_task(task)
+        _schedule_task_without_flag(request, domain, 'cancel')
 
     return HttpResponse('OK')
 
@@ -344,18 +336,18 @@ def cancel_repeat_record(request, domain):
 def requeue_repeat_record(request, domain):
     flag = _get_flag(request)
     if flag == 'requeue_all':
-        records = _get_ids(request, domain)
+        _schedule_task_with_flag(request, domain, 'requeue')
     else:
-        records = _get_records(request)
-    task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    task = task_operation_on_payloads.delay(records, domain, action='requeue')
-    task_ref.set_task(task)
+        _schedule_task_without_flag(request, domain, 'requeue')
 
     return HttpResponse('OK')
 
 
 def _get_records(request):
     records = request.POST.get('record_id')
+    if not records:
+        return []
+
     records_ids = records.split(' ')
     if records_ids[-1] == '':
         records_ids.pop()
@@ -365,7 +357,7 @@ def _get_records(request):
 
 def _get_query(request):
     query = request.POST.get('record_id')
-    return query
+    return query if query else ''
 
 
 def _get_flag(request):
@@ -394,25 +386,6 @@ def _change_record_state(base_string, string_to_add):
     return string_to_return
 
 
-def _get_ids(request, domain):
-    query = _get_query(request)
-    form_query_string = six.moves.urllib.parse.unquote(query)
-    data = _url_parameters_to_dict(form_query_string)
-    if data['payload_id']:
-        results = get_repeat_records_by_payload_id(domain, data['payload_id'])
-    else:
-        kwargs = {
-            'include_docs': True,
-            'reduce': False,
-            'descending': True,
-        }
-        kwargs.update(_get_startkey_endkey_all_records(domain, data['repeater']))
-        results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
-    ids = [x['id'] for x in results]
-
-    return ids
-
-
 def _url_parameters_to_dict(url_params):
     dict_to_return = {}
     while True:
@@ -426,3 +399,21 @@ def _url_parameters_to_dict(url_params):
         url_params = url_params[pos_two+1:]
 
     return dict_to_return
+
+
+def _schedule_task_with_flag(request, domain, action):
+    query = _get_query(request)
+    data = None
+    if query:
+        form_query_string = six.moves.urllib.parse.unquote(query)
+        data = _url_parameters_to_dict(form_query_string)
+    task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
+    task = task_generate_ids_and_operate_on_payloads.delay(data, domain, action)
+    task_ref.set_task(task)
+
+
+def _schedule_task_without_flag(request, domain, action):
+    records = _get_records(request)
+    task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
+    task = task_operate_on_payloads.delay(records, domain, action)
+    task_ref.set_task(task)
