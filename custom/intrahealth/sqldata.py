@@ -4015,8 +4015,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
                 location_name = stock['{}'.format(self.loc_name)]
                 location_id = stock['{}'.format(self.loc_id)]
                 if location_id is None:
-                    location_id = ''
-                    location_name = ''
+                    location_id = location_name
                 product_name = stock['product_name']
                 product_id = stock['product_id']
                 program_id = stock['program_id']
@@ -4234,8 +4233,7 @@ class TauxDeRuptureRateData(SqlData):
                 location_name = stock['{}'.format(self.loc_name)]
                 location_id = stock['{}'.format(self.loc_id)]
                 if location_id is None:
-                    location_id = ''
-                    location_name = ''
+                    location_id = location_name
                 product_name = stock['product_name']
                 product_id = stock['product_id']
                 program_id = stock['program_id']
@@ -4453,8 +4451,7 @@ class ConsommationPerProductData(SqlData):
                 location_name = consumption['{}'.format(self.loc_name)]
                 location_id = consumption['{}'.format(self.loc_id)]
                 if location_id is None:
-                    location_id = ''
-                    location_name = ''
+                    location_id = location_name
                 product_name = consumption['product_name']
                 product_id = consumption['product_id']
                 program_id = consumption['program_id']
@@ -5018,8 +5015,7 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
                 location_id = quantity['{}'.format(self.loc_id)]
                 location_name = quantity['{}'.format(self.loc_name)]
                 if location_id is None:
-                    location_id = ''
-                    location_name = ''
+                    location_id = location_name
                 product_name = quantity['product_name']
                 product_id = quantity['product_id']
                 program_id = quantity['select_programs']
@@ -5271,8 +5267,7 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
 
             for pna in pnas_list:
                 if pna['location_id'] is None:
-                    pna['location_id'] = ''
-                    pna['location_name'] = ''
+                    pna['location_id'] = pna['location_name']
 
 
             pnas_list = sorted(pnas_list, key=lambda x: x['location_id'])
@@ -5784,7 +5779,9 @@ class RecapPassageTwoTables(RecapPassageTwoData):
             rows.append(row)
             if add_amount_owed_column:
                 products_amount = self.get_row_product_values(pps_data, 'amount_owed')
-                amount_sum = dict(html=0)
+                amount_sum = {
+                    'html': 0
+                }
                 for name in self.product_names:
                     product_value = products_amount.get(name, {'html': 0})
                     amount_sum['html'] += product_value['html']
@@ -5969,6 +5966,8 @@ class IndicateursDeBaseData(SqlData):
             for row in sorted_rows:
                 location_id = row[self.loc_id]
                 location_name = row[self.loc_name]
+                if location_id is None:
+                    location_id = location_name
                 nb_pps_enregistres = row['nb_pps_enregistres']
                 nb_pps_visites = row['nb_pps_visites']
                 tmp_min_date = row['date_prevue_livraison_debut']
