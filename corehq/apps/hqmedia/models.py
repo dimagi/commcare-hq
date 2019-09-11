@@ -12,6 +12,7 @@ from django.utils.translation import ugettext as _
 
 import magic
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from lxml import etree
 from memoized import memoized
 from PIL import Image
 
@@ -722,14 +723,15 @@ class FormMediaMixin(MediaMixin):
         return media
 
     def rename_media(self, old_path, new_path):
-        count = 0
+        menu_count = self.rename_menu_media(self, old_path, new_path)
 
-        count += self.rename_menu_media(self, old_path, new_path)
-
+        xform_count = 0
         if self.form_type != 'shadow_form':
-            count += self.memoized_xform().rename_media(old_path, new_path)
+            xform_count = self.memoized_xform().rename_media(old_path, new_path)
+            if xform_count:
+                self.source = etree.tostring(self.memoized_xform().xml).decode('utf-8')
 
-        return count
+        return menu_count + xform_count
 
 
 class ApplicationMediaMixin(Document, MediaMixin):
