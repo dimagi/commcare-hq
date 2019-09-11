@@ -32,9 +32,6 @@ from corehq.motech.openmrs.atom_feed import (
 from corehq.motech.openmrs.const import (
     ATOM_FEED_NAME_ENCOUNTER,
     ATOM_FEED_NAME_PATIENT,
-    IMPORT_FREQUENCY_DAILY,
-    IMPORT_FREQUENCY_MONTHLY,
-    IMPORT_FREQUENCY_WEEKLY,
     OPENMRS_ATOM_FEED_POLL_INTERVAL,
     OPENMRS_IMPORTER_DEVICE_ID_PREFIX,
     XMLNS_OPENMRS,
@@ -189,7 +186,7 @@ def import_patients_to_domain(domain_name, force=False):
     :param force: Import regardless of the configured import frequency / today's date
     """
     for importer in get_openmrs_importers_by_domain(domain_name):
-        if _should_import_today(importer) or force:
+        if importer.should_import_today() or force:
             import_patients_with_importer.delay(importer.to_json())
 
 @task(serializer='pickle', queue='background_queue')
@@ -238,21 +235,6 @@ def import_patients_with_importer(importer_json):
                 f'OpenMRS Importer "{importer}": Unable to determine the owner of '
                 'imported cases without either owner_id or location_type_name'
             )
-
-
-def _should_import_today(importer):
-    today = datetime.today()
-    return (
-        importer.import_frequency == IMPORT_FREQUENCY_DAILY
-        or (
-            importer.import_frequency == IMPORT_FREQUENCY_WEEKLY
-            and today.weekday() == 1  # Tuesday
-        )
-        or (
-            importer.import_frequency == IMPORT_FREQUENCY_MONTHLY
-            and today.day == 1
-        )
-    )
 
 
 @periodic_task(
