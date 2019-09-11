@@ -130,7 +130,7 @@ def openmrs_test_fire(request, domain, repeater_id, record_id):
 @login_and_domain_required
 @require_http_methods(['POST'])
 def openmrs_import_now(request, domain):
-    import_patients_to_domain.delay(request.domain, True)
+    import_patients_to_domain(request.domain, force=True)
     return JsonResponse({'status': 'Accepted'}, status=202)
 
 
