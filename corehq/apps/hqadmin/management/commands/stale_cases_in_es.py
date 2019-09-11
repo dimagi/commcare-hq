@@ -14,9 +14,19 @@ from corehq.util.couch_helpers import paginate_view
 
 class Command(BaseCommand):
     """
-    Returns list of couch case_ids that are not updated in ES
+    Returns list of (case_id, es_server_modified_on, couch_server_modified_on)
+        tuples that are not updated in ES
 
-        $ ./manage.py stale_cases_in_es <DOMAIN> > case_ids.txt
+        Can be used in conjunction with republish_couch_case_changes
+
+        1. Generate couch case tuples not updated in ES with extra debug columns
+        $ ./manage.py stale_cases_in_es <DOMAIN> > case_ids_info.txt
+
+        2. Strip debug columns to prepare for reprocessing
+        $ cut -d, -f2-3 --complement case_ids_info.txt > case_ids.txt
+
+        3. Republish case changes
+        $ ./manage.py republish_couch_case_changes <DOMAIN> case_ids.txt
 
     """
     help = inspect.cleandoc(__doc__).split('\n')[0]
