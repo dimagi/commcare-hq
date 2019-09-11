@@ -351,7 +351,7 @@ class CouchSqlDomainMigrator(object):
 
         if self.with_progress:
             prefix = "{} ({})".format(progress_name, ', '.join(doc_types))
-            return with_progress_bar(iterable, doc_count, prefix=prefix)
+            return with_progress_bar(iterable, doc_count, prefix=prefix, oneline=False)
         else:
             log.info("{} {} ({})".format(progress_name, doc_count, ', '.join(doc_types)))
             return iterable
