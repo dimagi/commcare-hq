@@ -1,6 +1,7 @@
 import logging
 import os
 
+from django.conf import settings
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -65,11 +66,12 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @profile_prod('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
-    if not submission_rate_limiter.allow_usage(domain):
-        datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
-            'domain:{}'.format(domain),
-        ])
-    submission_rate_limiter.report_usage(domain)
+    if not settings.ENTERPRISE_MODE:
+        if not submission_rate_limiter.allow_usage(domain):
+            datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
+                'domain:{}'.format(domain),
+            ])
+        submission_rate_limiter.report_usage(domain)
     metric_tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
         'domain:{}'.format(domain),
