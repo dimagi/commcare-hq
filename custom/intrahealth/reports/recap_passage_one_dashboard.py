@@ -23,26 +23,21 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
     @property
     def export_table(self):
         report = [
-            [
-                self.name,
-                [],
-            ]
         ]
-        rows, headers_objects = self.calculate_table()
-        headers = [x.html for x in headers_objects]
-        report[0][1].append(headers)
-
-        for row in rows:
-            location_name = row[0]
-            row_to_return = [location_name]
-
-            rows_length = len(row)
-            for r in range(1, rows_length):
-                value = row[r]
-                row_to_return.append(value)
-
-            report[0][1].append(row_to_return)
-
+        visits = self.calculate_table()
+        for visit in visits.values():
+            report_sheet = []
+            report_sheet.append(
+                "{}_{}".format(
+                    visit['title'].replace(' ', '_'),
+                    visit['comment'].strftime("%Y_%b_%d")
+                )
+            )
+            report_sheet.append([
+                [x.html for x in visit['headers'].header],
+                *visit['rows']
+            ])
+            report.append(report_sheet)
         return report
 
     @property
@@ -105,13 +100,14 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
 
     def get_report_context(self):
         if self.needs_filters:
-            headers = []
+            visits = []
             aggregated_headers = []
-            rows = []
             aggregated_rows = []
             comment = ""
+
         else:
-            rows, headers = self.calculate_table()
+            visits = self.calculate_table()
+
             aggregated_rows, aggregated_headers = self.calculate_aggregated_table()
             
             for n in range(len(aggregated_headers)):
@@ -124,10 +120,9 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
                 'title': self.name,
                 'slug': self.slug,
                 'comment': comment,
-                'headers': headers,
-                'rows': rows,
                 'project': self.request.GET.get('project_name') or "Malaria",
                 'default_rows': self.default_rows,
+                'visits': sorted(visits.values(), key=lambda visit: visit['comment'], reverse=True)
             },
             'aggregated_table': {
                 'headers': aggregated_headers,
