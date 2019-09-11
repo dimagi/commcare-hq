@@ -3,6 +3,8 @@ from collections import namedtuple
 
 from django.db import models, transaction
 
+from memoized import memoized
+
 from casexml.apps.phone.restore import stream_response
 
 from corehq.blobs import CODES, get_blob_db
@@ -188,3 +190,36 @@ class MobileRecoveryMeasure(models.Model):
             res["app_version_min"] = self.app_version_min
             res["app_version_max"] = self.app_version_max
         return res
+
+
+class DeviceLogRequest(models.Model):
+    """
+    A pending request that a particular device submit their logs
+    """
+    domain = models.CharField(max_length=255)
+    username = models.CharField(max_length=255)
+    device_id = models.CharField(max_length=255)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta(object):
+        unique_together = ('domain', 'username', 'device_id')
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        _all_device_log_requests.reset_cache()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        _all_device_log_requests.reset_cache()
+
+    @classmethod
+    def is_pending(cls, domain, username, device_id):
+        """Is there a pending device log request matching these params?"""
+        return (domain, username, device_id) in _all_device_log_requests()
+
+
+@memoized
+def _all_device_log_requests():
+    # This is expected to be very small, usually empty, but it's accessed
+    # every heartbeat request, so it's memoized to the Django process
+    return set(DeviceLogRequest.objects.values_list('domain', 'username', 'device_id'))
