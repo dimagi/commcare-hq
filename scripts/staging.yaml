@@ -10,7 +10,7 @@
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
 #     $ scripts/rebuildstaging
-#     $ commcare-cloud staging fab deploy
+#     $ commcare-cloud staging deploy
 # Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
@@ -59,4 +59,5 @@ branches:
   - bmb/requirejs-registration  # Biyeun Sep 6
   - sk/sentry-upgrade # SK Sep 3
   - jls/use-compress-more # Jenny Sept 5
+  - nh/omrs/import_task  # Norman Sep 11
 submodules: {}
