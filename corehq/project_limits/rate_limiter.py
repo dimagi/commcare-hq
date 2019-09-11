@@ -12,7 +12,8 @@ class RateLimiter(object):
 
     >>> per_user_rate_def = RateDefinition(per_week=50000, per_day=13000, per_second=.001)
     >>> min_rate_def = RateDefinition(per_second=10)
-    >>> my_feature_rate_limiter = RateLimiter('my_feature', PerUserRateDefinition(per_user_rate_def, min_rate_def).get_rate_limits)
+    >>> per_user_rate_def = PerUserRateDefinition(per_user_rate_def, min_rate_def)
+    >>> my_feature_rate_limiter = RateLimiter('my_feature', per_user_rate_def.get_rate_limits)
     >>> if my_feature_rate_limiter.allow_usage('my_domain'):
     ...     # ...do stuff...
     ...     my_feature_rate_limiter.report_usage('my_domain')
@@ -41,7 +42,7 @@ class RateLimiter(object):
                    for rate_counter, limit in self.get_rate_limits(*scope))
 
 
-@quickcache(['domain'], memoize_timeout=60, timeout=60*60)
+@quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
 def get_user_count(domain):
     return CommCareUser.total_by_domain(domain, is_active=True)
 

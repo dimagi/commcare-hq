@@ -11,7 +11,8 @@ def test_rate_limit_interface():
     """
     per_user_rate_def = RateDefinition(per_week=50000, per_day=13000, per_second=.001)
     min_rate_def = RateDefinition(per_second=10)
-    my_feature_rate_limiter = RateLimiter('my_feature', PerUserRateDefinition(per_user_rate_def, min_rate_def).get_rate_limits)
+    per_user_rate_def = PerUserRateDefinition(per_user_rate_def, min_rate_def)
+    my_feature_rate_limiter = RateLimiter('my_feature', per_user_rate_def.get_rate_limits)
     if my_feature_rate_limiter.allow_usage('my_domain'):
         # ...do stuff...
         my_feature_rate_limiter.report_usage('my_domain')
