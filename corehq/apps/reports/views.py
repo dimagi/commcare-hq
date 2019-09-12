@@ -1059,7 +1059,7 @@ class CaseDataView(BaseProjectReportSectionView):
                 (_product_name(product_id), entry_map[product_id])
                 for product_id in entry_map
             ]
-            product_tuples.sort(key=lambda product_name, entry_state: product_name)
+            product_tuples.sort(key=lambda x: x[0])
             ledger_map[section] = product_tuples
 
         repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)
