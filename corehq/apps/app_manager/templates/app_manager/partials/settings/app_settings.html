@@ -27,16 +27,12 @@
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
   <div class="col-sm-2">
-  <!-- ko if: showDisabledCheckbox -->
     <input type="checkbox"
            data-bind="checked: boolValue,
-                      attr: {disabled: true, id: inputId}"/>
-  <!-- /ko -->
-  <!-- ko ifnot: showDisabledCheckbox -->
-    <input type="checkbox"
-           data-bind="checked: boolValue,
-                      attr: {disabled: !enabled(), id: inputId}"/>
-  <!-- /ko -->
+                      attr: {
+                        disabled: !enabled() || showDisabledCheckbox(),
+                        id: inputId
+                      }"/>
   </div>
   <!-- ko if: showUncheckWarning -->
   <div class="alert alert-warning alert-small clearfix">
