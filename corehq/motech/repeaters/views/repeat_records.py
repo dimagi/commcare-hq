@@ -253,8 +253,8 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         context = super(DomainForwardingRepeatRecords, self).report_context
 
         total = get_repeat_record_count(self.domain)
-        total_cancel = get_cancelled_repeat_record_count(self.domain, None)
-        total_requeue = get_pending_repeat_record_count(self.domain, None)
+        total_cancel = get_pending_repeat_record_count(self.domain, None)
+        total_requeue = get_cancelled_repeat_record_count(self.domain, None)
 
         form_query_string = self.request.GET.urlencode()
         form_query_string_requeue = _change_record_state(form_query_string, 'CANCELLED')
