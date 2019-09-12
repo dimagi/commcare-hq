@@ -27,7 +27,13 @@ hqDefine("up_nrhm/js/main", function () {
         }
     }
 
-    $(function () {
+    $(document).on("ajaxComplete", function (e, xhr, options) {
+        var fragment = "async/",
+            pageUrl = window.location.href.split('?')[0],
+            ajaxUrl = options.url.split('?')[0];
+        if (ajaxUrl.indexOf(fragment) === -1 || !pageUrl.endsWith(ajaxUrl.replace(fragment, ''))) {
+            return;
+        }
         if (hqImport("hqwebapp/js/initial_page_data").get("rendered_as") === "print") {
             if (!$('#report_filter_sf').val()) {
                 document.body.style.zoom="80%";
