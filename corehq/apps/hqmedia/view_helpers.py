@@ -1,10 +1,8 @@
-
 from collections import defaultdict
 
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-import six
 from lxml import etree
 
 from corehq.apps.app_manager.views.media_utils import interpolate_media_path
@@ -22,7 +20,7 @@ def download_multimedia_paths_rows(app, only_missing=False):
         return readable
 
     rows = []
-    for path, refs in six.iteritems(paths):
+    for path, refs in paths.items():
         if not only_missing or path not in app.multimedia_map:
             rows.append((_("Paths"), [path, ''] + [_readable_ref(r) for r in refs]))
 
@@ -74,24 +72,16 @@ def validate_multimedia_paths_rows(app, rows):
 def update_multimedia_paths(app, paths):
     # Update module and form references
     success_counts = defaultdict(lambda: 0)
-    dirty_xform_ids = set()
-    for old_path, new_path in six.iteritems(paths):
+    for old_path, new_path in paths.items():
         for module in app.modules:
             success_counts[module.unique_id] += module.rename_media(old_path, new_path)
-            for form in module.forms:
+            for form in module.get_forms():
                 update_count = form.rename_media(old_path, new_path)
                 if update_count:
-                    dirty_xform_ids.add(form.unique_id)
                     success_counts[form.unique_id] += update_count
 
-    # Update any form xml that changed
-    for module in app.modules:
-        for form in module.forms:
-            if form.unique_id in dirty_xform_ids:
-                form.source = etree.tostring(form.memoized_xform().xml).decode('utf-8')
-
     # Update app's master map of multimedia
-    for old_path, new_path in six.iteritems(paths):
+    for old_path, new_path in paths.items():
         if old_path in app.multimedia_map:  # path will not be present if file is missing from app
             app.multimedia_map.update({
                 new_path: app.multimedia_map[old_path],

@@ -1,7 +1,5 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-import six
-
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.phone.models import OTARestoreUser
 from casexml.apps.case.xml import V1, V2
@@ -10,7 +8,7 @@ from dimagi.utils.modules import to_function
 import itertools
 
 
-class FixtureProvider(six.with_metaclass(ABCMeta)):
+class FixtureProvider(metaclass=ABCMeta):
     @abstractproperty
     def id(self):
         """ID of the fixture"""

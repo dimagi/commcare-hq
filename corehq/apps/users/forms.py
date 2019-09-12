@@ -16,7 +16,6 @@ from django.utils.translation import string_concat
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-import six
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
@@ -24,7 +23,6 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
-from six.moves import range
 
 from dimagi.utils.django.fields import TrimmedCharField
 
@@ -43,10 +41,9 @@ from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
-from corehq.util.python_compatibility import soft_assert_type_text
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
-mark_safe_lazy = lazy(mark_safe, six.text_type)
+mark_safe_lazy = lazy(mark_safe, str)
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 
@@ -1171,7 +1168,7 @@ class CommCareUserFilterForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Filter and Download Users"),
-                crispy.Field('role_id'),
+                crispy.Field('role_id', css_class="hqwebapp-select2"),
                 crispy.Field('search_string'),
                 crispy.Field('location_id'),
             ),

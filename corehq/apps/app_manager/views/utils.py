@@ -8,9 +8,6 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-import six
-from six.moves.urllib.parse import urlencode
-
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -129,7 +126,7 @@ def bail(request, domain, app_id, not_found=""):
 
 
 def encode_if_unicode(s):
-    return s.encode('utf-8') if isinstance(s, six.text_type) else s
+    return s.encode('utf-8') if isinstance(s, str) else s
 
 
 def validate_langs(request, existing_langs):
@@ -166,16 +163,18 @@ def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
         'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
-        'custom_base_url'
+        'custom_base_url', 'family_id',
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
     form_ids_by_xmlns = _get_form_ids_by_xmlns(app_json)  # do this before we change the source
 
-    for key, value in six.iteritems(master_json):
+    for key, value in master_json.items():
         if key not in excluded_fields:
             app_json[key] = value
     app_json['version'] = master_json['version']
+    app_json['upstream_version'] = master_json['version']
+    app_json['upstream_app_id'] = master_json['copy_of']
     wrapped_app = wrap_app(app_json)
     for module in wrapped_app.get_report_modules():
         if report_map is None:
@@ -229,7 +228,7 @@ def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
     def _practice_mode_configured(app):
         if is_set(app):
             return True
-        return any(is_set(profile) for _, profile in app.build_profiles.items())
+        return any(is_set(profile) for profile in app.build_profiles.values())
 
     return [app for app in get_apps_in_domain(domain) if _practice_mode_configured(app)]
 
@@ -260,7 +259,7 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
     apps = get_practice_mode_configured_apps(domain, mobile_worker_id)
     for app in apps:
         unset_user(app)
-        for _, profile in six.iteritems(app.build_profiles):
+        for profile in app.build_profiles.values():
             unset_user(profile)
         app.save()
 
@@ -299,7 +298,7 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
     try:
         update_linked_app(app, user_id)
     except (AppLinkError, MultimediaMissingError) as e:
-        message = six.text_type(e)
+        message = str(e)
     except Exception:
         # Send an email but then crash the process
         # so we know what the error was

@@ -1,4 +1,3 @@
-
 from collections import namedtuple
 from datetime import datetime
 
@@ -12,7 +11,6 @@ from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-import six
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
@@ -100,7 +98,6 @@ from corehq.messaging.scheduling.views import (
     EditScheduleView,
 )
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import absolute_reverse
 
@@ -658,8 +655,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     @memoized
     def phone_number_filter(self):
         value = PhoneNumberFilter.get_value(self.request, self.domain)
-        if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+        if isinstance(value, str):
             return value.strip()
 
         return None
@@ -830,12 +826,14 @@ class MessageEventDetailReport(BaseMessagingEventReport):
 
     @property
     def template_context(self):
+        context = super().template_context
         event = self.messaging_event
         date = ServerTime(event.date).user_time(self.timezone).done()
-        return {
+        context.update({
             'messaging_event_date': date.strftime(SERVER_DATETIME_FORMAT),
             'messaging_event_type': self.get_source_display(event, display_only=True),
-        }
+        })
+        return context
 
     @property
     def headers(self):
@@ -971,12 +969,14 @@ class SurveyDetailReport(BaseMessagingEventReport):
 
     @property
     def template_context(self):
-        return {
+        context = super().template_context
+        context.update({
             'xforms_session': self.xforms_session,
             'contact': get_doc_info_by_id(self.domain, self.xforms_session.connection_id),
             'start_time': (ServerTime(self.xforms_session.start_time)
                            .user_time(self.timezone).done().strftime(SERVER_DATETIME_FORMAT)),
-        }
+        })
+        return context
 
     @property
     def headers(self):
@@ -1132,8 +1132,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     @memoized
     def phone_number_filter(self):
         value = self._filter['phone_number_filter']
-        if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+        if isinstance(value, str):
             return apply_leniency(value.strip())
 
         return None

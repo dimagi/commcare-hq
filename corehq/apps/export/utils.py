@@ -1,7 +1,5 @@
-
 from django.http import Http404
 
-import six
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -11,7 +9,7 @@ from corehq.toggles import MESSAGE_LOG_METADATA
 
 def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
     is_deleted = True
-    for app_id, version in six.iteritems(app_ids_and_versions):
+    for app_id, version in app_ids_and_versions.items():
         occurrence = last_occurrences.get(app_id)
         if occurrence is not None and occurrence >= version:
             is_deleted = False

@@ -1,9 +1,7 @@
-
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 from django.utils.translation import ugettext_lazy as _
 
-import six
 import sqlalchemy
 from jsonobject.base_properties import DefaultProperty
 
@@ -27,7 +25,7 @@ from corehq.apps.userreports.indicators import Column
 from corehq.apps.userreports.reports.specs import SQLAGG_COLUMN_MAP
 
 
-class ColumnAdapater(six.with_metaclass(ABCMeta, object)):
+class ColumnAdapater(metaclass=ABCMeta):
     """
     A column adapter represents everything needed to work with an aggregate column,
     including its config as well as its sqlalchemy information (via the ucr column spec).
@@ -163,7 +161,7 @@ def WeekColumnAdapter():
     )
 
 
-class PrimaryColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
+class PrimaryColumnAdapter(ColumnAdapater, metaclass=ABCMeta):
     """
     A base ColumnAdapter class for columns associated with the primary table.
     """
@@ -304,7 +302,7 @@ class SingleFieldColumnProperties(jsonobject.JsonObject):
     referenced_column = jsonobject.StringProperty(required=True)
 
 
-class SimpleAggregationAdapater(six.with_metaclass(ABCMeta, SecondaryColumnAdapter)):
+class SimpleAggregationAdapater(SecondaryColumnAdapter, metaclass=ABCMeta):
     """
     Generic SecondaryColumnAdapter class that does a passed-in sqlalchemy aggregation.
     """

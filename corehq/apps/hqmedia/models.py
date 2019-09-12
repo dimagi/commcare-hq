@@ -11,8 +11,8 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 import magic
-import six
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from lxml import etree
 from memoized import memoized
 from PIL import Image
 
@@ -41,7 +41,6 @@ from corehq.apps.domain import SHARED_DOMAIN
 from corehq.apps.domain.models import LICENSE_LINKS, LICENSES
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.blobs.mixin import CODES, BlobMixin
-from corehq.util.python_compatibility import soft_assert_type_text
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -469,9 +468,8 @@ class ApplicationMediaReference(object):
                  form_name=None, form_order=None, media_class=None,
                  is_menu_media=False, app_lang=None, use_default_media=False):
 
-        if not isinstance(path, six.string_types):
+        if not isinstance(path, str):
             path = ''
-        soft_assert_type_text(path)
         self.path = path.strip()
 
         if not issubclass(media_class, CommCareMultimedia):
@@ -676,7 +674,7 @@ class ModuleMediaMixin(MediaMixin):
             for column in details.get_columns():
                 if column.format == 'enum-image':
                     for map_item in column.enum:
-                        for lang, icon in six.iteritems(map_item.value):
+                        for lang, icon in map_item.value.items():
                             if icon == old_path:
                                 map_item.value[lang] = new_path
                                 count += 1
@@ -725,12 +723,15 @@ class FormMediaMixin(MediaMixin):
         return media
 
     def rename_media(self, old_path, new_path):
-        count = 0
+        menu_count = self.rename_menu_media(self, old_path, new_path)
 
-        count += self.rename_menu_media(self, old_path, new_path)
-        count += self.memoized_xform().rename_media(old_path, new_path)
+        xform_count = 0
+        if self.form_type != 'shadow_form':
+            xform_count = self.memoized_xform().rename_media(old_path, new_path)
+            if xform_count:
+                self.source = etree.tostring(self.memoized_xform().xml).decode('utf-8')
 
-        return count
+        return menu_count + xform_count
 
 
 class ApplicationMediaMixin(Document, MediaMixin):

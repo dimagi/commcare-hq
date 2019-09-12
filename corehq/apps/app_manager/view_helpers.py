@@ -1,7 +1,5 @@
-
 from django.http import Http404
 
-import six
 from memoized import memoized
 
 from dimagi.utils.logging import notify_exception
@@ -31,5 +29,5 @@ class ApplicationViewMixin(DomainViewMixin):
         except Http404 as e:
             raise e
         except Exception as e:
-            notify_exception(self.request, message=six.text_type(e))
+            notify_exception(self.request, message=str(e))
         return None

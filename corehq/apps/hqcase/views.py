@@ -1,4 +1,3 @@
-
 from django.contrib import messages
 from django.http.response import Http404
 from django.shortcuts import redirect

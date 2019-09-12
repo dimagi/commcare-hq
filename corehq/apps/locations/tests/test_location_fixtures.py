@@ -1,4 +1,3 @@
-
 import os
 import uuid
 from collections import namedtuple
@@ -8,7 +7,6 @@ from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
 
 import mock
-import six
 
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import RestoreParams
@@ -174,7 +172,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
         }
-        self.assertEquals(location_data, {k: six.text_type(v) for k, v in location.metadata.items()})
+        self.assertEquals(location_data, {k: str(v) for k, v in location.metadata.items()})
 
     def test_simple_location_fixture(self):
         self.user._couch_user.set_location(self.locations['Suffolk'])

@@ -1,4 +1,3 @@
-
 from jsonobject.properties import StringProperty
 
 DATA_TYPE_DATE = 'date'

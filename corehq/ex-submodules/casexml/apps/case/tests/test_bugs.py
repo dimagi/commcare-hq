@@ -39,7 +39,7 @@ class CaseBugTestCouchOnly(TestCase):
         case_block = CaseBlock(
             case_id=conflict_id,
             create=True,
-        ).as_string().decode('utf-8')
+        ).as_text()
         with self.assertRaises(BulkSaveError):
             submit_case_blocks(case_block, 'test-conflicts', form_id=conflict_id)
 
@@ -68,7 +68,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         case_block = CaseBlock(
             case_id='',
             create=True,
-        ).as_string().decode('utf-8')
+        ).as_text()
         form, cases = submit_case_blocks(case_block, 'test-domain')
         self.assertIn('IllegalCaseId', form.problem)
         self.assertEqual([], cases)  # should make no cases
@@ -81,7 +81,7 @@ class CaseBugTest(TestCase, TestFileMixin):
             case_name=value,
             case_type=value,
             create=True,
-        ).as_string().decode('utf-8')
+        ).as_text()
         update_caseblock = CaseBlock(
             case_id=case_id,
             user_id=value,
@@ -89,7 +89,7 @@ class CaseBugTest(TestCase, TestFileMixin):
                 'case_name': value,
                 'case_type': value,
             }
-        ).as_string().decode('utf-8')
+        ).as_text()
         for caseblock in create_caseblock, update_caseblock:
             form, [case] = submit_case_blocks(caseblock, 'test-domain')
             self.assertEqual(value, case.user_id)
@@ -135,11 +135,11 @@ class CaseBugTest(TestCase, TestFileMixin):
             CaseBlock(create=True, case_id=case_id, update={
                 'p1': 'v1',
                 'p2': 'v2',
-            }).as_string().decode('utf-8'),
+            }).as_text(),
             CaseBlock(case_id=case_id, update={
                 'p2': 'v4',
                 'p3': 'v3',
-            }).as_string().decode('utf-8'),
+            }).as_text(),
         ]
         form, [case] = submit_case_blocks(case_blocks, 'test-domain')
         self.assertEqual('v1', case.dynamic_case_properties()['p1'])
@@ -163,9 +163,11 @@ class CaseBugTest(TestCase, TestFileMixin):
         xform, [case] = post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
                 update={'foo': 'bar'}).as_xml()
-        ])
-        case.soft_delete()
+        ], domain="test-domain")
+        cases = CaseAccessors("test-domain")
+        cases.soft_delete_cases([case_id])
 
+        case = cases.get_case(case_id)
         self.assertEqual('bar', case.dynamic_case_properties()['foo'])
         self.assertTrue(case.is_deleted)
 
@@ -319,7 +321,7 @@ class TestCaseHierarchy(TestCase):
         case_block = CaseBlock(
             case_id=case_id1,
             create=True,
-        ).as_string().decode('utf-8')
+        ).as_text()
         submit_case_blocks(case_block, 'test-transactions', form_id=form_id)
         with self.assertRaises(CaseNotFound):
             CaseAccessors().get_case(case_id2)
@@ -329,7 +331,7 @@ class TestCaseHierarchy(TestCase):
             case_id=case_id2,
             create=True,
             case_type='t1',
-        ).as_string().decode('utf-8')
+        ).as_text()
         submit_case_blocks([case_block, new_case_block], 'test-transactions', form_id=form_id)
         case2 = CaseAccessors().get_case(case_id2)
         self.assertEqual([form_id], case2.xform_ids)

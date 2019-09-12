@@ -2,7 +2,6 @@ import os
 from collections import namedtuple
 from xml.sax.saxutils import escape
 
-import six
 from eulxml.xmlmap.core import load_xmlobject_from_string
 from lxml import etree
 from memoized import memoized
@@ -10,7 +9,7 @@ from memoized import memoized
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
-from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
@@ -68,6 +67,13 @@ class DetailContributor(SectionContributor):
                                 detail.custom_xml,
                                 xmlclass=Detail
                             )
+                            expected = id_strings.detail(module, detail_type)
+                            if not id_strings.is_custom_app_string(d.id) and d.id != expected:
+                                raise SuiteValidationError(
+                                    "Module {} uses custom case list xml, the "
+                                    "specified detail ID is '{}', expected '{}'"
+                                    .format(module.id, d.id, expected)
+                                )
                             r.append(d)
                         else:
                             detail_column_infos = get_detail_column_infos(

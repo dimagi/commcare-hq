@@ -1,4 +1,3 @@
-import itertools
 import re
 import uuid
 from calendar import monthrange
@@ -9,8 +8,6 @@ from xml.etree import cElementTree as ElementTree
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 
-import six
-from six.moves import zip
 from unidecode import unidecode
 
 from casexml.apps.case.mock import CaseBlock
@@ -25,7 +22,7 @@ from corehq.apps.commtrack.models import (
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.form_processor.utils.general import should_use_sql_backend
 
@@ -35,11 +32,16 @@ CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 def all_sms_codes(domain):
     config = CommtrackConfig.for_domain(domain)
 
-    actions = dict((action.keyword, action) for action in config.actions)
-    products = dict((p.code, p) for p in Product.by_domain(domain))
+    actions = {action.keyword: action for action in config.actions}
+    products = {p.code: p for p in SQLProduct.active_objects.filter(domain=domain)}
 
-    sms_codes = zip(('action', 'product'), (actions, products))
-    return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in six.iteritems(codes)] for type, codes in sms_codes)))
+    ret = {}
+    for action_key, action in actions.items():
+        ret[action_key] = ('action', action)
+    for product_key, product in products.items():
+        ret[product_key] = ('product', product)
+
+    return ret
 
 
 def get_supply_point_and_location(domain, site_code):
@@ -192,11 +194,7 @@ def submit_mapping_case_block(user, index):
 def location_map_case_id(user):
     if should_use_sql_backend(user.domain):
         user_id = user.user_id
-        if isinstance(user_id, six.text_type) and six.PY2:
-            user_id = user_id.encode('utf8')
         case_id = uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user_id).hex
-        if six.PY2:
-            case_id = case_id.decode('utf-8')
         return case_id
     return 'user-owner-mapping-' + user.user_id
 
@@ -220,11 +218,11 @@ def get_case_wrapper(data):
 
 
 def unicode_slug(text):
-    return slugify(six.text_type(unidecode(text)))
+    return slugify(str(unidecode(text)))
 
 
 def encode_if_needed(val):
-    return val.encode("utf8") if isinstance(val, six.text_type) else val
+    return val.encode("utf8") if isinstance(val, str) else val
 
 
 def _fetch_ending_numbers(s):

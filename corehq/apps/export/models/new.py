@@ -1,4 +1,3 @@
-
 import logging
 from collections import OrderedDict, defaultdict, namedtuple
 from copy import copy
@@ -13,7 +12,6 @@ from django.http import Http404
 from django.utils.datastructures import OrderedSet
 from django.utils.translation import ugettext as _
 
-import six
 from couchdbkit import (
     BooleanProperty,
     DictProperty,
@@ -22,7 +20,6 @@ from couchdbkit import (
     SchemaProperty,
 )
 from memoized import memoized
-from six.moves import filter, map, range
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from couchexport.models import Format
@@ -93,14 +90,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
-from corehq.apps.export.esaccessors import (
-    get_ledger_section_entry_combinations,
-)
-from corehq.apps.export.utils import (
-    domain_has_daily_saved_export_access,
-    domain_has_excel_dashboard_access,
-    is_occurrence_deleted,
-)
+from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
@@ -118,7 +108,6 @@ from corehq.blobs.util import random_url_id
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.global_request import get_request_domain
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
 
@@ -522,12 +511,11 @@ class TableConfiguration(DocumentSchema):
                     transform_dates=transform_dates,
                 )
                 if as_json:
-                    if isinstance(val, list):
-                        headers = col.get_headers(split_column=split_columns)
-                        for subval_ind, subval in enumerate(val):
-                            row_data[headers[subval_ind]] = subval
-                    else:
-                        row_data[col.label] = val
+                    for index, header in enumerate(col.get_headers(split_column=split_columns)):
+                        if isinstance(val, list):
+                            row_data[header] = "{}".format(val[index])
+                        else:
+                            row_data[header] = "{}".format(val)
                 elif isinstance(val, list):
                     row_data.extend(val)
                 else:
@@ -1907,7 +1895,7 @@ class FormExportDataSchema(ExportDataSchema):
             _add_to_group_schema(path, case_attribute, datatype=datatype)
 
         # Add case updates
-        for case_property, case_path in six.iteritems(case_properties):
+        for case_property, case_path in case_properties.items():
             path_suffix = case_property
             path = '{}/case/update/{}'.format(root_path, path_suffix)
             _add_to_group_schema(path, 'update.{}'.format(case_property))
@@ -2113,7 +2101,7 @@ class CaseExportDataSchema(ExportDataSchema):
             last_occurrences={app_id: app_version},
         )
 
-        for case_type, case_properties in six.iteritems(case_property_mapping):
+        for case_type, case_properties in case_property_mapping.items():
 
             for prop in case_properties:
                 group_schema.items.append(ScalarItem(
@@ -2283,13 +2271,13 @@ def _merge_dicts(one, two, resolvefn):
     # keys either in one or two, but not both
     merged = {
         key: one.get(key, two.get(key))
-        for key in six.viewkeys(one) ^ six.viewkeys(two)
+        for key in one.keys() ^ two.keys()
     }
 
     # merge keys that exist in both
     merged.update({
         key: resolvefn(one[key], two[key])
-        for key in six.viewkeys(one) & six.viewkeys(two)
+        for key in one.keys() & two.keys()
     })
     return merged
 
@@ -2336,10 +2324,8 @@ class SplitUserDefinedExportColumn(ExportColumn):
         if self.split_type == PLAIN_USER_DEFINED_SPLIT_TYPE:
             return value
 
-        if not isinstance(value, six.string_types):
+        if not isinstance(value, str):
             return [None] * len(self.user_defined_options) + [value]
-        else:
-            soft_assert_type_text(value)
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
@@ -2423,10 +2409,8 @@ class SplitGPSExportColumn(ExportColumn):
 
         values = [EMPTY_VALUE] * 4
 
-        if not isinstance(value, six.string_types):
+        if not isinstance(value, str):
             return values
-        else:
-            soft_assert_type_text(value)
 
         for index, coordinate in enumerate(value.split(' ')):
             values[index] = coordinate
@@ -2475,11 +2459,9 @@ class SplitExportColumn(ExportColumn):
                 value.append(MISSING_VALUE)
             return value
 
-        if not isinstance(value, six.string_types):
+        if not isinstance(value, str):
             unspecified_options = [] if self.ignore_unspecified_options else [value]
             return [EMPTY_VALUE] * len(self.item.options) + unspecified_options
-        else:
-            soft_assert_type_text(value)
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
@@ -2527,7 +2509,7 @@ class RowNumberColumn(ExportColumn):
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, **kwargs):
         assert row_index, 'There must be a row_index for number column'
         return (
-            [".".join([six.text_type(i) for i in row_index])]
+            [".".join([str(i) for i in row_index])]
             + (list(row_index) if len(row_index) > 1 else [])
         )
 
@@ -2628,9 +2610,7 @@ class StockExportColumn(ExportColumn):
     @property
     @memoized
     def _column_tuples(self):
-        combos = get_ledger_section_entry_combinations(self.domain)
-        section_and_product_ids = sorted(set([(combo.entry_id, combo.section_id) for combo in combos]))
-        return section_and_product_ids
+        return get_ledger_section_entry_combinations(self.domain)
 
     def _get_product_name(self, product_id):
         try:
@@ -2781,6 +2761,25 @@ class EmailExportWhenDoneRequest(models.Model):
     domain = models.CharField(max_length=255)
     download_id = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255)
+
+
+class LedgerSectionEntry(models.Model):
+    domain = models.CharField(max_length=255)
+    section_id = models.CharField(max_length=255)
+    entry_id = models.CharField(max_length=255)
+
+    class Meta(object):
+        unique_together = ('domain', 'section_id', 'entry_id')
+
+
+def get_ledger_section_entry_combinations(domain):
+    return list(
+        LedgerSectionEntry.objects
+        .filter(domain=domain)
+        .order_by('entry_id', 'section_id')
+        .values_list('entry_id', 'section_id')
+        .all()
+    )
 
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js

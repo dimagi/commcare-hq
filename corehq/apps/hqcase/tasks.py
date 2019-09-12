@@ -2,9 +2,7 @@ import uuid
 from collections import defaultdict
 from copy import copy
 
-import six
 from celery.task import task
-from six.moves import range
 
 from casexml.apps.case.mock.case_block import IndexAttrs
 from casexml.apps.phone.const import LIVEQUERY
@@ -18,6 +16,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
+from corehq.form_processor.exceptions import NotAllowed
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -42,7 +41,7 @@ def explode_cases(domain, user_id, factor, task=None):
 
     cases = {}
     new_case_ids = {}
-    for case_id, case in six.iteritems(sync_result.cases):
+    for case_id, case in sync_result.cases.items():
         if case.case_type != USERCASE_TYPE:
             cases[case_id] = case
             new_case_ids[case_id] = [str(uuid.uuid4()) for _ in range(factor - 1)]
@@ -77,9 +76,9 @@ def explode_cases(domain, user_id, factor, task=None):
             new_case.index = {
                 key: IndexAttrs(
                     i.case_type, new_case_ids[i.case_id][explosion], i.relationship
-                ) for key, i in six.iteritems(cases[old_case_id].index)
+                ) for key, i in cases[old_case_id].index.items()
             }
-            progress += queue_case(new_case.as_string().decode('utf-8'), queue, progress)
+            progress += queue_case(new_case.as_text(), queue, progress)
 
             for ledger in sync_result.ledgers.get(old_case_id, []):
                 new_ledger = copy(ledger)
@@ -114,9 +113,9 @@ def topological_sort_cases(cases):
     roots = []
 
     # compile graph
-    for case_id, case in six.iteritems(cases):
+    for case_id, case in cases.items():
         graph[case.case_id] = indices = []
-        for index in six.itervalues(case.index):
+        for index in case.index.values():
             indices.append(index.case_id)
             inverse_graph[index.case_id].append(case.case_id)
         if not indices:
@@ -132,7 +131,7 @@ def topological_sort_cases(cases):
             if not graph[case_id]:
                 roots.append(case_id)
 
-    for indices in six.itervalues(graph):
+    for indices in graph.values():
         if indices:
             raise ValueError("graph has cycles")
 
@@ -145,6 +144,7 @@ def delete_exploded_case_task(domain, explosion_id):
 
 
 def delete_exploded_cases(domain, explosion_id, task=None):
+    NotAllowed.check(domain)
     if task:
         DownloadBase.set_progress(delete_exploded_case_task, 0, 0)
     query = (CaseSearchES()

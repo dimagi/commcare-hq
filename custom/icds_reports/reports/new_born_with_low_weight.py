@@ -1,8 +1,6 @@
-
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
@@ -150,7 +148,7 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
             'loc_name': key,
             'percent': val
         }
-        for key, val in six.iteritems(best_worst)
+        for key, val in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(all_locations_sorted_by_name, key=lambda x: x['percent'])
@@ -165,7 +163,7 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
                         'in_month': val['in_month'],
                         'low_birth': val['low_birth'],
                         'all': val['all']
-                    } for key, val in six.iteritems(data['blue'])
+                    } for key, val in data['blue'].items()
                 ],
                 "key": "% Newborns with Low Birth Weight",
                 "strokeWidth": 2,

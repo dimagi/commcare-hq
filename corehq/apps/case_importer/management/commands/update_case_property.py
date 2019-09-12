@@ -1,8 +1,6 @@
-
 from django.core.management import BaseCommand
 
-import csv342 as csv
-import six
+import csv
 
 from dimagi.utils.chunked import chunked
 
@@ -36,7 +34,7 @@ class Command(BaseCommand):
                     log.write(xform.form_id + '\n')
                 except Exception as e:
                     print('error')
-                    print(six.text_type(e))
+                    print(str(e))
                     failed_updates.extend(u[0] for u in updates)
             log.write('--------Failed Cases--------------\n')
             for case_id in failed_updates:

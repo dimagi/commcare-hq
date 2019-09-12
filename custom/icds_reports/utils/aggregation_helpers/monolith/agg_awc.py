@@ -1,16 +1,11 @@
-
-import six
 from dateutil.relativedelta import relativedelta
-from six.moves import map
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-from corehq.util.python_compatibility import soft_assert_type_text
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, \
     month_formatter
 from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
-from six.moves import range
 
 
 class AggAwcHelper(BaseICDSAggregationHelper):
@@ -103,21 +98,22 @@ class AggAwcHelper(BaseICDSAggregationHelper):
     def indexes(self, aggregation_level):
         indexes = []
 
+        tablename = self._tablename_func(aggregation_level)
         agg_locations = ['state_id']
         if aggregation_level > 1:
-            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(tablename))
             agg_locations.append('district_id')
         if aggregation_level > 2:
-            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(tablename))
             agg_locations.append('block_id')
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(tablename))
             agg_locations.append('supervisor_id')
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (awc_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (awc_id)'.format(tablename))
             agg_locations.append('awc_id')
 
-        indexes.append('CREATE INDEX ON "{}" ({})'.format(self.tablename, ', '.join(agg_locations)))
+        indexes.append('CREATE INDEX ON "{}" ({})'.format(tablename, ', '.join(agg_locations)))
         return indexes
 
     def updates(self):
@@ -179,6 +175,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             cases_ccs_lactating = ut.cases_ccs_lactating,
             cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all,
             cases_ccs_lactating_all = ut.cases_ccs_lactating_all,
+            num_mother_thr_21_days = ut.rations_21_plus_distributed,
+            num_mother_thr_eligible = ut.thr_eligible,
             cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating,
             valid_visits = ut.valid_visits,
             expected_visits = CASE WHEN ut.valid_visits>ut.expected_visits THEN ut.valid_visits ELSE ut.expected_visits END
@@ -190,6 +188,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(agg_ccs_record_monthly.lactating) AS cases_ccs_lactating,
                 sum(agg_ccs_record_monthly.pregnant_all) AS cases_ccs_pregnant_all,
                 sum(agg_ccs_record_monthly.lactating_all) AS cases_ccs_lactating_all,
+                sum(agg_ccs_record_monthly.rations_21_plus_distributed) AS rations_21_plus_distributed,
+                sum(agg_ccs_record_monthly.thr_eligible) AS thr_eligible,
                 sum(agg_ccs_record_monthly.valid_visits) + COALESCE(home_visit.valid_visits, 0) AS valid_visits,
                 sum(agg_ccs_record_monthly.expected_visits) +
                 COALESCE(home_visit.expected_visits, 0) AS expected_visits
@@ -556,7 +556,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('usage_num_add_person',),
             ('usage_num_add_pregnancy',),
             ('is_launched', "'yes'"),
-            ('aggregation_level', six.text_type(aggregation_level)),
+            ('aggregation_level', str(aggregation_level)),
             ('num_launched_states', lambda col: _launched_col(col)),
             ('num_launched_districts', lambda col: _launched_col(col)),
             ('num_launched_blocks', lambda col: _launched_col(col)),
@@ -569,6 +569,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('cases_person_all',),
             ('cases_ccs_pregnant_all',),
             ('cases_ccs_lactating_all',),
+            ('num_mother_thr_21_days',),
+            ('num_mother_thr_eligible',),
             ('cases_child_health_all',),
             ('cases_person_adolescent_girls_11_14',),
             ('cases_person_adolescent_girls_15_18',),
@@ -610,8 +612,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
 
             if len(column_tuple) == 2:
                 agg_col = column_tuple[1]
-                if isinstance(agg_col, six.string_types):
-                    soft_assert_type_text(agg_col)
+                if isinstance(agg_col, str):
                     return column_tuple
                 elif callable(agg_col):
                     return (column, agg_col(column))

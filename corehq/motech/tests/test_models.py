@@ -1,12 +1,11 @@
-
 import json
 import logging
 
 from django.test import SimpleTestCase
 
-import requests
-from mock import patch, Mock
+from mock import Mock, patch
 
+import requests
 from corehq.motech.models import RequestLog
 from corehq.motech.requests import Requests
 

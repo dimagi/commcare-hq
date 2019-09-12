@@ -2,7 +2,6 @@ from django.template.loader import render_to_string
 from django.utils.text import slugify
 
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
-from six.moves import map
 
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.web import json_response

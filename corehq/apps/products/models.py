@@ -5,9 +5,7 @@ from django.db import models
 from django.utils.translation import ugettext as _
 
 import jsonfield
-import six
 from couchdbkit.exceptions import ResourceNotFound
-from six.moves import map
 
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -172,22 +170,10 @@ class Product(Document):
         return list(queryset.couch_products(wrapped=wrap))
 
     @classmethod
-    def ids_by_domain(cls, domain):
-        return list(SQLProduct.objects.filter(domain=domain).product_ids())
-
-    @classmethod
-    def count_by_domain(cls, domain):
-        """
-        Gets count of products in a domain
-        """
-        # todo: we should add a reduce so we can get this out of couch
-        return len(cls.ids_by_domain(domain))
-
-    @classmethod
     def _export_attrs(cls):
         return [
-            ('name', six.text_type),
-            ('unit', six.text_type),
+            ('name', str),
+            ('unit', str),
             'description',
             'category',
             ('program_id', str),
@@ -213,7 +199,7 @@ class Product(Document):
         from corehq.apps.commtrack.util import encode_if_needed
         property_dict = {}
 
-        for prop, val in six.iteritems(self.product_data):
+        for prop, val in self.product_data.items():
             property_dict['data: ' + prop] = encode_if_needed(val)
 
         return property_dict
@@ -315,7 +301,6 @@ class OnlyActiveProductManager(ProductManager):
         return super(OnlyActiveProductManager, self).get_queryset().filter(is_archived=False)
 
 
-@six.python_2_unicode_compatible
 class SQLProduct(models.Model):
     """
     A SQL based clone of couch Products.
@@ -358,6 +343,11 @@ class SQLProduct(models.Model):
     @property
     def get_id(self):
         return self.product_id
+
+    @property
+    def unit(self):
+        # For compatibility with Product
+        return self.units
 
     class Meta(object):
         app_label = 'products'

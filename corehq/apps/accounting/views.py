@@ -25,8 +25,6 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
-import csv342 as csv
-import six
 from couchdbkit import ResourceNotFound
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Grant, Role
@@ -361,7 +359,7 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
                 )
             except NewSubscriptionError as e:
                 errors = ErrorList()
-                errors.extend([six.text_type(e)])
+                errors.extend([str(e)])
                 self.subscription_form._errors.setdefault(NON_FIELD_ERRORS, errors)
         return self.get(request, *args, **kwargs)
 

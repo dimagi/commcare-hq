@@ -3,7 +3,6 @@ from collections import defaultdict
 
 from django.utils.translation import ugettext as _
 
-import six
 from memoized import memoized
 
 from corehq import toggles
@@ -196,7 +195,7 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
             if instance:
                 instances.add(instance)
             else:
-                class UnicodeWithContext(six.text_type):
+                class UnicodeWithContext(str):
                     pass
                 instance_name = UnicodeWithContext(instance_name)
                 instance_name.xpath = xpath

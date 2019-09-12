@@ -3,9 +3,7 @@ import re
 
 from django.conf import settings
 
-import csv342 as csv
-import six
-from six.moves import zip
+import csv
 
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.modules import to_function
@@ -39,7 +37,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             loader = getattr(self, '_get_data_%s' % adapter)
         except AttributeError:
             raise RuntimeError('unknown adapter [%s]' % adapter)
-        data = loader(self.data_source, dict(six.iteritems(self.request.GET)))
+        data = loader(self.data_source, dict(self.request.GET.items()))
 
         return self._to_geojson(data, geo_col)
 
@@ -82,13 +80,13 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                         depth += 1
                     feature_type = 'MultiPolygon' if depth == 4 else 'Polygon'
 
-                properties = dict((k, v) for k, v in six.iteritems(row) if k != geo_col)
+                properties = dict((k, v) for k, v in row.items() if k != geo_col)
                 # handle 'display value / raw value' fields (for backwards compatibility with
                 # existing data sources)
                 # note: this is not ideal for the maps report, as we have no idea how to properly
                 # format legends; it's better to use a formatter function in the maps report config
                 display_props = {}
-                for k, v in six.iteritems(properties):
+                for k, v in properties.items():
                     if isinstance(v, dict) and set(v.keys()) == set(('html', 'sort_key')):
                         properties[k] = v['sort_key']
                         display_props['__disp_%s' % k] = v['html']
@@ -137,12 +135,12 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         def _headers(e, root=[]):
             if hasattr(e, '__iter__'):
                 if hasattr(e, 'html'):
-                    root = list(root) + [six.text_type(e.html)]
+                    root = list(root) + [str(e.html)]
                 for sub in e:
                     for k in _headers(sub, root):
                         yield k
             else:
-                yield root + [six.text_type(e.html)]
+                yield root + [str(e.html)]
         headers = ['::'.join(k) for k in _headers(report.headers)]
 
         for row in report.rows:
@@ -186,7 +184,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                 'external_id',
                 'owner_id',
              )
-            data.update(('prop_%s' % k, v) for k, v in six.iteritems(case['properties']) if k not in standard_props)
+            data.update(('prop_%s' % k, v) for k, v in case['properties'].items() if k not in standard_props)
 
             GEO_DEFAULT = 'gps' # case property
             geo = None

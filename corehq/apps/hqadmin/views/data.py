@@ -1,4 +1,3 @@
-
 import json
 from collections import OrderedDict, defaultdict, namedtuple
 
@@ -6,7 +5,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 
-import six
 import six.moves.html_parser
 from couchdbkit import ResourceNotFound
 
@@ -90,7 +88,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
         try:
             doc = db.get(doc_id)
         except ResourceNotFound as e:
-            db_results.append(db_result(db.dbname, six.text_type(e), STATUSES[six.text_type(e)]))
+            db_results.append(db_result(db.dbname, str(e), STATUSES[str(e)]))
         else:
             db_results.append(db_result(db.dbname, 'found', 'success'))
             response.update({

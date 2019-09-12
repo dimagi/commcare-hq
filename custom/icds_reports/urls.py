@@ -10,7 +10,7 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI, \
     HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView, \
-    CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers
+    CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice
 
 dashboardurls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
@@ -147,10 +147,11 @@ urlpatterns = [
     url(r'^issnip_pdf_status/', CheckExportReportStatus.as_view(), name='issnip_pdf_status'),
     url(r'^have_access_to_location/', HaveAccessToLocation.as_view(), name='have_access_to_location'),
     url(r'^inactive_aww', InactiveAWW.as_view(), name='inactive_aww'),
-    url(r'^inactive_dashboard_users', InactiveDashboardUsers.as_view(), name='inactive_aww'),
+    url(r'^inactive_dashboard_users', InactiveDashboardUsers.as_view(), name='inactive_dashboard_users'),
     url(r'^health_indicators', DishaAPIView.as_view(), name='disha_api'),
     url(r'^nic_indicators', NICIndicatorAPIView.as_view(), name='nic_indicator_api'),
     url(r'^cas_export', CasDataExport.as_view(), name='cas_export'),
+    url(r'^ap_webservice', APWebservice.as_view(), name='ap_webservice'),
 ]
 
 DASHBOARD_URL_GROUPS = urlpatterns + dashboardurls + maternal_and_child_urls + cas_reach_urls + demographics_urls + awc_infrastructure_urls

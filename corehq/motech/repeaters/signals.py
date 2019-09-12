@@ -1,16 +1,18 @@
-
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
-from corehq.motech.repeaters.models import CreateCaseRepeater, UpdateCaseRepeater
 from couchforms.signals import successful_form_received
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCaseSQL
+from corehq.motech.repeaters.models import (
+    CreateCaseRepeater,
+    UpdateCaseRepeater,
+)
 
 
 def create_form_repeat_records(sender, xform, **kwargs):

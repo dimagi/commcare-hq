@@ -4,7 +4,6 @@ from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
 from custom.ewsghana.handlers.helpers.stock_and_receipt_parser import EWSStockAndReceiptParser
 from custom.ewsghana.handlers.soh import SOHHandler
 from custom.ewsghana.utils import send_sms
-import six
 
 VerifiedNumberAdapter = namedtuple('VerifiedNumberAdapter', ['owner', 'phone_number', 'domain', 'owner_id'])
 
@@ -34,4 +33,4 @@ class WebSubmissionHandler(SOHHandler):
         if not phone_number:
             return
 
-        send_sms(self.domain, self.user, phone_number, six.text_type(message % kwargs))
+        send_sms(self.domain, self.user, phone_number, str(message % kwargs))

@@ -1,4 +1,3 @@
-
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler

@@ -1,9 +1,6 @@
 from dateutil.parser import parse
 from dimagi.ext.couchdbkit import DateTimeProperty, Property
 import json
-import six
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def parse_date_string(datestring, precise=False):
@@ -41,8 +38,7 @@ class TimeStampProperty(DateTimeProperty):
         super(TimeStampProperty, self).__init__(**kwargs)
 
     def to_python(self, value):
-        if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+        if isinstance(value, str):
             try:
                 return parse_date_string(value, self.precise_reads)
             except ValueError as e:

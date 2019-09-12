@@ -4,7 +4,7 @@
     "ipm-senegal",
     "testing-ipm-senegal"
   ],
-  "server_environment": ["production", "pna", "changeme"],
+  "server_environment": ["production", "pna"],
   "config": {
     "table_id": "yeksi_naa_reports_consumption",
     "display_name": "Consumption and outstock report",
@@ -116,7 +116,7 @@
             },
             "location_type": {
               "type": "constant",
-              "constant": "Region"
+              "constant": "R\u00e9gion"
             },
             "location_property": null
           }

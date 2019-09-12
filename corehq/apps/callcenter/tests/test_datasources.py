@@ -1,4 +1,3 @@
-
 from django.test.testcases import SimpleTestCase
 
 from mock import patch

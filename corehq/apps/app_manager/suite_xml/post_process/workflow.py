@@ -5,7 +5,6 @@ from os.path import commonprefix
 from xml.sax.saxutils import unescape
 
 from memoized import memoized
-from six.moves import filter
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
@@ -86,46 +85,31 @@ class WorkflowHelper(PostProcessor):
 
         frame_children = []
 
-        def _add_new_datums(datums):
-            datum_frames = [f for f in frame_children if isinstance(f, WorkflowDatumMeta)]
-            frame_children.extend([d for d in datums if d not in datum_frames])
-
-        # Determine datums needed for target form
+        module_command = id_strings.menu_id(target_module)
         module_datums = self.get_module_datums(target_module_id)
         form_datums = module_datums[target_form_id]
+        frame_children = []
 
-        target_module_command = None
-        root_module_command = None
-        root_datums = [[]]
-
-        module_command = id_strings.menu_id(target_module)
         if module_command == id_strings.ROOT:
-            target_module_datums = self.root_module_datums
+            datums_list = self.root_module_datums
         else:
-            target_module_command = CommandId(module_command)
-            target_module_datums = list(module_datums.values())  # [ [datums for f0], [datums for f1], ...]
+            datums_list = list(module_datums.values())  # [ [datums for f0], [datums for f1], ...]
             root_module = target_module.root_module
             if root_module and include_target_root:
-                # Module has a parent. Store the parent's needed datums and command.
-                root_datums = list(self.get_module_datums(id_strings.menu_id(root_module)).values())
-                root_module_id = id_strings.menu_id(target_module.root_module)
-                if root_module_id != id_strings.ROOT:
-                    root_module_command = CommandId(root_module_id)
+                datums_list = datums_list + list(self.get_module_datums(id_strings.menu_id(root_module)).values())
+                root_module_command = id_strings.menu_id(target_module.root_module)
+                if root_module_command != id_strings.ROOT:
+                    frame_children.append(CommandId(root_module_command))
+            frame_children.append(CommandId(module_command))
 
-        # First add menu commands
-        if root_module_command:
-            frame_children.append(root_module_command)
-        if target_module_command:
-            frame_children.append(target_module_command)
+        common_datums = commonprefix(datums_list)
+        remaining_datums = form_datums[len(common_datums):]
 
-        # Then add datums needed by parent menu and target menu
-        _add_new_datums(commonprefix(root_datums))
-        _add_new_datums(commonprefix(target_module_datums))
+        frame_children.extend(common_datums)
 
-        # Then add form itself and any additional datums it needs
         if not module_only:
             frame_children.append(CommandId(command))
-            _add_new_datums(form_datums)
+            frame_children.extend(remaining_datums)
 
         return frame_children
 

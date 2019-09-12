@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import logging
 from collections import namedtuple
 
@@ -31,6 +29,7 @@ from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
+from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
 from corehq.util.datadog.utils import form_load_counter
@@ -45,7 +44,6 @@ from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log, SumoLogicLog
 
 from celery.task.control import revoke as revoke_celery_task
-import six
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
@@ -66,7 +64,7 @@ class SubmissionPost(object):
                  domain=None, app_id=None, build_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
-                 partial_submission=False, case_db=None):
+                 partial_submission=False, case_db=None, force_logs=False):
         assert domain, "'domain' is required"
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -92,6 +90,7 @@ class SubmissionPost(object):
         self.case_db = case_db
         if case_db:
             assert case_db.domain == domain
+        self.force_logs = force_logs
 
         self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
         self.track_load = form_load_counter("form_submission", domain)
@@ -228,6 +227,9 @@ class SubmissionPost(object):
             self.formdb.save_new_form(submitted_form)
             response = self.get_exception_response_and_log(submitted_form, self.path)
             return FormProcessingResult(response, None, [], [], 'submission_error_log')
+
+        if submitted_form.xmlns == SYSTEM_ACTION_XMLNS:
+            return self.handle_system_action(submitted_form)
 
         if submitted_form.xmlns == DEVICE_LOG_XMLNS:
             return self.process_device_log(submitted_form)
@@ -480,13 +482,20 @@ class SubmissionPost(object):
             status=500,
         ).response()
 
+    @tracer.wrap(name='submission.handle_system_action')
+    def handle_system_action(self, form):
+        handle_system_action(form, self.auth_context)
+        self.interface.save_processed_models([form])
+        response = HttpResponse(status=201)
+        return FormProcessingResult(response, form, [], [], 'system-action')
+
     @tracer.wrap(name='submission.process_device_log')
     def process_device_log(self, device_log_form):
         self._conditionally_send_device_logs_to_sumologic(device_log_form)
         ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.NO_DEVICE_LOG_ENVS
-        if not ignore_device_logs:
+        if self.force_logs or not ignore_device_logs:
             try:
-                process_device_log(self.domain, device_log_form)
+                process_device_log(self.domain, device_log_form, self.force_logs)
             except Exception as e:
                 notify_exception(None, "Error processing device log", details={
                     'xml': self.instance,
@@ -500,7 +509,7 @@ class SubmissionPost(object):
 
 
 def _transform_instance_to_error(interface, exception, instance):
-    error_message = '{}: {}'.format(type(exception).__name__, six.text_type(exception))
+    error_message = '{}: {}'.format(type(exception).__name__, str(exception))
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 

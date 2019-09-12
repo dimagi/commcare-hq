@@ -1,4 +1,3 @@
-
 from corehq.apps.reports.filters.controllers import (
     CaseListFilterOptionsController,
 )

@@ -34,7 +34,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
-import six
 from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -45,8 +44,6 @@ from django_countries.data import COUNTRIES
 from memoized import memoized
 from PIL import Image
 from pyzxcvbn import zxcvbn
-from six import unichr
-from six.moves import range
 from six.moves.urllib.parse import parse_qs, urlparse
 
 from corehq import privileges
@@ -116,6 +113,7 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.permissions import can_manage_releases
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
@@ -430,7 +428,7 @@ class SnapshotSettingsForm(forms.Form):
 
     def _get_apps_to_publish(self):
         app_ids = []
-        for d, val in six.iteritems(self.data):
+        for d, val in self.data.items():
             d = d.split('-')
             if len(d) < 2:
                 continue
@@ -1308,7 +1306,7 @@ def _get_uppercase_unicode_regexp():
     # http://stackoverflow.com/a/17065040/10840
     uppers = ['[']
     for i in range(sys.maxunicode):
-        c = unichr(i)
+        c = chr(i)
         if c.isupper():
             uppers.append(c)
     uppers.append(']')
@@ -1700,7 +1698,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         except Exception as e:
             log_accounting_error(
                 "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
-                % (self.domain, self.plan_version.plan.name, six.text_type(e)),
+                % (self.domain, self.plan_version.plan.name, str(e)),
                 show_stack_trace=True,
             )
             return False
@@ -2507,6 +2505,7 @@ class ManageReleasesByAppProfileForm(forms.Form):
                                help_text=ugettext_lazy("Applicable for search only"))
 
     def __init__(self, request, domain, *args, **kwargs):
+        self.request = request
         self.domain = domain
         super(ManageReleasesByAppProfileForm, self).__init__(*args, **kwargs)
         self.fields['app_id'].choices = self.app_id_choices()
@@ -2561,6 +2560,11 @@ class ManageReleasesByAppProfileForm(forms.Form):
                 self.version_build_id
             except BuildNotFoundException as e:
                 self.add_error('version', e)
+        app_id = self.cleaned_data.get('app_id')
+        if app_id:
+            if not can_manage_releases(self.request.couch_user, self.domain, app_id):
+                self.add_error('app_id',
+                               _("You don't have permission to set restriction for this application"))
 
     def clean_build_profile_id(self):
         # ensure value is present for a post request

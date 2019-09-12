@@ -1,4 +1,3 @@
-
 import io
 import re
 from datetime import datetime, timedelta
@@ -8,7 +7,7 @@ from django.core.management.base import CommandError
 from django.template.defaultfilters import linebreaksbr
 from django.urls import reverse
 
-import csv342 as csv
+import csv
 
 from dimagi.utils.dates import DateSpan
 

@@ -3,7 +3,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.util.translation import localize
 from memoized import memoized
-import six
 
 
 class KeywordHandler(object):
@@ -53,4 +52,4 @@ class KeywordHandler(object):
     def respond(self, message, **kwargs):
         owner = self.verified_contact.owner
         with localize(owner.get_language_code()):
-            send_sms_to_verified_number(self.verified_contact, six.text_type(message % kwargs))
+            send_sms_to_verified_number(self.verified_contact, str(message % kwargs))

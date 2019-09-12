@@ -8,7 +8,6 @@ from django.db import DatabaseError, InternalError, transaction
 from django.db.models import Count, Min
 from django.utils.translation import ugettext as _
 
-import six
 from botocore.vendored.requests.exceptions import ReadTimeout
 from botocore.vendored.requests.packages.urllib3.exceptions import (
     ProtocolError,
@@ -312,7 +311,7 @@ def reprocess_archive_stubs():
                 xform.unarchive(user_id=stub.user_id)
         # If the history was updated the first time around, just send the update to kafka
         else:
-            xform.publish_archive_action_to_kafka(user_id=stub.user_id, archive=stub.archive)
+            FormAccessors.publish_archive_action_to_kafka(xform, stub.user_id, stub.archive)
 
 
 @periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
@@ -470,14 +469,14 @@ def _build_async_indicators(indicator_doc_ids):
                         failed_indicators.add(indicator)
                         handle_exception(e, config_id, doc, adapter)
 
-            for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+            for adapter, rows in rows_to_save_by_adapter.items():
                 doc_ids = doc_ids_from_rows(rows)
                 indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
                 try:
                     adapter.save_rows(rows)
                 except Exception as e:
                     failed_indicators.union(indicators)
-                    message = six.text_type(e)
+                    message = str(e)
                     notify_exception(None,
                         "Exception bulk saving async indicators:{}".format(message))
                 else:
@@ -530,7 +529,7 @@ def async_indicators_metrics():
         avg_lag = sum(lags) / len(lags)
         datadog_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag)
 
-    for config_id, metrics in six.iteritems(_indicator_metrics()):
+    for config_id, metrics in _indicator_metrics().items():
         tags = ["config_id:{}".format(config_id)]
         datadog_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
         datadog_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)

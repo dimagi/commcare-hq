@@ -1,13 +1,10 @@
-# coding=utf-8
 from collections import OrderedDict
 from functools import reduce
 
 from django.template.defaultfilters import slugify
 
-import six
 import sqlagg
 from memoized import memoized
-from six.moves import range, zip
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import RawFilter, SqlFilter
 
@@ -20,8 +17,6 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.soft_assert import soft_assert
 
 
 class SqlReportException(Exception):
@@ -237,8 +232,7 @@ class SqlData(ReportDataSource):
     @property
     def wrapped_filters(self):
         def _wrap_if_necessary(string_or_filter):
-            if isinstance(string_or_filter, six.string_types):
-                soft_assert_type_text(string_or_filter)
+            if isinstance(string_or_filter, str):
                 filter = RawFilter(string_or_filter)
             else:
                 filter = string_or_filter
@@ -423,7 +417,7 @@ def calculate_total_row(rows):
         num_cols = len(rows[0])
         for i in range(num_cols):
             colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-            columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types)]
+            columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), int)]
             if len(columns):
                 total_row.append(reduce(lambda x, y: x + y, columns, 0))
             else:

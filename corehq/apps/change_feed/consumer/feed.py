@@ -3,10 +3,8 @@ from copy import copy
 
 from django.conf import settings
 
-import six
 from kafka import KafkaConsumer
 from kafka.common import TopicPartition
-from six.moves import range
 
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
@@ -20,7 +18,6 @@ from corehq.apps.change_feed.topics import validate_offsets
 MIN_TIMEOUT = 500
 
 
-@six.python_2_unicode_compatible
 class KafkaChangeFeed(ChangeFeed):
     """
     Kafka-based implementation of a ChangeFeed

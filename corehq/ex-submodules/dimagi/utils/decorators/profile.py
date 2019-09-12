@@ -1,4 +1,3 @@
-
 import random
 from functools import wraps
 import cProfile
@@ -10,9 +9,7 @@ import logging
 from datetime import datetime
 from django.conf import settings
 from corehq.util.decorators import ContextDecorator
-from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.utils.modules import to_function
-import six
 
 logger = logging.getLogger(__name__)
 
@@ -90,74 +87,6 @@ def profile_prod(log_file, probability, limit):
 
         return _inner
     return _outer
-
-try:
-    from line_profiler import LineProfiler
-
-    def line_profile(follow=[]):
-        """
-        Perform line profiling of a function.
-
-        Will output the profile stats per line of each function included in the profiler.
-        Output will be printed once per function call so take care not to use this on
-        functions that get called many times.
-
-        :param follow: list of additional functions that should be profiled
-
-        Example output
-        --------------
-
-        File: demo.py
-        Function: demo_follow at line 67
-        Total time: 1.00391 s
-
-        Line #      Hits         Time  Per Hit   % Time  Line Contents
-        ==============================================================
-            67                                           def demo_follow():
-            68         1           34     34.0      0.0      r = random.randint(5, 10)
-            69        11           81      7.4      0.0      for i in xrange(0, r):
-            70        10      1003800 100380.0    100.0          time.sleep(0.1)
-
-        File: demo.py
-        Function: demo_profiler at line 72
-        Total time: 1.80702 s
-
-        Line #      Hits         Time  Per Hit   % Time  Line Contents
-        ==============================================================
-            72                                           @line_profile(follow=[demo_follow])
-            73                                           def demo_profiler():
-            74         1           17     17.0      0.0      r = random.randint(5, 10)
-            75         9           66      7.3      0.0      for i in xrange(0, r):
-            76         8       802921 100365.1     44.4          time.sleep(0.1)
-            77
-            78         1      1004013 1004013.0     55.6      demo_follow()
-        """
-        def inner(func):
-            @wraps(func)
-            def profiled_func(*args, **kwargs):
-                try:
-                    profiler = LineProfiler()
-                    profiler.add_function(func)
-                    for f in follow:
-                        if isinstance(f, six.string_types):
-                            soft_assert_type_text(f)
-                            f = to_function(f)
-                        profiler.add_function(f)
-                    profiler.enable_by_count()
-                    return func(*args, **kwargs)
-                finally:
-                    profiler.print_stats()
-            return profiled_func
-        return inner
-
-except ImportError:
-    def line_profile(follow=[]):
-        "Helpful if you accidentally leave in production!"
-        def inner(func):
-            def nothing(*args, **kwargs):
-                return func(*args, **kwargs)
-            return nothing
-        return inner
 
 
 class resident_set_size(ContextDecorator):

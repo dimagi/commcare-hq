@@ -1,10 +1,9 @@
-
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_datetime
 
-import csv342 as csv
+import csv
 import pytz
 
 from corehq.apps.change_feed.data_sources import (

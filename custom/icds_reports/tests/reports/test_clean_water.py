@@ -1,4 +1,3 @@
-
 from django.test.utils import override_settings
 
 from custom.icds_reports.messages import awcs_reported_clean_drinking_water_help_text

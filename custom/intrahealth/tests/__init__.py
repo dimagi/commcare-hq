@@ -1,6 +1,5 @@
 import mock
 import postgres_copy
-import six
 import sqlalchemy
 import os
 
@@ -206,7 +205,7 @@ def setUpModule():
                 table_name = get_table_name(domain.name, file_name[:-4])
                 table = metadata.tables[table_name]
                 postgres_copy.copy_from(
-                    f, table, engine, format='csv' if six.PY3 else b'csv', null='' if six.PY3 else b'', header=True
+                    f, table, engine, format='csv', null='', header=True
                 )
     _call_center_domain_mock.stop()
 

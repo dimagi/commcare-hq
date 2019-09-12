@@ -61,6 +61,23 @@ class DomainMigrationProgressTest(TestCase):
         self.assertIsNotNone(progress.started_on)
         self.assertLessEqual(progress.started_on, datetime.utcnow())
 
+    def test_continue_live_migration(self):
+        set_migration_started('yellow', self.slug, dry_run=True)
+        self.assertFalse(migration_in_progress('yellow', self.slug))
+        self.assertTrue(migration_in_progress('yellow', self.slug, include_dry_runs=True))
+        # Live migration finishes ... and is continued later
+        set_migration_started('yellow', self.slug, dry_run=True)
+        self.assertFalse(migration_in_progress('yellow', self.slug))
+        self.assertTrue(migration_in_progress('yellow', self.slug, include_dry_runs=True))
+
+    def test_migration_after_live_migration(self):
+        set_migration_started('yellow', self.slug, dry_run=True)
+        self.assertFalse(migration_in_progress('yellow', self.slug))
+        self.assertTrue(migration_in_progress('yellow', self.slug, include_dry_runs=True))
+        # Live migration finishes ... and is completed with normal migration
+        set_migration_started('yellow', self.slug)
+        self.assertTrue(migration_in_progress('yellow', self.slug))
+
     def test_complete(self):
         set_migration_complete('green', self.slug)
         self.assertEqual(get_migration_status('green', self.slug),

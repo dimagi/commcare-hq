@@ -13,6 +13,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0126_agg_awc_image_column'),
     ]
 
-    operations = [
-        migrator.get_migration('thr_report_view.sql')
-    ]
+    operations = []

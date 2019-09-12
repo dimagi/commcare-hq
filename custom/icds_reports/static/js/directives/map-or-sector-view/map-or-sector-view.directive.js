@@ -95,9 +95,9 @@ function MapOrSectorController($location, storageService, locationsService) {
                 },
             },
             callback: function(chart) {
-                var height = 550;
+                var height = 1500;
                 var calcHeight = vm.data.mapData ? vm.data.mapData.chart_data[0].values.length * 60 : 0;
-                vm.chartOptions.chart.height = calcHeight > height ? calcHeight : height;
+                vm.chartOptions.chart.height = calcHeight !== 0 ? calcHeight : height;
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
                     locationsService.getLocationByNameAndParent(e.data[0], location_id).then(function (locations) {

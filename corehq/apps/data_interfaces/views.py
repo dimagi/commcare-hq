@@ -18,12 +18,9 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_GET
 
-import csv342 as csv
-import six
 from couchdbkit import ResourceNotFound
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
-from six.moves import map
 
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -391,7 +388,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 messages.success(self.request, _("We received your file and are processing it..."))
                 return upload_id
         except BulkUploadCasesException as e:
-            messages.error(self.request, six.text_type(e))
+            messages.error(self.request, str(e))
         return None
 
     @property
@@ -404,7 +401,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         try:
             return get_workbook(bulk_file)
         except WorkbookJSONError as e:
-            raise BulkUploadCasesException(six.text_type(e))
+            raise BulkUploadCasesException(str(e))
 
     def _get_item_data(self, case):
         return {

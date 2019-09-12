@@ -1,4 +1,3 @@
-
 from functools import partial
 
 from toggle.shortcuts import set_toggle

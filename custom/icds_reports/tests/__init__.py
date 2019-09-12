@@ -3,9 +3,8 @@ from datetime import datetime
 
 import mock
 import postgres_copy
-import six
 import sqlalchemy
-import csv342 as csv
+import csv
 
 from django.conf import settings
 from django.test.utils import override_settings
@@ -25,8 +24,6 @@ from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
     _aggregate_gm_forms)
-from six.moves import range
-from six.moves import zip
 
 from custom.icds_reports.utils.migrations import create_citus_reference_table, create_citus_distributed_table
 
@@ -126,10 +123,21 @@ def setUpModule():
         location_id='st7',
         location_type=state_location_type
     )
+    # exercise the logic that excludes test states by creating one
+    test_state = SQLLocation.objects.create(
+        domain=domain.name,
+        name='test_state',
+        location_id='test_state',
+        location_type=state_location_type,
+        metadata={
+            'is_test_location': 'test',
+        }
+    )
 
     supervisor_location_type = LocationType.objects.create(
         domain=domain.name,
         name='supervisor',
+        parent_type=state_location_type,
     )
     s1 = SQLLocation.objects.create(
         domain=domain.name,
@@ -142,6 +150,7 @@ def setUpModule():
     block_location_type = LocationType.objects.create(
         domain=domain.name,
         name='block',
+        parent_type=supervisor_location_type,
     )
     b1 = SQLLocation.objects.create(
         domain=domain.name,
@@ -186,10 +195,7 @@ def setUpModule():
                         '"{}"'.format(c.strip())  # quote to preserve case
                         for c in f.readline().split(',')
                     ]
-                    postgres_copy.copy_from(
-                        f, table, engine, format='csv' if six.PY3 else b'csv',
-                        null='' if six.PY3 else b'', columns=columns
-                    )
+                    postgres_copy.copy_from(f, table, engine, format='csv', null='', columns=columns)
 
         _distribute_tables_for_citus(engine)
 
@@ -297,7 +303,7 @@ class CSVTestCase(TestCase):
 
             for key in dict1.keys():
                 if key != 'id':
-                    if isinstance(dict1[key], six.text_type):
+                    if isinstance(dict1[key], str):
                         value1 = dict1[key]
                     elif isinstance(dict1[key], list):
                         value1 = str(dict1[key])

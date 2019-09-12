@@ -1,10 +1,8 @@
-
 import io
 import json
 import uuid
 
-import csv342 as csv
-from six.moves import map, range
+import csv
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import (

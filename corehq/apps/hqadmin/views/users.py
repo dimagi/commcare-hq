@@ -1,4 +1,3 @@
-
 import itertools
 import uuid
 from collections import Counter
@@ -29,7 +28,6 @@ from django.views.generic import FormView, TemplateView, View
 from couchdbkit.exceptions import ResourceNotFound
 from lxml import etree
 from lxml.builder import E
-from six.moves import filter
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS

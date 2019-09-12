@@ -4,8 +4,7 @@ from collections import defaultdict
 
 from django.core.management.base import BaseCommand
 
-import csv342 as csv
-from six.moves import input
+import csv
 
 from corehq.util.log import with_progress_bar
 

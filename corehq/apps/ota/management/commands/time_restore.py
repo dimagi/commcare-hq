@@ -1,9 +1,8 @@
-
 import datetime
 
 from django.core.management.base import BaseCommand
 
-import csv342 as csv
+import csv
 from couchdbkit.resource import ResourceNotFound
 from lxml import etree
 

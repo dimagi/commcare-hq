@@ -1,4 +1,3 @@
-
 import logging
 import os
 import shutil
@@ -11,7 +10,6 @@ from datetime import datetime, timedelta
 from wsgiref.util import FileWrapper
 from xml.etree import cElementTree as ElementTree
 
-import six
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 from django.http import HttpResponse, StreamingHttpResponse
@@ -28,7 +26,6 @@ from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SE
 from casexml.apps.phone.utils import get_cached_items_with_count
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
 from corehq.util.datadog.utils import bucket_value, maybe_add_domain_tag
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from memoized import memoized
@@ -300,10 +297,8 @@ class RestoreParams(object):
         self.include_item_count = include_item_count
         self.app = app
         self.device_id = device_id
-        if isinstance(openrosa_version, six.string_types):
-            soft_assert_type_text(openrosa_version)
         self.openrosa_version = (LooseVersion(openrosa_version)
-            if isinstance(openrosa_version, six.string_types) else openrosa_version)
+            if isinstance(openrosa_version, str) else openrosa_version)
 
     @property
     def app_id(self):
@@ -574,7 +569,7 @@ class RestoreConfig(object):
                               (type(e).__name__, self.restore_user.username, str(e)))
             is_async = False
             response = get_simple_response_xml(
-                six.text_type(e),
+                str(e),
                 ResponseNature.OTA_RESTORE_ERROR
             )
             response = HttpResponse(response, content_type="text/xml; charset=utf-8",
@@ -675,7 +670,7 @@ class RestoreConfig(object):
             response_or_name = task.get(timeout=self._get_task_timeout(new_task))
             if isinstance(response_or_name, bytes):
                 response_or_name = response_or_name.decode('utf-8')
-            if isinstance(response_or_name, six.text_type):
+            if isinstance(response_or_name, str):
                 response = CachedResponse(response_or_name)
             else:
                 response = response_or_name

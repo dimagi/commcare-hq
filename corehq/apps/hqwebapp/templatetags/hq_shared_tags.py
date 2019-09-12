@@ -19,7 +19,6 @@ from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
-import six
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
@@ -46,7 +45,7 @@ def JSON(obj):
     except TypeError as e:
         msg = ("Unserializable data was sent to the `|JSON` template tag.  "
                "If DEBUG is off, Django will silently swallow this error.  "
-               "{}".format(six.text_type(e)))
+               "{}".format(str(e)))
         soft_assert(notify_admins=True)(False, msg)
         raise e
 
@@ -216,7 +215,7 @@ def pretty_doc_info(doc_info):
 def _get_obj_from_name_or_instance(module, name_or_instance):
     if isinstance(name_or_instance, bytes):
         name_or_instance = name_or_instance.decode('utf-8')
-    if isinstance(name_or_instance, six.string_types):
+    if isinstance(name_or_instance, str):
         obj = getattr(module, name_or_instance)
     else:
         obj = name_or_instance
@@ -630,7 +629,7 @@ def registerurl(parser, token):
 def trans_html_attr(value):
     if isinstance(value, bytes):
         value = value.decode('utf-8')
-    if not isinstance(value, six.string_types):
+    if not isinstance(value, str):
         value = JSON(value)
     return escape(_(value))
 
@@ -639,7 +638,7 @@ def trans_html_attr(value):
 def html_attr(value):
     if isinstance(value, bytes):
         value = value.decode('utf-8')
-    if not isinstance(value, six.string_types):
+    if not isinstance(value, str):
         value = JSON(value)
     return escape(value)
 

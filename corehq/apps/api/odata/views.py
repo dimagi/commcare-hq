@@ -1,4 +1,3 @@
-
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
@@ -56,8 +55,9 @@ class ODataCaseMetadataView(View):
     def get(self, request, domain, config_id, **kwargs):
         table_id = int(kwargs.get('table_id', 0))
         config = get_document_or_404(CaseExportInstance, domain, config_id)
-        metadata = render_to_string('api/case_odata_metadata.xml', {
+        metadata = render_to_string('api/odata_metadata.xml', {
             'fields': get_case_odata_fields_from_config(config, table_id),
+            'primary_key': 'caseid' if table_id == 0 else 'number',
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
@@ -95,8 +95,9 @@ class ODataFormMetadataView(View):
     def get(self, request, domain, config_id, **kwargs):
         table_id = int(kwargs.get('table_id', 0))
         config = get_document_or_404(FormExportInstance, domain, config_id)
-        metadata = render_to_string('api/form_odata_metadata.xml', {
+        metadata = render_to_string('api/odata_metadata.xml', {
             'fields': get_form_odata_fields_from_config(config, table_id),
+            'primary_key': 'formid' if table_id == 0 else 'number',
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 

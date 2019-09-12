@@ -2,7 +2,6 @@ import logging
 from collections import defaultdict, deque, namedtuple
 from itertools import chain
 
-import six
 from memoized import memoized
 
 from corehq import toggles
@@ -81,8 +80,8 @@ class _CaseRelationshipManager(object):
 
     You can also ask "What are all of the case_types a `referral`'s `parent` can be?":
 
-    >>> case_relationship_manager.resolve_expansion(_CaseTypeRef('referral', ('parent',))) == {'patient'}
-    True
+    >>> case_relationship_manager.resolve_expansion(_CaseTypeRef('referral', ('parent',)))
+    {'patient'}
 
     This is read "a `referral`'s parent can only be a `patient`".
 

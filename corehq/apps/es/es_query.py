@@ -101,7 +101,6 @@ import json
 from collections import namedtuple
 from copy import deepcopy
 
-import six
 from memoized import memoized
 
 from corehq.elastic import (
@@ -203,7 +202,7 @@ class ESQuery(object):
         raise AttributeError("There is no builtin filter named %s" % attr)
 
     def __getitem__(self, sliced_or_int):
-        if isinstance(sliced_or_int, six.integer_types):
+        if isinstance(sliced_or_int, int):
             start = sliced_or_int
             size = 1
         else:

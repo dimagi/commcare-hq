@@ -1,11 +1,9 @@
-
 import logging
 import sys
 from functools import cmp_to_key
 
 from django.utils.translation import ugettext as _
 
-import six
 from ddtrace import tracer
 from iso8601 import iso8601
 
@@ -40,7 +38,7 @@ from corehq.util import cmp
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.soft_assert import soft_assert
 
-reconciliation_soft_assert = soft_assert('@'.join(['dmiller', 'dimagi.com']), include_breadcrumbs=True)
+reconciliation_soft_assert = soft_assert('@'.join(['dmiller', 'dimagi.com']))
 
 
 def _validate_length(length):
@@ -329,7 +327,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         try:
             self.reconcile_transactions()
         except ReconciliationError as e:
-            reconciliation_soft_assert(False, "ReconciliationError: %s" % six.text_type(e))
+            reconciliation_soft_assert(False, "ReconciliationError: %s" % str(e))
 
         return True
 

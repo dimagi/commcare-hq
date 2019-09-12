@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import json
 import logging
 import os
@@ -9,7 +7,6 @@ from collections import defaultdict
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
-import six
 from django_prbac.exceptions import PermissionDenied
 from lxml import etree
 from memoized import memoized
@@ -32,6 +29,7 @@ from corehq.apps.app_manager.exceptions import (
     LocationXpathValidationError,
     ModuleIdMissingException,
     ModuleNotFoundException,
+    ParentModuleReferenceError,
     PracticeUserException,
     SuiteValidationError,
     UserCaseXPathValidationError,
@@ -88,8 +86,8 @@ class ApplicationBaseValidator(object):
                 'form': ucve.form,
             })
         except (AppEditingError, XFormValidationError, XFormException,
-                PermissionDenied, SuiteValidationError) as e:
-            errors.append({'type': 'error', 'message': six.text_type(e)})
+                ParentModuleReferenceError, PermissionDenied, SuiteValidationError) as e:
+            errors.append({'type': 'error', 'message': str(e)})
         return errors
 
     @time_method()
@@ -155,7 +153,7 @@ class ApplicationBaseValidator(object):
         except PracticeUserException as e:
             return [{
                 'type': 'practice user config error',
-                'message': six.text_type(e),
+                'message': str(e),
                 'build_profile_id': build_profile_id,
             }]
         return []
@@ -318,7 +316,7 @@ class ModuleBaseValidator(object):
         except ModuleNotFoundException as ex:
             errors.append({
                 "type": "missing module",
-                "message": six.text_type(ex),
+                "message": str(ex),
                 "module": self.get_module_info(),
             })
 
@@ -384,7 +382,7 @@ class ModuleBaseValidator(object):
                 except LocationXpathValidationError as e:
                     yield {
                         'type': 'invalid location xpath',
-                        'details': six.text_type(e),
+                        'details': str(e),
                         'module': self.get_module_info(),
                         'column': column,
                     }
@@ -708,7 +706,7 @@ class FormBaseValidator(object):
             except XFormException as e:
                 errors.append(dict(
                     type="invalid xml",
-                    message=six.text_type(e) if self.form.source else '',
+                    message=str(e) if self.form.source else '',
                     **meta
                 ))
             except ValueError:
@@ -718,7 +716,7 @@ class FormBaseValidator(object):
         try:
             questions = self.form.cached_get_questions()
         except XFormException as e:
-            error = {'type': 'validation error', 'validation_message': six.text_type(e)}
+            error = {'type': 'validation error', 'validation_message': str(e)}
             error.update(meta)
             errors.append(error)
 
@@ -730,7 +728,7 @@ class FormBaseValidator(object):
                 try:
                     self.form.validate_form()
                 except XFormValidationError as e:
-                    error = {'type': 'validation error', 'validation_message': six.text_type(e)}
+                    error = {'type': 'validation error', 'validation_message': str(e)}
                     error.update(meta)
                     errors.append(error)
                 except XFormValidationFailed:
@@ -809,7 +807,7 @@ class IndexedFormBaseValidator(FormBaseValidator):
             questions = self.form.cached_get_questions()
             valid_paths = {question['value']: question['tag'] for question in questions}
         except XFormException as e:
-            errors.append({'type': 'invalid xml', 'message': six.text_type(e)})
+            errors.append({'type': 'invalid xml', 'message': str(e)})
         else:
             no_multimedia = not self.form.get_app().enable_multimedia_case_property
             for path in set(paths):

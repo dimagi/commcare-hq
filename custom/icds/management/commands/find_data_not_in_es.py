@@ -1,5 +1,4 @@
-
-import csv342 as csv
+import csv
 from datetime import datetime
 
 from django.core.management import BaseCommand

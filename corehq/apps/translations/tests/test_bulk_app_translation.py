@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import os
 import tempfile
 from collections import OrderedDict, defaultdict
@@ -8,7 +6,6 @@ from io import BytesIO
 from django.test import SimpleTestCase
 
 from mock import patch
-from six.moves import zip
 
 from couchexport.export import export_raw
 from couchexport.models import Format

@@ -7,13 +7,11 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-import six
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from memoized import memoized
-from six.moves import filter
 
 from dimagi.utils.couch.database import iter_docs
 
@@ -644,12 +642,12 @@ def to_list(value):
     Returns ``value`` as a list if it is iterable and not a string,
     otherwise returns ``value`` in a list.
 
-    >>> to_list(('foo', 'bar', 'baz')) == ['foo', 'bar', 'baz']
-    True
-    >>> to_list('foo bar baz') == ['foo bar baz']
-    True
+    >>> to_list(('foo', 'bar', 'baz'))
+    ['foo', 'bar', 'baz']
+    >>> to_list('foo bar baz')
+    ['foo bar baz']
 
     """
-    if hasattr(value, '__iter__') and not isinstance(value, six.string_types):
+    if hasattr(value, '__iter__') and not isinstance(value, str):
         return list(value)
     return [value]

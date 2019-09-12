@@ -1,4 +1,3 @@
-
 from collections import namedtuple
 
 from quickcache import get_quickcache

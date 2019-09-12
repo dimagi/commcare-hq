@@ -1,4 +1,3 @@
-
 from django.utils.functional import lazy
 from jsonfield import JSONField
 from rest_framework import serializers
@@ -9,7 +8,6 @@ from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
     XFormInstanceSQL, XFormOperationSQL,
     LedgerValue, CaseAttachmentSQL)
-import six
 
 
 class DeletableModelSerializer(serializers.ModelSerializer):
@@ -72,7 +70,7 @@ class XFormStateField(serializers.ChoiceField):
     def get_attribute(self, obj):
         choice = super(serializers.ChoiceField, self).get_attribute(obj)
         readable_state = []
-        for state, state_slug in six.iteritems(self.choices):
+        for state, state_slug in self.choices.items():
             if choice & state:
                 readable_state.append(state_slug)
         return ' / '.join(readable_state)

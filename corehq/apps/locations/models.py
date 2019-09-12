@@ -1,4 +1,3 @@
-
 import uuid
 from collections import defaultdict
 from datetime import datetime
@@ -8,7 +7,6 @@ from django.db import models, transaction
 from django.db.models import Q
 
 import jsonfield
-import six
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from django_cte import CTEQuerySet
 from memoized import memoized
@@ -85,7 +83,6 @@ def stock_level_config_for_domain(domain, commtrack_enabled):
         return ct_config.stock_levels_config
 
 
-@six.python_2_unicode_compatible
 class LocationType(models.Model):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255)
@@ -365,7 +362,6 @@ class OnlyArchivedLocationManager(LocationManager):
         return list(self.accessible_to_user(domain, user).location_ids())
 
 
-@six.python_2_unicode_compatible
 class SQLLocation(AdjListModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255, null=True)
@@ -418,8 +414,6 @@ class SQLLocation(AdjListModel):
 
         if not self.location_id:
             self.location_id = uuid.uuid4().hex
-            if six.PY2:
-                self.location_id = self.location_id.decode('utf-8')
 
         with transaction.atomic():
             set_site_code_if_needed(self)
@@ -912,7 +906,7 @@ class LocationRelation(models.Model):
         location_dict: {loc_id: distance}
         """
 
-        for loc_id, distance in six.iteritems(location_dict):
+        for loc_id, distance in location_dict.items():
             relation = cls.objects.filter(
                 (Q(location_a_id=loc_id) & Q(location_b_id=source_location_id)) |
                 (Q(location_b_id=loc_id) & Q(location_a_id=source_location_id))

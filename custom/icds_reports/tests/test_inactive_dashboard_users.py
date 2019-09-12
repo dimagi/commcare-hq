@@ -1,6 +1,5 @@
-
 import zipfile
-import csv342 as csv
+import csv
 import io
 
 from django.test.testcases import TestCase

@@ -1,8 +1,7 @@
-
 import json
-import six
 
 from django.test import SimpleTestCase
+
 from fakecouch import FakeCouchDb
 from jsonobject.base_properties import BadValueError
 
@@ -45,7 +44,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
-            six.text_type(e.exception),
+            str(e.exception),
             "Property program_id is required."
         )
 
@@ -60,7 +59,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
-            six.text_type(e.exception),
+            str(e.exception),
             'Property event_date is required.'
         )
 
@@ -117,7 +116,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         with self.assertRaises(BadValueError) as e:
             repeater.save()
         self.assertEqual(
-            six.text_type(e.exception),
+            str(e.exception),
             "Property data_element_id is required."
         )
 

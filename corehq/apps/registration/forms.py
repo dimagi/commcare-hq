@@ -10,7 +10,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
 
-import six
 from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -25,9 +24,8 @@ from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
 from corehq.apps.users.forms import RoleForm
 from corehq.apps.users.models import CouchUser
-from corehq.util.python_compatibility import soft_assert_type_text
 
-mark_safe_lazy = lazy(mark_safe, six.text_type)
+mark_safe_lazy = lazy(mark_safe, str)
 
 
 class RegisterWebUserForm(forms.Form):
@@ -274,8 +272,7 @@ class RegisterWebUserForm(forms.Form):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], six.string_types):
-                soft_assert_type_text(self.cleaned_data[field])
+            if isinstance(self.cleaned_data[field], str):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -311,8 +308,7 @@ class DomainRegistrationForm(forms.Form):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], six.string_types):
-                soft_assert_type_text(self.cleaned_data[field])
+            if isinstance(self.cleaned_data[field], str):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -387,8 +383,7 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], six.string_types):
-                soft_assert_type_text(self.cleaned_data[field])
+            if isinstance(self.cleaned_data[field], str):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -409,8 +404,7 @@ class _BaseForm(object):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], six.string_types):
-                soft_assert_type_text(self.cleaned_data[field])
+            if isinstance(self.cleaned_data[field], str):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 

@@ -1,4 +1,3 @@
-
 import multiprocessing
 import os
 import re
@@ -10,7 +9,6 @@ from datetime import datetime
 from django.core.management.base import BaseCommand, CommandError
 
 import sh
-from six.moves import input
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.multiprocess import (

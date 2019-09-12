@@ -12,7 +12,6 @@ http://bitbucket.org/james_taylor/bx-python/src/14b6a6c95da6/lib/bx/intervals/op
 """
 import time
 import random
-from six.moves import range
 
 
 class IntervalNode( object ):

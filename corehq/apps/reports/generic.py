@@ -1,4 +1,3 @@
-
 import datetime
 import io
 import json
@@ -17,11 +16,8 @@ from django.template.loader import render_to_string
 from django.urls import NoReverseMatch
 from django.utils.translation import ugettext
 
-import pytz
-import six
 from celery.utils.log import get_task_logger
 from memoized import memoized
-from six.moves import range, zip
 
 from couchexport.export import export_from_tables, get_writer
 from couchexport.shortcuts import export_response
@@ -44,8 +40,6 @@ from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.util import DatatablesParams, get_report_timezone
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
 
 from corehq import toggles
@@ -308,8 +302,7 @@ class GenericReportView(object):
         filters = []
         fields = self.fields
         for field in fields or []:
-            if isinstance(field, six.string_types):
-                soft_assert_type_text(field)
+            if isinstance(field, str):
                 klass = to_function(field, failhard=True)
             else:
                 klass = field
@@ -359,7 +352,9 @@ class GenericReportView(object):
             Nothing specific to the report should go here, use report_context for that.
             Must return a dict.
         """
-        return dict()
+        return {
+            'rendered_as': self.rendered_as,
+        }
 
     @property
     def report_context(self):
@@ -440,9 +435,7 @@ class GenericReportView(object):
         default_config = ReportConfig.default()
 
         def is_editable_datespan(field):
-            if isinstance(field, six.string_types):
-                soft_assert_type_text(field)
-            field_fn = to_function(field) if isinstance(field, six.string_types) else field
+            field_fn = to_function(field) if isinstance(field, str) else field
             return issubclass(field_fn, DatespanFilter) and field_fn.is_editable
 
         has_datespan = any([is_editable_datespan(field) for field in self.fields])
@@ -969,8 +962,7 @@ class GenericTabularReport(GenericReportView):
         # using regex breaks values then we should use a parser instead, and
         # take the knock. Assuming we won't have values with angle brackets,
         # using regex for now.
-        if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+        if isinstance(value, str):
             return re.sub('<[^>]*?>', '', value)
         return value
 
@@ -1237,7 +1229,7 @@ class GetParamsMixin(object):
         so as to get sorting working correctly with the context of the GET params
         """
         ret = super(GetParamsMixin, self).shared_pagination_GET_params
-        for k, v in six.iterlists(self.request.GET):
+        for k, v in self.request.GET.lists():
             ret.append(dict(name=k, value=v))
         return ret
 

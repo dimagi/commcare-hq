@@ -1,4 +1,3 @@
-
 import copy
 import json
 import os
@@ -17,7 +16,6 @@ from django.utils.http import urlencode as django_urlencode
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET
 
-import six
 import urllib3
 from couchdbkit.exceptions import ResourceConflict
 from django_prbac.utils import has_privilege
@@ -546,7 +544,7 @@ def import_app(request, domain):
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        source = decompress([six.unichr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
+        source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
         app = import_app_util(source, domain, {'name': name})
@@ -638,7 +636,7 @@ def rename_language(request, domain, form_unique_id):
         app.save()
         return HttpResponse(json.dumps({"status": "ok"}))
     except XFormException as e:
-        response = HttpResponse(json.dumps({'status': 'error', 'message': six.text_type(e)}), status=409)
+        response = HttpResponse(json.dumps({'status': 'error', 'message': str(e)}), status=409)
         return response
 
 
@@ -883,7 +881,7 @@ def edit_app_attr(request, domain, app_id, attr):
 def edit_add_ons(request, domain, app_id):
     app = get_app(domain, app_id)
     current = add_ons.get_dict(request, app)
-    for slug, value in six.iteritems(request.POST):
+    for slug, value in request.POST.items():
         if slug in current:
             app.add_ons[slug] = value == 'on'
     app.save()
@@ -980,7 +978,7 @@ def pull_master_app(request, domain, app_id):
         try:
             update_linked_app(app, request.couch_user.get_id)
         except AppLinkError as e:
-            messages.error(request, six.text_type(e))
+            messages.error(request, str(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
     track_workflow(request.couch_user.username, "Linked domain: master app pulled")

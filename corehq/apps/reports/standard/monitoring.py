@@ -1,4 +1,3 @@
-
 import datetime
 import math
 from collections import defaultdict, namedtuple
@@ -8,10 +7,8 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
 import pytz
-import six
 from memoized import memoized
 from pygooglechart import ScatterChart
-from six.moves import map, range
 from six.moves.urllib.parse import urlencode
 
 from dimagi.utils.chunked import chunked
@@ -1633,10 +1630,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         rows = []
         active_users_by_group = {
             g: len([u for u in users if report_data.submissions_by_user.get(u['user_id'])])
-            for g, users in six.iteritems(self.users_by_group)
+            for g, users in self.users_by_group.items()
         }
 
-        for group, users in six.iteritems(self.users_by_group):
+        for group, users in self.users_by_group.items():
             group_name, group_id = tuple(group.split('|'))
             if group_name == 'no_group':
                 continue

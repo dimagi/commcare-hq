@@ -1,6 +1,3 @@
-
-import six
-
 from django_bulk_update.helper import bulk_update
 from django.core.management import BaseCommand
 from corehq.warehouse.models.dimensions import ApplicationDim
@@ -33,7 +30,7 @@ def get_latest_build_ids(domain, app_id, user_ids):
     aggregations = query.run().aggregations
     buckets_dict = aggregations.user_id.buckets_dict
     result = {}
-    for user_id, bucket in six.iteritems(buckets_dict):
+    for user_id, bucket in buckets_dict.items():
         result[user_id] = bucket.top_hits_last_form_submissions.hits[0]['build_id']
     return result
 
@@ -55,7 +52,7 @@ def update_build_version_for_app(domain, app_id, check_only):
     version_by_build_id = {}
 
     def memoized_get_versions(build_ids):
-        new = set(build_ids) - set(six.iterkeys(version_by_build_id))
+        new = set(build_ids) - set(version_by_build_id.keys())
         if new:
             versions = ApplicationDim.objects.filter(
                 domain=domain,
@@ -70,11 +67,11 @@ def update_build_version_for_app(domain, app_id, check_only):
             f.user_dim.user_id: f
             for f in fact_chunk
         }
-        build_ids_by_user_ids = get_latest_build_ids(domain, app_id, list(six.iterkeys(facts_by_user_ids)))
-        build_ids = list(six.itervalues(build_ids_by_user_ids))
+        build_ids_by_user_ids = get_latest_build_ids(domain, app_id, list(facts_by_user_ids.keys()))
+        build_ids = list(build_ids_by_user_ids.values())
         version_by_build_id = memoized_get_versions(build_ids)
         facts_to_update = []
-        for user_id, fact in six.iteritems(facts_by_user_ids):
+        for user_id, fact in facts_by_user_ids.items():
             build_id = build_ids_by_user_ids.get(user_id, '')
             version = version_by_build_id.get(build_id, '')
             if not fact.last_form_app_build_version and version:

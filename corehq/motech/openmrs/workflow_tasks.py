@@ -1,5 +1,6 @@
-
 from datetime import timedelta
+
+from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.exceptions import ConfigurationError
@@ -16,7 +17,6 @@ from corehq.motech.openmrs.repeater_helpers import (
 )
 from corehq.motech.openmrs.serializers import to_omrs_datetime
 from corehq.motech.openmrs.workflow import WorkflowTask
-from dimagi.utils.parsing import string_to_utc_datetime
 
 
 class SyncPersonAttributesTask(WorkflowTask):

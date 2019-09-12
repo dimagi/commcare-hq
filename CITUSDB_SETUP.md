@@ -87,6 +87,17 @@ DATABASES.update({
 })
 ```
 
+And for ICDS dashboard development add the following:
+
+```python
+ICDS_USE_CITUS = True
+
+REPORTING_DATABASES.update({
+    'icds-ucr': 'icds-ucr',
+    'icds-ucr-citus': 'icds-ucr',
+})
+```
+
 **ROLE**
 
 This setting allows Django to know which DB is the master
@@ -107,13 +118,14 @@ with the same hostname that Django uses. Setting `CITUS_NODE_NAME`
 will override the host and port for master to worker communications.
 
 ## Setting up the database
+
 There are two ways to do the database setup. In both cases you will need
 to manually create the databases:
 
 ```
-$ psql -h localhost -p 5600 -U postgres -c 'create database commcare_ucr_citus;'
-$ psql -h localhost -p 5601 -U postgres -c 'create database commcare_ucr_citus;'
-$ psql -h localhost -p 5602 -U postgres -c 'create database commcare_ucr_citus;'
+$ psql -h localhost -p 5600 -U commcarehq -c 'create database commcare_ucr_citus;' postgres
+$ psql -h localhost -p 5601 -U commcarehq -c 'create database commcare_ucr_citus;' postgres
+$ psql -h localhost -p 5602 -U commcarehq -c 'create database commcare_ucr_citus;' postgres
 ```
 
 Now we can configure the databases in either of the following ways:
@@ -144,7 +156,7 @@ Now we can configure the databases in either of the following ways:
 
     Connect to your database on the master node:
     ```
-    $ psql -h localhost -p 5600 -U postgres commcare_ucr_citus
+    $ psql -h localhost -p 5600 -U commcarehq commcare_ucr_citus
     ```
     ```sql
     CREATE EXTENSION citus;
@@ -158,7 +170,7 @@ Now we can configure the databases in either of the following ways:
     Connect to your database on each worker node:
 
     ```
-    $ psql -h localhost -p 560[1,2] -U postgres commcare_ucr_citus
+    $ psql -h localhost -p 560[1,2] -U commcarehq commcare_ucr_citus
     ```
     ```sql
     CREATE EXTENSION citus;

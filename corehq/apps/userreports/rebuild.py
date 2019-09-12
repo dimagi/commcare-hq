@@ -1,10 +1,8 @@
-
 from collections import defaultdict, namedtuple
 
 import attr
 from alembic.autogenerate import compare_metadata
 from alembic.operations import Operations
-from six.moves import zip
 
 from dimagi.utils.couch import get_redis_client
 from fluff.signals import (

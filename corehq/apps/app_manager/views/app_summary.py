@@ -1,4 +1,3 @@
-
 import io
 from collections import namedtuple
 
@@ -6,9 +5,6 @@ from django.http import Http404
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
-
-import six
-from six.moves import range
 
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -206,9 +202,9 @@ def _translate_name(names, language):
     if not names:
         return "[{}]".format(_("Unknown"))
     try:
-        return six.text_type(names[language])
+        return str(names[language])
     except KeyError:
-        first_name = next(six.iteritems(names))
+        first_name = next(names.items())
         return "{} [{}]".format(first_name[1], first_name[0])
 
 
@@ -522,7 +518,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
             relationships = case_type.relationships
             relationships.update({'': [case_type.name]})
-            for relationship, types in six.iteritems(relationships):
+            for relationship, types in relationships.items():
                 for type_ in types:
                     if relationship and not opened_by[type_] and not closed_by[type_]:
                         rows.append((case_type.name, "[{}] {}".format(relationship, type_)))

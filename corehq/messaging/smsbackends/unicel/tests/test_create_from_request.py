@@ -1,4 +1,3 @@
-
 import codecs
 from datetime import timedelta
 

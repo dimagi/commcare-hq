@@ -1,4 +1,3 @@
-
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 

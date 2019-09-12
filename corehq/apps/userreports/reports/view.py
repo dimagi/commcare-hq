@@ -16,7 +16,6 @@ from django.shortcuts import redirect, render
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-import six
 from braces.views import JSONResponseMixin
 from memoized import memoized
 
@@ -100,7 +99,7 @@ def get_filter_values(filters, request_dict, user=None):
             for filter in filters
         }
     except FilterException as e:
-        raise UserReportsFilterError(six.text_type(e))
+        raise UserReportsFilterError(str(e))
 
 
 def query_dict_to_dict(query_dict, domain, string_type_params):
@@ -120,7 +119,7 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
 
     # json.loads casts strings 'true'/'false' to booleans, so undo it
     for key in string_type_params:
-        u_key = six.text_type(key)  # QueryDict's key/values are unicode strings
+        u_key = str(key)  # QueryDict's key/values are unicode strings
         if u_key in query_dict:
             request_dict[key] = query_dict[u_key]  # json_request converts keys to strings
     return request_dict
@@ -297,7 +296,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                         'You may need to delete and recreate the report. '
                         'If you believe you are seeing this message in error, please report an issue.'
                     )
-                    details = six.text_type(e)
+                    details = str(e)
                 self.template_name = 'userreports/report_error.html'
                 context = {
                     'report_id': self.report_config_id,
@@ -419,7 +418,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             if settings.DEBUG:
                 raise
             return self.render_json_response({
-                'error': six.text_type(e),
+                'error': str(e),
                 'aaData': [],
                 'iTotalRecords': 0,
                 'iTotalDisplayRecords': 0,
@@ -493,7 +492,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 if isinstance(value, Choice):
                     values.append(value.display)
                 else:
-                    values.append(six.text_type(value))
+                    values.append(str(value))
             return ', '.join(values)
         elif isinstance(filter_value, DateSpan):
             return filter_value.default_serialization()
@@ -501,7 +500,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             if isinstance(filter_value, Choice):
                 return filter_value.display
             else:
-                return six.text_type(filter_value)
+                return str(filter_value)
 
     def _get_filter_values(self):
         slug_to_filter = {
@@ -511,11 +510,11 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
         filters_without_prefilters = {
             filter_slug: filter_value
-            for filter_slug, filter_value in six.iteritems(self.filter_values)
+            for filter_slug, filter_value in self.filter_values.items()
             if not isinstance(slug_to_filter[filter_slug], PreFilter)
         }
 
-        for filter_slug, filter_value in six.iteritems(filters_without_prefilters):
+        for filter_slug, filter_value in filters_without_prefilters.items():
             label = slug_to_filter[filter_slug].label
             yield label, self._get_filter_export_format(filter_value)
 
@@ -535,7 +534,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             try:
                 self.report_export.create_export(temp, Format.HTML)
             except UserReportsError as e:
-                return self.render_json_response({'error': six.text_type(e)})
+                return self.render_json_response({'error': str(e)})
             return HttpResponse(json.dumps({
                 'report': temp.getvalue().decode('utf-8'),
             }), content_type='application/json')

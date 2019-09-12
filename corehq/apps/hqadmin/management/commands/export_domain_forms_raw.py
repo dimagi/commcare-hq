@@ -4,7 +4,6 @@ import os
 from django.core.management.base import BaseCommand, CommandError
 
 import jsonobject
-import six
 
 from dimagi.ext.jsonobject import JsonObject
 
@@ -16,7 +15,7 @@ class FormMetadata(JsonObject):
     received_on = jsonobject.DateTimeProperty()
     app_id = jsonobject.StringProperty()
     build_id = jsonobject.StringProperty()
-    attachments = jsonobject.ListProperty(six.text_type)
+    attachments = jsonobject.ListProperty(str)
     auth_context = jsonobject.DictProperty()
 
 
@@ -53,8 +52,6 @@ class Command(BaseCommand):
 
             with open(os.path.join(form_path, 'metadata.json'), 'w', encoding='utf-8') as meta:
                 form_meta_data = json.dumps(form_meta.to_json())
-                if six.PY2:
-                    form_meta_data = form_meta_data.decode('utf-8')
                 meta.write(form_meta_data)
 
             xml = form.get_xml()

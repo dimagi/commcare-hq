@@ -3,14 +3,12 @@ from lxml import etree
 
 import iso8601
 import pytz
-import six
 
 import xml2json
 from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.models import Attachment
 from corehq.form_processor.exceptions import XFormQuestionValueNotFound
-from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
 
@@ -60,7 +58,7 @@ class FormSubmissionBuilder(object):
         self.form_properties = form_properties or {}
 
     def as_xml_string(self):
-        case_block_xml = ''.join(cb.as_string().decode('utf-8') for cb in self.case_blocks)
+        case_block_xml = ''.join(cb.as_text() for cb in self.case_blocks)
         form_properties_xml = build_form_xml_from_property_dict(self.form_properties)
         form_xml = self.form_template.format(
             uuid=self.form_id, form_properties=form_properties_xml, case_block=case_block_xml,
@@ -198,10 +196,9 @@ def adjust_datetimes(data, parent=None, key=None, process_timezones=None):
     process_timezones = process_timezones or phone_timezones_should_be_processed()
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
-    if isinstance(data, six.string_types) and jsonobject.re_loose_datetime.match(data):
-        soft_assert_type_text(data)
+    if isinstance(data, str) and jsonobject.re_loose_datetime.match(data):
         try:
-            parent[key] = six.text_type(json_format_datetime(
+            parent[key] = str(json_format_datetime(
                 adjust_text_to_datetime(data, process_timezones=process_timezones)
             ))
         except (iso8601.ParseError, ValueError):

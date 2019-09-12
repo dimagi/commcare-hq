@@ -1,4 +1,3 @@
-
 import doctest
 
 from .. import chunked

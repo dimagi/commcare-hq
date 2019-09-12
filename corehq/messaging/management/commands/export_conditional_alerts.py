@@ -15,7 +15,6 @@ from django.core.management.base import BaseCommand, CommandError
 import copy
 import json
 import jsonobject
-import six
 
 
 SIMPLE_SMS_DAILY_SCHEDULE_WITH_TIME = 1
@@ -43,16 +42,16 @@ class ExtraSchedulingOptions(jsonobject.JsonObject):
     active = jsonobject.BooleanProperty()
     include_descendant_locations = jsonobject.BooleanProperty()
     default_language_code = jsonobject.StringProperty()
-    custom_metadata = jsonobject.DictProperty(six.text_type)
+    custom_metadata = jsonobject.DictProperty(str)
     use_utc_as_default_timezone = jsonobject.BooleanProperty()
-    user_data_filter = jsonobject.DictProperty(jsonobject.ListProperty(six.text_type))
+    user_data_filter = jsonobject.DictProperty(jsonobject.ListProperty(str))
     stop_date_case_property_name = jsonobject.StringProperty()
 
 
 class SimpleSMSDailyScheduleWithTime(jsonobject.JsonObject):
     schedule_type = SIMPLE_SMS_DAILY_SCHEDULE_WITH_TIME
     time = jsonobject.TimeProperty()
-    message = jsonobject.DictProperty(six.text_type)
+    message = jsonobject.DictProperty(str)
     total_iterations = jsonobject.IntegerProperty()
     start_offset = jsonobject.IntegerProperty()
     start_day_of_week = jsonobject.IntegerProperty()
@@ -62,16 +61,8 @@ class SimpleSMSDailyScheduleWithTime(jsonobject.JsonObject):
 
 class SimpleSMSAlertSchedule(jsonobject.JsonObject):
     schedule_type = SIMPLE_SMS_ALERT_SCHEDULE
-    message = jsonobject.DictProperty(six.text_type)
+    message = jsonobject.DictProperty(str)
     extra_options = jsonobject.ObjectProperty(ExtraSchedulingOptions)
-
-
-def open_for_json_write(path):
-    # json.dumps returns bytes in python2, but unicode in python3
-    if six.PY2:
-        return open(path, 'wb')
-
-    return open(path, 'w', encoding='utf-8')
 
 
 class Command(BaseCommand):
@@ -253,7 +244,7 @@ class Command(BaseCommand):
                 'schedule': json_schedule.to_json(),
             }))
 
-        with open_for_json_write('conditional_alerts_for_%s.txt' % domain) as f:
+        with open('conditional_alerts_for_%s.txt' % domain, 'w', encoding='utf-8') as f:
             for line in result:
                 f.write(line)
                 f.write('\n')

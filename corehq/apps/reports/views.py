@@ -34,13 +34,11 @@ from django.views.decorators.http import (
 from django.views.generic import View
 from django.views.generic.base import TemplateView
 
-import csv342 as csv
+import csv
 import pytz
-import six
 from couchdbkit.exceptions import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
-from six.moves import range, zip
 
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import close_case, rebuild_case_from_forms
@@ -151,12 +149,12 @@ from corehq.motech.repeaters.dbaccessors import (
 )
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.couch import get_document_or_404
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import (
     get_timezone_for_request,
     get_timezone_for_user,
 )
+from corehq.util import cmp
 from corehq.util.view_utils import (
     absolute_reverse,
     get_case_or_404,
@@ -708,7 +706,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             try:
                 self.report_notification.update_attributes(list(self.scheduled_report_form.cleaned_data.items()))
             except ValidationError as err:
-                kwargs['error'] = six.text_type(err)
+                kwargs['error'] = str(err)
                 messages.error(request, ugettext_lazy(kwargs['error']))
                 return self.get(request, *args, **kwargs)
             time_difference = get_timezone_difference(self.domain)
@@ -1047,18 +1045,21 @@ class CaseDataView(BaseProjectReportSectionView):
         tz_offset_ms = int(timezone.utcoffset(the_time_is_now).total_seconds()) * 1000
         tz_abbrev = timezone.localize(the_time_is_now).tzname()
 
-        # ledgers
+        product_name_by_id = {
+            product['product_id']: product['name']
+            for product in SQLProduct.objects.filter(domain=self.domain).values('product_id', 'name').all()
+        }
+
         def _product_name(product_id):
-            try:
-                return SQLProduct.objects.get(product_id=product_id).name
-            except SQLProduct.DoesNotExist:
-                return (_('Unknown Product ("{}")').format(product_id))
+            return product_name_by_id.get(product_id, _('Unknown Product ("{}")').format(product_id))
 
         ledger_map = LedgerAccessors(self.domain).get_case_ledger_state(self.case_id, ensure_form_id=True)
-        for section, product_map in ledger_map.items():
-            product_tuples = sorted(
-                (_product_name(product_id), product_map[product_id]) for product_id in product_map
-            )
+        for section, entry_map in ledger_map.items():
+            product_tuples = [
+                (_product_name(product_id), entry_map[product_id])
+                for product_id in entry_map
+            ]
+            product_tuples.sort(key=lambda product_name, entry_state: product_name)
             ledger_map[section] = product_tuples
 
         repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)
@@ -1990,7 +1991,7 @@ def _get_data_cleaning_updates(request, old_properties):
         else:
             return val_or_dict
 
-    for prop, value in six.iteritems(properties):
+    for prop, value in properties.items():
         if prop not in old_properties or _get_value(old_properties[prop]) != value:
             updates[prop] = value
     return updates
@@ -2037,11 +2038,9 @@ def resave_form_view(request, domain, instance_id):
 
 # Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
-    if isinstance(end, six.string_types):
-        soft_assert_type_text(end)
+    if isinstance(end, str):
         end = parse_date(end)
-    if isinstance(start, six.string_types):
-        soft_assert_type_text(start)
+    if isinstance(start, str):
         start = parse_date(start)
     if not end:
         end = datetime.utcnow()

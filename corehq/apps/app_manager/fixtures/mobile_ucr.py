@@ -1,5 +1,3 @@
-
-
 import logging
 import uuid
 from collections import defaultdict
@@ -8,7 +6,6 @@ from datetime import datetime, timedelta
 from django.conf import settings
 
 from lxml.builder import E
-from six.moves import map, zip
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.models import UCRSyncLog

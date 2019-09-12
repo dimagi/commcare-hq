@@ -5,7 +5,6 @@ from django.template.defaultfilters import yesno
 from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound
-from six.moves import range
 
 from couchexport.export import export_raw
 from couchexport.models import Format

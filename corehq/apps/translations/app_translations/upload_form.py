@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import copy
 import re
 from collections import defaultdict
@@ -7,7 +5,6 @@ from collections import defaultdict
 from django.contrib import messages
 from django.utils.translation import ugettext as _
 
-import six
 from lxml import etree
 from lxml.etree import Element, XMLSyntaxError
 
@@ -72,7 +69,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         try:
             self._check_for_shadow_form_error()
         except BulkAppTranslationsException as e:
-            return [(messages.error, six.text_type(e))]
+            return [(messages.error, str(e))]
 
         if not self.itext:
             # This form is empty or malformed. Ignore it.
@@ -99,7 +96,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 try:
                     self._add_or_remove_translations(lang, row)
                 except BulkAppTranslationsException as e:
-                    self.msgs.append((messages.warning, six.text_type(e)))
+                    self.msgs.append((messages.warning, str(e)))
 
         save_xform(self.app, self.form, etree.tostring(self.xform.xml))
 
