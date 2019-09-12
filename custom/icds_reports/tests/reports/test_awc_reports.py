@@ -1481,9 +1481,9 @@ class TestAWCReport(TestCase):
             {
                 "all": "",
                 "format": "number",
-                "color": "red",
-                "percent": 0,
-                "value": 139,
+                "color": "green",
+                "percent": 'Data in the previous reporting period was 0',
+                "value": 0,
                 "label": "Registered Households",
                 "frequency": "month",
                 "help_text": "Total number of households registered"
@@ -1734,9 +1734,9 @@ class TestAWCReport(TestCase):
             {
                 "all": "",
                 "format": "number",
-                "color": "red",
-                "percent": 0,
-                "value": 139,
+                "color": "green",
+                "percent": 'Data in the previous reporting period was 0',
+                "value": 0,
                 "label": "Registered Households",
                 "frequency": "day",
                 "help_text": "Total number of households registered"
@@ -1975,9 +1975,9 @@ class TestAWCReport(TestCase):
             {
                 "all": "",
                 "format": "number",
-                "color": "red",
-                "percent": 0,
-                "value": 139,
+                "color": "green",
+                "percent": 'Data in the previous reporting period was 0',
+                "value": 0,
                 "label": "Registered Households",
                 "frequency": "day",
                 "help_text": "Total number of households registered"

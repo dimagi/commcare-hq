@@ -979,13 +979,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][0],
             {
                 'average': {
-                    'html': 6964,
-                    'sort_key': 6964
+                    'html': 2799,
+                    'sort_key': 2799
                 },
                 'data': [
                     {'html': 'Number of Households'},
-                    {'html': 6951, 'sort_key': 6951},
-                    {'html': 6964, 'sort_key': 6964},
+                    {'html': 2792, 'sort_key': 2792},
+                    {'html': 2799, 'sort_key': 2799},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
