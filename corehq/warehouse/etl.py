@@ -2,7 +2,7 @@
 This files defines ETL objects that all have a common "load" function.
 Each object is meant for transferring one type of data to another type.
 '''
-
+import logging
 import os
 
 from django.conf import settings
@@ -11,6 +11,9 @@ from django.template import engines
 
 from corehq.sql_db.routers import db_for_read_write
 from corehq.warehouse.utils import django_batch_records
+
+
+logger = logging.getLogger('warehouse')
 
 
 class BaseETLMixin(object):
@@ -45,7 +48,9 @@ class CustomSQLETLMixin(BaseETLMixin):
         assert issubclass(cls, WarehouseTable)
         database = db_for_read_write(cls)
         with connections[database].cursor() as cursor:
-            cursor.execute(cls._sql_query_template(cls.slug, batch))
+            sql = cls._sql_query_template(cls.slug, batch)
+            logger.info('Executing SQL:\n%s', sql)
+            cursor.execute(sql)
 
     @classmethod
     def _table_context(cls, batch):
