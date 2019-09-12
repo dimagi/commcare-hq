@@ -1222,8 +1222,9 @@ def is_launched_awc_incentive_report(launched_awc_ids):
     for awc in launched_awc_ids:
         awc_from_aggregate = awc_launched_count_from_aggregate.filter(awc_id=awc[0]).values_list('awc_id',
                                                                                                  'is_launched')[0]
-        if awc[1] != awc_from_aggregate[1]:
-            row_data = [awc[0], awc[1], awc_from_aggregate[1]]
+        is_launched_from_awc = (lambda: False, lambda: True)[awc_from_aggregate[1].lower() == 'yes']()
+        if awc[1] != is_launched_from_awc:
+            row_data = [awc[0], awc[1], is_launched_from_awc]
             csv_data.append(row_data)
     _send_incentive_report_validation_email(csv_columns, csv_data)
 
