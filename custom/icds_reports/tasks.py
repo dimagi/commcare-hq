@@ -40,7 +40,7 @@ from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_id_username_pairs_by_domain,
 )
-from corehq.const import SERVER_DATE_FORMAT, ONE_DAY
+from corehq.const import SERVER_DATE_FORMAT, ONE_DAY, SERVER_DATETIME_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias, get_icds_ucr_citus_db_alias, \
@@ -1199,6 +1199,11 @@ def build_incentive_report(agg_date=None):
         agg_date = current_month - relativedelta(months=1)
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
+
+    aggregate_queryset = AWWIncentiveReport.objects.all()
+    # check the number of launched AWCs count
+    is_launched_awc_incentive_report(aggregate_queryset.values_list('awc_id', 'is_launched'))
+
     for file_format in ['xlsx', 'csv']:
         for location in locations:
             if location.location_type.name == 'state':
@@ -1207,6 +1212,38 @@ def build_incentive_report(agg_date=None):
                 build_incentive_files.delay(location, agg_date, file_format, 2, location.parent, location)
             else:
                 build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
+
+
+def is_launched_awc_incentive_report(launched_awc_ids):
+    awc_ids = launched_awc_ids.values_list('awc_id', flat=True)
+    awc_launched_count_from_aggregate = AggAwc.objects.filter(aggregation_level=5, awc_id__in=awc_ids).all()
+    csv_columns = ['awc_id', 'AwwIncentiveReport', 'AggAwc']
+    csv_data = []
+    for awc in launched_awc_ids:
+        awc_from_aggregate = awc_launched_count_from_aggregate.filter(awc_id=awc[0]).values_list('awc_id', 'is_launched')[0]
+        if awc[1] != awc_from_aggregate[1]:
+            row_data = [awc[0], awc[1], awc_from_aggregate[1]]
+            csv_data.append(row_data)
+    _send_incentive_report_validation_email(csv_columns, csv_data)
+
+
+def _send_incentive_report_validation_email(csv_columns, bad_data):
+    csv_file = io.StringIO()
+    writer = csv.writer(csv_file)
+    writer.writerow(csv_columns)
+    for data in bad_data:
+        writer.writerow(data)
+
+    email_content = """
+    Please see attached file for is_launched mismatch in awc incentive report
+    """
+
+    filename = datetime.now().strftime('incentive_report_awc_mismatch_%s.csv' % SERVER_DATETIME_FORMAT)
+    send_HTML_email(
+        '[{}] - ICDS Dashboard AWC Incentive Report Mismatch'.format(settings.SERVER_ENVIRONMENT),
+        DASHBOARD_TEAM_EMAILS, email_content,
+        file_attachments=[{'file_obj': csv_file, 'title': filename, 'mimetype': 'text/csv'}],
+    )
 
 
 @task(queue='icds_dashboard_reports_queue', serializer='pickle')
