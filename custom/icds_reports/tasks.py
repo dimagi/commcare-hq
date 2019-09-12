@@ -54,7 +54,7 @@ from corehq.util.view_utils import reverse
 from custom.icds_reports.const import (
     AWC_INFRASTRUCTURE_EXPORT,
     AWW_INCENTIVE_REPORT,
-    BENEFICIARY_LIST_EXPORT,
+    GROWTH_MONITORING_LIST_EXPORT,
     CHILDREN_EXPORT,
     DASHBOARD_DOMAIN,
     DEMOGRAPHICS_EXPORT,
@@ -774,10 +774,10 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 show_test=include_test,
                 beta=beta,
             ).get_excel_data(location)
-        elif indicator == BENEFICIARY_LIST_EXPORT:
+        elif indicator == GROWTH_MONITORING_LIST_EXPORT:
             # this report doesn't use this configuration
             config.pop('aggregation_level', None)
-            data_type = 'Beneficiary_List'
+            data_type = 'Growth_Monitoring_list'
             excel_data = BeneficiaryExport(
                 config=config,
                 loc_level=aggregation_level,
