@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from dimagi.ext.couchdbkit import (
     DictProperty,
     Document,
@@ -9,7 +11,9 @@ from dimagi.ext.couchdbkit import (
 
 from corehq.motech.openmrs.const import (
     IMPORT_FREQUENCY_CHOICES,
+    IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
+    IMPORT_FREQUENCY_WEEKLY,
 )
 
 # Supported values for ColumnMapping.data_type
@@ -74,3 +78,17 @@ class OpenmrsImporter(Document):
 
     def __str__(self):
         return self.server_url
+
+    def should_import_today(self):
+        today = datetime.today()
+        return (
+            self.import_frequency == IMPORT_FREQUENCY_DAILY
+            or (
+                self.import_frequency == IMPORT_FREQUENCY_WEEKLY
+                and today.weekday() == 1  # Tuesday
+            )
+            or (
+                self.import_frequency == IMPORT_FREQUENCY_MONTHLY
+                and today.day == 1
+            )
+        )
