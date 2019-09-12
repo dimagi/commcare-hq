@@ -40,7 +40,7 @@ from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_id_username_pairs_by_domain,
 )
-from corehq.const import SERVER_DATE_FORMAT, ONE_DAY, SERVER_DATETIME_FORMAT
+from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias, get_icds_ucr_citus_db_alias, \
@@ -1220,7 +1220,8 @@ def is_launched_awc_incentive_report(launched_awc_ids):
     csv_columns = ['awc_id', 'AwwIncentiveReport', 'AggAwc']
     csv_data = []
     for awc in launched_awc_ids:
-        awc_from_aggregate = awc_launched_count_from_aggregate.filter(awc_id=awc[0]).values_list('awc_id', 'is_launched')[0]
+        awc_from_aggregate = awc_launched_count_from_aggregate.filter(awc_id=awc[0]).values_list('awc_id',
+                                                                                                 'is_launched')[0]
         if awc[1] != awc_from_aggregate[1]:
             row_data = [awc[0], awc[1], awc_from_aggregate[1]]
             csv_data.append(row_data)
