@@ -276,11 +276,13 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         blocked on deletes.
         """
 
+        # these doc types were blocking the queue but the approach could be applied
+        # more generally with some more testing
         SHARDABLE_DOC_TYPES = ('XFormArchived', 'XFormDuplicate')
         table = self.get_table()
-        # todo group by the sharding column and issue bulk_delete
+        doc_ids_to_delete = []
+
         for doc in docs:
-            delete = table.delete().where(table.c.doc_id == doc['_id'])
             if doc.get('doc_type') in SHARDABLE_DOC_TYPES:
                 # get_all_values ignores duplicate and archived forms because
                 # the implicit filtering on all data sources filters doc_types
@@ -289,10 +291,23 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
                 tmp_doc = doc.copy()
                 tmp_doc['doc_type'] = 'XFormInstance'
-                # todo only get sharding column's value
                 rows = self.get_all_values(tmp_doc)
-                if rows and rows[0].get(column):
-                    delete = delete.where(table.c.get(column) == rows[column])
+                first_row = rows[0]
+                sharded_column_value = [
+                    i.value for i in first_row
+                    if i.column.database_column_name.decode('utf-8') == column
+                ]
+                if sharded_column_value:
+                    delete = table.delete().where(table.c.doc_id == doc['_id'])
+                    delete = delete.where(table.c.get(column) == sharded_column_value[0])
+                    with self.session_context() as session:
+                        session.execute(delete)
+                    continue  # skip adding doc ID into doc_ids_to_delete
+
+            doc_ids_to_delete.append(doc['_id'])
+
+        if doc_ids_to_delete:
+            delete = table.delete().where(table.c.doc_id.in_(doc_ids_to_delete))
             with self.session_context() as session:
                 session.execute(delete)
 
