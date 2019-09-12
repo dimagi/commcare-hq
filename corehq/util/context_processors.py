@@ -59,7 +59,7 @@ def get_per_domain_context(project, request=None):
         elif request.couch_user.is_web_user():
             allow_report_an_issue = True
         else:
-            allow_report_issue(request.couch_user, request.couch_user.domain)
+            allow_report_an_issue = allow_report_issue(request.couch_user, request.couch_user.domain)
     else:
         allow_report_an_issue = True
 
