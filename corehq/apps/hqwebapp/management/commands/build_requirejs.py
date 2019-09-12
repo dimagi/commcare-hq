@@ -89,8 +89,8 @@ class Command(ResourceStaticCommand):
         filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js', 'resource_versions.js')
         with open(filename, 'w') as fout:
             fout.write("requirejs.config({ paths: %s });" % json.dumps({
-                file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3],
-                                             ".js?version=%s" % version if version else "")
+                file[:-3]: "{}{}{}{}".format("", "", file[:-3],
+                                             ".js?version=%s" % "")
                 for file, version in resource_versions.items()
                 if file.endswith(".js") and not file.startswith("formdesigner")
             }, indent=2))
