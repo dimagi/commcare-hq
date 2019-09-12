@@ -36,6 +36,8 @@ from corehq.motech.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
+    get_cancelled_repeat_record_count,
+    get_pending_repeat_record_count
 )
 from corehq.motech.repeaters.forms import EmailBulkPayload
 from corehq.motech.repeaters.models import RepeatRecord
@@ -63,9 +65,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
         'corehq.apps.reports.filters.simple.RepeaterPayloadIdFilter',
     ]
-
-    total_requeue = 0
-    total_cancel = 0
 
     def _make_cancel_payload_button(self, record_id):
         return '''
@@ -214,10 +213,8 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
         if record.cancelled and not record.succeeded:
             row.append(self._make_requeue_payload_button(record.get_id))
-            self.total_requeue += 1
         elif not record.cancelled and not record.succeeded:
             row.append(self._make_cancel_payload_button(record.get_id))
-            self.total_cancel += 1
         else:
             row.append(None)
 
@@ -254,15 +251,20 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     @property
     def report_context(self):
         context = super(DomainForwardingRepeatRecords, self).report_context
-        total = len(self.rows)
+
+        total = get_repeat_record_count(self.domain)
+        total_cancel = get_cancelled_repeat_record_count(self.domain, None)
+        total_requeue = get_pending_repeat_record_count(self.domain, None)
+
         form_query_string = self.request.GET.urlencode()
         form_query_string_requeue = _change_record_state(form_query_string, 'CANCELLED')
         form_query_string_cancellable = _change_record_state(form_query_string, 'PENDING')
+
         context.update(
             email_bulk_payload_form=EmailBulkPayload(domain=self.domain),
             total=total,
-            total_cancel=self.total_cancel,
-            total_requeue=self.total_requeue,
+            total_cancel=total_cancel,
+            total_requeue=total_requeue,
             form_query_string=form_query_string,
             form_query_string_cancellable=form_query_string_cancellable,
             form_query_string_requeue=form_query_string_requeue,
@@ -381,22 +383,23 @@ def _change_record_state(base_string, string_to_add):
             pos_end = r
             break
 
-    string_to_return = base_string[:pos_start] + string_to_add + the_rest_of_string[pos_end:]
+    string_to_return = base_string[:pos_start] + string_to_add + the_rest_of_string[pos_end:] \
+        if base_string != '' else base_string
 
     return string_to_return
 
 
 def _url_parameters_to_dict(url_params):
     dict_to_return = {}
-    while True:
+    while url_params != '':
         pos_one = url_params.find('=')
         pos_two = url_params.find('&')
+        if pos_two == -1:
+            pos_two = len(url_params)
         key = url_params[:pos_one]
         value = url_params[pos_one+1:pos_two]
         dict_to_return[key] = value
-        if pos_two == -1:
-            break
-        url_params = url_params[pos_two+1:]
+        url_params = url_params[pos_two+1:] if pos_two != len(url_params) else ''
 
     return dict_to_return
 
