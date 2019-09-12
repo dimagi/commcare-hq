@@ -55,7 +55,7 @@ class InvalidOwnerName(CaseRowError):
     )
 
 
-class InvalidOwnerId(CaseRowError):
+class InvalidOwner(CaseRowError):
     title = ugettext_noop('Invalid Owner')
     message = ugettext_lazy(
         "Owners were provided in the mapping but there were errors when "

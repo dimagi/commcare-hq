@@ -405,7 +405,7 @@ class ImporterTest(TestCase):
         self.assertIn(error_message, res['errors'])
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
 
-        error_message = exceptions.InvalidOwnerId.title
+        error_message = exceptions.InvalidOwner.title
         self.assertIn(error_message, res['errors'])
         error_column_name = 'owner_name'
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [6])
@@ -492,7 +492,7 @@ class ImporterTest(TestCase):
             ['case_id', 'name', '', 'favorite_color', 'owner_name'],
             ['', 'Jeff', '', 'blue', bad_group.name],
         ])
-        self.assertIn(exceptions.InvalidOwnerId.title, res['errors'])
+        self.assertIn(exceptions.InvalidOwner.title, res['errors'])
 
 
 def make_worksheet_wrapper(*rows):
