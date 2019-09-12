@@ -658,9 +658,7 @@ def _log_response(target, data, response):
         response=response_text
     )
 
-    try:
-        response.raise_for_status()
-    except HTTPError:
+    if 400 <= status_code < 600:
         logger.error(message)
     else:
         logger.debug(message)
