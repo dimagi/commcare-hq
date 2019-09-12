@@ -55,8 +55,7 @@ branches:
   - jls/linked-app-multiple-masters-rebased # Jenny Aug 17
   - jls/reveal-family-id # Jenny Aug 27
   - bmb/case-sharing  #Biyeun Aug 22
-  #- bmb/requirejs-registration  # Biyeun Aug 30
-  - bmb/requirejs-registration  # Biyeun Sep 6
   - jls/use-compress-more # Jenny Sept 5
   - nh/omrs/import_task  # Norman Sep 11
+  - bmb/trial-revamp  # Biyeun Sep 12
 submodules: {}
