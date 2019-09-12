@@ -5,7 +5,12 @@ from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
+from django_prbac.utils import has_privilege
 
+from corehq.apps.users.models import Permissions, CommCareUser
+from corehq.apps.groups.models import Group, DeleteGroupRecord
+from corehq.apps.users.decorators import require_permission
+from corehq.privileges import CASE_SHARING_GROUPS
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -74,6 +79,9 @@ def undo_delete_group(request, domain, record_id):
 def restore_group(request, domain, group_id):
     group = Group.get(group_id)
     group.doc_type = group.doc_type.rstrip(DELETED_SUFFIX)
+
+    _ensure_case_sharing_privilege(request, group)
+
     group.save()
     messages.info(request, _('The "{0}" group has been restored.'.format(group.name)))
     return HttpResponseRedirect(
@@ -106,6 +114,9 @@ def edit_group(request, domain, group_id):
             group.case_sharing = json.loads(case_sharing)
         if reporting in ('true', 'false'):
             group.reporting = json.loads(reporting)
+
+        _ensure_case_sharing_privilege(request, group)
+
         group.save()
         return HttpResponseRedirect(
             reverse("group_members", args=[domain, group_id])
@@ -127,6 +138,9 @@ def update_group_data(request, domain, group_id):
             ))
             return HttpResponseRedirect(request.META['HTTP_REFERER'])
         group.metadata = updated_data
+
+        _ensure_case_sharing_privilege(request, group)
+
         group.save()
         messages.success(request, _("Group '%s' data updated!") % group.name)
         return HttpResponseRedirect(
@@ -158,6 +172,16 @@ def _update_group_membership(request, domain, group_id):
     safe_ids = [u for u in selected_users if u in all_users]
 
     group.users = safe_ids
+
+    _ensure_case_sharing_privilege(request, group)
+
     group.save()
     messages.success(request, _("Group %s updated!") % group.name)
     return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
+
+
+def _ensure_case_sharing_privilege(request, group):
+    if not has_privilege(request, CASE_SHARING_GROUPS):
+        if group.case_sharing:
+            group.reporting = True
+        group.case_sharing = False
