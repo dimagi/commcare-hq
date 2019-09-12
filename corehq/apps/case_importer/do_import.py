@@ -452,7 +452,7 @@ class _OwnerAccessor(object):
 
     def _check_owner_id(self, owner_id):
         """
-        Raises InvalidOwnerId if the owner cannot own cases.
+        Raises InvalidOwner if the owner cannot own cases.
         Raises InvalidLocation if a location-restricted user tries to assign
             an owner outside their location hierarchy.
         Returns True if owner ID is valid.
@@ -467,7 +467,7 @@ class _OwnerAccessor(object):
                              and owner.domain == self.domain
                              and owner.location_type.shares_cases)
         if not (is_valid_user or is_valid_group or is_valid_location):
-            raise exceptions.InvalidOwnerId(owner_field)
+            raise exceptions.InvalidOwner(owner_field)
         if not self._location_is_accessible(owner):
             raise exceptions.InvalidLocation(owner_field)
         return True
