@@ -1,10 +1,10 @@
-import argparse
 from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand, CommandError
 
 from itertools import zip_longest
 
+from corehq.util.argparse_types import date_type
 from couchforms.models import doc_types
 
 from corehq.apps.change_feed.document_types import CASE_DOC_TYPES
@@ -33,14 +33,6 @@ from corehq.util.markup import (
 DATE_FORMAT = "%Y-%m-%d"
 
 
-def valid_date(s):
-    try:
-        return datetime.strptime(s, DATE_FORMAT)
-    except ValueError:
-        msg = "Not a valid date: '{0}'.".format(s)
-        raise argparse.ArgumentTypeError(msg)
-
-
 class Command(BaseCommand):
     help = "Print doc IDs that are in the primary DB but not in ES. Use in conjunction with 'raw_doc' view."
 
@@ -51,14 +43,14 @@ class Command(BaseCommand):
             '-s',
             '--startdate',
             dest='start',
-            type=valid_date,
+            type=date_type,
             help="The start date. Only applicable to forms and cases on SQL domains. - format YYYY-MM-DD",
         )
         parser.add_argument(
             '-e',
             '--enddate',
             dest='end',
-            type=valid_date,
+            type=date_type,
             help="The end date. Only applicable to forms and cases on SQL domains. - format YYYY-MM-DD",
         )
         parser.add_argument('--csv', action='store_true', default=False, dest='csv',
