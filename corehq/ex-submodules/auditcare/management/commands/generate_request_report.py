@@ -65,7 +65,7 @@ class Command(BaseCommand):
 
         users, super_users = get_users_to_export(user, domain)
 
-        with open(filename, 'wb') as csvfile:
+        with open(filename, 'w') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['Date', 'User', 'Domain', 'IP Address', 'Request Path'])
             for user in users:
