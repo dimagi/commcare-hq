@@ -45,30 +45,31 @@ class UploadedTranslationsValidator(object):
         self.current_rows = dict()  # module_or_form_id: translations
         self.lang_prefix = lang_prefix
         self.default_language_column = self.lang_prefix + self.app.default_language
-        self.lang_to_compare = lang_to_compare
+        self.lang_to_compare = lang_to_compare or self.app.default_language
         self.single_sheet = False
         self._setup()
 
     def _setup(self):
-        if self.lang_to_compare:
+        if self._is_single_sheet():
             # assume its a single sheet workbook if there is a language
             self.single_sheet = True
-            self._ensure_single_sheet()
-            target_lang = self.lang_to_compare
             self.lang_cols_to_compare = [self.lang_prefix + self.lang_to_compare]
         else:
-            target_lang = self.app.default_language
             self.lang_cols_to_compare = [self.lang_prefix + self.app.default_language]
+            if self.lang_to_compare != self.app.default_language:
+                self.lang_cols_to_compare.append(self.lang_prefix + self.lang_to_compare)
         self.app_translation_generator = AppTranslationsGenerator(
-            self.app.domain, self.app.get_id, None, self.app.default_language, target_lang,
+            self.app.domain, self.app.get_id, None, self.app.default_language, self.lang_to_compare,
             self.lang_prefix)
         self.current_sheet_name_to_module_or_form_type_and_id = dict()
         self.uploaded_sheet_name_to_module_or_form_type_and_id = dict()
 
-    def _ensure_single_sheet(self):
-        sheet = self.uploaded_workbook.worksheets[0]
-        if not is_single_sheet(sheet.title):
-            raise Exception("Expected single sheet with title %s" % SINGLE_SHEET_NAME)
+    def _is_single_sheet(self):
+        sheets_count = len(self.uploaded_workbook.worksheets)
+        first_sheet = self.uploaded_workbook.worksheets[0]
+        if sheets_count == 1 and is_single_sheet(first_sheet.title):
+            return True
+        return False
 
     def _generate_current_headers_and_rows(self):
         self.current_headers = {
@@ -78,6 +79,7 @@ class UploadedTranslationsValidator(object):
                 self.app,
                 lang=self.lang_to_compare,
                 eligible_for_transifex_only=True,
+                single_sheet=self.single_sheet,
         )}
         if self.single_sheet:
             self.current_rows = get_bulk_app_single_sheet_by_name(
