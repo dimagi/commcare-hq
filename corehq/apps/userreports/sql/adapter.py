@@ -300,8 +300,9 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                     delete = delete.where(table.c.get(column) == sharded_column_value[0])
                     with self.session_context() as session:
                         session.execute(delete)
+                    continue  # skip adding doc ID into doc_ids_to_delete
 
-            doc_ids_to_delete.append(tmp_doc['_id'])
+            doc_ids_to_delete.append(doc['_id'])
 
         if doc_ids_to_delete:
             delete = table.delete().where(table.c.doc_id.in_(doc_ids_to_delete))
