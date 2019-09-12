@@ -33,7 +33,9 @@ FROM
 LEFT JOIN {{ domain_dim }} AS domain_table ON synclog_table.domain = domain_table.domain
 LEFT JOIN {{ user_dim }} AS user_table ON synclog_table.user_id = user_table.user_id
 LEFT JOIN {{ synclog_fact }} AS synclog_fact ON user_table.id = synclog_fact.user_dim_id
-WHERE synclog_table.sync_date > synclog_fact.sync_date OR synclog_fact.sync_date IS NULL
+WHERE
+    (synclog_table.sync_date > synclog_fact.sync_date OR synclog_fact.sync_date IS NULL)
+    AND user_table.id IS NOT NULL
 WINDOW wnd AS (
        PARTITION BY user_table.id ORDER BY synclog_table.sync_date AT TIME ZONE 'UTC' DESC
        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
