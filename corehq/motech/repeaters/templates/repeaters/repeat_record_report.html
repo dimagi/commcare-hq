@@ -11,80 +11,7 @@
         <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
         <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
         <script src="{% static 'repeaters/js/repeat_record_report.js' %}"></script>
-        <script>
-          var items = document.getElementsByName('xform_ids');
-          var all = document.getElementById('select_all');
-          var all_cancel = document.getElementById('cancel_all');
-          var all_requeue = document.getElementById('requeue_all');
-
-          function selectItems() {
-              for (var i = 0; i < items.length; i++) {
-                  if (items[i].type == 'checkbox')
-                  items[i].checked = true;
-              }
-          }
-
-          function unSelectItems() {
-              for (var i = 0; i < items.length; i++) {
-                if (items[i].type == 'checkbox')
-                  items[i].checked = false;
-              }
-          }
-
-          function bothSelects() {
-              if (all.checked) {
-                  selectItems();
-                  uncheck(all_cancel, all_requeue);
-              } else {
-                  unSelectItems();
-              }
-          }
-
-          function selectRequeue() {
-              unSelectItems();
-              uncheck(all, all_cancel);
-              if (all_requeue.checked) {
-                  checkMultipleItems('requeue');
-              } else {
-                  unSelectItems();
-              }
-          }
-
-          function selectCallable() {
-              unSelectItems();
-              uncheck(all, all_requeue);
-              if (all_cancel.checked) {
-                  checkMultipleItems('cancel');
-              } else {
-                  unSelectItems();
-              }
-          }
-
-          function uncheck(checkbox1, checkbox2) {
-              checkbox1.checked = false;
-              checkbox2.checked = false;
-          }
-
-          function uncheckAlls() {
-              all.checked = false;
-              all_cancel.checked = false;
-              all_requeue.checked = false;
-          }
-
-          function checkMultipleItems(action) {
-              for (var i = 0; i < items.length; i++) {
-                var id = items[i].value;
-                var query = '[data-record-id="' + id + '"][class="btn btn-default '+ action +'-record-payload"]';
-                var button = document.querySelector(query);
-                if (button != null && items[i].type == 'checkbox') {
-                    if (items[i].checked)
-                        items[i].checked = false;
-                    else
-                        items[i].checked = true;
-                }
-              }
-          }
-        </script>
+        <script src="{% static 'repeaters/js/repeat_record_report_selects.js' %}"></script>
     {% endcompress %}
 {% endblock js %}
 
@@ -98,7 +25,7 @@
             <button id="requeueAll" class="btn btn-default">Requeue selected</button>
             <label class="checkbox" >
               <input type="checkbox" id="select_all" value="{{ form_query_string|urlencode }}"
-                     onclick="bothSelects()" style="margin-left: 1em;">
+                     onclick="selectAll()" style="margin-left: 1em;">
                 {% blocktrans %}Select all {{ total }} forms{% endblocktrans %}
             </label>
             <label class="checkbox" >

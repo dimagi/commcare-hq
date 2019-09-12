@@ -197,7 +197,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     def _make_row(self, record):
         checkbox = mark_safe(
-            """<input type="checkbox" onclick="uncheckAlls()" class="xform-checkbox"
+            """<input type="checkbox" onclick="uncheckSelects()" class="xform-checkbox"
             value="{}" name="xform_ids"/>""".format(record.get_id)
         )
         row = [
@@ -228,8 +228,8 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(
                 mark_safe(
                     """
-                    Select  <a onclick="selectItems()" class="select-visible btn btn-xs btn-default">all</a>
-                    <a onclick="unSelectItems()" class="select-none btn btn-xs btn-default">none</a>
+                    Select  <a onclick="selectItemsForAllButton()" class="select-visible btn btn-xs btn-default">all</a>
+                    <a onclick="unSelectItemsForNoneButton()" class="select-none btn btn-xs btn-default">none</a>
                     """
                 ),
                 sortable=False, span=3
@@ -346,7 +346,10 @@ def requeue_repeat_record(request, domain):
 
 
 def _get_records(request):
-    records = request.POST.get('record_id')
+    if not request:
+        return []
+
+    records = request.POST.get('record_id', None)
     if not records:
         return []
 
@@ -358,16 +361,27 @@ def _get_records(request):
 
 
 def _get_query(request):
-    query = request.POST.get('record_id')
+    if not request:
+        return ''
+
+    query = request.POST.get('record_id', None)
     return query if query else ''
 
 
 def _get_flag(request):
-    flag = request.POST.get('flag')
-    return flag
+    if not request:
+        return ''
+
+    flag = request.POST.get('flag', None)
+    return flag if flag else ''
 
 
 def _change_record_state(base_string, string_to_add):
+    if not base_string:
+        return ''
+    elif not string_to_add:
+        return base_string
+
     string_to_look_for = 'record_state='
     pos_start = 0
     pos_end = 0
@@ -383,14 +397,16 @@ def _change_record_state(base_string, string_to_add):
             pos_end = r
             break
 
-    string_to_return = base_string[:pos_start] + string_to_add + the_rest_of_string[pos_end:] \
-        if base_string != '' else base_string
+    string_to_return = base_string[:pos_start] + string_to_add + the_rest_of_string[pos_end:]
 
     return string_to_return
 
 
 def _url_parameters_to_dict(url_params):
     dict_to_return = {}
+    if not url_params:
+        return dict_to_return
+
     while url_params != '':
         pos_one = url_params.find('=')
         pos_two = url_params.find('&')
