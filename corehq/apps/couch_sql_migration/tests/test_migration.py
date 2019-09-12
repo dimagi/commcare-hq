@@ -5,6 +5,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from functools import wraps
+from signal import SIGINT
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
@@ -22,9 +23,6 @@ from testil import tempdir
 from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
-from pillowtop.reindexer.change_providers.couch import (
-    CouchDomainDocTypeChangeProvider,
-)
 
 from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
     BAD_FORM_PROBLEM_TEMPLATE,
@@ -81,7 +79,7 @@ from ..management.commands.migrate_domain_from_couch_to_sql import (
     MIGRATE,
     RESET,
 )
-from ..statedb import open_state_db
+from ..statedb import init_state_db, open_state_db
 
 log = logging.getLogger(__name__)
 
@@ -227,8 +225,14 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         with mock.patch(path, chunk_size):
             yield
 
-    @contextmanager
     def stop_on_doc(self, doc_type, doc_id):
+        def stop():
+            log.debug("stopping on %s", doc_id)
+            raise KeyboardInterrupt
+        return self.on_doc(doc_type, doc_id, stop)
+
+    @contextmanager
+    def on_doc(self, doc_type, doc_id, handler):
         from ..couchsqlmigration import _iter_docs
 
         @wraps(_iter_docs)
@@ -237,8 +241,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             if doc_type == iter_doc_type:
                 for doc in itr:
                     if doc["_id"] == doc_id:
-                        log.debug("stopping on %s", doc_id)
-                        raise KeyboardInterrupt
+                        handler()
                     log.debug("yielding %(_id)s", doc)
                     yield doc
             else:
@@ -1023,9 +1026,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_delete_cases_during_migration(self):
         from corehq.apps.hqcase.tasks import delete_exploded_cases
-        from corehq.form_processor.backends.couch.processor import FormProcessorCouch
-        from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-        form = self.submit_form(make_test_form("form-1"), timedelta(minutes=-95))
+        self.submit_form(make_test_form("form-1"), timedelta(minutes=-95))
         with self.patch_migration_chunk_size(1):
             self._do_migration(live=True)
         self.assert_backend("sql")
@@ -1064,6 +1065,46 @@ class MigrationTestCase(BaseMigrationTestCase):
         form_ids = FormAccessorSQL \
             .get_form_ids_in_domain_by_type(self.domain_name, "XFormInstance")
         self.assertEqual(form_ids, [])
+
+    def test_migration_clean_break(self):
+        def interrupt():
+            os.kill(os.getpid(), SIGINT)
+        self.migrate_with_interruption(interrupt)
+        self.assertEqual(self._get_form_ids(), {"one"})
+        self.assertEqual(self.get_resume_state("CaseDiffQueue"), {'pending': {'test-case': 1}})
+        self.resume_after_interruption()
+
+    def test_migration_dirty_break(self):
+        def interrupt():
+            os.kill(os.getpid(), SIGINT)
+            os.kill(os.getpid(), SIGINT)
+        self.migrate_with_interruption(interrupt)
+        self.assertFalse(self._get_form_ids())
+        self.assertEqual(self.get_resume_state("CaseDiffQueue"), {})
+        self.resume_after_interruption()
+
+    def migrate_with_interruption(self, interrupt):
+        self.submit_form(make_test_form("one"), timedelta(minutes=-97))
+        self.submit_form(make_test_form("two"), timedelta(minutes=-95))
+        self.submit_form(make_test_form("arch"), timedelta(minutes=-93)).archive()
+        with self.patch_migration_chunk_size(1), self.on_doc("XFormInstance", "one", interrupt):
+            self._do_migration(live=True, diff_process=True)
+        self.assert_backend("sql")
+        self.assertFalse(self._get_form_ids("XFormArchived"))
+
+    def get_resume_state(self, key, default=object()):
+        statedb = init_state_db(self.domain_name, self.state_dir)
+        value = statedb.pop_resume_state(key, default)
+        if value is not default:
+            statedb.set_resume_state(key, value)
+        return value
+
+    def resume_after_interruption(self):
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(self._get_form_ids(), {"one", "two"})
+        self.assertEqual(self._get_form_ids("XFormArchived"), {"arch"})
+        self._compare_diffs([])
 
     def test_case_forms_list_order(self):
         SERVER_DATES = [
