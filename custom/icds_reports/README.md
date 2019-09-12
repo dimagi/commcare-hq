@@ -15,6 +15,10 @@ This does not include populating any data.
 - Add an `'icds-ucr'` entry to `settings.REPORTING_DATABASES` pointing at the desired key from
   `settings.DATABASES` where you want the report data tables to live.
 
+## Citus setup
+
+To get setup on CitusDB follow [these instructions](https://github.com/dimagi/commcare-hq/blob/master/CITUSDB_SETUP.md).
+
 ## Local data
 
 To get local dashboard data you can run:
