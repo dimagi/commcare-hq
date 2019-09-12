@@ -26,17 +26,17 @@
             <label class="checkbox" >
               <input type="checkbox" id="select_all" value="{{ form_query_string|urlencode }}"
                      onclick="selectAll()" style="margin-left: 1em;">
-                {% blocktrans %}Select all {{ total }} forms{% endblocktrans %}
+                {% blocktrans %}Select all {{ total }} payloads{% endblocktrans %}
             </label>
             <label class="checkbox" >
               <input type="checkbox" id="cancel_all" value="{{ form_query_string_cancellable|urlencode }}"
                      onclick="selectCallable()" style="margin-left: 1em;">
-                {% blocktrans %}Select {{ total_cancel }} cancellable forms{% endblocktrans %}
+                {% blocktrans %}Select {{ total_cancel }} cancellable payloads{% endblocktrans %}
             </label>
             <label class="checkbox" >
               <input type="checkbox" id="requeue_all" value="{{ form_query_string_requeue|urlencode }}"
                      onclick="selectRequeue()" style="margin-left: 1em;">
-                {% blocktrans %}Select {{ total_requeue }} requeue forms{% endblocktrans %}
+                {% blocktrans %}Select {{ total_requeue }} requeue payloads{% endblocktrans %}
             </label>
           </div>
         </div>
