@@ -236,6 +236,7 @@ class ODataFeedMixin(object):
         clean_odata_columns(export_instance)
         export_instance.is_odata_config = True
         export_instance.transform_dates = False
+        export_instance.name = _("Copy of {}").format(export_instance.name)
         return export_instance
 
 
