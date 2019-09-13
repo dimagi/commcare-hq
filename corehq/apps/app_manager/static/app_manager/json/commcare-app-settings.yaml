@@ -82,6 +82,8 @@
   requires: "{$parent.doc_type}='Application'"
   hide_if_not_enabled: true
   since: "2.0"
+  permission: 'case_sharing_groups'
+  upgrade_plan: "Pro"
 
 - id: cloudcare_enabled
   name: "Web App"
