@@ -1200,9 +1200,16 @@ def build_incentive_report(agg_date=None):
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
 
-    aggregate_queryset = AWWIncentiveReport.objects.all()
-    # check the number of launched AWCs count
-    is_launched_awc_incentive_report(aggregate_queryset.values_list('awc_id', 'is_launched'))
+    aggregate_queryset = AWWIncentiveReport.objects.values_list('awc_id', 'is_launched', 'valid_visits',
+                                                                'visit_denominator')
+    awc_ids = aggregate_queryset.values_list('awc_id', flat=True)
+    awc_launched_count_from_aggregate = AggAwc.objects.filter(aggregation_level=5, awc_id__in=awc_ids)\
+        .values_list('awc_id', 'is_launched', 'valid_visits', 'expected_visits')
+    # check for launched AWCs
+    is_launched_awc_incentive_report(aggregate_queryset, awc_launched_count_from_aggregate)
+
+    # check for home conduct percentage
+    home_conduct_awc_incentive_report(aggregate_queryset, awc_launched_count_from_aggregate)
 
     for file_format in ['xlsx', 'csv']:
         for location in locations:
@@ -1214,31 +1221,54 @@ def build_incentive_report(agg_date=None):
                 build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
 
 
-def is_launched_awc_incentive_report(launched_awc_ids):
-    awc_ids = launched_awc_ids.values_list('awc_id', flat=True)
-    awc_launched_count_from_aggregate = AggAwc.objects.filter(aggregation_level=5, awc_id__in=awc_ids).all()
+def is_launched_awc_incentive_report(performance_queryset, awcagg_queryset):
     csv_columns = ['awc_id', 'AwwIncentiveReport', 'AggAwc']
     csv_data = []
-    for awc in launched_awc_ids:
-        awc_from_aggregate = awc_launched_count_from_aggregate.filter(awc_id=awc[0]).values_list('awc_id',
-                                                                                                 'is_launched')[0]
+    for awc in performance_queryset:
+        awc_from_aggregate = awcagg_queryset.filter(awc_id=awc[0])[0]
         is_launched_from_awc = (lambda: False, lambda: True)[awc_from_aggregate[1].lower() == 'yes']()
         if awc[1] != is_launched_from_awc:
             row_data = [awc[0], awc[1], is_launched_from_awc]
             csv_data.append(row_data)
-    _send_incentive_report_validation_email(csv_columns, csv_data)
+    content = """
+    Please see attached file for is_launched mismatch in awc incentive report
+    """
+    _send_incentive_report_validation_email(content, csv_columns, csv_data)
 
 
-def _send_incentive_report_validation_email(csv_columns, bad_data):
+def home_conduct_awc_incentive_report(performance_queryset, awcagg_queryset):
+    csv_columns = ['awc_id', 'AwwIncentiveReport', 'AggAwc']
+    csv_data = []
+    for awc in performance_queryset:
+        false_result = False
+        awc_from_aggregate = awcagg_queryset.filter(awc_id=awc[0])[0]
+        if awc[2] in [0, None] or awc[3] in [0, None]:
+            home_conduct_from_report = 'N/A'
+            false_result = True
+        else:
+            home_conduct_from_report = awc[2]/awc[3]
+        if awc_from_aggregate[2] in [0, None] or awc_from_aggregate[3] in [0, None]:
+            home_conduct_from_awc = 'N/A'
+            false_result = True
+        else:
+            home_conduct_from_awc = awc_from_aggregate[2]/awc_from_aggregate[3]
+        if false_result or home_conduct_from_report != home_conduct_from_awc:
+            row_data = [awc[0], home_conduct_from_report, home_conduct_from_awc]
+            csv_data.append(row_data)
+    content = """
+    Please see attached file for home conduct percentage mismatch in awc incentive report
+    """
+    _send_incentive_report_validation_email(content, csv_columns, csv_data)
+
+
+def _send_incentive_report_validation_email(content,csv_columns, bad_data):
     csv_file = io.StringIO()
     writer = csv.writer(csv_file)
     writer.writerow(csv_columns)
     for data in bad_data:
         writer.writerow(data)
 
-    email_content = """
-    Please see attached file for is_launched mismatch in awc incentive report
-    """
+    email_content = content
 
     filename = datetime.now().strftime('incentive_report_awc_mismatch_%s.csv' % SERVER_DATETIME_FORMAT)
     send_HTML_email(
