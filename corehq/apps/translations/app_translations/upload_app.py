@@ -1,9 +1,8 @@
 import io
+import ghdiff
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
-
-import ghdiff
 
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
