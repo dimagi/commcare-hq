@@ -1,5 +1,6 @@
 import logging
 import os
+import signal
 from collections import defaultdict
 from itertools import chain, count
 
@@ -529,6 +530,15 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug
         else:
             getattr(queue, action)(*args)
 
+    def on_break(signum, frame):
+        nonlocal clean_break
+        if clean_break:
+            raise KeyboardInterrupt
+        log.info("clean break... (Ctrl+C to abort)")
+        clean_break = True
+
+    clean_break = False
+    signal.signal(signal.SIGINT, on_break)
     process_actions = {STATUS: status, TERMINATE: terminate}
     statedb = StateDB.init(state_path)
     statedb.is_rebuild = is_rebuild
