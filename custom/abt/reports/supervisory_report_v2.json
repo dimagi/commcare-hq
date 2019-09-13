@@ -35,7 +35,7 @@
         "doc_type": "ReportConfiguration",
         "domain": "airs",
         "description": "",
-        "title": "New Supervisory Report",
+        "title": "Supervisory Report 2018 (old)",
         "sort_expression": [
             {
                 "field": "received_on",
