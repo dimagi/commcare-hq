@@ -60,10 +60,13 @@ class StateDB(DiffDB):
     def init(cls, path):
         is_new_db = not os.path.exists(path)
         db = super(StateDB, cls).init(path)
-        db.is_rebuild = False
         if is_new_db:
             db._set_kv("db_unique_id", datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"))
         return db
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.is_rebuild = False
 
     def __enter__(self):
         return self
