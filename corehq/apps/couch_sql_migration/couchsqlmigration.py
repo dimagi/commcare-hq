@@ -2,7 +2,9 @@ import logging
 import os
 import signal
 import sys
+from collections import defaultdict
 from datetime import datetime, timedelta
+from functools import partial
 
 from django.conf import settings
 from django.db.utils import IntegrityError
@@ -130,6 +132,7 @@ class CouchSqlDomainMigrator(object):
         self.live_migrate = live_migrate
         self.stopper = Stopper(live_migrate)
         self.statedb = init_state_db(domain, state_dir)
+        self.counter = DocCounter(self.statedb)
         if rebuild_state:
             self.statedb.is_rebuild = True
         diff_queue = CaseDiffProcess if diff_process else CaseDiffQueue
@@ -146,7 +149,7 @@ class CouchSqlDomainMigrator(object):
 
         self.processed_docs = 0
         timing = TimingContext("couch_sql_migration")
-        with timing as timing_context, self.case_diff_queue, self.stopper:
+        with timing as timing_context, self.case_diff_queue, self.stopper, self.counter:
             self.timing_context = timing_context
             with timing_context('main_forms'):
                 self._process_main_forms()
@@ -160,9 +163,11 @@ class CouchSqlDomainMigrator(object):
 
     def _process_main_forms(self):
         """process main forms (including cases and ledgers)"""
+        add_form = partial(self.counter.add, 'XFormInstance')
         with AsyncFormProcessor(self.statedb, self._migrate_form) as pool:
             for doc in self._get_resumable_iterator(['XFormInstance']):
                 pool.process_xform(doc)
+                add_form()
 
         self._log_main_forms_processed_count()
 
@@ -252,9 +257,11 @@ class CouchSqlDomainMigrator(object):
             couch_form_json['doc_type'] = 'XFormError'
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
 
+        add_form = self.counter.add
         doc_types = sorted(UNPROCESSED_DOC_TYPES)
         for couch_form_json in self._get_resumable_iterator(doc_types):
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
+            add_form(couch_form_json["doc_type"])
 
         while not pool.join(timeout=10):
             log.info('Waiting on {} docs'.format(len(pool)))
@@ -271,8 +278,10 @@ class CouchSqlDomainMigrator(object):
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
         pool = Pool(10)
+        add_case = partial(self.counter.add, 'CommCareCase-Deleted')
         for doc in self._get_resumable_iterator(doc_types):
             pool.spawn(self._copy_unprocessed_case, doc)
+            add_case()
 
         while not pool.join(timeout=10):
             log.info('Waiting on {} docs'.format(len(pool)))
@@ -343,6 +352,8 @@ class CouchSqlDomainMigrator(object):
             get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
             for doc_type in doc_types
         ])
+        for doc_type in doc_types:
+            doc_count -= self.counter.get(doc_type)
         if self.timing_context:
             current_timer = self.timing_context.peek()
             current_timer.normalize_denominator = doc_count
@@ -379,7 +390,8 @@ class CouchSqlDomainMigrator(object):
         # so it will be reset (orphaned in couch) if that changes
         migration_id = self.statedb.unique_id
         if self.statedb.is_rebuild and doc_types == ["XFormInstance"]:
-            yield from iter_unmigrated_docs(self.domain, doc_types, migration_id)
+            yield from iter_unmigrated_docs(
+                self.domain, doc_types, migration_id, self.counter)
         docs = self._iter_docs(doc_types, migration_id)
         yield from self._with_progress(doc_types, docs)
 
@@ -829,6 +841,33 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
 
 
 _iter_docs.chunk_size = 1000
+
+
+class DocCounter:
+
+    def __init__(self, statedb, save_after=1000):
+        self.statedb = statedb
+        self.save_after = save_after
+        self.counts = defaultdict(int, self.statedb.get("doc_counts", {}))
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        counts = dict(self.counts)
+        self.statedb.set("counts", counts)
+        log.info("saving doc counts: %s", counts)
+
+    def add(self, doc_type, count=1):
+        self.counts[doc_type] += count
+        if self.counts[doc_type] > self.save_after:
+            self.statedb.set("doc_counts", dict(self.counts))
+
+    def get(self, doc_type):
+        return self.counts.get(doc_type, 0)
+
+    def pop(self, doc_type):
+        return self.counts.pop(doc_type, 0)
 
 
 def commit_migration(domain_name):

@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 
 from django.db import connections
 
@@ -15,17 +16,22 @@ from corehq.util.pagination import ResumableFunctionIterator
 log = logging.getLogger(__name__)
 
 
-def iter_unmigrated_docs(domain, doc_types, migration_id):
+def iter_unmigrated_docs(domain, doc_types, migration_id, counter):
     if doc_types != ["XFormInstance"]:
         raise NotImplementedError(doc_types)
     [doc_type] = doc_types
     couch_db = XFormInstance.get_db()
+    doc_count = counter.pop(doc_type)
+    if doc_count:
+        log.info("saved count of %s was %s", doc_type, doc_count)
     doc_count = get_doc_count_in_domain_by_type(domain, doc_type, couch_db)
+    add_docs = partial(counter.add, doc_type)
     batches = doc_count // iter_id_chunks.chunk_size
     iterable = iter_id_chunks(domain, doc_type, migration_id, couch_db)
     doc_ids = []
     for doc_ids in with_progress_bar(iterable, batches, prefix=doc_type, oneline=False):
         yield from iter_docs_not_in_sql(doc_ids, couch_db)
+        add_docs(len(doc_ids))
 
 
 def iter_id_chunks(domain, doc_type, migration_id, couch_db):

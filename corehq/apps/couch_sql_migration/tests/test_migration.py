@@ -1132,13 +1132,13 @@ class MigrationTestCase(BaseMigrationTestCase):
         for i, form_id in enumerate(form_ids):
             self.submit_form(make_test_form(form_id), timedelta(minutes=-90))
         with self.patch_migration_chunk_size(2), self.on_doc("XFormInstance", "form-3", interrupt):
-            self._do_migration(live=True, diff_process=True)
+            self._do_migration(live=True)
         self.assert_backend("sql")
         self.assertEqual(self._get_form_ids(), set(form_ids[:4]))
         statedb = init_state_db(self.domain_name, self.state_dir)
         statedb.pop_resume_state("CaseDiffQueue", None)  # simulate failed exit
         clear_local_domain_sql_backend_override(self.domain_name)
-        self._do_migration(live=True, rebuild_state=True, diff_process=True)
+        self._do_migration(live=True, rebuild_state=True)
         self.assertEqual(self._get_form_ids(), set(form_ids))
         self._compare_diffs([])
 
