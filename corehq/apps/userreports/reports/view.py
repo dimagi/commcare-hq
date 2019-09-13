@@ -102,7 +102,7 @@ def get_filter_values(filters, request_dict, user=None):
         raise UserReportsFilterError(str(e))
 
 
-def query_dict_to_dict(query_dict, domain, string_type_params):
+def query_dict_to_dict(query_dict, domain, string_type_params, list_type_params=None):
     """
     Transform the given QueryDict to a normal dict where each value has been
     converted from a string to a dict (if the value is JSON). params with values 'true'
@@ -114,14 +114,20 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
     :string_type_params: list of params that should not be autocasted to boolean/numbers
     :return: a dict
     """
+    list_type_params = list_type_params or []
     request_dict = json_request(query_dict)
     request_dict['domain'] = domain
 
-    # json.loads casts strings 'true'/'false' to booleans, so undo it
+    # json.loads casts strings 'true'/'false' to booleans, so undo it by pulling
+    # the data from the QueryDict directly
     for key in string_type_params:
         if key in query_dict:
-            # json_request converts keys to strings, this returns them to their original strings
             request_dict[key] = query_dict[key]
+
+    for key in list_type_params:
+        # also convert all list-like things to lists by fetching them as such from the QueryDict
+        request_dict[key] = query_dict.getlist(key)
+
     return request_dict
 
 
@@ -225,8 +231,13 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             for filter in self.filters
             if getattr(filter, 'datatype', 'string') == "string"
         ]
+        list_type_params = [
+            filter_spec.get('slug')
+            for filter_spec in self.spec.filters
+            if filter_spec.get('type') == 'dynamic_choice_list'
+        ]
         query_dict = self.request.GET if self.request.method == 'GET' else self.request.POST
-        return query_dict_to_dict(query_dict, self.domain, string_type_params)
+        return query_dict_to_dict(query_dict, self.domain, string_type_params, list_type_params)
 
     @property
     @memoized
