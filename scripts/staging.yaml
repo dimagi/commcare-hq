@@ -58,4 +58,5 @@ branches:
   - nh/omrs/import_task  # Norman Sep 11
   - bmb/trial-revamp  # Biyeun Sep 12
   - jls/requirejs-couch-changes-followup # Jenny Sept 13
+  - jls/report-filters-are-lists # Jenny Sept 13
 submodules: {}
