@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.core.management import call_command
 from django.db import migrations
 
@@ -19,5 +17,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(update_es_mapping, reverse_code=migrations.RunPython.noop)
+        migrations.RunPython(update_es_mapping, reverse_code=migrations.RunPython.noop, elidable=True)
     ]

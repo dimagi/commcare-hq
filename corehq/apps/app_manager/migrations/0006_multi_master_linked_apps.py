@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.db import migrations
 
 from corehq.apps.app_manager.models import LinkedApplication
@@ -38,5 +36,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(_populate_linked_app_fields,
-                             reverse_code=migrations.RunPython.noop),
+                             reverse_code=migrations.RunPython.noop,
+                             elidable=True),
     ]
