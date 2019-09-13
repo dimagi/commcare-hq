@@ -261,8 +261,11 @@ class CaseDiffQueue(object):
             state["to_diff"].extend(self.cases_to_diff)
         if self.num_diffed_cases:
             state["num_diffed_cases"] = self.num_diffed_cases
-        log.debug("resume state: %s", state)
         self.statedb.set_resume_state(type(self).__name__, state)
+        log_state = state if log.isEnabledFor(logging.DEBUG) else {
+            k: len(v) if hasattr(v, "__len__") else v for k, v in state.items()
+        }
+        log.info("saved %s state: %s", type(self).__name__, log_state)
 
     def _load_resume_state(self):
         state = self.statedb.pop_resume_state(type(self).__name__, {})
@@ -528,6 +531,7 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, debug):
     process_actions = {STATUS: status, TERMINATE: terminate}
     statedb = StateDB.init(state_path)
     setup_logging(state_path, debug)
+    queue = None
     with calls, stats:
         try:
             with queue_class(statedb, status_interval=0) as queue:
@@ -542,9 +546,10 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, debug):
         except Exception:
             log.exception("unexpected error")
         finally:
-            status_ = queue.get_status()
-            log.info("termination status: %s", status_)
-            stats.put((TERMINATE, status_))
+            if queue is not None:
+                status_ = queue.get_status()
+                log.info("termination status: %s", status_)
+                stats.put((TERMINATE, status_))
 
 
 def setup_logging(state_path, debug):
