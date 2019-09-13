@@ -1,3 +1,6 @@
+import random
+import time
+
 from django.conf import settings
 
 from corehq.project_limits.rate_limiter import RateDefinition, RateLimiter, \
@@ -7,6 +10,8 @@ from corehq.project_limits.rate_limiter import RateDefinition, RateLimiter, \
 # If we as a team end up regretting this decision, we'll have to reset expectations
 # with the Dimagi NDoH team.
 from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.utils import bucket_value
+from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 
 rates_promised_not_to_go_lower_than = RateDefinition(
@@ -35,12 +40,20 @@ submission_rate_limiter = RateLimiter(
 )
 
 
-def rate_limit_submission_noop(domain):
+def rate_limit_submission_by_delaying(domain, max_wait=None):
+    assert max_wait
     if not settings.ENTERPRISE_MODE:
         try:
             if not submission_rate_limiter.allow_usage(domain):
+                with TimingContext() as timer:
+                    acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
+                if acquired:
+                    duration_tag = bucket_value(timer.duration, [1, 5, 10, 15, 20], unit='s')
+                else:
+                    duration_tag = 'timeout'
                 datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
                     'domain:{}'.format(domain),
+                    'duration:{}'.format(duration_tag)
                 ])
             submission_rate_limiter.report_usage(domain)
         except Exception:

@@ -35,7 +35,7 @@ from corehq.apps.receiverwrapper.auth import (
     WaivedAuthContext,
     domain_requires_auth,
 )
-from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission_noop
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission_by_delaying
 from corehq.apps.receiverwrapper.util import (
     DEMO_SUBMIT_MODE,
     from_demo_user,
@@ -66,7 +66,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
 
-    rate_limit_submission_noop(domain)
+    rate_limit_submission_by_delaying(domain, max_wait=30)
 
     metric_tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
