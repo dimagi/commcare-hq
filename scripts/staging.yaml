@@ -57,4 +57,5 @@ branches:
   - jls/use-compress-more # Jenny Sept 5
   - nh/omrs/import_task  # Norman Sep 11
   - bmb/trial-revamp  # Biyeun Sep 12
+  - jls/requirejs-couch-changes-followup # Jenny Sept 13
 submodules: {}
