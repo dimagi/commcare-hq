@@ -1,0 +1,36 @@
+{% load i18n %}
+
+<div class="modal fade"
+     id="cta-form-start-trial">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+        <h4 class="modal-title">
+          {% trans "Get a customized CommCare trial" %}
+        </h4>
+      </div>
+      <div class="modal-body form-horizontal">
+
+        {# Hubspot Form #}
+        <div class="form form-horizontal"
+             id="get-trial-cta-form-content"></div>
+
+        {# Schedule Once Demo #}
+        <div id="get-trial-cta-calendar-content" style="display: none;">
+          <p>
+            {% blocktrans %}
+              Book a time with us to review your needs and get your customized
+              CommCare trial setup.
+            {% endblocktrans %}
+          </p>
+          <div id="SOIDIV_CommCareTrial"
+               data-so-page="CommCareTrial"
+               data-style="border: 1px solid #d8d8d8; min-width: 290px; max-width: 900px;"
+               data-psz="11"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
