@@ -59,4 +59,5 @@ branches:
   - bmb/trial-revamp  # Biyeun Sep 12
   - jls/requirejs-couch-changes-followup # Jenny Sept 13
   - jls/report-filters-are-lists # Jenny Sept 13
+  - jls/report-filters-are-lists-part-2 # Jenny Sept 13
 submodules: {}
