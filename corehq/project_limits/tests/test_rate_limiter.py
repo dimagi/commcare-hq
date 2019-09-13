@@ -29,22 +29,16 @@ def test_rate_definition_times():
         else:
             return number_or_none * factor
     for _ in range(15):
-        numbers = random.choices([None] + [random.expovariate(1/64) for _ in range(6)], k=5)
+        rate_def = _get_random_rate_def()
         factor = int(random.expovariate(1/10000))
         testil.eq(
+            rate_def.times(factor),
             RateDefinition(
-                per_second=numbers[0],
-                per_minute=numbers[1],
-                per_hour=numbers[2],
-                per_day=numbers[3],
-                per_week=numbers[4],
-            ).times(factor),
-            RateDefinition(
-                per_second=times_or_none(numbers[0], factor),
-                per_minute=times_or_none(numbers[1], factor),
-                per_hour=times_or_none(numbers[2], factor),
-                per_day=times_or_none(numbers[3], factor),
-                per_week=times_or_none(numbers[4], factor),
+                per_second=times_or_none(rate_def.per_second, factor),
+                per_minute=times_or_none(rate_def.per_minute, factor),
+                per_hour=times_or_none(rate_def.per_hour, factor),
+                per_day=times_or_none(rate_def.per_day, factor),
+                per_week=times_or_none(rate_def.per_week, factor),
             ),
         )
 
@@ -74,28 +68,16 @@ def test_rate_definition_with_minimum():
             return max(base_number_or_none, floor_number_or_none)
 
     for _ in range(15):
-        base_numbers = random.choices([None] + [random.expovariate(1/64) for _ in range(6)], k=5)
-        floor_numbers = random.choices([None] + [random.expovariate(1/64) for _ in range(6)], k=5)
+        base_rate = _get_random_rate_def()
+        floor_rate = _get_random_rate_def()
         testil.eq(
+            base_rate.with_minimum(floor_rate),
             RateDefinition(
-                per_second=base_numbers[0],
-                per_minute=base_numbers[1],
-                per_hour=base_numbers[2],
-                per_day=base_numbers[3],
-                per_week=base_numbers[4],
-            ).with_minimum(RateDefinition(
-                per_second=floor_numbers[0],
-                per_minute=floor_numbers[1],
-                per_hour=floor_numbers[2],
-                per_day=floor_numbers[3],
-                per_week=floor_numbers[4],
-            )),
-            RateDefinition(
-                per_second=asymmetric_max(base_numbers[0], floor_numbers[0]),
-                per_minute=asymmetric_max(base_numbers[1], floor_numbers[1]),
-                per_hour=asymmetric_max(base_numbers[2], floor_numbers[2]),
-                per_day=asymmetric_max(base_numbers[3], floor_numbers[3]),
-                per_week=asymmetric_max(base_numbers[4], floor_numbers[4]),
+                per_second=asymmetric_max(base_rate.per_second, floor_rate.per_second),
+                per_minute=asymmetric_max(base_rate.per_minute, floor_rate.per_minute),
+                per_hour=asymmetric_max(base_rate.per_hour, floor_rate.per_hour),
+                per_day=asymmetric_max(base_rate.per_day, floor_rate.per_day),
+                per_week=asymmetric_max(base_rate.per_week, floor_rate.per_week),
             )
         )
 
@@ -105,56 +87,49 @@ def test_rate_definition_map():
         return lambda x: None if x is None else fn(x)
 
     for _ in range(15):
-        numbers = random.choices([None] + [random.expovariate(1/64) for _ in range(6)], k=5)
+        rate_def = _get_random_rate_def()
         fn, = random.choices([preserve_none(int),
                               preserve_none(lambda x: x * x),
                               preserve_none(math.exp)])
         testil.eq(
+            rate_def.map(fn),
             RateDefinition(
-                per_second=numbers[0],
-                per_minute=numbers[1],
-                per_hour=numbers[2],
-                per_day=numbers[3],
-                per_week=numbers[4],
-            ).map(fn),
-            RateDefinition(
-                per_second=fn(numbers[0]),
-                per_minute=fn(numbers[1]),
-                per_hour=fn(numbers[2]),
-                per_day=fn(numbers[3]),
-                per_week=fn(numbers[4]),
+                per_second=fn(rate_def.per_second),
+                per_minute=fn(rate_def.per_minute),
+                per_hour=fn(rate_def.per_hour),
+                per_day=fn(rate_def.per_day),
+                per_week=fn(rate_def.per_week),
             ),
         )
 
 
 def test_rate_definition_map_with_other():
     for _ in range(15):
-        numbers = random.choices([None] + [random.expovariate(1/64) for _ in range(6)], k=5)
+        rate_def = _get_random_rate_def()
         fn, = random.choices([lambda x, y: max(filter(None, [x, y, -1])),
                               lambda x, y: None if None in (x, y) else (x * y)])
-        other_numbers = random.choices([None] + [random.expovariate(1 / 64) for _ in range(6)], k=5)
+        other = _get_random_rate_def()
         testil.eq(
+            rate_def.map(fn, other),
             RateDefinition(
-                per_second=numbers[0],
-                per_minute=numbers[1],
-                per_hour=numbers[2],
-                per_day=numbers[3],
-                per_week=numbers[4],
-            ).map(fn, RateDefinition(
-                per_second=other_numbers[0],
-                per_minute=other_numbers[1],
-                per_hour=other_numbers[2],
-                per_day=other_numbers[3],
-                per_week=other_numbers[4],
-            )),
-            RateDefinition(
-                per_second=fn(numbers[0], other_numbers[0]),
-                per_minute=fn(numbers[1], other_numbers[1]),
-                per_hour=fn(numbers[2], other_numbers[2]),
-                per_day=fn(numbers[3], other_numbers[3]),
-                per_week=fn(numbers[4], other_numbers[4]),
+                per_second=fn(rate_def.per_second, other.per_second),
+                per_minute=fn(rate_def.per_minute, other.per_minute),
+                per_hour=fn(rate_def.per_hour, other.per_hour),
+                per_day=fn(rate_def.per_day, other.per_day),
+                per_week=fn(rate_def.per_week, other.per_week),
             ),
         )
+
+
+def _get_random_rate_def():
+    numbers = random.choices([None] + [random.expovariate(1 / 64) for _ in range(6)], k=5)
+    return RateDefinition(
+        per_second=numbers[0],
+        per_minute=numbers[1],
+        per_hour=numbers[2],
+        per_day=numbers[3],
+        per_week=numbers[4],
+    )
 
 
 def test_rate_definition_against_fixed_user_table():
