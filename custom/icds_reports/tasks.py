@@ -1246,12 +1246,12 @@ def home_conduct_awc_incentive_report(performance_queryset, awcagg_queryset):
             home_conduct_from_report = 'N/A'
             false_result = True
         else:
-            home_conduct_from_report = awc[2]/awc[3]
+            home_conduct_from_report = awc[2] / awc[3]
         if awc_from_aggregate[2] in [0, None] or awc_from_aggregate[3] in [0, None]:
             home_conduct_from_awc = 'N/A'
             false_result = True
         else:
-            home_conduct_from_awc = awc_from_aggregate[2]/awc_from_aggregate[3]
+            home_conduct_from_awc = awc_from_aggregate[2] / awc_from_aggregate[3]
         if false_result or home_conduct_from_report != home_conduct_from_awc:
             row_data = [awc[0], home_conduct_from_report, home_conduct_from_awc]
             csv_data.append(row_data)
@@ -1261,7 +1261,7 @@ def home_conduct_awc_incentive_report(performance_queryset, awcagg_queryset):
     _send_incentive_report_validation_email(content, csv_columns, csv_data)
 
 
-def _send_incentive_report_validation_email(content,csv_columns, bad_data):
+def _send_incentive_report_validation_email(content, csv_columns, bad_data):
     csv_file = io.StringIO()
     writer = csv.writer(csv_file)
     writer.writerow(csv_columns)
