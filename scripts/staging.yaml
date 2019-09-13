@@ -53,7 +53,6 @@ branches:
   #- fr/case-templates      # FR May 15
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
   - jls/linked-app-multiple-masters-rebased # Jenny Aug 17
-  - jls/reveal-family-id # Jenny Aug 27
   - bmb/case-sharing  #Biyeun Aug 22
   - jls/use-compress-more # Jenny Sept 5
   - nh/omrs/import_task  # Norman Sep 11
