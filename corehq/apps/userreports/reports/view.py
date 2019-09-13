@@ -19,6 +19,7 @@ from django.utils.translation import ugettext_noop
 from braces.views import JSONResponseMixin
 from memoized import memoized
 
+from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
 from couchexport.models import Format
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
@@ -237,7 +238,14 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             if filter_spec.get('type') == 'dynamic_choice_list'
         ]
         query_dict = self.request.GET if self.request.method == 'GET' else self.request.POST
-        return query_dict_to_dict(query_dict, self.domain, string_type_params, list_type_params)
+        return_dict = query_dict_to_dict(query_dict, self.domain, string_type_params, list_type_params)
+        # this is to preserve legacy behavior for how these are expected
+        # in the filter value parsing. see https://dimagi-dev.atlassian.net/browse/HI-878 for more context
+        for param in list_type_params:
+            param_val = return_dict.get(param, None)
+            if isinstance(param_val, list):
+                return_dict[param] = CHOICE_DELIMITER.join(param_val)
+        return return_dict
 
     @property
     @memoized
