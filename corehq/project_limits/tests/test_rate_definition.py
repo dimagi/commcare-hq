@@ -14,7 +14,7 @@ def test_rate_definition_times():
             return number_or_none * factor
     for _ in range(15):
         rate_def = _get_random_rate_def()
-        factor = int(random.expovariate(1/10000))
+        factor = int(random.expovariate(1 / 10000))
         testil.eq(
             rate_def.times(factor),
             RateDefinition(
