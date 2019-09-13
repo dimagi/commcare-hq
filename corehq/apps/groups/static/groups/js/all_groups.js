@@ -15,5 +15,9 @@ hqDefine("groups/js/all_groups", [
             });
             return false;
         });
+
+        $('.js-case-sharing-alert').popover({
+            trigger: 'hover',
+        });
     });
 });
