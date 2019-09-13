@@ -52,12 +52,12 @@ class UploadedTranslationsValidator(object):
         self._setup()
 
     def _setup(self):
-        if self._is_single_sheet():
-            # assume its a single sheet workbook if there is a language
-            self.single_sheet = True
+        self.single_sheet = self._is_single_sheet()
+        if self.single_sheet:
             self.lang_cols_to_compare = [self.lang_prefix + self.lang_to_compare]
         else:
             self.lang_cols_to_compare = [self.lang_prefix + self.app.default_language]
+            # compare lang to compare along with default language, if not same
             if self.lang_to_compare != self.app.default_language:
                 self.lang_cols_to_compare.append(self.lang_prefix + self.lang_to_compare)
         self.app_translation_generator = AppTranslationsGenerator(
