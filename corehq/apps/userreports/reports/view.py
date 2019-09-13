@@ -121,7 +121,11 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
     for key in string_type_params:
         u_key = str(key)  # QueryDict's key/values are unicode strings
         if u_key in query_dict:
-            request_dict[key] = query_dict[u_key]  # json_request converts keys to strings
+            vals = query_dict.getlist(u_key)
+            if len(vals) > 1:
+                request_dict[key] = vals
+            else:
+                request_dict[key] = vals[0]
     return request_dict
 
 
