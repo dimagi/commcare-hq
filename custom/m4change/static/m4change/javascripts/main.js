@@ -1,6 +1,12 @@
 hqDefine("m4change/javascripts/main", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-    $(function () {
+    $(document).on("ajaxComplete", function (e, xhr, options) {
+        var fragment = "async/",
+            pageUrl = window.location.href.split('?')[0],
+            ajaxUrl = options.url.split('?')[0];
+        if (ajaxUrl.indexOf(fragment) === -1 || !pageUrl.endsWith(ajaxUrl.replace(fragment, ''))) {
+            return;
+        }
         var OPTIONS = {
             users: initialPageData.get("users"),
             groups: initialPageData.get("groups"),
