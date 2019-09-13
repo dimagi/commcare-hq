@@ -14,7 +14,7 @@ from corehq.util.log import with_progress_bar
 def _populate_linked_app_fields(apps, schema_editor):
     app_ids = (get_doc_ids_by_class(LinkedApplication)
                + get_deleted_doc_ids_by_class(LinkedApplication))
-    iter_update(LinkedApplication.get_db(), _add_fields, with_progress_bar(app_ids))
+    iter_update(LinkedApplication.get_db(), _add_fields, with_progress_bar(app_ids), chunksize=5)
 
 
 def _add_fields(app_doc):
