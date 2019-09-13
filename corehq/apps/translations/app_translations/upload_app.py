@@ -1,5 +1,5 @@
-import io
 import ghdiff
+import io
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
