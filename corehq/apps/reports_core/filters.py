@@ -389,12 +389,10 @@ class DynamicChoiceListFilter(BaseFilter):
             ]
 
     def value(self, **kwargs):
-        from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
         from corehq.apps.userreports.expressions.getters import transform_from_datatype
-        selection = kwargs.get(self.name, "")
+        choices = kwargs.get(self.name, "")
         user = kwargs.get(REQUEST_USER_KEY, None)
-        if selection:
-            choices = selection if isinstance(selection, list) else str(selection).split(CHOICE_DELIMITER)
+        if choices:
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
             return self.choice_provider.get_sorted_choices_for_values(typed_choices, user)
         return self.default_value(user)
