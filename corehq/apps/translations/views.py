@@ -130,7 +130,10 @@ def upload_bulk_app_translations(request, domain, app_id):
         messages.error(request, str(e))
     else:
         if validate:
-            msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)
+            if not lang:
+                msgs = [(messages.error, _("Please select language to validate."))]
+            else:
+                msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)
         else:
             sheet_name_to_unique_id = get_sheet_name_to_unique_id_map(request.file, lang)
             msgs = process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=lang)
