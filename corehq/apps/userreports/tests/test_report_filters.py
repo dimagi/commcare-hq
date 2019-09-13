@@ -31,7 +31,6 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters.specs import create_filter_value
 from corehq.apps.userreports.reports.filters.values import (
-    CHOICE_DELIMITER,
     SHOW_ALL_CHOICE,
     DateFilterValue,
     LocationDrilldownFilterValue,
@@ -657,17 +656,17 @@ class DynamicChoiceListFilterTestCase(SimpleTestCase):
     def test_multiple_selections(self):
         self.filter_spec["datatype"] = "string"
         filter = ReportFilterFactory.from_spec(self.filter_spec)
-        test_strings = (
-            'apple',
-            'apple{s}banana'.format(s=CHOICE_DELIMITER),
-            'apple{s}banana{s}carrot'.format(s=CHOICE_DELIMITER)
+        test_cases = (
+            ['apple'],
+            ['apple', 'banana'],
+            ['apple', 'banana', 'carrot'],
         )
         choices = [
             Choice('apple', 'apple'),
             Choice('banana', 'banana'),
             Choice('carrot', 'carrot')
         ]
-        for i, s in enumerate(test_strings):
+        for i, s in enumerate(test_cases):
             self.assertListEqual(choices[0:i + 1], filter.value(dynoslug=s))
 
     def test_ancestor_expression(self):
