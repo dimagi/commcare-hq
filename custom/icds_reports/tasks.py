@@ -1240,16 +1240,13 @@ def home_conduct_awc_incentive_report(performance_queryset, awcagg_queryset):
     csv_columns = ['awc_id', 'AwwIncentiveReport', 'AggAwc']
     csv_data = []
     for awc in performance_queryset:
-        false_result = False
         awc_from_aggregate = awcagg_queryset.filter(awc_id=awc[0])[0]
         if awc[2] in [0, None] or awc[3] in [0, None]:
             home_conduct_from_report = 'None'
-            false_result = True
         else:
             home_conduct_from_report = awc[2] / awc[3]
         if awc_from_aggregate[2] in [0, None] or awc_from_aggregate[3] in [0, None]:
             home_conduct_from_awc = 'None'
-            false_result = True
         else:
             home_conduct_from_awc = awc_from_aggregate[2] / awc_from_aggregate[3]
         if home_conduct_from_report != home_conduct_from_awc:
