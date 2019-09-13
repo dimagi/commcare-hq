@@ -120,7 +120,8 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
     # json.loads casts strings 'true'/'false' to booleans, so undo it
     for key in string_type_params:
         if key in query_dict:
-            request_dict[key] = query_dict[key]  # json_request converts keys to strings
+            # json_request converts keys to strings, this returns them to their original strings
+            request_dict[key] = query_dict[key]
     return request_dict
 
 
