@@ -54,7 +54,7 @@ def iter_id_chunks(domain, doc_type, migration_id, couch_db):
             break
 
 
-iter_id_chunks.chunk_size = 1000
+iter_id_chunks.chunk_size = 5000
 
 
 def get_endkey_docid(domain, doc_type, migration_id):
@@ -75,13 +75,11 @@ def iter_docs_not_in_sql(form_ids, couch_db):
             return [r[0] for r in cursor.fetchall()]
 
     sql = f"""
-        SELECT id FROM (
-            (
-                SELECT UNNEST(%s) AS id
-            ) EXCEPT (
-                SELECT form_id FROM {XFormInstanceSQL._meta.db_table}
-            )
-        ) AS missing_ids
+        SELECT maybe_missing.id
+        FROM (SELECT UNNEST(%s) AS id) maybe_missing
+        LEFT JOIN {XFormInstanceSQL._meta.db_table} migrated_form
+            ON migrated_form.form_id = maybe_missing.id
+        WHERE migrated_form.id IS NULL
     """
 
     for db_name, db_form_ids in split_list_by_db_partition(form_ids):
