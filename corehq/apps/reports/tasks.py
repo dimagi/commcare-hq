@@ -71,6 +71,8 @@ def _update_calculated_properties():
         get_domains_to_update_es_filter()
     ).fields(["name", "_id"]).run().hits
 
+    all_stats = all_domain_stats()
+
     for r in results:
         dom = r["name"]
         domain_obj = Domain.get_by_name(dom)
