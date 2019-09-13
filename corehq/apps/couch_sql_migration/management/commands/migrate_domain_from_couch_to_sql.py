@@ -102,6 +102,19 @@ class Command(BaseCommand):
                 a normal (non-live) migration, which will commit the
                 result if all goes well.
             ''')
+        parser.add_argument('--rebuild-state',
+            dest="rebuild_state", action='store_true', default=False,
+            help="""
+                Rebuild migration state by restarting form iterations.
+                Check each form to see if it has already been migrated,
+                and enqueue unmigrated forms as necessary until the
+                iteration reaches the place where it had previously
+                stopped. Finally resume the migration as usual. Forms
+                (and associated cases) encountered while rebuilding
+                state will not be diffed unless the form is not found
+                in SQL, which means that some cases that were previously
+                queued to diff may not be diffed.
+            """)
         parser.add_argument('--no-diff-process',
             dest='diff_process', action='store_false', default=True,
             help='''
@@ -114,13 +127,22 @@ class Command(BaseCommand):
         if should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
-        for opt in ["no_input", "verbose", "state_dir", "live_migrate", "diff_process"]:
+        for opt in [
+            "no_input",
+            "verbose",
+            "state_dir",
+            "live_migrate",
+            "diff_process",
+            "rebuild_state",
+        ]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('--no-input only allowed for unit testing')
         if action != MIGRATE and self.live_migrate:
             raise CommandError("--live only allowed with `MIGRATE`")
+        if action != MIGRATE and self.rebuild_state:
+            raise CommandError("--rebuild-state only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
 
@@ -137,6 +159,7 @@ class Command(BaseCommand):
             with_progress=not self.no_input,
             live_migrate=self.live_migrate,
             diff_process=self.diff_process,
+            rebuild_state=self.rebuild_state,
         )
 
         return_code = 0

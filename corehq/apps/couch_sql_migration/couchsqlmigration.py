@@ -81,6 +81,7 @@ from corehq.util.timer import TimingContext
 from .asyncforms import AsyncFormProcessor
 from .casediff import CaseDiffProcess, CaseDiffQueue
 from .statedb import init_state_db
+from .staterebuilder import iter_unmigrated_docs
 from .system_action import do_system_action
 
 log = logging.getLogger(__name__)
@@ -121,6 +122,7 @@ class CouchSqlDomainMigrator(object):
         with_progress=True,
         live_migrate=False,
         diff_process=True,
+        rebuild_state=False,
     ):
         self._check_for_migration_restrictions(domain)
         self.domain = domain
@@ -128,6 +130,8 @@ class CouchSqlDomainMigrator(object):
         self.live_migrate = live_migrate
         self.stopper = Stopper(live_migrate)
         self.statedb = init_state_db(domain, state_dir)
+        if rebuild_state:
+            self.statedb.is_rebuild = True
         diff_queue = CaseDiffProcess if diff_process else CaseDiffQueue
         self.case_diff_queue = diff_queue(self.statedb)
         # exit immediately on uncaught greenlet error
@@ -377,6 +381,8 @@ class CouchSqlDomainMigrator(object):
         # resumable iteration state is associated with statedb.unique_id,
         # so it will be reset (orphaned in couch) if that changes
         migration_id = self.statedb.unique_id
+        if self.statedb.is_rebuild and doc_types == ["XFormInstance"]:
+            yield from iter_unmigrated_docs(self.domain, doc_types, migration_id)
         for doc_type in doc_types:
             yield from _iter_docs(
                 self.domain,

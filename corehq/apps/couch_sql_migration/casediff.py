@@ -453,7 +453,8 @@ class CaseDiffProcess(object):
         calls, self.calls = self.calls_pipe.__enter__()
         self.stats, stats = self.stats_pipe.__enter__()
         debug = log.isEnabledFor(logging.DEBUG)
-        args = (self.queue_class, calls, stats, self.state_path, debug)
+        is_rebuild = self.statedb.is_rebuild
+        args = (self.queue_class, calls, stats, self.state_path, is_rebuild, debug)
         self.process = gipc.start_process(target=run_case_diff_queue, args=args)
         self.status_logger = gevent.spawn(self.run_status_logger)
         return self
@@ -514,7 +515,7 @@ def get_casediff_state_path(path):
     return path[:-3] + "-casediff.db"
 
 
-def run_case_diff_queue(queue_class, calls, stats, state_path, debug):
+def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug):
     def status():
         stats.put((STATUS, queue.get_status()))
 
@@ -530,6 +531,7 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, debug):
 
     process_actions = {STATUS: status, TERMINATE: terminate}
     statedb = StateDB.init(state_path)
+    statedb.is_rebuild = is_rebuild
     setup_logging(state_path, debug)
     queue = None
     with calls, stats:
