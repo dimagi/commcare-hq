@@ -161,8 +161,7 @@ class CouchSqlDomainMigrator(object):
     def _process_main_forms(self):
         """process main forms (including cases and ledgers)"""
         with AsyncFormProcessor(self.statedb, self._migrate_form) as pool:
-            docs = self._get_resumable_iterator(['XFormInstance'])
-            for doc in self._with_progress(['XFormInstance'], docs):
+            for doc in self._get_resumable_iterator(['XFormInstance']):
                 pool.process_xform(doc)
 
         self._log_main_forms_processed_count()
@@ -254,8 +253,7 @@ class CouchSqlDomainMigrator(object):
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
 
         doc_types = sorted(UNPROCESSED_DOC_TYPES)
-        docs = self._get_resumable_iterator(doc_types)
-        for couch_form_json in self._with_progress(doc_types, docs):
+        for couch_form_json in self._get_resumable_iterator(doc_types):
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
 
         while not pool.join(timeout=10):
@@ -273,8 +271,7 @@ class CouchSqlDomainMigrator(object):
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
         pool = Pool(10)
-        docs = self._get_resumable_iterator(doc_types)
-        for doc in self._with_progress(doc_types, docs):
+        for doc in self._get_resumable_iterator(doc_types):
             pool.spawn(self._copy_unprocessed_case, doc)
 
         while not pool.join(timeout=10):
@@ -383,6 +380,10 @@ class CouchSqlDomainMigrator(object):
         migration_id = self.statedb.unique_id
         if self.statedb.is_rebuild and doc_types == ["XFormInstance"]:
             yield from iter_unmigrated_docs(self.domain, doc_types, migration_id)
+        docs = self._iter_docs(doc_types, migration_id)
+        yield from self._with_progress(doc_types, docs)
+
+    def _iter_docs(self, doc_types, migration_id):
         for doc_type in doc_types:
             yield from _iter_docs(
                 self.domain,
