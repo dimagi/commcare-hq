@@ -162,7 +162,7 @@ class TestPrevalenceOfSevere(TestCase):
             data['rightLegend']['extended_info'],
             [
                 {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '696'},
-                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
+                {'indicator': 'Total Children (0 - 5 years) with weight and height measured in given month:',
                  'value': '27'},
                 {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '256'},
                 {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
@@ -862,7 +862,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             data['rightLegend']['extended_info'],
             [
                 {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '696'},
-                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
+                {'indicator': 'Total Children (0 - 5 years) with weight and height measured in given month:',
                  'value': '27'},
                 {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '256'},
                 {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
