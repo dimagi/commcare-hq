@@ -251,21 +251,23 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             yield
 
 
-class MigrationTestCase(BaseMigrationTestCase):
-
-    def set_up_report_domain(self):
-        domain = Domain(
-            name="up-nrhm",
-            is_active=True,
-            date_created=datetime.utcnow(),
-            secure_submissions=True,
-            use_sql_backend=False,
-        )
-        domain.save()
-
-    def tear_down_report_domsin(self):
-        domain = Domain.get_by_name('up-nrhm')
+@contextmanager
+def get_report_domain():
+    domain = Domain(
+        name="up-nrhm",
+        is_active=True,
+        date_created=datetime.utcnow(),
+        secure_submissions=True,
+        use_sql_backend=False,
+    )
+    domain.save()
+    try:
+        yield domain
+    finally:
         domain.delete()
+
+
+class MigrationTestCase(BaseMigrationTestCase):
 
     def test_migration_blacklist(self):
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
@@ -273,10 +275,10 @@ class MigrationTestCase(BaseMigrationTestCase):
             self._do_migration(self.domain_name)
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
 
-    @with_setup(set_up_report_domain, tear_down_report_domsin)
     def test_migration_custom_report(self):
-        with self.assertRaises(MigrationRestricted):
-            self._do_migration("up-nrhm")
+        with get_report_domain() as domain:
+            with self.assertRaises(MigrationRestricted):
+                self._do_migration(domain.name)
 
     def test_basic_form_migration(self):
         create_and_save_a_form(self.domain_name)
