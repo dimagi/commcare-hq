@@ -1,21 +1,15 @@
-import random
-import time
-from functools import wraps
-
-from django.conf import settings
-
 from corehq.project_limits.rate_limiter import RateDefinition, RateLimiter, \
     PerUserRateDefinition
 
-# Danny promised in an Aug 2019 email not to enforce limits that were lower than this.
-# If we as a team end up regretting this decision, we'll have to reset expectations
-# with the Dimagi NDoH team.
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.decorators import silence_and_report_error, enterprise_skip
 from corehq.util.timer import TimingContext
-from dimagi.utils.logging import notify_exception
 
+
+# Danny promised in an Aug 2019 email not to enforce limits that were lower than this.
+# If we as a team end up regretting this decision, we'll have to reset expectations
+# with the Dimagi NDoH team.
 rates_promised_not_to_go_lower_than = RateDefinition(
     per_week=115,
     per_day=23,
