@@ -44,8 +44,7 @@ class RateLimiter(object):
         return all(rate_counter.get((self.feature_key,) + scope) < limit
                    for rate_counter, limit in self.get_rate_limits(*scope))
 
-    def wait(self, scope, timeout=None):
-        assert timeout
+    def wait(self, scope, timeout):
         start = time.time()
         target_end = start + timeout
         delay = 0

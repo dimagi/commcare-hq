@@ -1,5 +1,6 @@
 import random
 import time
+from functools import wraps
 
 from django.conf import settings
 
@@ -11,6 +12,7 @@ from corehq.project_limits.rate_limiter import RateDefinition, RateLimiter, \
 # with the Dimagi NDoH team.
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
+from corehq.util.decorators import silence_and_report_error, enterprise_skip
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 
@@ -40,29 +42,19 @@ submission_rate_limiter = RateLimiter(
 )
 
 
-def rate_limit_submission_by_delaying(domain, max_wait=None):
-    assert max_wait
-    if not settings.ENTERPRISE_MODE:
-        try:
-            if not submission_rate_limiter.allow_usage(domain):
-                with TimingContext() as timer:
-                    acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
-                if acquired:
-                    duration_tag = bucket_value(timer.duration, [1, 5, 10, 15, 20], unit='s')
-                else:
-                    duration_tag = 'timeout'
-                datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
-                    'domain:{}'.format(domain),
-                    'duration:{}'.format(duration_tag)
-                ])
-            submission_rate_limiter.report_usage(domain)
-        except Exception:
-            # Prevent rate limiting logic from ever blocking as submission if it errors
-            # until it is proven to be a stable and essential part of our system.
-            # Instead, report the issue to sentry and track the overall count on datadog
-            notify_exception(request, "Exception raised in the rate limiter")
-            datadog_counter('commcare.xform_submissions.rate_limiter_errors', tags=[
-                'domain:{}'.format(domain),
-            ])
-            if settings.UNIT_TESTING:
-                raise
+@enterprise_skip
+@silence_and_report_error("Exception raised in the submission rate limiter",
+                          'commcare.xform_submissions.rate_limiter_errors')
+def rate_limit_submission_by_delaying(domain, max_wait):
+    if not submission_rate_limiter.allow_usage(domain):
+        with TimingContext() as timer:
+            acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
+        if acquired:
+            duration_tag = bucket_value(timer.duration, [1, 5, 10, 15, 20], unit='s')
+        else:
+            duration_tag = 'timeout'
+        datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
+            'domain:{}'.format(domain),
+            'duration:{}'.format(duration_tag)
+        ])
+    submission_rate_limiter.report_usage(domain)
