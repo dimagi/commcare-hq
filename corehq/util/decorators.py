@@ -1,5 +1,5 @@
 import inspect
-from contextlib import contextmanager
+from contextlib import contextmanager, ContextDecorator
 
 from celery.task import task
 from functools import wraps
@@ -10,20 +10,6 @@ from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.global_request import get_request
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
-
-
-class ContextDecorator(object):
-    """
-    A base class that enables a context manager to also be used as a decorator.
-    https://docs.python.org/3/library/contextlib.html#contextlib.ContextDecorator
-    """
-
-    def __call__(self, fn):
-        @wraps(fn)
-        def decorated(*args, **kwds):
-            with self:
-                return fn(*args, **kwds)
-        return decorated
 
 
 def handle_uncaught_exceptions(mail_admins=True):
