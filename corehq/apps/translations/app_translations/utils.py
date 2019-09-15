@@ -6,13 +6,14 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
-    SINGLE_SHEET_STATIC_HEADERS,
     SINGLE_SHEET_NAME,
+    SINGLE_SHEET_STATIC_HEADERS,
 )
 from corehq.apps.translations.generators import EligibleForTransifexChecker
 
 
-def get_bulk_app_sheet_headers(app, lang=None, eligible_for_transifex_only=False, by_id=False):
+def get_bulk_app_sheet_headers(app, single_sheet=False, lang=None, eligible_for_transifex_only=False,
+                               by_id=False):
     '''
     Returns lists representing the expected structure of bulk app translation
     Excel file uploads and downloads.
@@ -27,7 +28,7 @@ def get_bulk_app_sheet_headers(app, lang=None, eligible_for_transifex_only=False
     `eligible_for_transifex_only` will skip modules and forms that have "SKIP
     TRANSIFEX" in their comment.
     '''
-    langs = [lang] if lang else app.langs
+    langs = [lang] if single_sheet else app.langs
 
     default_lang_list = ['default_' + l for l in langs]
     audio_lang_list = ['audio_' + l for l in langs]
@@ -35,7 +36,7 @@ def get_bulk_app_sheet_headers(app, lang=None, eligible_for_transifex_only=False
     video_lang_list = ['video_' + l for l in langs]
     lang_list = default_lang_list + image_lang_list + audio_lang_list + video_lang_list
 
-    if lang:
+    if single_sheet:
         return ((SINGLE_SHEET_NAME, tuple(
             SINGLE_SHEET_STATIC_HEADERS
         ) + tuple(lang_list) + ('unique_id',)),)
