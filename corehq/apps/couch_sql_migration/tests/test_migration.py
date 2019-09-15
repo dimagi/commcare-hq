@@ -16,7 +16,6 @@ from django.test import TestCase, override_settings
 import attr
 import mock
 from couchdbkit.exceptions import ResourceNotFound
-from nose import with_setup
 from nose.tools import nottest
 from testil import tempdir
 
