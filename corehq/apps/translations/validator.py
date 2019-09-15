@@ -1,7 +1,7 @@
+from django.utils.translation import ugettext as _
+
 import ghdiff
 from memoized import memoized
-
-from django.utils.translation import ugettext as _
 
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
@@ -17,8 +17,8 @@ from corehq.apps.translations.app_translations.utils import (
 )
 from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
-    SINGLE_SHEET_STATIC_HEADERS,
     SINGLE_SHEET_NAME,
+    SINGLE_SHEET_STATIC_HEADERS,
 )
 from corehq.apps.translations.generators import (
     AppTranslationsGenerator,

@@ -6,8 +6,8 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
-    SINGLE_SHEET_STATIC_HEADERS,
     SINGLE_SHEET_NAME,
+    SINGLE_SHEET_STATIC_HEADERS,
 )
 from corehq.apps.translations.generators import EligibleForTransifexChecker
 
