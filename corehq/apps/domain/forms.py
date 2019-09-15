@@ -2519,7 +2519,7 @@ class ManageReleasesByAppProfileForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Field('app_id', id='app-id-search-select', css_class="ko-select2"),
             crispy.Field('version', id='version-input'),
-            crispy.Field('build_profile_id', id='app-profile-id-input'),
+            crispy.Field('build_profile_id', id='build-profile-id-input'),
             crispy.Field('status', id='status-input'),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
