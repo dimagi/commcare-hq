@@ -27,7 +27,8 @@ from corehq.apps.app_manager.models import (
     LatestEnabledBuildProfiles,
 )
 from corehq.apps.domain.forms import (
-    ManageReleasesByAppProfileForm,
+    CreateManageReleasesByAppProfileForm,
+    SearchManageReleasesByAppProfileForm,
     ManageReleasesByLocationForm,
 )
 from corehq.apps.domain.views import BaseProjectSettingsView
@@ -109,7 +110,7 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
 
     @cached_property
     def form(self):
-        return ManageReleasesByAppProfileForm(
+        return CreateManageReleasesByAppProfileForm(
             self.request,
             self.domain,
             data=self.request.POST if self.request.method == "POST" else None,
@@ -150,6 +151,8 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
                 query = query.filter(active=False)
         app_releases_by_app_profile = [release.to_json(app_names) for release in query.order_by('-version')]
         return {
+            'create_form': CreateManageReleasesByAppProfileForm(self.request, self.domain),
+            'search_form': SearchManageReleasesByAppProfileForm(self.request, self.domain),
             'manage_releases_by_app_profile_form': self.form,
             'app_releases_by_app_profile': app_releases_by_app_profile,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
