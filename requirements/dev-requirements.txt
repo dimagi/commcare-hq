@@ -17,7 +17,7 @@ boto3==1.9.143
 botocore==1.12.143        # via boto3, s3transfer
 cairocffi==0.9.0          # via cairosvg, weasyprint
 cairosvg==1.0.22          # via weasyprint
-git+git://github.com/nickpell/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
+git+git://github.com/dimagi/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 certifi==2019.3.9         # via requests, sentry-sdk
 cffi==1.12.3              # via cairocffi, csiphash, weasyprint
 chardet==3.0.4            # via ghdiff, requests
@@ -109,7 +109,6 @@ jsonpath-rw==1.4.0
 kafka-python==1.4.4
 kombu==4.2.2.post1
 laboratory==0.2.0
-line_profiler==1.0
 linecache2==1.0.0         # via traceback2
 lxml==4.3.3
 mako==1.0.9               # via alembic

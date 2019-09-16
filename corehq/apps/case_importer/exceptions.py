@@ -55,12 +55,12 @@ class InvalidOwnerName(CaseRowError):
     )
 
 
-class InvalidOwnerId(CaseRowError):
-    title = ugettext_noop('Invalid Owner ID')
+class InvalidOwner(CaseRowError):
+    title = ugettext_noop('Invalid Owner')
     message = ugettext_lazy(
-        "Owner ID was used in the mapping but there were errors when "
-        "uploading because of these values. Make sure the values in this "
-        "column are ID's for users or case sharing groups or locations."
+        "Owners were provided in the mapping but there were errors when "
+        "uploading because of these values. Make sure the owners in this "
+        "column are users, case sharing groups, or locations."
     )
 
 

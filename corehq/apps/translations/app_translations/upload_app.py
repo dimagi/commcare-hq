@@ -96,9 +96,12 @@ def process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, 
     if error:
         msgs.append((messages.error, error))
         return msgs
-
-    expected_headers_by_sheet_name = {k: v for k, v in get_bulk_app_sheet_headers(app, lang=lang)}
-    expected_headers_by_id = {k: v for k, v in get_bulk_app_sheet_headers(app, lang=lang, by_id=True)}
+    # if there is a lang selected, assume that user submitted a single sheet
+    single_sheet = bool(lang)
+    expected_headers_by_sheet_name = {k: v for k, v in get_bulk_app_sheet_headers(app, single_sheet=single_sheet,
+                                                                                  lang=lang)}
+    expected_headers_by_id = {k: v for k, v in get_bulk_app_sheet_headers(app, single_sheet=single_sheet,
+                                                                          lang=lang, by_id=True)}
     processed_sheets = set()
 
     for sheet in workbook.worksheets:

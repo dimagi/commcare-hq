@@ -14,6 +14,7 @@ function(doc){
             cloudcare_enabled: doc.cloudcare_enabled,
             mobile_ucr_sync_interval: doc.mobile_ucr_sync_interval,
             created_from_template: doc.created_from_template,
+            family_id: doc.family_id,
             build_profiles: doc.build_profiles
         });
     }
