@@ -1,7 +1,5 @@
 from django.db import migrations
 
-from dimagi.utils.couch.cache import cache_core
-
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
 
@@ -11,8 +9,7 @@ def _migrate_report_filters(apps, schema_editor):
         Migrates ReportConfig filters with multiple values from CHOICE_DELIMITER-delimited strings to lists.
     """
     key = ["name slug"]
-    results = cache_core.cached_view(
-        ReportConfig.get_db(),
+    results = ReportConfig.get_db().view(
         "reportconfig/configs_by_domain",
         reduce=False,
         include_docs=True,
