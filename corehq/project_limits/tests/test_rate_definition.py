@@ -7,14 +7,7 @@ from corehq.project_limits.rate_limiter import RateDefinition
 
 
 def test_rate_definition_times():
-    def times_or_none(number_or_none, factor):
-        if number_or_none is None:
-            return None
-        else:
-            return number_or_none * factor
-    for _ in range(15):
-        rate_def = _get_random_rate_def()
-        factor = int(random.expovariate(1 / 10000))
+    def check(rate_def, factor):
         testil.eq(
             rate_def.times(factor),
             RateDefinition(
@@ -26,8 +19,32 @@ def test_rate_definition_times():
             ),
         )
 
+    def times_or_none(number_or_none, factor):
+        if number_or_none is None:
+            return None
+        else:
+            return number_or_none * factor
+
+    for _ in range(15):
+        rate_def = _get_random_rate_def()
+        factor = int(random.expovariate(1 / 10000))
+        yield check, rate_def, factor
+
 
 def test_rate_definition_with_minimum():
+
+    def check(base_rate, floor_rate):
+        testil.eq(
+            base_rate.with_minimum(floor_rate),
+            RateDefinition(
+                per_second=asymmetric_max(base_rate.per_second, floor_rate.per_second),
+                per_minute=asymmetric_max(base_rate.per_minute, floor_rate.per_minute),
+                per_hour=asymmetric_max(base_rate.per_hour, floor_rate.per_hour),
+                per_day=asymmetric_max(base_rate.per_day, floor_rate.per_day),
+                per_week=asymmetric_max(base_rate.per_week, floor_rate.per_week)
+            )
+        )
+
     def asymmetric_max(base_number_or_none, floor_number_or_none):
         """
         Return max of the two numbers with the None value being treated asymmetrically
@@ -54,27 +71,11 @@ def test_rate_definition_with_minimum():
     for _ in range(15):
         base_rate = _get_random_rate_def()
         floor_rate = _get_random_rate_def()
-        testil.eq(
-            base_rate.with_minimum(floor_rate),
-            RateDefinition(
-                per_second=asymmetric_max(base_rate.per_second, floor_rate.per_second),
-                per_minute=asymmetric_max(base_rate.per_minute, floor_rate.per_minute),
-                per_hour=asymmetric_max(base_rate.per_hour, floor_rate.per_hour),
-                per_day=asymmetric_max(base_rate.per_day, floor_rate.per_day),
-                per_week=asymmetric_max(base_rate.per_week, floor_rate.per_week),
-            )
-        )
+        yield check, base_rate, floor_rate
 
 
 def test_rate_definition_map():
-    def preserve_none(fn):
-        return lambda x: None if x is None else fn(x)
-
-    for _ in range(15):
-        rate_def = _get_random_rate_def()
-        fn, = random.choices([preserve_none(int),
-                              preserve_none(lambda x: x * x),
-                              preserve_none(math.exp)])
+    def check(rate_def, fn):
         testil.eq(
             rate_def.map(fn),
             RateDefinition(
@@ -86,13 +87,19 @@ def test_rate_definition_map():
             ),
         )
 
+    def preserve_none(fn):
+        return lambda x: None if x is None else fn(x)
 
-def test_rate_definition_map_with_other():
     for _ in range(15):
         rate_def = _get_random_rate_def()
-        fn, = random.choices([lambda x, y: max(filter(None, [x, y, -1])),
-                              lambda x, y: None if None in (x, y) else (x * y)])
-        other = _get_random_rate_def()
+        fn, = random.choices([preserve_none(int),
+                              preserve_none(lambda x: x * x),
+                              preserve_none(math.exp)])
+        yield check, rate_def, fn
+
+
+def test_rate_definition_map_with_other():
+    def check(rate_def, fn, other):
         testil.eq(
             rate_def.map(fn, other),
             RateDefinition(
@@ -103,6 +110,13 @@ def test_rate_definition_map_with_other():
                 per_week=fn(rate_def.per_week, other.per_week),
             ),
         )
+
+    for _ in range(15):
+        rate_def = _get_random_rate_def()
+        fn, = random.choices([lambda x, y: max(filter(None, [x, y, -1])),
+                              lambda x, y: None if None in (x, y) else (x * y)])
+        other = _get_random_rate_def()
+        yield check, rate_def, fn, other
 
 
 def _get_random_rate_def():
@@ -118,17 +132,17 @@ def _get_random_rate_def():
 
 def test_rate_definition_against_fixed_user_table():
     tab_delimited_table = """
-    # of users	second	minute	hour	day	week
-    1	1	10	30	50	115
-    10	1	10	30	230	1,150
-    100	1	10	300	2,300	11,500
-    1000	5	70	3,000	23,000	115,000
-    10000	50	700	30,000	230,000	1,150,000
-    100000	500	7,000	300,000	2,300,000	11,500,000
+    # of users  second  minute  hour    day       week
+    1           1       10      30      50        115
+    10          1       10      30      230       1,150
+    100         1       10      300     2,300     11,500
+    1000        5       70      3,000   23,000    115,000
+    10000       50      700     30,000  230,000   1,150,000
+    100000      500     7,000   300,000 2,300,000 11,500,000
     """
 
     rows = tab_delimited_table.strip().splitlines()[1:]
-    table = [[int(cell.replace(',', '')) for cell in row.split('\t')] for row in rows]
+    table = [[int(cell.replace(',', '')) for cell in row.split()] for row in rows]
     per_user_rate = RateDefinition(
         per_week=115,
         per_day=23,
