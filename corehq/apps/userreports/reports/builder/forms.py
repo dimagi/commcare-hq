@@ -1,4 +1,3 @@
-
 import datetime
 import uuid
 from abc import ABCMeta, abstractproperty

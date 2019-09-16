@@ -1,4 +1,3 @@
-
 from testil import eq
 
 from ..quickcache import _quickcache_id

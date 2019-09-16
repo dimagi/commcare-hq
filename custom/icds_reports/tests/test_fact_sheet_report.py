@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from django.test.testcases import TestCase
 from custom.icds_reports.views import FactSheetsReport
@@ -350,14 +349,14 @@ class TestFactSheetReportInterventions(TestCase):
                 'rows_config': [
                     {
                         'average': {
-                            'html': 10.747271200671705,
-                            'sort_key': 10.747271200671705
+                            'html': 10.783487784330244,
+                            'sort_key': 10.783487784330244
                         },
                         'data': [
                             {'html': 'Children 1 year+ who have recieved complete immunization'
                                      ' required by age 1.'},
-                            {'html': 10.477001703577512, 'sort_key': 10.477001703577512},
-                            {'html': 10.747271200671705, 'sort_key': 10.747271200671705},
+                            {'html': 10.517241379310345, 'sort_key': 10.517241379310345},
+                            {'html': 10.783487784330244, 'sort_key': 10.783487784330244},
                             {'html': 0}
                         ],
                         'data_source': 'AggChildHealthMonthlyDataSource',

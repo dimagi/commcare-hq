@@ -1,4 +1,3 @@
-
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.utils.functional import cached_property

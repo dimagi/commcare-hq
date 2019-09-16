@@ -1,4 +1,3 @@
-
 from django.utils.translation import ugettext_lazy
 from sqlagg.columns import SimpleColumn
 from sqlagg.sorting import OrderBy

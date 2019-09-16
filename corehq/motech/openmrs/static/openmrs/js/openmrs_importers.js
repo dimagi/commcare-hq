@@ -36,6 +36,7 @@ hqDefine('openmrs/js/openmrs_importers', [
         self.column_map = ko.observable(properties["column_map"]);
 
         self.import_frequency_options = [
+            {"value": "daily", "text": gettext("Daily")},
             {"value": "weekly", "text": gettext("Weekly")},
             {"value": "monthly", "text": gettext("Monthly")},
         ];

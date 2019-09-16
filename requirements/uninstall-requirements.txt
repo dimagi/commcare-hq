@@ -1,3 +1,4 @@
+# This file is for requirements that should be removed _before_ pip install
 # https://github.com/maxtepkeev/architect/pull/52
 architect
 # https://github.com/django-nose/django-nose/pull/228
@@ -14,3 +15,4 @@ ConcurrentLogHandler
 xhtml2pdf
 celery  # Remove once we are back to regular celery releases
 subprocess32
+eventlet

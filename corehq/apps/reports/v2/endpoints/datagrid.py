@@ -1,4 +1,3 @@
-
 from corehq.apps.reports.v2.models import BaseDataEndpoint
 from corehq.elastic import ESError
 

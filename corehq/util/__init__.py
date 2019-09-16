@@ -1,4 +1,3 @@
-
 from django.utils.functional import Promise
 
 from .couch import get_document_or_404

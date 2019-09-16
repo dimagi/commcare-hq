@@ -1,4 +1,3 @@
-
 import os
 
 from . import get_blob_db, NotFound

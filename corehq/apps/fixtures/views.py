@@ -1,4 +1,3 @@
-
 import json
 from collections import OrderedDict
 from contextlib import contextmanager

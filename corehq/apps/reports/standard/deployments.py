@@ -787,8 +787,10 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 "that particular day."
             )
         )
-        return {
+        context = super().template_context
+        context.update({
             'submission_series': submission_series,
             'sync_series': sync_series,
             'total_users': total_users,
-        }
+        })
+        return context

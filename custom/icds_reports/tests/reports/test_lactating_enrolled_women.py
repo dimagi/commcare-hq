@@ -1,4 +1,3 @@
-
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors

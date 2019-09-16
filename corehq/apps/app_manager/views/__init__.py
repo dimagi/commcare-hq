@@ -1,4 +1,3 @@
-
 from corehq.apps.app_manager.views.app_summary import (
     AppCaseSummaryView,
     AppDataView,

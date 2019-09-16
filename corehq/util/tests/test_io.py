@@ -1,4 +1,3 @@
-
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
 

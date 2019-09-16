@@ -417,7 +417,7 @@ def _create_case(domain, **kwargs):
     from casexml.apps.case.mock import CaseBlock
     from corehq.apps.hqcase.utils import submit_case_blocks
     return submit_case_blocks(
-        [CaseBlock(**kwargs).as_string().decode('utf-8')], domain=domain
+        [CaseBlock(**kwargs).as_text()], domain=domain
     )
 
 

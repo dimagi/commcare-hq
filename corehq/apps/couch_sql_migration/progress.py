@@ -1,4 +1,3 @@
-
 from django.conf import settings
 
 from corehq.apps.domain_migration_flags.api import (

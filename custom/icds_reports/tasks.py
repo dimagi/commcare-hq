@@ -1,4 +1,3 @@
-
 import io
 import logging
 import os
@@ -55,7 +54,7 @@ from corehq.util.view_utils import reverse
 from custom.icds_reports.const import (
     AWC_INFRASTRUCTURE_EXPORT,
     AWW_INCENTIVE_REPORT,
-    BENEFICIARY_LIST_EXPORT,
+    GROWTH_MONITORING_LIST_EXPORT,
     CHILDREN_EXPORT,
     DASHBOARD_DOMAIN,
     DEMOGRAPHICS_EXPORT,
@@ -180,19 +179,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
 ]
-
-
-@periodic_task(run_every=crontab(minute=15, hour=18),
-               acks_late=True, queue='icds_aggregation_queue')
-def run_move_ucr_data_into_aggregation_tables_task():
-    move_ucr_data_into_aggregation_tables.delay()
-
-
-@periodic_task(run_every=crontab(minute=45, hour=17),
-               acks_late=True, queue='icds_aggregation_queue')
-def run_citus_move_ucr_data_into_aggregation_tables_task():
-    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
-        move_ucr_data_into_aggregation_tables.delay(force_citus=True)
 
 
 @serial_task('{force_citus}', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
@@ -788,10 +774,10 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 show_test=include_test,
                 beta=beta,
             ).get_excel_data(location)
-        elif indicator == BENEFICIARY_LIST_EXPORT:
+        elif indicator == GROWTH_MONITORING_LIST_EXPORT:
             # this report doesn't use this configuration
             config.pop('aggregation_level', None)
-            data_type = 'Beneficiary_List'
+            data_type = 'Growth_Monitoring_list'
             excel_data = BeneficiaryExport(
                 config=config,
                 loc_level=aggregation_level,
@@ -1321,7 +1307,7 @@ def _child_health_monthly_aggregation(day, state_ids):
     pool = Pool(10)
     for query, params in helper.pre_aggregation_queries():
         pool.spawn(_child_health_helper, query, params)
-        pool.join()
+    pool.join()
 
     with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))

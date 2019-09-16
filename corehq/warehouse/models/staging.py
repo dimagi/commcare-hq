@@ -1,4 +1,3 @@
-
 from contextlib import closing
 
 from django.contrib.postgres.fields import ArrayField, JSONField

@@ -1,4 +1,3 @@
-
 import re
 from datetime import datetime
 from tempfile import NamedTemporaryFile

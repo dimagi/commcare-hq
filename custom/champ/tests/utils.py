@@ -1,4 +1,3 @@
-
 import json
 from django.test.testcases import TestCase
 from django.test.client import RequestFactory

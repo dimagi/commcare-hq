@@ -1,4 +1,3 @@
-# coding=utf-8
 import calendar
 from datetime import datetime
 from corehq.apps.products.models import SQLProduct

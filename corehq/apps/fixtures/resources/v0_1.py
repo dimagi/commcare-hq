@@ -1,4 +1,3 @@
-
 from couchdbkit import ResourceNotFound
 from tastypie import fields as tp_f
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound

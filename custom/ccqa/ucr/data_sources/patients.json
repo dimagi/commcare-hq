@@ -1,0 +1,72 @@
+{
+  "domains": [
+    "ccqa",
+    "ccqa-downstream"
+  ],
+  "server_environment": [
+    "localdev",
+    "production",
+    "staging",
+    "india"
+  ],
+  "config": {
+    "table_id": "patients",
+    "display_name": "Patients",
+    "referenced_doc_type": "CommCareCase",
+    "description": "Example static UCR for testing, operates on 'patient' cases",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "type": "property_name",
+        "property_name": "type"
+      },
+      "property_value": "patient"
+    },
+    "validations": [],
+    "configured_indicators": [
+      {
+        "column_id": "name",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "name"
+        },
+        "datatype": "string"
+      },
+      {
+        "column_id": "dob",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "dob"
+        },
+        "datatype": "date"
+      },
+      {
+        "column_id": "favorite_color",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "favorite_color"
+        },
+        "datatype": "string"
+      },
+      {
+        "column_id": "opened_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "opened_on"
+      },
+      {
+        "column_id": "closed_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "closed_on"
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {}
+  }
+}

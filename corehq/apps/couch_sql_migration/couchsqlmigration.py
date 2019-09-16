@@ -2,6 +2,7 @@ import csv
 import io
 import logging
 import os
+import signal
 import sys
 import uuid
 from datetime import datetime, timedelta
@@ -10,7 +11,6 @@ from itertools import chain
 from django.conf import settings
 from django.db.utils import IntegrityError
 
-import attr
 import gevent
 from gevent.pool import Pool
 from lxml import etree
@@ -29,9 +29,8 @@ from couchforms.models import doc_types as form_doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
-from corehq.apps.couch_sql_migration.diff import (
-    ignore_rules,
-)
+
+from corehq.apps.couch_sql_migration.diff import ignore_rules
 from corehq.apps.couch_sql_migration.diffrule import Ignore
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
@@ -69,6 +68,10 @@ from corehq.form_processor.models import (
     XFormOperationSQL,
 )
 from corehq.form_processor.submission_post import CaseStockProcessingResult
+from corehq.form_processor.system_action import (
+    SYSTEM_ACTION_XMLNS,
+    do_system_action,
+)
 from corehq.form_processor.utils import (
     adjust_datetimes,
     extract_meta_user_id,
@@ -93,7 +96,7 @@ from corehq.util.timer import TimingContext
 
 from .asyncforms import AsyncFormProcessor
 from .casediff import CaseDiffProcess, CaseDiffQueue
-from .statedb import init_state_db, init_ignore_path_db
+from .statedb import init_ignore_path_db, init_state_db
 
 log = logging.getLogger(__name__)
 
@@ -342,7 +345,7 @@ class CouchSqlDomainMigrator(object):
         self.debug = debug
         self.dry_run = dry_run
         self.live_migrate = live_migrate
-        self.live_stopper = LiveStopper(live_migrate)
+        self.stopper = Stopper(live_migrate)
         self.statedb = init_state_db(src_domain, state_dir)
         self.ignore_path_db = init_ignore_path_db(src_domain, state_dir)
         diff_queue = CaseDiffProcess if diff_process else CaseDiffQueue
@@ -391,7 +394,7 @@ class CouchSqlDomainMigrator(object):
 
         self.processed_docs = 0
         timing = TimingContext("couch_sql_migration")
-        with timing as timing_context, self.case_diff_queue:
+        with timing as timing_context, self.case_diff_queue, self.stopper:
             self.timing_context = timing_context
             with timing_context('main_forms'):
                 self._process_main_forms()
@@ -447,6 +450,9 @@ class CouchSqlDomainMigrator(object):
             else:
                 xmlns = couch_form.xmlns
                 user_id = couch_form.user_id
+            if xmlns == SYSTEM_ACTION_XMLNS:
+                for form_id, case_ids in do_system_action(couch_form):
+                    self.case_diff_queue.update(case_ids, form_id)
             sql_form = XFormInstanceSQL(
                 form_id=form_id,
                 domain=self.dst_domain,
@@ -756,7 +762,7 @@ class CouchSqlDomainMigrator(object):
                 self.src_domain,
                 doc_type,
                 resume_key="%s.%s.%s" % (self.src_domain, doc_type, migration_id),
-                should_stop=self.live_stopper.get_stopper(),
+                stopper=self.stopper,
             )
 
     def _send_timings(self, timing_context):
@@ -1067,7 +1073,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
         domain=domain, lock=False, deleted_ok=True, xforms=xforms,
         load_src="couchsqlmigration",
     ) as case_db:
-        touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
+        touched_cases = interface.get_cases_from_forms(case_db, xforms)
         extensions_to_close = get_all_extensions_to_close(domain, list(touched_cases.values()))
         case_result = CaseProcessingResult(
             domain,
@@ -1112,14 +1118,34 @@ def _save_migrated_models(sql_form, case_stock_result):
     )
 
 
-@attr.s
-class LiveStopper(object):
-    live_migrate = attr.ib()
+class Stopper:
 
     # Minimum age of forms processed during live migration. This
     # prevents newly submitted forms from being skipped by the
     # migration.
     MIN_AGE = timedelta(hours=1)
+
+    def __init__(self, live_migrate):
+        self.live_migrate = live_migrate
+        self.clean_break = False
+        self.parent_pid = os.getpid()
+
+    def __enter__(self):
+        signal.signal(signal.SIGINT, self.on_break)
+
+    def __exit__(self, exc_type, exc, tb):
+        signal.signal(signal.SIGINT, signal.default_int_handler)
+        if self.clean_break:
+            # raise keyboard interrupt to signal early termination to
+            # __exit__ and exception handlers further up the stack
+            # (CaseDiffQueue will not diff cases with unprocessed forms)
+            raise KeyboardInterrupt
+
+    def on_break(self, signum, frame):
+        if self.clean_break:
+            raise KeyboardInterrupt
+        log.info("clean break... (Ctrl+C to abort)")
+        self.clean_break = True
 
     def get_stopper(self):
         """Get `should_stop(key_date)` function or `None`
@@ -1152,10 +1178,15 @@ class LiveStopper(object):
 class MigrationPaginationEventHandler(PaginationEventHandler):
     RETRIES = 5
 
-    def __init__(self, domain, should_stop):
+    def __init__(self, domain, stopper):
         self.domain = domain
-        self.should_stop = should_stop
+        self.stopper = stopper
+        self.should_stop = stopper.get_stopper()
         self.retries = self.RETRIES
+
+    def page_start(self, *args, **kw):
+        if self.stopper.clean_break:
+            raise StopToResume
 
     def page_exception(self, e):
         if self.retries <= 0:
@@ -1198,10 +1229,12 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
             raise StopToResume
 
 
-def _iter_docs(domain, doc_type, resume_key, should_stop):
+def _iter_docs(domain, doc_type, resume_key, stopper):
     def data_function(**view_kwargs):
         return couch_db.view('by_domain_doc_type_date/view', **view_kwargs)
 
+    if stopper.clean_break:
+        return []
     couch_db = XFormInstance.get_db()
     args_provider = NoSkipArgsProvider({
         'startkey': [domain, doc_type],
@@ -1215,7 +1248,7 @@ def _iter_docs(domain, doc_type, resume_key, should_stop):
         data_function,
         args_provider,
         item_getter=None,
-        event_handler=MigrationPaginationEventHandler(domain, should_stop)
+        event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
     return (row["doc"] for row in rows)
 

@@ -235,7 +235,7 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
             create=True,
             case_type='test',
             case_name='test case',
-        ).as_string()
+        ).as_text()
 
 
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):

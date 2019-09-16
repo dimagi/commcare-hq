@@ -1,4 +1,3 @@
-
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 from django.utils.translation import ugettext_lazy as _
