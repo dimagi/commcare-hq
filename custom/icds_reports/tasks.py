@@ -1200,12 +1200,12 @@ def build_incentive_report(agg_date=None):
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
 
-    aggregate_queryset = list(set(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched',
+    aggregate_queryset = list(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched',
                                                                     'valid_visits', 'visit_denominator')
-                             .order_by('awc_id')))
-    awc_launched_count_from_aggregate = list(set(AggAwc.objects.values_list('awc_id', 'is_launched',
+                             .order_by('awc_id'))
+    awc_launched_count_from_aggregate = list(AggAwc.objects.values_list('awc_id', 'is_launched',
                                                                        'valid_visits', 'expected_visits')
-                                            .order_by('awc_id')))
+                                            .order_by('awc_id'))
 
     # check for launched AWCs
     is_launched_awc_incentive_report(aggregate_queryset, awc_launched_count_from_aggregate)
@@ -1232,7 +1232,7 @@ def is_launched_awc_incentive_report(performance_queryset, awcagg_queryset):
         if awc_from_aggregate[1].lower() == 'yes':
             is_launched_from_awc = True
         if awc[1] != is_launched_from_awc:
-            row_data = [awc[0], awc[1], is_launched_from_awc]
+            row_data = [awc[0], awc_from_aggregate[0], awc[1], is_launched_from_awc]
             csv_data.append(row_data)
     content = """
     Please see attached file for is_launched mismatch in awc incentive report
@@ -1254,7 +1254,7 @@ def home_conduct_awc_incentive_report(performance_queryset, awcagg_queryset):
         else:
             home_conduct_from_awc = awc_from_aggregate[2] / awc_from_aggregate[3]
         if home_conduct_from_report != home_conduct_from_awc:
-            row_data = [awc[0], home_conduct_from_report, home_conduct_from_awc]
+            row_data = [awc[0], awc_from_aggregate[0], home_conduct_from_report, home_conduct_from_awc]
             csv_data.append(row_data)
     content = """
     Please see attached file for home conduct percentage mismatch in awc incentive report
