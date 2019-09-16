@@ -1203,8 +1203,8 @@ def build_incentive_report(agg_date=None):
     aggregate_queryset = list(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched', 'valid_visits',
                                                                      'visit_denominator'))
     awc_ids = aggregate_queryset.values_list('awc_id', flat=True)
-    awc_launched_count_from_aggregate = list(AggAwc.objects.filter(aggregation_level=5, awc_id__in=awc_ids)\
-        .values_list('awc_id', 'is_launched', 'valid_visits', 'expected_visits'))
+    awc_launched_count_from_aggregate = list(AggAwc.objects.filter(aggregation_level=5, awc_id__in=awc_ids)
+                                             .values_list('awc_id', 'is_launched', 'valid_visits', 'expected_visits'))
     # check for launched AWCs
     is_launched_awc_incentive_report(aggregate_queryset, awc_launched_count_from_aggregate)
 
