@@ -65,6 +65,7 @@ def get_latest_released_app_versions_by_app_id(domain):
         endkey=['^ReleasedApplications', domain, {}],
         include_docs=False,
     ).all()
+    # key[3] will be latest released version since view is ordered by app_id, version asc
     return {r['key'][2]: r['key'][3] for r in results}
 
 
