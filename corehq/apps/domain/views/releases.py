@@ -117,16 +117,15 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
         )
 
     @staticmethod
-    def _get_initial_app_profile_details(domain, version, app_id, build_profile_id):
+    def _get_initial_app_profile_details(apps_profiles, app_id, app_profile_id):
         # only need to set when performing search to populate with initial values in view
-        if app_id and version:
-            build_doc = get_build_doc_by_version(domain, app_id, version)
-            if build_doc:
-                return [{
-                    'id': _id,
-                    'text': details['name'],
-                    'selected': build_profile_id == _id
-                } for _id, details in build_doc['build_profiles'].items()]
+        if apps_profiles and app_id and app_id in apps_profiles:
+            app_profiles = apps_profiles[app_id]
+            return [{
+                'id': _id,
+                'text': details['name'],
+                'selected': app_profile_id == _id
+            } for _id, details in app_profiles.items()]
 
     @property
     def page_context(self):
@@ -157,8 +156,8 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
             'manage_releases_by_app_profile_form': self.form,
             'app_releases_by_app_profile': app_releases_by_app_profile,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
-            'initial_app_profile_details': self._get_initial_app_profile_details(self.domain, version, app_id,
-                                                                                 build_profile_id),
+            'initial_app_profile_details': self._get_initial_app_profile_details(apps_profiles, app_id,
+                                                                                 app_profile_id),
             'apps_profiles': apps_profiles,
         }
 
