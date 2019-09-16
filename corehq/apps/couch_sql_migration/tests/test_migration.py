@@ -21,6 +21,7 @@ from nose.tools import nottest
 from testil import tempdir
 
 from casexml.apps.case.mock import CaseBlock
+from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
@@ -252,7 +253,24 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             yield
 
 
+@contextmanager
+def get_report_domain():
+    domain = Domain(
+        name="up-nrhm",
+        is_active=True,
+        date_created=datetime.utcnow(),
+        secure_submissions=True,
+        use_sql_backend=False,
+    )
+    domain.save()
+    try:
+        yield domain
+    finally:
+        domain.delete()
+
+
 class MigrationTestCase(BaseMigrationTestCase):
+
     def test_migration_blacklist(self):
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
         with self.assertRaises(MigrationRestricted):
@@ -260,8 +278,9 @@ class MigrationTestCase(BaseMigrationTestCase):
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
 
     def test_migration_custom_report(self):
-        with self.assertRaises(MigrationRestricted):
-            self._do_migration("up-nrhm")
+        with get_report_domain() as domain:
+            with self.assertRaises(MigrationRestricted):
+                self._do_migration(domain.name)
 
     def test_basic_form_migration(self):
         create_and_save_a_form(self.domain_name)
