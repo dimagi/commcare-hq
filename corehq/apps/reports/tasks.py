@@ -73,7 +73,6 @@ def _update_calculated_properties():
 
     all_stats = all_domain_stats()
 
-    active_users_by_domain = {}
     for r in results:
         dom = r["name"]
         domain_obj = Domain.get_by_name(dom)
@@ -82,7 +81,6 @@ def _update_calculated_properties():
             continue
         try:
             props = calced_props(domain_obj, r["_id"], all_stats)
-            active_users_by_domain[dom] = props['cp_n_active_cc_users']
             if props['cp_first_form'] is None:
                 del props['cp_first_form']
             if props['cp_last_form'] is None:
@@ -93,8 +91,6 @@ def _update_calculated_properties():
         except Exception as e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
-    datadog_report_user_stats('commcare.active_mobile_workers.count', active_users_by_domain)
-
 
 @periodic_task(run_every=timedelta(minutes=1), queue='background_queue')
 def run_datadog_user_stats():
@@ -104,6 +100,12 @@ def run_datadog_user_stats():
         'commcare.mobile_workers.count',
         commcare_users_by_domain=all_stats['commcare_users'],
     )
+
+    active_users_by_domain = {}
+    for result in DomainES().sort('cp_n_active_cc_users', desc=True).values('name', 'cp_n_active_cc_users'):
+        active_users_by_domain[result['name']] = result.get('cp_n_active_cc_users', 0)
+
+    datadog_report_user_stats('commcare.active_mobile_workers.count', active_users_by_domain)
 
 
 def datadog_report_user_stats(metric_name, commcare_users_by_domain):
