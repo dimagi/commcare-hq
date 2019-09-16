@@ -61,7 +61,7 @@ hqDefine("app_manager/js/widgets", [
                 var buildProfiles = _.map(e.params.data.buildProfiles, function (details, profileId) {
                     return { id: profileId, text: details.name };
                 });
-                if(buildProfiles.length) {
+                if (buildProfiles.length) {
                     $('#build-profile-id-input').append(new Option(gettext('Select Profile'), '', true, true));
                     $('#build-profile-id-input').select2({
                         data: buildProfiles,
