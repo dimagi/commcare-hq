@@ -25,7 +25,7 @@ def iter_unmigrated_docs(domain, doc_types, migration_id, counter):
     if doc_count:
         log.info("saved count of %s was %s", doc_type, doc_count)
     doc_count = get_doc_count_in_domain_by_type(domain, doc_type, couch_db)
-    add_docs = partial(counter.add, doc_type)
+    add_docs = partial(counter.add, None, doc_type)
     batches = doc_count // iter_id_chunks.chunk_size
     iterable = iter_id_chunks(domain, doc_type, migration_id, couch_db)
     doc_ids = []

@@ -3,6 +3,7 @@ import os
 import signal
 import sys
 from collections import defaultdict
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from functools import partial
 
@@ -147,9 +148,8 @@ class CouchSqlDomainMigrator(object):
             state=self.statedb.unique_id,
         ))
 
-        self.processed_docs = 0
         timing = TimingContext("couch_sql_migration")
-        with timing as timing_context, self.case_diff_queue, self.stopper, self.counter:
+        with timing as timing_context, self.case_diff_queue, self.stopper:
             self.timing_context = timing_context
             with timing_context('main_forms'):
                 self._process_main_forms()
@@ -163,21 +163,19 @@ class CouchSqlDomainMigrator(object):
 
     def _process_main_forms(self):
         """process main forms (including cases and ledgers)"""
-        add_form = partial(self.counter.add, 'XFormInstance')
-        with AsyncFormProcessor(self.statedb, self._migrate_form) as pool:
+        def migrate_form(doc, case_ids):
+            self._migrate_form(doc, case_ids)
+            add_form()
+        with self.counter('main_forms', 'XFormInstance') as add_form, \
+                AsyncFormProcessor(self.statedb, migrate_form) as pool:
             for doc in self._get_resumable_iterator(['XFormInstance']):
                 pool.process_xform(doc)
-                add_form()
-
-        self._log_main_forms_processed_count()
 
     def _migrate_form(self, couch_form, case_ids):
         set_local_domain_sql_backend_override(self.domain)
         form_id = couch_form.form_id
         self._migrate_form_and_associated_models(couch_form)
-        self.processed_docs += 1
         self.case_diff_queue.update(case_ids, form_id)
-        self._log_main_forms_processed_count(throttled=True)
 
     def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
         """
@@ -250,43 +248,41 @@ class CouchSqlDomainMigrator(object):
         return case_stock_result
 
     def _copy_unprocessed_forms(self):
+        def copy_form(doc):
+            self._migrate_unprocessed_form(doc)
+            add_form(doc['doc_type'])
         pool = Pool(10)
-        problems = self.statedb.iter_problem_forms()
-        for couch_form_json in iter_docs(XFormInstance.get_db(), problems, chunksize=1000):
-            assert couch_form_json['problem']
-            couch_form_json['doc_type'] = 'XFormError'
-            pool.spawn(self._migrate_unprocessed_form, couch_form_json)
+        with self.counter("unprocessed_forms") as add_form:
+            problems = self.statedb.iter_problem_forms()
+            for couch_form_json in iter_docs(XFormInstance.get_db(), problems, chunksize=1000):
+                assert couch_form_json['problem']
+                couch_form_json['doc_type'] = 'XFormError'
+                pool.spawn(copy_form, couch_form_json)
 
-        add_form = self.counter.add
-        doc_types = sorted(UNPROCESSED_DOC_TYPES)
-        for couch_form_json in self._get_resumable_iterator(doc_types):
-            pool.spawn(self._migrate_unprocessed_form, couch_form_json)
-            add_form(couch_form_json["doc_type"])
+            doc_types = sorted(UNPROCESSED_DOC_TYPES)
+            for couch_form_json in self._get_resumable_iterator(doc_types):
+                pool.spawn(copy_form, couch_form_json)
 
-        while not pool.join(timeout=10):
-            log.info('Waiting on {} docs'.format(len(pool)))
-
-        self._log_unprocessed_forms_processed_count()
+            while not pool.join(timeout=10):
+                log.info('Waiting on {} docs'.format(len(pool)))
 
     def _migrate_unprocessed_form(self, couch_form_json):
         log.debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
         couch_form = _wrap_form(couch_form_json)
         self._migrate_form_and_associated_models(couch_form, form_is_processed=False)
-        self.processed_docs += 1
-        self._log_unprocessed_forms_processed_count(throttled=True)
 
     def _copy_unprocessed_cases(self):
+        def copy_case(doc):
+            self._copy_unprocessed_case(doc)
+            add_case()
         doc_types = ['CommCareCase-Deleted']
         pool = Pool(10)
-        add_case = partial(self.counter.add, 'CommCareCase-Deleted')
-        for doc in self._get_resumable_iterator(doc_types):
-            pool.spawn(self._copy_unprocessed_case, doc)
-            add_case()
+        with self.counter("unprocessed_cases", 'CommCareCase-Deleted') as add_case:
+            for doc in self._get_resumable_iterator(doc_types):
+                pool.spawn(copy_case, doc)
 
-        while not pool.join(timeout=10):
-            log.info('Waiting on {} docs'.format(len(pool)))
-
-        self._log_unprocessed_cases_processed_count()
+            while not pool.join(timeout=10):
+                log.info('Waiting on {} docs'.format(len(pool)))
 
     def _copy_unprocessed_case(self, doc):
         couch_case = CommCareCase.wrap(doc)
@@ -333,9 +329,6 @@ class CouchSqlDomainMigrator(object):
         finally:
             self.case_diff_queue.enqueue(doc)
 
-        self.processed_docs += 1
-        self._log_unprocessed_cases_processed_count(throttled=True)
-
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []
         if not should_use_sql_backend(domain_name):
@@ -364,26 +357,6 @@ class CouchSqlDomainMigrator(object):
         else:
             log.info("{} {} ({})".format(progress_name, doc_count, ', '.join(doc_types)))
             return iterable
-
-    def _log_processed_docs_count(self, tags, throttled=False):
-        if throttled and self.processed_docs < 100:
-            return
-
-        processed_docs = self.processed_docs
-        self.processed_docs = 0
-
-        datadog_counter("commcare.couchsqlmigration.processed_docs",
-                        value=processed_docs,
-                        tags=tags)
-
-    def _log_main_forms_processed_count(self, throttled=False):
-        self._log_processed_docs_count(['type:main_forms'], throttled)
-
-    def _log_unprocessed_forms_processed_count(self, throttled=False):
-        self._log_processed_docs_count(['type:unprocessed_forms'], throttled)
-
-    def _log_unprocessed_cases_processed_count(self, throttled=False):
-        self._log_processed_docs_count(['type:unprocessed_cases'], throttled)
 
     def _get_resumable_iterator(self, doc_types):
         # resumable iteration state is associated with statedb.unique_id,
@@ -845,23 +818,52 @@ _iter_docs.chunk_size = 1000
 
 class DocCounter:
 
-    def __init__(self, statedb, save_after=1000):
+    DD_KEY = "commcare.couchsqlmigration.processed_docs"
+    DD_INTERVAL = 100
+    STATE_KEY = "doc_counts"
+    STATE_INTERVAL = 1000
+
+    def __init__(self, statedb):
         self.statedb = statedb
-        self.save_after = save_after
         self.counts = defaultdict(int, self.statedb.get("doc_counts", {}))
+        self.dd_session = 0
+        self.state_session = 0
 
-    def __enter__(self):
-        return self
+    @contextmanager
+    def __call__(self, dd_type, doc_type=None):
+        """Create counting context
 
-    def __exit__(self, *exc_info):
-        counts = dict(self.counts)
-        self.statedb.set("counts", counts)
-        log.info("saving doc counts: %s", counts)
+        :param dd_type: datadog 'type' tag
+        :param doc_type: optional doc type; doc type must be passed to
+        the returned counter function if not provided here, and cannot
+        be passed if it is provided here.
+        :yields: counter function.
+        """
+        tags = [f"type:{dd_type}"]
+        args = (doc_type,) if doc_type else ()
+        try:
+            yield partial(self.add, tags, *args)
+        finally:
+            self.flush(tags)
 
-    def add(self, doc_type, count=1):
+    def add(self, tags, doc_type, count=1):
         self.counts[doc_type] += count
-        if self.counts[doc_type] > self.save_after:
-            self.statedb.set("doc_counts", dict(self.counts))
+        self.dd_session += count
+        self.state_session += count
+        if self.state_session > self.STATE_INTERVAL:
+            self.flush(tags)
+        elif self.dd_session > self.DD_INTERVAL:
+            self.flush(tags, state=False)
+
+    def flush(self, tags, state=True):
+        if state:
+            counts = dict(self.counts)
+            self.statedb.set(self.STATE_KEY, counts)
+            log.debug("saved doc counts: %s", counts)
+            self.state_session = 0
+        if tags is not None:
+            datadog_counter(self.DD_KEY, value=self.dd_session, tags=tags)
+            self.dd_session = 0
 
     def get(self, doc_type):
         return self.counts.get(doc_type, 0)
