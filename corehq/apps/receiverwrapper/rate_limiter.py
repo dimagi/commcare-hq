@@ -1,6 +1,12 @@
 from corehq.project_limits.rate_limiter import RateDefinition, RateLimiter, \
     PerUserRateDefinition
 
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.utils import bucket_value
+from corehq.util.decorators import silence_and_report_error, enterprise_skip
+from corehq.util.timer import TimingContext
+
+
 # Danny promised in an Aug 2019 email not to enforce limits that were lower than this.
 # If we as a team end up regretting this decision, we'll have to reset expectations
 # with the Dimagi NDoH team.
@@ -28,3 +34,21 @@ submission_rate_limiter = RateLimiter(
     feature_key='submissions',
     get_rate_limits=test_rates.get_rate_limits
 )
+
+
+@enterprise_skip
+@silence_and_report_error("Exception raised in the submission rate limiter",
+                          'commcare.xform_submissions.rate_limiter_errors')
+def rate_limit_submission_by_delaying(domain, max_wait):
+    if not submission_rate_limiter.allow_usage(domain):
+        with TimingContext() as timer:
+            acquired = submission_rate_limiter.wait(domain, timeout=max_wait)
+        if acquired:
+            duration_tag = bucket_value(timer.duration, [1, 5, 10, 15, 20], unit='s')
+        else:
+            duration_tag = 'timeout'
+        datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
+            'domain:{}'.format(domain),
+            'duration:{}'.format(duration_tag)
+        ])
+    submission_rate_limiter.report_usage(domain)

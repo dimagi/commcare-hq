@@ -1,3 +1,6 @@
+import random
+import time
+
 import attr
 
 from corehq.apps.users.models import CommCareUser
@@ -40,6 +43,25 @@ class RateLimiter(object):
         scope = self.get_normalized_scope(scope)
         return all(rate_counter.get((self.feature_key,) + scope) < limit
                    for rate_counter, limit in self.get_rate_limits(*scope))
+
+    def wait(self, scope, timeout):
+        start = time.time()
+        target_end = start + timeout
+        delay = 0
+        while True:
+            if self.allow_usage(scope):
+                return True
+            # add a random amount between 100ms and 500ms to the last delay
+            # so that the delays get a bit longer each time
+            # and different requests don't have exactly the same schedule
+            delay += random.uniform(0.1, 0.5)
+            # if the delay would bring us past the timeout
+            # rescheduled for right at the timeout instead
+            delay = min(delay, target_end - time.time())
+            if delay < 0.01:
+                return False
+            else:
+                time.sleep(delay)
 
 
 @quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
