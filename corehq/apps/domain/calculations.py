@@ -67,14 +67,11 @@ def active_mobile_users(domain, *args):
     now = datetime.utcnow()
     then = (now - timedelta(days=30))
 
-    user_ids = get_mobile_users(domain)
-
     form_users = set(
         FormES()
         .domain(domain)
         .user_aggregation()
         .submitted(gte=then)
-        .user_id(user_ids)
         .size(0)
         .run()
         .aggregations.user.keys
@@ -93,7 +90,11 @@ def active_mobile_users(domain, *args):
     )
 
     num_users = len(form_users | sms_users)
-    return num_users if 'inactive' not in args else len(user_ids) - num_users
+
+    if 'inactive' in args:
+        user_ids = get_mobile_users(domain)
+        return len(user_ids) - num_users
+    return num_users
 
 
 def cases(domain, *args):

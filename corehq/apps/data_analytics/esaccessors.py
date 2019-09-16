@@ -52,7 +52,6 @@ def active_mobile_users(domain, start, end, *args):
                   .domain(domain.name)
                   .user_aggregation()
                   .submitted(gte=start, lt=end)
-                  .user_id(user_ids)
                   .size(0)
                   .run()
                   .aggregations.user.counts_by_bucket())
