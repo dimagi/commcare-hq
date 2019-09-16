@@ -20,7 +20,7 @@ def _migrate_report_filters(apps, schema_editor):
     for result in results:
         dirty = False
         doc = result['doc']
-        config = ReportConfig.get(doc['_id'])
+        config = ReportConfig.wrap(doc)
         for name, value in config['filters'].items():
             if isinstance(value, str) and CHOICE_DELIMITER in value:
                 print("Updating config {} filter {}".format(config._id, name))
