@@ -117,7 +117,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
-class TableauView(RedirectView):
+class LegacyTableauRedirectView(RedirectView):
 
     permanent = True
     pattern_name = 'icds_dashboard'
