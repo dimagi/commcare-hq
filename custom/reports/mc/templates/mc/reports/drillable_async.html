@@ -1,5 +1,11 @@
 {% load hq_shared_tags %}
-<div class="form-group">
+<div class="form-group" id="mc-drillable-async"
+     data-api-root="{{ api_root }}"
+     data-control-name="{{ control_name }}"
+     data-control-slug="{{ control_slug }}"
+     data-selected-fdi-id="{{ selected_fdi_id }}"
+     data-fdis="{% html_attr fdis %}"
+     data-hierarchy="{% html_attr hierarchy %}">
     <label class="{{ css_label_class }}">{{ control_name }}</label>
     <div class="{{ css_field_class }}">
         <div data-bind="foreach: selected_path">

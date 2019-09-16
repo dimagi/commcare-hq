@@ -1,32 +1,30 @@
 hqDefine("mc/js/main", function () {
-    var LOAD_FDIS_URL = '{{ api_root }}';
-    var hierarchy = {{ hierarchy|JSON }};
-
     function api_get_children(fdi_uuid, depth, callback) {
+        var hierarchy = $("#mc-drillable-async").data("hierarchy");
         var params = (fdi_uuid ? {parent_id: fdi_uuid} : {});
         params["parent_ref_name"] = hierarchy[depth]["parent_ref"];
         params["child_type"] = hierarchy[depth]["id"];
         params["references"] = hierarchy[depth]["references"];
         $('#fdi_ajax').removeClass('hide');
-        $.getJSON(LOAD_FDIS_URL, params, function(allData) {
+        $.getJSON($("#mc-drillable-async").data("api-root"), params, function(allData) {
             $('#fdi_ajax').addClass('hide');
             callback(allData.objects);
         });
     };
 
     $(function() {
-        var fdis = {{ fdis|safe }};
-        var selected = '{{ selected_fdi_id|safe }}';
+        var fdis = $("#mc-drillable-async").data("fdis");
+        var selected = $("#mc-drillable-async").data("selected-fdi-id");
 
         var model = new FixtureSelectViewModel();
-        $('#group_{{ control_slug }}').koApplyBindings(model);
+        $('#group_' + $("#mc-drillable-async").data("control-slug")).koApplyBindings(model);
         model.load(fdis, selected);
 
     });
 
-
     function FixtureSelectViewModel() {
         var model = this;
+        var hierarchy = $("#mc-drillable-async").data("hierarchy");
 
         this.root = ko.observable();
         this.selected_path = ko.observableArray();
@@ -98,6 +96,7 @@ hqDefine("mc/js/main", function () {
 
     function FixtureModel(data, root, depth) {
         var fixt = this;
+        var hierarchy = $("#mc-drillable-async").data("hierarchy");
 
         this.name = ko.observable();
         this.type = ko.observable();
@@ -182,5 +181,4 @@ hqDefine("mc/js/main", function () {
 
         this.load(data);
     }
-
 });
