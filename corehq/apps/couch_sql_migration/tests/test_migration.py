@@ -279,7 +279,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_migration_custom_report(self):
         with get_report_domain() as domain:
-            with self.assertRaises(MigrationRestricted):
+            with self.assertRaisesRegex(MigrationRestricted, "^up-nrhm: has custom reports$"):
                 self._do_migration(domain.name)
 
     def test_basic_form_migration(self):
