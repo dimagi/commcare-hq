@@ -2540,8 +2540,7 @@ class SearchManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
                                    ('', ugettext_lazy('Select Status')),
                                    ('active', ugettext_lazy('Active')),
                                    ('inactive', ugettext_lazy('Inactive'))),
-                               required=False,
-                               help_text=ugettext_lazy("Applicable for search only"))
+                               required=False)
 
     def __init__(self, request, domain, *args, **kwargs):
         super(SearchManageReleasesByAppProfileForm, self).__init__(request, domain, *args, **kwargs)
