@@ -29,6 +29,24 @@ hqDefine("translations/js/app_translations", [
         $("[name='app_id']").change(function () {
             var $form = $(this).closest("form");
             $form.find("[name='version']").val('').trigger('change');
+            // update app profile options if present
+            $appProfileIdSelect = $form.find('.app-profile-id-select');
+            if ($appProfileIdSelect.length) {
+                $appProfileIdSelect.html('');
+                var appsProfiles = initialPageData.get('appsProfiles');
+                if(appsProfiles) {
+                    var selectedAppId = $(this).val();
+                    if (selectedAppId) {
+                        $appProfileIdSelect.append(new Option(gettext('Select Profile'), '', true, true));
+                        _.each(appsProfiles[selectedAppId], function(profileDetails, profileId) {
+                            $appProfileIdSelect.append(
+                                new Option(profileDetails.name, profileId, false, false)
+                            );
+                        });
+                    }
+                }
+                $appProfileIdSelect.trigger('change');
+            }
         });
     });
 });

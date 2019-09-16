@@ -85,7 +85,9 @@ hqDefine("app_manager/js/widgets", [
         }
         var appProfileInitialValues = initialPageData.get('appProfileInitialValues');
         if (!_.isEmpty(appProfileInitialValues)) {
-            $('#build-profile-id-input').select2({data: appProfileInitialValues});
+            var $appProfileIdSelect = $('#search-manage-app-releases .app-profile-id-select');
+            $appProfileIdSelect.append(new Option(gettext('Select Profile'), '', false, false));
+            $appProfileIdSelect.select2({data: appProfileInitialValues});
         }
     };
 

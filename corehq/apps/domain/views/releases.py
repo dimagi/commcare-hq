@@ -131,6 +131,7 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
     @property
     def page_context(self):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
+        apps_profiles = {app.id: app.build_profiles for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         query = LatestEnabledBuildProfiles.objects
         app_id = self.request.GET.get('app_id')
         if app_id:
@@ -158,6 +159,7 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
             'selected_build_details': ({'id': version, 'text': version} if version else None),
             'initial_app_profile_details': self._get_initial_app_profile_details(self.domain, version, app_id,
                                                                                  build_profile_id),
+            'apps_profiles': apps_profiles,
         }
 
     def post(self, request, *args, **kwargs):
