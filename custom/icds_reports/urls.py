@@ -1,16 +1,18 @@
 from django.conf.urls import url, include
 
-from custom.icds_reports.views import LegacyTableauRedirectView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView, \
-    PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView, \
-    ExportIndicatorView, FactSheetsView, PrevalenceOfSevereView, PrevalenceOfStuntingView, \
-    ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding, \
-    ChildrenInitiatedView, InstitutionalDeliveriesView, ImmunizationCoverageView, AWCDailyStatusView, \
-    AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView, \
-    LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
-    FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
-    ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI, \
-    HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView, \
+from custom.icds_reports.views import (
+    LegacyTableauRedirectView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView,
+    PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView,
+    ExportIndicatorView, FactSheetsView, PrevalenceOfSevereView, PrevalenceOfStuntingView,
+    ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding,
+    ChildrenInitiatedView, InstitutionalDeliveriesView, ImmunizationCoverageView, AWCDailyStatusView,
+    AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView,
+    LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView,
+    FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage,
+    ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI,
+    HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView,
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice
+)
 
 dashboardurls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
