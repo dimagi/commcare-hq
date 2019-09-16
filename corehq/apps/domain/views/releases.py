@@ -141,9 +141,9 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
         version = self.request.GET.get('version')
         if version:
             query = query.filter(version=version)
-        build_profile_id = self.request.GET.get('build_profile_id')
-        if build_profile_id:
-            query = query.filter(build_profile_id=build_profile_id)
+        app_profile_id = self.request.GET.get('app_profile_id')
+        if app_profile_id:
+            query = query.filter(build_profile_id=app_profile_id)
         status = self.request.GET.get('status')
         if status:
             if status == 'active':
