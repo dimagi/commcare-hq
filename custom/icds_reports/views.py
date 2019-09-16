@@ -118,6 +118,8 @@ from django.views.decorators.csrf import csrf_exempt
 # checks required to view the dashboard
 DASHBOARD_CHECKS = [
     toggles.DASHBOARD_ICDS_REPORT.required_decorator(),
+    require_permission(Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport',
+                       login_decorator=None),
     login_and_domain_required,
 ]
 
