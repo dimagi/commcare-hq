@@ -1224,7 +1224,7 @@ def build_incentive_report(agg_date=None):
 
 
 def is_launched_awc_incentive_report(performance_queryset, awcagg_queryset):
-    csv_columns = ['awc_id', 'AwwIncentiveReport', 'AggAwc']
+    csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
     csv_data = []
     for index, awc in enumerate(performance_queryset):
         awc_from_aggregate = awcagg_queryset[index]
@@ -1241,7 +1241,7 @@ def is_launched_awc_incentive_report(performance_queryset, awcagg_queryset):
 
 
 def home_conduct_awc_incentive_report(performance_queryset, awcagg_queryset):
-    csv_columns = ['awc_id', 'AwwIncentiveReport', 'AggAwc']
+    csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
     csv_data = []
     for index, awc in enumerate(performance_queryset):
         awc_from_aggregate = awcagg_queryset[index]
