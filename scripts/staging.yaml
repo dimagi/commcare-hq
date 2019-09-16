@@ -57,6 +57,5 @@ branches:
   - jls/use-compress-more # Jenny Sept 5
   - nh/omrs/import_task  # Norman Sep 11
   - bmb/trial-revamp  # Biyeun Sep 12
-  - jls/report-filters-are-lists # Jenny Sept 13
-  - jls/report-filters-are-lists-part-2 # Jenny Sept 13
+  - jls/turn-off-cdn-for-requirejs # Jenny Sept 16
 submodules: {}
