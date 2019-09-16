@@ -129,14 +129,17 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
 
     @property
     def page_context(self):
-        app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
-        apps_profiles = {app.id: app.build_profiles for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
+        apps_names = {}
+        apps_profiles = {}
+        for app in get_brief_apps_in_domain(self.domain, include_remote=True):
+            apps_names[app.id] = app.name
+            apps_profiles[app.id] = app.build_profiles
         query = LatestEnabledBuildProfiles.objects
         app_id = self.request.GET.get('app_id')
         if app_id:
             query = query.filter(app_id=app_id)
         else:
-            query = query.filter(app_id__in=app_names.keys())
+            query = query.filter(app_id__in=apps_names.keys())
         version = self.request.GET.get('version')
         if version:
             query = query.filter(version=version)
@@ -149,7 +152,7 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
                 query = query.filter(active=True)
             elif status == 'inactive':
                 query = query.filter(active=False)
-        app_releases_by_app_profile = [release.to_json(app_names) for release in query.order_by('-version')]
+        app_releases_by_app_profile = [release.to_json(apps_names) for release in query.order_by('-version')]
         return {
             'create_form': CreateManageReleasesByAppProfileForm(self.request, self.domain),
             'search_form': SearchManageReleasesByAppProfileForm(self.request, self.domain),
