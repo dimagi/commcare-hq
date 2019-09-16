@@ -1164,7 +1164,7 @@ class ImmunizationCoverageView(BaseReportView):
 
 
 @location_safe
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class AWCDailyStatusView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
@@ -1202,7 +1202,7 @@ class AWCDailyStatusView(View):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class AWCsCoveredView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
