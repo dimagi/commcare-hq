@@ -115,6 +115,13 @@ from custom.icds_reports.models.views import NICIndicatorsView
 from django.views.decorators.csrf import csrf_exempt
 
 
+# checks required to view the dashboard
+DASHBOARD_CHECKS = [
+    toggles.DASHBOARD_ICDS_REPORT.required_decorator(),
+    login_and_domain_required,
+]
+
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class TableauView(RedirectView):
@@ -197,7 +204,7 @@ def get_tableau_access_token(tableau_user, client_ip):
 
 
 @location_safe
-@method_decorator([toggles.DASHBOARD_ICDS_REPORT.required_decorator(), login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class DashboardView(TemplateView):
     template_name = 'icds_reports/dashboard.html'
 
