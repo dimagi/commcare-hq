@@ -61,18 +61,17 @@ hqDefine("app_manager/js/widgets", [
                 var buildProfiles = _.map(e.params.data.buildProfiles, function (details, profileId) {
                     return { id: profileId, text: details.name };
                 });
-                $('#build-profile-id-input').select2({
-                    placeholder: gettext("Select profile"),
-                    allowClear: true,
-                    data: buildProfiles,
-                });
+                if(buildProfiles.length) {
+                    $('#build-profile-id-input').append(new Option(gettext('Select Profile'), '', true, true));
+                    $('#build-profile-id-input').select2({
+                        data: buildProfiles,
+                    });
+                }
             });
             $select.on('change.select2', function () {
                 // https://stackoverflow.com/a/32115793
                 // clear all options manually since it's not getting deleted in this version of select2
-                $('#build-profile-id-input').html('').select2({
-                    placeholder: gettext("Select profile"),
-                });
+                $('#build-profile-id-input').html('');
                 $('#build-profile-id-input').val(null).trigger('change');
             });
         }
