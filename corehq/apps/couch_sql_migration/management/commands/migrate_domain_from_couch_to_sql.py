@@ -9,7 +9,6 @@ from django.db.models import Q
 
 from sqlalchemy.exc import OperationalError
 
-from corehq.apps.domain.models import Domain
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.chunked import chunked
