@@ -19,7 +19,7 @@ def get_master_app_briefs(domain_link, family_id):
         apps = get_brief_apps_in_domain(domain_link.master_domain, include_remote=False)
 
     # Ignore deleted, linked and remote apps
-    apps = [app for app in apps if family_id in [app._id, app.family_id] and app.doc_type == 'Application']
+    return [app for app in apps if family_id in [app._id, app.family_id] and app.doc_type == 'Application']
 
 
 def get_latest_master_app_release(domain_link, app_id):
