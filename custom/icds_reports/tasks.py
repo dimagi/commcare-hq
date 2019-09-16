@@ -1200,11 +1200,11 @@ def build_incentive_report(agg_date=None):
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
 
-    aggregate_queryset = AWWIncentiveReport.objects.values_list('awc_id', 'is_launched', 'valid_visits',
-                                                                'visit_denominator')
+    aggregate_queryset = list(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched', 'valid_visits',
+                                                                     'visit_denominator'))
     awc_ids = aggregate_queryset.values_list('awc_id', flat=True)
-    awc_launched_count_from_aggregate = AggAwc.objects.filter(aggregation_level=5, awc_id__in=awc_ids)\
-        .values_list('awc_id', 'is_launched', 'valid_visits', 'expected_visits')
+    awc_launched_count_from_aggregate = list(AggAwc.objects.filter(aggregation_level=5, awc_id__in=awc_ids)\
+        .values_list('awc_id', 'is_launched', 'valid_visits', 'expected_visits'))
     # check for launched AWCs
     is_launched_awc_incentive_report(aggregate_queryset, awc_launched_count_from_aggregate)
 
@@ -1226,7 +1226,9 @@ def is_launched_awc_incentive_report(performance_queryset, awcagg_queryset):
     csv_data = []
     for awc in performance_queryset:
         awc_from_aggregate = awcagg_queryset.filter(awc_id=awc[0])[0]
-        is_launched_from_awc = (lambda: False, lambda: True)[awc_from_aggregate[1].lower() == 'yes']()
+        is_launched_from_awc = False
+        if awc_from_aggregate[1].lower() == 'yes':
+            is_launched_from_awc = True
         if awc[1] != is_launched_from_awc:
             row_data = [awc[0], awc[1], is_launched_from_awc]
             csv_data.append(row_data)
