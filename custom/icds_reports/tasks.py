@@ -1200,12 +1200,13 @@ def build_incentive_report(agg_date=None):
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
 
-    aggregate_queryset = list(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched', 'valid_visits',
-                                                                     'visit_denominator'))
-    awc_ids = aggregate_queryset.values_list('awc_id', flat=True)
-    awc_launched_count_from_aggregate = list(AggAwc.objects.filter(aggregation_level=5, awc_id__in=awc_ids)
-                                             .values_list('awc_id', 'is_launched',
-                                                          'valid_visits', 'expected_visits'))
+    aggregate_queryset = list(set(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched',
+                                                                    'valid_visits', 'visit_denominator')
+                             .order_by('awc_id')))
+    awc_launched_count_from_aggregate = list(set(AggAwc.objects.values_list('awc_id', 'is_launched',
+                                                                       'valid_visits', 'expected_visits')
+                                            .order_by('awc_id')))
+
     # check for launched AWCs
     is_launched_awc_incentive_report(aggregate_queryset, awc_launched_count_from_aggregate)
 
@@ -1225,8 +1226,8 @@ def build_incentive_report(agg_date=None):
 def is_launched_awc_incentive_report(performance_queryset, awcagg_queryset):
     csv_columns = ['awc_id', 'AwwIncentiveReport', 'AggAwc']
     csv_data = []
-    for awc in performance_queryset:
-        awc_from_aggregate = awcagg_queryset.filter(awc_id=awc[0])[0]
+    for index, awc in enumerate(performance_queryset):
+        awc_from_aggregate = awcagg_queryset[index]
         is_launched_from_awc = False
         if awc_from_aggregate[1].lower() == 'yes':
             is_launched_from_awc = True
@@ -1242,8 +1243,8 @@ def is_launched_awc_incentive_report(performance_queryset, awcagg_queryset):
 def home_conduct_awc_incentive_report(performance_queryset, awcagg_queryset):
     csv_columns = ['awc_id', 'AwwIncentiveReport', 'AggAwc']
     csv_data = []
-    for awc in performance_queryset:
-        awc_from_aggregate = awcagg_queryset.filter(awc_id=awc[0])[0]
+    for index, awc in enumerate(performance_queryset):
+        awc_from_aggregate = awcagg_queryset[index]
         if awc[2] in [0, None] or awc[3] in [0, None]:
             home_conduct_from_report = 'None'
         else:
