@@ -59,6 +59,7 @@ from corehq.form_processor.utils.sql import (
 from corehq.sql_db.config import partition_config
 from corehq.sql_db.routers import db_for_read_write, get_cursor
 from corehq.sql_db.util import (
+    estimate_row_count,
     split_list_by_db_partition,
     get_db_aliases_for_partitioned_query,
 )
@@ -310,19 +311,11 @@ class ReindexAccessor(metaclass=ABCMeta):
 
     def get_approximate_doc_count(self, from_db):
         """Get the approximate doc count from the given DB
+
         :param from_db: The DB alias to query
         """
         query = self.query(from_db, for_count=True)
-        sql, params = query.query.sql_with_params()
-        explain_query = 'EXPLAIN {}'.format(sql)
-        db_cursor = connections[from_db].cursor()
-        with db_cursor as cursor:
-            cursor.execute(explain_query, params)
-            for row in cursor.fetchall():
-                search = re.search(r' rows=(\d+)', row[0])
-                if search:
-                    return int(search.group(1))
-        return 0
+        return estimate_row_count(query, from_db)
 
 
 class FormReindexAccessor(ReindexAccessor):
@@ -498,7 +491,6 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def hard_delete_forms(domain, form_ids, delete_attachments=True):
         assert isinstance(form_ids, list)
-        NotAllowed.check(domain)
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
@@ -886,7 +878,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
-        NotAllowed.check(domain)
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT hard_delete_cases(%s, %s) as deleted_count', [domain, case_ids])
             results = fetchall_as_namedtuple(cursor)

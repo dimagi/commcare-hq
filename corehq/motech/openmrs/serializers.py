@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import datetime
 import re
 
@@ -21,8 +19,8 @@ def to_omrs_date(value):
     """
     Drop the time and timezone to export date-only values
 
-    >>> to_omrs_date('2017-06-27T12:00:00+0530') == '2017-06-27'
-    True
+    >>> to_omrs_date('2017-06-27T12:00:00+0530')
+    '2017-06-27'
 
     """
     if isinstance(value, str):
@@ -37,8 +35,8 @@ def to_omrs_datetime(value):
     """
     Converts CommCare dates and datetimes to OpenMRS datetimes.
 
-    >>> to_omrs_datetime('2017-06-27') == '2017-06-27T00:00:00.000+0000'
-    True
+    >>> to_omrs_datetime('2017-06-27')
+    '2017-06-27T00:00:00.000+0000'
 
     """
     if isinstance(value, str):
@@ -61,8 +59,8 @@ def omrs_datetime_to_date(value):
     """
     Converts an OpenMRS datetime to a CommCare date
 
-    >>> omrs_datetime_to_date('2017-06-27T00:00:00.000+0000') == '2017-06-27'
-    True
+    >>> omrs_datetime_to_date('2017-06-27T00:00:00.000+0000')
+    '2017-06-27'
 
     """
     if value and 'T' in value:

@@ -60,7 +60,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 'aggregation_level': 5,
                 'doc_id': location['location_id'],
                 'awc_name': location['name'].replace("\n", ""),
-                'awc_site_code': location['location_type__code'],
+                'awc_site_code': location['site_code'],
                 'awc_is_test': 1 if metadata.get('is_test_location') == 'test' else 0,
             }
 
@@ -72,7 +72,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 loc.update({
                     '{}_id'.format(loc_type): current_location['location_id'],
                     '{}_name'.format(loc_type): current_location['name'].replace("\n", ""),
-                    '{}_site_code'.format(loc_type): current_location['location_type__code'],
+                    '{}_site_code'.format(loc_type): current_location['site_code'],
                     '{}_is_test'.format(loc_type): 1 if metadata.get('is_test_location') == 'test' else 0,
                 })
                 if loc_type in ('block', 'district', 'state'):
@@ -301,5 +301,5 @@ def _get_all_locations_for_domain(domain):
     return (
         SQLLocation.objects
         .filter(domain=domain, is_archived=False)
-        .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code')
+        .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code', 'site_code')
     )

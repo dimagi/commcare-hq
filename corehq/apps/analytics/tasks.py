@@ -18,6 +18,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
+from requests import HTTPError
 
 from dimagi.utils.logging import notify_exception
 
@@ -657,7 +658,7 @@ def _log_response(target, data, response):
         response=response_text
     )
 
-    if status_code != 200:
+    if 400 <= status_code < 600:
         logger.error(message)
     else:
         logger.debug(message)

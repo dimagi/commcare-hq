@@ -1,5 +1,8 @@
+from functools import lru_cache
+
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.export.models.new import LedgerSectionEntry
 from corehq.apps.locations.models import SQLLocation
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import LedgerReindexAccessor
@@ -37,6 +40,8 @@ def _prepare_ledger_for_es(ledger):
     if not ledger.get('location_id') and ledger.get('case_id'):
         ledger['location_id'] = _location_id_for_case(ledger['case_id'])
 
+    _update_ledger_section_entry_combinations(ledger)
+
     return ledger
 
 
@@ -55,6 +60,27 @@ def _get_daily_consumption_for_ledger(ledger):
         StockState.objects.filter(pk=ledger['_id']).update(daily_consumption=daily_consumption)
 
     return daily_consumption
+
+
+def _update_ledger_section_entry_combinations(ledger):
+    current_combos = _get_ledger_section_combinations(ledger['domain'])
+    if (ledger['section_id'], ledger['entry_id']) in current_combos:
+        return
+
+    # use get_or_create because this may be created by another parallel process
+    LedgerSectionEntry.objects.get_or_create(
+        domain=ledger['domain'],
+        section_id=ledger['section_id'],
+        entry_id=ledger['entry_id'],
+    )
+
+    # clear the lru_cache so that next time a ledger is saved, we get the combinations
+    _get_ledger_section_combinations.cache_clear()
+
+
+@lru_cache()
+def _get_ledger_section_combinations(domain):
+    return list(LedgerSectionEntry.objects.filter(domain=domain).values_list('section_id', 'entry_id').all())
 
 
 def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', num_processes=1,

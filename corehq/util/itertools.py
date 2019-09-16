@@ -12,10 +12,8 @@ def zip_with_gaps(all_items, some_items, all_items_key=None, some_items_key=None
 
     >>> long_list = ['Alice', 'Apple', 'Bengal', 'Carrot', 'Daring', 'Danger', 'Dakar', 'Electric']
     >>> short_list = ['Cabernet', 'Daedalus', 'Daimler', 'Dog']
-    >>> list(zip_with_gaps(long_list, short_list, lambda x: x[0], lambda x: x[0])) == [
-    ...    ('Carrot', 'Cabernet'), ('Daring', 'Daedalus'), ('Danger', 'Daimler'), ('Dakar', 'Dog')
-    ... ]
-    True
+    >>> list(zip_with_gaps(long_list, short_list, lambda x: x[0], lambda x: x[0]))
+    [('Carrot', 'Cabernet'), ('Daring', 'Daedalus'), ('Danger', 'Daimler'), ('Dakar', 'Dog')]
 
     """
     if all_items_key is None:

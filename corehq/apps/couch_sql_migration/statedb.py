@@ -34,8 +34,11 @@ def init_state_db(domain, state_dir):
 
 
 def open_state_db(domain, state_dir):
+    """Open state db in read-only mode"""
     db_filepath = _get_state_db_filepath(domain, state_dir)
-    return StateDB.open(db_filepath)
+    if not os.path.exists(db_filepath):
+        db_filepath = ":memory:"
+    return StateDB.open(db_filepath, readonly=True)
 
 
 def delete_state_db(domain, state_dir):
@@ -69,8 +72,6 @@ class StateDB(DiffDB):
 
     def close(self):
         self.engine.dispose()
-        if self._connection is not None:
-            self._connection.close()
 
     @contextmanager
     def session(self, session=None):
