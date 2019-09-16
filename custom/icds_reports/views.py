@@ -1424,7 +1424,7 @@ class AdhaarBeneficiariesView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class CleanWaterView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1456,7 +1456,7 @@ class CleanWaterView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class FunctionalToiletView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1488,7 +1488,7 @@ class FunctionalToiletView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class MedicineKitView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1520,7 +1520,7 @@ class MedicineKitView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class InfantsWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -1552,7 +1552,7 @@ class InfantsWeightScaleView(BaseReportView):
         })
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class AdultWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
