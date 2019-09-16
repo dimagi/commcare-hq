@@ -1,0 +1,6 @@
+{% extends "reports/standard/base_template.html" %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+  <script src="{% static 'mc/js/main.js' %}"></script>
+{% endblock %}
