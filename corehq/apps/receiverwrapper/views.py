@@ -66,7 +66,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
 
-    rate_limit_submission_by_delaying(domain, max_wait=30)
+    rate_limit_submission_by_delaying(domain, max_wait=15)
 
     metric_tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
