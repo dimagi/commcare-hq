@@ -85,7 +85,7 @@ class AsyncFormProcessor(object):
 
     def _try_to_empty_queues(self):
         while True:
-            new_wrapped_form, case_ids = self.queues.get_next()
+            new_wrapped_form, case_ids = self.queues.pop()
             if not new_wrapped_form:
                 break
             self.pool.spawn(self._async_migrate_form, new_wrapped_form, case_ids)
@@ -95,7 +95,7 @@ class AsyncFormProcessor(object):
         next_check = datetime.now()
         pool = self.pool
         while self.queues:
-            wrapped_form, case_ids = self.queues.get_next()
+            wrapped_form, case_ids = self.queues.pop()
             if wrapped_form:
                 pool.spawn(self._async_migrate_form, wrapped_form, case_ids)
             else:
@@ -121,12 +121,12 @@ class PartiallyLockingQueue(object):
     This is not currently thread safe
 
     Interface:
-    `.try_obj(lock_ids, queue_obj)` use to add a new object, seeing if it can be
+    `.try_obj(lock_ids, queue_obj)` add a new object, seeing if it can be
         processed immediately
-    `.get_next()` use to get the next object that can be processed
+    `.pop()` get a locked object to be processed
     `bool(queue)` find out if there are still objects in the queue
     `len(queue)` get the number of objects in the queue
-    `.release_lock_for_queue_obj(queue_obj)` use to release the locks associated
+    `.release_lock_for_queue_obj(queue_obj)` release the locks associated
         with an object once finished processing
     """
 
@@ -180,11 +180,8 @@ class PartiallyLockingQueue(object):
         self._set_lock(lock_ids)
         return True
 
-    def get_next(self):
-        """Returns the next object and lock ids that can be processed
-
-        Iterates through the first object in each queue, then checks
-        that that object is the first in every lock queue it is in.
+    def pop(self):
+        """Pop a locked object and lock ids from the queue
 
         :returns: A tuple: `(<queue_obj>, <lock_ids>)`; `(None, None)`
         if nothing can acquire the lock currently.

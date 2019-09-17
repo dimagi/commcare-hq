@@ -90,36 +90,36 @@ class TestLockingQueues(SimpleTestCase):
         self._check_locks(['grapefruit_sculpin'], lock_set=True)
         self._check_locks(['wrought_iron'], lock_set=False)
 
-    def test_get_next(self):
+    def test_pop(self):
         # nothing returned if nothing in queues
-        self.assertEqual((None, None), self.queues.get_next())
+        self.assertEqual((None, None), self.queues.pop())
 
         # first obj in queues will be returned if nothing blocking
         lock_ids = ['old_chub', 'dales_pale', 'little_yella']
         queue_obj_id = 'moosilauke'
         self._add_to_queues(queue_obj_id, lock_ids)
-        self.assertEqual(queue_obj_id, self.queues.get_next()[0].id)
+        self.assertEqual(queue_obj_id, self.queues.pop()[0].id)
         self._check_locks(lock_ids, lock_set=True)
 
         # next object will not be returned if anything locks are held
         new_lock_ids = ['old_chub', 'ten_fidy']
         new_queue_obj_id = 'flume'
         self._add_to_queues(new_queue_obj_id, new_lock_ids)
-        self.assertEqual((None, None), self.queues.get_next())
+        self.assertEqual((None, None), self.queues.pop())
         self._check_locks(['ten_fidy'], lock_set=False)
 
         # next object will not be returned if not first in all queues
         next_lock_ids = ['ten_fidy', 'death_by_coconut']
         next_queue_obj_id = 'liberty'
         self._add_to_queues(next_queue_obj_id, next_lock_ids)
-        self.assertEqual((None, None), self.queues.get_next())
+        self.assertEqual((None, None), self.queues.pop())
         self._check_locks(next_lock_ids, lock_set=False)
 
         # will return something totally orthogonal though
         final_lock_ids = ['fugli', 'pinner']
         final_queue_obj_id = 'sandwich'
         self._add_to_queues(final_queue_obj_id, final_lock_ids)
-        self.assertEqual(final_queue_obj_id, self.queues.get_next()[0].id)
+        self.assertEqual(final_queue_obj_id, self.queues.pop()[0].id)
         self._check_locks(final_lock_ids)
 
     def test_release_locks(self):
