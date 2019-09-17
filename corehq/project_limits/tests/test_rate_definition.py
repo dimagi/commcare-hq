@@ -35,43 +35,39 @@ def test_rate_definition_with_minimum():
 
     def check(base_rate, floor_rate):
         testil.eq(
-            base_rate.with_minimum(floor_rate),
+            base_rate.plus(floor_rate),
             RateDefinition(
-                per_second=asymmetric_max(base_rate.per_second, floor_rate.per_second),
-                per_minute=asymmetric_max(base_rate.per_minute, floor_rate.per_minute),
-                per_hour=asymmetric_max(base_rate.per_hour, floor_rate.per_hour),
-                per_day=asymmetric_max(base_rate.per_day, floor_rate.per_day),
-                per_week=asymmetric_max(base_rate.per_week, floor_rate.per_week)
+                per_second=asymmetric_sum(base_rate.per_second, floor_rate.per_second),
+                per_minute=asymmetric_sum(base_rate.per_minute, floor_rate.per_minute),
+                per_hour=asymmetric_sum(base_rate.per_hour, floor_rate.per_hour),
+                per_day=asymmetric_sum(base_rate.per_day, floor_rate.per_day),
+                per_week=asymmetric_sum(base_rate.per_week, floor_rate.per_week)
             )
         )
 
-    def asymmetric_max(base_number_or_none, floor_number_or_none):
+    def asymmetric_sum(base_number_or_none, incr_number_or_none):
         """
-        Return max of the two numbers with the None value being treated asymmetrically
+        Return sum of the two numbers with the None value being treated asymmetrically
 
         None means:
           - Infinity for the base value
-          - Negative Infinity for the floor value
+          - 0 for the incr value
           - Infinity in the return value
 
         This corresponds to the intuitive notion that None in a rate limit value means
-        "Not imposing a limit" and None in a floor value means "Not imposing a floor".
-
-        (This function is only meant to be used with positive numbers,
-        but will work with with negative numbers and zero as well
-        which are meaningless in the context of rate limiting.)
+        "Not imposing a limit" and None in an incr value means "Not incrementing the limit".
         """
         if base_number_or_none is None:  # "Infinity"
             return None  # "Infinity"
-        elif floor_number_or_none is None:  # "Negative Infinity"
+        elif incr_number_or_none is None:  # "0"
             return base_number_or_none
         else:
-            return max(base_number_or_none, floor_number_or_none)
+            return base_number_or_none + incr_number_or_none
 
     for _ in range(15):
         base_rate = _get_random_rate_def()
-        floor_rate = _get_random_rate_def()
-        yield check, base_rate, floor_rate
+        incr_rate = _get_random_rate_def()
+        yield check, base_rate, incr_rate
 
 
 def test_rate_definition_map():
@@ -133,12 +129,12 @@ def _get_random_rate_def():
 def test_rate_definition_against_fixed_user_table():
     tab_delimited_table = """
     # of users  second  minute  hour    day       week
-    1           1       10      30      50        115
-    10          1       10      30      230       1,150
-    100         1       10      300     2,300     11,500
-    1000        5       70      3,000   23,000    115,000
-    10000       50      700     30,000  230,000   1,150,000
-    100000      500     7,000   300,000 2,300,000 11,500,000
+    1           1       10      33      73        115
+    10          1       10      60      280       1,150
+    100         1       17      330     2,350     11,500
+    1000        6       80      3,030   23,050    115,000
+    10000       51      710     30,030  230,050   1,150,000
+    100000      501     7,010   300,030 2,300,050 11,500,000
     """
 
     rows = tab_delimited_table.strip().splitlines()[1:]
@@ -158,7 +154,7 @@ def test_rate_definition_against_fixed_user_table():
     )
     for n_users, per_second, per_minute, per_hour, per_day, per_week in table:
         testil.eq(
-            per_user_rate.times(n_users).with_minimum(floor_rate).map(int),
+            per_user_rate.times(n_users).plus(floor_rate).map(int),
             RateDefinition(
                 per_week=per_week,
                 per_day=per_day,
