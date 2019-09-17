@@ -2424,7 +2424,7 @@ class ManageReleasesByLocationForm(forms.Form):
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
-            crispy.Field('app_id', id='app-id-search-select', css_class="ko-select2"),
+            crispy.Field('app_id', id='app-id-search-select', css_class="hqwebapp-select2"),
             crispy.Field('location_id', id='location_search_select'),
             crispy.Field('version', id='version-input'),
             crispy.Field('status', id='status-input'),
@@ -2523,7 +2523,7 @@ class BaseManageReleasesByAppProfileForm(forms.Form):
 
     def form_fields(self):
         return [
-            crispy.Field('app_id', css_class="ko-select2 app-id-search-select"),
+            crispy.Field('app_id', css_class="hqwebapp-select2 app-id-search-select"),
             crispy.Field('version', css_class='version-input'),
         ]
 
