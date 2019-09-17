@@ -193,8 +193,6 @@ class PartiallyLockingQueue(object):
         queue_by_lock_id = self.queue_by_lock_id
         lock_ids_by_queue_id = self.lock_ids_by_queue_id
         for queue in queue_by_lock_id.values():
-            if not queue:
-                continue
             queue_id = queue[0]
             lock_ids = lock_ids_by_queue_id[queue_id]
             if all(is_first(queue_id, x) for x in lock_ids) and self._set_lock(lock_ids):
@@ -246,7 +244,11 @@ class PartiallyLockingQueue(object):
         queue_by_lock_id = self.queue_by_lock_id
         for lock_id in lock_ids:
             queue = queue_by_lock_id[lock_id]
-            queue.popleft()
+            assert queue[0] == queued_obj_id, (queue[0], queued_obj_id)
+            if len(queue) == 1:
+                queue_by_lock_id.pop(lock_id)
+            else:
+                queue.popleft()
         return self.queue_objs_by_queue_id.pop(queued_obj_id)
 
     def _is_any_locked(self, lock_ids):

@@ -154,6 +154,16 @@ class TestLockingQueues(SimpleTestCase):
         self.assertTrue(self.queues.try_obj(["tooth", "tail"], obj))
         self.assertFalse(self.queues.queue_by_lock_id)
 
+    def test_pop_should_discard_empty_queues(self):
+        tiger = DummyObject('tiger')
+        beaver = DummyObject('beaver')
+        self.assertTrue(self.queues.try_obj(["tooth", "claw"], tiger))
+        self.assertFalse(self.queues.try_obj(["tooth", "tail"], beaver))
+        self.queues.release_lock_for_queue_obj(tiger)
+        obj, lock_ids = self.queues.pop()
+        self.assertEqual(obj, beaver)
+        self.assertFalse(self.queues.queue_by_lock_id)
+
     def test_max_size(self):
         self.assertEqual(-1, self.queues.max_size)
         self.assertFalse(self.queues.full)  # not full when no max size set
