@@ -19,6 +19,7 @@ rates_promised_not_to_go_lower_than = RateDefinition(
 )
 
 floor_for_small_domain = RateDefinition(
+    per_week=100,
     per_day=50,
     per_hour=30,
     per_minute=10,

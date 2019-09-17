@@ -129,12 +129,12 @@ def _get_random_rate_def():
 def test_rate_definition_against_fixed_user_table():
     tab_delimited_table = """
     # of users  second  minute  hour    day       week
-    1           1       10      33      73        115
-    10          1       10      60      280       1,150
-    100         1       17      330     2,350     11,500
-    1000        6       80      3,030   23,050    115,000
-    10000       51      710     30,030  230,050   1,150,000
-    100000      501     7,010   300,030 2,300,050 11,500,000
+    1           1       10      33      73        215
+    10          1       10      60      280       1,250
+    100         1       17      330     2,350     11,600
+    1000        6       80      3,030   23,050    115,100
+    10000       51      710     30,030  230,050   1,150,100
+    100000      501     7,010   300,030 2,300,050 11,500,100
     """
 
     rows = tab_delimited_table.strip().splitlines()[1:]
@@ -147,6 +147,7 @@ def test_rate_definition_against_fixed_user_table():
         per_second=0.005,
     )
     floor_rate = RateDefinition(
+        per_week=100,
         per_day=50,
         per_hour=30,
         per_minute=10,
