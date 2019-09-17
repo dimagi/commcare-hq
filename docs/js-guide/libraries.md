@@ -3,6 +3,12 @@
 ## jQuery
 [jQuery](https://jquery.com/) is available throughout HQ. We use jQuery 3 everywhere except in Web Apps, which depends on [marionette](https://marionettejs.com/) v2, which is only compatible with jQuery 2.
 
+Prefix jQuery variables with a `$`:
+```
+var $rows = $("#myTable tr"),
+    firstRow = $rows[0];
+```
+
 ## Underscore
 [Underscore](http://underscorejs.org/) is available throughout HQ for utilities.
 
