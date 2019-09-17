@@ -228,8 +228,9 @@ class PartiallyLockingQueue(object):
         """
         queue_obj_id = self.get_queue_obj_id(queue_obj)
         if to_queue:
+            queue_by_lock_id = self.queue_by_lock_id
             for lock_id in lock_ids:
-                self.queue_by_lock_id[lock_id].append(queue_obj_id)
+                queue_by_lock_id[lock_id].append(queue_obj_id)
             self.queue_objs_by_queue_id[queue_obj_id] = queue_obj
         self.lock_ids_by_queue_id[queue_obj_id] = lock_ids
 
