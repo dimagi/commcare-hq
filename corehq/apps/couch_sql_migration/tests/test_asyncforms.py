@@ -63,9 +63,9 @@ class TestLockingQueues(SimpleTestCase):
         self.assertEqual(lock_set, self.queues._check_lock(lock_ids))
 
     def test_has_next(self):
-        self.assertFalse(self.queues.has_next())
+        self.assertFalse(self.queues)
         self._add_to_queues('monadnock', ['heady_topper', 'sip_of_sunshine', 'focal_banger'])
-        self.assertTrue(self.queues.has_next())
+        self.assertTrue(self.queues)
 
     def test_try_obj(self):
         # first object is fine

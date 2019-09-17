@@ -94,7 +94,7 @@ class AsyncFormProcessor(object):
         update_interval = timedelta(seconds=10)
         next_check = datetime.now()
         pool = self.pool
-        while self.queues.has_next():
+        while self.queues:
             wrapped_form, case_ids = self.queues.get_next()
             if wrapped_form:
                 pool.spawn(self._async_migrate_form, wrapped_form, case_ids)
@@ -103,8 +103,7 @@ class AsyncFormProcessor(object):
 
             now = datetime.now()
             if now > next_check:
-                remaining_items = self.queues.remaining_items + len(pool)
-                log.info('Waiting on {} docs'.format(remaining_items))
+                log.info('Waiting on %s docs', len(self.queues) + len(pool))
                 next_check += update_interval
 
         while not pool.join(timeout=10):
@@ -125,7 +124,8 @@ class PartiallyLockingQueue(object):
     `.try_obj(lock_ids, queue_obj)` use to add a new object, seeing if it can be
         processed immediately
     `.get_next()` use to get the next object that can be processed
-    `.has_next()` use to make sure there are still objects in the queue
+    `bool(queue)` find out if there are still objects in the queue
+    `len(queue)` get the number of objects in the queue
     `.release_lock_for_queue_obj(queue_obj)` use to release the locks associated
         with an object once finished processing
     """
@@ -203,16 +203,6 @@ class PartiallyLockingQueue(object):
                 return self._pop_queue_obj(queue_id), lock_ids
         return None, None
 
-    def has_next(self):
-        """ Makes sure there are still objects in the queue
-
-        Returns :boolean: True if there are objs left, False if not
-        """
-        for queue in self.queue_by_lock_id.values():
-            if queue:
-                return True
-        return False
-
     def release_lock_for_queue_obj(self, queue_obj):
         """ Releases all locks for an object in the queue
 
@@ -228,15 +218,15 @@ class PartiallyLockingQueue(object):
             return True
         return False
 
-    @property
-    def remaining_items(self):
+    def __len__(self):
+        """Return the number of objects in the queue"""
         return len(self.queue_objs_by_queue_id)
 
     @property
     def full(self):
         if self.max_size == -1:
             return False
-        return self.remaining_items >= self.max_size
+        return len(self) >= self.max_size
 
     def _add_item(self, lock_ids, queue_obj, to_queue=True):
         """
