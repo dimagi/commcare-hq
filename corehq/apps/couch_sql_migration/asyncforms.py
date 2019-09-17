@@ -177,7 +177,8 @@ class PartiallyLockingQueue(object):
                 self._add_item(lock_ids, queue_obj)
                 return False
         self._add_item(lock_ids, queue_obj, to_queue=False)
-        self._set_lock(lock_ids)
+        locked = self._set_lock(lock_ids)
+        assert locked, len(lock_ids)
         return True
 
     def pop(self):
@@ -201,7 +202,10 @@ class PartiallyLockingQueue(object):
         return None, None
 
     def release_lock_for_queue_obj(self, queue_obj):
-        """ Releases all locks for an object in the queue
+        """Release locks for a locked object
+
+        The object should have been previously popped from the queue or
+        `.try_obj()` should have returned `True`.
 
         :queue_obj obj: An object of the type in the queues
         """

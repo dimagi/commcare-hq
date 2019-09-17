@@ -137,6 +137,18 @@ class TestLockingQueues(SimpleTestCase):
         self.queues.release_lock_for_queue_obj(queue_obj)
         self._check_locks(lock_ids, lock_set=False)
 
+    def test_release_obj_with_no_locks(self):
+        obj = DummyObject('blanch')
+        self.assertTrue(self.queues.try_obj([], obj))
+        self.assertFalse(self.queues)
+        self.queues.release_lock_for_queue_obj(obj)
+
+    def test_release_locked_obj(self):
+        obj = DummyObject('beaver')
+        self.assertTrue(self.queues.try_obj(["tooth", "tail"], obj))
+        self.assertFalse(self.queues)
+        self.queues.release_lock_for_queue_obj(obj)
+
     def test_max_size(self):
         self.assertEqual(-1, self.queues.max_size)
         self.assertFalse(self.queues.full)  # not full when no max size set
