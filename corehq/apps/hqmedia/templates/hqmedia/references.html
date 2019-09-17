@@ -104,25 +104,26 @@
     </article>
 
     <script type="text/html" id="image-preview-template">
-      <img data-bind="attr: { src: thumb_url }" />&nbsp;&nbsp;
-      <a target="_blank"
-         class="btn btn-default preview-media"
-         data-bind="attr: { href: url }"
-         data-toggle="tooltip" data-title="{% trans 'Opens image in new tab' %}.">{% trans 'View Larger' %}</a>
+      <a target="_blank" data-bind="attr: { href: url }">
+        <img class="preview-media"
+             data-bind="attr: { src: thumb_url }"
+             data-toggle="tooltip"
+             data-title="{% trans 'Open image in new tab' %}." />
+      </a>
     </script>
 
     <script type="text/html" id="audio-preview-template">
       <a target="_blank"
          class="btn btn-default preview-media"
          data-bind="attr: { href: url }"
-         data-toggle="tooltip" data-title="{% trans 'Opens file in new tab' %}.">{% trans 'Hear Audio' %}</a>
+         data-toggle="tooltip" data-title="{% trans 'Open file in new tab' %}.">{% trans 'Hear Audio' %}</a>
     </script>
 
     <script type="text/html" id="video-preview-template">
       <a target="_blank"
          class="btn btn-default preview-media"
          data-bind="attr: { href: url }"
-         data-toggle="tooltip" data-title="{% trans 'Opens file in new tab' %}.">{% trans 'View Video' %}</a>
+         data-toggle="tooltip" data-title="{% trans 'Open file in new tab' %}.">{% trans 'View Video' %}</a>
     </script>
 
     {% for uploader in uploaders %}
