@@ -15,6 +15,24 @@ var $rows = $("#myTable tr"),
 ## Knockout
 [Knockout](http://knockoutjs.com/) is also available throughout HQ and should be used for new code. We use Knockout 3.0.
 
+Prefix knockout observables with an `o`:
+
+```
+var myModel = function (options) {
+    var self = this;
+    self.type = options.type;
+    self.oTotal = ko.observable(0);
+};
+```
+
+...so that in HTML it's apparent what you're dealing with:
+
+```
+<input data-bind="visible: type === 'large' && oTotal() > 10, value: oTotal" />
+
+Current total: <span data-bind="text: oTotal"></div>
+```
+
 ## Backbone
 [Backbone](http://backbonejs.org/) is used in Web Apps. It **should not** be used outside of Web Apps.
 
