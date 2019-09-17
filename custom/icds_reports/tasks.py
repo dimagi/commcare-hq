@@ -1201,11 +1201,11 @@ def build_incentive_report(agg_date=None):
         AWWIncentiveReport.aggregate(state, agg_date)
 
     performance_queryset = list(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched',
-                                                                    'valid_visits', 'visit_denominator')
-                             .order_by('awc_id'))
+                                                                       'valid_visits', 'visit_denominator')
+                                .order_by('awc_id'))
     aggregate_queryset = list(AggAwc.objects.values_list('awc_id', 'is_launched',
-                                                                       'valid_visits', 'expected_visits')
-                                            .order_by('awc_id'))
+                                                         'valid_visits', 'expected_visits')
+                              .order_by('awc_id'))
     is_launched_bad_data = []
     home_conduct_bad_data = []
     for index, awc_performance in enumerate(performance_queryset):
