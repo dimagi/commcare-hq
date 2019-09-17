@@ -127,8 +127,7 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                     $('#warning').css('display', 'none');
                     $('#notAllowed').css('display', 'none');
                     popUp.css('display', 'block');
-                }
-                else {
+                } else {
                     $('#warning').css('display', 'none');
                     $('#notAllowed').css('display', 'block');
                 }

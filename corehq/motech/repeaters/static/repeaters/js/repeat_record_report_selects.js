@@ -1,7 +1,9 @@
-var items = document.getElementsByName('xform_ids');
-var all = document.getElementById('select_all');
-var all_cancel = document.getElementById('cancel_all');
-var all_requeue = document.getElementById('requeue_all');
+var items = document.getElementsByName('xform_ids'),
+    all = document.getElementById('select_all'),
+    all_cancel = document.getElementById('cancel_all'),
+    all_requeue = document.getElementById('requeue_all'),
+    button_cancel = document.getElementById('cancelAll'),
+    button_requeue = document.getElementById('requeueAll');
 
 function selectItems() {
     for (var i = 0; i < items.length; i++) {
@@ -31,14 +33,18 @@ function selectAll() {
     if (all.checked) {
         selectItems();
         uncheck(all_cancel, all_requeue);
+        turnOffCancelRequeue();
     } else {
         unSelectItems();
+        turnOnCancelRequeue();
     }
 }
 
 function selectRequeue() {
     unSelectItems();
     uncheck(all, all_cancel);
+    turnOnCancelRequeue();
+    button_cancel.disabled = true;
     if (all_requeue.checked) {
         checkMultipleItems('requeue');
     }
@@ -47,6 +53,8 @@ function selectRequeue() {
 function selectCallable() {
     unSelectItems();
     uncheck(all, all_requeue);
+    turnOnCancelRequeue();
+    button_requeue.disabled = true;
     if (all_cancel.checked) {
         checkMultipleItems('cancel');
     }
@@ -61,6 +69,16 @@ function uncheckSelects() {
     all.checked = false;
     all_cancel.checked = false;
     all_requeue.checked = false;
+}
+
+function turnOffCancelRequeue() {
+    button_cancel.disabled = true;
+    button_requeue.disabled = true;
+}
+
+function turnOnCancelRequeue() {
+    button_cancel.disabled = false;
+    button_requeue.disabled = false;
 }
 
 function checkMultipleItems(action) {

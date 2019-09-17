@@ -278,7 +278,7 @@ class RepeatRecordView(View):
     http_method_names = ['get', 'post']
 
     @staticmethod
-    def get_record_or_404(request, domain, record_id):
+    def get_record_or_404(domain, record_id):
         try:
             record = RepeatRecord.get(record_id)
         except ResourceNotFound:
@@ -291,7 +291,7 @@ class RepeatRecordView(View):
 
     def get(self, request, domain):
         record_id = request.GET.get('record_id')
-        record = self.get_record_or_404(request, domain, record_id)
+        record = self.get_record_or_404(domain, record_id)
         content_type = record.repeater.generator.content_type
         try:
             payload = record.get_payload()
