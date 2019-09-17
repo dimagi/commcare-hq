@@ -123,16 +123,10 @@ class TestLockingQueues(SimpleTestCase):
         self._check_locks(final_lock_ids)
 
     def test_release_locks(self):
+        queue_obj = DummyObject('kancamagus')
         lock_ids = ['rubaeus', 'dirty_bastard', 'red\'s_rye']
         self._check_locks(lock_ids, lock_set=False)
-        self.queues._set_lock(lock_ids)
-        self._check_locks(lock_ids, lock_set=True)
-        self.queues._release_lock(lock_ids)
-        self._check_locks(lock_ids, lock_set=False)
-
-        queue_obj = DummyObject('kancamagus')
-        self.queues._add_item(lock_ids, queue_obj, to_queue=False)
-        self.queues._set_lock(lock_ids)
+        self.assertTrue(self.queues.try_obj(lock_ids, queue_obj))
         self._check_locks(lock_ids, lock_set=True)
         self.queues.release_lock_for_queue_obj(queue_obj)
         self._check_locks(lock_ids, lock_set=False)
