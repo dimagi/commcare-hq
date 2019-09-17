@@ -256,8 +256,7 @@ def release_build(request, domain, app_id, saved_app_id):
     if saved_app.copy_of != app_id:
         raise Http404
     saved_app.is_released = is_released
-    if is_released:
-        saved_app.last_released = datetime.datetime.utcnow()
+    saved_app.last_released = datetime.datetime.utcnow() if is_released else None
     saved_app.is_auto_generated = False
     saved_app.save(increment_version=False)
     from corehq.apps.app_manager.signals import app_post_release
