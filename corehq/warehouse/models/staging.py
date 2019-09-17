@@ -2,7 +2,7 @@ from contextlib import closing
 
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import connections, models, transaction
-from django.db.models import Q
+from django.db.models import Q, Index
 
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.app_manager.models import Application
@@ -381,6 +381,11 @@ class SyncLogStagingTable(StagingTable, HQToWarehouseETLMixin):
     @classmethod
     def record_iter(cls, start_datetime, end_datetime):
         return get_synclogs_by_date(start_datetime, end_datetime)
+
+    class Meta:
+        indexes = [
+            Index(fields=['user_id']),
+        ]
 
 
 class ApplicationStagingTable(StagingTable, HQToWarehouseETLMixin):
