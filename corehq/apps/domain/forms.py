@@ -2560,7 +2560,8 @@ class SearchManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
     @staticmethod
     def _buttons():
         return [
-            crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
+            crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search",
+                          css_class='btn-primary'),
             crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
         ]
 
@@ -2596,7 +2597,7 @@ class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
 
     @staticmethod
     def _buttons():
-        return [Submit('submit', ugettext_lazy("Add New Restriction"))]
+        return [Submit('submit', ugettext_lazy("Add New Restriction"), css_class='btn-primary')]
 
     def clean(self):
         if self.cleaned_data.get('version'):
