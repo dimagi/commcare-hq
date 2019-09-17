@@ -171,9 +171,9 @@ class PartiallyLockingQueue(object):
         if self._is_any_locked(lock_ids):
             self._add_item(lock_ids, queue_obj)
             return False
+        queue_by_lock_id = self.queue_by_lock_id
         for lock_id in lock_ids:  # if other objs are waiting for the same locks, it has to wait
-            queue = self.queue_by_lock_id[lock_id]
-            if queue:
+            if queue_by_lock_id.get(lock_id):
                 self._add_item(lock_ids, queue_obj)
                 return False
         self._add_item(lock_ids, queue_obj, to_queue=False)
