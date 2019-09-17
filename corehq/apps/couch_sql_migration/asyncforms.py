@@ -149,7 +149,7 @@ class PartiallyLockingQueue(object):
     def queue_ids(self):
         """Return a list of queue object ids
 
-        Queue state can be ruilt using this list by looking up each
+        Queue state can be rebuilt using this list by looking up each
         queue object and lock ids and passing them to `try_obj()`.
         """
         return list(self.lock_ids_by_queue_id)
@@ -207,16 +207,11 @@ class PartiallyLockingQueue(object):
         """ Releases all locks for an object in the queue
 
         :queue_obj obj: An object of the type in the queues
-
-        At some point in the future it might raise an exception if it trys
-        releasing a lock that isn't held
         """
         queue_obj_id = self.get_queue_obj_id(queue_obj)
         lock_ids = self.lock_ids_by_queue_id.pop(queue_obj_id, None)
         if lock_ids:
             self._release_lock(lock_ids)
-            return True
-        return False
 
     def __len__(self):
         """Return the number of objects in the queue"""
@@ -263,7 +258,7 @@ class PartiallyLockingQueue(object):
         return any(lock_id in self.currently_locked for lock_id in lock_ids)
 
     def _set_lock(self, lock_ids):
-        """ Trys to set locks for given lock ids
+        """ Tries to set locks for given lock ids
 
         If already locked, returns false. If acquired, returns True
         """
