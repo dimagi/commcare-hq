@@ -142,7 +142,7 @@ class TestCaseDiffQueue(SimpleTestCase):
         with self.assertRaises(Error), self.queue() as queue:
             # HACK mutate queue internal state
             # currently there is no easier way to stop non-empty cases_to_diff
-            queue.cases_to_diff["a"] = self.get_cases("a")[0]
+            queue.cases_to_diff.append("a")
             raise Error("do not process_remaining_diffs")
         self.assertTrue(queue.cases_to_diff)
         with self.queue() as queue:
@@ -414,17 +414,17 @@ class TestCaseDiffProcess(SimpleTestCase):
         with self.process() as proc:
             self.assertEqual(self.get_status(proc), [0, 0, 0])
             proc.update({"case1", "case2"}, "form")
-            proc.enqueue({"case": "data"})
+            proc.enqueue("case")
             self.assertEqual(self.get_status(proc), [2, 1, 0])
 
     def test_process_statedb(self):
         with self.process() as proc1:
             self.assertEqual(self.get_status(proc1), [0, 0, 0])
-            proc1.enqueue({"case": "data"})
+            proc1.enqueue("case")
             self.assertEqual(self.get_status(proc1), [0, 1, 0])
         with self.process() as proc2:
             self.assertEqual(self.get_status(proc2), [0, 1, 0])
-            proc2.enqueue({"case": "data"})
+            proc2.enqueue("case")
             self.assertEqual(self.get_status(proc2), [0, 2, 0])
 
     def test_process_not_allowed(self):
@@ -499,7 +499,7 @@ class FakeCaseDiffQueue(object):
     def update(self, case_ids, form_id):
         self.stats["pending_cases"] += len(case_ids)
 
-    def enqueue(self, case_doc):
+    def enqueue(self, case_id):
         self.stats["pending_diffs"] += 1
 
     def get_status(self):

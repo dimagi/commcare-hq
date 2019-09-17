@@ -71,7 +71,7 @@ class CaseDiffQueue(object):
         self.status_interval = status_interval
         self.pending_cases = defaultdict(int)  # case id -> processed form count
         self.pending_loads = defaultdict(int)  # case id -> processed form count
-        self.cases_to_diff = {}  # case id -> case doc (JSON)
+        self.cases_to_diff = []  # case ids ready to diff
         self.pool = Pool()
         self.case_batcher = BatchProcessor(self.pool)
         self.diff_batcher = BatchProcessor(self.pool)
@@ -122,7 +122,6 @@ class CaseDiffQueue(object):
         :param pending: dict `{<case_id>: <processed_form_count>, ...}`
         """
         log.debug("enqueue or load %s", pending)
-        to_diff = []
         update_lru = self.cases.get
         batch = self.pending_loads
         result = self.statedb.add_processed_forms(pending)
@@ -133,14 +132,12 @@ class CaseDiffQueue(object):
                     self._async_load_cases(batch)
                     batch = self.pending_loads = defaultdict(int)
             elif total_forms <= processed_forms:
-                to_diff.append(case_id)
+                self.enqueue(case_id)
             else:
                 update_lru(case_id)
         if self._is_flushing and batch:
             self._load_cases(batch)
             self.pending_loads = defaultdict(int)
-        if to_diff:
-            self._enqueue_cases(to_diff)
 
     def _async_load_cases(self, pending):
         self.case_batcher.spawn(self._load_cases, pending)
@@ -156,12 +153,11 @@ class CaseDiffQueue(object):
         log.debug("enqueue or load %s", pending)
         cases = self.cases
         case_ids = list(pending)
-        loaded_cases = {}
+        loaded_case_ids = set()
         case_records = []
-        enqueued = set()
         stock_forms = get_stock_forms_by_case_id(case_ids)
         for case in CaseAccessorCouch.get_cases(case_ids):
-            loaded_cases[case.case_id] = case
+            loaded_case_ids.add(case.case_id)
             case_stock_forms = stock_forms.get(case.case_id, [])
             rec = CaseRecord(case, case_stock_forms, pending[case.case_id])
             case_records.append(rec)
@@ -171,40 +167,36 @@ class CaseDiffQueue(object):
         if case_records:
             result = self.statedb.update_cases(case_records)
             for case_id, total_forms, processed_forms in result:
-                if total_forms <= processed_forms and case_id not in enqueued:
-                    self.enqueue(loaded_cases[case_id].to_json())
-        missing = set(case_ids) - set(loaded_cases)
+                if total_forms <= processed_forms:
+                    self.enqueue(case_id)
+        missing = set(case_ids) - loaded_case_ids
         if missing:
             log.error("Found %s missing Couch cases", len(missing))
             self.statedb.add_missing_docs("CommCareCase-couch", missing)
 
-    def _enqueue_cases(self, case_ids):
-        log.debug("enqueue cases %s", case_ids)
-        to_load = []
-        get_case = self.cases.get
-        for case_id in case_ids:
-            case = get_case(case_id)
-            if case is None:
-                to_load.append(case_id)
-            else:
-                self.enqueue(case.to_json())
-        for case in CaseAccessorCouch.get_cases(to_load):
-            self.enqueue(case.to_json())
-
-    def enqueue(self, case_doc):
-        case_id = case_doc["_id"]
-        self.cases.pop(case_id, None)
-        self.cases_to_diff[case_id] = case_doc
+    def enqueue(self, case_id):
+        self.cases_to_diff.append(case_id)
         if len(self.cases_to_diff) >= self.BATCH_SIZE:
             self._diff_cases()
 
     def _diff_cases(self):
-        def diff(couch_cases):
+        def diff(case_ids):
+            couch_cases = {}
+            to_load = []
+            pop_case = self.cases.pop
+            for case_id in case_ids:
+                case = pop_case(case_id, None)
+                if case is None:
+                    to_load.append(case_id)
+                else:
+                    couch_cases[case_id] = case.to_json()
+            for case in CaseAccessorCouch.get_cases(to_load):
+                couch_cases[case.case_id] = case.to_json()
             diff_cases(couch_cases, statedb=self.statedb)
-            self.num_diffed_cases += len(couch_cases)
+            self.num_diffed_cases += len(case_ids)
 
         self.diff_batcher.spawn(diff, self.cases_to_diff)
-        self.cases_to_diff = {}
+        self.cases_to_diff = []
 
     def process_remaining_diffs(self):
         log.debug("process remaining diffs")
@@ -236,9 +228,8 @@ class CaseDiffQueue(object):
             join(pool)
             if complete:
                 log.info("Diffing cases with unprocessed forms...")
-                to_diff = self.statedb.iter_cases_with_unprocessed_forms()
-                for chunk in chunked(to_diff, self.BATCH_SIZE, list):
-                    self._enqueue_cases(chunk)
+                for case_id in self.statedb.iter_cases_with_unprocessed_forms():
+                    self.enqueue(case_id)
             while self.cases_to_diff or pool:
                 if self.cases_to_diff:
                     self._diff_cases()
@@ -273,8 +264,8 @@ class CaseDiffQueue(object):
         if "num_diffed_cases" in state:
             self.num_diffed_cases = state["num_diffed_cases"]
         if "to_diff" in state:
-            for chunk in chunked(state["to_diff"], self.BATCH_SIZE, list):
-                self.diff_batcher.spawn(self._enqueue_cases, chunk)
+            for case_id in state["to_diff"]:
+                self.enqueue(case_id)
         if "pending" in state:
             for chunk in chunked(state["pending"].items(), self.BATCH_SIZE, list):
                 self._async_load_cases(dict(chunk))
@@ -465,7 +456,7 @@ class CaseDiffProcess(object):
         if is_error:
             log.error("stopping process with error", exc_info=exc_info)
         else:
-            log.debug("stopping process")
+            log.info("stopping case diff process")
         self.request_status()
         self.calls.put((TERMINATE, is_error))
         self.status_logger.join(timeout=30)
@@ -477,8 +468,8 @@ class CaseDiffProcess(object):
     def update(self, case_ids, form_id):
         self.calls.put(("update", case_ids, form_id))
 
-    def enqueue(self, case_doc):
-        self.calls.put(("enqueue", case_doc))
+    def enqueue(self, case_id):
+        self.calls.put(("enqueue", case_id))
 
     def request_status(self):
         log.debug("reqeust status...")

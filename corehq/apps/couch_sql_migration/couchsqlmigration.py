@@ -327,7 +327,7 @@ class CouchSqlDomainMigrator(object):
                 sql_case.deletion_id
             )
         finally:
-            self.case_diff_queue.enqueue(doc)
+            self.case_diff_queue.enqueue(couch_case.case_id)
 
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []
