@@ -216,10 +216,6 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
         self.humanized_content_length = ko.observable();
         self.image_size = ko.observable();
 
-        self.status_icon = ko.computed(function () {
-            return (self.is_matched()) ? "fa fa-check text-success" : "fa fa-exclamation-triangle text-danger";
-        }, self);
-
         self.upload_button_class = ko.computed(function () {
             return (self.is_matched()) ? "btn btn-success" : "btn btn-danger";
         }, self);

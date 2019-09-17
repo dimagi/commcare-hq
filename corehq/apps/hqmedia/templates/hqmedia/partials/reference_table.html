@@ -15,17 +15,15 @@
       <thead>
       <tr>
         <th class="col-sm-1 text-center">{% trans 'Type' %}</th>
-        <th class="col-sm-1 text-center">{% trans 'Status' %}</th>
         <th class="col-sm-2">{% trans 'Action' %}</th>
-        <th class="col-sm-2">{% trans 'Preview' %}</th>
+        <th class="col-sm-2 text-center">{% trans 'Preview' %}</th>
         <th class="col-sm-1">{% trans 'Size'  %}</th>
-        <th class="col-sm-5">{% trans 'Path in Application'  %}</th>
+        <th class="col-sm-6">{% trans 'Path in Application'  %}</th>
       </tr>
       </thead>
       <tbody data-bind="foreach: {{ ref_type }}">
       <tr data-bind="attr: { 'data-hqmediapath': path }, event: { mediaUploadComplete: uploadComplete }">
         <td class="media-type-icon text-center"><i data-bind="attr: { class: type_icon }"></i></td>
-        <td class="media-status-icon text-center"><i data-bind="attr: { class: status_icon }"></i></td>
         <td>
           <a data-toggle="modal"
              data-bind="attr: { class: upload_button_class, href: upload_controller.container },
@@ -35,7 +33,13 @@
             <span data-bind="visible: is_matched()">{% trans "Replace" %}</span>
           </a>
         </td>
-        <td><div data-bind="visible: is_matched, template: preview_template"></div></td>
+        <td class="text-center">
+          <div data-bind="visible: is_matched, template: preview_template"></div>
+          <div data-bind="visible: !is_matched()">
+            <i class="fa fa-exclamation-triangle text-danger media-status-icon"></i>
+            <div class="text-danger">{% trans "Missing" %}</div>
+          </div>
+        </td>
         <td>
           <code data-bind="visible: humanized_content_length, text: humanized_content_length"></code>
           <!-- ko if: image_size -->
