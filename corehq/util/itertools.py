@@ -23,7 +23,13 @@ def zip_with_gaps(all_items, some_items, all_items_key=None, some_items_key=None
 
     all_iterable = iter(all_items)
     for s_item in some_items:
-        a_item = next(all_iterable)
-        while some_items_key(s_item) != all_items_key(a_item):
+        try:
             a_item = next(all_iterable)
+        except StopIteration:
+            return
+        while some_items_key(s_item) != all_items_key(a_item):
+            try:
+                a_item = next(all_iterable)
+            except StopIteration:
+                return
         yield (a_item, s_item)
