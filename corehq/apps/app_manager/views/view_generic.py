@@ -291,7 +291,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                 slug: ApplicationMediaReference(
                     app.logo_refs.get(slug, {}).get("path", slug),
                     media_class=CommCareImage,
-                    module_id=app.logo_refs.get(slug, {}).get("m_id"),
+                    module_id=app.logo_refs.get(slug, {}).get("m_id"),  # TODO: why is this here? should module unique id be here?
                 ).as_dict()
                 for slug in uploader_slugs
             },

@@ -23,6 +23,8 @@
   {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
   {% initial_page_data 'uploaders' uploaders_js %}
   {% registerurl 'hqmedia_references' app.domain app.id %}
+  {% registerurl 'view_module' app.domain app.id '---' %}
+  {% registerurl 'form_source' app.domain app.id '---' %}
 
   <p class="lead">{{ current_page.page_name }}</p>
 

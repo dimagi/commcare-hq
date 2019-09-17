@@ -464,8 +464,8 @@ class ApplicationMediaReference(object):
         Useful info for user-facing things.
     """
 
-    def __init__(self, path, module_id=None, module_name=None, form_id=None,
-                 form_name=None, form_order=None, media_class=None,
+    def __init__(self, path, module_id=None, module_unique_id=None, module_name=None,
+                 form_unique_id=None, form_name=None, form_order=None, media_class=None,
                  is_menu_media=False, app_lang=None, use_default_media=False):
 
         if not isinstance(path, str):
@@ -476,9 +476,10 @@ class ApplicationMediaReference(object):
             raise ValueError("media_class should be a type of CommCareMultimedia")
 
         self.module_id = module_id
+        self.module_unique_id = module_unique_id
         self.module_name = module_name
 
-        self.form_id = form_id
+        self.form_unique_id = form_unique_id
         self.form_name = form_name
         self.form_order = form_order
 
@@ -506,10 +507,11 @@ class ApplicationMediaReference(object):
             'module': {
                 'name': self.get_module_name(lang),
                 'id': self.module_id,
+                'unique_id': self.module_unique_id,
             },
             'form': {
                 'name': self.get_form_name(lang),
-                'id': self.form_id,
+                'unique_id': self.form_unique_id,
                 'order': self.form_order,
             },
             'is_menu_media': self.is_menu_media,
@@ -604,8 +606,9 @@ class ModuleMediaMixin(MediaMixin):
             'app_lang': self.get_app().default_language,
             'module_name': self.name,
             'module_id': self.id,
+            'module_unique_id': self.unique_id,
             'form_name': None,
-            'form_id': None,
+            'form_unique_id': None,
             'form_order': None,
         }
 
@@ -689,8 +692,9 @@ class FormMediaMixin(MediaMixin):
             'app_lang': module.get_app().default_language,
             'module_name': module.name,
             'module_id': module.id,
+            'module_unique_id': module.unique_id,
             'form_name': self.name,
-            'form_id': self.unique_id,
+            'form_unique_id': self.unique_id,
             'form_order': self.id,
         }
 
@@ -856,8 +860,9 @@ class ApplicationMediaMixin(Document, MediaMixin):
             'app_lang': self.default_language,
             'module_name': module.name,
             'module_id': module_index,
+            'module_unique_id': module.unique_id,
             'form_name': form.name if form else None,
-            'form_id': form.unique_id if form else None,
+            'form_unique_id': form.unique_id if form else None,
             'form_order': form_index,
             'is_menu_media': is_menu_media,
         }

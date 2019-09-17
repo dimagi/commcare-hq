@@ -126,9 +126,9 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
         self.id = "module-" + self.id;
 
         self.processReference = function (ref) {
-            if (ref.form.id) {
+            if (ref.form.unique_id) {
                 if (!self.forms[ref.form.order]) {
-                    self.forms[ref.form.order] = FormReferences(ref.form.name, self.objectMap, ref.form.id);
+                    self.forms[ref.form.order] = FormReferences(ref.form.name, self.objectMap, ref.form.unique_id);
                 }
                 self.forms[ref.form.order].processReference(ref);
             } else if (ref.is_menu_media) {
@@ -193,7 +193,6 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
     FormReferences.prototype = Object.create(BaseReferenceGroup.prototype);
     FormReferences.prototype.constructor = FormReferences;
 
-
     function BaseMediaReference(ref) {
         'use strict';
         var self = {};
@@ -219,6 +218,14 @@ hqDefine("hqmedia/js/hqmedia.reference_controller",[
         self.upload_button_class = ko.computed(function () {
             return (self.is_matched()) ? "btn btn-success" : "btn btn-danger";
         }, self);
+
+        // Link to module or form
+        self.app_url = "";
+        if (self.form.unique_id) {
+            self.app_url = hqImport("hqwebapp/js/initial_page_data").reverse("form_source", self.form.unique_id);
+        } else if (self.module.unique_id) {
+            self.app_url = hqImport("hqwebapp/js/initial_page_data").reverse("view_module", self.module.unique_id);
+        }
 
         self.preview_template = null; // override
 
