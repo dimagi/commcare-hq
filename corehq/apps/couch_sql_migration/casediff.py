@@ -85,6 +85,7 @@ class CaseDiffQueue(object):
         self.diff_batcher = BatchProcessor(self.diff_pool)
         self.cases = LRUDict(self.MAX_MEMORIZED_CASES)
         self.num_diffed_cases = 0
+        self.cache_hits = [0, 0]
         self._is_flushing = False
 
     def __enter__(self):
@@ -201,6 +202,8 @@ class CaseDiffQueue(object):
             for case in CaseAccessorCouch.get_cases(to_load):
                 couch_cases[case.case_id] = case.to_json()
             diff_cases(couch_cases, statedb=self.statedb)
+            self.cache_hits[0] += len(case_ids) - len(to_load)
+            self.cache_hits[1] += len(case_ids)
             self.num_diffed_cases += len(case_ids)
 
         def spawn_diff(case_ids):
@@ -312,26 +315,24 @@ class CaseDiffQueue(object):
 
     @staticmethod
     def log_status(status):
-        log.info(
-            "cases pending=%s loaded=%s diffed=%s",
-            status["pending_cases"],
-            status["loaded_cases"],
-            status["diffed_cases"],
-        )
+        log.info("cases pending=%(pending)s cached=%(cached)s "
+                 "loaded=%(loaded)s diffed=%(diffed)s", status)
 
     def get_status(self):
+        cache_hits, self.cache_hits = self.cache_hits, [0, 0]
         return {
-            "pending_cases": (
+            "pending": (
                 len(self.pending_cases)
                 + len(self.pending_loads)
                 + sum(len(batch) for batch in self.case_batcher)
                 + len(self.cases_to_diff)
                 + sum(len(batch) for batch in self.diff_spawner)
             ),
-            "loaded_cases": (
+            "cached": "%s/%s" % tuple(cache_hits),
+            "loaded": (
                 len(self.cases) + sum(len(batch) for batch in self.diff_batcher)
             ),
-            "diffed_cases": self.num_diffed_cases,
+            "diffed": self.num_diffed_cases,
         }
 
 

@@ -470,7 +470,9 @@ class TestCaseDiffProcess(SimpleTestCase):
     def get_status(proc):
         def log_status(status):
             log.info("status: %s", status)
-            keys = ["pending_cases", "loaded_cases", "diffed_cases"]
+            cached = status.pop("cached")
+            assert cached == "0/0", cached
+            keys = ["pending", "loaded", "diffed"]
             assert set(keys) == set(status), status
             queue.put([status[k] for k in keys])
 
@@ -485,7 +487,7 @@ class FakeCaseDiffQueue(object):
 
     def __init__(self, statedb, status_interval=None):
         self.statedb = statedb
-        self.stats = {"pending_cases": 0, "loaded_cases": 0, "diffed_cases": 0}
+        self.stats = {"pending": 0, "cached": "0/0", "loaded": 0, "diffed": 0}
 
     def __enter__(self):
         state = self.statedb.pop_resume_state(type(self).__name__, {})
@@ -497,10 +499,10 @@ class FakeCaseDiffQueue(object):
         self.statedb.set_resume_state(type(self).__name__, {"stats": self.stats})
 
     def update(self, case_ids, form_id):
-        self.stats["pending_cases"] += len(case_ids)
+        self.stats["pending"] += len(case_ids)
 
     def enqueue(self, case_id):
-        self.stats["loaded_cases"] += 1
+        self.stats["loaded"] += 1
 
     def get_status(self):
         return self.stats
