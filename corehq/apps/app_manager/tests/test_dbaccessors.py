@@ -7,8 +7,8 @@ from corehq.apps.app_manager.dbaccessors import (
     get_all_app_ids,
     get_all_built_app_ids_and_versions,
     get_app,
-    get_app_ids_in_domain,
     get_apps_by_id,
+    get_app_ids_in_domain,
     get_apps_in_domain,
     get_brief_app,
     get_brief_apps_in_domain,
@@ -22,6 +22,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
     get_latest_released_app_version,
+    get_latest_released_app_versions_by_app_id,
 )
 from corehq.apps.app_manager.models import Application, Module, RemoteApp
 from corehq.apps.domain.models import Domain
@@ -225,15 +226,21 @@ class TestAppGetters(TestCase):
         ).to_json()
         app = Application.wrap(app_doc)  # app is v1
 
+        # Make builds v1 - v5. Builds v2 and v4 are released.
         app.save()  # app is v2
         cls.v2_build = app.make_build()
         cls.v2_build.is_released = True
-        cls.v2_build.save()  # There is a starred build at v2
+        cls.v2_build.save()
 
         app.save()  # app is v3
-        app.make_build().save()  # There is a build at v3
+        app.make_build().save()
 
         app.save()  # app is v4
+        cls.v4_build = app.make_build()
+        cls.v4_build.is_released = True
+        cls.v4_build.save()
+
+        app.save()  # app is v5
         cls.app_id = app._id
 
     @classmethod
@@ -243,31 +250,31 @@ class TestAppGetters(TestCase):
 
     def test_get_app_current(self):
         app = get_app(self.domain, self.app_id)
-        self.assertEqual(app.version, 4)
+        self.assertEqual(app.version, 5)
 
     def test_get_current_app(self):
         app_doc = get_current_app(self.domain, self.app_id)
-        self.assertEqual(app_doc['version'], 4)
+        self.assertEqual(app_doc['version'], 5)
 
     def test_latest_saved_from_build(self):
         app_doc = get_app(self.domain, self.v2_build._id, latest=True, target='save')
-        self.assertEqual(app_doc['version'], 4)
+        self.assertEqual(app_doc['version'], 5)
 
     def test_get_app_latest_released_build(self):
         app = get_app(self.domain, self.app_id, latest=True)
-        self.assertEqual(app.version, 2)
+        self.assertEqual(app.version, 4)
 
     def test_get_latest_released_app_doc(self):
         app_doc = get_latest_released_app_doc(self.domain, self.app_id)
-        self.assertEqual(app_doc['version'], 2)
+        self.assertEqual(app_doc['version'], 4)
 
     def test_get_app_latest_build(self):
         app = get_app(self.domain, self.app_id, latest=True, target='build')
-        self.assertEqual(app.version, 3)
+        self.assertEqual(app.version, 4)
 
     def test_get_latest_build_doc(self):
         app_doc = get_latest_build_doc(self.domain, self.app_id)
-        self.assertEqual(app_doc['version'], 3)
+        self.assertEqual(app_doc['version'], 4)
 
     def test_get_specific_version(self):
         app_doc = get_build_doc_by_version(self.domain, self.app_id, version=2)
@@ -276,8 +283,14 @@ class TestAppGetters(TestCase):
     def test_get_apps_by_id(self):
         apps = get_apps_by_id(self.domain, [self.app_id])
         self.assertEqual(1, len(apps))
-        self.assertEqual(apps[0].version, 4)
+        self.assertEqual(apps[0].version, 5)
 
     def test_get_latest_released_app_version(self):
         version = get_latest_released_app_version(self.domain, self.app_id)
-        self.assertEqual(version, 2)
+        self.assertEqual(version, 4)
+
+    def test_get_latest_released_app_versions_by_app_id(self):
+        versions = get_latest_released_app_versions_by_app_id(self.domain)
+        self.assertEqual(versions, {
+            self.app_id: 4,
+        })
