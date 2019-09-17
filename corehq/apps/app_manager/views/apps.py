@@ -198,6 +198,8 @@ def get_app_view_context(request, app):
     app_view_options = {
         'permissions': {
             'cloudcare': has_privilege(request, privileges.CLOUDCARE),
+            'case_sharing_groups': has_privilege(request,
+                                                 privileges.CASE_SHARING_GROUPS),
         },
         'sections': settings_layout,
         'urls': {
