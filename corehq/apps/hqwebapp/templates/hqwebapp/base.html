@@ -450,10 +450,8 @@
     {# JavaScript Display Logic Libaries #}
 
     {% if request.couch_user and not requirejs_main %}
-      {% compress js %}
-        <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
-        <script src="{% static 'notifications/js/notifications_service_main.js' %}"></script>
-      {% endcompress %}
+      <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
+      <script src="{% static 'notifications/js/notifications_service_main.js' %}"></script>
     {% endif %}
 
     {% if not requirejs_main %}
@@ -528,10 +526,8 @@
     {% endif %}
 
     {% if request.use_ko_validation and not requirejs_main %}
-      {% compress js %}
-        <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
-      {% endcompress %}
+      <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
     {% endif %}
 
     {% if is_demo_visible %}
