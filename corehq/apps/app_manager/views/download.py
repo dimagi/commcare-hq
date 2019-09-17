@@ -293,7 +293,7 @@ def download_file(request, domain, app_id, path):
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)
         if path in ['profile.ccpr', 'media_profile.ccpr']:
-            response['last_released'] = request.app.last_released
+            response['X-CommCareHQ-AppReleasedOn'] = request.app.last_released
         response['Content-Length'] = len(response.content)
         return response
     except (ResourceNotFound, AssertionError):
