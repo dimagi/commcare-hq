@@ -1200,18 +1200,32 @@ def build_incentive_report(agg_date=None):
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
 
-    aggregate_queryset = list(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched',
+    performance_queryset = list(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched',
                                                                     'valid_visits', 'visit_denominator')
                              .order_by('awc_id'))
-    awc_launched_count_from_aggregate = list(AggAwc.objects.values_list('awc_id', 'is_launched',
+    aggregate_queryset = list(AggAwc.objects.values_list('awc_id', 'is_launched',
                                                                        'valid_visits', 'expected_visits')
                                             .order_by('awc_id'))
+    is_launched_bad_data = []
+    home_conduct_bad_data = []
+    for index, awc_performance in enumerate(performance_queryset):
+        awc_from_aggregate = aggregate_queryset[index]
 
-    # check for launched AWCs
-    is_launched_awc_incentive_report(aggregate_queryset, awc_launched_count_from_aggregate)
+        # check for launched AWCs
+        row_data = is_launched_awc_incentive_report(awc_performance, awc_from_aggregate)
+        if row_data is not None:
+            is_launched_bad_data.append(row_data)
 
-    # check for home conduct percentage
-    home_conduct_awc_incentive_report(aggregate_queryset, awc_launched_count_from_aggregate)
+        # check for home conduct percentage
+        row_data = home_conduct_awc_incentive_report(awc_performance, awc_from_aggregate)
+        if row_data is not None:
+            home_conduct_bad_data.append(row_data)
+    # sending email with is_launched mismatch csv
+    if len(is_launched_bad_data) > 0:
+        is_launched_incentive_check_helper(is_launched_bad_data)
+    # sending email with home conduct % mismatch csv
+    if len(home_conduct_bad_data) > 0:
+        home_conduct_incentive_check_helper(home_conduct_bad_data)
 
     for file_format in ['xlsx', 'csv']:
         for location in locations:
@@ -1223,39 +1237,41 @@ def build_incentive_report(agg_date=None):
                 build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
 
 
-def is_launched_awc_incentive_report(performance_queryset, awcagg_queryset):
+def is_launched_awc_incentive_report(performance_row, awcagg_row):
+    is_launched_from_awc = False
+    if awcagg_row[1].lower() == 'yes':
+        is_launched_from_awc = True
+    if performance_row[1] != is_launched_from_awc:
+        row_data = [performance_row[0], awcagg_row[0], performance_row[1], is_launched_from_awc]
+        return row_data
+    return None
+
+
+def is_launched_incentive_check_helper(csv_data):
     csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
-    csv_data = []
-    for index, awc in enumerate(performance_queryset):
-        awc_from_aggregate = awcagg_queryset[index]
-        is_launched_from_awc = False
-        if awc_from_aggregate[1].lower() == 'yes':
-            is_launched_from_awc = True
-        if awc[1] != is_launched_from_awc:
-            row_data = [awc[0], awc_from_aggregate[0], awc[1], is_launched_from_awc]
-            csv_data.append(row_data)
     content = """
     Please see attached file for is_launched mismatch in awc incentive report
     """
     _send_incentive_report_validation_email(content, csv_columns, csv_data)
 
 
-def home_conduct_awc_incentive_report(performance_queryset, awcagg_queryset):
+def home_conduct_awc_incentive_report(performance_row, awcagg_row):
+    if performance_row[2] in [0, None] or performance_row[3] in [0, None]:
+        home_conduct_from_report = 'None'
+    else:
+        home_conduct_from_report = performance_row[2] / performance_row[3]
+    if awcagg_row[2] in [0, None] or awcagg_row[3] in [0, None]:
+        home_conduct_from_awc = 'None'
+    else:
+        home_conduct_from_awc = awcagg_row[2] / awcagg_row[3]
+    if home_conduct_from_report != home_conduct_from_awc:
+        row_data = [performance_row[0], awcagg_row[0], home_conduct_from_report, home_conduct_from_awc]
+        return row_data
+    return None
+
+
+def home_conduct_incentive_check_helper(csv_data):
     csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
-    csv_data = []
-    for index, awc in enumerate(performance_queryset):
-        awc_from_aggregate = awcagg_queryset[index]
-        if awc[2] in [0, None] or awc[3] in [0, None]:
-            home_conduct_from_report = 'None'
-        else:
-            home_conduct_from_report = awc[2] / awc[3]
-        if awc_from_aggregate[2] in [0, None] or awc_from_aggregate[3] in [0, None]:
-            home_conduct_from_awc = 'None'
-        else:
-            home_conduct_from_awc = awc_from_aggregate[2] / awc_from_aggregate[3]
-        if home_conduct_from_report != home_conduct_from_awc:
-            row_data = [awc[0], awc_from_aggregate[0], home_conduct_from_report, home_conduct_from_awc]
-            csv_data.append(row_data)
     content = """
     Please see attached file for home conduct percentage mismatch in awc incentive report
     """
