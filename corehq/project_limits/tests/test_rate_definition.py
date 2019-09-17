@@ -139,6 +139,19 @@ def test_rate_definition_against_fixed_user_table():
 
     rows = tab_delimited_table.strip().splitlines()[1:]
     table = [[int(cell.replace(',', '')) for cell in row.split()] for row in rows]
+
+    def check(n_users, per_second, per_minute, per_hour, per_day, per_week):
+        testil.eq(
+            per_user_rate.times(n_users).plus(floor_rate).map(int),
+            RateDefinition(
+                per_week=per_week,
+                per_day=per_day,
+                per_hour=per_hour,
+                per_minute=per_minute,
+                per_second=per_second,
+            ),
+        )
+
     per_user_rate = RateDefinition(
         per_week=115,
         per_day=23,
@@ -154,13 +167,4 @@ def test_rate_definition_against_fixed_user_table():
         per_second=1,
     )
     for n_users, per_second, per_minute, per_hour, per_day, per_week in table:
-        testil.eq(
-            per_user_rate.times(n_users).plus(floor_rate).map(int),
-            RateDefinition(
-                per_week=per_week,
-                per_day=per_day,
-                per_hour=per_hour,
-                per_minute=per_minute,
-                per_second=per_second,
-            ),
-        )
+        yield check, n_users, per_second, per_minute, per_hour, per_day, per_week
