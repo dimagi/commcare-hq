@@ -240,18 +240,12 @@ class PartiallyLockingQueue(object):
 
         :queue_obj_id string: An id of an object of the type in the queues
 
-        Assumes the obj is the first in every queue it inhabits. This seems reasonable
-        for the intended use case, as this function should only be used by `.get_next`.
-
-        Raises UnexpectedObjectException if this assumption doesn't hold
+        Assumes the obj is the first in every queue it inhabits.
         """
-        lock_ids = self.lock_ids_by_queue_id.get(queued_obj_id)
+        lock_ids = self.lock_ids_by_queue_id[queued_obj_id]
+        queue_by_lock_id = self.queue_by_lock_id
         for lock_id in lock_ids:
-            queue = self.queue_by_lock_id[lock_id]
-            if queue[0] != queued_obj_id:
-                raise UnexpectedObjectException("This object shouldn't be removed")
-        for lock_id in lock_ids:
-            queue = self.queue_by_lock_id[lock_id]
+            queue = queue_by_lock_id[lock_id]
             queue.popleft()
         return self.queue_objs_by_queue_id.pop(queued_obj_id)
 
@@ -271,10 +265,6 @@ class PartiallyLockingQueue(object):
 
     def _release_lock(self, lock_ids):
         self.currently_locked.difference_update(lock_ids)
-
-
-class UnexpectedObjectException(Exception):
-    pass
 
 
 def _fix_replacement_form_problem_in_couch(doc):
