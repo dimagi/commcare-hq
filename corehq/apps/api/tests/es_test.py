@@ -6,7 +6,7 @@ from datetime import datetime
 
 from elasticsearch import Elasticsearch
 
-from corehq.apps.api.es import XFormES, UserES, ESUserError, ReportXFormES
+from corehq.apps.api.es import XFormES, UserES, ESUserError, ReportXFormES, ESView
 from corehq.apps.api.tests.utils import ESTest
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs.mixin import BlobMetaRef
@@ -17,7 +17,7 @@ from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import delete_es_index
+from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import make_es_ready_form
 
 
@@ -34,19 +34,17 @@ class FormTestES(ESTest):
         }
         cls.form_pair = cls._create_es_form(
             domain=cls.domain.name,
-            attachment_dict={"addition": {"Louis": "Armstrong"}},
             **form_data)
         pass
 
     @classmethod
     def tearDownClass(cls):
-        delete_es_index(XFORM_INDEX_INFO.index)
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
         super(FormTestES, cls).tearDownClass()
         pass
 
     @classmethod
-    def _create_es_form(cls, domain=None, attachment_dict=None, **metadata_kwargs):
-        attachment_dict = attachment_dict or {}
+    def _create_es_form(cls, domain=None, **metadata_kwargs):
         metadata = TestFormMetadata(
             domain=domain or uuid.uuid4().hex,
             time_end=datetime.utcnow(),
@@ -57,17 +55,30 @@ class FormTestES(ESTest):
             setattr(metadata, attr, value)
 
         form_pair = make_es_ready_form(metadata)
-        if attachment_dict:
-            form_pair.wrapped_form.external_blobs = {
-                name: BlobMetaRef(**meta)
-                for name, meta in attachment_dict.items()
-            }
-            form_pair.json_form['external_blobs'] = attachment_dict
 
         cls.es_form = transform_xform_for_elasticsearch(form_pair.json_form)
         send_to_elasticsearch('forms', cls.es_form)
         cls.es.indices.refresh(XFORM_INDEX_INFO.index)
         return form_pair
+
+
+class TestESView(ESTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestESView, cls).setUpClass()
+        cls.es_view = ESView(cls.domain.name)
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        super(TestESView, cls).tearDownClass()
+        pass
+
+    def test_not_implemented_head(self):
+        with self.assertRaises(NotImplementedError):
+            head = self.es_view.head()
+
 
 
 class TestXFormES(FormTestES):
@@ -159,14 +170,19 @@ class TestUserES(ESTest):
         query = {
             "query": {
                 "filtered": {
-                    "query": {"match_all": {}}
+                    "query": {"match_all": {}},
+                    'filter': {
+                        'and': [
+                            {'term': {'username': "johann_strauss"}}
+                        ]
+                    }
                 }
+
             },
-            "fields": ["username", "domain", "domain_memberships"]
+            "fields": ["username", "domain"]
         }
 
         result = self.user_es.run_query(query, security_check=False)
-
         self.assertEqual(result['hits']['total'], 1)
         self.assertEqual(result['hits']['hits'][0]['fields']['username'][0],
                          self.user.username)
@@ -187,6 +203,7 @@ class TestReportFormES(FormTestES):
     @classmethod
     def tearDownClass(cls):
         super(TestReportFormES, cls).tearDownClass()
+        delete_es_index(REPORT_XFORM_INDEX_INFO.index)
         pass
 
     @run_with_all_backends

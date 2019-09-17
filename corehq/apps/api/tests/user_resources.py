@@ -801,7 +801,7 @@ class TestDomainCases(APIResourceTest):
 
         self.assertEqual(len(actual), 2)
         self.assertIsInstance(actual, list)
-        self.assertEqual(expected, actual)
+        self.assertCountEqual(expected, actual)
         elastic.assert_called_with(self.domain.name)
 
 
