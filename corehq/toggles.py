@@ -1803,3 +1803,11 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
+
+
+GROUP_API_USE_ES_BACKEND = StaticToggle(
+    'group_api_use_es_backend',
+    'Use ES backend for Group API',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)

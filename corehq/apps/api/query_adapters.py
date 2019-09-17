@@ -1,5 +1,6 @@
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class, \
     get_docs_in_domain_by_class
+from corehq.apps.es import GroupES
 from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import (
     get_active_commcare_users_in_domain,
@@ -32,7 +33,7 @@ class UserQuerySetAdapter(object):
             'Invalid type of argument. Item should be an instance of slice class.')
 
 
-class GroupQuerySetAdapter(object):
+class GroupQuerySetAdapterCouch(object):
     def __init__(self, domain):
         self.domain = domain
 
@@ -43,5 +44,21 @@ class GroupQuerySetAdapter(object):
         if isinstance(item, slice):
             limit = item.stop - item.start
             return get_docs_in_domain_by_class(self.domain, Group, limit=limit, skip=item.start)
+        raise ValueError(
+            'Invalid type of argument. Item should be an instance of slice class.')
+
+
+class GroupQuerySetAdapterES(object):
+    def __init__(self, domain):
+        self.domain = domain
+
+    def count(self):
+        return GroupES().domain(self.domain).count()
+
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            limit = item.stop - item.start
+            result = GroupES().domain(self.domain).sort('name').size(limit).start(item.start).run()
+            return map(Group.wrap, result.hits)
         raise ValueError(
             'Invalid type of argument. Item should be an instance of slice class.')
