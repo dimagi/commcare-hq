@@ -60,7 +60,7 @@ class TestLockingQueues(SimpleTestCase):
         self.assertItemsEqual(lock_ids, self.queues.lock_ids_by_queue_id[queue_obj_id])
 
     def _check_locks(self, lock_ids, lock_set=True):
-        self.assertEqual(lock_set, self.queues._check_lock(lock_ids))
+        self.assertEqual(lock_set, self.queues._is_any_locked(lock_ids))
 
     def test_has_next(self):
         self.assertFalse(self.queues)

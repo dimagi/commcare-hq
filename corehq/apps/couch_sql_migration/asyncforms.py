@@ -168,7 +168,7 @@ class PartiallyLockingQueue(object):
         if not lock_ids:
             self._add_item(lock_ids, queue_obj, to_queue=False)
             return True
-        if self._check_lock(lock_ids):  # if it's currently locked, it can't acquire the lock
+        if self._is_any_locked(lock_ids):
             self._add_item(lock_ids, queue_obj)
             return False
         for lock_id in lock_ids:  # if other objs are waiting for the same locks, it has to wait
@@ -254,15 +254,16 @@ class PartiallyLockingQueue(object):
             queue.popleft()
         return self.queue_objs_by_queue_id.pop(queued_obj_id)
 
-    def _check_lock(self, lock_ids):
-        return any(lock_id in self.currently_locked for lock_id in lock_ids)
+    def _is_any_locked(self, lock_ids):
+        locked = self.currently_locked
+        return any(lock_id in locked for lock_id in lock_ids)
 
     def _set_lock(self, lock_ids):
         """ Tries to set locks for given lock ids
 
         If already locked, returns false. If acquired, returns True
         """
-        if self._check_lock(lock_ids):
+        if self._is_any_locked(lock_ids):
             return False
         self.currently_locked.update(lock_ids)
         return True
