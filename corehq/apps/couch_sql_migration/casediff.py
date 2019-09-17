@@ -6,7 +6,7 @@ from itertools import chain, count
 
 import gevent
 from gevent.event import Event
-from gevent.pool import Group as Pool
+from gevent.pool import Group, Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.stock.models import StockReport
@@ -62,6 +62,7 @@ class CaseDiffQueue(object):
     """
 
     BATCH_SIZE = 100
+    MAX_DIFF_WORKERS = 20
     MAX_MEMORIZED_CASES = 4096
 
     def __init__(self, statedb, status_interval=STATUS_INTERVAL):
@@ -72,9 +73,16 @@ class CaseDiffQueue(object):
         self.pending_cases = defaultdict(int)  # case id -> processed form count
         self.pending_loads = defaultdict(int)  # case id -> processed form count
         self.cases_to_diff = []  # case ids ready to diff
-        self.pool = Pool()
+        self.pool = Group()
+        # The diff pool is used for case diff jobs. It has limited
+        # concurrency to prevent OOM conditions caused by loading too
+        # many cases into memory. The approximate limit on number of
+        # couch cases in memory at any time
+        # BATCH_SIZE + MAX_MEMORIZED_CASES + MAX_DIFF_WORKERS * BATCH_SIZE
+        self.diff_pool = Pool(self.MAX_DIFF_WORKERS)
         self.case_batcher = BatchProcessor(self.pool)
-        self.diff_batcher = BatchProcessor(self.pool)
+        self.diff_spawner = BatchProcessor(self.pool)
+        self.diff_batcher = BatchProcessor(self.diff_pool)
         self.cases = LRUDict(self.MAX_MEMORIZED_CASES)
         self.num_diffed_cases = 0
         self._is_flushing = False
@@ -195,7 +203,11 @@ class CaseDiffQueue(object):
             diff_cases(couch_cases, statedb=self.statedb)
             self.num_diffed_cases += len(case_ids)
 
-        self.diff_batcher.spawn(diff, self.cases_to_diff)
+        def spawn_diff(case_ids):
+            # may block due to concurrency limit on diff pool
+            self.diff_batcher.spawn(diff, case_ids)
+
+        self.diff_spawner.spawn(spawn_diff, self.cases_to_diff)
         self.cases_to_diff = []
 
     def process_remaining_diffs(self):
@@ -203,11 +215,13 @@ class CaseDiffQueue(object):
         self.flush()
         for batcher, action in [
             (self.case_batcher, "loaded"),
+            (self.diff_spawner, "spawned to diff"),
             (self.diff_batcher, "diffed"),
         ]:
             if batcher:
                 log.warn("%s batches of cases could not be %s", len(batcher), action)
         self.pool = None
+        self.diff_pool = None
 
     def flush(self, complete=True):
         """Process cases in the queue
@@ -220,6 +234,7 @@ class CaseDiffQueue(object):
 
         log.debug("begin flush")
         pool = self.pool
+        diff_pool = self.diff_pool
         self._is_flushing = True
         try:
             if self.pending_cases:
@@ -230,10 +245,11 @@ class CaseDiffQueue(object):
                 log.info("Diffing cases with unprocessed forms...")
                 for case_id in self.statedb.iter_cases_with_unprocessed_forms():
                     self.enqueue(case_id)
-            while self.cases_to_diff or pool:
+            while self.cases_to_diff or pool or diff_pool:
                 if self.cases_to_diff:
                     self._diff_cases()
                 join(pool)
+                join(diff_pool)
             assert not self.pending_cases, self.pending_cases
             assert not self.pending_loads, self.pending_loads
         finally:
@@ -248,8 +264,9 @@ class CaseDiffQueue(object):
                 for case_id, processed_forms in batch.items():
                     pending[case_id] += processed_forms
             state["pending"] = dict(pending)
-        if self.diff_batcher or self.cases_to_diff:
+        if self.diff_batcher or self.diff_spawner or self.cases_to_diff:
             state["to_diff"] = list(chain.from_iterable(self.diff_batcher))
+            state["to_diff"].extend(chain.from_iterable(self.diff_spawner))
             state["to_diff"].extend(self.cases_to_diff)
         if self.num_diffed_cases:
             state["num_diffed_cases"] = self.num_diffed_cases
@@ -296,10 +313,10 @@ class CaseDiffQueue(object):
     @staticmethod
     def log_status(status):
         log.info(
-            "cases diffed=%s, pending cases=%s diffs=%s",
-            status["diffed_cases"],
+            "cases pending=%s loaded=%s diffed=%s",
             status["pending_cases"],
-            status["pending_diffs"],
+            status["loaded_cases"],
+            status["diffed_cases"],
         )
 
     def get_status(self):
@@ -308,11 +325,11 @@ class CaseDiffQueue(object):
                 len(self.pending_cases)
                 + len(self.pending_loads)
                 + sum(len(batch) for batch in self.case_batcher)
-                + len(self.cases)
+                + len(self.cases_to_diff)
+                + sum(len(batch) for batch in self.diff_spawner)
             ),
-            "pending_diffs": (
-                len(self.cases_to_diff)
-                + sum(len(batch) for batch in self.diff_batcher)
+            "loaded_cases": (
+                len(self.cases) + sum(len(batch) for batch in self.diff_batcher)
             ),
             "diffed_cases": self.num_diffed_cases,
         }
