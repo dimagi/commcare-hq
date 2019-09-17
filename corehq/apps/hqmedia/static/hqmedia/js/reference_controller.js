@@ -1,10 +1,10 @@
-hqDefine("hqmedia/js/hqmedia.reference_controller",[
+hqDefine("hqmedia/js/reference_controller",[
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqmedia/js/hqmediauploaders',
-],function (
+], function (
     $,
     ko,
     _,

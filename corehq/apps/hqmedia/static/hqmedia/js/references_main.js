@@ -1,4 +1,3 @@
-/* globals MultimediaReferenceController */
 hqDefine("hqmedia/js/references_main", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
@@ -8,7 +7,7 @@ hqDefine("hqmedia/js/references_main", function () {
             data: { json: 1 },
             success: function (data) {
                 $loading.remove();
-                var referenceController = hqImport('hqmedia/js/hqmedia.reference_controller').MultimediaReferenceController({
+                var referenceController = hqImport('hqmedia/js/reference_controller').MultimediaReferenceController({
                     references: data.references,
                     objectMap: data.object_map,
                     totals: data.totals,

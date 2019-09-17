@@ -28,7 +28,7 @@
   {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
     {% compress js %}
       <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
-      <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+      <script src="{% static 'hqmedia/js/reference_controller.js' %}"></script>
     {% endcompress %}
   {% endif %}
   {% compress js %}
