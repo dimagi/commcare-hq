@@ -370,7 +370,7 @@ class CommCareImage(CommCareMultimedia):
             width = image_size.get('width')
             height = image_size.get('height')
             if width is not None and height is not None:
-                return "{} X {} Pixels".format(width, height)
+                return "{} x {} px".format(width, height)
 
     @classmethod
     def get_image_object(cls, data):
