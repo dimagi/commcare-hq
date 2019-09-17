@@ -84,3 +84,38 @@ SET domain = EXCLUDED.domain,
     dim_last_modified = EXCLUDED.dim_last_modified,
     deleted = EXCLUDED.deleted,
     batch_id = EXCLUDED.batch_id;
+
+
+-- update level and parent hierarchy
+UPDATE warehouse_locationdim dim SET
+    level = cte.level,
+    location_level_2 = cte.hierarchy[3],
+    location_level_3 = cte.hierarchy[4],
+    location_level_4 = cte.hierarchy[5],
+    location_level_5 = cte.hierarchy[6],
+    location_level_6 = cte.hierarchy[7],
+    location_level_7 = cte.hierarchy[8]
+FROM (
+    WITH RECURSIVE location_cte (batch_id, sql_location_id, level, parent_key, hierarchy)
+    AS (
+        SELECT
+            batch_id,
+            sql_location_id,
+            0,
+            NULL::INTEGER,
+            ARRAY[sql_location_id]
+        FROM warehouse_locationdim
+        WHERE location_level_1 IS NULL
+        UNION ALL
+        SELECT
+            child.batch_id,
+            child.sql_location_id,
+            parent.level+1,
+            child.location_level_1,
+            ARRAY[child.sql_location_id] || parent.hierarchy
+        FROM location_cte parent
+        JOIN warehouse_locationdim child ON child.location_level_1 = parent.sql_location_id
+    )
+    SELECT * FROM location_cte WHERE batch_id = {{ batch_id }}
+) cte
+WHERE cte.sql_location_id = dim.sql_location_id;
