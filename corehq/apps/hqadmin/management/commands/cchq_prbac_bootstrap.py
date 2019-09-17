@@ -152,6 +152,9 @@ class Command(BaseCommand):
         Role(slug=privileges.CHILD_CASES,
              name='Child Cases',
              description='Allows for use of child cases / subcases in applications.'),
+        Role(slug=privileges.PROJECT_ACCESS,
+             name='Project Access',
+             description='Allows access to core project functionality.'),
     ]
 
     BOOTSTRAP_PLANS = [
