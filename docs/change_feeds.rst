@@ -39,7 +39,8 @@ Topics
 Topics are a kafka concept that are used to create logical groups (or "topics") of data.
 In the HQ codebase we use topics primarily as a 1:N mapping to HQ document classes (or ``doc_type`` s).
 Forms and cases currently have their own topics, while everything else is lumped in to a "meta" topic.
-This allows certain pillows to subscribe to the exact category of change/data they are interested in (e.g. a pillow that sends cases to elasticsearch would only subscribe to the "cases" topic).
+This allows certain pillows to subscribe to the exact category of change/data they are interested in
+(e.g. a pillow that sends cases to elasticsearch would only subscribe to the "cases" topic).
 
 Document Stores
 ~~~~~~~~~~~~~~~
@@ -48,7 +49,6 @@ Published changes are just "stubs" but do not contain the full data that was aff
 Each change should be associated with a "document store" which is an abstraction that represents a way to retrieve the document from its original database.
 This allows the subscribers to retrieve the full document while not needing to have the underlying source hard-coded (so that it can be changed).
 To add a new document store, you can use one of the existing subclasses of ``DocumentStore`` or roll your own.
-
 
 Publishing changes
 ==================
