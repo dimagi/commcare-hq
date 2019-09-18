@@ -6,7 +6,7 @@
 {% block view-tabs %}
 {% endblock %}
 
-{% block js %}{{ block.super }}
+{% block js %}
   {% include 'reports/partials/filters_js.html' %}
   {% compress js %}
     <script src="{% static 'reports/js/hq_report.js' %}"></script>
@@ -15,6 +15,8 @@
     <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
   {% endcompress %}
+  {# The scripts above must be loaded before the parent's scripts, specifically reports/js/standard_hq_report #}
+  {{ block.super }}
 {% endblock %}
 
 {% block page_navigation %}
