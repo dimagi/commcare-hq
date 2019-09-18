@@ -84,10 +84,6 @@ hqDefine("hqmedia/js/reference_controller",[
             return (self.showOnlyMissing()) ? self.getMissingRefs(self.menu_references()) : self.menu_references();
         }, self);
 
-        self.showMenuRefs = ko.computed(function () {
-            return self.active_menu_references().length > 0;
-        }, self);
-
         self.createReferenceObject = function (ref) {
             var objRef = self.objectMap[ref.path];
             if (ref.media_class === "CommCareImage") {
@@ -159,20 +155,6 @@ hqDefine("hqmedia/js/reference_controller",[
         self.active_video = ko.computed(function () {
             return (self.showOnlyMissing()) ? self.getMissingRefs(self.video()) : self.video();
         }, self);
-
-        self.showImageRefs = ko.computed(function () {
-            return self.active_images().length > 0;
-        }, self);
-        self.showAudioRefs = ko.computed(function () {
-            return self.active_audio().length > 0;
-        }, self);
-        self.showVideoRefs = ko.computed(function () {
-            return self.active_video().length > 0;
-        }, self);
-
-        self.showForm = ko.computed(function () {
-            return self.showImageRefs() || self.showAudioRefs() || self.showVideoRefs() || self.showMenuRefs();
-        });
 
         self.processReference = function (ref) {
             var refObj = self.createReferenceObject(ref);

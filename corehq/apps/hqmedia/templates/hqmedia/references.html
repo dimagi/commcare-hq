@@ -69,40 +69,15 @@
       </div>
     </div>
 
-    <article class="panel panel-default" id="mm-reference-list" data-bind="visible: totals().length">
       <!-- ko foreach: modules -->
-      <div class="panel-heading">
-        <h3 class="panel-title">
-          <a class="accordion-toggle"
-             data-toggle="collapse"
-             data-parent="#mm-reference-list"
-             data-bind="attr: { href: '#' + id }">
-            <i class="fa fa-angle-double-down"></i> {% trans 'Module' %}: <span data-bind="text: name"></span>
-          </a>
-        </h3>
-      </div>
-      <div class="panel-body collapse in"
-           data-bind="attr: { id: id }">
-        <div class="accordion-inner">
-          <p>{% trans 'Showing all media in the module named' %} '<span data-bind="text: name"></span>'.</p>
-          <div class="accordion" data-bind="attr: { id: id + '-ModuleRefs' }">
-            {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" show_refs="showMenuRefs" parent_accordion="ModuleRefs" this_accordion="ModuleMenuRefs" title="Menu References" %}
-          </div>
+            {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" %}
           <!-- ko foreach: forms -->
-          <div data-bind="visible: showForm">
-            <h4>{% trans 'Form' %}: <span data-bind="text: name"></span></h4>
-            <div class="accordion" data-bind="attr: { id: id + '-FormRefs' }">
-              {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" show_refs="showMenuRefs" parent_accordion="FormRefs" this_accordion="FormMenuRefs" title="Menu References" %}
-              {% include "hqmedia/partials/reference_table.html" with ref_type="active_images" show_refs="showImageRefs" parent_accordion="FormRefs" this_accordion="FormImageRefs" title="Image References" %}
-              {% include "hqmedia/partials/reference_table.html" with ref_type="active_audio" show_refs="showAudioRefs" parent_accordion="FormRefs" this_accordion="FormAudioRefs" title="Audio References" %}
-              {% include "hqmedia/partials/reference_table.html" with ref_type="active_video" show_refs="showVideoRefs" parent_accordion="FormRefs" this_accordion="FormVideoRefs" title="Video References" %}
-            </div>
-          </div>
+              {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" %}
+              {% include "hqmedia/partials/reference_table.html" with ref_type="active_images" %}
+              {% include "hqmedia/partials/reference_table.html" with ref_type="active_audio" %}
+              {% include "hqmedia/partials/reference_table.html" with ref_type="active_video" %}
           <!-- /ko -->
-        </div>
-      </div>
       <!-- /ko -->
-    </article>
 
     <script type="text/html" id="image-preview-template">
       <a target="_blank" data-bind="attr: { href: url }">
