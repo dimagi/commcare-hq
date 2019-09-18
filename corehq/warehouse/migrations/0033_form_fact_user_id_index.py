@@ -1,14 +1,11 @@
 from django.db import migrations, models
 
-TABLE_NAME = 'warehouse_formstagingtable'
-INDEX_NAME = 'warehouse_f_user_id_785d18_idx'
+FORM_STAGING_USER_INDEX_NAME = 'warehouse_f_user_id_785d18_idx'
 COLUMNS = ['user_id']
 
 
-CREATE_INDEX_SQL = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({})".format(
-    INDEX_NAME, TABLE_NAME, ','.join(COLUMNS)
-)
-DROP_INDEX_SQL = "DROP INDEX CONCURRENTLY {}".format(INDEX_NAME)
+CREATE_INDEX_SQL = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({})"
+DROP_INDEX_SQL = "DROP INDEX CONCURRENTLY IF EXISTS {}"
 
 
 class Migration(migrations.Migration):
@@ -20,21 +17,36 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            sql=CREATE_INDEX_SQL,
-            reverse_sql=DROP_INDEX_SQL,
+            sql=CREATE_INDEX_SQL.format(
+                FORM_STAGING_USER_INDEX_NAME,
+                'warehouse_formstagingtable',
+                ','.join(COLUMNS)
+            ),
+            reverse_sql=DROP_INDEX_SQL.format(FORM_STAGING_USER_INDEX_NAME),
             state_operations=[
                 migrations.AddIndex(
                     model_name='formstagingtable',
-                    index=models.Index(fields=['user_id'], name=INDEX_NAME),
+                    index=models.Index(fields=COLUMNS, name=FORM_STAGING_USER_INDEX_NAME),
                 ),
             ]
         ),
         migrations.RunSQL(
-            'DROP INDEX CONCURRENTLY IF EXISTS warehouse_formstagingtable_form_id_246fcaf3_like',
+            sql=DROP_INDEX_SQL.format('warehouse_formstagingtable_received_on_6a73ba8d'),
+            reverse_sql=migrations.RunSQL.noop,
+            state_operations=[
+                migrations.AlterField(
+                    model_name='formstagingtable',
+                    name='received_on',
+                    field=models.DateTimeField(),
+                ),
+            ]
+        ),
+        migrations.RunSQL(
+            DROP_INDEX_SQL.format('warehouse_formstagingtable_form_id_246fcaf3_like'),
             migrations.RunSQL.noop
         ),
         migrations.RunSQL(
-            'DROP INDEX CONCURRENTLY IF EXISTS warehouse_formfact_form_id_1bb74f90_like',
+            DROP_INDEX_SQL.format('warehouse_formfact_form_id_1bb74f90_like'),
             migrations.RunSQL.noop
         )
     ]

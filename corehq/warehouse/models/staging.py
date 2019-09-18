@@ -294,7 +294,7 @@ class FormStagingTable(StagingTable, HQToWarehouseETLMixin):
     user_id = models.CharField(max_length=255, null=True)
 
     # The time at which the server has received the form
-    received_on = models.DateTimeField(db_index=True)
+    received_on = models.DateTimeField()
     deleted_on = models.DateTimeField(null=True)
     edited_on = models.DateTimeField(null=True)
 
