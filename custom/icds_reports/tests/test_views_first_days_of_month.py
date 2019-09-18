@@ -53,12 +53,9 @@ class Base(TestCase):
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
         domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
+        user = WebUser.create('icds-test', 'test', 'passwordtest', is_admin=True)
         user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
+        user.is_superuser = False
         user.is_active = True
         self.user = user
 
