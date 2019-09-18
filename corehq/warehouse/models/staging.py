@@ -1,17 +1,13 @@
-from contextlib import closing
-
 from django.contrib.postgres.fields import ArrayField, JSONField
-from django.db import connections, models, transaction
-from django.db.models import Q
+from django.db import models
+from django.db.models import Q, Index
 
-from casexml.apps.phone.models import SyncLog
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import XFormInstanceSQL
-from corehq.sql_db.routers import db_for_read_write
 from corehq.warehouse.const import (APPLICATION_STAGING_SLUG,
     APP_STATUS_FACT_SLUG, APP_STATUS_FORM_STAGING_SLUG,
     APP_STATUS_SYNCLOG_STAGING_SLUG, DOMAIN_STAGING_SLUG, FORM_STAGING_SLUG,
@@ -381,6 +377,11 @@ class SyncLogStagingTable(StagingTable, HQToWarehouseETLMixin):
     @classmethod
     def record_iter(cls, start_datetime, end_datetime):
         return get_synclogs_by_date(start_datetime, end_datetime)
+
+    class Meta:
+        indexes = [
+            Index(fields=['user_id']),
+        ]
 
 
 class ApplicationStagingTable(StagingTable, HQToWarehouseETLMixin):
