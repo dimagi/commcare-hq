@@ -53,5 +53,41 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             DROP_INDEX_SQL.format('warehouse_formstagingtable_timezone_idx'),
             migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            DROP_INDEX_SQL.format('warehouse_domaindim_domain_id_b1c3504b_like'),
+            migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            DROP_INDEX_SQL.format('warehouse_groupdim_group_id_b5f6f7bd_like'),
+            migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            DROP_INDEX_SQL.format('warehouse_locationdim_location_id_bb42cee7_like'),
+            migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            DROP_INDEX_SQL.format('warehouse_userdim_user_id_701f9e28_like'),
+            migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            DROP_INDEX_SQL.format('warehouse_appstatusformstaging_domain_5997210f_like'),
+            migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            DROP_INDEX_SQL.format('warehouse_appstatusforms_submission_build_version_0a62241a_like'),
+            migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            DROP_INDEX_SQL.format('warehouse_appstatusformstaging_commcare_version_cfb94daf_like'),
+            migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            DROP_INDEX_SQL.format('warehouse_appstatussynclogstaging_domain_2ab81363_like'),
+            migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            DROP_INDEX_SQL.format('warehouse_applicationstatusfact_domain_18a67251_like'),
+            migrations.RunSQL.noop
         )
     ]
