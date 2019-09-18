@@ -31,17 +31,6 @@ class Migration(migrations.Migration):
             ]
         ),
         migrations.RunSQL(
-            sql=DROP_INDEX_SQL.format('warehouse_formstagingtable_received_on_6a73ba8d'),
-            reverse_sql=migrations.RunSQL.noop,
-            state_operations=[
-                migrations.AlterField(
-                    model_name='formstagingtable',
-                    name='received_on',
-                    field=models.DateTimeField(),
-                ),
-            ]
-        ),
-        migrations.RunSQL(
             DROP_INDEX_SQL.format('warehouse_formstagingtable_form_id_246fcaf3_like'),
             migrations.RunSQL.noop
         ),
