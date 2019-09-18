@@ -720,6 +720,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         dm.is_admin = False
         if role_qualified_id == "admin":
             dm.is_admin = True
+            dm.role_id = None
         elif role_qualified_id.startswith('user-role:'):
             dm.role_id = role_qualified_id[len('user-role:'):]
         elif role_qualified_id in PERMISSIONS_PRESETS:
