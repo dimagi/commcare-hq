@@ -25,7 +25,6 @@ class CustomSQLETLMixin(BaseETLMixin):
     Mixin for transferring data from a SQL store to another SQL store using
     a custom SQL script.
     '''
-
     @classmethod
     def additional_sql_context(cls):
         '''
@@ -43,7 +42,7 @@ class CustomSQLETLMixin(BaseETLMixin):
         '''
 
         assert issubclass(cls, WarehouseTable)
-        database = db_for_read_write(cls)
+        database = db_for_read_write(cls.model_cls)
         with connections[database].cursor() as cursor:
             cursor.execute(cls._sql_query_template(cls.slug, batch))
 
@@ -59,7 +58,7 @@ class CustomSQLETLMixin(BaseETLMixin):
         '''
         from corehq.warehouse.models import get_cls_by_slug
 
-        context = {cls.slug: cls._meta.db_table}
+        context = {cls.slug: cls.model_cls._meta.db_table}
         for dep in cls.dependencies():
             dep_cls = get_cls_by_slug(dep)
             context[dep] = dep_cls._meta.db_table

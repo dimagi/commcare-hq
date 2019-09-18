@@ -1,8 +1,5 @@
-
-
-
-
 class WarehouseTable(object):
+    model_cls = None
 
     @classmethod
     def commit(cls, batch):

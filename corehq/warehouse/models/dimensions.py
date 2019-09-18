@@ -23,7 +23,7 @@ from corehq.warehouse.models.shared import WarehouseTable
 from corehq.warehouse.utils import truncate_records_for_cls
 
 
-class BaseDim(models.Model, WarehouseTable):
+class BaseDim(models.Model):
     batch = models.ForeignKey(
         'Batch',
         on_delete=models.PROTECT,
@@ -32,20 +32,6 @@ class BaseDim(models.Model, WarehouseTable):
     dim_last_modified = models.DateTimeField(auto_now=True)
     dim_created_on = models.DateTimeField(auto_now_add=True)
     deleted = models.BooleanField()
-
-    @classmethod
-    def commit(cls, batch):
-        with transaction.atomic(using=db_for_read_write(cls)):
-            cls.load(batch)
-        return True
-
-    class Meta(object):
-        abstract = True
-
-    @classmethod
-    @unit_testing_only
-    def clear_records(cls):
-        truncate_records_for_cls(cls, cascade=True)
 
 
 class UserDim(BaseDim, CustomSQLETLMixin):
@@ -151,14 +137,12 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
         return [LOCATION_STAGING_SLUG]
 
 
-class DomainDim(BaseDim, CustomSQLETLMixin):
-    '''
+class DomainDim(BaseDim):
+    """
     Dimension for Domain
 
     Grain: domain_id
-    '''
-    slug = DOMAIN_DIM_SLUG
-
+    """
     domain = models.CharField(max_length=255)
     domain_id = models.CharField(max_length=255, unique=True)
     default_timezone = models.CharField(max_length=255)
@@ -176,10 +160,6 @@ class DomainDim(BaseDim, CustomSQLETLMixin):
 
     domain_last_modified = models.DateTimeField(null=True)
     domain_created_on = models.DateTimeField(null=True)
-
-    @classmethod
-    def dependencies(cls):
-        return [DOMAIN_STAGING_SLUG]
 
 
 class UserLocationDim(BaseDim, CustomSQLETLMixin):
