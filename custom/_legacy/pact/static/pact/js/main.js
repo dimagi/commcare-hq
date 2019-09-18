@@ -80,19 +80,20 @@ hqDefine("pact/js/main", function () {
 
         self.removeLast = function() {
             var api_url = initialPageData.reverse('pactdata_1') + "?case_id=" + initialPageData.get('patient_id');
-            var json_schedules= ko.toJSON(self.schedules);
-            var send_xhr = $.ajax({
-                "type": "POST",
-                "url":  api_url + "&method=rm_schedule",
-                "data": {"rm_schedule":""},
-                "success": function(data) {
-                    alert("Removed, I hope you know what you're doing");
-                    scheduleView.refresh();
-                },
-                "error": function(data) {
-                    alert ("Error trying to save form, please try again.");
-                }
-            });
+            var json_schedules = ko.toJSON(self.schedules);
+            if (confirm("This will immediately remove this data. Are you sure you wish to do so?")) {
+                $.ajax({
+                    "type": "POST",
+                    "url":  api_url + "&method=rm_schedule",
+                    "data": {"rm_schedule":""},
+                    "success": function(data) {
+                        scheduleView.refresh();
+                    },
+                    "error": function(data) {
+                        alert ("Error trying to save form, please try again.");
+                    }
+                });
+            }
         };
 
         self.currentSchedule = function(idx) {
