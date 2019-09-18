@@ -81,7 +81,7 @@ class AsyncFormProcessor(object):
         try:
             self.migrate_form(wrapped_form, case_ids)
         finally:
-            self.queues.release_lock_for_queue_obj(wrapped_form)
+            self.queues.release_lock(wrapped_form)
 
     def _try_to_empty_queues(self):
         while True:
@@ -123,10 +123,10 @@ class PartiallyLockingQueue(object):
     Interface:
     `.try_obj(lock_ids, queue_obj)` add a new object, seeing if it can be
         processed immediately
-    `.pop()` get a locked object to be processed
+    `.pop()` get a locked object and lock_ids to be processed
     `bool(queue)` find out if there are still objects in the queue
     `len(queue)` get the number of objects in the queue
-    `.release_lock_for_queue_obj(queue_obj)` release the locks associated
+    `.release_lock(queoe_obj)` release the locks associated
         with an object once finished processing
     """
 
@@ -136,8 +136,8 @@ class PartiallyLockingQueue(object):
         :max_size int: the maximum size the queue should reach. -1 means no limit
         """
         self.queue_by_lock_id = defaultdict(deque)
-        self.lock_ids_by_queue_id = {}
-        self.queue_objs_by_queue_id = {}
+        self.objs_by_queue_id = {}  # {queue_id: (obj, lock_ids), ...}
+        self.processing = {}  # {queue_id: lock_ids, ...}
         self.currently_locked = set()
         self.max_size = max_size
 
@@ -149,10 +149,12 @@ class PartiallyLockingQueue(object):
     def queue_ids(self):
         """Return a list of queue object ids
 
+        This includes all objects that are currently locked (processing)
+        as well as all objects in the queue waiting to be processed.
         Queue state can be rebuilt using this list by looking up each
         queue object and lock ids and passing them to `try_obj()`.
         """
-        return list(self.lock_ids_by_queue_id)
+        return list(self.processing) + list(self.objs_by_queue_id)
 
     def try_obj(self, lock_ids, queue_obj):
         """ Checks if the object can acquire some locks. If not, adds item to queue
@@ -165,33 +167,28 @@ class PartiallyLockingQueue(object):
 
         Returns :boolean: True if it acquired the lock, False if it was added to queue
         """
+        queue_obj_id = self.get_queue_obj_id(queue_obj)
         if not lock_ids:
-            self._add_item(lock_ids, queue_obj, to_queue=False)
+            self.processing[queue_obj_id] = lock_ids
             return True
         if self._is_any_locked(lock_ids):
-            self._add_item(lock_ids, queue_obj)
+            self._add_item(queue_obj_id, lock_ids, queue_obj)
             return False
         queue_by_lock_id = self.queue_by_lock_id
         for lock_id in lock_ids:  # if other objs are waiting for the same locks, it has to wait
             if queue_by_lock_id.get(lock_id):
-                self._add_item(lock_ids, queue_obj)
+                self._add_item(queue_obj_id, lock_ids, queue_obj)
                 return False
-        self._add_item(lock_ids, queue_obj, to_queue=False)
+        self.processing[queue_obj_id] = lock_ids
         locked = self._set_lock(lock_ids)
-        assert locked, len(lock_ids)
+        assert locked, lock_ids
         return True
 
-    def _add_item(self, lock_ids, queue_obj, to_queue=True):
-        """
-        :to_queue boolean: adds object to queues if True, just do lock tracking if not
-        """
-        queue_obj_id = self.get_queue_obj_id(queue_obj)
-        if to_queue:
-            queue_by_lock_id = self.queue_by_lock_id
-            for lock_id in lock_ids:
-                queue_by_lock_id[lock_id].append(queue_obj_id)
-            self.queue_objs_by_queue_id[queue_obj_id] = queue_obj
-        self.lock_ids_by_queue_id[queue_obj_id] = lock_ids
+    def _add_item(self, queue_obj_id, lock_ids, queue_obj):
+        queue_by_lock_id = self.queue_by_lock_id
+        for lock_id in lock_ids:
+            queue_by_lock_id[lock_id].append(queue_obj_id)
+        self.objs_by_queue_id[queue_obj_id] = (queue_obj, lock_ids)
 
     def pop(self):
         """Pop a locked object and lock ids from the queue
@@ -203,12 +200,12 @@ class PartiallyLockingQueue(object):
             return queue_by_lock_id[lock_id][0] == queue_id
 
         queue_by_lock_id = self.queue_by_lock_id
-        lock_ids_by_queue_id = self.lock_ids_by_queue_id
+        objs_by_queue_id = self.objs_by_queue_id
         for queue in queue_by_lock_id.values():
             queue_id = queue[0]
-            lock_ids = lock_ids_by_queue_id[queue_id]
+            lock_ids = objs_by_queue_id[queue_id][1]
             if all(is_first(queue_id, x) for x in lock_ids) and self._set_lock(lock_ids):
-                return self._pop_queue_obj(queue_id), lock_ids
+                return self._pop_queue_obj(queue_id)
         return None, None
 
     def _pop_queue_obj(self, queued_obj_id):
@@ -218,7 +215,7 @@ class PartiallyLockingQueue(object):
 
         Assumes the obj is the first in every queue it inhabits.
         """
-        lock_ids = self.lock_ids_by_queue_id[queued_obj_id]
+        queue_obj, lock_ids = self.objs_by_queue_id.pop(queued_obj_id)
         queue_by_lock_id = self.queue_by_lock_id
         for lock_id in lock_ids:
             queue = queue_by_lock_id[lock_id]
@@ -227,7 +224,8 @@ class PartiallyLockingQueue(object):
                 queue_by_lock_id.pop(lock_id)
             else:
                 queue.popleft()
-        return self.queue_objs_by_queue_id.pop(queued_obj_id)
+        self.processing[queued_obj_id] = lock_ids
+        return queue_obj, lock_ids
 
     def _is_any_locked(self, lock_ids):
         locked = self.currently_locked
@@ -243,22 +241,15 @@ class PartiallyLockingQueue(object):
         self.currently_locked.update(lock_ids)
         return True
 
-    def release_lock_for_queue_obj(self, queue_obj):
-        """Release locks for a locked object
-
-        The object should have been previously popped from the queue or
-        `.try_obj()` should have returned `True`.
-
-        :queue_obj obj: An object of the type in the queues
-        """
+    def release_lock(self, queue_obj):
         queue_obj_id = self.get_queue_obj_id(queue_obj)
-        lock_ids = self.lock_ids_by_queue_id.pop(queue_obj_id, None)
+        lock_ids = self.processing.pop(queue_obj_id)
         if lock_ids:
             self.currently_locked.difference_update(lock_ids)
 
     def __len__(self):
         """Return the number of objects in the queue"""
-        return len(self.queue_objs_by_queue_id)
+        return len(self.objs_by_queue_id)
 
     @property
     def full(self):
