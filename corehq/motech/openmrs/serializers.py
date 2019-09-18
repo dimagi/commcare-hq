@@ -72,6 +72,40 @@ def omrs_boolean_to_text(value):
     return 'true' if value else 'false'
 
 
+def openmrs_timestamp_to_isoformat(value, tz=None):
+    """
+    Converts an OpenMRS timestamp to ISO format. Accepts a timezone,
+    which defaults to UTC. If timezone is given, ISO format includes the
+    offset, otherwise it ends in "Z".
+
+    An OpenMRS timestamp is a Unix timestamp * 1000 (i.e. with
+    milliseconds). Given None returns None. Raises ValueError for
+    non-numeric values.
+
+    >>> openmrs_timestamp_to_isoformat(1551564000000)
+    '2019-03-02T22:00:00Z'
+    >>> tz = datetime.timezone(datetime.timedelta(hours=+2), 'CAT')
+    >>> openmrs_timestamp_to_isoformat(1551564000000, tz)
+    '2019-03-03T00:00:00+02:00'
+    >>> openmrs_timestamp_to_isoformat(1551564000)
+    '2019-03-02T22:00:00Z'
+
+    """
+    if value is None:
+        return None
+    try:
+        timestamp = int(value)
+    except ValueError:
+        raise ValueError(f"{value!r} is not an OpenMRS timestamp")
+    max_seconds = datetime.datetime(datetime.MAXYEAR, 12, 31).timestamp()
+    seconds_since_1970 = timestamp / 1000 if timestamp > max_seconds else timestamp
+    dt = datetime.datetime.fromtimestamp(seconds_since_1970, tz)
+    isoformat = dt.isoformat()
+    if not dt.utcoffset():
+        isoformat += "Z"
+    return isoformat
+
+
 serializers.update({
     # (from_data_type, to_data_type): function
     (None, OPENMRS_DATA_TYPE_DATE): to_omrs_date,

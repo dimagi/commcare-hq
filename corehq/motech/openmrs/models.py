@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from memoized import memoized
+
 from dimagi.ext.couchdbkit import (
     DictProperty,
     Document,
@@ -14,6 +16,10 @@ from corehq.motech.openmrs.const import (
     IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
     IMPORT_FREQUENCY_WEEKLY,
+)
+from corehq.util.timezones.utils import (
+    coerce_timezone_value,
+    get_timezone_for_domain,
 )
 
 # Supported values for ColumnMapping.data_type
@@ -47,6 +53,9 @@ class OpenmrsImporter(Document):
 
     log_level = IntegerProperty()
 
+    # Timezone name. If not specified, the domain's timezone will be used.
+    timezone = StringProperty()
+
     # OpenMRS UUID of the report of patients to be imported
     report_uuid = StringProperty()
 
@@ -78,6 +87,13 @@ class OpenmrsImporter(Document):
 
     def __str__(self):
         return self.server_url
+
+    @memoized
+    def get_timezone(self):
+        if self.timezone:
+            return coerce_timezone_value(self.timezone)
+        else:
+            return get_timezone_for_domain(self.domain)
 
     def should_import_today(self):
         today = datetime.today()
