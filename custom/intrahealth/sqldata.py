@@ -3923,8 +3923,8 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @cached_property
     def selected_location(self):
-        if self.config['selected_location']:
-            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        if self.config['location_id']:
+            return SQLLocation.objects.get(location_id=self.config['location_id'])
         else:
             return None
 
@@ -3936,9 +3936,9 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
     @cached_property
     def loc_type(self):
-        if self.selected_location_type == 'national':
+        if self.selected_location_type in ['national', 'region']:
             return 'region'
-        elif self.selected_location_type == 'region':
+        elif self.selected_location_type == 'disctrict':
             return 'district'
         else:
             return 'pps'
@@ -3951,15 +3951,28 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
     def loc_name(self):
         return "{}_name".format(self.loc_type)
 
-    @property
-    def desired_location(self):
-        if self.config['selected_location']:
-            return self.config['selected_location']
-        return None
+    @cached_property
+    def loc_type_to_get(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id_to_get(self):
+        return "{}_id".format(self.loc_type_to_get)
+
+    @cached_property
+    def loc_name_to_get(self):
+        return "{}_name".format(self.loc_type_to_get)
 
     @property
     def filters(self):
         filters = [BETWEEN('real_date_precise', 'startdate', 'enddate')]
+        if self.config['location_id']:
+            filters.append(EQ(self.loc_id, 'location_id'))
         if self.config['product_product']:
             filters.append(EQ('product_id', 'product_product'))
         elif self.config['product_program']:
@@ -3969,9 +3982,8 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
     @property
     def group_by(self):
         group_by = [
+            self.loc_id_to_get, self.loc_name_to_get,
             'real_date_precise', 'product_is_outstock',
-            'region_id', 'region_name', 'district_id',
-            'district_name', 'pps_id', 'pps_name',
             'product_id', 'product_name', 'program_id'
         ]
 
@@ -3981,12 +3993,8 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
     def columns(self):
         columns = [
             DatabaseColumn('Date', SimpleColumn('real_date_precise')),
-            DatabaseColumn('Region ID', SimpleColumn('region_id')),
-            DatabaseColumn('Region Name', SimpleColumn('region_name')),
-            DatabaseColumn('District ID', SimpleColumn('district_id')),
-            DatabaseColumn('District Name', SimpleColumn('district_name')),
-            DatabaseColumn('PPS ID', SimpleColumn('pps_id')),
-            DatabaseColumn('PPS Name', SimpleColumn('pps_name')),
+            DatabaseColumn('Location ID', SimpleColumn(self.loc_id_to_get)),
+            DatabaseColumn('Location Name', SimpleColumn(self.loc_name_to_get)),
             DatabaseColumn('Product ID', SimpleColumn('product_id')),
             DatabaseColumn('Program ID', SimpleColumn('program_id')),
             DatabaseColumn('Product Name', SimpleColumn('product_name')),
@@ -3997,18 +4005,10 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
     @property
     def rows(self):
         rows_to_return = []
-        all_wanted_rows = []
         rows = self.get_data()
 
-        if self.desired_location:
-            for row in rows:
-                if self.desired_location in row.values():
-                    all_wanted_rows.append(row)
-        else:
-            all_wanted_rows = rows
-
         def clean_rows(data_to_clean):
-            stocks = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
+            stocks = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name_to_get)])
 
             stocks_list = []
             added_locations = []
@@ -4016,8 +4016,8 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
             added_products_for_locations = {}
 
             for stock in stocks:
-                location_name = stock['{}'.format(self.loc_name)]
-                location_id = stock['{}'.format(self.loc_id)]
+                location_name = stock['{}'.format(self.loc_name_to_get)]
+                location_id = stock['{}'.format(self.loc_id_to_get)]
                 if location_id is None:
                     location_id = location_name
                 product_name = stock['product_name']
@@ -4098,16 +4098,19 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
 
             return stocks_list_to_return
 
-        for row in all_wanted_rows:
+        for row in rows:
             if not rows_to_return:
                 rows_to_return.append(row)
             else:
                 length = len(rows_to_return)
                 for r in range(0, length):
                     current_product = rows_to_return[r]
-                    current_location_id = current_product[self.loc_id]
+                    current_location_id = current_product[self.loc_id_to_get] \
+                        if current_product[self.loc_id_to_get] is not None else current_product[self.loc_name_to_get]
                     current_product_id = current_product['product_id']
-                    if current_location_id == row[self.loc_id] and current_product_id == row['product_id']:
+                    _row_id = row[self.loc_id_to_get] \
+                        if row[self.loc_id_to_get] is not None else row[self.loc_name_to_get]
+                    if current_location_id == _row_id and current_product_id == row['product_id']:
                         current_date = current_product['real_date_precise']
                         new_date = row['real_date_precise']
                         if current_date > new_date:
@@ -4142,36 +4145,10 @@ class TauxDeRuptureRateData(SqlData):
         config, _ = get_datasource_config(doc_id, config_domain)
         return get_table_name(config_domain, config.table_id)
 
-    @property
-    def group_by(self):
-        return [
-            'real_date_precise', 'product_is_outstock',
-            'region_id', 'region_name', 'district_id',
-            'district_name', 'pps_id', 'pps_name',
-            'program_id', 'product_id', 'product_name',
-        ]
-
-    @property
-    def columns(self):
-        columns = [
-            DatabaseColumn('Date', SimpleColumn('real_date_precise')),
-            DatabaseColumn('Region ID', SimpleColumn('region_id')),
-            DatabaseColumn('Region Name', SimpleColumn('region_name')),
-            DatabaseColumn('District ID', SimpleColumn('district_id')),
-            DatabaseColumn('District Name', SimpleColumn('district_name')),
-            DatabaseColumn('PPS ID', SimpleColumn('pps_id')),
-            DatabaseColumn('PPS Name', SimpleColumn('pps_name')),
-            DatabaseColumn('Program ID', SimpleColumn('program_id')),
-            DatabaseColumn('Product ID', SimpleColumn('product_id')),
-            DatabaseColumn('Product name', SimpleColumn('product_name')),
-            DatabaseColumn("Product is outstock", SimpleColumn('product_is_outstock')),
-        ]
-        return columns
-
     @cached_property
     def selected_location(self):
-        if self.config['selected_location']:
-            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        if self.config['location_id']:
+            return SQLLocation.objects.get(location_id=self.config['location_id'])
         else:
             return None
 
@@ -4183,9 +4160,9 @@ class TauxDeRuptureRateData(SqlData):
 
     @cached_property
     def loc_type(self):
-        if self.selected_location_type == 'national':
+        if self.selected_location_type in ['national', 'region']:
             return 'region'
-        elif self.selected_location_type == 'region':
+        elif self.selected_location_type == 'disctrict':
             return 'district'
         else:
             return 'pps'
@@ -4198,15 +4175,28 @@ class TauxDeRuptureRateData(SqlData):
     def loc_name(self):
         return "{}_name".format(self.loc_type)
 
-    @property
-    def desired_location(self):
-        if self.config['selected_location']:
-            return self.config['selected_location']
-        return None
+    @cached_property
+    def loc_type_to_get(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id_to_get(self):
+        return "{}_id".format(self.loc_type_to_get)
+
+    @cached_property
+    def loc_name_to_get(self):
+        return "{}_name".format(self.loc_type_to_get)
 
     @property
     def filters(self):
         filters = [BETWEEN('real_date_precise', 'startdate', 'enddate')]
+        if self.config['location_id']:
+            filters.append(EQ(self.loc_id, 'location_id'))
         if self.config['product_product']:
             filters.append(EQ('product_id', 'product_product'))
         elif self.config['product_program']:
@@ -4214,19 +4204,35 @@ class TauxDeRuptureRateData(SqlData):
         return filters
 
     @property
+    def group_by(self):
+        group_by = [
+            self.loc_id_to_get, self.loc_name_to_get,
+            'real_date_precise', 'product_is_outstock',
+            'product_id', 'product_name', 'program_id'
+        ]
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn('Date', SimpleColumn('real_date_precise')),
+            DatabaseColumn('Location ID', SimpleColumn(self.loc_id_to_get)),
+            DatabaseColumn('Location Name', SimpleColumn(self.loc_name_to_get)),
+            DatabaseColumn('Product ID', SimpleColumn('product_id')),
+            DatabaseColumn('Program ID', SimpleColumn('program_id')),
+            DatabaseColumn('Product Name', SimpleColumn('product_name')),
+            DatabaseColumn('Is product outstock', SimpleColumn('product_is_outstock')),
+        ]
+        return columns
+
+    @property
     def rows(self):
         rows_to_return = []
-        all_wanted_rows = []
         rows = self.get_data()
-        if self.desired_location:
-            for row in rows:
-                if self.desired_location in row.values():
-                    all_wanted_rows.append(row)
-        else:
-            all_wanted_rows = rows
 
         def clean_rows(data_to_clean):
-            stocks = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
+            stocks = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name_to_get)])
 
             stocks_list = []
             added_locations = []
@@ -4234,8 +4240,8 @@ class TauxDeRuptureRateData(SqlData):
             added_products_for_locations = {}
 
             for stock in stocks:
-                location_name = stock['{}'.format(self.loc_name)]
-                location_id = stock['{}'.format(self.loc_id)]
+                location_name = stock['{}'.format(self.loc_name_to_get)]
+                location_id = stock['{}'.format(self.loc_id_to_get)]
                 if location_id is None:
                     location_id = location_name
                 product_name = stock['product_name']
@@ -4316,16 +4322,19 @@ class TauxDeRuptureRateData(SqlData):
 
             return stocks_list_to_return
 
-        for row in all_wanted_rows:
+        for row in rows:
             if not rows_to_return:
                 rows_to_return.append(row)
             else:
                 length = len(rows_to_return)
                 for r in range(0, length):
                     current_product = rows_to_return[r]
-                    current_location_id = current_product[self.loc_id]
+                    current_location_id = current_product[self.loc_id_to_get] \
+                        if current_product[self.loc_id_to_get] is not None else current_product[self.loc_name_to_get]
                     current_product_id = current_product['product_id']
-                    if current_location_id == row[self.loc_id] and current_product_id == row['product_id']:
+                    _row_id = row[self.loc_id_to_get] \
+                        if row[self.loc_id_to_get] is not None else row[self.loc_name_to_get]
+                    if current_location_id == _row_id and current_product_id == row['product_id']:
                         current_date = current_product['real_date_precise']
                         new_date = row['real_date_precise']
                         if current_date > new_date:
@@ -4360,36 +4369,10 @@ class ConsommationPerProductData(SqlData):
         config, _ = get_datasource_config(doc_id, config_domain)
         return get_table_name(config_domain, config.table_id)
 
-    @property
-    def group_by(self):
-        return [
-            'region_id', 'region_name', 'district_id',
-            'district_name', 'pps_id', 'pps_name',
-            'product_id', 'product_name', 'program_id',
-            'actual_consumption', 'real_date_precise'
-        ]
-
-    @property
-    def columns(self):
-        columns = [
-            DatabaseColumn('Date', SimpleColumn('real_date_precise')),
-            DatabaseColumn('Region ID', SimpleColumn('region_id')),
-            DatabaseColumn('Region Name', SimpleColumn('region_name')),
-            DatabaseColumn('District ID', SimpleColumn('district_id')),
-            DatabaseColumn('District Name', SimpleColumn('district_name')),
-            DatabaseColumn('PPS ID', SimpleColumn('pps_id')),
-            DatabaseColumn('PPS Name', SimpleColumn('pps_name')),
-            DatabaseColumn("Program ID", SimpleColumn('program_id')),
-            DatabaseColumn("Product ID", SimpleColumn('product_id')),
-            DatabaseColumn("Product name", SimpleColumn('product_name')),
-            DatabaseColumn("Consumption", SimpleColumn('actual_consumption'))
-        ]
-        return columns
-
     @cached_property
     def selected_location(self):
-        if self.config['selected_location']:
-            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        if self.config['location_id']:
+            return SQLLocation.objects.get(location_id=self.config['location_id'])
         else:
             return None
 
@@ -4401,9 +4384,9 @@ class ConsommationPerProductData(SqlData):
 
     @cached_property
     def loc_type(self):
-        if self.selected_location_type == 'national':
+        if self.selected_location_type in ['national', 'region']:
             return 'region'
-        elif self.selected_location_type == 'region':
+        elif self.selected_location_type == 'disctrict':
             return 'district'
         else:
             return 'pps'
@@ -4416,15 +4399,28 @@ class ConsommationPerProductData(SqlData):
     def loc_name(self):
         return "{}_name".format(self.loc_type)
 
-    @property
-    def desired_location(self):
-        if self.config['selected_location']:
-            return self.config['selected_location']
-        return None
+    @cached_property
+    def loc_type_to_get(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id_to_get(self):
+        return "{}_id".format(self.loc_type_to_get)
+
+    @cached_property
+    def loc_name_to_get(self):
+        return "{}_name".format(self.loc_type_to_get)
 
     @property
     def filters(self):
         filters = [BETWEEN('real_date_precise', 'startdate', 'enddate')]
+        if self.config['location_id']:
+            filters.append(EQ(self.loc_id, 'location_id'))
         if self.config['product_product']:
             filters.append(EQ('product_id', 'product_product'))
         elif self.config['product_program']:
@@ -4432,19 +4428,34 @@ class ConsommationPerProductData(SqlData):
         return filters
 
     @property
+    def group_by(self):
+        group_by = [
+            self.loc_id_to_get, self.loc_name_to_get,
+            'real_date_precise', 'actual_consumption',
+            'product_id', 'product_name', 'program_id'
+        ]
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn('Date', SimpleColumn('real_date_precise')),
+            DatabaseColumn('Location ID', SimpleColumn(self.loc_id_to_get)),
+            DatabaseColumn('Location Name', SimpleColumn(self.loc_name_to_get)),
+            DatabaseColumn("Program ID", SimpleColumn('program_id')),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Product name", SimpleColumn('product_name')),
+            DatabaseColumn("Consumption", SimpleColumn('actual_consumption'))
+        ]
+        return columns
+
+    @property
     def rows(self):
-        all_wanted_rows = []
         rows = self.get_data()
 
-        if self.desired_location:
-            for row in rows:
-                if self.desired_location in row.values():
-                    all_wanted_rows.append(row)
-        else:
-            all_wanted_rows = rows
-
         def clean_rows(data_to_clean):
-            consumptions = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
+            consumptions = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name_to_get)])
 
             consumptions_list = []
             added_locations = []
@@ -4452,8 +4463,8 @@ class ConsommationPerProductData(SqlData):
             added_products_for_locations = {}
 
             for consumption in consumptions:
-                location_name = consumption['{}'.format(self.loc_name)]
-                location_id = consumption['{}'.format(self.loc_id)]
+                location_name = consumption['{}'.format(self.loc_name_to_get)]
+                location_id = consumption['{}'.format(self.loc_id_to_get)]
                 if location_id is None:
                     location_id = location_name
                 product_name = consumption['product_name']
@@ -4526,7 +4537,7 @@ class ConsommationPerProductData(SqlData):
 
             return consumptions_list_to_return
 
-        clean_data = clean_rows(all_wanted_rows)
+        clean_data = clean_rows(rows)
 
         return clean_data
 
@@ -4927,8 +4938,8 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
 
     @cached_property
     def selected_location(self):
-        if self.config['selected_location']:
-            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        if self.config['location_id']:
+            return SQLLocation.objects.get(location_id=self.config['location_id'])
         else:
             return None
 
@@ -4940,9 +4951,9 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
 
     @cached_property
     def loc_type(self):
-        if self.selected_location_type == 'national':
+        if self.selected_location_type in ['national', 'region']:
             return 'region'
-        elif self.selected_location_type == 'region':
+        elif self.selected_location_type == 'disctrict':
             return 'district'
         else:
             return 'pps'
@@ -4955,15 +4966,28 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
     def loc_name(self):
         return "{}_name".format(self.loc_type)
 
-    @property
-    def desired_location(self):
-        if self.config['selected_location']:
-            return self.config['selected_location']
-        return None
+    @cached_property
+    def loc_type_to_get(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id_to_get(self):
+        return "{}_id".format(self.loc_type_to_get)
+
+    @cached_property
+    def loc_name_to_get(self):
+        return "{}_name".format(self.loc_type_to_get)
 
     @property
     def filters(self):
-        filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
+        filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
+        if self.config['location_id']:
+            filters.append(EQ(self.loc_id, 'location_id'))
         if self.config['product_product']:
             filters.append(EQ('product_id', 'product_product'))
         elif self.config['product_program']:
@@ -4972,22 +4996,21 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
 
     @property
     def group_by(self):
-        return [
-            'real_date_repeat', 'product_id', 'product_name', 'select_programs',
-            'region_id', 'region_name', 'district_id',
-            'district_name', 'pps_id', 'pps_name',
+        group_by = [
+            self.loc_id_to_get, self.loc_name_to_get,
+            'real_date_repeat', 'select_programs',
+            'product_id', 'product_name', 'ideal_topup',
+            'amt_delivered_convenience'
         ]
+
+        return group_by
 
     @property
     def columns(self):
         columns = [
             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
-            DatabaseColumn('Region ID', SimpleColumn('region_id')),
-            DatabaseColumn('Region Name', SimpleColumn('region_name')),
-            DatabaseColumn('District ID', SimpleColumn('district_id')),
-            DatabaseColumn('District Name', SimpleColumn('district_name')),
-            DatabaseColumn('PPS ID', SimpleColumn('pps_id')),
-            DatabaseColumn('PPS Name', SimpleColumn('pps_name')),
+            DatabaseColumn('Location ID', SimpleColumn(self.loc_id_to_get)),
+            DatabaseColumn('Location Name', SimpleColumn(self.loc_name_to_get)),
             DatabaseColumn("Product ID", SimpleColumn('product_id')),
             DatabaseColumn("Product Name", SimpleColumn('product_name')),
             DatabaseColumn("Programs", SimpleColumn('select_programs')),
@@ -4998,26 +5021,18 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
 
     @property
     def rows(self):
-        all_wanted_rows = []
         rows = self.get_data()
 
-        if self.desired_location:
-            for row in rows:
-                if self.desired_location in row.values():
-                    all_wanted_rows.append(row)
-        else:
-            all_wanted_rows = rows
-
         def clean_rows(data_to_clean):
-            quantities = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
+            quantities = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name_to_get)])
             quantities_list = []
             added_locations = []
             added_programs = []
             added_products_for_locations = {}
 
             for quantity in quantities:
-                location_id = quantity['{}'.format(self.loc_id)]
-                location_name = quantity['{}'.format(self.loc_name)]
+                location_id = quantity['{}'.format(self.loc_id_to_get)]
+                location_name = quantity['{}'.format(self.loc_name_to_get)]
                 if location_id is None:
                     location_id = location_name
                 product_name = quantity['product_name']
@@ -5085,7 +5100,7 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
 
             return quantities_list_to_return
 
-        clean_data = clean_rows(all_wanted_rows)
+        clean_data = clean_rows(rows)
 
         return clean_data
 
@@ -5119,19 +5134,15 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
     def group_by(self):
         return [
             'real_date_repeat', 'product_id', 'product_name', 'select_programs',
-            'region_id', 'region_name', 'district_id',
-            'district_name', 'pps_id', 'pps_name',
+            self.loc_id_to_get, self.loc_name_to_get,
+            'final_pna_stock_valuation'
         ]
 
     @property
     def columns(self):
         columns = [
-            DatabaseColumn('Region ID', SimpleColumn('region_id')),
-            DatabaseColumn('Region Name', SimpleColumn('region_name')),
-            DatabaseColumn('District ID', SimpleColumn('district_id')),
-            DatabaseColumn('District Name', SimpleColumn('district_name')),
-            DatabaseColumn('PPS ID', SimpleColumn('pps_id')),
-            DatabaseColumn('PPS Name', SimpleColumn('pps_name')),
+            DatabaseColumn('Location ID', SimpleColumn(self.loc_id_to_get)),
+            DatabaseColumn('Location Name', SimpleColumn(self.loc_name_to_get)),
             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
             DatabaseColumn("Product ID", SimpleColumn('product_id')),
             DatabaseColumn("Product Name", SimpleColumn('product_name')),
@@ -5142,8 +5153,8 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
 
     @cached_property
     def selected_location(self):
-        if self.config['selected_location']:
-            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        if self.config['location_id']:
+            return SQLLocation.objects.get(location_id=self.config['location_id'])
         else:
             return None
 
@@ -5155,9 +5166,9 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
 
     @cached_property
     def loc_type(self):
-        if self.selected_location_type == 'national':
+        if self.selected_location_type in ['national', 'region']:
             return 'region'
-        elif self.selected_location_type == 'region':
+        elif self.selected_location_type == 'disctrict':
             return 'district'
         else:
             return 'pps'
@@ -5170,15 +5181,28 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
     def loc_name(self):
         return "{}_name".format(self.loc_type)
 
-    @property
-    def desired_location(self):
-        if self.config['selected_location']:
-            return self.config['selected_location']
-        return None
+    @cached_property
+    def loc_type_to_get(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        elif self.selected_location_type == 'region':
+            return 'district'
+        else:
+            return 'pps'
+
+    @cached_property
+    def loc_id_to_get(self):
+        return "{}_id".format(self.loc_type_to_get)
+
+    @cached_property
+    def loc_name_to_get(self):
+        return "{}_name".format(self.loc_type_to_get)
 
     @property
     def filters(self):
         filters = [BETWEEN('real_date_repeat', 'startdate', 'enddate')]
+        if self.config['location_id']:
+            filters.append(EQ(self.loc_id, 'location_id'))
         if self.config['product_product']:
             filters.append(EQ('product_id', 'product_product'))
         elif self.config['product_program']:
@@ -5187,18 +5211,10 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
 
     @property
     def rows(self):
-        all_wanted_rows = []
         rows = self.get_data()
 
-        if self.desired_location:
-            for row in rows:
-                if self.desired_location in row.values():
-                    all_wanted_rows.append(row)
-        else:
-            all_wanted_rows = rows
-
         def clean_rows(data_to_clean):
-            pnas = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name)])
+            pnas = sorted(data_to_clean, key=lambda x: x['{}'.format(self.loc_name_to_get)])
 
             pnas_list = []
             pnas_list_to_return = []
@@ -5207,8 +5223,8 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
             added_products_for_locations = {}
 
             for pna in pnas:
-                location_name = pna['{}'.format(self.loc_name)]
-                location_id = pna['{}'.format(self.loc_id)]
+                location_name = pna['{}'.format(self.loc_name_to_get)]
+                location_id = pna['{}'.format(self.loc_id_to_get)]
                 product_name = pna['product_name']
                 product_id = pna['product_id']
                 program_id = pna['select_programs']
@@ -5282,7 +5298,7 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
 
             return pnas_list_to_return
 
-        clean_data = clean_rows(all_wanted_rows)
+        clean_data = clean_rows(rows)
 
         return clean_data
 
@@ -5847,8 +5863,8 @@ class IndicateursDeBaseData(SqlData):
     @property
     def group_by(self):
         return [
-            'region_id', 'region_name', 'district_id',
-            'district_name', 'date_prevue_livraison_debut',
+            self.loc_id_to_get, self.loc_name_to_get,
+            'date_prevue_livraison_debut',
             'date_prevue_livraison_fin', 'nb_pps_enregistres',
             'nb_pps_visites'
         ]
@@ -5856,12 +5872,10 @@ class IndicateursDeBaseData(SqlData):
     @property
     def columns(self):
         columns = [
+            DatabaseColumn('Location ID', SimpleColumn(self.loc_id_to_get)),
+            DatabaseColumn('Location Name', SimpleColumn(self.loc_name_to_get)),
             DatabaseColumn('Date (Start)', SimpleColumn('date_prevue_livraison_debut')),
             DatabaseColumn('Date (End)', SimpleColumn('date_prevue_livraison_fin')),
-            DatabaseColumn('Region ID', SimpleColumn('region_id')),
-            DatabaseColumn('Region Name', SimpleColumn('region_name')),
-            DatabaseColumn('District ID', SimpleColumn('district_id')),
-            DatabaseColumn('District Name', SimpleColumn('district_name')),
             DatabaseColumn("NB PPS Enregistres", SimpleColumn('nb_pps_enregistres')),
             DatabaseColumn("NB PPS Visites", SimpleColumn('nb_pps_visites')),
         ]
@@ -5869,8 +5883,8 @@ class IndicateursDeBaseData(SqlData):
 
     @cached_property
     def selected_location(self):
-        if self.config['selected_location']:
-            return SQLLocation.objects.get(location_id=self.config['selected_location'])
+        if self.config['location_id']:
+            return SQLLocation.objects.get(location_id=self.config['location_id'])
         else:
             return None
 
@@ -5882,12 +5896,10 @@ class IndicateursDeBaseData(SqlData):
 
     @cached_property
     def loc_type(self):
-        if self.selected_location_type == 'national':
+        if self.selected_location_type in ['national', 'region']:
             return 'region'
-        elif self.selected_location_type == 'region':
-            return 'district'
         else:
-            return 'pps'
+            return 'district'
 
     @cached_property
     def loc_id(self):
@@ -5897,11 +5909,20 @@ class IndicateursDeBaseData(SqlData):
     def loc_name(self):
         return "{}_name".format(self.loc_type)
 
-    @property
-    def desired_location(self):
-        if self.config['selected_location']:
-            return self.config['selected_location']
-        return None
+    @cached_property
+    def loc_type_to_get(self):
+        if self.selected_location_type == 'national':
+            return 'region'
+        else:
+            return 'district'
+
+    @cached_property
+    def loc_id_to_get(self):
+        return "{}_id".format(self.loc_type_to_get)
+
+    @cached_property
+    def loc_name_to_get(self):
+        return "{}_name".format(self.loc_type_to_get)
 
     @property
     def month(self):
@@ -5936,11 +5957,14 @@ class IndicateursDeBaseData(SqlData):
 
     @property
     def filters(self):
-        return []
+        filters = []
+        if self.config['location_id']:
+            filters.append(EQ(self.loc_id, 'location_id'))
+
+        return filters
 
     @property
     def rows(self):
-        all_wanted_rows = []
         rows = self.get_data()
 
         rows_with_wanted_date = []
@@ -5950,26 +5974,19 @@ class IndicateursDeBaseData(SqlData):
             if min_date >= self.min_date and max_date <= self.max_date:
                 rows_with_wanted_date.append(row)
 
-        if self.desired_location:
-            for row in rows_with_wanted_date:
-                if self.desired_location in row.values():
-                    all_wanted_rows.append(row)
-        else:
-            all_wanted_rows = rows_with_wanted_date
-
         def clean_rows(data_to_clean):
             for data_row in data_to_clean:
-                data_row[self.loc_name] = data_row.get(self.loc_name, '')
-                data_row[self.loc_id] = data_row.get(self.loc_id, '')
+                data_row[self.loc_name_to_get] = data_row.get(self.loc_name_to_get, '')
+                data_row[self.loc_id_to_get] = data_row.get(self.loc_id_to_get, '')
 
-            sorted_rows = sorted(data_to_clean, key=lambda x: x.get(self.loc_name, ' '))
+            sorted_rows = sorted(data_to_clean, key=lambda x: x.get(self.loc_name_to_get, ' '))
             added_locations = []
             data_for_locations = {}
             data_to_return = []
 
             for row in sorted_rows:
-                location_id = row[self.loc_id]
-                location_name = row[self.loc_name]
+                location_id = row[self.loc_id_to_get]
+                location_name = row[self.loc_name_to_get]
                 if location_id is None:
                     location_id = location_name
                 nb_pps_enregistres = row['nb_pps_enregistres']
@@ -6007,6 +6024,6 @@ class IndicateursDeBaseData(SqlData):
 
             return data_to_return
 
-        clean_data = clean_rows(all_wanted_rows)
+        clean_data = clean_rows(rows_with_wanted_date)
 
         return clean_data

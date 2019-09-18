@@ -18,7 +18,7 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     name = "Disponibilité par Produit"
-    slug = 'disponibilite_par_produit__report'
+    slug = 'disponibilite_par_produit_report'
     comment = 'Taux de disponibilité de la gamme'
     default_rows = 10
     exportable = True
@@ -291,7 +291,8 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
     @property
     def charts(self):
-        chart = PNAMultiBarChart(None, Axis('Product'), Axis('Percent', format='.2f'))
+        x_axis = 'Product' if self.selected_location_type != 'PPS' else 'Location'
+        chart = PNAMultiBarChart(None, Axis(x_axis), Axis('Percent', format='.2f'))
         chart.height = 550
         chart.marginBottom = 150
         chart.forceY = [0, 100]
@@ -409,5 +410,5 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         config['enddate'] = enddate
         config['product_program'] = self.request.GET.get('product_program')
         config['product_product'] = self.request.GET.get('product_product')
-        config['selected_location'] = self.request.GET.get('location_id')
+        config['location_id'] = self.request.GET.get('location_id')
         return config
