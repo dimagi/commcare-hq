@@ -159,7 +159,7 @@ _ADD_ONS = {
     "submenus": AddOn(
         name=_("Sub Menus"),
         description=_("Nest menus inside of other menus."),
-        help_link="https://confluence.dimagi.com/display/ccinternal/Sub+menus", # TODO: make public
+        help_link="https://confluence.dimagi.com/display/commcarepublic/Sub+Menus",
         used_in_module=lambda m: hasattr(m, 'root_module_id') and m.root_module_id,
     ),
     "empty_case_lists": AddOn(
