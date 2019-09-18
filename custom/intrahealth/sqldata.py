@@ -5760,7 +5760,8 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         context = self.create_table_context('amt_delivered_convenience', 'Livraison Total Effectuées')
         rows = context['rows']
         new_row = self.create_row_with_column_values_sum('Livraison Effectuées', rows)
-        new_row = new_row[:-1]
+        if new_row:
+            new_row = new_row[:-1]
         context['rows'].append(new_row)
         return context
 
@@ -5769,7 +5770,8 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         context = self.create_table_context('total_stock', 'Stock Disponible Utilisable')
         rows = context['rows']
         sum_row = self.create_row_with_column_values_sum('SDU avant Livraison', rows)
-        sum_row = sum_row[:-1]
+        if sum_row:
+            sum_row = sum_row[:-1]
         display_stock_row = self.add_row_with_sum_value('SDU après Livraison', 'display_total_stock')
         context['rows'].append(sum_row)
         context['rows'].append(display_stock_row)
