@@ -111,7 +111,7 @@ def create_application_staging_record(domain, name, app_id=None, doc_type=None, 
         application_id=app_id or uuid.uuid4().hex,
         name=name,
         doc_type=doc_type or 'Application',
-        batch_id=batch_id or DEFAULT_BATCH_ID,
+        batch_id=batch_id,
     )
     record.save()
     return record
