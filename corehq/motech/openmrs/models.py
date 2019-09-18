@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from memoized import memoized
 
 from dimagi.ext.couchdbkit import (
