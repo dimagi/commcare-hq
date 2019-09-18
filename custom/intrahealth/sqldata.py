@@ -5423,7 +5423,7 @@ class RecapPassageOneData(IntraHealthSqlData):
             location = rows[0]['pps_name']
             date = rows[0]['real_date_repeat']
             amount_billed_sum = 0
-            
+
             for row in rows:
                 product_name = row['product_name']
                 product_id = row['product_id']
