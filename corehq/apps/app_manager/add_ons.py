@@ -156,6 +156,12 @@ _ADD_ONS = {
         upgrade_text=_("Child cases are not available on your subscription. "
                        "This feature is only available on our Pro plan or higher.")
     ),
+    "submenus": AddOn(
+        name=_("Sub Menus"),
+        description=_("Nest menus inside of other menus."),
+        help_link="https://confluence.dimagi.com/display/ccinternal/Sub+menus", # TODO: make public
+        used_in_module=lambda m: hasattr(m, 'root_module_id') and m.root_module_id,
+    ),
     "empty_case_lists": AddOn(
         name=_("New Case Lists Created Empty"),
         description=_("When adding a new case list, don't include a registration and followup form."),
@@ -180,6 +186,7 @@ _LAYOUT = [
             "enum_image",
             "menu_mode",
             "register_from_case_list",
+            "submenus",
         ],
     },
     {
