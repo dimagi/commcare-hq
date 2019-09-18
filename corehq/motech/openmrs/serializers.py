@@ -74,27 +74,6 @@ def omrs_boolean_to_text(value):
     return 'true' if value else 'false'
 
 
-def unix_timestamp_to_datetime(value, tz=None):
-    """
-    Converts a Unix timestamp to a datetime.datetime instance.
-
-    Given None returns None. Raises ValueError for non-numeric values.
-
-    >>> tz = datetime.timezone(datetime.timedelta(hours=+2), 'CAT')
-    >>> dt = unix_timestamp_to_datetime(1551564000, tz)
-    >>> dt.strftime('%Y-%m-%d')
-    '2019-03-03'
-
-    """
-    if value is None:
-        return None
-    try:
-        timestamp = int(value)
-    except ValueError:
-        raise ValueError(f"{value!r} is not a Unix timestamp")
-    return datetime.datetime.fromtimestamp(timestamp, tz)
-
-
 def posix_milliseconds_to_isoformat(value, tz=None):
     """
     Converts an OpenMRS timestamp to ISO format. Accepts a timezone,
@@ -115,10 +94,11 @@ def posix_milliseconds_to_isoformat(value, tz=None):
     if value is None:
         return None
     try:
-        timestamp = int(value)
+        milliseconds_since_1970 = int(value)
     except ValueError:
         raise ValueError(f"{value!r} is not an OpenMRS timestamp")
-    dt = unix_timestamp_to_datetime(timestamp / 1000, tz)
+    seconds_since_1970 = milliseconds_since_1970 / 1000
+    dt = datetime.datetime.fromtimestamp(seconds_since_1970, tz)
     isoformat = dt.isoformat()
     if not dt.utcoffset():
         isoformat += "Z"
