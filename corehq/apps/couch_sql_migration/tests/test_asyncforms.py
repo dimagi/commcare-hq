@@ -39,8 +39,14 @@ class TestLockingQueues(SimpleTestCase):
         self.queues = mod.PartiallyLockingQueue("id", max_size=-1)
 
     def _add_to_queues(self, queue_obj_id, lock_ids):
-        self.queues._add_item(queue_obj_id, lock_ids, DummyObject(queue_obj_id))
+        self._add_item(lock_ids, DummyObject(queue_obj_id))
         self._check_queue_dicts(queue_obj_id, lock_ids, -1)
+
+    def _add_item(self, lock_ids, obj):
+        locked = self.queues._set_lock(lock_ids)
+        self.queues.try_obj(lock_ids, obj)
+        if locked:
+            self.queues.currently_locked.difference_update(lock_ids)
 
     def _check_queue_dicts(self, queue_obj_id, lock_ids, location=None, present=True):
         """
@@ -159,13 +165,13 @@ class TestLockingQueues(SimpleTestCase):
         self.queues.max_size = 2  # set max_size
         lock_ids = ['dali', 'manet', 'monet']
         queue_obj = DummyObject('osceola')
-        self.queues._add_item(queue_obj.id, lock_ids, queue_obj)
+        self._add_item(lock_ids, queue_obj)
         self.assertFalse(self.queues.full)  # not full when not full
         queue_obj = DummyObject('east osceola')
-        self.queues._add_item(queue_obj.id, lock_ids, queue_obj)
+        self._add_item(lock_ids, queue_obj)
         self.assertTrue(self.queues.full)  # full when full
         queue_obj = DummyObject('west osceola')
-        self.queues._add_item(queue_obj.id, lock_ids, queue_obj)
+        self._add_item(lock_ids, queue_obj)
         self.assertTrue(self.queues.full)  # full when over full
 
     def test_queue_ids(self):

@@ -168,27 +168,14 @@ class PartiallyLockingQueue(object):
         Returns :boolean: True if it acquired the lock, False if it was added to queue
         """
         queue_obj_id = self.get_queue_obj_id(queue_obj)
-        if not lock_ids:
+        if not lock_ids or self._set_lock(lock_ids):
             self.processing[queue_obj_id] = lock_ids
             return True
-        if self._is_any_locked(lock_ids):
-            self._add_item(queue_obj_id, lock_ids, queue_obj)
-            return False
-        queue_by_lock_id = self.queue_by_lock_id
-        for lock_id in lock_ids:  # if other objs are waiting for the same locks, it has to wait
-            if queue_by_lock_id.get(lock_id):
-                self._add_item(queue_obj_id, lock_ids, queue_obj)
-                return False
-        self.processing[queue_obj_id] = lock_ids
-        locked = self._set_lock(lock_ids)
-        assert locked, lock_ids
-        return True
-
-    def _add_item(self, queue_obj_id, lock_ids, queue_obj):
         queue_by_lock_id = self.queue_by_lock_id
         for lock_id in lock_ids:
             queue_by_lock_id[lock_id].append(queue_obj_id)
         self.objs_by_queue_id[queue_obj_id] = (queue_obj, lock_ids)
+        return False
 
     def pop(self):
         """Pop a locked object and lock ids from the queue
