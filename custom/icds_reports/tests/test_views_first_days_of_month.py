@@ -41,6 +41,7 @@ class ThirdDayOfJuly(datetime.datetime):
 
 
 class Base(TestCase):
+    DOMAIN_NAME = 'icds-test'
 
     def setUp(self):
         self.factory = None
@@ -50,7 +51,7 @@ class Base(TestCase):
         self.run_july_third_test = False
 
     def _setup_domain_and_user(self):
-        domain = Domain.get_or_create_with_name('icds-test')
+        domain = Domain.get_or_create_with_name(self.DOMAIN_NAME)
         domain.is_active = True
         domain.save()
         user = WebUser.create('icds-test', 'test', 'passwordtest', is_admin=True)
