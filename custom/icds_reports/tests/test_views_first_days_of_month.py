@@ -185,7 +185,10 @@ class Base(TestCase):
 
     def _get_request(self, path):
         request = self.factory.get(path)
-        request.user = self.user
+        # we need to mock a few things on the request to make sure login/permission checks pass
+        request.couch_user = self.user
+        request.user = self.user.get_django_user()
+        request.domain = self.DOMAIN_NAME
         return request
 
 
