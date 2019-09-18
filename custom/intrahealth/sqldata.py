@@ -5422,6 +5422,7 @@ class RecapPassageOneData(IntraHealthSqlData):
             product_names = set()
             location = rows[0]['pps_name']
             date = rows[0]['real_date_repeat']
+            amount_billed_sum = 0
 
             for row in rows:
                 product_name = row['product_name']
@@ -5448,17 +5449,18 @@ class RecapPassageOneData(IntraHealthSqlData):
                 product_data['Péremptions PNA'] += self.get_value(row['expired_pna'])
                 product_data['Ajustements / Retraits PNA'] += self.get_value(row['ajustment'])
                 product_data['Nombre Jours de rupture'] += self.get_value(row['nb_days_outstock'])
-                product_data['Consommations Non Facturable'] += self.get_value(row['consommations_non_facturable'])
+                product_data['Consommations Non Facturable'] += (
+                    self.get_value(row['actual_consumption']) - self.get_value(row['billed_consumption'])
+                )
                 product_data['CMM Ajustée'] += self.get_value(row['adjusted_monthly_consumption'])
                 product_data['Stock Restant ε PPS'] += self.get_value(row['pps_stock_new'])
+
+                amount_billed_sum += self.get_value(row['amount_billed'])
 
             product_names = sorted(product_names)
             self.product_names = product_names
 
             rows = []
-            # In case of no products
-            if len(product_names) == 0:
-                return self.empty_table
             for key in data[product_names[0]]:
                 next_row = [key]
                 for product in product_names:
@@ -5466,7 +5468,6 @@ class RecapPassageOneData(IntraHealthSqlData):
 
                 rows.append(next_row)
 
-            amount_billed_sum = sum([data[product]['amount_billed'] for product in self.product_names])
             facturation_fill = len(rows[0]) - 2
             facturation_group = ['Facturation Groupe', amount_billed_sum]
             facturation_group.extend([' ' for _ in range(facturation_fill)])
@@ -5496,6 +5497,7 @@ class RecapPassageOneData(IntraHealthSqlData):
             data['Total Facture'] += self.get_value(row['amount_billed'])
             data['Net à Payer'] += self.get_value(row['amount_owed'])
 
+        data['Net à Payer'] = int(data['Total Facture'] * 1.075)
         rows = []
         headers = data.keys()
         for header in headers:
@@ -5758,6 +5760,8 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         context = self.create_table_context('amt_delivered_convenience', 'Livraison Total Effectuées')
         rows = context['rows']
         new_row = self.create_row_with_column_values_sum('Livraison Effectuées', rows)
+        if new_row:
+            new_row = new_row[:-1]
         context['rows'].append(new_row)
         return context
 
@@ -5766,6 +5770,8 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         context = self.create_table_context('total_stock', 'Stock Disponible Utilisable')
         rows = context['rows']
         sum_row = self.create_row_with_column_values_sum('SDU avant Livraison', rows)
+        if sum_row:
+            sum_row = sum_row[:-1]
         display_stock_row = self.add_row_with_sum_value('SDU après Livraison', 'display_total_stock')
         context['rows'].append(sum_row)
         context['rows'].append(display_stock_row)
