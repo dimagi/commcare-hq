@@ -142,31 +142,10 @@ hqDefine("hqmedia/js/reference_controller",[
         'use strict';
         var self = BaseReferenceGroup(name, objectMap, groupId);
 
-        self.images = ko.observableArray();
-        self.audio = ko.observableArray();
-        self.video = ko.observableArray();
-
-        self.active_images = ko.computed(function () {
-            return (self.showOnlyMissing()) ? self.getMissingRefs(self.images()) : self.images();
-        }, self);
-        self.active_audio = ko.computed(function () {
-            return (self.showOnlyMissing()) ? self.getMissingRefs(self.audio()) : self.audio();
-        }, self);
-        self.active_video = ko.computed(function () {
-            return (self.showOnlyMissing()) ? self.getMissingRefs(self.video()) : self.video();
-        }, self);
+        self.references = ko.observableArray();
 
         self.processReference = function (ref) {
-            var refObj = self.createReferenceObject(ref);
-            if (ref.is_menu_media) {
-                self.menu_references.push(refObj);
-            } else if (ref.media_class === "CommCareImage") {
-                self.images.push(refObj);
-            } else if (ref.media_class === "CommCareAudio") {
-                self.audio.push(refObj);
-            } else if (ref.media_class === "CommCareVideo") {
-                self.video.push(refObj);
-            }
+            self.references.push(self.createReferenceObject(ref));
         };
 
         return self;
