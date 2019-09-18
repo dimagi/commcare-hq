@@ -17,7 +17,7 @@ hqDefine("hqmedia/js/reference_controller",[
         assertProperties.assert(options, ['references', 'objectMap', 'totals']);
         var self = {};
         self.objectMap = options.objectMap;
-        self.modules = [];
+        self.references = ko.observableArray();
         self.showMissingReferences = ko.observable(false);
         self.totals = ko.observable(options.totals);
 
@@ -26,34 +26,28 @@ hqDefine("hqmedia/js/reference_controller",[
         }, self);
 
         self.render = function () {
-            _.each(options.references, function (ref) {
-                if (!self.modules[ref.module.id]) {
-                    self.modules[ref.module.id] = ModuleReferences(ref.module.name, self.objectMap, ref.module.id);
+            self.references(_.compact(_.map(options.references, function (ref) {
+                var objRef = self.objectMap[ref.path];
+                if (ref.media_class === "CommCareImage") {
+                    var imageRef = ImageReference(ref);
+                    imageRef.setObjReference(objRef);
+                    return imageRef;
+                } else if (ref.media_class === "CommCareAudio") {
+                    var audioRef = AudioReference(ref);
+                    audioRef.setObjReference(objRef);
+                    return audioRef;
+                } else if (ref.media_class === "CommCareVideo") {
+                    var videoRef = VideoReference(ref);
+                    videoRef.setObjReference(objRef);
+                    return videoRef;
                 }
-                self.modules[ref.module.id].processReference(ref);
-            });
-            self.modules = _.compact(self.modules);
-            _.each(self.modules, function (mod) {
-                mod.forms = _.compact(mod.forms);
-            });
+                // Other multimedia, like HTML print templates, is ignored by the reference checker
+                return null;
+            })));
         };
 
         self.toggleMissingRefs = function (sender, event) {
-            var showMissing = !self.showMissingReferences();
-            self.showMissingReferences(showMissing);
-            for (var m = 0; m < self.modules.length; m++) {
-                var module = self.modules[m];
-                if (module) {
-                    module.showOnlyMissing(showMissing);
-                    for (var f = 0; f < module.forms.length; f++) {
-                        var form = module.forms[f];
-                        if (form) {
-                            form.showOnlyMissing(showMissing);
-                        }
-                    }
-                }
-            }
-            event.preventDefault();
+            self.showMissingReferences(!self.showMissingReferences());
         };
 
         self.incrementTotals = function (trigger, event, data) {
@@ -70,89 +64,6 @@ hqDefine("hqmedia/js/reference_controller",[
 
         return self;
     }
-
-    function BaseReferenceGroup(name, objectMap, groupId) {
-        'use strict';
-        var self = {};
-        self.name = name;
-        self.id = groupId;
-        self.objectMap = objectMap;
-        self.menu_references = ko.observableArray();
-        self.showOnlyMissing = ko.observable(false);
-
-        self.active_menu_references = ko.computed(function () {
-            return (self.showOnlyMissing()) ? self.getMissingRefs(self.menu_references()) : self.menu_references();
-        }, self);
-
-        self.createReferenceObject = function (ref) {
-            var objRef = self.objectMap[ref.path];
-            if (ref.media_class === "CommCareImage") {
-                var imageRef = ImageReference(ref);
-                imageRef.setObjReference(objRef);
-                return imageRef;
-            } else if (ref.media_class === "CommCareAudio") {
-                var audioRef = AudioReference(ref);
-                audioRef.setObjReference(objRef);
-                return audioRef;
-            } else if (ref.media_class === "CommCareVideo") {
-                var videoRef = VideoReference(ref);
-                videoRef.setObjReference(objRef);
-                return videoRef;
-            }
-            return null;
-        };
-
-        self.getMissingRefs = function (refs) {
-            var missing = [];
-            for (var r = 0; r < refs.length; r++) {
-                var ref = refs[r];
-                if (!ref.is_matched()) {
-                    missing.push(ref);
-                }
-            }
-            return missing;
-        };
-        return self;
-    }
-
-    function ModuleReferences(name, objectMap, groupId) {
-        'use strict';
-        var self = BaseReferenceGroup(name, objectMap, groupId);
-        self.forms = [];
-        self.id = "module-" + self.id;
-
-        self.processReference = function (ref) {
-            if (ref.form.unique_id) {
-                if (!self.forms[ref.form.order]) {
-                    self.forms[ref.form.order] = FormReferences(ref.form.name, self.objectMap, ref.form.unique_id);
-                }
-                self.forms[ref.form.order].processReference(ref);
-            } else if (ref.is_menu_media) {
-                self.menu_references.push(self.createReferenceObject(ref));
-            }
-        };
-        return self;
-    }
-
-    ModuleReferences.prototype = Object.create(BaseReferenceGroup.prototype);
-    ModuleReferences.prototype.constructor = ModuleReferences;
-
-
-    function FormReferences(name, objectMap, groupId) {
-        'use strict';
-        var self = BaseReferenceGroup(name, objectMap, groupId);
-
-        self.references = ko.observableArray();
-
-        self.processReference = function (ref) {
-            self.references.push(self.createReferenceObject(ref));
-        };
-
-        return self;
-    }
-
-    FormReferences.prototype = Object.create(BaseReferenceGroup.prototype);
-    FormReferences.prototype.constructor = FormReferences;
 
     function BaseMediaReference(ref) {
         'use strict';
@@ -298,5 +209,3 @@ hqDefine("hqmedia/js/reference_controller",[
     };
 
 });
-
-

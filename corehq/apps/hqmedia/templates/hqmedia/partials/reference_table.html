@@ -11,8 +11,10 @@
     <th class="col-sm-4">{% trans 'Path in Application'  %}</th>
   </tr>
   </thead>
-  <tbody data-bind="foreach: {{ ref_type }}">
-    <tr data-bind="attr: { 'data-hqmediapath': path }, event: { mediaUploadComplete: uploadComplete }">
+  <tbody data-bind="foreach: references">
+    <tr data-bind="attr: { 'data-hqmediapath': path },
+                   event: { mediaUploadComplete: uploadComplete },
+                   visible: !is_matched() || !$root.showMissingReferences()">
       <td>
           <a data-bind="attr: {href: app_url}">
             <span data-bind="text: module.name"></span>

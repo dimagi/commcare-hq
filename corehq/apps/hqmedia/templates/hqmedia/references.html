@@ -69,12 +69,7 @@
       </div>
     </div>
 
-    <!-- ko foreach: modules -->
-      {% include "hqmedia/partials/reference_table.html" with ref_type="active_menu_references" %}
-      <!-- ko foreach: forms -->
-        {% include "hqmedia/partials/reference_table.html" with ref_type="references" %}
-      <!-- /ko -->
-    <!-- /ko -->
+    {% include "hqmedia/partials/reference_table.html" %}
 
     <script type="text/html" id="image-preview-template">
       <a target="_blank" data-bind="attr: { href: url }">
