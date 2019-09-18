@@ -5,6 +5,7 @@ from collections import defaultdict
 from itertools import chain, count
 
 import gevent
+import gipc
 from gevent.event import Event
 from gevent.pool import Group, Pool
 
@@ -12,7 +13,6 @@ from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.stock.models import StockReport
 from dimagi.utils.chunked import chunked
 
-import gipc
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.tzmigration.timezonemigration import json_diff
 from corehq.form_processor.backends.couch.dbaccessors import (
