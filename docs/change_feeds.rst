@@ -98,3 +98,41 @@ Depending on the data being published, some of these may be able to be skipped (
 2. Setup a subscriber, following the instructions above.
 3. For non-couch-based data sources, you must setup a ``DocumentStore`` class for the pillow, and include it in the published feed.
 4. For any pillows that require additional bootstrap logic (e.g. setting up UCR data tables or bootstrapping elasticsearch indexes) this must be hooked up manually.
+
+Mapping the above to CommCare-specific details
+==============================================
+
+Topics
+~~~~~~
+
+The list of topics used by CommCare can be found in `corehq.apps.change_feed.topics.py <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/change_feed/topics.py#L9>`_.
+For most data models there is a 1:1 relationship between the data model and the model in CommCare HQ, with the exceptions
+of forms and cases, which each have two topics - one for the legacy CouchDB-based forms/cases, and one for the SQL-based
+models (suffixed by ``-sql``).
+
+Contents of the feed
+~~~~~~~~~~~~~~~~~~~~
+
+Generally the contents of each change in the feed will documents that mirror the ``ChangeMeta`` class in
+`pillowtop.feed.interface <https://github.com/dimagi/commcare-hq/blob/master/corehq/ex-submodules/pillowtop/feed/interface.py#L9>`_,
+in the form of a serialized JSON dictionary. An example once deserialized might look something like this:
+
+.. code-block:: json
+
+    {
+      "document_id": "95dece4cd7c945ec83c6d2dd04d38673",
+      "data_source_type": "sql",
+      "data_source_name": "form-sql",
+      "document_type": "XFormInstance",
+      "document_subtype": "http://commcarehq.org/case",
+      "domain": "dimagi",
+      "is_deletion": false,
+      "document_rev": null,
+      "publish_timestamp": "2019-09-18T14:31:01.930921Z",
+      "attempts": 0
+    }
+
+Details on how to interpret these can be found in the comments of the linked class.
+
+The `document_id`, along with the `document_type` and `data_source_type` should be sufficient to retrieve the
+underlying raw document out from the feed from the Document Store (see above).
