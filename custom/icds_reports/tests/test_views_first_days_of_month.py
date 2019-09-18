@@ -6,6 +6,7 @@ import json
 import mock
 import datetime
 
+from corehq.toggles import DASHBOARD_ICDS_REPORT
 from custom.icds_reports.views import PrevalenceOfUndernutritionView, AwcReportsView, \
     PrevalenceOfSevereView, PrevalenceOfStuntingView, NewbornsWithLowBirthWeightView, \
     EarlyInitiationBreastfeeding, ExclusiveBreastfeedingView, ChildrenInitiatedView, InstitutionalDeliveriesView, \
@@ -54,6 +55,9 @@ class Base(TestCase):
         domain = Domain.get_or_create_with_name(self.DOMAIN_NAME)
         domain.is_active = True
         domain.save()
+        # used instead of flag_enabled, because the patch is tricky to get into the required_decorator()
+        # function at the appropriate time
+        DASHBOARD_ICDS_REPORT.always_enabled = set([self.DOMAIN_NAME])
         user = WebUser.create('icds-test', 'test', 'passwordtest', is_admin=True)
         user.is_authenticated = True
         user.is_superuser = False
@@ -186,6 +190,7 @@ class Base(TestCase):
     def tearDown(self):
         if self.user:
             self.user.delete()
+        DASHBOARD_ICDS_REPORT.always_enabled = set()
 
 
 class TestPrevalenceOfUndernutritionView(Base):
