@@ -49,6 +49,19 @@ class Base(TestCase):
         self.url = None
         self.run_july_third_test = False
 
+    def _setup_domain_and_user(self):
+        domain = Domain.get_or_create_with_name('icds-test')
+        domain.is_active = True
+        domain.save()
+        user = WebUser.all().first()
+        if not user:
+            user = WebUser.create('icds-test', 'test', 'passwordtest')
+        user.is_authenticated = True
+        user.is_superuser = True
+        user.is_authenticated = True
+        user.is_active = True
+        self.user = user
+
     def test_map_first_day_of_month(self):
         if self.factory is None:
             return
@@ -182,17 +195,7 @@ class TestPrevalenceOfUndernutritionView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = PrevalenceOfUndernutritionView.as_view()
         self.url = 'underweight_children'
 
@@ -202,17 +205,7 @@ class TestAwcReportsView(Base):
     def setUp(self):
         self.run_july_third_test = False
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = AwcReportsView.as_view()
         self.url = 'awc_reports'
 
@@ -222,17 +215,7 @@ class TestPrevalenceOfSevereView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = PrevalenceOfSevereView.as_view()
         self.url = 'prevalence_of_severe'
 
@@ -242,17 +225,7 @@ class TestPrevalenceOfStuntingView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = PrevalenceOfStuntingView.as_view()
         self.url = 'prevalence_of_stunting'
 
@@ -262,17 +235,7 @@ class TestNewbornsWithLowBirthWeightView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = NewbornsWithLowBirthWeightView.as_view()
         self.url = 'low_birth'
 
@@ -282,17 +245,7 @@ class TestEarlyInitiationBreastfeeding(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = EarlyInitiationBreastfeeding.as_view()
         self.url = 'early_initiation'
 
@@ -302,17 +255,7 @@ class TestExclusiveBreastfeedingView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = ExclusiveBreastfeedingView.as_view()
         self.url = 'exclusive-breastfeeding'
 
@@ -322,17 +265,7 @@ class TestChildrenInitiatedView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = ChildrenInitiatedView.as_view()
         self.url = 'children_initiated'
 
@@ -342,17 +275,7 @@ class TestInstitutionalDeliveriesView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = InstitutionalDeliveriesView.as_view()
         self.url = 'institutional_deliveries'
 
@@ -362,17 +285,7 @@ class TestImmunizationCoverageView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = ImmunizationCoverageView.as_view()
         self.url = 'immunization_coverage'
 
@@ -382,17 +295,7 @@ class TestAWCsCoveredView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = AWCsCoveredView.as_view()
         self.url = 'awcs_covered'
 
@@ -402,17 +305,7 @@ class TestRegisteredHouseholdView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = RegisteredHouseholdView.as_view()
         self.url = 'registered_household'
 
@@ -422,17 +315,7 @@ class TestEnrolledChildrenView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = EnrolledChildrenView.as_view()
         self.url = 'enrolled_children'
 
@@ -442,17 +325,7 @@ class TestEnrolledWomenView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = EnrolledWomenView.as_view()
         self.url = 'enrolled_women'
 
@@ -462,17 +335,7 @@ class TestLactatingEnrolledWomenView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = LactatingEnrolledWomenView.as_view()
         self.url = 'lactating_enrolled_women'
 
@@ -482,17 +345,7 @@ class TestAdolescentGirlsView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = AdolescentGirlsView.as_view()
         self.url = 'adolescent_girls'
 
@@ -502,17 +355,7 @@ class TestAdhaarBeneficiariesView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = AdhaarBeneficiariesView.as_view()
         self.url = 'adhaar'
 
@@ -522,17 +365,7 @@ class TestCleanWaterView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = CleanWaterView.as_view()
         self.url = 'clean_water'
 
@@ -542,17 +375,7 @@ class TestFunctionalToiletView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = FunctionalToiletView.as_view()
         self.url = 'functional_toilet'
 
@@ -562,17 +385,7 @@ class TestMedicineKitView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = MedicineKitView.as_view()
         self.url = 'medicine_kit'
 
@@ -582,17 +395,7 @@ class TestInfantsWeightScaleView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = InfantsWeightScaleView.as_view()
         self.url = 'infants_weight_scale'
 
@@ -602,16 +405,6 @@ class TestAdultWeightScaleView(Base):
     def setUp(self):
         self.run_july_third_test = True
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('icds-test')
-        domain.is_active = True
-        domain.save()
-        user = WebUser.all().first()
-        if not user:
-            user = WebUser.create('icds-test', 'test', 'passwordtest')
-        user.is_authenticated = True
-        user.is_superuser = True
-        user.is_authenticated = True
-        user.is_active = True
-        self.user = user
+        self._setup_domain_and_user()
         self.view = AdultWeightScaleView.as_view()
         self.url = 'adult_weight_scale'
