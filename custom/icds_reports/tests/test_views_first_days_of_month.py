@@ -68,8 +68,7 @@ class Base(TestCase):
         if self.factory is None:
             return
         working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
-        request = self.factory.get(working_reverse)
-        request.user = self.user
+        request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
             response_june = self.view(request, step='map', domain='icds-test')
         with mock.patch('custom.icds_reports.views.datetime', FirstDayOfJuly):
@@ -81,8 +80,7 @@ class Base(TestCase):
         if self.factory is None:
             return
         working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
-        request = self.factory.get(working_reverse)
-        request.user = self.user
+        request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
             response_june = self.view(request, step='chart', domain='icds-test')
         with mock.patch('custom.icds_reports.views.datetime', FirstDayOfJuly):
@@ -94,8 +92,7 @@ class Base(TestCase):
         if self.factory is None:
             return
         working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
-        request = self.factory.get(working_reverse)
-        request.user = self.user
+        request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
             response_june = self.view(request, step='chart', domain='icds-test', location_id='b1')
         with mock.patch('custom.icds_reports.views.datetime', FirstDayOfJuly):
@@ -107,8 +104,7 @@ class Base(TestCase):
         if self.factory is None:
             return
         working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
-        request = self.factory.get(working_reverse)
-        request.user = self.user
+        request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
             response_june = self.view(request, step='map', domain='icds-test')
         with mock.patch('custom.icds_reports.views.datetime', SecondDayOfJuly):
@@ -120,8 +116,7 @@ class Base(TestCase):
         if self.factory is None:
             return
         working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
-        request = self.factory.get(working_reverse)
-        request.user = self.user
+        request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
             response_june = self.view(request, step='chart', domain='icds-test')
         with mock.patch('custom.icds_reports.views.datetime', SecondDayOfJuly):
@@ -133,8 +128,7 @@ class Base(TestCase):
         if self.factory is None:
             return
         working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
-        request = self.factory.get(working_reverse)
-        request.user = self.user
+        request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
             response_june = self.view(request, step='chart', domain='icds-test', location_id='b1')
         with mock.patch('custom.icds_reports.views.datetime', SecondDayOfJuly):
@@ -148,8 +142,7 @@ class Base(TestCase):
         if not self.run_july_third_test:
             return
         working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
-        request = self.factory.get(working_reverse)
-        request.user = self.user
+        request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
             response_june = self.view(request, step='map', domain='icds-test')
         with mock.patch('custom.icds_reports.views.datetime', ThirdDayOfJuly):
@@ -163,8 +156,7 @@ class Base(TestCase):
         if not self.run_july_third_test:
             return
         working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
-        request = self.factory.get(working_reverse)
-        request.user = self.user
+        request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
             response_june = self.view(request, step='chart', domain='icds-test')
         with mock.patch('custom.icds_reports.views.datetime', ThirdDayOfJuly):
@@ -178,8 +170,7 @@ class Base(TestCase):
         if not self.run_july_third_test:
             return
         working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
-        request = self.factory.get(working_reverse)
-        request.user = self.user
+        request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
             response_june = self.view(request, step='chart', domain='icds-test', location_id='b1')
         with mock.patch('custom.icds_reports.views.datetime', ThirdDayOfJuly):
@@ -191,6 +182,11 @@ class Base(TestCase):
         if self.user:
             self.user.delete()
         DASHBOARD_ICDS_REPORT.always_enabled = set()
+
+    def _get_request(self, path):
+        request = self.factory.get(path)
+        request.user = self.user
+        return request
 
 
 class TestPrevalenceOfUndernutritionView(Base):
