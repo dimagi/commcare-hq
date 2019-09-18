@@ -19,6 +19,7 @@ rates_promised_not_to_go_lower_than = RateDefinition(
 )
 
 floor_for_small_domain = RateDefinition(
+    per_week=100,
     per_day=50,
     per_hour=30,
     per_minute=10,
@@ -27,7 +28,7 @@ floor_for_small_domain = RateDefinition(
 
 test_rates = PerUserRateDefinition(
     per_user_rate_definition=rates_promised_not_to_go_lower_than.times(2.0),
-    min_rate_definition=floor_for_small_domain,
+    constant_rate_definition=floor_for_small_domain,
 )
 
 submission_rate_limiter = RateLimiter(
