@@ -58,7 +58,7 @@ class Base(TestCase):
         # used instead of flag_enabled, because the patch is tricky to get into the required_decorator()
         # function at the appropriate time
         DASHBOARD_ICDS_REPORT.always_enabled = set([self.DOMAIN_NAME])
-        user = WebUser.create('icds-test', 'test', 'passwordtest', is_admin=True)
+        user = WebUser.create(self.DOMAIN_NAME, 'test', 'passwordtest', is_admin=True)
         user.is_authenticated = True
         user.is_superuser = False
         user.is_active = True
@@ -67,72 +67,72 @@ class Base(TestCase):
     def test_map_first_day_of_month(self):
         if self.factory is None:
             return
-        working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
+        working_reverse = reverse(self.url, kwargs={'domain': self.DOMAIN_NAME, 'step': 'map'})
         request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step='map', domain='icds-test')
+            response_june = self.view(request, step='map', domain=self.DOMAIN_NAME)
         with mock.patch('custom.icds_reports.views.datetime', FirstDayOfJuly):
-            response_first_of_july = self.view(request, step='map', domain='icds-test')
+            response_first_of_july = self.view(request, step='map', domain=self.DOMAIN_NAME)
 
         self.assertDictEqual(json.loads(response_june.content), json.loads(response_first_of_july.content))
 
     def test_chart_first_day_of_month(self):
         if self.factory is None:
             return
-        working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
+        working_reverse = reverse(self.url, kwargs={'domain': self.DOMAIN_NAME, 'step': 'map'})
         request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step='chart', domain='icds-test')
+            response_june = self.view(request, step='chart', domain=self.DOMAIN_NAME)
         with mock.patch('custom.icds_reports.views.datetime', FirstDayOfJuly):
-            response_first_of_july = self.view(request, step='chart', domain='icds-test')
+            response_first_of_july = self.view(request, step='chart', domain=self.DOMAIN_NAME)
 
         self.assertDictEqual(json.loads(response_june.content), json.loads(response_first_of_july.content))
 
     def test_sector_first_day_of_month(self):
         if self.factory is None:
             return
-        working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
+        working_reverse = reverse(self.url, kwargs={'domain': self.DOMAIN_NAME, 'step': 'map'})
         request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step='chart', domain='icds-test', location_id='b1')
+            response_june = self.view(request, step='chart', domain=self.DOMAIN_NAME, location_id='b1')
         with mock.patch('custom.icds_reports.views.datetime', FirstDayOfJuly):
-            response_first_of_july = self.view(request, step='chart', domain='icds-test', location_id='b1')
+            response_first_of_july = self.view(request, step='chart', domain=self.DOMAIN_NAME, location_id='b1')
 
         self.assertDictEqual(json.loads(response_june.content), json.loads(response_first_of_july.content))
 
     def test_map_second_day_of_month(self):
         if self.factory is None:
             return
-        working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
+        working_reverse = reverse(self.url, kwargs={'domain': self.DOMAIN_NAME, 'step': 'map'})
         request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step='map', domain='icds-test')
+            response_june = self.view(request, step='map', domain=self.DOMAIN_NAME)
         with mock.patch('custom.icds_reports.views.datetime', SecondDayOfJuly):
-            response_first_of_july = self.view(request, step='map', domain='icds-test')
+            response_first_of_july = self.view(request, step='map', domain=self.DOMAIN_NAME)
 
         self.assertDictEqual(json.loads(response_june.content), json.loads(response_first_of_july.content))
 
     def test_chart_second_day_of_month(self):
         if self.factory is None:
             return
-        working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
+        working_reverse = reverse(self.url, kwargs={'domain': self.DOMAIN_NAME, 'step': 'map'})
         request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step='chart', domain='icds-test')
+            response_june = self.view(request, step='chart', domain=self.DOMAIN_NAME)
         with mock.patch('custom.icds_reports.views.datetime', SecondDayOfJuly):
-            response_first_of_july = self.view(request, step='chart', domain='icds-test')
+            response_first_of_july = self.view(request, step='chart', domain=self.DOMAIN_NAME)
 
         self.assertDictEqual(json.loads(response_june.content), json.loads(response_first_of_july.content))
 
     def test_sector_second_day_of_month(self):
         if self.factory is None:
             return
-        working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
+        working_reverse = reverse(self.url, kwargs={'domain': self.DOMAIN_NAME, 'step': 'map'})
         request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step='chart', domain='icds-test', location_id='b1')
+            response_june = self.view(request, step='chart', domain=self.DOMAIN_NAME, location_id='b1')
         with mock.patch('custom.icds_reports.views.datetime', SecondDayOfJuly):
-            response_first_of_july = self.view(request, step='chart', domain='icds-test', location_id='b1')
+            response_first_of_july = self.view(request, step='chart', domain=self.DOMAIN_NAME, location_id='b1')
 
         self.assertDictEqual(json.loads(response_june.content), json.loads(response_first_of_july.content))
 
@@ -141,12 +141,12 @@ class Base(TestCase):
             return
         if not self.run_july_third_test:
             return
-        working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
+        working_reverse = reverse(self.url, kwargs={'domain': self.DOMAIN_NAME, 'step': 'map'})
         request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step='map', domain='icds-test')
+            response_june = self.view(request, step='map', domain=self.DOMAIN_NAME)
         with mock.patch('custom.icds_reports.views.datetime', ThirdDayOfJuly):
-            response_first_of_july = self.view(request, step='map', domain='icds-test')
+            response_first_of_july = self.view(request, step='map', domain=self.DOMAIN_NAME)
 
         self.assertNotEqual(response_june.content, response_first_of_july.content)
 
@@ -155,12 +155,12 @@ class Base(TestCase):
             return
         if not self.run_july_third_test:
             return
-        working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
+        working_reverse = reverse(self.url, kwargs={'domain': self.DOMAIN_NAME, 'step': 'map'})
         request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step='chart', domain='icds-test')
+            response_june = self.view(request, step='chart', domain=self.DOMAIN_NAME)
         with mock.patch('custom.icds_reports.views.datetime', ThirdDayOfJuly):
-            response_first_of_july = self.view(request, step='chart', domain='icds-test')
+            response_first_of_july = self.view(request, step='chart', domain=self.DOMAIN_NAME)
 
         self.assertNotEqual(response_june.content, response_first_of_july.content)
 
@@ -169,12 +169,12 @@ class Base(TestCase):
             return
         if not self.run_july_third_test:
             return
-        working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
+        working_reverse = reverse(self.url, kwargs={'domain': self.DOMAIN_NAME, 'step': 'map'})
         request = self._get_request(working_reverse)
         with mock.patch('custom.icds_reports.views.datetime', LastDayOfJune):
-            response_june = self.view(request, step='chart', domain='icds-test', location_id='b1')
+            response_june = self.view(request, step='chart', domain=self.DOMAIN_NAME, location_id='b1')
         with mock.patch('custom.icds_reports.views.datetime', ThirdDayOfJuly):
-            response_first_of_july = self.view(request, step='chart', domain='icds-test', location_id='b1')
+            response_first_of_july = self.view(request, step='chart', domain=self.DOMAIN_NAME, location_id='b1')
 
         self.assertNotEqual(response_june.content, response_first_of_july.content)
 
