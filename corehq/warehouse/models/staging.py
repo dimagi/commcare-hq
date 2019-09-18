@@ -338,6 +338,11 @@ class FormStagingTable(StagingTable, HQToWarehouseETLMixin):
     def record_iter(cls, start_datetime, end_datetime):
         return get_forms_by_last_modified(start_datetime, end_datetime)
 
+    class Meta:
+        indexes = [
+            Index(fields=['user_id']),
+        ]
+
 
 class SyncLogStagingTable(StagingTable, HQToWarehouseETLMixin):
     '''
