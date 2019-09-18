@@ -1011,14 +1011,6 @@ SUPPORT = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
 )
 
-BASIC_CHILD_MODULE = StaticToggle(
-    'child_module',
-    'Basic modules can be sub-menus',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Sub-menus',
-)
-
 LEGACY_CHILD_MODULES = StaticToggle(
     'legacy_child_modules',
     'Legacy, non-nested sub-menus',
