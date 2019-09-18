@@ -89,15 +89,18 @@ def posix_milliseconds_to_isoformat(value, tz=None):
     >>> tz = datetime.timezone(datetime.timedelta(hours=+2), 'CAT')
     >>> posix_milliseconds_to_isoformat(1551564000000, tz)
     '2019-03-03T00:00:00+02:00'
+    >>> posix_milliseconds_to_isoformat(1551564000)
+    '2019-03-02T22:00:00Z'
 
     """
     if value is None:
         return None
     try:
-        milliseconds_since_1970 = int(value)
+        timestamp = int(value)
     except ValueError:
         raise ValueError(f"{value!r} is not an OpenMRS timestamp")
-    seconds_since_1970 = milliseconds_since_1970 / 1000
+    max_seconds = datetime.datetime(datetime.MAXYEAR, 12, 31).timestamp()
+    seconds_since_1970 = timestamp / 1000 if timestamp > max_seconds else timestamp
     dt = datetime.datetime.fromtimestamp(seconds_since_1970, tz)
     isoformat = dt.isoformat()
     if not dt.utcoffset():
