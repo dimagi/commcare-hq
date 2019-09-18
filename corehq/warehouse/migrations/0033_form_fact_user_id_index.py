@@ -48,5 +48,10 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             DROP_INDEX_SQL.format('warehouse_formfact_form_id_1bb74f90_like'),
             migrations.RunSQL.noop
+        ),
+        # "warehouse_formstagingtable_timezone_idx" btree (timezone('UTC'::text, GREATEST(received_on, deleted_on, edited_on)))
+        migrations.RunSQL(
+            DROP_INDEX_SQL.format('warehouse_formstagingtable_timezone_idx'),
+            migrations.RunSQL.noop
         )
     ]
