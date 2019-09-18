@@ -33,6 +33,9 @@ including the aggregate data.
 Note that the above command is destructive to local data and read the warnings
 before proceeding!
 
+If you are using CitusDB and have already initialized the database via migrations, you will need to comment out
+the `_distribute_tables_for_citus(engine)` line in `icds_reports/tests/__init__.py` for the command to succeed.
+
 Aggregate Data Tables
 ---------------------
 
