@@ -80,8 +80,8 @@ def get_patient_uuid(element):
     ...         <![CDATA[/openmrs/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full]]>
     ...     </content>
     ... </entry>''')
-    >>> get_patient_uuid(element) == 'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4'
-    True
+    >>> get_patient_uuid(element)
+    'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4'
 
     """
     # "./*[local-name()='content']" ignores namespaces and matches all
@@ -106,8 +106,8 @@ def get_encounter_uuid(element):
     ...         <![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true]]>
     ...     </content>
     ... </entry>''')
-    >>> get_encounter_uuid(element) == '0f54fe40-89af-4412-8dd4-5eaebe8684dc'
-    True
+    >>> get_encounter_uuid(element)
+    '0f54fe40-89af-4412-8dd4-5eaebe8684dc'
 
     """
     content = element.xpath("./*[local-name()='content']")

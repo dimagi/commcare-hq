@@ -1,10 +1,6 @@
 from elasticsearch import ElasticsearchException
 
-from corehq.apps.es import CaseES, FormES, GroupES, LedgerES
-from corehq.apps.es.aggregations import (
-    AggregationTerm,
-    NestedTermAggregationsHelper,
-)
+from corehq.apps.es import CaseES, FormES, GroupES
 from corehq.apps.es.sms import SMSES
 from corehq.elastic import ES_EXPORT_INSTANCE, get_es_new
 
@@ -49,18 +45,6 @@ def get_groups_user_ids(group_ids):
             results.extend(user_list)
 
     return results
-
-
-def get_ledger_section_entry_combinations(domain):
-    """Get all section / entry combinations in a domain.
-    :returns: a generator of namedtuples with fields ``section_id``, ``entry_id``, ``doc_count``
-    """
-    terms = [
-        AggregationTerm('section_id', 'section_id'),
-        AggregationTerm('entry_id', 'entry_id'),
-    ]
-    query = LedgerES().domain(domain)
-    return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
 
 
 def get_case_name(case_id):

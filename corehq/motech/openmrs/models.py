@@ -1,3 +1,4 @@
+from datetime import datetime
 from memoized import memoized
 
 from dimagi.ext.couchdbkit import (
@@ -11,7 +12,9 @@ from dimagi.ext.couchdbkit import (
 
 from corehq.motech.openmrs.const import (
     IMPORT_FREQUENCY_CHOICES,
+    IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
+    IMPORT_FREQUENCY_WEEKLY,
 )
 from corehq.util.timezones.utils import (
     coerce_timezone_value,
@@ -90,3 +93,17 @@ class OpenmrsImporter(Document):
             return coerce_timezone_value(self.timezone)
         else:
             return get_timezone_for_domain(self.domain)
+
+    def should_import_today(self):
+        today = datetime.today()
+        return (
+            self.import_frequency == IMPORT_FREQUENCY_DAILY
+            or (
+                self.import_frequency == IMPORT_FREQUENCY_WEEKLY
+                and today.weekday() == 1  # Tuesday
+            )
+            or (
+                self.import_frequency == IMPORT_FREQUENCY_MONTHLY
+                and today.day == 1
+            )
+        )
