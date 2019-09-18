@@ -29,4 +29,12 @@ class Migration(migrations.Migration):
                 ),
             ]
         ),
+        migrations.RunSQL(
+            'DROP INDEX CONCURRENTLY IF EXISTS warehouse_formstagingtable_form_id_246fcaf3_like',
+            migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            'DROP INDEX CONCURRENTLY IF EXISTS warehouse_formfact_form_id_1bb74f90_like',
+            migrations.RunSQL.noop
+        )
     ]
