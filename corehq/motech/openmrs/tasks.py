@@ -43,7 +43,7 @@ from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.models import POSIX_MILLISECONDS
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.openmrs.serializers import posix_milliseconds_to_isoformat
+from corehq.motech.openmrs.serializers import openmrs_timestamp_to_isoformat
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
 
@@ -85,7 +85,7 @@ def get_openmrs_patients(requests, importer, location=None):
 
 
 def get_case_properties(patient, importer):
-    as_isoformat = partial(posix_milliseconds_to_isoformat,
+    as_isoformat = partial(openmrs_timestamp_to_isoformat,
                            tz=importer.get_timezone())
     cast = {
         POSIX_MILLISECONDS: as_isoformat,

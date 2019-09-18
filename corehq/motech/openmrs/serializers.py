@@ -74,7 +74,7 @@ def omrs_boolean_to_text(value):
     return 'true' if value else 'false'
 
 
-def posix_milliseconds_to_isoformat(value, tz=None):
+def openmrs_timestamp_to_isoformat(value, tz=None):
     """
     Converts an OpenMRS timestamp to ISO format. Accepts a timezone,
     which defaults to UTC. If timezone is given, ISO format includes the
@@ -84,12 +84,12 @@ def posix_milliseconds_to_isoformat(value, tz=None):
     milliseconds). Given None returns None. Raises ValueError for
     non-numeric values.
 
-    >>> posix_milliseconds_to_isoformat(1551564000000)
+    >>> openmrs_timestamp_to_isoformat(1551564000000)
     '2019-03-02T22:00:00Z'
     >>> tz = datetime.timezone(datetime.timedelta(hours=+2), 'CAT')
-    >>> posix_milliseconds_to_isoformat(1551564000000, tz)
+    >>> openmrs_timestamp_to_isoformat(1551564000000, tz)
     '2019-03-03T00:00:00+02:00'
-    >>> posix_milliseconds_to_isoformat(1551564000)
+    >>> openmrs_timestamp_to_isoformat(1551564000)
     '2019-03-02T22:00:00Z'
 
     """
