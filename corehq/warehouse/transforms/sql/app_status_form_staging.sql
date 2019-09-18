@@ -35,19 +35,19 @@ SELECT
 	    THEN app_status.last_form_app_commcare_version
 	    ELSE commcare_version
 	END AS commcare_version,
-	    user_dim.id as user_dim_id,
+	    form_fact.user_dim_id as user_dim_id,
 	    app_dim.id as app_dim_id,
-	    form_staging.domain as domain
-	FROM {{ form_staging }} as form_staging
+	    form_fact.domain as domain
+	FROM {{ form_fact }} as form_fact
 	LEFT JOIN {{ user_dim }} as user_dim
-	ON user_dim.user_id = form_staging.user_id
+	ON user_dim.id = form_fact.user_dim_id
 	LEFT JOIN {{ application_dim }} as app_dim
-	ON form_staging.app_id = app_dim.application_id
+	ON form_fact.app_id = app_dim.application_id
 	LEFT JOIN {{ application_dim }} as build
-	ON form_staging.build_id = build.application_id
+	ON form_fact.build_id = build.application_id
     LEFT JOIN {{ app_status_fact }} as app_status
-	ON app_dim.id = app_status.app_dim_id and user_dim.id = app_status.user_dim_id
-	WHERE form_staging.user_id <> '' and user_dim.doc_type='CommCareUser'
+	ON app_dim.id = app_status.app_dim_id and form_fact.user_dim_id = app_status.user_dim_id
+	WHERE form_fact.user_id <> '' and user_dim.doc_type='CommCareUser'
         WINDOW wnd AS (
             PARTITION BY user_dim.id, COALESCE(app_dim.id, -1) ORDER BY received_on AT TIME ZONE 'UTC' DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING

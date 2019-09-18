@@ -8,15 +8,20 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import XFormInstanceSQL
-from corehq.warehouse.const import (APPLICATION_STAGING_SLUG,
+from corehq.warehouse.const import (
+    APPLICATION_STAGING_SLUG,
     APP_STATUS_FACT_SLUG, APP_STATUS_FORM_STAGING_SLUG,
     APP_STATUS_SYNCLOG_STAGING_SLUG, DOMAIN_STAGING_SLUG, FORM_STAGING_SLUG,
     GROUP_STAGING_SLUG, LOCATION_STAGING_SLUG, SYNCLOG_STAGING_SLUG,
-    USER_STAGING_SLUG, APPLICATION_DIM_SLUG, USER_DIM_SLUG, DOMAIN_DIM_SLUG)
-from corehq.warehouse.dbaccessors import (get_application_ids_by_last_modified,
+    USER_STAGING_SLUG, APPLICATION_DIM_SLUG, USER_DIM_SLUG, DOMAIN_DIM_SLUG,
+    FORM_FACT_SLUG, SYNCLOG_FACT_SLUG
+)
+from corehq.warehouse.dbaccessors import (
+    get_application_ids_by_last_modified,
     get_domain_ids_by_last_modified, get_forms_by_last_modified,
     get_group_ids_by_last_modified, get_synclogs_by_date,
-    get_user_ids_by_last_modified)
+    get_user_ids_by_last_modified
+)
 from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
 from corehq.warehouse.models.shared import WarehouseTable
 from corehq.warehouse.models.dimensions import ApplicationDim, UserDim
@@ -437,7 +442,7 @@ class AppStatusFormStaging(StagingTable, CustomSQLETLMixin):
     @classmethod
     def dependencies(cls):
         return [
-            FORM_STAGING_SLUG,
+            FORM_FACT_SLUG,
             APP_STATUS_FACT_SLUG,
             APPLICATION_DIM_SLUG,
             USER_DIM_SLUG,
@@ -456,9 +461,8 @@ class AppStatusSynclogStaging(StagingTable, CustomSQLETLMixin):
     @classmethod
     def dependencies(cls):
         return [
-            SYNCLOG_STAGING_SLUG,
+            SYNCLOG_FACT_SLUG,
             APP_STATUS_FACT_SLUG,
             APPLICATION_DIM_SLUG,
-            USER_DIM_SLUG,
             DOMAIN_DIM_SLUG
         ]
