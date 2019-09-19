@@ -1,17 +1,13 @@
+from django.db import models
+
 import architect
 
-from django.db import models, transaction
-
 from corehq.form_processor.models import XFormInstanceSQL
-from corehq.sql_db.routers import db_for_read_write
-from corehq.util.test_utils import unit_testing_only
-from corehq.warehouse.const import (APPLICATION_DIM_SLUG, APP_STATUS_FACT_SLUG,
-    DOMAIN_DIM_SLUG, FORM_FACT_SLUG, FORM_STAGING_SLUG, SYNCLOG_FACT_SLUG,
-    SYNCLOG_STAGING_SLUG, USER_DIM_SLUG, APP_STATUS_FORM_STAGING_SLUG, APP_STATUS_SYNCLOG_STAGING_SLUG)
-from corehq.warehouse.etl import CustomSQLETLMixin
-from corehq.warehouse.models.dimensions import DomainDim, UserDim, ApplicationDim
-from corehq.warehouse.models.shared import WarehouseTable
-from corehq.warehouse.utils import truncate_records_for_cls
+from corehq.warehouse.models.dimensions import (
+    ApplicationDim,
+    DomainDim,
+    UserDim,
+)
 
 
 class BaseFact(models.Model):

@@ -1,26 +1,4 @@
-from django.db import models, transaction
-
-from corehq.warehouse.const import (
-    USER_DIM_SLUG,
-    GROUP_DIM_SLUG,
-    LOCATION_DIM_SLUG,
-    DOMAIN_DIM_SLUG,
-    USER_LOCATION_DIM_SLUG,
-    USER_GROUP_DIM_SLUG,
-    USER_STAGING_SLUG,
-    GROUP_STAGING_SLUG,
-    DOMAIN_STAGING_SLUG,
-    LOCATION_STAGING_SLUG,
-    APPLICATION_DIM_SLUG,
-    APPLICATION_STAGING_SLUG,
-    DOMAIN_MEMBERSHIP_DIM_SLUG,
-)
-
-from corehq.sql_db.routers import db_for_read_write
-from corehq.util.test_utils import unit_testing_only
-from corehq.warehouse.etl import CustomSQLETLMixin
-from corehq.warehouse.models.shared import WarehouseTable
-from corehq.warehouse.utils import truncate_records_for_cls
+from django.db import models
 
 
 class BaseDim(models.Model):
