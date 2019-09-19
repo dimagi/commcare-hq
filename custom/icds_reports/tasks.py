@@ -1200,45 +1200,44 @@ def build_incentive_report(agg_date=None):
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
 
-    performance_queryset = list(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched',
-                                                                       'valid_visits', 'visit_denominator',
-                                                                       'wer_weighed', 'wer_eligible',
-                                                                       'incentive_eligible')
-                                .order_by('awc_id'))
-    aggregate_queryset = list(AggAwc.objects.values_list('awc_id', 'is_launched',
-                                                         'valid_visits', 'expected_visits')
-                              .order_by('awc_id'))
-    is_launched_bad_data = []
-    home_conduct_bad_data = []
+    awc_performance_rows_list = list(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched',
+                                                                            'valid_visits', 'visit_denominator',
+                                                                            'wer_weighed', 'wer_eligible',
+                                                                            'incentive_eligible')
+                                     .order_by('awc_id'))
+    awc_aggregate_rows_list = list(AggAwc.objects.values_list('awc_id', 'is_launched',
+                                                              'valid_visits', 'expected_visits')
+                                   .order_by('awc_id'))
+    is_launched_check_bad_data = []
+    home_conduct_check_bad_data = []
     eligibility_check_bad_data = []
-    for index, awc_performance in enumerate(performance_queryset):
-        awc_from_aggregate = aggregate_queryset[index]
+    for index, awc_from_performance in enumerate(awc_performance_rows_list):
+        awc_from_aggregate = awc_aggregate_rows_list[index]
 
         # check for launched AWCs
-        row_data = is_launched_awc_incentive_report(awc_performance, awc_from_aggregate)
+        row_data = get_awc_is_launched_mismatch_row(awc_from_performance, awc_from_aggregate)
         if row_data is not None:
-            is_launched_bad_data.append(row_data)
+            is_launched_check_bad_data.append(row_data)
 
         # check for home conduct percentage
-        row_data = home_conduct_awc_incentive_report(awc_performance, awc_from_aggregate)
+        row_data = get_awc_home_conduct_mismatch_row(awc_from_performance, awc_from_aggregate)
         if row_data is not None:
-            home_conduct_bad_data.append(row_data)
+            home_conduct_check_bad_data.append(row_data)
 
         # check for eligibility
-        row_data = eligibility_check_for_performance_report(awc_performance)
+        row_data = get_awc_eligibility_mismatch_row(awc_from_performance)
         if row_data is not None:
             eligibility_check_bad_data.append(row_data)
 
     # sending email with is_launched mismatch csv
-    if len(is_launched_bad_data) > 0:
-        is_launched_incentive_check_report_helper(is_launched_bad_data)
+    if len(is_launched_check_bad_data) > 0:
+        awc_is_launched_mismatch_mail_helper(is_launched_check_bad_data)
     # sending email with home conduct % mismatch csv
-    if len(home_conduct_bad_data) > 0:
-        home_conduct_incentive_check_report_helper(home_conduct_bad_data)
-
+    if len(home_conduct_check_bad_data) > 0:
+        awc_home_conduct_mismatch_mail_helper(home_conduct_check_bad_data)
     # sending email with eligibility mismatch csv
     if len(eligibility_check_bad_data) > 0:
-        eligibility_check_report_helper(eligibility_check_bad_data)
+        awc_eligibility_mismatch_mail_helper(eligibility_check_bad_data)
 
     for file_format in ['xlsx', 'csv']:
         for location in locations:
@@ -1250,29 +1249,59 @@ def build_incentive_report(agg_date=None):
                 build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
 
 
-def is_launched_awc_incentive_report(performance_row, awcagg_row):
+# performance row is AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
+# 'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'
+# awcagg_row is AggAwc object with 'awc_id', 'is_launched', 'valid_visits', 'expected_visits'
+def get_awc_is_launched_mismatch_row(performance_row, awcagg_row):
     is_launched_from_awc = False
     if awcagg_row[1].lower() == 'yes':
         is_launched_from_awc = True
+    # checking if is_launched from incentive report is same as that of aggregate
     if performance_row[1] != is_launched_from_awc:
         row_data = [performance_row[0], awcagg_row[0], performance_row[1], is_launched_from_awc]
         return row_data
     return None
 
 
-def eligibility_check_for_performance_report(performance_row):
+# performance row is AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
+# 'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'
+# awcagg_row is AggAwc object with 'awc_id', 'is_launched', 'valid_visits', 'expected_visits'
+def get_awc_home_conduct_mismatch_row(performance_row, awcagg_row):
+    # checking if valid_visits or valid_denominator is zero or None as they are treated as valid cases
+    if performance_row[2] in [0, None] or performance_row[3] in [0, None]:
+        home_conduct_from_report = 'None'
+    else:
+        home_conduct_from_report = performance_row[2] / performance_row[3]
+    if awcagg_row[2] in [0, None] or awcagg_row[3] in [0, None]:
+        home_conduct_from_awc = 'None'
+    else:
+        home_conduct_from_awc = awcagg_row[2] / awcagg_row[3]
+    # checking if home conduct (valid_visits/valid_denominator) from incentive report is same as that of aggregate
+    if home_conduct_from_report != home_conduct_from_awc:
+        row_data = [performance_row[0], awcagg_row[0], home_conduct_from_report, home_conduct_from_awc]
+        return row_data
+    return None
+
+
+# performance row is AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
+# 'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'
+def get_awc_eligibility_mismatch_row(performance_row):
+    # checking if valid_visits or valid_denominator is zero or None as they are treated as valid cases
     if performance_row[2] in [0, None] or performance_row[3] in [0, None]:
         is_eligible = True
     else:
+        # checking if valid_visits/valid_denominator > 0.6(60%)
         home_conduct_from_report = performance_row[2] / performance_row[3]
         if home_conduct_from_report > 0.6:
             is_eligible = True
         else:
             is_eligible = False
     if is_eligible:
+        # checking if wer_weighed or wer_eligible is zero or None as they are treated as valid cases
         if performance_row[4] in [0, None] or performance_row[5] in [0, None]:
             is_eligible = True
         else:
+            # checking if wer_weighed/wer_eligible > 0.6(60%)
             weigh_eligibility = performance_row[4] / performance_row[5]
             if weigh_eligibility > 0.6:
                 is_eligible = True
@@ -1287,7 +1316,7 @@ def eligibility_check_for_performance_report(performance_row):
     return None
 
 
-def is_launched_incentive_check_report_helper(csv_data):
+def awc_is_launched_mismatch_mail_helper(csv_data):
     csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
     content = """
     Please see attached file for is_launched mismatch in awc incentive report
@@ -1295,22 +1324,7 @@ def is_launched_incentive_check_report_helper(csv_data):
     _send_incentive_report_validation_email(content, csv_columns, csv_data)
 
 
-def home_conduct_awc_incentive_report(performance_row, awcagg_row):
-    if performance_row[2] in [0, None] or performance_row[3] in [0, None]:
-        home_conduct_from_report = 'None'
-    else:
-        home_conduct_from_report = performance_row[2] / performance_row[3]
-    if awcagg_row[2] in [0, None] or awcagg_row[3] in [0, None]:
-        home_conduct_from_awc = 'None'
-    else:
-        home_conduct_from_awc = awcagg_row[2] / awcagg_row[3]
-    if home_conduct_from_report != home_conduct_from_awc:
-        row_data = [performance_row[0], awcagg_row[0], home_conduct_from_report, home_conduct_from_awc]
-        return row_data
-    return None
-
-
-def home_conduct_incentive_check_report_helper(csv_data):
+def awc_home_conduct_mismatch_mail_helper(csv_data):
     csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
     content = """
     Please see attached file for home conduct percentage mismatch in awc incentive report
@@ -1318,7 +1332,7 @@ def home_conduct_incentive_check_report_helper(csv_data):
     _send_incentive_report_validation_email(content, csv_columns, csv_data)
 
 
-def eligibility_check_report_helper(csv_data):
+def awc_eligibility_mismatch_mail_helper(csv_data):
     csv_columns = ['awc_id_from_performance', 'Expected eligibility', 'Eligibility from performance record']
     content = """
     Please see attached file for eligibility check mismatch in awc incentive report
