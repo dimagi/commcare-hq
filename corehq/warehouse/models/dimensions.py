@@ -72,14 +72,12 @@ class GroupDim(BaseDim):
     group_last_modified = models.DateTimeField()
 
 
-class LocationDim(BaseDim, CustomSQLETLMixin):
-    '''
+class LocationDim(BaseDim):
+    """
     Dimension for Locations
 
     Grain: location_id
-    '''
-    slug = LOCATION_DIM_SLUG
-
+    """
     domain = models.CharField(max_length=255)
     location_id = models.CharField(max_length=100, unique=True)
     sql_location_id = models.IntegerField()
@@ -119,10 +117,6 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
 
     location_last_modified = models.DateTimeField()
     location_created_on = models.DateTimeField(null=True)
-
-    @classmethod
-    def dependencies(cls):
-        return [LOCATION_STAGING_SLUG]
 
 
 class DomainDim(BaseDim):
