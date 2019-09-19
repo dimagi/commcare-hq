@@ -4,7 +4,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2019
+# Dimagi Dev <devops@dimagi.com>, 2017
 # Gladys Teos <info@enestranslations.com>, 2019
 #
 #, fuzzy
@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-09-17 19:21+0000\n"
+"POT-Creation-Date: 2019-09-19 16:55+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -3922,31 +3922,31 @@ msgstr "Completar"
 msgid "Unable to save DataSet maps"
 msgstr "No es posible guardar los mapas DataSet"
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:39
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:40
 msgid "Daily"
 msgstr "Diariamente"
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:40
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:41
 msgid "Weekly"
 msgstr "Semanal"
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:41
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:42
 msgid "Monthly"
 msgstr "Mensual"
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:44
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:45
 msgid "Disable logging"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:110
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:112
 msgid "Unable to save OpenMRS Importers"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:115
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:117
 msgid "Importing from OpenMRS will begin shortly."
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:117
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:119
 msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
@@ -4002,18 +4002,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "show"
-#~ msgstr "mostrar"
-
-#~ msgid "hide"
-#~ msgstr "ocultar"
-
-#~ msgid "toggle"
-#~ msgstr "alternar"
-
-#~ msgid "URL"
-#~ msgstr "URL"
-
-#~ msgid "Parameters"
-#~ msgstr "Manejo de Casos"

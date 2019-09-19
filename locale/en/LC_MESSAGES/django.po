@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-09-17 19:18+0000\n"
+"POT-Creation-Date: 2019-09-19 16:54+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -5900,7 +5900,7 @@ msgstr "Casos IRA Tratados"
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_modals.html:8
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/ko_feedback.html:21
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/ko_feedback.html:84
-#: corehq/apps/reports/templates/reports/standard/base_template.html:192
+#: corehq/apps/reports/templates/reports/standard/base_template.html:194
 #: corehq/apps/reports/templates/reports/standard/submission_error_report.html:26
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:56
 #: corehq/apps/users/templates/users/mobile_workers.html:75
@@ -6797,7 +6797,7 @@ msgstr "Manejo de Casos"
 #: corehq/ex-submodules/casexml/apps/case/views.py:60
 #: corehq/ex-submodules/casexml/apps/case/views.py:101
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html:65
-#: corehq/motech/openmrs/forms.py:89
+#: corehq/motech/openmrs/forms.py:91
 msgid "Case Type"
 msgstr ""
 
@@ -8455,7 +8455,7 @@ msgid "Sync Delay (in hours)"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html:64
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:305
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:308
 #, fuzzy
 msgid "Data Table"
 msgstr "Diagnóstico de Casos"
@@ -25096,8 +25096,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/filters.py:58
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:147
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:148
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:150
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:151
 msgid "Columns"
 msgstr ""
 
@@ -26465,12 +26465,12 @@ msgid "How can I use this report?"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/description.html:8
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:79
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:81
 msgid "Why can't I see any data?"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/description.html:9
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:80
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:82
 msgid ""
 "Please choose your filters above and click <strong>Apply</strong> to see "
 "report data."
@@ -26876,58 +26876,58 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:63
+#: corehq/apps/reports/templates/reports/standard/base_template.html:65
 #, fuzzy
 msgid "Reports Menu"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:127
+#: corehq/apps/reports/templates/reports/standard/base_template.html:129
 msgid "Email report:"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:130
+#: corehq/apps/reports/templates/reports/standard/base_template.html:132
 msgid "to"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:138
+#: corehq/apps/reports/templates/reports/standard/base_template.html:140
 #: corehq/messaging/scheduling/forms.py:338
 msgid "Subject"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:148
+#: corehq/apps/reports/templates/reports/standard/base_template.html:150
 #, fuzzy
 msgid "Sending Options"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:152
+#: corehq/apps/reports/templates/reports/standard/base_template.html:154
 msgid "Send to me"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:159
+#: corehq/apps/reports/templates/reports/standard/base_template.html:161
 msgid "Additional Recipients"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:174
+#: corehq/apps/reports/templates/reports/standard/base_template.html:176
 msgid "Report notes"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:186
+#: corehq/apps/reports/templates/reports/standard/base_template.html:188
 msgid "Email successfully sent!"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:187
+#: corehq/apps/reports/templates/reports/standard/base_template.html:189
 msgid "Error sending email."
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:194
+#: corehq/apps/reports/templates/reports/standard/base_template.html:196
 msgid "Sending..."
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:195
+#: corehq/apps/reports/templates/reports/standard/base_template.html:197
 msgid "Send Email"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:206
+#: corehq/apps/reports/templates/reports/standard/base_template.html:208
 msgid "Notice"
 msgstr ""
 
@@ -27351,14 +27351,14 @@ msgstr ""
 msgid "Choice \"{choice}\" not found in choices: {choices}"
 msgstr ""
 
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:60
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:62
 msgid ""
 "\n"
 "        There was an error rendering your report.\n"
 "      "
 msgstr ""
 
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:66
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:68
 #, fuzzy
 msgid ""
 "\n"
@@ -27366,7 +27366,7 @@ msgid ""
 "      "
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:87
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:89
 msgid ""
 "\n"
 "            Charts cannot be displayed with more than 25 categories. Please "
@@ -27374,12 +27374,12 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:94
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:261
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:96
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:264
 msgid "Fit all data into view"
 msgstr ""
 
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:98
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:100
 #, fuzzy
 msgid ""
 "\n"
@@ -30210,7 +30210,7 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/configurable_report.html:51
+#: corehq/apps/userreports/templates/userreports/configurable_report.html:54
 #, fuzzy
 msgid "Subscribe to Report Builder"
 msgstr "Manejo de Casos"
@@ -30222,18 +30222,18 @@ msgid "Configurable Reports"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:5
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:60
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:63
 msgid "Add data source"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:6
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:31
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:34
 #, fuzzy
 msgid "Add report"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:7
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:35
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:38
 #, fuzzy
 msgid "Import report"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
@@ -30542,34 +30542,34 @@ msgstr ""
 msgid "Technical Details:"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:73
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:76
 #, fuzzy
 msgid "Save and View Report"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:84
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:87
 msgid "Enter report name here"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:95
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:98
 msgid "Enter report description here"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:106
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:109
 #, fuzzy
 msgid "Type of Report"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:147
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:150
 msgid "Indicators"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:170
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:173
 #, fuzzy
 msgid "User Filters"
 msgstr "Casos IRA Tratados"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:178
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:181
 msgid ""
 "\n"
 "                    Add filters to your report to allow viewers to select "
@@ -30579,12 +30579,12 @@ msgid ""
 "                  "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:196
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:199
 #, fuzzy
 msgid "Default Filters"
 msgstr "Casos IRA Tratados"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:204
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:207
 msgid ""
 "\n"
 "                    These filters are not displayed to report viewers and "
@@ -30592,40 +30592,40 @@ msgid ""
 "                  "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:221
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:224
 #, fuzzy
 msgid "Preview Report"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:225
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:228
 msgid "Preview includes at most 100 cases"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:227
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:230
 msgid "Preview includes at most 100 forms"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:237
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:240
 #, fuzzy
 msgid "Add Chart"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:245
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:248
 #, fuzzy
 msgid "Map Preview"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:247
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:250
 #, fuzzy
 msgid "Location field"
 msgstr "Casos IRA Tratados"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:267
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:270
 #, fuzzy
 msgid "Chart Preview"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:285
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:288
 msgid ""
 "\n"
 "                    Charts cannot be displayed with more than 25 "
@@ -30635,7 +30635,7 @@ msgid ""
 "                  "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:295
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:298
 msgid ""
 "\n"
 "                      At least one indicator must not be of format \"Group By"
@@ -30643,7 +30643,7 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:309
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:312
 #, fuzzy
 msgid ""
 "\n"
@@ -30657,32 +30657,32 @@ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 msgid "Step 1 of 2 - Select Data Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:14
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:17
 #, fuzzy
 msgid "Edit Reports"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:40
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:43
 msgid "Edit Data Sources"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:66
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:69
 #, fuzzy
 msgid "Data source from application"
 msgstr "Casos IRA Tratados"
 
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:72
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:75
 #: corehq/apps/userreports/views.py:864
 msgid "Expression Debugger"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:78
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:81
 #: corehq/apps/userreports/views.py:870
 #, fuzzy
 msgid "Data Source Debugger"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:83
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:86
 #, fuzzy
 msgid "Aggregate Data Sources"
 msgstr "Manejo de Casos"
@@ -31410,36 +31410,36 @@ msgstr ""
 msgid "Billing Admin"
 msgstr "Casos IRA Tratados"
 
-#: corehq/apps/users/models.py:745
+#: corehq/apps/users/models.py:746
 #, fuzzy
 msgid "Unknown User"
 msgstr "Casos IRA Tratados"
 
-#: corehq/apps/users/models.py:747
+#: corehq/apps/users/models.py:748
 #, fuzzy
 msgid "Dimagi User"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/users/models.py:747
+#: corehq/apps/users/models.py:748
 msgid "Unauthorized User"
 msgstr ""
 
-#: corehq/apps/users/models.py:2577
+#: corehq/apps/users/models.py:2578
 #, python-format
 msgid "Request to join %s approved"
 msgstr ""
 
-#: corehq/apps/users/models.py:2593
+#: corehq/apps/users/models.py:2594
 #, python-format
 msgid "Request from %(name)s to join %(domain)s"
 msgstr ""
 
-#: corehq/apps/users/models.py:2638
+#: corehq/apps/users/models.py:2639
 #, python-format
 msgid "Invitation from %s to join CommCareHQ"
 msgstr ""
 
-#: corehq/apps/users/models.py:2642
+#: corehq/apps/users/models.py:2643
 msgid "Request to join CommCareHQ approved"
 msgstr ""
 
@@ -35592,58 +35592,66 @@ msgstr ""
 msgid "Log Level"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:86
-#, fuzzy
-msgid "Report UUID"
-msgstr "Manejo de Casos"
+#: corehq/motech/openmrs/forms.py:85
+msgid "Timezone"
+msgstr ""
 
-#: corehq/motech/openmrs/forms.py:87
-msgid "The OpenMRS UUID of the report of patients to be imported"
+#: corehq/motech/openmrs/forms.py:86
+msgid "Timezone name. If not specified, the domain's timezone will be used."
 msgstr ""
 
 #: corehq/motech/openmrs/forms.py:88
 #, fuzzy
+msgid "Report UUID"
+msgstr "Manejo de Casos"
+
+#: corehq/motech/openmrs/forms.py:89
+msgid "The OpenMRS UUID of the report of patients to be imported"
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py:90
+#, fuzzy
 msgid "Report Parameters"
 msgstr "Manejo de Casos"
 
-#: corehq/motech/openmrs/forms.py:91
+#: corehq/motech/openmrs/forms.py:93
 msgid "The ID of the mobile worker or location who will own new cases"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:93
-msgid "The Organization Level whose mobile worker will own new cases"
-msgstr ""
-
 #: corehq/motech/openmrs/forms.py:95
-#, fuzzy
-msgid "External ID Column"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: corehq/motech/openmrs/forms.py:96
-msgid "The column that contains the OpenMRS UUID of the patient"
+msgid "The Organization Level whose mobile worker will own new cases"
 msgstr ""
 
 #: corehq/motech/openmrs/forms.py:97
 #, fuzzy
-msgid "Name Columns"
+msgid "External ID Column"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/motech/openmrs/forms.py:98
+msgid "The column that contains the OpenMRS UUID of the patient"
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py:99
+#, fuzzy
+msgid "Name Columns"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/motech/openmrs/forms.py:100
 msgid ""
 "Space-separated column(s) to be concatenated to create the case name (e.g. "
 "\"givenName familyName\")"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:100
+#: corehq/motech/openmrs/forms.py:102
 #, fuzzy
 msgid "Map columns to properties"
 msgstr "Manejo de Casos"
 
-#: corehq/motech/openmrs/forms.py:101
+#: corehq/motech/openmrs/forms.py:103
 msgid "e.g. [{\"column\": \"givenName\", \"property\": \"first_name\"}, ...]"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:107
+#: corehq/motech/openmrs/forms.py:109
 #, python-brace-format
 msgid ""
 "The owner of imported patient cases is determined using either "
@@ -36493,7 +36501,7 @@ msgstr ""
 
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_base.html:9
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_submissions.html:9
-#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:24
+#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:25
 #: custom/_legacy/pact/templates/pact/patient/pactpatient_submissions.html:17
 #: custom/succeed/templates/base_patient.html:22
 msgid "Info"
@@ -36501,7 +36509,7 @@ msgstr ""
 
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_base.html:10
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_submissions.html:10
-#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:30
+#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:31
 #: custom/_legacy/pact/templates/pact/patient/pactpatient_submissions.html:28
 #: custom/succeed/templates/base_patient.html:26
 msgid "Submissions"
@@ -36513,12 +36521,12 @@ msgstr ""
 msgid "Phone"
 msgstr ""
 
-#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:27
+#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:28
 #: custom/_legacy/pact/templates/pact/patient/pactpatient_submissions.html:20
 msgid "Schedule"
 msgstr ""
 
-#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:33
+#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:34
 #: custom/_legacy/pact/templates/pact/patient/pactpatient_submissions.html:31
 msgid "Care Plan"
 msgstr ""
@@ -39768,7 +39776,7 @@ msgstr "Diagnóstico de Casos"
 msgid "Product id"
 msgstr "Diagnóstico de Casos"
 
-#: custom/intrahealth/sqldata.py:5347 custom/intrahealth/sqldata.py:5570
+#: custom/intrahealth/sqldata.py:5347 custom/intrahealth/sqldata.py:5572
 msgid "Doc_id"
 msgstr ""
 
@@ -39781,16 +39789,16 @@ msgstr "Balanço do Stock"
 msgid "Outside AMT"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:5567
+#: custom/intrahealth/sqldata.py:5569
 msgid "PPS_Id"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:5571
+#: custom/intrahealth/sqldata.py:5573
 #, fuzzy
 msgid "Delivery Amt"
 msgstr "Casos IRA Tratados"
 
-#: custom/intrahealth/sqldata.py:5572
+#: custom/intrahealth/sqldata.py:5574
 #, fuzzy
 msgid "Delivery Margin"
 msgstr "Casos IRA Tratados"

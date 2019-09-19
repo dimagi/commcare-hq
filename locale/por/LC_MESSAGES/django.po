@@ -34,8 +34,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-09-17 19:18+0000\n"
-"PO-Revision-Date: 2019-09-03 19:52+0000\n"
+"POT-Creation-Date: 2019-09-19 16:54+0000\n"
+"PO-Revision-Date: 2019-09-17 19:21+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
 "language/pt/)\n"
@@ -5770,7 +5770,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_modals.html:8
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/ko_feedback.html:21
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/ko_feedback.html:84
-#: corehq/apps/reports/templates/reports/standard/base_template.html:192
+#: corehq/apps/reports/templates/reports/standard/base_template.html:194
 #: corehq/apps/reports/templates/reports/standard/submission_error_report.html:26
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:56
 #: corehq/apps/users/templates/users/mobile_workers.html:75
@@ -6634,7 +6634,7 @@ msgstr ""
 #: corehq/ex-submodules/casexml/apps/case/views.py:60
 #: corehq/ex-submodules/casexml/apps/case/views.py:101
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html:65
-#: corehq/motech/openmrs/forms.py:89
+#: corehq/motech/openmrs/forms.py:91
 msgid "Case Type"
 msgstr "Típo de Caso"
 
@@ -8202,7 +8202,7 @@ msgid "Sync Delay (in hours)"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html:64
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:305
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:308
 msgid "Data Table"
 msgstr ""
 
@@ -10272,10 +10272,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_importer/exceptions.py:59
-#, fuzzy
-#| msgid "Invalid date format"
 msgid "Invalid Owner"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/case_importer/exceptions.py:61
 msgid ""
@@ -17726,10 +17724,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/views/utils.py:239
-#, fuzzy
-#| msgid "Copy of {name}"
 msgid "Copy of {}"
-msgstr "Cópia de {name}"
+msgstr ""
 
 #: corehq/apps/export/views/utils.py:298
 msgid "Download Data Files"
@@ -24164,8 +24160,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/filters.py:58
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:147
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:148
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:150
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:151
 msgid "Columns"
 msgstr "Colunas"
 
@@ -25488,12 +25484,12 @@ msgid "How can I use this report?"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/description.html:8
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:79
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:81
 msgid "Why can't I see any data?"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/description.html:9
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:80
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:82
 msgid ""
 "Please choose your filters above and click <strong>Apply</strong> to see "
 "report data."
@@ -25877,56 +25873,56 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:63
+#: corehq/apps/reports/templates/reports/standard/base_template.html:65
 msgid "Reports Menu"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:127
+#: corehq/apps/reports/templates/reports/standard/base_template.html:129
 msgid "Email report:"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:130
+#: corehq/apps/reports/templates/reports/standard/base_template.html:132
 msgid "to"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:138
+#: corehq/apps/reports/templates/reports/standard/base_template.html:140
 #: corehq/messaging/scheduling/forms.py:338
 msgid "Subject"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:148
+#: corehq/apps/reports/templates/reports/standard/base_template.html:150
 msgid "Sending Options"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:152
+#: corehq/apps/reports/templates/reports/standard/base_template.html:154
 msgid "Send to me"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:159
+#: corehq/apps/reports/templates/reports/standard/base_template.html:161
 msgid "Additional Recipients"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:174
+#: corehq/apps/reports/templates/reports/standard/base_template.html:176
 msgid "Report notes"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:186
+#: corehq/apps/reports/templates/reports/standard/base_template.html:188
 msgid "Email successfully sent!"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:187
+#: corehq/apps/reports/templates/reports/standard/base_template.html:189
 msgid "Error sending email."
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:194
+#: corehq/apps/reports/templates/reports/standard/base_template.html:196
 msgid "Sending..."
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:195
+#: corehq/apps/reports/templates/reports/standard/base_template.html:197
 msgid "Send Email"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/standard/base_template.html:206
+#: corehq/apps/reports/templates/reports/standard/base_template.html:208
 msgid "Notice"
 msgstr ""
 
@@ -26322,21 +26318,21 @@ msgstr ""
 msgid "Choice \"{choice}\" not found in choices: {choices}"
 msgstr ""
 
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:60
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:62
 msgid ""
 "\n"
 "        There was an error rendering your report.\n"
 "      "
 msgstr ""
 
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:66
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:68
 msgid ""
 "\n"
 "        Warning:\n"
 "      "
 msgstr ""
 
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:87
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:89
 msgid ""
 "\n"
 "            Charts cannot be displayed with more than 25 categories. Please "
@@ -26344,12 +26340,12 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:94
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:261
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:96
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:264
 msgid "Fit all data into view"
 msgstr ""
 
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:98
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:100
 msgid ""
 "\n"
 "            Note:\n"
@@ -28741,10 +28737,8 @@ msgid "Default Display Text"
 msgstr ""
 
 #: corehq/apps/translations/validator.py:177
-#, fuzzy
-#| msgid "Tile not found: {}"
 msgid "{} not found"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/translations/views.py:59
 msgid "Upload failed. We found problems with the following translations:"
@@ -29100,7 +29094,7 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/configurable_report.html:51
+#: corehq/apps/userreports/templates/userreports/configurable_report.html:54
 msgid "Subscribe to Report Builder"
 msgstr ""
 
@@ -29110,17 +29104,17 @@ msgid "Configurable Reports"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:5
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:60
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:63
 msgid "Add data source"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:6
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:31
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:34
 msgid "Add report"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/configurable_reports_home.html:7
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:35
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:38
 msgid "Import report"
 msgstr ""
 
@@ -29406,31 +29400,31 @@ msgstr ""
 msgid "Technical Details:"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:73
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:76
 msgid "Save and View Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:84
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:87
 msgid "Enter report name here"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:95
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:98
 msgid "Enter report description here"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:106
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:109
 msgid "Type of Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:147
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:150
 msgid "Indicators"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:170
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:173
 msgid "User Filters"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:178
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:181
 msgid ""
 "\n"
 "                    Add filters to your report to allow viewers to select "
@@ -29440,11 +29434,11 @@ msgid ""
 "                  "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:196
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:199
 msgid "Default Filters"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:204
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:207
 msgid ""
 "\n"
 "                    These filters are not displayed to report viewers and "
@@ -29452,35 +29446,35 @@ msgid ""
 "                  "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:221
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:224
 msgid "Preview Report"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:225
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:228
 msgid "Preview includes at most 100 cases"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:227
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:230
 msgid "Preview includes at most 100 forms"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:237
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:240
 msgid "Add Chart"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:245
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:248
 msgid "Map Preview"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:247
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:250
 msgid "Location field"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:267
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:270
 msgid "Chart Preview"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:285
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:288
 msgid ""
 "\n"
 "                    Charts cannot be displayed with more than 25 "
@@ -29490,7 +29484,7 @@ msgid ""
 "                  "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:295
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:298
 msgid ""
 "\n"
 "                      At least one indicator must not be of format \"Group By"
@@ -29498,7 +29492,7 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:309
+#: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:312
 msgid ""
 "\n"
 "                    There was an error rendering your report preview. Please "
@@ -29511,29 +29505,29 @@ msgstr ""
 msgid "Step 1 of 2 - Select Data Source"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:14
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:17
 msgid "Edit Reports"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:40
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:43
 msgid "Edit Data Sources"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:66
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:69
 msgid "Data source from application"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:72
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:75
 #: corehq/apps/userreports/views.py:864
 msgid "Expression Debugger"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:78
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:81
 #: corehq/apps/userreports/views.py:870
 msgid "Data Source Debugger"
 msgstr ""
 
-#: corehq/apps/userreports/templates/userreports/userreports_base.html:83
+#: corehq/apps/userreports/templates/userreports/userreports_base.html:86
 msgid "Aggregate Data Sources"
 msgstr ""
 
@@ -30226,34 +30220,34 @@ msgstr ""
 msgid "Billing Admin"
 msgstr ""
 
-#: corehq/apps/users/models.py:745
+#: corehq/apps/users/models.py:746
 msgid "Unknown User"
 msgstr ""
 
-#: corehq/apps/users/models.py:747
+#: corehq/apps/users/models.py:748
 msgid "Dimagi User"
 msgstr ""
 
-#: corehq/apps/users/models.py:747
+#: corehq/apps/users/models.py:748
 msgid "Unauthorized User"
 msgstr ""
 
-#: corehq/apps/users/models.py:2577
+#: corehq/apps/users/models.py:2578
 #, python-format
 msgid "Request to join %s approved"
 msgstr ""
 
-#: corehq/apps/users/models.py:2593
+#: corehq/apps/users/models.py:2594
 #, python-format
 msgid "Request from %(name)s to join %(domain)s"
 msgstr ""
 
-#: corehq/apps/users/models.py:2638
+#: corehq/apps/users/models.py:2639
 #, python-format
 msgid "Invitation from %s to join CommCareHQ"
 msgstr ""
 
-#: corehq/apps/users/models.py:2642
+#: corehq/apps/users/models.py:2643
 msgid "Request to join CommCareHQ approved"
 msgstr ""
 
@@ -30883,17 +30877,12 @@ msgid "Reactivate Mobile Worker"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html:296
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                On-Site Scoping Visit\n"
-#| "                            "
 msgid ""
 "\n"
 "                            Are you sure you want to <strong>reactivate</"
 "strong> this mobile worker?\n"
 "                          "
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html:305
 #: corehq/apps/users/templates/users/mobile_workers.html:347
@@ -30916,17 +30905,12 @@ msgid "Deactivate Mobile Worker"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html:338
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                On-Site Scoping Visit\n"
-#| "                            "
 msgid ""
 "\n"
 "                            Are you sure you want to <strong>deactivate</"
 "strong> this mobile worker?\n"
 "                          "
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html:375
 msgid "Loading Workers..."
@@ -34193,53 +34177,61 @@ msgstr ""
 msgid "Log Level"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:86
-msgid "Report UUID"
+#: corehq/motech/openmrs/forms.py:85
+msgid "Timezone"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:87
-msgid "The OpenMRS UUID of the report of patients to be imported"
+#: corehq/motech/openmrs/forms.py:86
+msgid "Timezone name. If not specified, the domain's timezone will be used."
 msgstr ""
 
 #: corehq/motech/openmrs/forms.py:88
+msgid "Report UUID"
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py:89
+msgid "The OpenMRS UUID of the report of patients to be imported"
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py:90
 msgid "Report Parameters"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:91
+#: corehq/motech/openmrs/forms.py:93
 msgid "The ID of the mobile worker or location who will own new cases"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:93
+#: corehq/motech/openmrs/forms.py:95
 msgid "The Organization Level whose mobile worker will own new cases"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:95
+#: corehq/motech/openmrs/forms.py:97
 msgid "External ID Column"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:96
+#: corehq/motech/openmrs/forms.py:98
 msgid "The column that contains the OpenMRS UUID of the patient"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:97
+#: corehq/motech/openmrs/forms.py:99
 msgid "Name Columns"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:98
+#: corehq/motech/openmrs/forms.py:100
 msgid ""
 "Space-separated column(s) to be concatenated to create the case name (e.g. "
 "\"givenName familyName\")"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:100
+#: corehq/motech/openmrs/forms.py:102
 msgid "Map columns to properties"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:101
+#: corehq/motech/openmrs/forms.py:103
 msgid "e.g. [{\"column\": \"givenName\", \"property\": \"first_name\"}, ...]"
 msgstr ""
 
-#: corehq/motech/openmrs/forms.py:107
+#: corehq/motech/openmrs/forms.py:109
 #, python-brace-format
 msgid ""
 "The owner of imported patient cases is determined using either "
@@ -35029,7 +35021,7 @@ msgstr "Tarefa"
 
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_base.html:9
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_submissions.html:9
-#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:24
+#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:25
 #: custom/_legacy/pact/templates/pact/patient/pactpatient_submissions.html:17
 #: custom/succeed/templates/base_patient.html:22
 msgid "Info"
@@ -35037,7 +35029,7 @@ msgstr ""
 
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_base.html:10
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_submissions.html:10
-#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:30
+#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:31
 #: custom/_legacy/pact/templates/pact/patient/pactpatient_submissions.html:28
 #: custom/succeed/templates/base_patient.html:26
 msgid "Submissions"
@@ -35049,12 +35041,12 @@ msgstr ""
 msgid "Phone"
 msgstr ""
 
-#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:27
+#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:28
 #: custom/_legacy/pact/templates/pact/patient/pactpatient_submissions.html:20
 msgid "Schedule"
 msgstr ""
 
-#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:33
+#: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:34
 #: custom/_legacy/pact/templates/pact/patient/pactpatient_submissions.html:31
 msgid "Care Plan"
 msgstr "Plano de Assistência"
@@ -38199,7 +38191,7 @@ msgstr ""
 msgid "Product id"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:5347 custom/intrahealth/sqldata.py:5570
+#: custom/intrahealth/sqldata.py:5347 custom/intrahealth/sqldata.py:5572
 msgid "Doc_id"
 msgstr ""
 
@@ -38211,15 +38203,15 @@ msgstr ""
 msgid "Outside AMT"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:5567
+#: custom/intrahealth/sqldata.py:5569
 msgid "PPS_Id"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:5571
+#: custom/intrahealth/sqldata.py:5573
 msgid "Delivery Amt"
 msgstr ""
 
-#: custom/intrahealth/sqldata.py:5572
+#: custom/intrahealth/sqldata.py:5574
 msgid "Delivery Margin"
 msgstr ""
 
@@ -40542,6 +40534,12 @@ msgstr ""
 
 #~ msgid ""
 #~ "\n"
+#~ "                                On-Site Scoping Visit\n"
+#~ "                            "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid ""
+#~ "\n"
 #~ "                                Requirements Analysis\n"
 #~ "                            "
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
@@ -40917,6 +40915,9 @@ msgstr ""
 
 #~ msgid "Get a Demo"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid "Invalid date format"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "is a deleted Application."
 #~ msgstr "Casos IRA Tratados"
@@ -41430,6 +41431,9 @@ msgstr ""
 
 #~ msgid "Edit Performance Message (advanced mode)"
 #~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Tile not found: {}"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Collect census data"
 #~ msgstr "Casos IRA Tratados"
