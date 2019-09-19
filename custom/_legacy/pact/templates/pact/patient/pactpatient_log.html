@@ -1,14 +1,4 @@
 {% extends "pact/patient/pactpatient_base.html" %}
-{% block extrahead %}
-  <script>
-    $(function () {
-      //$("#tbl_issues").tablesorter({ sortList:[ [0, 0] ], });
-      $("#tbl_issues").tablesorter();
-      $("abbr.timeago").timeago();
-    });
-  </script>
-
-{% endblock extrahead %}
 {% block patient-tab-container %}
   <div class="col-sm-12">
 
