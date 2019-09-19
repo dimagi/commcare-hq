@@ -27,10 +27,6 @@ class BaseLoader(object):
         raise NotImplementedError
 
     @classmethod
-    def load(cls):
-        raise NotImplementedError
-
-    @classmethod
     @unit_testing_only
     def clear_records(cls):
         truncate_records_for_cls(cls.model_cls, cascade=True)
