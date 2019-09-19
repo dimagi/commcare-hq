@@ -131,7 +131,7 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
 
             loader = loader_class()
 
-            for dep in loader.dependencies():
+            for dep in loader.dependant_slugs():
                 dep_cls = get_loader_by_slug(dep)
                 if dep_cls in path:
                     continue
