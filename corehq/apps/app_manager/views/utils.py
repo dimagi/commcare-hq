@@ -174,7 +174,6 @@ def overwrite_app(app, master_build, report_map=None):
     # and compare those to the XMLNSes present in this app.
     unknown_xmlnses = {form.xmlns for form in app.get_forms()}
     form_ids_by_xmlns = {}
-    unknown_xmlnses = unknown_xmlnses.difference(form_ids_by_xmlns.keys())
     for brief in app.get_master_app_briefs():
         if len(unknown_xmlnses):
             previous_app = app.get_latest_build_from_upstream(brief.master_id)
@@ -184,9 +183,7 @@ def overwrite_app(app, master_build, report_map=None):
     # Add in any forms from the current linked app, before the source is overwritten.
     # This is particularly important if there's no previous version.
     if len(unknown_xmlnses):
-        for module in app['modules']:
-            for form in module['forms']:
-                form_ids_by_xmlns[form.xmlns] = form['unique_id']
+        form_ids_by_xmlns.update(_get_form_ids_by_xmlns(app))
 
     for key, value in master_json.items():
         if key not in excluded_fields:
