@@ -50,6 +50,9 @@ class Rewinder:
     move_to = attr.ib()
 
     def __attrs_post_init__(self):
+        migration_id = self.statedb.unique_id
+        resume_key = "%s.%s.%s" % (self.domain, self.doc_type, migration_id)
+        self.itr = ResumableFunctionIterator(resume_key, None, None, None)
         for method, regex in [
             ("case_rewind", r"^case-(\d+)$"),
             ("resume_rewind", r"^resume-"),
@@ -60,9 +63,6 @@ class Rewinder:
                 break
         else:
             raise NotImplementedError(self.move_to)
-        migration_id = self.statedb.unique_id
-        resume_key = "%s.%s.%s" % (self.domain, self.doc_type, migration_id)
-        self.itr = ResumableFunctionIterator(resume_key, None, None, None)
 
     def resume_rewind(self, match):
         self.offset = None
