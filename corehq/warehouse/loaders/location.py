@@ -1,10 +1,10 @@
 from django.db.models import Q
 
 from corehq.apps.locations.models import SQLLocation
-from corehq.warehouse.const import LOCATION_STAGING_SLUG, LOCATION_DIM_SLUG
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin, slug_to_table_map
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
-from corehq.warehouse.models import LocationStagingTable, LocationDim
+from corehq.warehouse.const import LOCATION_DIM_SLUG, LOCATION_STAGING_SLUG
+from corehq.warehouse.etl import CustomSQLETLMixin, HQToWarehouseETLMixin
+from corehq.warehouse.loaders.base import BaseLoader, BaseStagingLoader
+from corehq.warehouse.models import LocationDim, LocationStagingTable
 
 
 class LocationStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):

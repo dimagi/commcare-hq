@@ -1,10 +1,11 @@
-from corehq.apps.groups.models import Group
-from corehq.warehouse.const import GROUP_STAGING_SLUG, GROUP_DIM_SLUG
-from corehq.warehouse.dbaccessors import get_group_ids_by_last_modified
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin, slug_to_table_map
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
-from corehq.warehouse.models import GroupStagingTable, GroupDim
 from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.groups.models import Group
+from corehq.warehouse.const import GROUP_DIM_SLUG, GROUP_STAGING_SLUG
+from corehq.warehouse.dbaccessors import get_group_ids_by_last_modified
+from corehq.warehouse.etl import CustomSQLETLMixin, HQToWarehouseETLMixin
+from corehq.warehouse.loaders.base import BaseLoader, BaseStagingLoader
+from corehq.warehouse.models import GroupDim, GroupStagingTable
 
 
 class GroupStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):

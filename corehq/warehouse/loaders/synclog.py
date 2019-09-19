@@ -1,8 +1,13 @@
-from corehq.warehouse.const import SYNCLOG_STAGING_SLUG, SYNCLOG_FACT_SLUG, USER_DIM_SLUG, DOMAIN_DIM_SLUG
+from corehq.warehouse.const import (
+    DOMAIN_DIM_SLUG,
+    SYNCLOG_FACT_SLUG,
+    SYNCLOG_STAGING_SLUG,
+    USER_DIM_SLUG,
+)
 from corehq.warehouse.dbaccessors import get_synclogs_by_date
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin, slug_to_table_map
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
-from corehq.warehouse.models import SyncLogStagingTable, SyncLogFact
+from corehq.warehouse.etl import CustomSQLETLMixin, HQToWarehouseETLMixin
+from corehq.warehouse.loaders.base import BaseLoader, BaseStagingLoader
+from corehq.warehouse.models import SyncLogFact, SyncLogStagingTable
 
 
 class SyncLogStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):

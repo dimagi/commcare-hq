@@ -1,14 +1,19 @@
 import random
 import uuid
 from datetime import datetime, timedelta
-from django.test import TestCase
 
 from django.conf import settings
 from django.core.management import call_command
+from django.test import TestCase
 
 from corehq.form_processor.tests.utils import partitioned
-from corehq.warehouse.models import (ApplicationStagingTable, Batch,
-    GroupStagingTable, LocationStagingTable, UserStagingTable)
+from corehq.warehouse.models import (
+    ApplicationStagingTable,
+    Batch,
+    GroupStagingTable,
+    LocationStagingTable,
+    UserStagingTable,
+)
 
 
 def create_batch(slug):
