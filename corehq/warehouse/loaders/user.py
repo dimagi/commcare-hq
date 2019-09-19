@@ -1,7 +1,7 @@
 from corehq.apps.users.models import CouchUser
 from corehq.warehouse.const import USER_STAGING_SLUG, USER_DIM_SLUG
 from corehq.warehouse.dbaccessors import get_user_ids_by_last_modified
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
+from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin, slug_to_table_map
 from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import UserStagingTable, UserDim
 from dimagi.utils.couch.database import iter_docs
@@ -15,9 +15,6 @@ class UserStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     slug = USER_STAGING_SLUG
     model_cls = UserStagingTable
-
-    def dependencies(self):
-        return []
 
     def field_mapping(self):
         return [
@@ -54,5 +51,5 @@ class UserDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = USER_DIM_SLUG
     model_cls = UserDim
 
-    def dependencies(self):
+    def dependant_slugs(self):
         return [USER_STAGING_SLUG]

@@ -2,7 +2,7 @@ from django.db.models import Q
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.warehouse.const import LOCATION_STAGING_SLUG, LOCATION_DIM_SLUG
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
+from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin, slug_to_table_map
 from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import LocationStagingTable, LocationDim
 
@@ -38,9 +38,6 @@ class LocationStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
             ('location_type.last_modified', 'location_type_last_modified'),
         ]
 
-    def dependencies(self):
-        return []
-
     def record_iter(self, start_datetime, end_datetime):
         return SQLLocation.objects.filter(
             Q(last_modified__gt=start_datetime, last_modified__lte=end_datetime) |
@@ -57,5 +54,5 @@ class LocationDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = LOCATION_DIM_SLUG
     model_cls = LocationDim
 
-    def dependencies(self):
+    def dependant_slugs(self):
         return [LOCATION_STAGING_SLUG]
