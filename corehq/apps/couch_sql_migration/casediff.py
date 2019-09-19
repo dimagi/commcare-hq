@@ -403,7 +403,7 @@ class BatchProcessor(object):
                 if self._should_retry(key):
                     log.warn("retrying batch on error: %s: %s",
                         type(err).__name__, err)
-                    self._process_batch(process, key)
+                    gevent.spawn(self._process_batch, process, key)
                 else:
                     log.exception("batch processing error: %s: %s",
                         type(err).__name__, err)
