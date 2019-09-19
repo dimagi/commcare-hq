@@ -95,6 +95,19 @@ class TestLockingQueues(SimpleTestCase):
         self._check_locks(['grapefruit_sculpin'], lock_set=True)
         self._check_locks(['wrought_iron'], lock_set=False)
 
+    def test_try_obj_should_make_obj_wait_in_line(self):
+        tiger = DummyObject('tiger')
+        beaver = DummyObject('beaver')
+        monkey = DummyObject('monkey')
+        self.assertTrue(self.queues.try_obj(["tooth", "claw"], tiger))
+        self.assertFalse(self.queues.try_obj(["tooth", "tail"], beaver))
+        self.assertFalse(self.queues.try_obj(["tail"], monkey))
+        self.queues.release_lock(tiger)
+        self.assertEqual(self.queues.pop()[0], beaver)
+        self.assertEqual(self.queues.pop()[0], None)
+        self.queues.release_lock(beaver)
+        self.assertEqual(self.queues.pop()[0], monkey)
+
     def test_pop(self):
         # nothing returned if nothing in queues
         self.assertEqual((None, None), self.queues.pop())

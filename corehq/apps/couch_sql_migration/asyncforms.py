@@ -176,10 +176,14 @@ class PartiallyLockingQueue(object):
         Returns :boolean: True if it acquired the lock, False if it was added to queue
         """
         queue_obj_id = self.get_queue_obj_id(queue_obj)
-        if not lock_ids or self._set_lock(lock_ids):
-            self.processing[queue_obj_id] = lock_ids
-            return True
         queue_by_lock_id = self.queue_by_lock_id
+        for lock_id in lock_ids:
+            if queue_by_lock_id.get(lock_id):
+                break  # wait behind other object(s) in the queue for this lock
+        else:
+            if not lock_ids or self._set_lock(lock_ids):
+                self.processing[queue_obj_id] = lock_ids
+                return True
         for lock_id in lock_ids:
             queue_by_lock_id[lock_id].append(queue_obj_id)
         self.objs_by_queue_id[queue_obj_id] = (queue_obj, lock_ids)
