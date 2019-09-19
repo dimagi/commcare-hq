@@ -4,7 +4,7 @@ from corehq.warehouse.const import (
     USER_LOCATION_DIM_SLUG,
     USER_STAGING_SLUG,
 )
-from corehq.warehouse.etl import CustomSQLETLMixin, slug_to_table_map
+from corehq.warehouse.etl import CustomSQLETLMixin
 from corehq.warehouse.loaders.base import BaseLoader
 from corehq.warehouse.models import UserLocationDim
 

@@ -1,10 +1,11 @@
-from corehq.apps.users.models import CouchUser
-from corehq.warehouse.const import USER_STAGING_SLUG, USER_DIM_SLUG
-from corehq.warehouse.dbaccessors import get_user_ids_by_last_modified
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin, slug_to_table_map
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
-from corehq.warehouse.models import UserStagingTable, UserDim
 from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.users.models import CouchUser
+from corehq.warehouse.const import USER_DIM_SLUG, USER_STAGING_SLUG
+from corehq.warehouse.dbaccessors import get_user_ids_by_last_modified
+from corehq.warehouse.etl import CustomSQLETLMixin, HQToWarehouseETLMixin
+from corehq.warehouse.loaders.base import BaseLoader, BaseStagingLoader
+from corehq.warehouse.models import UserDim, UserStagingTable
 
 
 class UserStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):

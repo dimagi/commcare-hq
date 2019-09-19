@@ -1,10 +1,14 @@
-from corehq.apps.app_manager.models import Application
-from corehq.warehouse.const import APPLICATION_STAGING_SLUG, APPLICATION_DIM_SLUG
-from corehq.warehouse.dbaccessors import get_application_ids_by_last_modified
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin, slug_to_table_map
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
-from corehq.warehouse.models import ApplicationStagingTable, ApplicationDim
 from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.app_manager.models import Application
+from corehq.warehouse.const import (
+    APPLICATION_DIM_SLUG,
+    APPLICATION_STAGING_SLUG,
+)
+from corehq.warehouse.dbaccessors import get_application_ids_by_last_modified
+from corehq.warehouse.etl import CustomSQLETLMixin, HQToWarehouseETLMixin
+from corehq.warehouse.loaders.base import BaseLoader, BaseStagingLoader
+from corehq.warehouse.models import ApplicationDim, ApplicationStagingTable
 
 
 class ApplicationStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):

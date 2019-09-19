@@ -1,8 +1,13 @@
-from corehq.warehouse.const import FORM_STAGING_SLUG, FORM_FACT_SLUG, USER_DIM_SLUG, DOMAIN_DIM_SLUG
+from corehq.warehouse.const import (
+    DOMAIN_DIM_SLUG,
+    FORM_FACT_SLUG,
+    FORM_STAGING_SLUG,
+    USER_DIM_SLUG,
+)
 from corehq.warehouse.dbaccessors import get_forms_by_last_modified
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin, slug_to_table_map
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
-from corehq.warehouse.models import FormStagingTable, FormFact
+from corehq.warehouse.etl import CustomSQLETLMixin, HQToWarehouseETLMixin
+from corehq.warehouse.loaders.base import BaseLoader, BaseStagingLoader
+from corehq.warehouse.models import FormFact, FormStagingTable
 
 
 class FormStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
