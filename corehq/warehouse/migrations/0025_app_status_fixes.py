@@ -28,7 +28,6 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, corehq.warehouse.models.shared.WarehouseTable, corehq.warehouse.etl.CustomSQLETLMixin),
         ),
         migrations.CreateModel(
             name='AppStatusSynclogStaging',
@@ -43,7 +42,6 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, corehq.warehouse.models.shared.WarehouseTable, corehq.warehouse.etl.CustomSQLETLMixin),
         ),
         migrations.AddField(
             model_name='applicationstatusfact',

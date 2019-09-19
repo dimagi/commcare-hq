@@ -25,7 +25,6 @@ class Migration(migrations.Migration):
                 ('batch', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='warehouse.Batch')),
                 ('user_dim', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.UserDim')),
             ],
-            bases=(models.Model, corehq.warehouse.models.shared.WarehouseTable, corehq.warehouse.etl.CustomSQLETLMixin),
         ),
         migrations.AlterUniqueTogether(
             name='domainmembershipdim',

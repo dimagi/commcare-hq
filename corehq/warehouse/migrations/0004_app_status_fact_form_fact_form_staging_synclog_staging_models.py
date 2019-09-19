@@ -29,7 +29,6 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, corehq.warehouse.models.shared.WarehouseTable, corehq.warehouse.etl.CustomSQLETLMixin),
         ),
         migrations.CreateModel(
             name='FormFact',
@@ -50,7 +49,6 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, corehq.warehouse.models.shared.WarehouseTable, corehq.warehouse.etl.CustomSQLETLMixin),
         ),
         migrations.CreateModel(
             name='FormStagingTable',
@@ -70,7 +68,6 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, corehq.warehouse.models.shared.WarehouseTable, corehq.warehouse.etl.HQToWarehouseETLMixin),
         ),
         migrations.CreateModel(
             name='SyncLogStagingTable',
@@ -86,7 +83,6 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, corehq.warehouse.models.shared.WarehouseTable, corehq.warehouse.etl.HQToWarehouseETLMixin),
         ),
         migrations.AddField(
             model_name='domaindim',

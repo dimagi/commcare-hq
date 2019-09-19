@@ -29,7 +29,6 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, corehq.warehouse.models.shared.WarehouseTable, corehq.warehouse.etl.CustomSQLETLMixin),
         ),
         migrations.CreateModel(
             name='ApplicationStagingTable',
@@ -45,6 +44,5 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, corehq.warehouse.models.shared.WarehouseTable, corehq.warehouse.etl.HQToWarehouseETLMixin),
         ),
     ]
