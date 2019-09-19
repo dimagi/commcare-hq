@@ -41,7 +41,7 @@ class Command(BaseCommand):
             verified=False,
         )
         try:
-            commit_record.verified = loader.commit(batch)
+            commit_record.verified = loader().commit(batch)
         except Exception as e:
             commit_record.error = e
             commit_record.success = False

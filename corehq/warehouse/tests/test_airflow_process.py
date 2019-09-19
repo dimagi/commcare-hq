@@ -29,8 +29,8 @@ class TestUserLoad(BaseWarehouseTestCase):
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
-        UserStagingLoader.clear_records()
-        UserDimLoader.clear_records()
+        UserStagingLoader().clear_records()
+        UserDimLoader().clear_records()
         CommitRecord.objects.all().delete()
         Batch.objects.all().delete()
         super(TestUserLoad, cls).tearDownClass()

@@ -14,12 +14,10 @@ class SyncLogStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     slug = SYNCLOG_STAGING_SLUG
     model_cls = SyncLogStagingTable
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return []
 
-    @classmethod
-    def field_mapping(cls):
+    def field_mapping(self):
         return [
             ('synclog_id', 'sync_log_id'),
             ('date', 'sync_date'),
@@ -29,8 +27,7 @@ class SyncLogStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
             ('duration', 'duration'),
         ]
 
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
+    def record_iter(self, start_datetime, end_datetime):
         return get_synclogs_by_date(start_datetime, end_datetime)
 
 
@@ -42,8 +39,7 @@ class SyncLogFactLoader(CustomSQLETLMixin, BaseLoader):
     slug = SYNCLOG_FACT_SLUG
     model_cls = SyncLogFact
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return [
             USER_DIM_SLUG,
             DOMAIN_DIM_SLUG,

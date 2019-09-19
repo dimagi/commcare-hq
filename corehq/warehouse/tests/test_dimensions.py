@@ -91,12 +91,12 @@ class TestUserDim(BaseWarehouseTestCase):
     def tearDownClass(cls):
         for record in cls.records:
             record.delete()
-        UserDimLoader.clear_records()
-        UserStagingLoader.clear_records()
+        UserDimLoader().clear_records()
+        UserStagingLoader().clear_records()
         super(TestUserDim, cls).tearDownClass()
 
     def test_user_types(self):
-        UserDimLoader.commit(self.batch)
+        UserDimLoader().commit(self.batch)
 
         self.assertEqual(UserDim.objects.count(), 5)
         self.assertEqual(
@@ -157,17 +157,17 @@ class TestDomainMembershipDim(BaseWarehouseTestCase):
                 {'domain': 'test2', 'is_admin': False},
             ]
         )
-        UserDimLoader.commit(cls.batch)
+        UserDimLoader().commit(cls.batch)
 
     @classmethod
     def tearDownClass(cls):
-        DomainMembershipDimLoader.clear_records()
-        UserDimLoader.clear_records()
-        UserStagingLoader.clear_records()
+        DomainMembershipDimLoader().clear_records()
+        UserDimLoader().clear_records()
+        UserStagingLoader().clear_records()
         super(TestDomainMembershipDim, cls).tearDownClass()
 
     def test_insert_and_update(self):
-        DomainMembershipDimLoader.commit(self.batch)
+        DomainMembershipDimLoader().commit(self.batch)
         # should create 4 domain membership columns
         self.assertEqual(
             DomainMembershipDim.objects.count(), 4
@@ -181,7 +181,7 @@ class TestDomainMembershipDim(BaseWarehouseTestCase):
 
         ## test removing a domain membership
         # clear and add new staging record to remove a membership of 2
-        UserStagingLoader.clear_records()
+        UserStagingLoader().clear_records()
         create_user_staging_record(
             domain=None,
             username='mobile1',
@@ -192,7 +192,7 @@ class TestDomainMembershipDim(BaseWarehouseTestCase):
                 {'domain': 'test1', 'is_admin': True},
             ]
         )
-        DomainMembershipDimLoader.commit(self.batch)
+        DomainMembershipDimLoader().commit(self.batch)
         # should create 3 domain membership columns instead of 4
         self.assertEqual(
             DomainMembershipDim.objects.count(), 3
@@ -226,15 +226,15 @@ class TestUserGroupDim(BaseWarehouseTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        GroupStagingLoader.clear_records()
-        UserStagingLoader.clear_records()
-        GroupDimLoader.clear_records()
-        UserDimLoader.clear_records()
-        UserGroupDimLoader.clear_records()
+        GroupStagingLoader().clear_records()
+        UserStagingLoader().clear_records()
+        GroupDimLoader().clear_records()
+        UserDimLoader().clear_records()
+        UserGroupDimLoader().clear_records()
         super(TestUserGroupDim, cls).tearDownClass()
 
     def test_basic_user_group_insert(self):
-        UserDimLoader.commit(self.batch)
+        UserDimLoader().commit(self.batch)
         self.assertEqual(UserDim.objects.count(), 3)
 
         # Setup group records to have multiple users
@@ -250,10 +250,10 @@ class TestUserGroupDim(BaseWarehouseTestCase):
             user_ids=[self.yellow_cat.user_id],
             batch_id=self.batch.id
         )
-        GroupDimLoader.commit(self.batch)
+        GroupDimLoader().commit(self.batch)
         self.assertEqual(GroupDim.objects.count(), 2)
 
-        UserGroupDimLoader.commit(self.batch)
+        UserGroupDimLoader().commit(self.batch)
         self.assertEqual(UserGroupDim.objects.count(), 3)
         dog_relations = UserGroupDim.objects.filter(group_dim=GroupDim.objects.get(group_id=dogs.group_id))
         self.assertEqual(
@@ -279,8 +279,8 @@ class TestLocationDim(BaseWarehouseTestCase):
         cls.batch = create_batch(cls.slug)
 
     def tearDown(self):
-        LocationStagingLoader.clear_records()
-        LocationDimLoader.clear_records()
+        LocationStagingLoader().clear_records()
+        LocationDimLoader().clear_records()
         super(TestLocationDim, self).tearDown()
 
     def test_location_dim(self):
@@ -296,7 +296,7 @@ class TestLocationDim(BaseWarehouseTestCase):
 
         self.assertEqual(LocationStagingTable.objects.count(), 4)
 
-        LocationDimLoader.commit(self.batch)
+        LocationDimLoader().commit(self.batch)
         self.assertEqual(LocationDim.objects.count(), 4)
         home_location = LocationDim.objects.filter(name='Home').first()
 
@@ -316,12 +316,12 @@ class TestLocationDim(BaseWarehouseTestCase):
             }
         }
         create_location_records_from_tree(self.domain, tree, self.batch.id)
-        LocationDimLoader.commit(self.batch)
+        LocationDimLoader().commit(self.batch)
         self.assertEqual(LocationDim.objects.count(), 4)
 
         # Let's add one more location under Naperville to ensure that the dim updates
         # when it's not a root node
-        LocationStagingLoader.clear_records()
+        LocationStagingLoader().clear_records()
         home_location = LocationDim.objects.filter(name='Home').first()
         city_location = LocationDim.objects.filter(name='Naperville').first()
         create_location_staging_record(
@@ -334,7 +334,7 @@ class TestLocationDim(BaseWarehouseTestCase):
             batch_id=self.batch.id
         )
 
-        LocationDimLoader.commit(self.batch)
+        LocationDimLoader().commit(self.batch)
         self.assertEqual(LocationDim.objects.count(), 5)
 
 
@@ -350,14 +350,14 @@ class TestAppDim(BaseWarehouseTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        ApplicationDimLoader.clear_records()
-        ApplicationStagingLoader.clear_records()
+        ApplicationDimLoader().clear_records()
+        ApplicationStagingLoader().clear_records()
         super(TestAppDim, cls).tearDownClass()
 
     def test_app_dim(self):
         create_application_staging_record(self.domain, 'test-app', batch_id=self.batch.id)
         create_application_staging_record(self.domain, 'test-deleted', doc_type='Application-Deleted', batch_id=self.batch.id)
-        ApplicationDimLoader.commit(self.batch)
+        ApplicationDimLoader().commit(self.batch)
         self.assertEqual(ApplicationDim.objects.count(), 2)
         test_app = ApplicationDim.objects.get(name='test-app')
         self.assertEqual(test_app.deleted, False)

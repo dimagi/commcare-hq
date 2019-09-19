@@ -16,12 +16,10 @@ class DomainStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     slug = DOMAIN_STAGING_SLUG
     model_cls = DomainStagingTable
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return []
 
-    @classmethod
-    def field_mapping(cls):
+    def field_mapping(self):
         return [
             ('_id', 'domain_id'),
             ('name', 'domain'),
@@ -43,8 +41,7 @@ class DomainStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
             ('doc_type', 'doc_type'),
         ]
 
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
+    def record_iter(self, start_datetime, end_datetime):
         domain_ids = get_domain_ids_by_last_modified(start_datetime, end_datetime)
 
         return iter_docs(Domain.get_db(), domain_ids)
@@ -59,6 +56,5 @@ class DomainDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = DOMAIN_DIM_SLUG
     model_cls = DomainDim
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return [DOMAIN_STAGING_SLUG]

@@ -14,12 +14,10 @@ class FormStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     slug = FORM_STAGING_SLUG
     model_cls = FormStagingTable
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return []
 
-    @classmethod
-    def field_mapping(cls):
+    def field_mapping(self):
         return [
             ('form_id', 'form_id'),
             ('domain', 'domain'),
@@ -38,8 +36,7 @@ class FormStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
             ('app_version', 'app_version'),
         ]
 
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
+    def record_iter(self, start_datetime, end_datetime):
         return get_forms_by_last_modified(start_datetime, end_datetime)
 
 
@@ -53,8 +50,7 @@ class FormFactLoader(CustomSQLETLMixin, BaseLoader):
     slug = FORM_FACT_SLUG
     model_cls = FormFact
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return [
             USER_DIM_SLUG,
             DOMAIN_DIM_SLUG,

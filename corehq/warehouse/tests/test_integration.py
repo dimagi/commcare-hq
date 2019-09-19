@@ -100,17 +100,17 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
 
         FormProcessorTestUtils.delete_all_sql_forms(cls.domain)
 
-        FormStagingLoader.clear_records()
-        FormFactLoader.clear_records()
-        DomainStagingLoader.clear_records()
-        DomainDimLoader.clear_records()
-        UserStagingLoader.clear_records()
-        UserDimLoader.clear_records()
-        SyncLogStagingLoader.clear_records()
-        SyncLogFactLoader.clear_records()
-        AppStatusFormStagingLoader.clear_records()
-        AppStatusSynclogStagingLoader.clear_records()
-        ApplicationStatusFactLoader.clear_records()
+        FormStagingLoader().clear_records()
+        FormFactLoader().clear_records()
+        DomainStagingLoader().clear_records()
+        DomainDimLoader().clear_records()
+        UserStagingLoader().clear_records()
+        UserDimLoader().clear_records()
+        SyncLogStagingLoader().clear_records()
+        SyncLogFactLoader().clear_records()
+        AppStatusFormStagingLoader().clear_records()
+        AppStatusSynclogStagingLoader().clear_records()
+        ApplicationStatusFactLoader().clear_records()
         super(AppStatusIntegrationTest, cls).tearDownClass()
 
     def test_loading_app_stats_fact(self):
@@ -122,7 +122,9 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
             path = path or []
             path.append(clazz)
 
-            for dep in clazz.dependencies():
+            loader = clazz()
+
+            for dep in loader.dependencies():
                 dep_cls = get_loader_by_slug(dep)
                 if dep_cls in path:
                     continue
@@ -130,7 +132,7 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
 
             if clazz not in seen:
                 seen.add(clazz)
-                clazz.commit(batch)
+                loader.commit(batch)
 
         commit_with_dependencies(ApplicationStatusFactLoader)
 
