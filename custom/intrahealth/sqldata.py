@@ -5086,7 +5086,6 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
                 if pna['location_id'] is None:
                     pna['location_id'] = pna['location_name']
 
-
             pnas_list = sorted(pnas_list, key=lambda x: x['location_id'])
 
             for pna in pnas_list:
