@@ -52,6 +52,7 @@ def get_latest_released_app(domain, app_id):
     return None
 
 
+@quickcache(['domain'], timeout=1 * 60 * 60)
 def get_latest_released_app_versions_by_app_id(domain):
     """
     Gets a dict of all apps in domain that have released at least one build
