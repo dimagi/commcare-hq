@@ -8,6 +8,13 @@
 {% endblock %}
 
 {% block patient-tab-container %}
+  <script>
+    // have to do this here too because this page is loaded asynchronously
+    $(function () {
+      $(".timeago").timeago();
+    });
+  </script>
+
   <div class="row">
     {% include "case/partials/case_hierarchy.html" %}
   </div>

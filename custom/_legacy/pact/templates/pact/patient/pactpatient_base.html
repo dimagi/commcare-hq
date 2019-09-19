@@ -2,9 +2,8 @@
 {% load i18n %}
 
 {% block reportcontent %}
-  {% registerurl 'pactdata_1' domain %}
-  {% initial_page_data 'patient_id' patient_doc.get_id %}
-  {% initial_page_data 'pt_root_url' pt_root_url %}
+  {#    {% block extrahead %}#}
+  {#    {% endblock extrahead %}#}
 
   {% block pactpatient_header %}
     <div>
