@@ -285,7 +285,7 @@ class CaseDiffQueue(object):
         if "num_diffed_cases" in state:
             self.num_diffed_cases = state["num_diffed_cases"]
         if "to_diff" in state:
-            for case_id in state["to_diff"]:
+            for case_id in set(state["to_diff"]):
                 self.enqueue(case_id)
         if "pending" in state:
             for chunk in chunked(state["pending"].items(), self.BATCH_SIZE, list):
