@@ -1,6 +1,6 @@
 hqDefine("succeed/js/patient_list", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-    $(function() {
+    $(function () {
         var tableOptions = initialPageData.get('report_table_js_options');
         if (tableOptions && tableOptions.datatables) {
             var reportTablesOptions = {
@@ -16,7 +16,7 @@ hqDefine("succeed/js/patient_list", function () {
                 reportTablesOptions.aoColumns = tableOptions.headers.render_aoColumns;
             }
             if (tableOptions.headers.custom_sort) {
-                reportTablesOptions.customSort = report_table.headers.custom_sort;
+                reportTablesOptions.customSort = tableOptions.headers.custom_sort;
             }
             if (tableOptions.pagination.hide) {
                 reportTablesOptions.show_pagination = false;
@@ -47,7 +47,7 @@ hqDefine("succeed/js/patient_list", function () {
 
         $('.header-popover').popout({
             trigger: 'hover',
-            placement: 'bottom'
+            placement: 'bottom',
         });
     });
 });
