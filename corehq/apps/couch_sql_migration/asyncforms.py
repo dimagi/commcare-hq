@@ -40,7 +40,9 @@ class AsyncFormProcessor(object):
             else:
                 self.pool.kill()  # stop workers -> reduce chaos in logs
         finally:
-            self.statedb.set_resume_state(type(self).__name__, queue_ids)
+            key = type(self).__name__
+            self.statedb.set_resume_state(key, queue_ids)
+            log.info("saved %s state (%s ids)", key, len(queue_ids))
             self.queues = self.pool = None
 
     def _rebuild_queues(self, form_ids):

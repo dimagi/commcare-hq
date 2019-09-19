@@ -1,17 +1,18 @@
 import logging
 import os
+import signal
 from collections import defaultdict
 from itertools import chain, count
 
 import gevent
+import gipc
 from gevent.event import Event
-from gevent.pool import Group as Pool
+from gevent.pool import Group, Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form
 from casexml.apps.stock.models import StockReport
 from dimagi.utils.chunked import chunked
 
-import gipc
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.tzmigration.timezonemigration import json_diff
 from corehq.form_processor.backends.couch.dbaccessors import (
@@ -61,6 +62,7 @@ class CaseDiffQueue(object):
     """
 
     BATCH_SIZE = 100
+    MAX_DIFF_WORKERS = 20
     MAX_MEMORIZED_CASES = 4096
 
     def __init__(self, statedb, status_interval=STATUS_INTERVAL):
@@ -70,12 +72,20 @@ class CaseDiffQueue(object):
         self.status_interval = status_interval
         self.pending_cases = defaultdict(int)  # case id -> processed form count
         self.pending_loads = defaultdict(int)  # case id -> processed form count
-        self.cases_to_diff = {}  # case id -> case doc (JSON)
-        self.pool = Pool()
+        self.cases_to_diff = []  # case ids ready to diff
+        self.pool = Group()
+        # The diff pool is used for case diff jobs. It has limited
+        # concurrency to prevent OOM conditions caused by loading too
+        # many cases into memory. The approximate limit on number of
+        # couch cases in memory at any time
+        # BATCH_SIZE + MAX_MEMORIZED_CASES + MAX_DIFF_WORKERS * BATCH_SIZE
+        self.diff_pool = Pool(self.MAX_DIFF_WORKERS)
         self.case_batcher = BatchProcessor(self.pool)
-        self.diff_batcher = BatchProcessor(self.pool)
+        self.diff_spawner = BatchProcessor(self.pool)
+        self.diff_batcher = BatchProcessor(self.diff_pool)
         self.cases = LRUDict(self.MAX_MEMORIZED_CASES)
         self.num_diffed_cases = 0
+        self.cache_hits = [0, 0]
         self._is_flushing = False
 
     def __enter__(self):
@@ -121,7 +131,6 @@ class CaseDiffQueue(object):
         :param pending: dict `{<case_id>: <processed_form_count>, ...}`
         """
         log.debug("enqueue or load %s", pending)
-        to_diff = []
         update_lru = self.cases.get
         batch = self.pending_loads
         result = self.statedb.add_processed_forms(pending)
@@ -132,14 +141,12 @@ class CaseDiffQueue(object):
                     self._async_load_cases(batch)
                     batch = self.pending_loads = defaultdict(int)
             elif total_forms <= processed_forms:
-                to_diff.append(case_id)
+                self.enqueue(case_id)
             else:
                 update_lru(case_id)
         if self._is_flushing and batch:
             self._load_cases(batch)
             self.pending_loads = defaultdict(int)
-        if to_diff:
-            self._enqueue_cases(to_diff)
 
     def _async_load_cases(self, pending):
         self.case_batcher.spawn(self._load_cases, pending)
@@ -155,12 +162,11 @@ class CaseDiffQueue(object):
         log.debug("enqueue or load %s", pending)
         cases = self.cases
         case_ids = list(pending)
-        loaded_cases = {}
+        loaded_case_ids = set()
         case_records = []
-        enqueued = set()
         stock_forms = get_stock_forms_by_case_id(case_ids)
         for case in CaseAccessorCouch.get_cases(case_ids):
-            loaded_cases[case.case_id] = case
+            loaded_case_ids.add(case.case_id)
             case_stock_forms = stock_forms.get(case.case_id, [])
             rec = CaseRecord(case, case_stock_forms, pending[case.case_id])
             case_records.append(rec)
@@ -170,51 +176,55 @@ class CaseDiffQueue(object):
         if case_records:
             result = self.statedb.update_cases(case_records)
             for case_id, total_forms, processed_forms in result:
-                if total_forms <= processed_forms and case_id not in enqueued:
-                    self.enqueue(loaded_cases[case_id].to_json())
-        missing = set(case_ids) - set(loaded_cases)
+                if total_forms <= processed_forms:
+                    self.enqueue(case_id)
+        missing = set(case_ids) - loaded_case_ids
         if missing:
             log.error("Found %s missing Couch cases", len(missing))
             self.statedb.add_missing_docs("CommCareCase-couch", missing)
 
-    def _enqueue_cases(self, case_ids):
-        log.debug("enqueue cases %s", case_ids)
-        to_load = []
-        get_case = self.cases.get
-        for case_id in case_ids:
-            case = get_case(case_id)
-            if case is None:
-                to_load.append(case_id)
-            else:
-                self.enqueue(case.to_json())
-        for case in CaseAccessorCouch.get_cases(to_load):
-            self.enqueue(case.to_json())
-
-    def enqueue(self, case_doc):
-        case_id = case_doc["_id"]
-        self.cases.pop(case_id, None)
-        self.cases_to_diff[case_id] = case_doc
+    def enqueue(self, case_id):
+        self.cases_to_diff.append(case_id)
         if len(self.cases_to_diff) >= self.BATCH_SIZE:
             self._diff_cases()
 
     def _diff_cases(self):
-        def diff(couch_cases):
+        def diff(case_ids):
+            couch_cases = {}
+            to_load = []
+            pop_case = self.cases.pop
+            for case_id in case_ids:
+                case = pop_case(case_id, None)
+                if case is None:
+                    to_load.append(case_id)
+                else:
+                    couch_cases[case_id] = case.to_json()
+            for case in CaseAccessorCouch.get_cases(to_load):
+                couch_cases[case.case_id] = case.to_json()
             diff_cases(couch_cases, statedb=self.statedb)
-            self.num_diffed_cases += len(couch_cases)
+            self.cache_hits[0] += len(case_ids) - len(to_load)
+            self.cache_hits[1] += len(case_ids)
+            self.num_diffed_cases += len(case_ids)
 
-        self.diff_batcher.spawn(diff, self.cases_to_diff)
-        self.cases_to_diff = {}
+        def spawn_diff(case_ids):
+            # may block due to concurrency limit on diff pool
+            self.diff_batcher.spawn(diff, case_ids)
+
+        self.diff_spawner.spawn(spawn_diff, self.cases_to_diff)
+        self.cases_to_diff = []
 
     def process_remaining_diffs(self):
         log.debug("process remaining diffs")
         self.flush()
         for batcher, action in [
             (self.case_batcher, "loaded"),
+            (self.diff_spawner, "spawned to diff"),
             (self.diff_batcher, "diffed"),
         ]:
             if batcher:
                 log.warn("%s batches of cases could not be %s", len(batcher), action)
         self.pool = None
+        self.diff_pool = None
 
     def flush(self, complete=True):
         """Process cases in the queue
@@ -227,6 +237,7 @@ class CaseDiffQueue(object):
 
         log.debug("begin flush")
         pool = self.pool
+        diff_pool = self.diff_pool
         self._is_flushing = True
         try:
             if self.pending_cases:
@@ -235,13 +246,13 @@ class CaseDiffQueue(object):
             join(pool)
             if complete:
                 log.info("Diffing cases with unprocessed forms...")
-                to_diff = self.statedb.iter_cases_with_unprocessed_forms()
-                for chunk in chunked(to_diff, self.BATCH_SIZE, list):
-                    self._enqueue_cases(chunk)
-            while self.cases_to_diff or pool:
+                for case_id in self.statedb.iter_cases_with_unprocessed_forms():
+                    self.enqueue(case_id)
+            while self.cases_to_diff or pool or diff_pool:
                 if self.cases_to_diff:
                     self._diff_cases()
                 join(pool)
+                join(diff_pool)
             assert not self.pending_cases, self.pending_cases
             assert not self.pending_loads, self.pending_loads
         finally:
@@ -256,21 +267,25 @@ class CaseDiffQueue(object):
                 for case_id, processed_forms in batch.items():
                     pending[case_id] += processed_forms
             state["pending"] = dict(pending)
-        if self.diff_batcher or self.cases_to_diff:
+        if self.diff_batcher or self.diff_spawner or self.cases_to_diff:
             state["to_diff"] = list(chain.from_iterable(self.diff_batcher))
+            state["to_diff"].extend(chain.from_iterable(self.diff_spawner))
             state["to_diff"].extend(self.cases_to_diff)
         if self.num_diffed_cases:
             state["num_diffed_cases"] = self.num_diffed_cases
-        log.debug("resume state: %s", state)
         self.statedb.set_resume_state(type(self).__name__, state)
+        log_state = state if log.isEnabledFor(logging.DEBUG) else {
+            k: len(v) if hasattr(v, "__len__") else v for k, v in state.items()
+        }
+        log.info("saved %s state: %s", type(self).__name__, log_state)
 
     def _load_resume_state(self):
         state = self.statedb.pop_resume_state(type(self).__name__, {})
         if "num_diffed_cases" in state:
             self.num_diffed_cases = state["num_diffed_cases"]
         if "to_diff" in state:
-            for chunk in chunked(state["to_diff"], self.BATCH_SIZE, list):
-                self.diff_batcher.spawn(self._enqueue_cases, chunk)
+            for case_id in state["to_diff"]:
+                self.enqueue(case_id)
         if "pending" in state:
             for chunk in chunked(state["pending"].items(), self.BATCH_SIZE, list):
                 self._async_load_cases(dict(chunk))
@@ -300,26 +315,24 @@ class CaseDiffQueue(object):
 
     @staticmethod
     def log_status(status):
-        log.info(
-            "cases diffed=%s, pending cases=%s diffs=%s",
-            status["diffed_cases"],
-            status["pending_cases"],
-            status["pending_diffs"],
-        )
+        log.info("cases pending=%(pending)s cached=%(cached)s "
+                 "loaded=%(loaded)s diffed=%(diffed)s", status)
 
     def get_status(self):
+        cache_hits, self.cache_hits = self.cache_hits, [0, 0]
         return {
-            "pending_cases": (
+            "pending": (
                 len(self.pending_cases)
                 + len(self.pending_loads)
                 + sum(len(batch) for batch in self.case_batcher)
-                + len(self.cases)
+                + len(self.cases_to_diff)
+                + sum(len(batch) for batch in self.diff_spawner)
             ),
-            "pending_diffs": (
-                len(self.cases_to_diff)
-                + sum(len(batch) for batch in self.diff_batcher)
+            "cached": "%s/%s" % tuple(cache_hits),
+            "loaded": (
+                len(self.cases) + sum(len(batch) for batch in self.diff_batcher)
             ),
-            "diffed_cases": self.num_diffed_cases,
+            "diffed": self.num_diffed_cases,
         }
 
 
@@ -450,7 +463,8 @@ class CaseDiffProcess(object):
         calls, self.calls = self.calls_pipe.__enter__()
         self.stats, stats = self.stats_pipe.__enter__()
         debug = log.isEnabledFor(logging.DEBUG)
-        args = (self.queue_class, calls, stats, self.state_path, debug)
+        is_rebuild = self.statedb.is_rebuild
+        args = (self.queue_class, calls, stats, self.state_path, is_rebuild, debug)
         self.process = gipc.start_process(target=run_case_diff_queue, args=args)
         self.status_logger = gevent.spawn(self.run_status_logger)
         return self
@@ -460,7 +474,7 @@ class CaseDiffProcess(object):
         if is_error:
             log.error("stopping process with error", exc_info=exc_info)
         else:
-            log.debug("stopping process")
+            log.info("stopping case diff process")
         self.request_status()
         self.calls.put((TERMINATE, is_error))
         self.status_logger.join(timeout=30)
@@ -472,8 +486,8 @@ class CaseDiffProcess(object):
     def update(self, case_ids, form_id):
         self.calls.put(("update", case_ids, form_id))
 
-    def enqueue(self, case_doc):
-        self.calls.put(("enqueue", case_doc))
+    def enqueue(self, case_id):
+        self.calls.put(("enqueue", case_id))
 
     def request_status(self):
         log.debug("reqeust status...")
@@ -511,7 +525,7 @@ def get_casediff_state_path(path):
     return path[:-3] + "-casediff.db"
 
 
-def run_case_diff_queue(queue_class, calls, stats, state_path, debug):
+def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug):
     def status():
         stats.put((STATUS, queue.get_status()))
 
@@ -525,9 +539,20 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, debug):
         else:
             getattr(queue, action)(*args)
 
+    def on_break(signum, frame):
+        nonlocal clean_break
+        if clean_break:
+            raise KeyboardInterrupt
+        log.info("clean break... (Ctrl+C to abort)")
+        clean_break = True
+
+    clean_break = False
+    signal.signal(signal.SIGINT, on_break)
     process_actions = {STATUS: status, TERMINATE: terminate}
     statedb = StateDB.init(state_path)
+    statedb.is_rebuild = is_rebuild
     setup_logging(state_path, debug)
+    queue = None
     with calls, stats:
         try:
             with queue_class(statedb, status_interval=0) as queue:
@@ -542,9 +567,10 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, debug):
         except Exception:
             log.exception("unexpected error")
         finally:
-            status_ = queue.get_status()
-            log.info("termination status: %s", status_)
-            stats.put((TERMINATE, status_))
+            if queue is not None:
+                status_ = queue.get_status()
+                log.info("termination status: %s", status_)
+                stats.put((TERMINATE, status_))
 
 
 def setup_logging(state_path, debug):
