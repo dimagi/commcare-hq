@@ -303,7 +303,12 @@ class CaseDiffQueue(object):
             ),
             "cached": "%s/%s" % tuple(cache_hits),
             "loaded": (
-                len(self.cases) + sum(len(batch) for batch in self.diff_batcher)
+                len(self.cases)
+                + sum(len(batch) for batch in self.diff_batcher)
+                # subtract diff_spawner jobs because it blocks until
+                # diff_batcher starts the job; during that time
+                # batches will appear in both
+                - sum(len(batch) for batch in self.diff_spawner)
             ),
             "diffed": self.num_diffed_cases,
         }
