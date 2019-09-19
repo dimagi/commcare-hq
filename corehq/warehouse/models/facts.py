@@ -14,38 +14,23 @@ from corehq.warehouse.models.shared import WarehouseTable
 from corehq.warehouse.utils import truncate_records_for_cls
 
 
-class BaseFact(models.Model, WarehouseTable):
-
+class BaseFact(models.Model):
     batch = models.ForeignKey(
         'Batch',
         on_delete=models.PROTECT,
     )
 
-    @classmethod
-    def commit(cls, batch):
-        with transaction.atomic(using=db_for_read_write(cls)):
-            cls.load(batch)
-        return True
-
     class Meta(object):
         abstract = True
 
-    @classmethod
-    @unit_testing_only
-    def clear_records(cls):
-        truncate_records_for_cls(cls, cascade=True)
-
 
 @architect.install('partition', type='range', subtype='date', constraint='month', column='received_on')
-class FormFact(BaseFact, CustomSQLETLMixin):
-    '''
+class FormFact(BaseFact):
+    """
     Contains all `XFormInstance`s
 
     Grain: form_id
-    '''
-    # TODO: Write Update SQL Query
-    slug = FORM_FACT_SLUG
-
+    """
     form_id = models.CharField(max_length=255, unique=True)
 
     domain = models.CharField(max_length=255)
@@ -71,14 +56,6 @@ class FormFact(BaseFact, CustomSQLETLMixin):
     state = models.PositiveSmallIntegerField(
         choices=XFormInstanceSQL.STATES,
     )
-
-    @classmethod
-    def dependencies(cls):
-        return [
-            USER_DIM_SLUG,
-            DOMAIN_DIM_SLUG,
-            FORM_STAGING_SLUG,
-        ]
 
 
 class SyncLogFact(BaseFact, CustomSQLETLMixin):

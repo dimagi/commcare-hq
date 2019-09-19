@@ -138,14 +138,12 @@ class DomainStagingTable(StagingTable):
     domain_created_on = models.DateTimeField(null=True)
 
 
-class FormStagingTable(StagingTable, HQToWarehouseETLMixin):
-    '''
+class FormStagingTable(StagingTable):
+    """
     Represents the staging table to dump data before loading into the FormFact
 
     Grain: form_id
-    '''
-    slug = FORM_STAGING_SLUG
-
+    """
     form_id = models.CharField(max_length=255, unique=True)
 
     domain = models.CharField(max_length=255, default=None)
@@ -169,34 +167,6 @@ class FormStagingTable(StagingTable, HQToWarehouseETLMixin):
         choices=XFormInstanceSQL.STATES,
         default=XFormInstanceSQL.NORMAL
     )
-
-    @classmethod
-    def dependencies(cls):
-        return []
-
-    @classmethod
-    def field_mapping(cls):
-        return [
-            ('form_id', 'form_id'),
-            ('domain', 'domain'),
-            ('app_id', 'app_id'),
-            ('xmlns', 'xmlns'),
-            ('user_id', 'user_id'),
-
-            ('received_on', 'received_on'),
-            ('deleted_on', 'deleted_on'),
-            ('edited_on', 'edited_on'),
-            ('build_id', 'build_id'),
-
-            ('time_end', 'time_end'),
-            ('time_start', 'time_start'),
-            ('commcare_version', 'commcare_version'),
-            ('app_version', 'app_version'),
-        ]
-
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
-        return get_forms_by_last_modified(start_datetime, end_datetime)
 
 
 class SyncLogStagingTable(StagingTable, HQToWarehouseETLMixin):
