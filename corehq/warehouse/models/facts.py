@@ -79,14 +79,12 @@ class SyncLogFact(BaseFact):
     duration = models.IntegerField(null=True)  # in seconds
 
 
-class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
-    '''
+class ApplicationStatusFact(BaseFact):
+    """
     Application Status Report Fact Table
 
     Grain: app_id, user_id
-    '''
-    slug = APP_STATUS_FACT_SLUG
-
+    """
     app_dim = models.ForeignKey(ApplicationDim, on_delete=models.PROTECT, null=True)
 
     domain = models.CharField(max_length=255, db_index=True)
@@ -98,10 +96,3 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
 
     last_form_app_build_version = models.CharField(max_length=255, null=True)
     last_form_app_commcare_version = models.CharField(max_length=255, null=True)
-
-    @classmethod
-    def dependencies(cls):
-        return [
-            APP_STATUS_SYNCLOG_STAGING_SLUG,
-            APP_STATUS_FORM_STAGING_SLUG,
-        ]

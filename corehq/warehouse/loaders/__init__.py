@@ -1,10 +1,27 @@
-from corehq.warehouse.loaders.application import ApplicationStagingLoader, ApplicationDimLoader
-from corehq.warehouse.loaders.domain import DomainStagingLoader, DomainDimLoader
-from corehq.warehouse.loaders.form import FormStagingLoader, FormFactLoader
-from corehq.warehouse.loaders.group import GroupStagingLoader, GroupDimLoader
-from corehq.warehouse.loaders.location import LocationStagingLoader, LocationDimLoader
-from corehq.warehouse.loaders.synclog import SyncLogStagingLoader, SyncLogFactLoader
-from corehq.warehouse.loaders.user import UserStagingLoader, UserDimLoader
+from corehq.warehouse.loaders.app_status import (
+    ApplicationStatusFactLoader,
+    AppStatusFormStagingLoader,
+    AppStatusSynclogStagingLoader,
+)
+from corehq.warehouse.loaders.application import (
+    ApplicationDimLoader,
+    ApplicationStagingLoader,
+)
+from corehq.warehouse.loaders.domain import (
+    DomainDimLoader,
+    DomainStagingLoader,
+)
+from corehq.warehouse.loaders.form import FormFactLoader, FormStagingLoader
+from corehq.warehouse.loaders.group import GroupDimLoader, GroupStagingLoader
+from corehq.warehouse.loaders.location import (
+    LocationDimLoader,
+    LocationStagingLoader,
+)
+from corehq.warehouse.loaders.synclog import (
+    SyncLogFactLoader,
+    SyncLogStagingLoader,
+)
+from corehq.warehouse.loaders.user import UserDimLoader, UserStagingLoader
 
 
 def get_loader_by_slug(slug):
@@ -24,5 +41,9 @@ def get_loader_by_slug(slug):
         FormFactLoader,
         SyncLogStagingLoader,
         SyncLogFactLoader,
+
+        AppStatusSynclogStagingLoader,
+        AppStatusFormStagingLoader,
+        ApplicationStatusFactLoader,
     ]
     return {cls.slug: cls for cls in loaders}[slug]

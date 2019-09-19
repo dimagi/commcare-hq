@@ -208,10 +208,7 @@ class ApplicationStagingTable(StagingTable):
     copy_of = models.CharField(max_length=255, null=True, blank=True)
 
 
-class AppStatusFormStaging(StagingTable, CustomSQLETLMixin):
-
-    slug = APP_STATUS_FORM_STAGING_SLUG
-
+class AppStatusFormStaging(StagingTable):
     domain = models.CharField(max_length=255, default=None, db_index=True)
     app_dim = models.ForeignKey(ApplicationDim, on_delete=models.PROTECT, null=True)
     user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
@@ -219,31 +216,8 @@ class AppStatusFormStaging(StagingTable, CustomSQLETLMixin):
     submission_build_version = models.CharField(max_length=255, null=True, db_index=True)
     commcare_version = models.CharField(max_length=255, null=True, db_index=True)
 
-    @classmethod
-    def dependencies(cls):
-        return [
-            FORM_STAGING_SLUG,
-            APP_STATUS_FACT_SLUG,
-            APPLICATION_DIM_SLUG,
-            USER_DIM_SLUG,
-            DOMAIN_DIM_SLUG
-        ]
 
-
-class AppStatusSynclogStaging(StagingTable, CustomSQLETLMixin):
-
-    slug = APP_STATUS_SYNCLOG_STAGING_SLUG
-
+class AppStatusSynclogStaging(StagingTable):
     last_sync = models.DateTimeField(null=True, db_index=True)
     domain = models.CharField(max_length=255, null=True, db_index=True)
     user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
-
-    @classmethod
-    def dependencies(cls):
-        return [
-            SYNCLOG_STAGING_SLUG,
-            APP_STATUS_FACT_SLUG,
-            APPLICATION_DIM_SLUG,
-            USER_DIM_SLUG,
-            DOMAIN_DIM_SLUG
-        ]
