@@ -1,20 +1,30 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import CommCareUser
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
-from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
-
-from corehq.warehouse.tests.utils import create_batch, BaseWarehouseTestCase
-from corehq.warehouse.models import (
-    UserStagingTable,
-    DomainStagingTable,
-    UserDim,
-    DomainDim,
-    FormStagingTable,
-    FormFact,
-    Batch,
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    create_form_for_test,
 )
+from corehq.warehouse.loaders import (
+    DomainDimLoader,
+    DomainStagingLoader,
+    FormFactLoader,
+    FormStagingLoader,
+    UserDimLoader,
+    UserStagingLoader,
+)
+from corehq.warehouse.models import (
+    Batch,
+    DomainDim,
+    DomainStagingTable,
+    FormFact,
+    FormStagingTable,
+    UserDim,
+    UserStagingTable,
+)
+from corehq.warehouse.tests.utils import BaseWarehouseTestCase, create_batch
 
 
 def teardown_module():
@@ -22,10 +32,10 @@ def teardown_module():
 
 
 class FormFactIntegrationTest(BaseWarehouseTestCase):
-    '''
+    """
     Tests a full integration of loading the FormFact table from
     staging and dimension tables.
-    '''
+    """
     domain = 'form-fact-integration-test'
     slug = 'form_fact'
 
@@ -84,31 +94,31 @@ class FormFactIntegrationTest(BaseWarehouseTestCase):
 
         FormProcessorTestUtils.delete_all_sql_forms(cls.domain)
 
-        FormStagingTable.clear_records()
-        FormFact.clear_records()
-        DomainStagingTable.clear_records()
-        DomainDim.clear_records()
-        UserStagingTable.clear_records()
-        UserDim.clear_records()
+        FormStagingLoader.clear_records()
+        FormFactLoader.clear_records()
+        DomainStagingLoader.clear_records()
+        DomainDimLoader.clear_records()
+        UserStagingLoader.clear_records()
+        UserDimLoader.clear_records()
         super(FormFactIntegrationTest, cls).tearDownClass()
 
     def test_loading_form_fact(self):
         batch = self.batch
 
-        DomainStagingTable.commit(batch)
+        DomainStagingLoader.commit(batch)
         self.assertEqual(DomainStagingTable.objects.count(), len(self.domain_records))
 
-        DomainDim.commit(batch)
+        DomainDimLoader.commit(batch)
         self.assertEqual(DomainDim.objects.count(), len(self.domain_records))
 
-        UserStagingTable.commit(batch)
+        UserStagingLoader.commit(batch)
         self.assertEqual(UserStagingTable.objects.count(), len(self.user_records))
 
-        UserDim.commit(batch)
+        UserDimLoader.commit(batch)
         self.assertEqual(UserDim.objects.count(), len(self.user_records))
 
-        FormStagingTable.commit(batch)
+        FormStagingLoader.commit(batch)
         self.assertEqual(FormStagingTable.objects.count(), len(self.form_records))
 
-        FormFact.commit(batch)
+        FormFactLoader.commit(batch)
         self.assertEqual(FormFact.objects.count(), len(self.form_records))
