@@ -126,6 +126,7 @@ class Rewinder:
                  key, state_json)
         old = self.statedb.get(key)
         if old is None:
+            log.info("saved.")
             self.statedb.set(key, state_json)
         elif old != state_json:
             log.warn("NOT SAVED! refusing to overwrite:\n%s", old)
