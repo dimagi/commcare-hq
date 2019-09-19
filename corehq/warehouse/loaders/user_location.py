@@ -5,11 +5,11 @@ from corehq.warehouse.const import (
     USER_STAGING_SLUG,
 )
 from corehq.warehouse.etl import CustomSQLETLMixin
-from corehq.warehouse.loaders.base import BaseDimLoader
+from corehq.warehouse.loaders.base import BaseLoader
 from corehq.warehouse.models import UserLocationDim
 
 
-class UserLocationDimLoader(BaseDimLoader, CustomSQLETLMixin):
+class UserLocationDimLoader(BaseLoader, CustomSQLETLMixin):
     """
     Dimension for User and Location mapping
 

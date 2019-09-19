@@ -4,11 +4,11 @@ from corehq.warehouse.const import (
     USER_STAGING_SLUG,
 )
 from corehq.warehouse.etl import CustomSQLETLMixin
-from corehq.warehouse.loaders.base import BaseDimLoader
+from corehq.warehouse.loaders.base import BaseLoader
 from corehq.warehouse.models import DomainMembershipDim
 
 
-class DomainMembershipDimLoader(BaseDimLoader, CustomSQLETLMixin):
+class DomainMembershipDimLoader(BaseLoader, CustomSQLETLMixin):
     """
     Dimension for domain memberships for Web/CommCare users
     """

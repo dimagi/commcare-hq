@@ -1,7 +1,7 @@
 from corehq.warehouse.const import FORM_STAGING_SLUG, FORM_FACT_SLUG, USER_DIM_SLUG, DOMAIN_DIM_SLUG
 from corehq.warehouse.dbaccessors import get_forms_by_last_modified
 from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseDimLoader
+from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import FormStagingTable, FormFact
 
 
@@ -43,7 +43,7 @@ class FormStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         return get_forms_by_last_modified(start_datetime, end_datetime)
 
 
-class FormFactLoader(BaseDimLoader, CustomSQLETLMixin):
+class FormFactLoader(BaseLoader, CustomSQLETLMixin):
     """
     Contains all `XFormInstance`s
 

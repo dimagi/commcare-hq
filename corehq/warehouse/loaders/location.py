@@ -3,7 +3,7 @@ from django.db.models import Q
 from corehq.apps.locations.models import SQLLocation
 from corehq.warehouse.const import LOCATION_STAGING_SLUG, LOCATION_DIM_SLUG
 from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseDimLoader
+from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import LocationStagingTable, LocationDim
 
 
@@ -51,7 +51,7 @@ class LocationStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         ).select_related('location_type').iterator()
 
 
-class LocationDimLoader(BaseDimLoader, CustomSQLETLMixin):
+class LocationDimLoader(BaseLoader, CustomSQLETLMixin):
     """
     Dimension for Locations
 

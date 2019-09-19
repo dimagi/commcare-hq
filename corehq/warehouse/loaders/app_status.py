@@ -9,7 +9,7 @@ from corehq.warehouse.const import (
     USER_DIM_SLUG,
 )
 from corehq.warehouse.etl import CustomSQLETLMixin
-from corehq.warehouse.loaders.base import BaseDimLoader, BaseStagingLoader
+from corehq.warehouse.loaders.base import BaseLoader, BaseStagingLoader
 from corehq.warehouse.models import (
     AppStatusFormStaging,
     AppStatusSynclogStaging,
@@ -46,7 +46,7 @@ class AppStatusSynclogStagingLoader(BaseStagingLoader, CustomSQLETLMixin):
         ]
 
 
-class ApplicationStatusFactLoader(BaseDimLoader, CustomSQLETLMixin):
+class ApplicationStatusFactLoader(BaseLoader, CustomSQLETLMixin):
     """
     Application Status Report Fact Table
 

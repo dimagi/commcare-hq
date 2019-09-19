@@ -5,10 +5,10 @@ from corehq.warehouse.const import (
     USER_GROUP_DIM_SLUG,
 )
 from corehq.warehouse.etl import CustomSQLETLMixin
-from corehq.warehouse.loaders.base import BaseDimLoader
+from corehq.warehouse.loaders.base import BaseLoader
 
 
-class UserGroupDimLoader(BaseDimLoader, CustomSQLETLMixin):
+class UserGroupDimLoader(BaseLoader, CustomSQLETLMixin):
     """
     Dimension for User and Group mapping
 

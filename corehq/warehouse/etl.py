@@ -35,13 +35,13 @@ class CustomSQLETLMixin(BaseETLMixin):
 
     @classmethod
     def load(cls, batch):
-        from corehq.warehouse.models.shared import WarehouseTable
+        from corehq.warehouse.loaders.base import BaseLoader
         '''
         Bulk loads records for a dim or fact table from
         their corresponding dependencies
         '''
 
-        assert issubclass(cls, WarehouseTable)
+        assert issubclass(cls, BaseLoader)
         database = db_for_read_write(cls.model_cls)
         with connections[database].cursor() as cursor:
             cursor.execute(cls._sql_query_template(cls.slug, batch))
@@ -103,9 +103,9 @@ class HQToWarehouseETLMixin(BaseETLMixin):
 
     @classmethod
     def load(cls, batch):
-        from corehq.warehouse.models.shared import WarehouseTable
+        from corehq.warehouse.loaders.base import BaseLoader
 
-        assert issubclass(cls, WarehouseTable)
+        assert issubclass(cls, BaseLoader)
         record_iter = cls.record_iter(batch.start_datetime, batch.end_datetime)
 
         django_batch_records(cls, record_iter, cls.field_mapping(), batch.id)

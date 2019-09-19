@@ -2,7 +2,7 @@ from corehq.apps.domain.models import Domain
 from corehq.warehouse.const import DOMAIN_STAGING_SLUG, DOMAIN_DIM_SLUG
 from corehq.warehouse.dbaccessors import get_domain_ids_by_last_modified
 from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseDimLoader
+from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import DomainStagingTable, DomainDim
 from dimagi.utils.couch.database import iter_docs
 
@@ -60,7 +60,7 @@ class DomainStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         return iter_docs(Domain.get_db(), domain_ids)
 
 
-class DomainDimLoader(BaseDimLoader, CustomSQLETLMixin):
+class DomainDimLoader(BaseLoader, CustomSQLETLMixin):
     """
     Dimension for Domain
 

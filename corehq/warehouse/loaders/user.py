@@ -2,7 +2,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.warehouse.const import USER_STAGING_SLUG, USER_DIM_SLUG
 from corehq.warehouse.dbaccessors import get_user_ids_by_last_modified
 from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseDimLoader
+from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import UserStagingTable, UserDim
 from dimagi.utils.couch.database import iter_docs
 
@@ -48,7 +48,7 @@ class UserStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         return iter_docs(CouchUser.get_db(), user_ids)
 
 
-class UserDimLoader(BaseDimLoader, CustomSQLETLMixin):
+class UserDimLoader(BaseLoader, CustomSQLETLMixin):
     """
     Dimension for Users
 

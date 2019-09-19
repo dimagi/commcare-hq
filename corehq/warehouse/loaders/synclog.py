@@ -1,7 +1,7 @@
 from corehq.warehouse.const import SYNCLOG_STAGING_SLUG, SYNCLOG_FACT_SLUG, USER_DIM_SLUG, DOMAIN_DIM_SLUG
 from corehq.warehouse.dbaccessors import get_synclogs_by_date
 from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseDimLoader
+from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import SyncLogStagingTable, SyncLogFact
 
 
@@ -34,7 +34,7 @@ class SyncLogStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         return get_synclogs_by_date(start_datetime, end_datetime)
 
 
-class SyncLogFactLoader(BaseDimLoader, CustomSQLETLMixin):
+class SyncLogFactLoader(BaseLoader, CustomSQLETLMixin):
     """
     SyncLog Fact Table
     Grain: sync_log_id

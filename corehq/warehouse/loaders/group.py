@@ -2,7 +2,7 @@ from corehq.apps.groups.models import Group
 from corehq.warehouse.const import GROUP_STAGING_SLUG, GROUP_DIM_SLUG
 from corehq.warehouse.dbaccessors import get_group_ids_by_last_modified
 from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseDimLoader
+from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import GroupStagingTable, GroupDim
 from dimagi.utils.couch.database import iter_docs
 
@@ -41,7 +41,7 @@ class GroupStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         return iter_docs(Group.get_db(), group_ids)
 
 
-class GroupDimLoader(BaseDimLoader, CustomSQLETLMixin):
+class GroupDimLoader(BaseLoader, CustomSQLETLMixin):
     """
     Dimension for Groups
 
