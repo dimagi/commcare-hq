@@ -1,6 +1,12 @@
 hqDefine("succeed/js/patient_submissions", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-    $(function () {
+    $(document).on("ajaxComplete", function (e, xhr, options) {
+        var fragment = "async/",
+            pageUrl = window.location.href.split('?')[0],
+            ajaxUrl = options.url.split('?')[0];
+        if (ajaxUrl.indexOf(fragment) === -1 || !pageUrl.endsWith(ajaxUrl.replace(fragment, ''))) {
+            return;
+        }
         var $paramSelectorForm = $('#paramSelectorForm');
         if ($paramSelectorForm.length && ! $paramSelectorForm.find('#patient_id_field').length) {
             $('<input>').attr({id: 'patient_id_field', type: 'hidden', name: 'patient_id', value: initialPageData.get('patient_id') }).appendTo('#paramSelectorForm');
