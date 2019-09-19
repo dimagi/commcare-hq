@@ -15,6 +15,8 @@ from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.exceptions import MissingFormXml
 
+from .status import run_status_logger
+
 log = logging.getLogger(__name__)
 POOL_SIZE = 15
 
@@ -30,6 +32,11 @@ class AsyncFormProcessor(object):
         self.queues = PartiallyLockingQueue()
         form_ids = self.statedb.pop_resume_state(type(self).__name__, [])
         self._rebuild_queues(form_ids)
+        self.stop_status_logger = run_status_logger(
+            log_status,
+            self.queues.get_status,
+            status_interval=1800,  # 30 minutes
+        )
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
@@ -43,6 +50,7 @@ class AsyncFormProcessor(object):
             key = type(self).__name__
             self.statedb.set_resume_state(key, queue_ids)
             log.info("saved %s state (%s ids)", key, len(queue_ids))
+            self.stop_status_logger()
             self.queues = self.pool = None
 
     def _rebuild_queues(self, form_ids):
@@ -247,6 +255,19 @@ class PartiallyLockingQueue(object):
         if self.max_size == -1:
             return False
         return len(self) >= self.max_size
+
+    def get_status(self):
+        return {
+            "proc": len(self.processing),
+            "queued": len(self),
+            "queues": len(self.queue_by_lock_id),
+            "locked": len(self.currently_locked),
+        }
+
+
+def log_status(status):
+    log.info("forms in queue=%(queued)s, processing=%(proc)s, "
+             "locked cases=%(locked)s, num queues=%(queues)s", status)
 
 
 def _fix_replacement_form_problem_in_couch(doc):

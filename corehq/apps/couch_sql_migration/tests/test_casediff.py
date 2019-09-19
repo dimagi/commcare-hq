@@ -4,6 +4,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
 from glob import glob
+from inspect import signature
 
 from django.test import SimpleTestCase
 
@@ -18,15 +19,7 @@ from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 from .. import casediff as mod
-from ..statedb import StateDB, delete_state_db, init_state_db
-
-try:
-    from inspect import signature
-except ImportError:
-    from funcsigs import signature  # TODO remove after Python 3 upgrade
-
-
-
+from ..statedb import StateDB, init_state_db
 
 log = logging.getLogger(__name__)
 
@@ -298,12 +291,10 @@ class TestCaseDiffQueue(SimpleTestCase):
 
     def test_status_logger(self):
         event = Event()
-        queue = mod.CaseDiffQueue(None, status_interval=0.00001)
-        with patch.object(queue, "log_status") as log_status:
+        with patch.object(mod, "log_status") as log_status:
             log_status.side_effect = lambda x: event.set()
-            stop = queue.run_status_logger()
-            self.assertTrue(event.wait(timeout=5), "queue.log_status() not called")
-            stop()
+            with mod.CaseDiffQueue(self.statedb, status_interval=0.00001):
+                self.assertTrue(event.wait(timeout=5), "queue.log_status() not called")
         self.assertGreater(log_status.call_count, 0)
 
     @contextmanager
@@ -477,7 +468,7 @@ class TestCaseDiffProcess(SimpleTestCase):
             queue.put([status[k] for k in keys])
 
         queue = Queue()
-        with patch.object(mod.CaseDiffQueue, "log_status") as mock:
+        with patch.object(mod, "log_status") as mock:
             mock.side_effect = log_status
             proc.request_status()
             return queue.get(timeout=5)
