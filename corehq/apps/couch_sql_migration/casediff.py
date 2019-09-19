@@ -6,7 +6,6 @@ from itertools import chain, count
 
 import gevent
 import gipc
-from gevent.event import Event
 from gevent.pool import Group, Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -29,6 +28,7 @@ from corehq.form_processor.exceptions import MissingFormXml
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .lrudict import LRUDict
 from .statedb import StateDB
+from .status import run_status_logger
 
 log = logging.getLogger(__name__)
 
@@ -91,7 +91,8 @@ class CaseDiffQueue(object):
     def __enter__(self):
         self.statedb.set(ProcessNotAllowed.__name__, True)
         self._load_resume_state()
-        self._stop_status_logger = self.run_status_logger()
+        self._stop_status_logger = run_status_logger(
+            log_status, self.get_status, self.status_interval)
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
@@ -290,34 +291,6 @@ class CaseDiffQueue(object):
             for chunk in chunked(state["pending"].items(), self.BATCH_SIZE, list):
                 self._async_load_cases(dict(chunk))
 
-    def run_status_logger(self):
-        """Start periodic status logger in a greenlet
-
-        Log status every `self.status_interval` seconds unless it
-        evaluates to false, in which case the loop is not started.
-
-        :returns: A function that stops the logger loop.
-        """
-        def status_logger():
-            while not exit.wait(timeout=self.status_interval):
-                self.log_status(self.get_status())
-            self.log_status(self.get_status())
-
-        def stop():
-            exit.set()
-            loop.join()
-
-        if self.status_interval:
-            exit = Event()
-            loop = gevent.spawn(status_logger)
-            return stop
-        return lambda: None
-
-    @staticmethod
-    def log_status(status):
-        log.info("cases pending=%(pending)s cached=%(cached)s "
-                 "loaded=%(loaded)s diffed=%(diffed)s", status)
-
     def get_status(self):
         cache_hits, self.cache_hits = self.cache_hits, [0, 0]
         return {
@@ -334,6 +307,11 @@ class CaseDiffQueue(object):
             ),
             "diffed": self.num_diffed_cases,
         }
+
+
+def log_status(status):
+    log.info("cases pending=%(pending)s cached=%(cached)s "
+             "loaded=%(loaded)s diffed=%(diffed)s", status)
 
 
 def task_switch():
@@ -511,7 +489,7 @@ class CaseDiffProcess(object):
                 result = requested
             elif result is not requested:
                 action, status = result
-                CaseDiffQueue.log_status(status)
+                log_status(status)
                 result = None
 
 
