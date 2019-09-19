@@ -186,10 +186,15 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
 
     def get(self, request, *args, **kwargs):
         if request.GET.get('json', None):
+            limit = int(request.GET.get('limit', 5))
+            page = int(request.GET.get('page', 1))
+            skip = limit * (page - 1)
+            references = self.app.get_references()[skip:skip + limit]   # TODO: be less ridiculous
+            object_map = self.app.get_object_map()                      # TODO: limit to references
             return JsonResponse({
-                "references": self.app.get_references(),
-                "object_map": self.app.get_object_map(),
-                "totals": self.app.get_reference_totals(),
+                "references": references,
+                "object_map": object_map,
+                "totals": self.app.get_reference_totals(),  # TODO: provide on page load? how slow is this?
             })
         return super(MultimediaReferencesView, self).get(request, *args, **kwargs)
 

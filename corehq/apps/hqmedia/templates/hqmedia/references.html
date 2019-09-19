@@ -27,14 +27,13 @@
 
   <p class="lead">{{ current_page.page_name }}</p>
 
-  <div class="hq-loading alert alert-info">
-    {% blocktrans %}
-      <i class="fa fa-spin fa-spinner"></i>
-      Loading...
-    {% endblocktrans %}
-  </div>
-
   <div id="multimedia-reference-checker" class="ko-template">
+    <div class="alert alert-info" data-bind="visible: isInitialLoad()">
+      {% blocktrans %}
+        <i class="fa fa-spin fa-spinner"></i>
+        Loading...
+      {% endblocktrans %}
+    </div>
     <div class="row">
       <div class="col-sm-7">
         <div data-bind="visible: totals().length">
@@ -49,7 +48,7 @@
             </p>
           {% endif %}
         </div>
-        <div data-bind="visible: !totals().length">
+        <div data-bind="visible: !isInitialLoad() && !totals().length">
           <div class="alert alert-info">
             {% blocktrans %}This application references no multimedia.{% endblocktrans %}
           </div>

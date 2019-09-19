@@ -13,37 +13,65 @@ hqDefine("hqmedia/js/reference_controller",[
 ) {
     var HQMediaUploaders = mediaUploaders.get();
 
-    function MultimediaReferenceController(options) {
-        assertProperties.assert(options, ['references', 'objectMap', 'totals']);
+    function MultimediaReferenceController() {
         var self = {};
-        self.objectMap = options.objectMap;
         self.references = ko.observableArray();
         self.showMissingReferences = ko.observable(false);
-        self.totals = ko.observable(options.totals);
+        self.totals = ko.observableArray();
+
+        self.isInitialLoad = ko.observable(true);
+        self.showPaginationSpinner = ko.observable(false);
+        self.itemsPerPage = ko.observable();
+        self.totalItems = ko.computed(function () {
+            // TODO: this isn't quite right because some files appear in multiple places and therefore have multiple rows
+            return _.reduce(_.pluck(self.totals(), 'matched'), function (memo, num) {
+                return memo + num;
+            }, 0);
+        });
 
         self.toggleRefsText = ko.computed(function () {
             return (self.showMissingReferences()) ? gettext("Show All References") : gettext("Show Only Missing References");
         }, self);
 
-        self.render = function () {
-            self.references(_.compact(_.map(options.references, function (ref) {
-                var objRef = self.objectMap[ref.path];
-                if (ref.media_class === "CommCareImage") {
-                    var imageRef = ImageReference(ref);
-                    imageRef.setObjReference(objRef);
-                    return imageRef;
-                } else if (ref.media_class === "CommCareAudio") {
-                    var audioRef = AudioReference(ref);
-                    audioRef.setObjReference(objRef);
-                    return audioRef;
-                } else if (ref.media_class === "CommCareVideo") {
-                    var videoRef = VideoReference(ref);
-                    videoRef.setObjReference(objRef);
-                    return videoRef;
-                }
-                // Other multimedia, like HTML print templates, is ignored by the reference checker
-                return null;
-            })));
+        self.goToPage = function (page) {
+            self.showPaginationSpinner(true);
+            $.ajax({
+                url: hqImport("hqwebapp/js/initial_page_data").reverse('hqmedia_references'),
+                data: {
+                    json: 1,
+                    page: page,
+                    limit: self.itemsPerPage(),
+                },
+                success: function (data) {
+                    self.isInitialLoad(false);
+                    self.showPaginationSpinner(false);
+                    self.references(_.compact(_.map(data.references, function (ref) {
+                        var objRef = data.object_map[ref.path];
+                        if (ref.media_class === "CommCareImage") {
+                            var imageRef = ImageReference(ref);
+                            imageRef.setObjReference(objRef);
+                            return imageRef;
+                        } else if (ref.media_class === "CommCareAudio") {
+                            var audioRef = AudioReference(ref);
+                            audioRef.setObjReference(objRef);
+                            return audioRef;
+                        } else if (ref.media_class === "CommCareVideo") {
+                            var videoRef = VideoReference(ref);
+                            videoRef.setObjReference(objRef);
+                            return videoRef;
+                        }
+                        // Other multimedia, like HTML print templates, is ignored by the reference checker
+                        return null;
+                    })));
+                    self.totals(data.totals);
+                    $('.preview-media').tooltip();
+                },
+                error: function () {
+                    self.showPaginationSpinner(false);
+                    hqImport('hqwebapp/js/alert_user').alert_user(gettext("Error fetching multimedia, " +
+                        "please try again or report an issue if the problem persists."), 'danger');
+                },
+            });
         };
 
         self.toggleMissingRefs = function (sender, event) {
@@ -61,6 +89,8 @@ hqDefine("hqmedia/js/reference_controller",[
             });
             self.totals(newTotals);
         };
+
+        self.goToPage(1);
 
         return self;
     }
