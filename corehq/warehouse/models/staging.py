@@ -102,14 +102,12 @@ class LocationStagingTable(StagingTable, HQToWarehouseETLMixin):
         ).select_related('location_type').iterator()
 
 
-class GroupStagingTable(StagingTable, HQToWarehouseETLMixin):
-    '''
+class GroupStagingTable(StagingTable):
+    """
     Represents the staging table to dump data before loading into the GroupDim
 
     Grain: group_id
-    '''
-    slug = GROUP_STAGING_SLUG
-
+    """
     group_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     doc_type = models.CharField(max_length=100)
@@ -121,30 +119,6 @@ class GroupStagingTable(StagingTable, HQToWarehouseETLMixin):
     reporting = models.NullBooleanField()
 
     group_last_modified = models.DateTimeField(null=True)
-
-    @classmethod
-    def field_mapping(cls):
-        return [
-            ('_id', 'group_id'),
-            ('domain', 'domain'),
-            ('name', 'name'),
-            ('case_sharing', 'case_sharing'),
-            ('reporting', 'reporting'),
-            ('last_modified', 'group_last_modified'),
-            ('doc_type', 'doc_type'),
-            ('users', 'user_ids'),
-            ('removed_users', 'removed_user_ids'),
-        ]
-
-    @classmethod
-    def dependencies(cls):
-        return []
-
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
-        group_ids = get_group_ids_by_last_modified(start_datetime, end_datetime)
-
-        return iter_docs(Group.get_db(), group_ids)
 
 
 class UserStagingTable(StagingTable):

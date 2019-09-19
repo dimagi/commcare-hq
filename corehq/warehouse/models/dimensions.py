@@ -56,14 +56,12 @@ class UserDim(BaseDim):
     date_joined = models.DateTimeField()
 
 
-class GroupDim(BaseDim, CustomSQLETLMixin):
-    '''
+class GroupDim(BaseDim):
+    """
     Dimension for Groups
 
     Grain: group_id
-    '''
-    slug = GROUP_DIM_SLUG
-
+    """
     group_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
     domain = models.CharField(max_length=255)
@@ -72,10 +70,6 @@ class GroupDim(BaseDim, CustomSQLETLMixin):
     reporting = models.NullBooleanField()
 
     group_last_modified = models.DateTimeField()
-
-    @classmethod
-    def dependencies(cls):
-        return [GROUP_STAGING_SLUG]
 
 
 class LocationDim(BaseDim, CustomSQLETLMixin):
