@@ -86,7 +86,7 @@ class Command(BaseCommand):
             pool = Pool(10)
             for state in state_ids:
                 pool.spawn(query.func, state, agg_date)
-            pool.join()
+            pool.join(raise_error=True)
         elif query.by_state == NO_STATES:
             query.func(agg_date)
         else:
