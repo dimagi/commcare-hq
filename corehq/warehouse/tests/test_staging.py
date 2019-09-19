@@ -37,7 +37,7 @@ class BaseStagingTableTest(BaseWarehouseTestCase):
         cls.batch = create_batch(cls.slug)
 
     def tearDown(self):
-        self.staging_table_loader.clear_records()
+        self.staging_table_loader().clear_records()
 
     @classmethod
     def tearDownClass(cls):
@@ -52,10 +52,10 @@ class StagingRecordsTestsMixin(object):
         batch = self.batch
 
         self.assertEqual(self.staging_table_loader.model_cls.objects.count(), 0)
-        self.staging_table_loader.commit(batch)
+        self.staging_table_loader().commit(batch)
         self.assertEqual(self.staging_table_loader.model_cls.objects.count(), len(self.records))
 
-        self.staging_table_loader.commit(batch)
+        self.staging_table_loader().commit(batch)
         self.assertEqual(self.staging_table_loader.model_cls.objects.count(), len(self.records))
 
     def test_stage_records_no_data(self):
@@ -63,7 +63,7 @@ class StagingRecordsTestsMixin(object):
         batch = create_batch(self.slug)
 
         self.assertEqual(self.staging_table_loader.model_cls.objects.count(), 0)
-        self.staging_table_loader.commit(batch)
+        self.staging_table_loader().commit(batch)
         self.assertEqual(self.staging_table_loader.model_cls.objects.count(), 0)
 
 
@@ -88,13 +88,13 @@ class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
         # 1 Query for clearing records
         # 1 Query for inserting recorrds
         with self.assertNumQueries(2, using=self.using):
-            GroupStagingLoader.commit(batch)
+            GroupStagingLoader().commit(batch)
 
         # 1 Query for clearing records
         # 2 Queries for inserting recorrds
         with self.assertNumQueries(3, using=self.using):
             with patch('corehq.warehouse.utils.DJANGO_MAX_BATCH_SIZE', 2):
-                GroupStagingLoader.commit(batch)
+                GroupStagingLoader().commit(batch)
         self.assertEqual(GroupStagingTable.objects.count(), 3)
 
 

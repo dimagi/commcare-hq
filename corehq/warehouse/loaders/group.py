@@ -16,8 +16,7 @@ class GroupStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     slug = GROUP_STAGING_SLUG
     model_cls = GroupStagingTable
 
-    @classmethod
-    def field_mapping(cls):
+    def field_mapping(self):
         return [
             ('_id', 'group_id'),
             ('domain', 'domain'),
@@ -30,12 +29,10 @@ class GroupStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
             ('removed_users', 'removed_user_ids'),
         ]
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return []
 
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
+    def record_iter(self, start_datetime, end_datetime):
         group_ids = get_group_ids_by_last_modified(start_datetime, end_datetime)
 
         return iter_docs(Group.get_db(), group_ids)
@@ -50,6 +47,5 @@ class GroupDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = GROUP_DIM_SLUG
     model_cls = GroupDim
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return [GROUP_STAGING_SLUG]

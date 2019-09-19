@@ -21,8 +21,7 @@ class AppStatusFormStagingLoader(CustomSQLETLMixin, BaseStagingLoader):
     slug = APP_STATUS_FORM_STAGING_SLUG
     model_cls = AppStatusFormStaging
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return [
             FORM_STAGING_SLUG,
             APP_STATUS_FACT_SLUG,
@@ -36,8 +35,7 @@ class AppStatusSynclogStagingLoader(CustomSQLETLMixin, BaseStagingLoader):
     slug = APP_STATUS_SYNCLOG_STAGING_SLUG
     model_cls = AppStatusSynclogStaging
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return [
             SYNCLOG_STAGING_SLUG,
             APP_STATUS_FACT_SLUG,
@@ -56,8 +54,7 @@ class ApplicationStatusFactLoader(CustomSQLETLMixin, BaseLoader):
     slug = APP_STATUS_FACT_SLUG
     model_cls = ApplicationStatusFact
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return [
             APP_STATUS_SYNCLOG_STAGING_SLUG,
             APP_STATUS_FORM_STAGING_SLUG

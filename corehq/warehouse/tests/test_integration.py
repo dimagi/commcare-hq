@@ -102,21 +102,21 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
 
         FormProcessorTestUtils.delete_all_sql_forms(cls.domain)
 
-        ApplicationStatusFactLoader.clear_records()
-        AppStatusSynclogStagingLoader.clear_records()
-        AppStatusFormStagingLoader.clear_records()
+        ApplicationStatusFactLoader().clear_records()
+        AppStatusSynclogStagingLoader().clear_records()
+        AppStatusFormStagingLoader().clear_records()
 
-        SyncLogFactLoader.clear_records()
-        SyncLogStagingLoader.clear_records()
+        SyncLogFactLoader().clear_records()
+        SyncLogStagingLoader().clear_records()
 
-        FormFactLoader.clear_records()
-        FormStagingLoader.clear_records()
+        FormFactLoader().clear_records()
+        FormStagingLoader().clear_records()
 
-        DomainDimLoader.clear_records()
-        DomainStagingLoader.clear_records()
+        DomainDimLoader().clear_records()
+        DomainStagingLoader().clear_records()
 
-        UserDimLoader.clear_records()
-        UserStagingLoader.clear_records()
+        UserDimLoader().clear_records()
+        UserStagingLoader().clear_records()
 
         super(AppStatusIntegrationTest, cls).tearDownClass()
 
@@ -129,7 +129,9 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
             path = path or []
             path.append(loader_class)
 
-            for dep in loader_class.dependencies():
+            loader = loader_class()
+
+            for dep in loader.dependencies():
                 dep_cls = get_loader_by_slug(dep)
                 if dep_cls in path:
                     continue
@@ -137,7 +139,7 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
 
             if loader_class not in seen:
                 seen.add(loader_class)
-                loader_class.commit(batch)
+                loader.commit(batch)
 
         commit_with_dependencies(ApplicationStatusFactLoader)
 

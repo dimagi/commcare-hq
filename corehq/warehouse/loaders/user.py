@@ -16,12 +16,10 @@ class UserStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     slug = USER_STAGING_SLUG
     model_cls = UserStagingTable
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return []
 
-    @classmethod
-    def field_mapping(cls):
+    def field_mapping(self):
         return [
             ('_id', 'user_id'),
             ('username', 'username'),
@@ -41,8 +39,7 @@ class UserStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
             ('assigned_location_ids', 'assigned_location_ids')
         ]
 
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
+    def record_iter(self, start_datetime, end_datetime):
         user_ids = get_user_ids_by_last_modified(start_datetime, end_datetime)
 
         return iter_docs(CouchUser.get_db(), user_ids)
@@ -57,6 +54,5 @@ class UserDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = USER_DIM_SLUG
     model_cls = UserDim
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return [USER_STAGING_SLUG]

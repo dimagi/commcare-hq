@@ -16,8 +16,7 @@ class ApplicationStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     slug = APPLICATION_STAGING_SLUG
     model_cls = ApplicationStagingTable
 
-    @classmethod
-    def field_mapping(cls):
+    def field_mapping(self):
         return [
             ('_id', 'application_id'),
             ('domain', 'domain'),
@@ -28,12 +27,10 @@ class ApplicationStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
             ('copy_of', 'copy_of'),
         ]
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return []
 
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
+    def record_iter(self, start_datetime, end_datetime):
         application_ids = get_application_ids_by_last_modified(start_datetime, end_datetime)
         return iter_docs(Application.get_db(), application_ids)
 
@@ -47,6 +44,5 @@ class ApplicationDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = APPLICATION_DIM_SLUG
     model_cls = ApplicationDim
 
-    @classmethod
-    def dependencies(cls):
+    def dependencies(self):
         return [APPLICATION_STAGING_SLUG]
