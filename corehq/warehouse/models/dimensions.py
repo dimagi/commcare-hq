@@ -11,6 +11,9 @@ class BaseDim(models.Model):
     dim_created_on = models.DateTimeField(auto_now_add=True)
     deleted = models.BooleanField()
 
+    class Meta:
+        abstract = True
+
 
 class UserDim(BaseDim):
     """
