@@ -5,6 +5,7 @@ from corehq.apps.app_manager.models import Application, LinkedApplication
 from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.users.models import CommCareUser, WebUser
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.phone.models import SimplifiedSyncLog
@@ -32,6 +33,7 @@ class TestDbAccessors(TestCase):
         # Needed because other tests do not always clean up their users or applications.
         delete_all_users()
         hard_delete_deleted_users()
+        delete_all_groups()
         delete_all_apps()
 
         cls.g1 = Group(domain=cls.domain, name='group')
