@@ -34,14 +34,12 @@ class BaseDim(models.Model):
     deleted = models.BooleanField()
 
 
-class UserDim(BaseDim, CustomSQLETLMixin):
-    '''
+class UserDim(BaseDim):
+    """
     Dimension for Users
 
     Grain: user_id
-    '''
-    slug = USER_DIM_SLUG
-
+    """
     user_id = models.CharField(max_length=255, unique=True)
     username = models.CharField(max_length=150)
     user_type = models.CharField(max_length=100)
@@ -56,10 +54,6 @@ class UserDim(BaseDim, CustomSQLETLMixin):
 
     last_login = models.DateTimeField(null=True)
     date_joined = models.DateTimeField()
-
-    @classmethod
-    def dependencies(cls):
-        return [USER_STAGING_SLUG]
 
 
 class GroupDim(BaseDim, CustomSQLETLMixin):

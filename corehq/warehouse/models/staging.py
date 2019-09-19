@@ -147,14 +147,12 @@ class GroupStagingTable(StagingTable, HQToWarehouseETLMixin):
         return iter_docs(Group.get_db(), group_ids)
 
 
-class UserStagingTable(StagingTable, HQToWarehouseETLMixin):
-    '''
+class UserStagingTable(StagingTable):
+    """
     Represents the staging table to dump data before loading into the UserDim
 
     Grain: user_id
-    '''
-    slug = USER_STAGING_SLUG
-
+    """
     user_id = models.CharField(max_length=255)
     username = models.CharField(max_length=150)
     first_name = models.TextField(null=True)
@@ -174,37 +172,6 @@ class UserStagingTable(StagingTable, HQToWarehouseETLMixin):
     date_joined = models.DateTimeField()
 
     user_last_modified = models.DateTimeField(null=True)
-
-    @classmethod
-    def dependencies(cls):
-        return []
-
-    @classmethod
-    def field_mapping(cls):
-        return [
-            ('_id', 'user_id'),
-            ('username', 'username'),
-            ('first_name', 'first_name'),
-            ('last_name', 'last_name'),
-            ('email', 'email'),
-            ('domain', 'domain'),
-            ('doc_type', 'doc_type'),
-            ('base_doc', 'base_doc'),
-            ('is_active', 'is_active'),
-            ('is_staff', 'is_staff'),
-            ('is_superuser', 'is_superuser'),
-            ('last_login', 'last_login'),
-            ('date_joined', 'date_joined'),
-            ('last_modified', 'user_last_modified'),
-            ('domain_memberships', 'domain_memberships'),
-            ('assigned_location_ids', 'assigned_location_ids')
-        ]
-
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
-        user_ids = get_user_ids_by_last_modified(start_datetime, end_datetime)
-
-        return iter_docs(CouchUser.get_db(), user_ids)
 
 
 class DomainStagingTable(StagingTable):
