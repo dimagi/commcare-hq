@@ -10,7 +10,6 @@ from django.db import connections
 from django.template import engines
 
 from corehq.sql_db.routers import db_for_read_write
-from corehq.warehouse.loaders import get_loader_by_slug
 from corehq.warehouse.utils import django_batch_records
 
 
@@ -117,6 +116,7 @@ def _render_template(path, context):
 
 
 def slug_to_table_map(slugs):
+    from corehq.warehouse.loaders import get_loader_by_slug
     mapping = {}
     for slug in slugs:
         loader_cls = get_loader_by_slug(slug)
