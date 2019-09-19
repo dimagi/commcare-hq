@@ -144,39 +144,26 @@ class DomainDim(BaseDim):
     domain_created_on = models.DateTimeField(null=True)
 
 
-class UserLocationDim(BaseDim, CustomSQLETLMixin):
-    '''
+class UserLocationDim(BaseDim):
+    """
     Dimension for User and Location mapping
 
     Grain: user_id, location_id
-    '''
-    # TODO: Write Update SQL Query
-    slug = USER_LOCATION_DIM_SLUG
-
+    """
     domain = models.CharField(max_length=255)
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
     location_dim = models.ForeignKey('LocationDim', on_delete=models.CASCADE)
 
-    @classmethod
-    def dependencies(cls):
-        return [USER_DIM_SLUG, LOCATION_DIM_SLUG, USER_STAGING_SLUG]
 
-
-class UserGroupDim(BaseDim, CustomSQLETLMixin):
-    '''
+class UserGroupDim(BaseDim):
+    """
     Dimension for User and Group mapping
 
     Grain: user_id, group_id
-    '''
-    slug = USER_GROUP_DIM_SLUG
-
+    """
     domain = models.CharField(max_length=255)
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
     group_dim = models.ForeignKey('GroupDim', on_delete=models.CASCADE)
-
-    @classmethod
-    def dependencies(cls):
-        return [USER_DIM_SLUG, GROUP_DIM_SLUG, GROUP_STAGING_SLUG]
 
 
 class ApplicationDim(BaseDim):
@@ -193,19 +180,13 @@ class ApplicationDim(BaseDim):
     copy_of = models.CharField(max_length=255, null=True, blank=True)
 
 
-class DomainMembershipDim(BaseDim, CustomSQLETLMixin):
-    '''
+class DomainMembershipDim(BaseDim):
+    """
     Dimension for domain memberships for Web/CommCare users
-    '''
-    slug = DOMAIN_MEMBERSHIP_DIM_SLUG
-
+    """
     domain = models.CharField(max_length=255)
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
     is_domain_admin = models.BooleanField()
-
-    @classmethod
-    def dependencies(cls):
-        return [USER_STAGING_SLUG, USER_DIM_SLUG]
 
     class Meta:
         unique_together = ('domain', 'user_dim')

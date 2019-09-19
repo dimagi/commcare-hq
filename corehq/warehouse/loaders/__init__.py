@@ -11,6 +11,9 @@ from corehq.warehouse.loaders.domain import (
     DomainDimLoader,
     DomainStagingLoader,
 )
+from corehq.warehouse.loaders.domain_membership import (
+    DomainMembershipDimLoader,
+)
 from corehq.warehouse.loaders.form import FormFactLoader, FormStagingLoader
 from corehq.warehouse.loaders.group import GroupDimLoader, GroupStagingLoader
 from corehq.warehouse.loaders.location import (
@@ -22,6 +25,8 @@ from corehq.warehouse.loaders.synclog import (
     SyncLogStagingLoader,
 )
 from corehq.warehouse.loaders.user import UserDimLoader, UserStagingLoader
+from corehq.warehouse.loaders.user_group import UserGroupDimLoader
+from corehq.warehouse.loaders.user_location import UserLocationDimLoader
 
 
 def get_loader_by_slug(slug):
@@ -36,6 +41,9 @@ def get_loader_by_slug(slug):
         LocationDimLoader,
         ApplicationStagingLoader,
         ApplicationDimLoader,
+        UserGroupDimLoader,
+        UserLocationDimLoader,
+        DomainMembershipDimLoader,
 
         FormStagingLoader,
         FormFactLoader,
