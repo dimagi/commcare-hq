@@ -56,12 +56,12 @@ class CustomSQLETLMixin(BaseETLMixin):
             ...
         }
         '''
-        from corehq.warehouse.models import get_cls_by_slug
+        from corehq.warehouse.loaders import get_loader_by_slug
 
-        context = {cls.slug: cls.model_cls._meta.db_table}
+        context = {cls.slug: cls.target_table()}
         for dep in cls.dependencies():
-            dep_cls = get_cls_by_slug(dep)
-            context[dep] = dep_cls._meta.db_table
+            loader_cls = get_loader_by_slug(dep)
+            context[dep] = loader_cls.target_table()
         context['start_datetime'] = batch.start_datetime.isoformat()
         context['end_datetime'] = batch.end_datetime.isoformat()
         context['batch_id'] = batch.id

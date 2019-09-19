@@ -35,6 +35,10 @@ class BaseLoader(object):
     def clear_records(cls):
         truncate_records_for_cls(cls.model_cls, cascade=True)
 
+    @classmethod
+    def target_table(cls):
+        return cls.model_cls._meta.db_table
+
 
 class BaseStagingLoader(BaseLoader):
     @classmethod
