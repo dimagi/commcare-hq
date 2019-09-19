@@ -653,7 +653,8 @@ def diff_ledgers(case_ids, statedb):
     }
     for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
         couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
-        diffs = json_diff(couch_state.to_json(), ledger_value.to_json(), track_list_indices=False)
+        couch_json = couch_state.to_json() if couch_state is not None else {}
+        diffs = json_diff(couch_json, ledger_value.to_json(), track_list_indices=False)
         statedb.add_diffs(
             'stock state', ledger_value.ledger_reference.as_id(),
             filter_ledger_diffs(diffs)
