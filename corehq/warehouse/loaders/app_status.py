@@ -11,6 +11,7 @@ from corehq.warehouse.const import (
 from corehq.warehouse.etl import CustomSQLETLMixin
 from corehq.warehouse.loaders.base import BaseLoader, BaseStagingLoader
 from corehq.warehouse.models import (
+    ApplicationStatusFact,
     AppStatusFormStaging,
     AppStatusSynclogStaging,
 )
@@ -53,6 +54,7 @@ class ApplicationStatusFactLoader(BaseLoader, CustomSQLETLMixin):
     Grain: app_id, user_id
     """
     slug = APP_STATUS_FACT_SLUG
+    model_cls = ApplicationStatusFact
 
     @classmethod
     def dependencies(cls):

@@ -1,5 +1,8 @@
 from datetime import datetime
 
+from casexml.apps.phone.models import OTARestoreCommCareUser
+from casexml.apps.phone.utils import MockDevice
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
@@ -8,22 +11,22 @@ from corehq.form_processor.tests.utils import (
     create_form_for_test,
 )
 from corehq.warehouse.loaders import (
+    ApplicationDimLoader,
+    ApplicationStagingLoader,
+    ApplicationStatusFactLoader,
+    AppStatusFormStagingLoader,
+    AppStatusSynclogStagingLoader,
     DomainDimLoader,
     DomainStagingLoader,
     FormFactLoader,
     FormStagingLoader,
+    SyncLogFactLoader,
+    SyncLogStagingLoader,
     UserDimLoader,
     UserStagingLoader,
+    get_loader_by_slug,
 )
-from corehq.warehouse.models import (
-    Batch,
-    DomainDim,
-    DomainStagingTable,
-    FormFact,
-    FormStagingTable,
-    UserDim,
-    UserStagingTable,
-)
+from corehq.warehouse.models import ApplicationStatusFact, Batch
 from corehq.warehouse.tests.utils import BaseWarehouseTestCase, create_batch
 
 
@@ -31,17 +34,13 @@ def teardown_module():
     Batch.objects.all().delete()
 
 
-class FormFactIntegrationTest(BaseWarehouseTestCase):
-    """
-    Tests a full integration of loading the FormFact table from
-    staging and dimension tables.
-    """
+class AppStatusIntegrationTest(BaseWarehouseTestCase):
     domain = 'form-fact-integration-test'
     slug = 'form_fact'
 
     @classmethod
     def setUpClass(cls):
-        super(FormFactIntegrationTest, cls).setUpClass()
+        super(AppStatusIntegrationTest, cls).setUpClass()
         delete_all_docs_by_doc_type(Domain.get_db(), ['Domain', 'Domain-Deleted'])
         delete_all_docs_by_doc_type(CommCareUser.get_db(), ['CommCareUser', 'WebUser'])
         cls.domain_records = [
@@ -82,6 +81,13 @@ class FormFactIntegrationTest(BaseWarehouseTestCase):
             create_form_for_test(cls.domain, user_id=cls.user_records[0]._id),
             create_form_for_test(cls.domain, user_id=cls.user_records[0]._id),
         ]
+
+        cls.sync_records = []
+        for user in cls.user_records:
+            restore_user = OTARestoreCommCareUser(user.domain, user)
+            device = MockDevice(cls.domain_records[0], restore_user)
+            cls.sync_records.append(device.sync())
+
         cls.batch = create_batch(cls.slug)
 
     @classmethod
@@ -100,25 +106,61 @@ class FormFactIntegrationTest(BaseWarehouseTestCase):
         DomainDimLoader.clear_records()
         UserStagingLoader.clear_records()
         UserDimLoader.clear_records()
-        super(FormFactIntegrationTest, cls).tearDownClass()
+        SyncLogStagingLoader.clear_records()
+        SyncLogFactLoader.clear_records()
+        AppStatusFormStagingLoader.clear_records()
+        AppStatusSynclogStagingLoader.clear_records()
+        ApplicationStatusFactLoader.clear_records()
+        super(AppStatusIntegrationTest, cls).tearDownClass()
 
-    def test_loading_form_fact(self):
+    def test_loading_app_stats_fact(self):
         batch = self.batch
 
-        DomainStagingLoader.commit(batch)
-        self.assertEqual(DomainStagingTable.objects.count(), len(self.domain_records))
+        seen = set()
 
-        DomainDimLoader.commit(batch)
-        self.assertEqual(DomainDim.objects.count(), len(self.domain_records))
+        def commit_with_dependencies(clazz, path=None):
+            path = path or []
+            path.append(clazz)
 
-        UserStagingLoader.commit(batch)
-        self.assertEqual(UserStagingTable.objects.count(), len(self.user_records))
+            for dep in clazz.dependencies():
+                dep_cls = get_loader_by_slug(dep)
+                if dep_cls in path:
+                    continue
+                commit_with_dependencies(dep_cls, path)
 
-        UserDimLoader.commit(batch)
-        self.assertEqual(UserDim.objects.count(), len(self.user_records))
+            if clazz not in seen:
+                seen.add(clazz)
+                clazz.commit(batch)
 
-        FormStagingLoader.commit(batch)
-        self.assertEqual(FormStagingTable.objects.count(), len(self.form_records))
+        commit_with_dependencies(ApplicationStatusFactLoader)
 
-        FormFactLoader.commit(batch)
-        self.assertEqual(FormFact.objects.count(), len(self.form_records))
+        expected_by_class = {
+            ApplicationStagingLoader: 0,
+            ApplicationDimLoader: 0,
+            DomainStagingLoader: len(self.domain_records),
+            DomainDimLoader: len(self.domain_records),
+            UserStagingLoader: len(self.user_records),
+            UserDimLoader: len(self.user_records),
+            FormStagingLoader: len(self.form_records),
+            SyncLogStagingLoader: len(self.user_records),
+            AppStatusFormStagingLoader: len(self.user_records),
+            AppStatusSynclogStagingLoader: len(self.user_records),
+            ApplicationStatusFactLoader: len(self.user_records),
+        }
+        for clazz in seen:
+            expected = expected_by_class.pop(clazz)
+            self.assertEqual(clazz.model_cls.objects.count(), expected)
+
+        self.assertFalse(expected_by_class, 'Not all classes checked')
+
+        user = self.user_records[0]
+        facts = ApplicationStatusFact.objects.filter(user_dim__user_id=user.user_id)
+        self.assertEqual(len(facts), 1)
+        app_status_fact = facts[0]
+        self.assertEqual(app_status_fact.batch.id, batch.id)
+        self.assertEqual(app_status_fact.domain, self.domain)
+        self.assertEqual(app_status_fact.app_dim, None)
+        self.assertEqual(app_status_fact.last_form_submission_date, self.form_records[-1].received_on)
+        self.assertEqual(app_status_fact.last_sync_log_date, self.sync_records[-1].log.date)
+        self.assertEqual(app_status_fact.last_form_app_build_version, None)
+        self.assertEqual(app_status_fact.last_form_app_commcare_version, None)
