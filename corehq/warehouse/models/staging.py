@@ -169,14 +169,12 @@ class FormStagingTable(StagingTable):
     )
 
 
-class SyncLogStagingTable(StagingTable, HQToWarehouseETLMixin):
-    '''
+class SyncLogStagingTable(StagingTable):
+    """
     Represents the staging table to dump data before loading into the SyncLogFact
 
     Grain: sync_log_id
-    '''
-    slug = SYNCLOG_STAGING_SLUG
-
+    """
     sync_log_id = models.CharField(max_length=255)
     sync_date = models.DateTimeField(null=True)
 
@@ -188,25 +186,6 @@ class SyncLogStagingTable(StagingTable, HQToWarehouseETLMixin):
     build_id = models.CharField(max_length=255, null=True)
 
     duration = models.IntegerField(null=True)  # in seconds
-
-    @classmethod
-    def dependencies(cls):
-        return []
-
-    @classmethod
-    def field_mapping(cls):
-        return [
-            ('synclog_id', 'sync_log_id'),
-            ('date', 'sync_date'),
-            ('domain', 'domain'),
-            ('user_id', 'user_id'),
-            ('build_id', 'build_id'),
-            ('duration', 'duration'),
-        ]
-
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
-        return get_synclogs_by_date(start_datetime, end_datetime)
 
     class Meta:
         indexes = [

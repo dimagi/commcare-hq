@@ -58,13 +58,11 @@ class FormFact(BaseFact):
     )
 
 
-class SyncLogFact(BaseFact, CustomSQLETLMixin):
-    '''
+class SyncLogFact(BaseFact):
+    """
     SyncLog Fact Table
     Grain: sync_log_id
-    '''
-    slug = SYNCLOG_FACT_SLUG
-
+    """
     sync_log_id = models.CharField(max_length=255)
     sync_date = models.DateTimeField(null=True)
 
@@ -79,14 +77,6 @@ class SyncLogFact(BaseFact, CustomSQLETLMixin):
     build_id = models.CharField(max_length=255, null=True)
 
     duration = models.IntegerField(null=True)  # in seconds
-
-    @classmethod
-    def dependencies(cls):
-        return [
-            USER_DIM_SLUG,
-            DOMAIN_DIM_SLUG,
-            SYNCLOG_STAGING_SLUG,
-        ]
 
 
 class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
