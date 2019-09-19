@@ -193,14 +193,12 @@ class SyncLogStagingTable(StagingTable):
         ]
 
 
-class ApplicationStagingTable(StagingTable, HQToWarehouseETLMixin):
-    '''
+class ApplicationStagingTable(StagingTable):
+    """
     Represents the staging table to dump data before loading into the ApplicationDim
 
     Grain: application_id
-    '''
-    slug = APPLICATION_STAGING_SLUG
-
+    """
     application_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     domain = models.CharField(max_length=100)
@@ -208,28 +206,6 @@ class ApplicationStagingTable(StagingTable, HQToWarehouseETLMixin):
     doc_type = models.CharField(max_length=100)
     version = models.IntegerField(null=True)
     copy_of = models.CharField(max_length=255, null=True, blank=True)
-
-    @classmethod
-    def field_mapping(cls):
-        return [
-            ('_id', 'application_id'),
-            ('domain', 'domain'),
-            ('name', 'name'),
-            ('last_modified', 'application_last_modified'),
-            ('doc_type', 'doc_type'),
-            ('version', 'version'),
-            ('copy_of', 'copy_of'),
-        ]
-
-    @classmethod
-    def dependencies(cls):
-        return []
-
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
-        application_ids = get_application_ids_by_last_modified(start_datetime, end_datetime)
-
-        return iter_docs(Application.get_db(), application_ids)
 
 
 class AppStatusFormStaging(StagingTable, CustomSQLETLMixin):

@@ -1,3 +1,4 @@
+from corehq.warehouse.loaders.application import ApplicationStagingLoader, ApplicationDimLoader
 from corehq.warehouse.loaders.domain import DomainStagingLoader, DomainDimLoader
 from corehq.warehouse.loaders.form import FormStagingLoader, FormFactLoader
 from corehq.warehouse.loaders.group import GroupStagingLoader, GroupDimLoader
@@ -16,6 +17,8 @@ def get_loader_by_slug(slug):
         GroupDimLoader,
         LocationStagingLoader,
         LocationDimLoader,
+        ApplicationStagingLoader,
+        ApplicationDimLoader,
 
         FormStagingLoader,
         FormFactLoader,

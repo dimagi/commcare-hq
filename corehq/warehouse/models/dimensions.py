@@ -179,24 +179,18 @@ class UserGroupDim(BaseDim, CustomSQLETLMixin):
         return [USER_DIM_SLUG, GROUP_DIM_SLUG, GROUP_STAGING_SLUG]
 
 
-class ApplicationDim(BaseDim, CustomSQLETLMixin):
-    '''
+class ApplicationDim(BaseDim):
+    """
     Dimension for Applications
 
     Grain: application_id
-    '''
-    slug = APPLICATION_DIM_SLUG
-
+    """
     domain = models.CharField(max_length=255)
     application_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
     application_last_modified = models.DateTimeField(null=True)
     version = models.IntegerField(null=True)
     copy_of = models.CharField(max_length=255, null=True, blank=True)
-
-    @classmethod
-    def dependencies(cls):
-        return [APPLICATION_STAGING_SLUG]
 
 
 class DomainMembershipDim(BaseDim, CustomSQLETLMixin):
