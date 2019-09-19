@@ -1,6 +1,6 @@
 from corehq.warehouse.const import FORM_STAGING_SLUG, FORM_FACT_SLUG, USER_DIM_SLUG, DOMAIN_DIM_SLUG
 from corehq.warehouse.dbaccessors import get_forms_by_last_modified
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
+from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin, slug_to_table_map
 from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import FormStagingTable, FormFact
 
@@ -13,9 +13,6 @@ class FormStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     slug = FORM_STAGING_SLUG
     model_cls = FormStagingTable
-
-    def dependencies(self):
-        return []
 
     def field_mapping(self):
         return [
@@ -50,7 +47,7 @@ class FormFactLoader(CustomSQLETLMixin, BaseLoader):
     slug = FORM_FACT_SLUG
     model_cls = FormFact
 
-    def dependencies(self):
+    def dependant_slugs(self):
         return [
             USER_DIM_SLUG,
             DOMAIN_DIM_SLUG,

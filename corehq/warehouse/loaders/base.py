@@ -8,6 +8,9 @@ from corehq.warehouse.utils import truncate_records_for_cls
 class BaseLoader(object):
     model_cls = None
 
+    def dependant_slugs(self):
+        return []
+
     def commit(self, batch):
         """
         Commits records based on a time frame.
@@ -21,10 +24,6 @@ class BaseLoader(object):
         return True
 
     def load(self, batch):
-        raise NotImplementedError
-
-    def dependencies(self):
-        """Returns a list of slugs that the warehouse table is dependent on"""
         raise NotImplementedError
 
     @unit_testing_only

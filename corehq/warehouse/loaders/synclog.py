@@ -1,6 +1,6 @@
 from corehq.warehouse.const import SYNCLOG_STAGING_SLUG, SYNCLOG_FACT_SLUG, USER_DIM_SLUG, DOMAIN_DIM_SLUG
 from corehq.warehouse.dbaccessors import get_synclogs_by_date
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
+from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin, slug_to_table_map
 from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import SyncLogStagingTable, SyncLogFact
 
@@ -13,9 +13,6 @@ class SyncLogStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     slug = SYNCLOG_STAGING_SLUG
     model_cls = SyncLogStagingTable
-
-    def dependencies(self):
-        return []
 
     def field_mapping(self):
         return [
@@ -39,7 +36,7 @@ class SyncLogFactLoader(CustomSQLETLMixin, BaseLoader):
     slug = SYNCLOG_FACT_SLUG
     model_cls = SyncLogFact
 
-    def dependencies(self):
+    def dependant_slugs(self):
         return [
             USER_DIM_SLUG,
             DOMAIN_DIM_SLUG,

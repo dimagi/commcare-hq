@@ -3,7 +3,7 @@ from corehq.warehouse.const import (
     USER_DIM_SLUG,
     USER_STAGING_SLUG,
 )
-from corehq.warehouse.etl import CustomSQLETLMixin
+from corehq.warehouse.etl import CustomSQLETLMixin, slug_to_table_map
 from corehq.warehouse.loaders.base import BaseLoader
 from corehq.warehouse.models import DomainMembershipDim
 
@@ -15,5 +15,5 @@ class DomainMembershipDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = DOMAIN_MEMBERSHIP_DIM_SLUG
     model_cls = DomainMembershipDim
 
-    def dependencies(self):
+    def dependant_slugs(self):
         return [USER_STAGING_SLUG, USER_DIM_SLUG]

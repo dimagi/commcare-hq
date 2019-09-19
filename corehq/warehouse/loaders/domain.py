@@ -1,7 +1,7 @@
 from corehq.apps.domain.models import Domain
 from corehq.warehouse.const import DOMAIN_STAGING_SLUG, DOMAIN_DIM_SLUG
 from corehq.warehouse.dbaccessors import get_domain_ids_by_last_modified
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
+from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin, slug_to_table_map
 from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import DomainStagingTable, DomainDim
 from dimagi.utils.couch.database import iter_docs
@@ -15,9 +15,6 @@ class DomainStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     slug = DOMAIN_STAGING_SLUG
     model_cls = DomainStagingTable
-
-    def dependencies(self):
-        return []
 
     def field_mapping(self):
         return [
@@ -54,5 +51,5 @@ class DomainDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = DOMAIN_DIM_SLUG
     model_cls = DomainDim
 
-    def dependencies(self):
+    def dependant_slugs(self):
         return [DOMAIN_STAGING_SLUG]

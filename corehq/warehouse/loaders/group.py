@@ -1,7 +1,7 @@
 from corehq.apps.groups.models import Group
 from corehq.warehouse.const import GROUP_STAGING_SLUG, GROUP_DIM_SLUG
 from corehq.warehouse.dbaccessors import get_group_ids_by_last_modified
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
+from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin, slug_to_table_map
 from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import GroupStagingTable, GroupDim
 from dimagi.utils.couch.database import iter_docs
@@ -29,9 +29,6 @@ class GroupStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
             ('removed_users', 'removed_user_ids'),
         ]
 
-    def dependencies(self):
-        return []
-
     def record_iter(self, start_datetime, end_datetime):
         group_ids = get_group_ids_by_last_modified(start_datetime, end_datetime)
 
@@ -47,5 +44,5 @@ class GroupDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = GROUP_DIM_SLUG
     model_cls = GroupDim
 
-    def dependencies(self):
+    def dependant_slugs(self):
         return [GROUP_STAGING_SLUG]

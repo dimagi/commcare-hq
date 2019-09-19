@@ -4,7 +4,7 @@ from corehq.warehouse.const import (
     USER_DIM_SLUG,
     USER_GROUP_DIM_SLUG,
 )
-from corehq.warehouse.etl import CustomSQLETLMixin
+from corehq.warehouse.etl import CustomSQLETLMixin, slug_to_table_map
 from corehq.warehouse.loaders.base import BaseLoader
 from corehq.warehouse.models import UserGroupDim
 
@@ -18,5 +18,5 @@ class UserGroupDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = USER_GROUP_DIM_SLUG
     model_cls = UserGroupDim
 
-    def dependencies(self):
+    def dependant_slugs(self):
         return [USER_DIM_SLUG, GROUP_DIM_SLUG, GROUP_STAGING_SLUG]
