@@ -163,6 +163,17 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                 products = sorted(stock['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations:
                     length = len(locations_with_products[location_name])
+                    if length < len(products):
+                        for product in products:
+                            products_in = [x for x in locations_with_products[location_name]]
+                            if product not in products_in:
+                                locations_with_products[location_name].append({
+                                    'product_name': product['product_name'],
+                                    'product_id': product['product_id'],
+                                    'in_ppses': product['in_ppses'],
+                                    'all_ppses': product['all_ppses'],
+                                })
+                    length = len(locations_with_products[location_name])
                     for r in range(0, length):
                         product_for_location = locations_with_products[location_name][r]
                         for product in products:
@@ -177,6 +188,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                     unique_products_for_location = []
                     products_to_add = []
                     for product in products:
+                        print(product)
                         product_name = product['product_name']
                         if product_name not in unique_products_for_location and product_name in all_products:
                             unique_products_for_location.append(product_name)

@@ -3901,25 +3901,8 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
         return headers
 
 
-class VisiteDeLOperateurPerProductV2DataSource(SqlData):
-    slug = 'disponibilite'
-    comment = 'Disponibilité de la gamme au niveau PPS : combien de PPS ont eu tous les produits disponibles'
-    title = 'Disponibilité'
-
-    def __init__(self, config):
-        super(VisiteDeLOperateurPerProductV2DataSource, self).__init__()
-        self.config = config
-
-    @property
-    def engine_id(self):
-        return 'ucr'
-
-    @property
-    def table_name(self):
-        config_domain = self.config['domain']
-        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, YEKSI_NAA_REPORTS_CONSUMPTION)
-        config, _ = get_datasource_config(doc_id, config_domain)
-        return get_table_name(config_domain, config.table_id)
+class LocationLevelMixin:
+    config = {}
 
     @cached_property
     def selected_location(self):
@@ -3967,6 +3950,27 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
     @cached_property
     def loc_name_to_get(self):
         return "{}_name".format(self.loc_type_to_get)
+
+
+class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
+    slug = 'disponibilite'
+    comment = 'Disponibilité de la gamme au niveau PPS : combien de PPS ont eu tous les produits disponibles'
+    title = 'Disponibilité'
+
+    def __init__(self, config):
+        super(VisiteDeLOperateurPerProductV2DataSource, self).__init__()
+        self.config = config
+
+    @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
+    def table_name(self):
+        config_domain = self.config['domain']
+        doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, YEKSI_NAA_REPORTS_CONSUMPTION)
+        config, _ = get_datasource_config(doc_id, config_domain)
+        return get_table_name(config_domain, config.table_id)
 
     @property
     def filters(self):
@@ -4123,7 +4127,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData):
         return clean_data
 
 
-class TauxDeRuptureRateData(SqlData):
+class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
     slug = 'taux_de_rupture_par_pps'
     comment = 'Nombre de produits en rupture sur le nombre total de produits du PPS'
     title = 'Taux de Rupture par PPS'
@@ -4144,53 +4148,6 @@ class TauxDeRuptureRateData(SqlData):
         doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, YEKSI_NAA_REPORTS_CONSUMPTION)
         config, _ = get_datasource_config(doc_id, config_domain)
         return get_table_name(config_domain, config.table_id)
-
-    @cached_property
-    def selected_location(self):
-        if self.config['location_id']:
-            return SQLLocation.objects.get(location_id=self.config['location_id'])
-        else:
-            return None
-
-    @cached_property
-    def selected_location_type(self):
-        if not self.selected_location:
-            return 'national'
-        return self.selected_location.location_type.code
-
-    @cached_property
-    def loc_type(self):
-        if self.selected_location_type in ['national', 'region']:
-            return 'region'
-        elif self.selected_location_type == 'disctrict':
-            return 'district'
-        else:
-            return 'pps'
-
-    @cached_property
-    def loc_id(self):
-        return "{}_id".format(self.loc_type)
-
-    @cached_property
-    def loc_name(self):
-        return "{}_name".format(self.loc_type)
-
-    @cached_property
-    def loc_type_to_get(self):
-        if self.selected_location_type == 'national':
-            return 'region'
-        elif self.selected_location_type == 'region':
-            return 'district'
-        else:
-            return 'pps'
-
-    @cached_property
-    def loc_id_to_get(self):
-        return "{}_id".format(self.loc_type_to_get)
-
-    @cached_property
-    def loc_name_to_get(self):
-        return "{}_name".format(self.loc_type_to_get)
 
     @property
     def filters(self):
@@ -4347,7 +4304,7 @@ class TauxDeRuptureRateData(SqlData):
         return clean_data
 
 
-class ConsommationPerProductData(SqlData):
+class ConsommationPerProductData(SqlData, LocationLevelMixin):
     slug = 'consommation_per_product'
     comment = ''
     title = 'Consommation per product'
@@ -4368,53 +4325,6 @@ class ConsommationPerProductData(SqlData):
         doc_id = StaticDataSourceConfiguration.get_doc_id(config_domain, YEKSI_NAA_REPORTS_CONSUMPTION)
         config, _ = get_datasource_config(doc_id, config_domain)
         return get_table_name(config_domain, config.table_id)
-
-    @cached_property
-    def selected_location(self):
-        if self.config['location_id']:
-            return SQLLocation.objects.get(location_id=self.config['location_id'])
-        else:
-            return None
-
-    @cached_property
-    def selected_location_type(self):
-        if not self.selected_location:
-            return 'national'
-        return self.selected_location.location_type.code
-
-    @cached_property
-    def loc_type(self):
-        if self.selected_location_type in ['national', 'region']:
-            return 'region'
-        elif self.selected_location_type == 'disctrict':
-            return 'district'
-        else:
-            return 'pps'
-
-    @cached_property
-    def loc_id(self):
-        return "{}_id".format(self.loc_type)
-
-    @cached_property
-    def loc_name(self):
-        return "{}_name".format(self.loc_type)
-
-    @cached_property
-    def loc_type_to_get(self):
-        if self.selected_location_type == 'national':
-            return 'region'
-        elif self.selected_location_type == 'region':
-            return 'district'
-        else:
-            return 'pps'
-
-    @cached_property
-    def loc_id_to_get(self):
-        return "{}_id".format(self.loc_type_to_get)
-
-    @cached_property
-    def loc_name_to_get(self):
-        return "{}_name".format(self.loc_type_to_get)
 
     @property
     def filters(self):
@@ -4487,27 +4397,18 @@ class ConsommationPerProductData(SqlData):
                             location_position = r
                             break
 
-                    added_products_for_location = \
-                        [x['product_id'] for x in added_products_for_locations[location_id]]
-                    products_for_location = added_products_for_locations[location_id]
-                    if product_id not in added_products_for_location:
-                        product_data = {
+                    products = consumptions_list[location_position]['products']
+                    product_names = [x['product_name'] for x in products]
+                    if product_name in product_names:
+                        for product in products:
+                            if product['product_name'] == product_name:
+                                product['actual_consumption'] += actual_consumption
+                    else:
+                        products.append({
                             'product_name': product_name,
                             'product_id': product_id,
-                            'actual_consumption': 0,
-                        }
-                        added_products_for_locations[location_id].append(product_data)
-                        consumptions_list[location_position]['products'].append(product_data)
-
-                    amount_of_products_for_location = len(added_products_for_locations[location_id])
-                    product_position = 0
-                    for s in range(0, amount_of_products_for_location):
-                        current_product = products_for_location[s]['product_id']
-                        if current_product == product_id:
-                            product_position = s
-                            break
-                    overall_position = consumptions_list[location_position]['products'][product_position]
-                    overall_position['actual_consumption'] += actual_consumption
+                            'actual_consumption': actual_consumption
+                        })
                 else:
                     if location_id not in added_locations:
                         added_locations.append(location_id)
@@ -4522,16 +4423,6 @@ class ConsommationPerProductData(SqlData):
                     data_dict['products'].append(product_data)
                     consumptions_list.append(data_dict)
                     added_products_for_locations[location_id] = [product_data]
-
-            for consumption in consumptions_list:
-                programs = consumption['program_id'].split(' ')
-                amount_of_programs = len(programs)
-                if amount_of_programs > 1:
-                    index = consumptions_list.index(consumption)
-                    consumptions_list.pop(index)
-                    for program in programs:
-                        consumption['program_id'] = program
-                        consumptions_list.append(consumption.copy())
 
             consumptions_list_to_return = sorted(consumptions_list, key=lambda x: x['location_id'])
 
@@ -4929,59 +4820,12 @@ class ExpirationRatePerProductData2(LossRatePerProductData2):
         return sorted(rows, key=lambda x: x[0]['html'])
 
 
-class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDataSource):
+class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDataSource, LocationLevelMixin):
     slug = 'taux_de_satisfaction_report'
     comment = 'produits proposés sur produits livrés'
     title = 'Taux de satisfaction (après livraison)'
     show_total = True
     custom_total_calculate = True
-
-    @cached_property
-    def selected_location(self):
-        if self.config['location_id']:
-            return SQLLocation.objects.get(location_id=self.config['location_id'])
-        else:
-            return None
-
-    @cached_property
-    def selected_location_type(self):
-        if not self.selected_location:
-            return 'national'
-        return self.selected_location.location_type.code
-
-    @cached_property
-    def loc_type(self):
-        if self.selected_location_type in ['national', 'region']:
-            return 'region'
-        elif self.selected_location_type == 'disctrict':
-            return 'district'
-        else:
-            return 'pps'
-
-    @cached_property
-    def loc_id(self):
-        return "{}_id".format(self.loc_type)
-
-    @cached_property
-    def loc_name(self):
-        return "{}_name".format(self.loc_type)
-
-    @cached_property
-    def loc_type_to_get(self):
-        if self.selected_location_type == 'national':
-            return 'region'
-        elif self.selected_location_type == 'region':
-            return 'district'
-        else:
-            return 'pps'
-
-    @cached_property
-    def loc_id_to_get(self):
-        return "{}_id".format(self.loc_type_to_get)
-
-    @cached_property
-    def loc_name_to_get(self):
-        return "{}_name".format(self.loc_type_to_get)
 
     @property
     def filters(self):
@@ -5105,7 +4949,7 @@ class SatisfactionRateAfterDeliveryPerProductData(VisiteDeLOperateurPerProductDa
         return clean_data
 
 
-class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource):
+class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource, LocationLevelMixin):
     slug = 'valeur_des_stocks_pna_disponible_chaque_produit'
     comment = 'Valeur des stocks PNA disponible (chaque produit)'
     title = 'Valeur des stocks PNA disponible (chaque produit)'
@@ -5150,53 +4994,6 @@ class ValuationOfPNAStockPerProductV2Data(VisiteDeLOperateurPerProductDataSource
             DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation')),
         ]
         return columns
-
-    @cached_property
-    def selected_location(self):
-        if self.config['location_id']:
-            return SQLLocation.objects.get(location_id=self.config['location_id'])
-        else:
-            return None
-
-    @cached_property
-    def selected_location_type(self):
-        if not self.selected_location:
-            return 'national'
-        return self.selected_location.location_type.code
-
-    @cached_property
-    def loc_type(self):
-        if self.selected_location_type in ['national', 'region']:
-            return 'region'
-        elif self.selected_location_type == 'disctrict':
-            return 'district'
-        else:
-            return 'pps'
-
-    @cached_property
-    def loc_id(self):
-        return "{}_id".format(self.loc_type)
-
-    @cached_property
-    def loc_name(self):
-        return "{}_name".format(self.loc_type)
-
-    @cached_property
-    def loc_type_to_get(self):
-        if self.selected_location_type == 'national':
-            return 'region'
-        elif self.selected_location_type == 'region':
-            return 'district'
-        else:
-            return 'pps'
-
-    @cached_property
-    def loc_id_to_get(self):
-        return "{}_id".format(self.loc_type_to_get)
-
-    @cached_property
-    def loc_name_to_get(self):
-        return "{}_name".format(self.loc_type_to_get)
 
     @property
     def filters(self):
@@ -5838,7 +5635,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         return sum_row
 
 
-class IndicateursDeBaseData(SqlData):
+class IndicateursDeBaseData(SqlData, LocationLevelMixin):
     slug = 'indicateurs_de_base'
     comment = ''
     title = 'Indicateur de Base'
@@ -5882,19 +5679,6 @@ class IndicateursDeBaseData(SqlData):
         return columns
 
     @cached_property
-    def selected_location(self):
-        if self.config['location_id']:
-            return SQLLocation.objects.get(location_id=self.config['location_id'])
-        else:
-            return None
-
-    @cached_property
-    def selected_location_type(self):
-        if not self.selected_location:
-            return 'national'
-        return self.selected_location.location_type.code
-
-    @cached_property
     def loc_type(self):
         if self.selected_location_type in ['national', 'region']:
             return 'region'
@@ -5902,27 +5686,11 @@ class IndicateursDeBaseData(SqlData):
             return 'district'
 
     @cached_property
-    def loc_id(self):
-        return "{}_id".format(self.loc_type)
-
-    @cached_property
-    def loc_name(self):
-        return "{}_name".format(self.loc_type)
-
-    @cached_property
     def loc_type_to_get(self):
         if self.selected_location_type == 'national':
             return 'region'
         else:
             return 'district'
-
-    @cached_property
-    def loc_id_to_get(self):
-        return "{}_id".format(self.loc_type_to_get)
-
-    @cached_property
-    def loc_name_to_get(self):
-        return "{}_name".format(self.loc_type_to_get)
 
     @property
     def month(self):
