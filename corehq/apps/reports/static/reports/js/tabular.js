@@ -62,6 +62,7 @@ hqDefine("reports/js/tabular", [
             trigger: 'hover',
             placement: 'bottom',
             container: 'body',
+            html: true,     // needed only for pact custom reports
         });
     }
 

@@ -1,0 +1,8 @@
+{% extends "reports/base_template.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+
+{% block js %}
+  {{ block.super }}
+  <script src="{% static 'pact/js/main.js' %}"></script>
+{% endblock js %}
