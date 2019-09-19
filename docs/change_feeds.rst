@@ -3,7 +3,7 @@ Change Feeds
 ============
 
 The following describes our approach to change feeds on HQ.
-For related content see `this brown bag on the topic <https://docs.google.com/presentation/d/1YPWUJbic87UYz3bqocJCsnYrnaEZkn8nCM2VZOXQRmg/edit>`_
+For related content see `this presentation on the topic <https://docs.google.com/presentation/d/1YPWUJbic87UYz3bqocJCsnYrnaEZkn8nCM2VZOXQRmg/edit>`_
 though be advised the presentation was last updated in 2015 and is somewhat out of date.
 
 What they are
