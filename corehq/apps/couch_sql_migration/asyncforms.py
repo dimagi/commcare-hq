@@ -186,13 +186,17 @@ class PartiallyLockingQueue(object):
         def is_first(queue_id, lock_id):
             return queue_by_lock_id[lock_id][0] == queue_id
 
+        seen = set()
         queue_by_lock_id = self.queue_by_lock_id
         objs_by_queue_id = self.objs_by_queue_id
         for queue in queue_by_lock_id.values():
             queue_id = queue[0]
+            if queue_id in seen:
+                continue
             lock_ids = objs_by_queue_id[queue_id][1]
             if all(is_first(queue_id, x) for x in lock_ids) and self._set_lock(lock_ids):
                 return self._pop_queue_obj(queue_id)
+            seen.add(queue_id)
         return None, None
 
     def _pop_queue_obj(self, queued_obj_id):
