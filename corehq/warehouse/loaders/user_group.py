@@ -6,6 +6,7 @@ from corehq.warehouse.const import (
 )
 from corehq.warehouse.etl import CustomSQLETLMixin
 from corehq.warehouse.loaders.base import BaseLoader
+from corehq.warehouse.models import UserGroupDim
 
 
 class UserGroupDimLoader(BaseLoader, CustomSQLETLMixin):
@@ -15,6 +16,7 @@ class UserGroupDimLoader(BaseLoader, CustomSQLETLMixin):
     Grain: user_id, group_id
     """
     slug = USER_GROUP_DIM_SLUG
+    model_cls = UserGroupDim
 
     @classmethod
     def dependencies(cls):
