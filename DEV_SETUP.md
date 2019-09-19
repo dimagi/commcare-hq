@@ -21,7 +21,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 #### Prerequisites
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- [Python 2.7](https://www.python.org/downloads/)
+- [Python 3.6](https://www.python.org/downloads/)
 - [Pip](https://pip.pypa.io/en/stable/installing/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/)
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
@@ -45,7 +45,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 Run the following commands:
 
     $ source /usr/local/bin/virtualenvwrapper.sh
-    $ mkvirtualenv --no-site-packages commcare-hq -p python2.7
+    $ mkvirtualenv --no-site-packages commcare-hq -p python3.6
 
 #### Clone and setup repo / requirements
 
@@ -70,7 +70,7 @@ Next, install the appropriate requirements (only one is necessary).
 
 Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate these tasks. For pulling code, instead of `git pull`, you can run [this script](https://github.com/dimagi/commcare-hq/blob/master/scripts/update-code.sh) to update all code, including submodules. [This script](https://github.com/dimagi/commcare-hq/blob/master/scripts/hammer.sh) will update all code and do a few more tasks like run migrations and update libraries, so it's good to run once a month or so, or when you pull code and then immediately hit an error.
 
-#### Setup for Python 3 (beta)
+#### Setup for Python 3
 
 - Install [Python 3.6](https://www.python.org/downloads/)
     - For OSX, you can [install using Homebrew](http://osxdaily.com/2018/06/13/how-install-update-python-3x-mac/)
@@ -85,8 +85,7 @@ Note that once you're up and running, you'll want to periodically re-run these s
           $ sudo apt-get install python3.6
 
 - [Create and activate virtualenv](https://docs.python.org/3/library/venv.html#creating-virtual-environments)
-- Install HQ requirements for Python 3.6
-    - `$ pip install -r requirements-python3/dev-requirements.txt`
+- `$ pip install -r requirements/dev-requirements.txt`
 
 #### Setup localsettings
 
@@ -139,8 +138,7 @@ You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
 
-To set up elasticsearch indexes run the following (Ignore warnings
-related to Raven for the following two commands.):
+To set up elasticsearch indexes run the following:
 
     $ ./manage.py ptop_preindex
 
@@ -307,6 +305,12 @@ Running CommCare HQ
 -------------------
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka, Elasticsearch).
+
+```bash
+$ ./manage.py check_services
+```
+
+Some of the services listed there aren't necessary for very basic operation, but it can give you a good idea of what's broken.
 
 Then run the following separately:
 

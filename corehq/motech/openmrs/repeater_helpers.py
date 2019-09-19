@@ -1,19 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-from collections import namedtuple, defaultdict
 import re
+from collections import defaultdict
 
 from lxml import html
-from requests import RequestException
-from six.moves import zip
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import extract_case_blocks
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.openmrs.const import (
@@ -33,10 +30,7 @@ from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.requests import Requests
 from corehq.motech.value_source import CaseTriggerInfo
 from corehq.util.quickcache import quickcache
-from dimagi.utils.logging import notify_exception
-
-
-OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
+from requests import RequestException
 
 
 def get_case_location(case):
@@ -174,7 +168,7 @@ def save_match_ids(case, case_config, patient):
         update=case_update,
         **kwargs
     )
-    submit_case_blocks([case_block.as_string()], case.domain, xmlns=XMLNS_OPENMRS)
+    submit_case_blocks([case_block.as_text()], case.domain, xmlns=XMLNS_OPENMRS)
 
 
 def create_patient(requests, info, case_config):
@@ -361,6 +355,8 @@ def generate_identifier(requests, identifier_type):
 def find_or_create_patient(requests, domain, info, openmrs_config):
     case = CaseAccessors(domain).get_case(info.case_id)
     patient_finder = PatientFinder.wrap(openmrs_config.case_config.patient_finder)
+    if patient_finder is None:
+        return
     patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
     if len(patients) == 1:
         patient, = patients

@@ -1,11 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 import time
+
+from django.conf import settings
 
 from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
+from dimagi.utils.logging import notify_error
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.history import get_recent_changes
 from corehq.elastic import get_es_new
@@ -13,10 +16,6 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from couchforms.models import XFormInstance
-from django.conf import settings
-from dimagi.utils.logging import notify_error
-from six.moves import range
 
 
 def check_es_cluster_health():

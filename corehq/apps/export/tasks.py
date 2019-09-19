@@ -1,12 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import datetime, timedelta
 import logging
-from celery.schedules import crontab
-from celery.task import task, periodic_task
+from datetime import datetime, timedelta
+
 from django.conf import settings
+
+from celery.schedules import crontab
+from celery.task import periodic_task, task
+
+from couchexport.models import Format
 from soil import DownloadBase
 from soil.progress import get_task_status
+from soil.util import expose_blob_download, process_email_request
 
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.utils import get_export
@@ -14,22 +17,18 @@ from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.util.datadog.gauges import datadog_track_errors
 from corehq.util.decorators import serial_task
-from corehq.util.files import safe_filename_header, TransientTempfile
+from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.quickcache import quickcache
-from couchexport.models import Format
-from soil.util import expose_blob_download, process_email_request
 
-from .const import SAVED_EXPORTS_QUEUE, EXPORT_DOWNLOAD_QUEUE
+from .const import EXPORT_DOWNLOAD_QUEUE, SAVED_EXPORTS_QUEUE
 from .dbaccessors import (
     get_case_inferred_schema,
-    get_properly_wrapped_export_instance,
     get_daily_saved_export_ids_for_auto_rebuild,
+    get_properly_wrapped_export_instance,
 )
 from .export import get_export_file, rebuild_export
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
-
-from six.moves import filter
 
 logger = logging.getLogger('export_migration')
 

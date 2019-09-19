@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import datetime
 
 from django.core.serializers.json import DjangoJSONEncoder

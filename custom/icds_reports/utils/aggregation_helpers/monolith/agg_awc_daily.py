@@ -1,13 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
-from six.moves import map
-
-from corehq.util.python_compatibility import soft_assert_type_text
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
 from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
-from six.moves import range
 
 
 class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
@@ -150,7 +142,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             ('block_id', lambda col: col if aggregation_level > 2 else "'All'"),
             ('supervisor_id', lambda col: col if aggregation_level > 3 else "'All'"),
             ('awc_id', lambda col: col if aggregation_level > 4 else "'All'"),
-            ('aggregation_level', six.text_type(aggregation_level)),
+            ('aggregation_level', str(aggregation_level)),
             ('date', 'date'),
             ('cases_household',),
             ('cases_person',),
@@ -200,8 +192,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
 
             if len(column_tuple) == 2:
                 agg_col = column_tuple[1]
-                if isinstance(agg_col, six.string_types):
-                    soft_assert_type_text(agg_col)
+                if isinstance(agg_col, str):
                     return column_tuple
                 elif callable(agg_col):
                     return (column, agg_col(column))

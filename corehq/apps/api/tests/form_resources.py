@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 import uuid
 from datetime import datetime
@@ -7,8 +5,6 @@ from datetime import datetime
 from django.conf import settings
 from django.test import TestCase
 from django.utils.http import urlencode
-
-import six
 
 from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance
@@ -232,5 +228,5 @@ class TestReportPillow(TestCase):
         for fn in transform_functions:
             cleaned = fn(bad_appVersion)
             self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
-            self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], six.text_type))
+            self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
             self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")

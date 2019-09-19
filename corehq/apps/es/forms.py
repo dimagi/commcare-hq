@@ -2,11 +2,10 @@
 FormES
 --------
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.pillows.mappings import NULL_VALUE
-from .es_query import HQESQuery
+
 from . import filters
+from .es_query import HQESQuery
 
 
 class FormES(HQESQuery):

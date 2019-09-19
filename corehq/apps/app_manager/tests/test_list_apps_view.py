@@ -1,11 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.phone import get_app_list_xml
 
 

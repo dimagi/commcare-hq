@@ -1,17 +1,17 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from datetime import datetime
-from openpyxl import Workbook
-import csv342 as csv
-from couchdbkit import ResourceNotFound
+import csv
 
 from django.core.management.base import BaseCommand, CommandError
-from corehq.util.log import with_progress_bar
+
+from couchdbkit import ResourceNotFound
+from openpyxl import Workbook
+
+from corehq.motech.repeaters.dbaccessors import (
+    get_repeat_record_count,
+    iter_repeat_records_by_domain,
+)
 from corehq.motech.repeaters.models import RepeatRecord
-from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
-from six.moves import range
-from io import open
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):

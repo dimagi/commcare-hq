@@ -1,20 +1,16 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import csv342 as csv
 from collections import defaultdict
-
-from django.apps import apps
-from django.core.management import BaseCommand
-from django.conf import settings
 from importlib import import_module
 
-from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
+from django.apps import apps
+from django.conf import settings
+from django.core.management import BaseCommand
+
+import csv
+
+from couchforms.analytics import get_last_form_submission_received
+
+from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.domain.models import Domain
-import six
-from six.moves import map
-from io import open
 
 
 class Command(BaseCommand):
@@ -32,6 +28,7 @@ class Command(BaseCommand):
                 'domains',
                 'domains exist',
                 'plans',
+                'last form submissions',
                 'in DOMAIN_MODULE_MAP',
                 'likely removable',
             ])
@@ -62,6 +59,7 @@ class Command(BaseCommand):
     def log_module_info(self, module, path, domains, in_module_map):
         domains_exist = []
         plans = []
+        last_form_submissions = []
         all_community = True
         for domain in domains:
             domain_obj = Domain.get_by_name(domain)
@@ -73,14 +71,18 @@ class Command(BaseCommand):
                     plan = subscription.plan_version.plan.name
                     if subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY:
                         all_community = False
+                last_form_submissions.append("{}".format(get_last_form_submission_received(domain)))
+            else:
+                last_form_submissions.append("None")
             plans.append(plan)
 
         return [
             module,
             path[len(settings.FILEPATH) + 1:],
             " | ".join(domains),
-            " | ".join(map(six.text_type, domains_exist)),
+            " | ".join(map(str, domains_exist)),
             " | ".join(plans),
+            " | ".join(last_form_submissions),
             in_module_map,
             all(domains_exist) and all_community,
         ]

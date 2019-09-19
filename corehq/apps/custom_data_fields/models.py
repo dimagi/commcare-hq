@@ -1,17 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
-from dimagi.ext.couchdbkit import (Document, StringProperty,
-    BooleanProperty, SchemaListProperty, StringListProperty)
-from dimagi.ext.jsonobject import JsonObject
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
+
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    Document,
+    SchemaListProperty,
+    StringListProperty,
+    StringProperty,
+)
+from dimagi.ext.jsonobject import JsonObject
+
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 
 from .dbaccessors import get_by_domain_and_type
-import six
-from six.moves import filter
-
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # If mobile-worker is demo, this will be set to value 'demo'
@@ -48,8 +51,6 @@ class CustomDataField(JsonObject):
     regex = StringProperty()
     regex_msg = StringProperty()
     is_multiple_choice = BooleanProperty(default=False)
-    # Currently only relevant for location fields
-    index_in_fixture = BooleanProperty(default=False)
 
 
 class CustomDataFieldsDefinition(QuickCachedDocumentMixin, Document):
@@ -89,7 +90,7 @@ class CustomDataFieldsDefinition(QuickCachedDocumentMixin, Document):
         Returns a validator to be used in bulk import
         """
         def validate_choices(field, value):
-            if field.choices and value and six.text_type(value) not in field.choices:
+            if field.choices and value and str(value) not in field.choices:
                 return _(
                     "'{value}' is not a valid choice for {slug}, the available "
                     "options are: {options}."

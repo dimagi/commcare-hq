@@ -1,12 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import tempfile
 
-import six
-
-from corehq.apps.app_manager.models import LinkedApplication
 from corehq import toggles
+from corehq.apps.app_manager.models import LinkedApplication
 
 
 def get_file_content_from_workbook(wb):

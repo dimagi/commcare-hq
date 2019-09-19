@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import gzip
 import os
 import zipfile
@@ -10,7 +8,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.apps.dump_reload.couch import CouchDataDumper
-from corehq.apps.dump_reload.couch.dump import ToggleDumper, DomainDumper
+from corehq.apps.dump_reload.couch.dump import DomainDumper, ToggleDumper
 from corehq.apps.dump_reload.sql import SqlDataDumper
 
 

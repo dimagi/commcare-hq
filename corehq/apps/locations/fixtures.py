@@ -1,20 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from collections import defaultdict
 from itertools import groupby
 from xml.etree.cElementTree import Element, SubElement
 
 from django.contrib.postgres.fields.array import ArrayField
 from django.db.models import IntegerField, Q
+
 from django_cte import With
 from django_cte.raw import raw_cte_sql
-import six
 
 from casexml.apps.phone.fixtures import FixtureProvider
+
 from corehq import toggles
 from corehq.apps.app_manager.const import (
-    DEFAULT_LOCATION_FIXTURE_OPTION, SYNC_FLAT_FIXTURES, SYNC_HIERARCHICAL_FIXTURE
+    DEFAULT_LOCATION_FIXTURE_OPTION,
+    SYNC_FLAT_FIXTURES,
+    SYNC_HIERARCHICAL_FIXTURE,
 )
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.fixtures.utils import get_index_schema_node
@@ -161,8 +161,6 @@ class FlatLocationSerializer(object):
         )
         location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
         attrs_to_index = ['@{}'.format(attr) for attr in location_type_attrs]
-        attrs_to_index.extend(_get_indexed_field_name(field.slug) for field in data_fields
-                              if field.index_in_fixture)
         attrs_to_index.extend(['@id', '@type', 'name'])
 
         return [get_index_schema_node(fixture_id, attrs_to_index),
@@ -421,7 +419,7 @@ def _get_metadata_node(location, data_fields):
     # add default empty nodes for all known fields: http://manage.dimagi.com/default.asp?247786
     for field in data_fields:
         element = Element(field.slug)
-        element.text = six.text_type(location.metadata.get(field.slug, ''))
+        element.text = str(location.metadata.get(field.slug, ''))
         node.append(element)
     return node
 
@@ -446,17 +444,8 @@ def _fill_in_location_element(xml_root, location, data_fields):
     for field in fixture_fields:
         field_node = Element(field)
         val = getattr(location, field)
-        field_node.text = six.text_type(val if val is not None else '')
+        field_node.text = str(val if val is not None else '')
         xml_root.append(field_node)
-
-    # in order to be indexed, custom data fields need to be top-level
-    # so we stick them in there with the prefix data_
-    for field in data_fields:
-        if field.index_in_fixture:
-            field_node = Element(_get_indexed_field_name(field.slug))
-            val = location.metadata.get(field.slug)
-            field_node.text = six.text_type(val if val is not None else '')
-            xml_root.append(field_node)
 
     xml_root.append(_get_metadata_node(location, data_fields))
 
@@ -468,7 +457,3 @@ def _get_location_data_fields(domain):
         return fields_definition.fields
     else:
         return []
-
-
-def _get_indexed_field_name(slug):
-    return "data_{}".format(slug)

@@ -1,6 +1,4 @@
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
 
 def get_server_url(server_root, username, password):

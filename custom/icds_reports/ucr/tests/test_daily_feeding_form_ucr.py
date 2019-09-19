@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from mock import patch
 
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest

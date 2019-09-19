@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import traceback
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
@@ -13,7 +11,6 @@ from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 from pact.enums import PACT_DOTS_DATA_PROPERTY
 from pact.utils import get_case_id
-import six
 
 
 DOT_RECOMPUTE = True
@@ -57,7 +54,7 @@ def eval_dots_block(xform_json, callback=None):
             #update is a dict
             if 'dots' in xform_json['form']['case']['update']:
                 dots_json = xform_json['form']['case']['update']['dots']
-                if isinstance(dots_json, str) or isinstance(dots_json, six.text_type):
+                if isinstance(dots_json, str) or isinstance(dots_json, str):
                     json_data = json.loads(dots_json)
                     xform_json[PACT_DOTS_DATA_PROPERTY]['dots'] = json_data
                 do_continue=True

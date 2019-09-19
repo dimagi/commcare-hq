@@ -1,11 +1,6 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from __future__ import absolute_import
-from django.db import models, migrations
+from django.db import migrations, models
 
 from corehq.apps.smsbillables.models import add_twilio_gateway_fee
-
 
 
 def add_twilio_gateway_fee_for_migration(apps, schema_editor):

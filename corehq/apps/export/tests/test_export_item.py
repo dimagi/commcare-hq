@@ -1,17 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import mock
-from django.test import SimpleTestCase
 from collections import namedtuple
 
+from django.test import SimpleTestCase
+
+import mock
+
 from corehq.apps.export.models import (
-    ExportItem,
     ExportColumn,
-    Option, MultipleChoiceItem)
-from corehq.apps.export.models.new import (
-    MAIN_TABLE,
-    PathNode,
+    ExportItem,
+    MultipleChoiceItem,
+    Option,
 )
+from corehq.apps.export.models.new import MAIN_TABLE, PathNode
 
 MockRequest = namedtuple('MockRequest', 'domain')
 

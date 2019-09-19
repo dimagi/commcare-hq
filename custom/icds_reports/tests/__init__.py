@@ -1,14 +1,10 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 import os
 from datetime import datetime
 
 import mock
 import postgres_copy
-import six
 import sqlalchemy
-import csv342 as csv
+import csv
 
 from django.conf import settings
 from django.test.utils import override_settings
@@ -28,9 +24,6 @@ from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
     _aggregate_gm_forms)
-from io import open
-from six.moves import range
-from six.moves import zip
 
 from custom.icds_reports.utils.migrations import create_citus_reference_table, create_citus_distributed_table
 
@@ -42,7 +35,6 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'household_cases': get_table_name('icds-cas', 'static-household_cases'),
     'infrastructure': get_table_name('icds-cas', 'static-infrastructure_form'),
     'infrastructure_v2': get_table_name('icds-cas', 'static-infrastructure_form_v2'),
-    'location_ucr': get_table_name('icds-cas', 'static-awc_location'),
     'person_cases': get_table_name('icds-cas', 'static-person_cases_v3'),
     'usage': get_table_name('icds-cas', 'static-usage_forms'),
     'vhnd': get_table_name('icds-cas', 'static-vhnd_form'),
@@ -58,10 +50,12 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'ls_home_vists': get_table_name('icds-cas', 'static-ls_home_visit_forms_filled'),
     'ls_vhnd': get_table_name('icds-cas', 'static-ls_vhnd_form'),
     'cbe_form': get_table_name('icds-cas', 'static-cbe_form'),
-    'agg_awc': 'agg_awc',
     'birth_preparedness': get_table_name('icds-cas', 'static-dashboard_birth_preparedness_forms'),
     'delivery_form': get_table_name('icds-cas', 'static-dashboard_delivery_forms'),
-    'thr_form_v2': get_table_name('icds-cas','static-thr_forms_v2'),
+    'thr_form_v2': get_table_name('icds-cas', 'static-thr_forms_v2'),
+    'awc_location': 'awc_location',
+    'awc_location_local': 'awc_location_local',
+    'agg_awc': 'agg_awc',
 }
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
@@ -129,10 +123,21 @@ def setUpModule():
         location_id='st7',
         location_type=state_location_type
     )
+    # exercise the logic that excludes test states by creating one
+    test_state = SQLLocation.objects.create(
+        domain=domain.name,
+        name='test_state',
+        location_id='test_state',
+        location_type=state_location_type,
+        metadata={
+            'is_test_location': 'test',
+        }
+    )
 
     supervisor_location_type = LocationType.objects.create(
         domain=domain.name,
         name='supervisor',
+        parent_type=state_location_type,
     )
     s1 = SQLLocation.objects.create(
         domain=domain.name,
@@ -145,6 +150,7 @@ def setUpModule():
     block_location_type = LocationType.objects.create(
         domain=domain.name,
         name='block',
+        parent_type=supervisor_location_type,
     )
     b1 = SQLLocation.objects.create(
         domain=domain.name,
@@ -189,10 +195,7 @@ def setUpModule():
                         '"{}"'.format(c.strip())  # quote to preserve case
                         for c in f.readline().split(',')
                     ]
-                    postgres_copy.copy_from(
-                        f, table, engine, format='csv' if six.PY3 else b'csv',
-                        null='' if six.PY3 else b'', columns=columns
-                    )
+                    postgres_copy.copy_from(f, table, engine, format='csv', null='', columns=columns)
 
         _distribute_tables_for_citus(engine)
 
@@ -202,7 +205,8 @@ def setUpModule():
             _aggregate_bp_forms(state_id, datetime(2017, 3, 31))
 
         try:
-            move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
+            with mock.patch('custom.icds_reports.tasks._update_aggregate_locations_tables'):
+                move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
             build_incentive_report(agg_date=datetime(2017, 5, 28))
         except Exception as e:
             print(e)
@@ -263,9 +267,10 @@ def tearDownModule():
         with engine.begin() as connection:
             metadata = sqlalchemy.MetaData(bind=engine)
             metadata.reflect(bind=engine, extend_existing=True)
-            table = metadata.tables['ucr_table_name_mapping']
-            delete = table.delete()
-            connection.execute(delete)
+            for name in ('ucr_table_name_mapping', 'awc_location', 'awc_location_local'):
+                table = metadata.tables[name]
+                delete = table.delete()
+                connection.execute(delete)
     LocationType.objects.filter(domain='icds-cas').delete()
     SQLLocation.objects.filter(domain='icds-cas').delete()
 
@@ -298,7 +303,7 @@ class CSVTestCase(TestCase):
 
             for key in dict1.keys():
                 if key != 'id':
-                    if isinstance(dict1[key], six.text_type):
+                    if isinstance(dict1[key], str):
                         value1 = dict1[key]
                     elif isinstance(dict1[key], list):
                         value1 = str(dict1[key])

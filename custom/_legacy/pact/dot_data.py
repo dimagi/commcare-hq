@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 from functools import cmp_to_key
 
+from corehq.util import cmp
 from django.conf import settings
 from pytz import timezone
 from datetime import datetime, timedelta, date
@@ -18,7 +17,6 @@ from pact.enums import (
 )
 
 from pact.models import CObservation
-from six.moves import range
 
 
 class DOTDayDose(object):

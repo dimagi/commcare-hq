@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import uuid
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -86,12 +83,23 @@ class HostedCCZSupportingFile(models.Model):
 
 
 class HostedCCZ(models.Model):
+    PENDING = 'pending'
+    BUILDING = 'building'
+    FAILED = 'failed'
+    COMPLETED = 'completed'
+    STATUSES = [PENDING, BUILDING, FAILED, COMPLETED]
     link = models.ForeignKey(HostedCCZLink, on_delete=models.CASCADE)
     app_id = models.CharField(max_length=255, null=False)
     version = models.IntegerField(null=False)
     profile_id = models.CharField(max_length=255, blank=True)
     file_name = models.CharField(max_length=255, blank=True)
     note = models.TextField(blank=True)
+    status = models.CharField(max_length=255, null=False, blank=False, default='pending',
+                              choices=((PENDING, _('Pending')),
+                                       (BUILDING, _('Building')),
+                                       (FAILED, _('Failed')),
+                                       (COMPLETED, _('Completed')),
+                                       ))
 
     class Meta:
         unique_together = ('link', 'app_id', 'version', 'profile_id')
@@ -142,8 +150,11 @@ class HostedCCZ(models.Model):
         from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting
         self.full_clean()
         email = kwargs.pop('email') if 'email' in kwargs else None
+        file_exists = self.utility.file_exists()
+        if file_exists:
+            self.status = self.COMPLETED
         super(HostedCCZ, self).save(*args, **kwargs)
-        if not self.utility.file_exists():
+        if not file_exists:
             setup_ccz_file_for_hosting.delay(self.pk, user_email=email)
 
     def delete_ccz(self):
@@ -155,6 +166,10 @@ class HostedCCZ(models.Model):
     def delete(self, *args, **kwargs):
         self.delete_ccz()
         super(HostedCCZ, self).delete(*args, **kwargs)
+
+    def update_status(self, new_status):
+        assert new_status in self.STATUSES
+        HostedCCZ.objects.filter(id=self.pk).update(status=new_status)
 
 
 def delete_ccz_for_link(sender, instance, **kwargs):

@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 from custom.icds_reports.models.views import TakeHomeRationMonthly
@@ -47,7 +43,7 @@ class TakeHomeRationExport(object):
 
         headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
                    'Total No. of Beneficiaries eligible for THR',
-                   'Total No. of Beneficiaries received THR>21 days in given month',
+                   'Total No. of Beneficiaries received THR>=21 days in given month',
                    'Total No of Pictures taken by AWW']
 
         excel_rows = [headers]

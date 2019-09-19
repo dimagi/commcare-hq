@@ -1,6 +1,3 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from custom.intrahealth.filters import YeksiNaaLocationFilter, MonthsDateFilter, ProgramFilter
 from custom.intrahealth.sqldata import SatisfactionRateAfterDeliveryData, ValuationOfPNAStockPerProductData
 from custom.intrahealth.utils import MultiReport
@@ -8,10 +5,10 @@ from django.utils.functional import cached_property
 
 
 class Dashboard3Report(MultiReport):
-    title = "Tableau de Bord 3"
+    title = "Valorisation & Satisfaction"
     fields = [MonthsDateFilter, ProgramFilter, YeksiNaaLocationFilter]
-    name = "Tableau de Bord 3"
-    slug = 'tableau_de_bord_3'
+    name = "Valorisation & Satisfaction"
+    slug = 'valorisation_and_satisfaction'
     default_rows = 10
     exportable = True
 

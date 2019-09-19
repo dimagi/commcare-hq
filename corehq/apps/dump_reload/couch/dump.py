@@ -1,20 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import itertools
 import json
-import six
 from collections import Counter
 
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewIDProvider, UserIDProvider, \
-    DomainKeyGenerator, DomainInListKeyGenerator
-from corehq.apps.dump_reload.exceptions import DomainDumpError
-from corehq.apps.dump_reload.interface import DataDumper
-from corehq.feature_previews import all_previews
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.dump_reload.couch.id_providers import (
+    DocTypeIDProvider,
+    DomainInListKeyGenerator,
+    DomainKeyGenerator,
+    UserIDProvider,
+    ViewIDProvider,
+)
+from corehq.apps.dump_reload.exceptions import DomainDumpError
+from corehq.apps.dump_reload.interface import DataDumper
+from corehq.feature_previews import all_previews
 
 DOC_PROVIDERS = {
     DocTypeIDProvider(['Application']),
@@ -69,9 +72,7 @@ class CouchDataDumper(DataDumper):
         for doc in iter_docs(couch_db, doc_ids, chunksize=500):
             count += 1
             doc = _get_doc_with_attachments(couch_db, doc)
-            json_dump = json.dumps(doc)
-            if six.PY3:
-                json_dump = json_dump.encode('utf-8')
+            json_dump = json.dumps(doc).encode('utf-8')
             output_stream.write(json_dump)
             output_stream.write(b'\n')
         self.stdout.write('Dumped {} {}\n'.format(count, model_label))
@@ -94,9 +95,7 @@ class ToggleDumper(DataDumper):
         count = 0
         for toggle in self._get_toggles_to_migrate():
             count += 1
-            json_dump = json.dumps(toggle)
-            if six.PY3:
-                json_dump = json_dump.encode('utf-8')
+            json_dump = json.dumps(toggle).encode('utf-8')
             output_stream.write(json_dump)
             output_stream.write(b'\n')
 

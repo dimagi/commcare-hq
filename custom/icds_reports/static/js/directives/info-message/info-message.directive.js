@@ -4,21 +4,35 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function InfoMessageController($location) {
     var vm = this;
+    vm.previousToPreviousMonth = null;
+    vm.previousMonth = null;
     vm.currentMonth = null;
-    vm.lastDayOfPreviousMonth = null;
+    vm.nextMonth = null;
+    vm.year = null;
 
     vm.showInfoMessage = function () {
+        var start = parseInt(vm.start || '1');
+        var end = parseInt(vm.end || '2');
+        vm.type = vm.type || 'default';
+
         var selectedMonth = parseInt($location.search()['month']) || new Date().getMonth() + 1;
         var selectedYear = parseInt($location.search()['year']) || new Date().getFullYear();
         var currentMonth = new Date().getMonth() + 1;
         var currentYear = new Date().getFullYear();
-        if (!$location.path().startsWith("/fact_sheets") && !$location.path().startsWith("/download") &&
-            selectedMonth === currentMonth && selectedYear === currentYear &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2)) {
-            vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
+        var currentDate = new Date().getDate();
+
+        var displayInfoMessage = selectedMonth === currentMonth && selectedYear === currentYear && (currentDate >= start && currentDate <= end);
+
+        if (displayInfoMessage && !$location.path().startsWith("/download")) {
+            vm.previousMonth = moment().startOf('month').subtract(1, 'months').format('MMMM');
+            vm.previousToPreviousMonth = moment().startOf('month').subtract(2, 'months').format('MMMM');
             vm.currentMonth = moment().format("MMMM");
+            vm.nextMonth = moment().startOf('month').add(1, 'months').format("MMMM");
+            vm.year = moment().format('YYYY');
+
             return true;
         }
+
         return false;
     };
 }
@@ -29,7 +43,9 @@ window.angular.module('icdsApp').directive("infoMessage", function () {
     return {
         restrict: 'E',
         scope: {
-            data: '=',
+            type: '@',
+            start: '@',
+            end: '@'
         },
         bindToController: true,
         templateUrl: url('icds-ng-template', 'info-message.directive'),

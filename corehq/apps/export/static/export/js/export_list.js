@@ -22,7 +22,7 @@ hqDefine("export/js/export_list", [
     'analytix/js/kissmetrix',
     'export/js/utils',
     'hqwebapp/js/validators.ko',        // needed for validation of startDate and endDate
-    'hqwebapp/js/components.ko',        // pagination widget
+    'hqwebapp/js/components.ko',        // pagination & feedback widget
     'select2/dist/js/select2.full.min',
 ], function (
     $,
@@ -38,7 +38,7 @@ hqDefine("export/js/export_list", [
     var exportModel = function (options, pageOptions) {
         assertProperties.assert(pageOptions, ['is_deid', 'model_type', 'urls']);
 
-        _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'isOData', 'showLink'], function (key) {
+        _.each(['isAutoRebuildEnabled', 'isDailySaved', 'isFeed', 'isOData'], function (key) {
             options[key] = options[key] || false;
         });
         options.formname = options.formname || '';
@@ -61,6 +61,7 @@ hqDefine("export/js/export_list", [
             'owner_username',
             'sharing',
             'odataUrl',
+            'additionalODataUrls',
         ], [
             'case_type',
             'isAutoRebuildEnabled',
@@ -69,7 +70,6 @@ hqDefine("export/js/export_list", [
             'isOData',
             'editNameUrl',
             'editDescriptionUrl',
-            'showLink',
         ]);
         assertProperties.assert(pageOptions.urls, ['poll', 'toggleEnabled', 'update']);
 
@@ -85,6 +85,9 @@ hqDefine("export/js/export_list", [
         self.hasEmailedExport = !!options.emailedExport;
         if (self.hasEmailedExport) {
             self.emailedExport = emailedExportModel(options.emailedExport, pageOptions, self.id(), self.exportType());
+            if (options.isFeed) {
+                self.feedUrl = exportFeedUrl(options.emailedExport.fileData.downloadUrl);
+            }
         }
 
         if (options.editNameUrl) {
@@ -95,8 +98,54 @@ hqDefine("export/js/export_list", [
         }
 
         if (options.isOData) {
-            self.odataFeedUrl = options.odataUrl;
+            self.odataFeedUrl = exportFeedUrl(options.odataUrl);
+            self.odataAdditionalFeedUrls = ko.observableArray(_.map(options.additionalODataUrls, function (urlData) {
+                urlData.url = exportFeedUrl(urlData.url);
+                return urlData;
+            }));
+            self.hasAdditionalODataFeeds = ko.computed(function () {
+                return self.odataAdditionalFeedUrls().length > 0;
+            });
+            self.sendAnalyticsOpenAdditionalFeeds = function () {
+                if (options.exportType === 'form') {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Repeat Group Feeds");
+                } else {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Parent Feeds");
+                }
+            };
+            self.sendAnalyticsCloseAdditionalFeeds = function () {
+                var eventData = {
+                    "Number of feeds": self.odataAdditionalFeedUrls().length,
+                };
+                if (options.exportType === 'form') {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Close on Repeat Group Feeds modal", eventData);
+                } else {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Close on Parent Feeds modal", eventData);
+                }
+            };
         }
+
+        self.editExport = function () {
+            if (options.isOData) {
+                kissmetricsAnalytics.track.event("[BI Integration] Clicked Copy OData Feed Link");
+                setTimeout(function () {
+                    window.location.href = self.editUrl();
+                }, 250);
+            } else {
+                window.location.href = self.editUrl();
+            }
+        };
+
+        self.deleteExport = function (observable, event) {
+            if (options.isOData) {
+                kissmetricsAnalytics.track.event("[BI Integration] Deleted Feed");
+                setTimeout(function () {
+                    $(event.currentTarget).closest('form').submit();
+                }, 250);
+            } else {
+                $(event.currentTarget).closest('form').submit();
+            }
+        };
 
         self.isLocationSafeForUser = function () {
             return !self.hasEmailedExport || self.emailedExport.isLocationSafeForUser();
@@ -107,16 +156,6 @@ hqDefine("export/js/export_list", [
             $btn.addClass('disabled');
             $btn.text(gettext('Download Requested'));
             return true;    // allow default click action to process so file is downloaded
-        };
-        self.copyLinkRequested = function (model, e) {
-            self.showLink(true);
-            var clipboard = new Clipboard(e.target, {
-                target: function (trigger) {
-                    return trigger.nextElementSibling;
-                },
-            });
-            clipboard.onClick(e);
-            clipboard.destroy();
         };
 
         self.updateDisabledState = function (model, e) {
@@ -142,6 +181,27 @@ hqDefine("export/js/export_list", [
                     $('#modalEnableDisableAutoRefresh-' + self.id() + '-' + self.emailedExport.groupId()).modal('hide');
                 },
             });
+        };
+
+        return self;
+    };
+
+    var exportFeedUrl = function (url) {
+        var self = {};
+
+        self.url = ko.observable(url);
+
+        self.showLink = ko.observable(false);
+
+        self.copyLinkRequested = function (model, e) {
+            self.showLink(true);
+            var clipboard = new Clipboard(e.target, {
+                target: function (trigger) {
+                    return trigger.nextElementSibling;
+                },
+            });
+            clipboard.onClick(e);
+            clipboard.destroy();
         };
 
         return self;
@@ -398,6 +458,13 @@ hqDefine("export/js/export_list", [
         // Editing filters for a saved export
         self.selectedExportModelType = ko.observable();
         self.filterModalExportId = ko.observable();
+        if (options.isOData) {
+            self.filterModalExportId.subscribe(function (value) {
+                if (value) {
+                    kissmetricsAnalytics.track.event("[BI Integration] Clicked Edit Filters button");
+                }
+            });
+        }
         self.locationRestrictions = ko.observableArray([]).extend({notify: 'always'});  // List of location names. Export will be restricted to these locations.
         self.formSubmitErrorMessage = ko.observable('');
         self.dateRegex = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
@@ -477,6 +544,13 @@ hqDefine("export/js/export_list", [
                 self.emwfCaseFilter(self.$emwfCaseFilter.val());
                 self.emwfFormFilter(null);
             }
+
+            kissmetricsAnalytics.track.event(
+                "[BI Integration] Clicked Save Filters button",
+                {
+                    "Date Range": self.dateRange(),
+                }
+            );
 
             $.ajax({
                 method: 'POST',

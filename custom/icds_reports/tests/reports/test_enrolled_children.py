@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -9,7 +7,7 @@ from custom.icds_reports.reports.enrolled_children import get_enrolled_children_
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds-new')
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestEnrolledChildren(TestCase):
 
     def test_map_data(self):

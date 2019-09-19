@@ -1,11 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import csv342 as csv
+import csv
 from django.http import HttpResponse
 
 from dimagi.utils.parsing import string_to_boolean
-from six.moves import input
-import six
 
 
 def are_you_sure(prompt="Are you sure you want to proceed? (yes or no): "):
@@ -47,7 +43,7 @@ def export_as_csv_action(description="Export selected objects as CSV file",
             field_names = field_names - excludeset
 
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=%s.csv' % six.text_type(opts).replace('.', '_')
+        response['Content-Disposition'] = 'attachment; filename=%s.csv' % str(opts).replace('.', '_')
 
         writer = csv.writer(response)
         if header:

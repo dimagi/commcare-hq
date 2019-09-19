@@ -1,32 +1,46 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from datetime import datetime, date
+from freezegun import freeze_time
 
 from django.test import TestCase
 from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 
 
+@freeze_time("2017-05-02")
 class NICIndicatorTest(TestCase):
 
     def test_file_content(self):
-        self.maxDiff = None
-        state_id = 'st1'
-        month = '2017-05-01'
-        data = get_inc_indicator_api_data(state_id, month)
-
-        self.assertMultiLineEqual("""<?xml version="1.0" encoding="UTF-8"?>
-    <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2001/12/soap-envelope"
-    SOAP-ENV:encodingStyle="http://www.w3.org/2001/12/soap-encoding">
-       <SOAP-ENV:Header />
-       <SOAP-ENV:Body>
-          <state>st1</state>
-          <month>2017-05-01</month>
-          <num_launched_awcs>9</num_launched_awcs>
-          <num_households_registered>3633</num_households_registered>
-          <pregnant_enrolled>70</pregnant_enrolled>
-          <lactating_enrolled>87</lactating_enrolled>
-          <children_enrolled>618</children_enrolled>
-          <bf_at_birth>1</bf_at_birth>
-          <ebf_in_month>17</ebf_in_month>
-          <cf_in_month>14</cf_in_month>
-       </SOAP-ENV:Body>
-    </SOAP-ENV:Envelope>""", data)
+        get_inc_indicator_api_data.clear(use_citus=True)
+        data = get_inc_indicator_api_data()
+        self.assertCountEqual(
+            {'scheme_code': 'C002',
+             'total_launched_awcs': 20,
+             'dataarray1': [
+                 {
+                     'state_name': 'st2',
+                     'site_id': 'st2',
+                     'month': date(2017, 5, 1),
+                     'num_launched_awcs': 11,
+                     'num_households_registered': 3331,
+                     'pregnant_enrolled': 85,
+                     'lactating_enrolled': 79,
+                     'children_enrolled': 669,
+                     'bf_at_birth': 1,
+                     'ebf_in_month': 11,
+                     'cf_in_month': 20
+                 },
+                 {
+                     'state_name': 'st1',
+                     'site_id': 'st1',
+                     'month': date(2017, 5, 1),
+                     'num_launched_awcs': 9,
+                     'num_households_registered': 3633,
+                     'pregnant_enrolled': 70,
+                     'lactating_enrolled': 87,
+                     'children_enrolled': 618,
+                     'bf_at_birth': 1,
+                     'ebf_in_month': 17,
+                     'cf_in_month': 14
+                 }
+             ]},
+            data
+        )

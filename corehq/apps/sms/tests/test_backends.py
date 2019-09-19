@@ -1,55 +1,75 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import uuid
+from datetime import datetime
+
+from django.test import TestCase
+from django.test.client import Client
+from django.test.utils import override_settings
+
+from mock import patch
+from six.moves.urllib.parse import urlencode
+
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
-from corehq.apps.api.models import ApiUser, PERMISSION_POST_SMS
+from corehq.apps.api.models import PERMISSION_POST_SMS, ApiUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
-from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
-    send_sms_with_backend, send_sms_with_backend_name)
+from corehq.apps.sms.api import (
+    send_sms,
+    send_sms_to_verified_number,
+    send_sms_with_backend,
+    send_sms_with_backend_name,
+)
 from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.sms.models import (SMS, QueuedSMS,
-    SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation,
-    PhoneLoadBalancingMixin, BackendMap)
-from corehq.apps.sms.tasks import handle_outgoing, get_connection_slot_from_phone_number, get_connection_slot_lock
+from corehq.apps.sms.models import (
+    SMS,
+    BackendMap,
+    MobileBackendInvitation,
+    PhoneLoadBalancingMixin,
+    QueuedSMS,
+    SQLMobileBackend,
+    SQLMobileBackendMapping,
+)
+from corehq.apps.sms.tasks import (
+    get_connection_slot_from_phone_number,
+    get_connection_slot_lock,
+    handle_outgoing,
+)
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
 from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
-from corehq.messaging.smsbackends.ivory_coast_mtn.models import IvoryCoastMTNBackend
+from corehq.messaging.smsbackends.ivory_coast_mtn.models import (
+    IvoryCoastMTNBackend,
+)
 from corehq.messaging.smsbackends.karix.models import KarixBackend
-from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
 from corehq.messaging.smsbackends.push.models import PushBackend
 from corehq.messaging.smsbackends.sislog.models import SQLSislogBackend
 from corehq.messaging.smsbackends.smsgh.models import SQLSMSGHBackend
-from corehq.messaging.smsbackends.start_enterprise.models import StartEnterpriseBackend
+from corehq.messaging.smsbackends.start_enterprise.models import (
+    StartEnterpriseBackend,
+)
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
-from corehq.messaging.smsbackends.unicel.models import SQLUnicelBackend, InboundParams
+from corehq.messaging.smsbackends.unicel.models import (
+    InboundParams,
+    SQLUnicelBackend,
+)
 from corehq.messaging.smsbackends.vertex.models import VertexBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from corehq.util.test_utils import create_test_case
-from datetime import datetime
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from django.test import TestCase
-from django.test.client import Client
-from django.test.utils import override_settings
-from flaky import flaky
-from mock import patch
-from six.moves.urllib.parse import urlencode
-from six.moves import range
 
 
-@flaky
 class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
     @classmethod

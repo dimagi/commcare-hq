@@ -1,8 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import logging
+import subprocess
 from collections import namedtuple
 import os
 import sys
@@ -11,9 +8,6 @@ import uuid
 
 import re
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
-import six
-from raven import breadcrumbs
-from raven import fetch_git_sha
 
 
 def is_testing():
@@ -238,40 +232,51 @@ def fix_logger_obfuscation(fix_logger_obfuscation_, logging_config):
                 handler["class"] = "logging.StreamHandler"
 
 
-def configure_sentry(base_dir, server_env, pub_key, priv_key, project_id):
-    if not (pub_key and priv_key and project_id):
-        return
+def configure_sentry(base_dir, server_env, dsn):
+    import sentry_sdk
+    from sentry_sdk.integrations.logging import ignore_logger
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+
+    def _before_send(event, hint):
+        # can't import this during load since settings is not fully configured yet
+        from corehq.util.sentry import before_sentry_send
+        return before_sentry_send(event, hint)
 
     release = get_release_name(base_dir, server_env)
 
-    breadcrumbs.ignore_logger('quickcache')
-    breadcrumbs.ignore_logger('django.template')
+    ignore_logger('quickcache')
+    ignore_logger('django.template')
+    ignore_logger('pillowtop')
 
-    return {
-        'dsn': 'https://{pub_key}:{priv_key}@sentry.io/{project_id}'.format(
-            pub_key=pub_key,
-            priv_key=priv_key,
-            project_id=project_id
-        ),
-        'release': release,
-        'environment': server_env,
-        'tags': {},
-        'include_versions': False,  # performance without this is bad
-        'processors': (
-            'raven.processors.RemovePostDataProcessor',
-            'corehq.util.sentry.HQSanitzeSystemPasswordsProcessor',
-        ),
-        'ignore_exceptions': [
-            'KeyboardInterrupt'
-        ],
-        'CELERY_LOGLEVEL': logging.FATAL
-    }
+    sentry_sdk.init(
+        dsn,
+        release=release,
+        environment=server_env,
+        request_bodies='never',
+        before_send=_before_send,
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(),
+            SqlalchemyIntegration(),
+            RedisIntegration()
+        ]
+    )
 
 
 def get_release_name(base_dir, server_env):
     release_dir = base_dir.split('/')[-1]
     if re.match(r'\d{4}-\d{2}-\d{2}_\d{2}.\d{2}', release_dir):
-        release = "{}-{}-deploy".format(release_dir, server_env)
+        return "{}-{}-deploy".format(release_dir, server_env)
     else:
-        release = fetch_git_sha(base_dir)
-    return release
+        return get_git_commit(base_dir) or 'unknown'
+
+
+def get_git_commit(base_dir):
+    try:
+        out = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=base_dir)
+        return out.strip().decode('ascii')
+    except OSError:
+        pass

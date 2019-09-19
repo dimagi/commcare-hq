@@ -1,7 +1,9 @@
-from __future__ import unicode_literals
 
 
 PASSWORD_PLACEHOLDER = '*' * 16
+
+# If any remote service does not respond within 5 minutes, time out
+REQUEST_TIMEOUT = 5 * 60
 
 ALGO_AES = 'aes'
 

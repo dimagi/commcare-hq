@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from couchdbkit.exceptions import ResourceConflict
 from django.utils.functional import wraps
 from six.moves import range

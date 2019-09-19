@@ -1,54 +1,57 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
-from __future__ import division
-import csv342 as csv
-import os
-
+import json
+import logging
 import math
+import os
+import time
+from datetime import date, datetime, timedelta
+
+from django.conf import settings
+
+import csv
+import KISSmetrics
+import requests
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
+import tinys3
 from celery.schedules import crontab
 from celery.task import periodic_task
-import tinys3
+from email_validator import EmailNotValidError, validate_email
+from memoized import memoized
+from requests import HTTPError
+
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.accounting.models import (
-    SubscriptionType, ProBonoStatus, SoftwarePlanVisibility,
-    SoftwarePlanEdition, Subscription, DefaultProductPlan
+    DefaultProductPlan,
+    ProBonoStatus,
+    SoftwarePlanEdition,
+    SoftwarePlanVisibility,
+    Subscription,
+    SubscriptionType,
+)
+from corehq.apps.analytics.utils import (
+    analytics_enabled_for_email,
+    get_instance_string,
+    get_meta,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser
-from corehq.util.dates import unix_time
-from corehq.apps.analytics.utils import get_instance_string, get_meta
-from datetime import datetime, date, timedelta
-import time
-import json
-import requests
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-import KISSmetrics
-import logging
-
-from django.conf import settings
-from email_validator import validate_email, EmailNotValidError
 from corehq.toggles import deterministic_random
-from corehq.util.decorators import analytics_task
-from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.utils import (
+    DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE,
+    DATADOG_HUBSPOT_SENT_FORM_METRIC,
+    DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC,
+    DATADOG_WEB_USERS_GAUGE,
     count_by_response_code,
     update_datadog_metrics,
-    DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE,
-    DATADOG_WEB_USERS_GAUGE,
-    DATADOG_HUBSPOT_SENT_FORM_METRIC,
-    DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC
 )
-
-from dimagi.utils.logging import notify_exception
-from memoized import memoized
-
-from corehq.apps.analytics.utils import analytics_enabled_for_email
-from io import open
-from six.moves import range
+from corehq.util.dates import unix_time
+from corehq.util.decorators import analytics_task
+from corehq.util.soft_assert import soft_assert
 
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
@@ -69,6 +72,10 @@ HUBSPOT_SAVED_APP_FORM_ID = "8494a26a-8576-4241-97de-a28dc8bf927c"
 HUBSPOT_SAVED_UCR_FORM_ID = "a0d64c4a-2e37-4f48-9700-b9831acdd1d9"
 HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
+
+
+HUBSPOT_ENABLED = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', False)
+KISSMETRICS_ENABLED = settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', False)
 
 
 def _raise_for_urllib3_response(response):
@@ -382,7 +389,7 @@ def track_workflow(email, event, properties=None):
 @analytics_task(serializer='pickle', )
 def _track_workflow_task(email, event, properties=None, timestamp=0):
     def _no_nonascii_unicode(value):
-        if isinstance(value, six.text_type):
+        if isinstance(value, str):
             return value.encode('utf-8')
         return value
 
@@ -392,7 +399,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
         res = km.record(
             email,
             event,
-            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in six.iteritems(properties)} if properties else {},
+            {_no_nonascii_unicode(k): _no_nonascii_unicode(v) for k, v in properties.items()} if properties else {},
             timestamp
         )
         _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
@@ -438,6 +445,10 @@ def track_periodic_data():
     :return:
     """
     # Start by getting a list of web users mapped to their domains
+
+    if not KISSMETRICS_ENABLED and not HUBSPOT_ENABLED:
+        return
+
     three_months_ago = date.today() - timedelta(days=90)
 
     user_query = (UserES()
@@ -647,7 +658,7 @@ def _log_response(target, data, response):
         response=response_text
     )
 
-    if status_code != 200:
+    if 400 <= status_code < 600:
         logger.error(message)
     else:
         logger.debug(message)

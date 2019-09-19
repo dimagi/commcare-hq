@@ -1,24 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 from collections import defaultdict
 from datetime import datetime
-from lxml import etree as ET
 
-from couchdbkit import ResourceNotFound
 from django.core.management import BaseCommand
 
+from couchdbkit import ResourceNotFound
+from lxml import etree as ET
+
+from dimagi.utils.parsing import json_format_datetime
+
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
-from corehq.apps.app_manager.models import Application, PreloadAction, CaseReferences
+from corehq.apps.app_manager.models import (
+    Application,
+    CaseReferences,
+    PreloadAction,
+)
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import (
-    XForm, SESSION_USERCASE_ID,
+    SESSION_USERCASE_ID,
+    XForm,
     get_add_case_preloads_case_id_xpath,
     get_case_parent_id_xpath,
 )
-from dimagi.utils.parsing import json_format_datetime
-import six
-
 
 logger = logging.getLogger('app_migration')
 
@@ -174,7 +177,7 @@ def iter_forms(app):
 def fix_user_props_copy(app, module, form, form_ix, preloads, dry):
     updated = False
     xform = XForm(form.source)
-    refs = {xform.resolve_path(ref): prop for ref, prop in six.iteritems(preloads)}
+    refs = {xform.resolve_path(ref): prop for ref, prop in preloads.items()}
     for node in xform.model_node.findall("{f}setvalue"):
         if (node.attrib.get('ref') in refs
                 and node.attrib.get('event') == "xforms-ready"):
@@ -203,7 +206,7 @@ def fix_user_props_caseref(app, module, form, form_ix, dry):
     updated = False
     xform = XForm(form.source)
     refs = {xform.resolve_path(ref): vals
-        for ref, vals in six.iteritems(form.case_references.load)
+        for ref, vals in form.case_references.load.items()
         if any(v.startswith("#user/") for v in vals)}
     ref_warnings = []
     for node in xform.model_node.findall("{f}setvalue"):
@@ -308,7 +311,7 @@ def migrate_preloads(app, form, preload_items, form_ix, dry):
                 xform.add_setvalue(ref=nodeset, value=USERPROP_PREFIX + prop)
         else:
             raise ValueError("unknown hashtag: " + hashtag)
-        for nodeset, prop in six.iteritems(preloads):
+        for nodeset, prop in preloads.items():
             load_refs.setdefault(nodeset, []).append(hashtag + prop)
             logger.info("%s/%s %s setvalue %s = %s",
                 app.domain, app._id, form_ix, nodeset, hashtag + prop)

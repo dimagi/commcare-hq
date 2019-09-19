@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import doctest
 
 from django.test import SimpleTestCase
@@ -18,7 +16,6 @@ from corehq.motech.openmrs.openmrs_config import (
     get_property_map,
 )
 from corehq.motech.value_source import ConstantString
-
 
 PATIENT = {
     'uuid': '94c0e9c0-1bea-4467-b3c3-823e36c5adf5',

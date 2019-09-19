@@ -1,10 +1,6 @@
-from __future__ import absolute_import, division
-
-from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
@@ -131,7 +127,7 @@ def get_enrolled_women_sector_data(domain, config, loc_level, location_id, show_
             'valid': valid,
             'all': all_pregnant
         }
-        for prop, value in six.iteritems(row_values):
+        for prop, value in row_values.items():
             tooltips_data[name][prop] += value
 
         chart_data['blue'].append([
@@ -213,7 +209,7 @@ def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False):
             'loc_name': key,
             'value': sum(value) / len(value)
         }
-        for key, value in six.iteritems(best_worst)
+        for key, value in best_worst.items()
     ]
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_value_and_name = sorted(
@@ -227,7 +223,7 @@ def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'],
                         'all': value['all']
-                    } for key, value in six.iteritems(data['blue'])
+                    } for key, value in data['blue'].items()
                 ],
                 "key": "Total number of pregnant women who are enrolled for Anganwadi Services",
                 "strokeWidth": 2,

@@ -1,132 +1,152 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-from collections import namedtuple, OrderedDict
 import datetime
 import functools
 import json
 import os
-import tempfile
 import re
+import tempfile
+from collections import OrderedDict, namedtuple
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404, JsonResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
-from sqlalchemy import types, exc
+from memoized import memoized
+from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
 
-from corehq.apps.accounting.models import Subscription
-from corehq.apps.analytics.tasks import update_hubspot_properties, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
-from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.reports.daterange import get_simple_dateranges
-from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
-from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_RAW
-from corehq.apps.userreports.reports.builder.sources import get_source_type_from_report_config
-from corehq.apps.userreports.specs import FactoryContext
-from corehq.apps.userreports.indicators.factory import IndicatorFactory
-from corehq.apps.userreports.filters.factory import FilterFactory
-from corehq.tabs.tabclasses import ProjectReportsTab
-from corehq.util import reverse
-from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
-from dimagi.utils.couch.undo import get_deleted_doc_type, is_deleted, undo_delete, soft_delete
-from memoized import memoized
+from dimagi.utils.couch.undo import (
+    get_deleted_doc_type,
+    is_deleted,
+    soft_delete,
+    undo_delete,
+)
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
+from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq import toggles
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.accounting.models import Subscription
+from corehq.apps.analytics.tasks import (
+    HUBSPOT_SAVED_UCR_FORM_ID,
+    send_hubspot_form,
+    track_workflow,
+    update_hubspot_properties,
+)
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
-from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.locations.permissions import conditionally_location_safe
+from corehq.apps.change_feed.data_sources import (
+    get_document_store_for_doc_type,
+)
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.hqwebapp.decorators import (
-    use_daterangepicker,
     use_datatables,
+    use_daterangepicker,
     use_jquery_ui,
     use_nvd3,
 )
-from corehq.apps.userreports.app_manager.helpers import get_case_data_source, get_form_data_source
+from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.locations.permissions import conditionally_location_safe
+from corehq.apps.reports.daterange import get_simple_dateranges
+from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
+from corehq.apps.saved_reports.models import ReportConfig
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    DATA_SOURCE_TYPE_RAW,
+)
+from corehq.apps.userreports.app_manager.helpers import (
+    get_case_data_source,
+    get_form_data_source,
+)
 from corehq.apps.userreports.const import (
-    REPORT_BUILDER_EVENTS_KEY,
+    DATA_SOURCE_MISSING_APP_ERROR_MESSAGE,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
-    DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
-from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
+    REPORT_BUILDER_EVENTS_KEY,
+)
+from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
+    TableNotFoundWarning,
     UserQueryError,
-    translate_programming_error, TableNotFoundWarning)
+    translate_programming_error,
+)
 from corehq.apps.userreports.expressions import ExpressionFactory
+from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
-    ReportConfiguration,
     DataSourceConfiguration,
-    StaticReportConfiguration,
+    ReportConfiguration,
     StaticDataSourceConfiguration,
+    StaticReportConfiguration,
     get_datasource_config,
     get_report_config,
-    report_config_id_is_static,
     id_is_static,
+    report_config_id_is_static,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
-    DataSourceForm,
-    ConfigureMapReportForm,
     ConfigureListReportForm,
+    ConfigureMapReportForm,
     ConfigureTableReportForm,
-    get_data_source_interface)
+    DataSourceForm,
+    get_data_source_interface,
+)
+from corehq.apps.userreports.reports.builder.sources import (
+    get_source_type_from_report_config,
+)
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
+from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.userreports.reports.view import ConfigurableReportView
-from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
-    resume_building_indicators,
     rebuild_indicators_in_place,
+    resume_building_indicators,
 )
 from corehq.apps.userreports.ui.forms import (
-    ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
+    ConfigurableReportEditForm,
 )
 from corehq.apps.userreports.util import (
     add_event,
+    allowed_report_builder_reports,
     get_indicator_adapter,
     has_report_builder_access,
     has_report_builder_add_on_privilege,
-    allowed_report_builder_reports,
     number_of_report_builder_reports,
 )
-from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.tabs.tabclasses import ProjectReportsTab
+from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
+from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
-from pillowtop.dao.exceptions import DocumentNotFoundError
-import six
-
 
 TEMP_REPORT_PREFIX = '__tmp'
 
@@ -293,7 +313,6 @@ class ReportBuilderView(BaseDomainView):
             'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
             'pricing_page_url': settings.PRICING_PAGE_URL,
-            'support_email': settings.SUPPORT_EMAIL,
         })
         return main_context
 
@@ -331,14 +350,6 @@ class ReportBuilderPaywallBase(BaseDomainView):
         return paywall_home(self.domain)
 
     @property
-    def page_context(self):
-        context = super(ReportBuilderPaywallBase, self).page_context
-        context.update({
-            'support_email': settings.SUPPORT_EMAIL
-        })
-        return context
-
-    @property
     @memoized
     def plan_name(self):
         return Subscription.get_subscribed_plan_by_domain(self.domain).plan.name
@@ -358,7 +369,6 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
             'has_report_builder_access': has_report_builder_access(self.request),
             'at_report_limit': num_builder_reports >= max_allowed_reports,
             'max_allowed_reports': max_allowed_reports,
-            'support_email': settings.SUPPORT_EMAIL,
             'pricing_page_url': settings.PRICING_PAGE_URL,
         })
         return context
@@ -380,7 +390,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
                 self.plan_name
             ),
             settings.DEFAULT_FROM_EMAIL,
-            [settings.REPORT_BUILDER_ADD_ON_EMAIL],
+            [settings.SALES_EMAIL],
         )
         update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
@@ -447,7 +457,7 @@ class EditReportInBuilder(View):
             try:
                 return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
-                messages.error(request, six.text_type(e))
+                messages.error(request, str(e))
                 return HttpResponseRedirect(reverse(ConfigurableReportView.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
@@ -912,7 +922,7 @@ def evaluate_expression(request, domain):
         )
     except Exception as e:
         return json_response(
-            {"error": six.text_type(e)},
+            {"error": str(e)},
             status_code=500,
         )
 
@@ -1354,7 +1364,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             msg = ugettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
             return HttpResponse(msg, status=400)
     except UserQueryError as e:
-        return HttpResponse(six.text_type(e), status=400)
+        return HttpResponse(str(e), status=400)
 
     q = q.filter_by(**params.keyword_filters)
     for sql_filter in params.sql_filters:

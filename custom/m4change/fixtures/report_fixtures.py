@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import calendar
 from datetime import datetime
 
@@ -13,7 +11,6 @@ from custom.m4change.constants import M4CHANGE_DOMAINS, NUMBER_OF_MONTHS_FOR_FIX
 from custom.m4change.models import FixtureReportResult
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 from dimagi.utils.parsing import json_format_date
-from six.moves import range
 
 
 def get_last_n_months(months):

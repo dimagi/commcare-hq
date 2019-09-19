@@ -1,27 +1,68 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 from django.conf import settings
-from django.conf.urls import url, include
+from django.conf.urls import include, url
 from django.contrib.auth.views import (
     password_change,
     password_change_done,
+    password_reset,
     password_reset_complete,
     password_reset_done,
-    password_reset,
 )
 from django.utils.translation import ugettext as _
 from django.views.generic import RedirectView
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
-from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
-from corehq.apps.domain.views.releases import (
-    ManageReleasesByLocation,
-    deactivate_release_restriction,
-    activate_release_restriction,
-    toggle_release_restriction_by_app_profile,
-    ManageReleasesByAppProfile,
+from corehq.apps.domain.forms import (
+    ConfidentialPasswordResetForm,
+    HQSetPasswordForm,
 )
+from corehq.apps.domain.views.accounting import (
+    BillingStatementPdfView,
+    BulkStripePaymentView,
+    CardsView,
+    CardView,
+    ConfirmBillingAccountInfoView,
+    ConfirmSelectedPlanView,
+    ConfirmSubscriptionRenewalView,
+    CreditsStripePaymentView,
+    CreditsWireInvoiceView,
+    DomainBillingStatementsView,
+    DomainSubscriptionView,
+    EditExistingBillingAccountView,
+    EmailOnDowngradeView,
+    InternalSubscriptionManagementView,
+    InvoiceStripePaymentView,
+    SelectedAnnualPlanView,
+    SelectedEnterprisePlanView,
+    SelectPlanView,
+    SubscriptionRenewalView,
+    WireInvoiceView,
+)
+from corehq.apps.domain.views.base import select
+from corehq.apps.domain.views.exchange import (
+    CreateNewExchangeSnapshotView,
+    ExchangeSnapshotsView,
+    set_published_snapshot,
+)
+from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
+from corehq.apps.domain.views.internal import (
+    ActivateTransferDomainView,
+    DeactivateTransferDomainView,
+    EditInternalCalculationsView,
+    EditInternalDomainInfoView,
+    FlagsAndPrivilegesView,
+    TransferDomainView,
+    calculated_properties,
+    toggle_diff,
+)
+from corehq.apps.domain.views.pro_bono import ProBonoView
+from corehq.apps.domain.views.releases import (
+    ManageReleasesByAppProfile,
+    ManageReleasesByLocation,
+    activate_release_restriction,
+    deactivate_release_restriction,
+    toggle_release_restriction_by_app_profile,
+)
+from corehq.apps.domain.views.repeaters import generate_repeater_payloads
 from corehq.apps.domain.views.settings import (
     CaseSearchConfigView,
     DefaultProjectSettingsView,
@@ -34,47 +75,6 @@ from corehq.apps.domain.views.settings import (
     PasswordResetView,
     RecoveryMeasuresHistory,
 )
-from corehq.apps.domain.views.accounting import (
-    BillingStatementPdfView,
-    BulkStripePaymentView,
-    CardView,
-    CardsView,
-    ConfirmBillingAccountInfoView,
-    ConfirmSelectedPlanView,
-    ConfirmSubscriptionRenewalView,
-    CreditsStripePaymentView,
-    CreditsWireInvoiceView,
-    DomainBillingStatementsView,
-    DomainSubscriptionView,
-    EditExistingBillingAccountView,
-    EmailOnDowngradeView,
-    InternalSubscriptionManagementView,
-    InvoiceStripePaymentView,
-    SelectedEnterprisePlanView,
-    SelectedAnnualPlanView,
-    SelectPlanView,
-    SubscriptionRenewalView,
-    WireInvoiceView,
-)
-from corehq.apps.domain.views.base import select
-from corehq.apps.domain.views.exchange import (
-    ExchangeSnapshotsView,
-    CreateNewExchangeSnapshotView,
-    set_published_snapshot,
-)
-from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
-from corehq.apps.domain.views.internal import (
-    ActivateTransferDomainView,
-    DeactivateTransferDomainView,
-    EditInternalCalculationsView,
-    EditInternalDomainInfoView,
-    FlagsAndPrivilegesView,
-    TransferDomainView,
-    calculated_properties,
-    toggle_diff,
-)
-from corehq.apps.domain.views.pro_bono import ProBonoView
-from corehq.apps.domain.views.repeaters import generate_repeater_payloads
 from corehq.apps.domain.views.sms import SMSRatesView
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -216,7 +216,6 @@ domain_settings = [
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),
-    url(r'^calendar_settings/$', CalendarFixtureConfigView.as_view(), name=CalendarFixtureConfigView.urlname),
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings', permanent=True)),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),

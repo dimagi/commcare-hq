@@ -1,17 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 from decimal import Decimal
 
-from django.urls import reverse
 from django.db.models import Q
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from couchexport.models import Format
 from memoized import memoized
 
-from corehq.const import SERVER_DATE_FORMAT
+from couchexport.models import Format
+
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import (
     DataTablesColumn,
@@ -20,6 +18,7 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import format_datatables_data
+from corehq.const import SERVER_DATE_FORMAT
 
 from .dispatcher import AccountingAdminInterfaceDispatcher
 from .filters import (
@@ -27,6 +26,7 @@ from .filters import (
     ActiveStatusFilter,
     BillingContactFilter,
     CreatedSubAdjMethodFilter,
+    CustomerAccountFilter,
     DateCreatedFilter,
     DateFilter,
     DimagiContactFilter,
@@ -35,8 +35,8 @@ from .filters import (
     DueDatePeriodFilter,
     EndDateFilter,
     EntryPointFilter,
-    InvoiceNumberFilter,
     InvoiceBalanceFilter,
+    InvoiceNumberFilter,
     IsHiddenFilter,
     NameFilter,
     PaymentStatusFilter,
@@ -52,7 +52,6 @@ from .filters import (
     SubscriberFilter,
     SubscriptionTypeFilter,
     TrialStatusFilter,
-    CustomerAccountFilter,
 )
 from .forms import AdjustBalanceForm
 from .models import (
@@ -60,6 +59,7 @@ from .models import (
     BillingContactInfo,
     CreditAdjustment,
     CreditAdjustmentReason,
+    CustomerInvoice,
     FeatureType,
     Invoice,
     PaymentRecord,
@@ -70,14 +70,8 @@ from .models import (
     SubscriptionAdjustmentMethod,
     SubscriptionAdjustmentReason,
     WireInvoice,
-    CustomerInvoice
 )
-from .utils import (
-    get_money_str,
-    make_anchor_tag,
-    quantize_accounting_decimal,
-)
-from six.moves import map
+from .utils import get_money_str, make_anchor_tag, quantize_accounting_decimal
 
 
 def invoice_column_cell(invoice):

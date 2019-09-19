@@ -1,11 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import timedelta
 
 from django.contrib.auth.models import User
 from django.utils.datastructures import OrderedSet
 
-from auditcare.models import NavigationEventAudit
+from auditcare.models import NavigationEventAudit, wrap_audit_event
 from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.database import iter_docs
 
@@ -64,3 +62,47 @@ def get_users_to_export(username, domain):
         super_users = super_users - users
 
     return users, super_users
+
+
+def get_all_log_events(start_date=None, end_date=None):
+    def _date_key(date):
+        return [date.year, date.month, date.day]
+
+    startkey = []
+    if start_date:
+        startkey.extend(_date_key(start_date))
+
+    endkey = []
+    if end_date:
+        end = end_date + timedelta(days=1)
+        endkey.extend(_date_key(end))
+    else:
+        endkey.append({})
+
+    results = NavigationEventAudit.get_db().view(
+        'auditcare/all_events',
+        startkey=startkey,
+        endkey=endkey,
+        reduce=False,
+        include_docs=True,
+    )
+    for row in results:
+        yield wrap_audit_event(row['doc'])
+
+
+def write_generic_log_event(writer, event):
+    action = ''
+    resource = ''
+    if event.doc_type == 'NavigationEventAudit':
+        action = event.headers['REQUEST_METHOD']
+        resource = event.request_path
+    elif event.doc_type == 'AccessAudit':
+        action = event.access_type
+        resource = event.path_info
+    elif event.doc_type == 'ModelActionAudit':
+        resource = f'{event.object_type}:{event.object_uuid}'
+
+    writer.writerow([
+        event.event_date, event.doc_type, event.user, getattr(event, 'domain', ''),
+        getattr(event, 'ip_address', ''), action, resource, event.description
+    ])

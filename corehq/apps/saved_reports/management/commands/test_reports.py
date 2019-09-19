@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
+
 from corehq.apps.saved_reports.tasks import queue_scheduled_reports
 
 

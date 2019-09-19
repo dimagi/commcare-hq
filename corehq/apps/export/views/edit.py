@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
@@ -18,8 +16,8 @@ from corehq.apps.export.views.utils import (
     DashboardFeedMixin,
     ODataFeedMixin,
     clean_odata_columns,
-    remove_row_number_from_export_columns,
 )
+from corehq.apps.locations.permissions import location_safe
 
 
 class BaseEditNewCustomExportView(BaseExportView):
@@ -75,6 +73,7 @@ class BaseEditNewCustomExportView(BaseExportView):
         return super(BaseEditNewCustomExportView, self).post(request, *args, **kwargs)
 
 
+@location_safe
 class EditNewCustomFormExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_form'
     page_title = ugettext_lazy("Edit Form Data Export")
@@ -87,6 +86,7 @@ class EditNewCustomFormExportView(BaseEditNewCustomExportView):
         return FormExportListView
 
 
+@location_safe
 class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_case'
     page_title = ugettext_lazy("Edit Case Data Export")
@@ -120,23 +120,13 @@ class EditFormDailySavedExportView(DailySavedExportMixin, EditNewCustomFormExpor
 class EditODataCaseFeedView(ODataFeedMixin, EditNewCustomCaseExportView):
     urlname = 'edit_odata_case_feed'
     page_title = ugettext_lazy("Copy OData Feed")
-
-    def get_export_instance(self, schema, original_export_instance):
-        export_instance = super(EditODataCaseFeedView, self).get_export_instance(schema, original_export_instance)
-        remove_row_number_from_export_columns(export_instance)
-        clean_odata_columns(export_instance)
-        return export_instance
+    is_copy = True
 
 
 class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_odata_form_feed'
     page_title = ugettext_lazy("Copy OData Feed")
-
-    def get_export_instance(self, schema, original_export_instance):
-        export_instance = super(EditODataFormFeedView, self).get_export_instance(schema, original_export_instance)
-        remove_row_number_from_export_columns(export_instance)
-        clean_odata_columns(export_instance)
-        return export_instance
+    is_copy = True
 
 
 class EditExportAttrView(BaseEditNewCustomExportView):

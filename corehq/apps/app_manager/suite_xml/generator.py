@@ -1,29 +1,47 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from distutils.version import LooseVersion
-
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 
 from django.urls import reverse
 
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
+
+from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import MediaResourceError
+from corehq.apps.app_manager.suite_xml.features.scheduler import (
+    SchedulerFixtureContributor,
+)
+from corehq.apps.app_manager.suite_xml.post_process.instances import (
+    EntryInstances,
+)
 from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
-from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
-from corehq.apps.app_manager.suite_xml.sections.entries import EntriesContributor
-from corehq.apps.app_manager.suite_xml.features.scheduler import SchedulerFixtureContributor
-from corehq.apps.app_manager.suite_xml.sections.fixtures import FixtureContributor
-from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
+from corehq.apps.app_manager.suite_xml.post_process.workflow import (
+    WorkflowHelper,
+)
+from corehq.apps.app_manager.suite_xml.sections.details import (
+    DetailContributor,
+)
+from corehq.apps.app_manager.suite_xml.sections.entries import (
+    EntriesContributor,
+)
+from corehq.apps.app_manager.suite_xml.sections.fixtures import (
+    FixtureContributor,
+)
 from corehq.apps.app_manager.suite_xml.sections.menus import MenuContributor
+from corehq.apps.app_manager.suite_xml.sections.remote_requests import (
+    RemoteRequestContributor,
+)
 from corehq.apps.app_manager.suite_xml.sections.resources import (
     FormResourceContributor,
     LocaleResourceContributor,
     PracticeUserRestoreContributor,
 )
-from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowHelper
-from corehq.apps.app_manager.suite_xml.sections.remote_requests import RemoteRequestContributor
-from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource, LocalizedMenu, Text
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    LocalizedMenu,
+    MediaResource,
+    Suite,
+    Text,
+)
 from corehq.apps.app_manager.util import split_path
 from corehq.apps.hqmedia.models import HQMediaMapItem
 

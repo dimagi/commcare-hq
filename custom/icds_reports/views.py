@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
-
 from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
@@ -38,12 +34,13 @@ from corehq.apps.users.models import UserRole, Permissions
 from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.sql_db.routers import forced_citus
 from corehq.util.files import safe_filename_header
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, \
-    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT, \
+    GROWTH_MONITORING_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT, \
     THR_REPORT_EXPORT
 from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models.aggregate import AwcLocation
@@ -106,7 +103,7 @@ from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months, \
     get_datatables_ordering_info
 from custom.icds_reports.utils.data_accessor import get_program_summary_data,\
-    get_program_summary_data_with_retrying
+    get_program_summary_data_with_retrying, get_awc_covered_data_with_retrying
 from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
@@ -120,7 +117,7 @@ from django.contrib.staticfiles import finders
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
-class TableauView(RedirectView):
+class LegacyTableauRedirectView(RedirectView):
 
     permanent = True
     pattern_name = 'icds_dashboard'
@@ -238,6 +235,10 @@ class DashboardView(TemplateView):
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
         )
+
+        if kwargs['have_access_to_all_locations']:
+            kwargs['user_location_id'] = None
+
         is_commcare_user = self.couch_user.is_commcare_user()
 
         if self.couch_user.is_web_user():
@@ -708,6 +709,7 @@ class AwcReportsView(BaseReportView):
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExportIndicatorView(View):
     def post(self, request, *args, **kwargs):
+        use_citus = forced_citus()
         include_test = request.GET.get('include_test', False)
         export_format = request.POST.get('format')
         month = int(request.POST.get('month'))
@@ -762,11 +764,12 @@ class ExportIndicatorView(View):
                 pdf_format,
                 month,
                 year,
-                request.couch_user
+                request.couch_user,
+                force_citus=use_citus
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})
-        if indicator == BENEFICIARY_LIST_EXPORT:
+        if indicator == GROWTH_MONITORING_LIST_EXPORT:
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
                 return HttpResponseBadRequest()
             config = beneficiary_config
@@ -781,7 +784,7 @@ class ExportIndicatorView(View):
             if year > latest_year or month > latest_month and year == latest_year:
                 return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
-                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT,
+                         AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
                          LS_REPORT_EXPORT, THR_REPORT_EXPORT):
             task = prepare_excel_reports.delay(
                 config,
@@ -791,7 +794,8 @@ class ExportIndicatorView(View):
                 location,
                 self.kwargs['domain'],
                 export_format,
-                indicator
+                indicator,
+                force_citus=use_citus
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})
@@ -818,6 +822,11 @@ class FactSheetsView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
+
+        # query database at same level for which it is requested
+        if config.get('aggregation_level') > 1:
+            config['aggregation_level'] -= 1
+
         loc_level = get_location_level(config.get('aggregation_level'))
 
         beta = icds_pre_release_features(request.user)
@@ -1197,19 +1206,7 @@ class AWCsCoveredView(BaseReportView):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = {}
-        if step == "map":
-            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_awcs_covered_sector_data(domain, config, loc_level, location, include_test)
-            else:
-                data = get_awcs_covered_data_map(domain, config.copy(), loc_level, include_test)
-                if loc_level == LocationTypes.BLOCK:
-                    sector = get_awcs_covered_sector_data(
-                        domain, config, loc_level, location, include_test
-                    )
-                    data.update(sector)
-        elif step == "chart":
-            data = get_awcs_covered_data_chart(domain, config, loc_level, include_test)
+        data = get_awc_covered_data_with_retrying(step, domain, config, loc_level, location, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1751,7 +1748,7 @@ class DishaAPIView(View):
         query_month = date(year, month, 1)
         today = date.today()
         current_month = today - relativedelta(months=1) if today.day <= 5 else today
-        if query_month > current_month:
+        if query_month > current_month or query_month < date(2018, 6, 1):
             return JsonResponse(self.message('invalid_month'), status=400)
 
         state_name = self.request.GET.get('state_name')
@@ -1768,72 +1765,33 @@ class DishaAPIView(View):
 
 
 @location_safe
-@method_decorator([api_auth, csrf_exempt, toggles.ICDS_NIC_INDICATOR_API.required_decorator()], name='dispatch')
+@method_decorator([api_auth, toggles.ICDS_NIC_INDICATOR_API.required_decorator()], name='dispatch')
 class NICIndicatorAPIView(View):
 
     def message(self, message_name):
-        state_names = ", ".join(self.valid_states.keys())
         error_messages = {
-            "missing_date": "Please specify valid month and year",
-            "invalid_month": "Please specify a month that's older than or same as current month",
-            "invalid_state": "Please specify one of {} as state_name".format(state_names),
             "unknown_error": "Unknown Error occured",
             "no_data": "Data does not exists"
         }
 
-        error_message_template = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2001/12/soap-envelope"
-            SOAP-ENV:encodingStyle="http://www.w3.org/2001/12/soap-encoding">
-               <SOAP-ENV:Header />
-               <SOAP-ENV:Body>
-                    <SOAP-ENV:Fault>
-                        <message>
-                            {}
-                        </message>
-                    </SOAP-ENV:Fault>
-               </SOAP-ENV:Body>
-            </SOAP-ENV:Envelope>
-            """
-        return error_message_template.format(error_messages[message_name]).strip()
+        return error_messages[message_name]
 
-    def get_data(self, post_body):
-        xml_data = etree.fromstring(post_body.strip())
-        nic_indicators_request = {
-            'month': xml_data.xpath('//month')[0].text if xml_data.xpath('//month') else None,
-            'year': xml_data.xpath('//year')[0].text if xml_data.xpath('//year') else None,
-            'state_name': xml_data.xpath('//state_name')[0].text if xml_data.xpath('//state_name') else None,
-
-        }
-        return nic_indicators_request
-
-    def post(self, request, *args, **kwargs):
-
-        nic_indicators_request = self.get_data(request.body)
-        try:
-            month = int(nic_indicators_request.get('month'))
-            year = int(nic_indicators_request.get('year'))
-        except (ValueError, TypeError):
-            return HttpResponse(self.message('missing_date'), content_type='text/xml', status=400)
-
-        query_month = date(year, month, 1)
-
-        if query_month > date.today():
-            return HttpResponse(self.message('invalid_month'), content_type='text/xml', status=400)
-
-        state_name = nic_indicators_request.get('state_name')
-
-        if state_name not in self.valid_states:
-            return HttpResponse(self.message('invalid_state'), content_type='text/xml', status=400)
+    def get(self, request, *args, **kwargs):
 
         try:
-            state_id = self.valid_states[state_name]
-            data = get_inc_indicator_api_data(state_id, month_formatter(query_month))
-            return HttpResponse(data, content_type='text/xml')
+            data = get_inc_indicator_api_data()
+            response = {'isSuccess': True,
+                        'message': 'Data Sent Successfully',
+                        'Result': {
+                            'response': data
+                        }}
+            return JsonResponse(response)
         except NICIndicatorsView.DoesNotExist:
-            return HttpResponse(self.message('no_data'), content_type='text/xml', status=500)
+            response = dict(isSuccess=False, message=self.message('no_data'))
+            return JsonResponse(response, status=500)
         except AttributeError:
-            return HttpResponse(self.message('unknown_error'), content_type='text/xml', status=500)
+            response = dict(isSuccess=False, message=self.message('unknown_error'))
+            return JsonResponse(response, status=500)
 
     @property
     @icds_quickcache([])
@@ -1841,6 +1799,13 @@ class NICIndicatorAPIView(View):
         states = AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE,
                                             state_is_test=0).values_list('state_name', 'state_id')
         return {state[0]: state[1] for state in states}
+
+
+@location_safe
+@method_decorator([api_auth, toggles.AP_WEBSERVICE.required_decorator()], name='dispatch')
+class APWebservice(View):
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({'message': 'Connection Successful'})
 
 
 @location_safe

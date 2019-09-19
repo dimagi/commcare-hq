@@ -12,8 +12,6 @@ Usage:
     # sort each output file
     # diff tests-django.txt tests-nose.txt
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from types import ModuleType
 
 from nose.case import FunctionTestCase

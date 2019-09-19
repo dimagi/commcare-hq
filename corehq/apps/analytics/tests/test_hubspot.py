@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.test import RequestFactory, TestCase, override_settings
 
 import mock

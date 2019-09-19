@@ -1,56 +1,73 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-from collections import defaultdict
-from datetime import datetime, timedelta
 import logging
 import time
+from collections import defaultdict
+from datetime import datetime, timedelta
 
-from botocore.vendored.requests.exceptions import ReadTimeout
-from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
-from celery.schedules import crontab
-from celery.task import task, periodic_task
-from couchdbkit import ResourceConflict, ResourceNotFound
 from django.conf import settings
-from django.db import InternalError, DatabaseError
-from django.db import transaction
+from django.db import DatabaseError, InternalError, transaction
 from django.db.models import Count, Min
 from django.utils.translation import ugettext as _
+
+from botocore.vendored.requests.exceptions import ReadTimeout
+from botocore.vendored.requests.packages.urllib3.exceptions import (
+    ProtocolError,
+)
+from celery.schedules import crontab
+from celery.task import periodic_task, task
+from couchdbkit import ResourceConflict, ResourceNotFound
 from elasticsearch.exceptions import ConnectionTimeout
 
 from couchexport.models import Format
-from soil.util import get_download_file_path, expose_download
-
-from corehq import toggles
-from corehq.apps.reports.util import send_report_download_email, DatatablesParams
-from corehq.apps.userreports.const import (
-    UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
-    ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
-)
-from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
-from corehq.apps.userreports.exceptions import StaticDataSourceConfigurationNotFoundError
-from corehq.apps.userreports.rebuild import DataSourceResumeHelper
-from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.models import (
-    AsyncIndicator,
-    DataSourceConfiguration,
-    StaticDataSourceConfiguration,
-    id_is_static,
-    get_report_config)
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
-from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
-from corehq.elastic import ESError
-from corehq.util.context_managers import notify_someone
-from corehq.util.datadog.gauges import datadog_gauge, datadog_histogram, datadog_counter
-from corehq.util.decorators import serial_task
-from corehq.util.quickcache import quickcache
-from corehq.util.timer import TimingContext
-from corehq.util.view_utils import reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
 from pillowtop.dao.couch import ID_CHUNK_SIZE
-import six
+from soil.util import expose_download, get_download_file_path
+
+from corehq import toggles
+from corehq.apps.change_feed.data_sources import (
+    get_document_store_for_doc_type,
+)
+from corehq.apps.reports.util import (
+    DatatablesParams,
+    send_report_download_email,
+)
+from corehq.apps.userreports.const import (
+    ASYNC_INDICATOR_CHUNK_SIZE,
+    ASYNC_INDICATOR_QUEUE_TIME,
+    UCR_CELERY_QUEUE,
+    UCR_INDICATOR_CELERY_QUEUE,
+)
+from corehq.apps.userreports.exceptions import (
+    StaticDataSourceConfigurationNotFoundError,
+)
+from corehq.apps.userreports.models import (
+    AsyncIndicator,
+    DataSourceConfiguration,
+    StaticDataSourceConfiguration,
+    get_report_config,
+    id_is_static,
+)
+from corehq.apps.userreports.rebuild import DataSourceResumeHelper
+from corehq.apps.userreports.reports.data_source import (
+    ConfigurableReportDataSource,
+)
+from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.util import (
+    get_async_indicator_modify_lock_key,
+    get_indicator_adapter,
+)
+from corehq.elastic import ESError
+from corehq.util.context_managers import notify_someone
+from corehq.util.datadog.gauges import (
+    datadog_counter,
+    datadog_gauge,
+    datadog_histogram,
+)
+from corehq.util.decorators import serial_task
+from corehq.util.quickcache import quickcache
+from corehq.util.timer import TimingContext
+from corehq.util.view_utils import reverse
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -294,7 +311,7 @@ def reprocess_archive_stubs():
                 xform.unarchive(user_id=stub.user_id)
         # If the history was updated the first time around, just send the update to kafka
         else:
-            xform.publish_archive_action_to_kafka(user_id=stub.user_id, archive=stub.archive)
+            FormAccessors.publish_archive_action_to_kafka(xform, stub.user_id, stub.archive)
 
 
 @periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
@@ -452,14 +469,14 @@ def _build_async_indicators(indicator_doc_ids):
                         failed_indicators.add(indicator)
                         handle_exception(e, config_id, doc, adapter)
 
-            for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+            for adapter, rows in rows_to_save_by_adapter.items():
                 doc_ids = doc_ids_from_rows(rows)
                 indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
                 try:
                     adapter.save_rows(rows)
                 except Exception as e:
                     failed_indicators.union(indicators)
-                    message = six.text_type(e)
+                    message = str(e)
                     notify_exception(None,
                         "Exception bulk saving async indicators:{}".format(message))
                 else:
@@ -512,7 +529,7 @@ def async_indicators_metrics():
         avg_lag = sum(lags) / len(lags)
         datadog_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag)
 
-    for config_id, metrics in six.iteritems(_indicator_metrics()):
+    for config_id, metrics in _indicator_metrics().items():
         tags = ["config_id:{}".format(config_id)]
         datadog_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
         datadog_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)

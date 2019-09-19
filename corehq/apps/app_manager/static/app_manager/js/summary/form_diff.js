@@ -33,17 +33,17 @@ hqDefine('app_manager/js/summary/form_diff',[
             // deep copy these datastructures so we don't overwrite the underlying data
             var firstModules = JSON.parse(JSON.stringify(initialPageData.get('first.modules'))),
                 secondModules = JSON.parse(JSON.stringify(initialPageData.get('second.modules'))),
-                firstModulesById = _.indexBy(firstModules, 'id'),
+                firstModulesById = _.indexBy(firstModules, 'unique_id'),
                 allModules = firstModules;
             // given the list of modules in the first list
             // if the element from the second is in the first, check the forms, and label them
             // otherwise just add the second element
             _.each(secondModules, function (secondModule) {
-                var firstModule = firstModulesById[secondModule.id];
+                var firstModule = firstModulesById[secondModule.unique_id];
                 if (firstModule) { // both versions have this module, check that all the forms are the same
                     // find all forms;
-                    var firstModuleFormIds = _.pluck(firstModule.forms, 'id'),
-                        secondModuleFormsById = _.indexBy(secondModule.forms, 'id'),
+                    var firstModuleFormIds = _.pluck(firstModule.forms, 'unique_id'),
+                        secondModuleFormsById = _.indexBy(secondModule.forms, 'unique_id'),
                         inSecondNotFirst = _.difference(_.keys(secondModuleFormsById), firstModuleFormIds);
                     _.each(inSecondNotFirst, function (extraFormId) {
                         firstModule.forms.push(secondModuleFormsById[extraFormId]);

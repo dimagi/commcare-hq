@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import uuid
 from datetime import datetime, timedelta
 
@@ -15,7 +13,6 @@ from corehq.apps.sms.models import OUTGOING, SMS, MessagingEvent
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
-from six.moves import zip
 
 
 @flag_enabled('SMS_LOG_CHANGES')

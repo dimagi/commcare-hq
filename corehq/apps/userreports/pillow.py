@@ -1,12 +1,9 @@
-from __future__ import absolute_import, division, unicode_literals
-
 import hashlib
+import signal
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 
 from django.conf import settings
-
-import six
 
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
@@ -51,6 +48,23 @@ from corehq.util.timer import TimingContext
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
+
+
+class WarmShutdown(object):
+    # modified from https://stackoverflow.com/a/50174144
+
+    shutting_down = False
+
+    def __enter__(self):
+        self.current_handler = signal.signal(signal.SIGTERM, self.handler)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.shutting_down and exc_type is None:
+            exit(0)
+        signal.signal(signal.SIGTERM, self.current_handler)
+
+    def handler(self, signum, frame):
+        self.shutting_down = True
 
 
 def time_ucr_process_change(method):
@@ -209,7 +223,7 @@ class ConfigurableReportTableManagerMixin(object):
                     try:
                         self.rebuild_table(sql_adapter, table_diffs)
                     except TableRebuildError as e:
-                        _notify_rebuild(six.text_type(e), sql_adapter.config.to_json())
+                        _notify_rebuild(str(e), sql_adapter.config.to_json())
                 else:
                     self.rebuild_table(sql_adapter, table_diffs)
 
@@ -270,8 +284,9 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
         retry_changes = set()
         change_exceptions = []
-        for domain, changes_chunk in six.iteritems(changes_by_domain):
-            failed, exceptions = self._process_chunk_for_domain(domain, changes_chunk)
+        for domain, changes_chunk in changes_by_domain.items():
+            with WarmShutdown():
+                failed, exceptions = self._process_chunk_for_domain(domain, changes_chunk)
             retry_changes.update(failed)
             change_exceptions.extend(exceptions)
 
@@ -327,7 +342,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
         with self._datadog_timing('single_batch_load'):
             # bulk update by adapter
-            for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+            for adapter, rows in rows_to_save_by_adapter.items():
                 with self._datadog_timing('load', adapter.config._id):
                     try:
                         adapter.save_rows(rows)
@@ -366,7 +381,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
         # query
         docs = []
-        for _, _changes in six.iteritems(changes_by_doctype):
+        for _, _changes in changes_by_doctype.items():
             doc_store = _changes[0].document_store
             doc_ids_to_query = [change.id for change in _changes if change.should_fetch_document()]
             new_docs = list(doc_store.iter_documents(doc_ids_to_query))

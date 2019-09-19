@@ -6,6 +6,8 @@
                 <Key>
                     <PropertyRef Name="caseid"/>
                 </Key>
+                <Property Name="closed" Type="Edm.Boolean"/>
+                <Property Name="date_modified" Type="Edm.DateTimeOffset"/>
                 <Property Name="selected_property_1" Type="Edm.String"/>
                 <Property Name="selected_property_2" Type="Edm.String"/>
             </EntityType>

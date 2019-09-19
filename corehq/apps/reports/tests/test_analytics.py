@@ -1,19 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
+
 from django.test import TestCase
+
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.reports.analytics.couchaccessors import (
-    update_reports_analytics_indexes,
-    get_all_form_definitions_grouped_by_app_and_xmlns,
     SimpleFormInfo,
+    get_all_form_definitions_grouped_by_app_and_xmlns,
     get_all_form_details,
-    get_form_details_for_xmlns,
+    get_form_details_for_app,
     get_form_details_for_app_and_module,
     get_form_details_for_app_and_xmlns,
-    get_form_details_for_app,
+    get_form_details_for_xmlns,
+    update_reports_analytics_indexes,
 )
-from six.moves import range
 
 
 class SetupSimpleAppMixin(object):

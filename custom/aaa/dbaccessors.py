@@ -1,6 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-from __future__ import division
-
 from collections import OrderedDict
 from datetime import date
 
@@ -26,7 +23,6 @@ from custom.aaa.models import (
     Woman,
 )
 from dimagi.utils.dates import force_to_datetime
-from six.moves import zip
 
 
 class ChildQueryHelper(object):

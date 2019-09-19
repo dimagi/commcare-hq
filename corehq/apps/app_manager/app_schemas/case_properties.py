@@ -1,18 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import print_function
+import logging
 from collections import defaultdict, deque, namedtuple
 from itertools import chain
-import logging
+
+from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_case_sharing_apps_in_domain
-from corehq.apps.app_manager.util import is_usercase_in_use
+from corehq.apps.app_manager.dbaccessors import (
+    get_apps_in_domain,
+    get_case_sharing_apps_in_domain,
+)
+from corehq.apps.app_manager.util import is_remote_app, is_usercase_in_use
 from corehq.util.quickcache import quickcache
-from memoized import memoized
-import six
-
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ def _get_forms(app):
     """
     Return list of forms in the app
     """
-    if app.doc_type == 'RemoteApp':
+    if is_remote_app(app):
         return []
     forms = []
     for module in app.get_modules():
@@ -81,8 +80,8 @@ class _CaseRelationshipManager(object):
 
     You can also ask "What are all of the case_types a `referral`'s `parent` can be?":
 
-    >>> case_relationship_manager.resolve_expansion(_CaseTypeRef('referral', ('parent',))) == {'patient'}
-    True
+    >>> case_relationship_manager.resolve_expansion(_CaseTypeRef('referral', ('parent',)))
+    {'patient'}
 
     This is read "a `referral`'s parent can only be a `patient`".
 

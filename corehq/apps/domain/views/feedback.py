@@ -1,10 +1,8 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 
+from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
-from django.conf import settings
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.tasks import send_mail_async

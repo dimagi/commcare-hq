@@ -1,12 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from functools import partial
 
 from casexml.apps.phone.fixtures import FixtureProvider
-from casexml.apps.phone.utils import get_or_cache_global_fixture, GLOBAL_USER_ID
-from corehq.apps.programs.models import Program
+from casexml.apps.phone.utils import (
+    GLOBAL_USER_ID,
+    get_or_cache_global_fixture,
+)
+
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
+from corehq.apps.programs.models import Program
 
 PROGRAM_FIELDS = ['name', 'code']
 
@@ -43,13 +44,37 @@ class ProgramFixturesProvider(FixtureProvider):
     def _get_fixture_items(self, restore_state):
         restore_user = restore_state.restore_user
 
-        def get_programs():
-            return Program.by_domain(restore_user.domain)
+        project = restore_user.project
+        if not project or not project.commtrack_enabled:
+            return []
+
+        data = Program.by_domain(restore_user.domain)
+
+        if not self._should_sync(data, restore_state.last_sync_log):
+            return []
 
         return simple_fixture_generator(
             restore_user, self.id, "program",
-            PROGRAM_FIELDS, get_programs, restore_state.last_sync_log
+            PROGRAM_FIELDS, data
         )
+
+    def _should_sync(self, data, last_sync):
+        """
+        Determine if a data collection needs to be synced.
+        """
+
+        # definitely sync if we haven't synced before
+        if not last_sync or not last_sync.date:
+            return True
+
+        # check if any items have been modified since last sync
+        for data_item in data:
+            # >= used because if they are the same second, who knows
+            # which actually happened first
+            if not data_item.last_modified or data_item.last_modified >= last_sync.date:
+                return True
+
+        return False
 
 
 program_fixture_generator = ProgramFixturesProvider()

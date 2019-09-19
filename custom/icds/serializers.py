@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from rest_framework import serializers
 
 from custom.icds.models import (
@@ -18,7 +15,7 @@ class HostedCCZLinkSerializer(serializers.ModelSerializer):
 class HostedCCZSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = HostedCCZ
-        fields = ['id', 'link', 'app_id', 'version', 'note']
+        fields = ['id', 'link', 'app_id', 'version', 'note', 'status']
 
     def to_representation(self, instance):
         ret = super(HostedCCZSerializer, self).to_representation(instance)

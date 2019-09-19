@@ -1,10 +1,6 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from __future__ import absolute_import
+import datetime
 
 from django.db import migrations, models
-import datetime
 
 
 def set_pending_verification_numbers(apps, schema_editor):

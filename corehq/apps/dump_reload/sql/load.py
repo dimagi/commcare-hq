@@ -1,17 +1,15 @@
-from __future__ import unicode_literals
-
-from __future__ import absolute_import
 import json
-from collections import defaultdict, namedtuple, Counter
+from collections import Counter, defaultdict, namedtuple
 
 from django.apps import apps
 from django.conf import settings
 from django.core.management.color import no_style
-from django.core.serializers.python import (
-    Deserializer as PythonDeserializer,
-)
+from django.core.serializers.python import Deserializer as PythonDeserializer
 from django.db import (
-    DatabaseError, IntegrityError, connections, router,
+    DatabaseError,
+    IntegrityError,
+    connections,
+    router,
     transaction,
 )
 from django.utils.encoding import force_text
@@ -20,7 +18,6 @@ from corehq.apps.dump_reload.interface import DataLoader
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.sql_db.config import partition_config
-
 
 PARTITIONED_MODEL_SHARD_ID_FIELDS = {
     'form_processor.xforminstancesql': 'form_id',

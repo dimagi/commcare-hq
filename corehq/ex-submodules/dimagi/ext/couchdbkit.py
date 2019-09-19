@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from couchdbkit.ext.django.schema import *
 from dimagi.ext.jsonobject import USecDateTimeMeta, \
     DateTimeProperty, OldDateTimeProperty

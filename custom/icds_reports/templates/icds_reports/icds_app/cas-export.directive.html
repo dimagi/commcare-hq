@@ -1,10 +1,11 @@
 <div class="cas-export-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
-    <div class="row fixes-filters" ng-init="updateCssClasses()">
+    <div class="row fixes-filters" ng-class="{'fixes-filters-with-alert': $ctrl.isAlertActive}">
         <div class="col-md-11">
             <span class="breadcrump-element">Export CAS Data: </span>
         </div>
     </div>
-    <info-message></info-message>
+    <info-message start="1" end="6" type="downloading-available-for-previous-month-from-7th"></info-message>
+    <info-message start="7" end="31" type="downloading-available-for-current-month-from-7th"></info-message>
     <div class="report-content report-content-without-message">
         <div class="alert alert-info" ng-show="!$ctrl.allFiltersSelected()">
             <strong>Info!</strong> Please select all filters!

@@ -1,25 +1,33 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import logging
 import json
+import logging
 from functools import wraps
+
 from django.contrib import messages
-from django.http import HttpResponseRedirect, HttpResponse
-from couchdbkit.exceptions import ResourceConflict
-from django.views.decorators.http import require_POST
+from django.core.cache import cache
+from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from corehq import toggles
-from corehq.apps.app_manager.exceptions import CaseError
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import AppEditingError
-from corehq.apps.app_manager.util import get_latest_app_release_by_location, get_latest_enabled_build_for_profile
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions, CommCareUser
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.users.util import normalize_username
+from django.views.decorators.http import require_POST
+
+from couchdbkit.exceptions import ResourceConflict
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+
+from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.exceptions import (
+    BuildConflictException,
+    CaseError,
+)
+from corehq.apps.app_manager.models import AppEditingError
+from corehq.apps.app_manager.util import (
+    get_latest_app_release_by_location,
+    get_latest_enabled_build_for_profile,
+)
+from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import CommCareUser, Permissions
+from corehq.apps.users.util import normalize_username
 
 
 def safe_download(f):
@@ -144,6 +152,41 @@ def no_conflict(fn):
             return HttpResponse(status=409)
 
     return _no_conflict
+
+
+def avoid_parallel_build_request(fn):
+    @wraps(fn)
+    def new_fn(app, comment, user_id, *args, **kwargs):
+        domain = app.domain
+        app_id = app.get_id
+        if _build_request_in_progress(domain, app_id):
+            raise BuildConflictException()
+        _set_build_in_progress_lock(domain, app_id)
+        try:
+            fn_return = fn(app, comment, user_id, *args, **kwargs)
+        finally:
+            _release_build_in_progress_lock(domain, app_id)
+        return fn_return
+    return new_fn
+
+
+def _set_build_in_progress_lock(domain, app_id):
+    key = _build_request_cache_key(domain, app_id)
+    cache.set(key, True, 60 * 60)  # Lock for an hour
+
+
+def _build_request_cache_key(domain, app_id):
+    return 'app-build-{domain}-{app_id}'.format(domain=domain, app_id=app_id)
+
+
+def _release_build_in_progress_lock(domain, app_id):
+    key = _build_request_cache_key(domain, app_id)
+    cache.delete(key)
+
+
+def _build_request_in_progress(domain, app_id):
+    key = _build_request_cache_key(domain, app_id)
+    return cache.get(key, False)
 
 
 require_can_edit_apps = require_permission(Permissions.edit_apps)

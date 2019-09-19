@@ -1,7 +1,3 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
 import datetime
 
@@ -19,19 +15,24 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
     percent_aadhaar_seeded_beneficiaries_help_text, percent_children_enrolled_help_text, \
     percent_pregnant_women_enrolled_help_text, percent_lactating_women_enrolled_help_text, \
     percent_adolescent_girls_enrolled_help_text
-from six.moves import filter
 
 
-class FirstDayOfMay(datetime.datetime):
+class FirstDayOfMay(date):
     @classmethod
-    def utcnow(cls):
-        return datetime.datetime(2017, 5, 1)
+    def today(cls):
+        return date(2017, 5, 1)
 
 
 class FirstDayOfMayDate(date):
     @classmethod
     def today(cls):
         return date(2017, 5, 1)
+
+
+class SecondDayOfMay(date):
+    @classmethod
+    def today(cls):
+        return date(2017, 5, 2)
 
 
 class TestAWCReport(TestCase):
@@ -1733,8 +1734,8 @@ class TestAWCReport(TestCase):
             {
                 "all": "",
                 "format": "number",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 139,
                 "label": "Registered Households",
                 "frequency": "day",
@@ -1758,9 +1759,9 @@ class TestAWCReport(TestCase):
             )['kpi'][0][1],
             {
                 "all": 5,
-                'color': 'green',
+                'color': 'red',
                 "format": "percent_and_div",
-                "percent": "Data in the previous reporting period was 0",
+                "percent": 0,
                 "value": 1,
                 "label": "Percent Aadhaar-seeded Beneficiaries",
                 "frequency": "day",
@@ -1814,8 +1815,8 @@ class TestAWCReport(TestCase):
             {
                 "all": 2,
                 "format": "percent_and_div",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 2,
                 "label": "Percent pregnant women enrolled for Anganwadi Services",
                 "frequency": "day",
@@ -1840,8 +1841,8 @@ class TestAWCReport(TestCase):
             {
                 "all": 3,
                 "format": "percent_and_div",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 3,
                 "label": "Percent lactating women enrolled for Anganwadi Services",
                 "frequency": "day",
@@ -1974,8 +1975,8 @@ class TestAWCReport(TestCase):
             {
                 "all": "",
                 "format": "number",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 139,
                 "label": "Registered Households",
                 "frequency": "day",
@@ -1999,9 +2000,9 @@ class TestAWCReport(TestCase):
             )['kpi'][0][1],
             {
                 "all": 5,
-                'color': 'green',
+                'color': 'red',
                 "format": "percent_and_div",
-                "percent": "Data in the previous reporting period was 0",
+                "percent": 0,
                 "value": 1,
                 "label": "Percent Aadhaar-seeded Beneficiaries",
                 "frequency": "day",
@@ -2055,8 +2056,8 @@ class TestAWCReport(TestCase):
             {
                 "all": 2,
                 "format": "percent_and_div",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 2,
                 "label": "Percent pregnant women enrolled for Anganwadi Services",
                 "frequency": "day",
@@ -2081,8 +2082,8 @@ class TestAWCReport(TestCase):
             {
                 "all": 3,
                 "format": "percent_and_div",
-                "color": "green",
-                "percent": "Data in the previous reporting period was 0",
+                "color": "red",
+                "percent": 0,
                 "value": 3,
                 "label": "Percent lactating women enrolled for Anganwadi Services",
                 "frequency": "day",
@@ -2470,13 +2471,13 @@ class TestAWCReport(TestCase):
             json.dumps({
                 "draw": 1,
                 "last_month": "May 2017",
-                "recordsTotal": 27,
+                "recordsTotal": 32,
                 "months": [
                     "May 2017",
                     "Apr 2017",
                     "Mar 2017"
                 ],
-                "recordsFiltered": 27,
+                "recordsFiltered": 32,
             }, cls=DjangoJSONEncoder)
         )
 
@@ -2488,7 +2489,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_pregnant_first_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.date', FirstDayOfMayDate):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_awc_report_pregnant(
                 start=0,
                 length=10,
@@ -2521,7 +2522,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_pregnant_details_first_record_first_trimester(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_pregnant_details(
                 case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
                 awc_id='a15'
@@ -2532,7 +2533,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_pregnant_details_first_record_second_trimester(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_pregnant_details(
                 case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
                 awc_id='a15'
@@ -2563,7 +2564,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_pregnant_details_first_record_third_trimester(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_pregnant_details(
                 case_id='7313c174-6b63-457c-a734-6eed0a2b2ac6',
                 awc_id='a15'
@@ -2574,7 +2575,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_first_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2598,7 +2599,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_second_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2622,7 +2623,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_third_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2646,7 +2647,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_forth_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2670,7 +2671,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_fifth_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2694,7 +2695,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_sixth_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2718,7 +2719,7 @@ class TestAWCReport(TestCase):
             )
 
     def test_awc_report_lactating_seventh_record(self):
-        with mock.patch('custom.icds_reports.reports.awc_reports.datetime', FirstDayOfMay):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_awc_report_lactating(
                 start=0,
                 length=10,
@@ -2740,4 +2741,47 @@ class TestAWCReport(TestCase):
                     'case_id': '1744a035-56f1-4059-86f5-93fcea3c6076',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
+            )
+
+    def test_awc_report_lactating_on_first_of_month(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', FirstDayOfMay):
+            data = get_awc_report_lactating(
+                start=0,
+                length=7,
+                order='age',
+                reversed_order=False,
+                awc_id='a50'
+            )
+            self.assertListEqual(
+                data['data'],
+                [
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None,
+                     'age': 20, 'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
+                     'case_id': u'36d5e223-a631-4030-910c-262a1d066fb3', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None,
+                     'age': 23, 'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 4, 20),
+                     'case_id': u'aefb8fe5-1cd1-4235-9baf-963b1a0b498e', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 24,
+                     'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
+                     'case_id': u'4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 26,
+                     'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 20),
+                     'case_id': u'10a53900-f65e-46b7-ae0c-f32a208c0677', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 26,
+                     'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
+                     'case_id': u'1a6851bc-8172-48fc-80d1-b198f23033ab', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 26,
+                     'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
+                     'case_id': u'37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                    {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 29,
+                     'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
+                     'case_id': u'1744a035-56f1-4059-86f5-93fcea3c6076', 'breastfed_at_birth': u'N',
+                     'is_ebf': u'N', 'institutional_delivery': u'N'}
+                ]
             )

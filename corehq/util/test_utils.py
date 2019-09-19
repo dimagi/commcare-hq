@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 import uuid
 import functools
 import json
@@ -123,9 +120,10 @@ class flag_enabled(object):
     """
     enabled = True
 
-    def __init__(self, toggle_name):
+    def __init__(self, toggle_name, is_preview=False):
+        location = 'corehq.feature_previews' if is_preview else 'corehq.toggles'
         self.patches = [
-            mock.patch('.'.join(['corehq.toggles', toggle_name, method_name]),
+            mock.patch('.'.join([location, toggle_name, method_name]),
                        new=lambda *args, **kwargs: self.enabled)
             for method_name in ['enabled', 'enabled_for_request']
         ]
@@ -419,7 +417,7 @@ def _create_case(domain, **kwargs):
     from casexml.apps.case.mock import CaseBlock
     from corehq.apps.hqcase.utils import submit_case_blocks
     return submit_case_blocks(
-        [CaseBlock(**kwargs).as_string().decode('utf-8')], domain=domain
+        [CaseBlock(**kwargs).as_text()], domain=domain
     )
 
 
@@ -573,7 +571,7 @@ class PatchMeta(type):
     """A metaclass to patch all inherited classes.
 
     Usage:
-    class BaseTest(six.with_metaclass(PatchMeta, TestCase)):
+    class BaseTest(TestCase, metaclass=PatchMeta):
         patch = mock.patch('something.do.patch', .....)
     """
 

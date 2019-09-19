@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 import uuid
 from corehq.apps.locations.models import SQLLocation
@@ -11,7 +9,6 @@ from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import REGISTER_HELP, \
     REGISTRATION_CONFIRM_DISTRICT, REGISTRATION_CONFIRM, Roles, REGISTER_UNKNOWN_DISTRICT, REGISTER_UNKNOWN_CODE
 from dimagi.utils.couch import CriticalSection
-from six.moves import range
 
 DISTRICT_PREFIXES = [
     'd', 'dm', 'dr',

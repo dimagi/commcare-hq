@@ -1697,7 +1697,7 @@ var weight_for_height = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations, haveAccessToFeatures) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations, haveAccessToFeatures, isAlertActive) {
     var vm = this;
     vm.data = {};
     vm.label = "AWC Report";
@@ -1706,6 +1706,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.filters = ['gender', 'age'];
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
+    vm.isAlertActive = isAlertActive;
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
@@ -2149,7 +2150,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     var attended = day ? day.attended : '0';
                     var eligible = day ? day.eligible : '0';
 
-                    var tooltipContent = "<p><strong>" + d3.time.format('%b %Y')(new Date(d.value)) + "</strong></p><br/>";
+                    var tooltipContent = "<p><strong>" + d3.time.format('%d/%m/%Y')(new Date(d.value)) + "</strong></p><br/>";
                     tooltipContent += "<div>Number of children who attended PSE: <strong>" + attended + "</strong></div>";
                     tooltipContent += "<div>Number of children who were eligible to attend PSE: <strong>" + eligible + "</strong></div>";
 
@@ -2627,7 +2628,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'haveAccessToFeatures', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive('awcReports', function () {
     return {

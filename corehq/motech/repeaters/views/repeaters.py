@@ -1,38 +1,45 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 import json
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
 from django.contrib import messages
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
 
 from memoized import memoized
 
-from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES
-from corehq.motech.utils import b64_aes_encrypt
 from dimagi.utils.post import simple_post
 
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView, BaseProjectSettingsView
-from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
+from corehq.apps.domain.views.settings import (
+    BaseAdminProjectSettingsView,
+    BaseProjectSettingsView,
+)
+from corehq.apps.users.decorators import (
+    require_can_edit_web_users,
+    require_permission,
+)
 from corehq.apps.users.models import Permissions
-
+from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
 from corehq.motech.repeaters.forms import (
     CaseRepeaterForm,
     FormRepeaterForm,
     GenericRepeaterForm,
     OpenmrsRepeaterForm,
-    Dhis2RepeaterForm,
 )
-from corehq.motech.repeaters.models import Repeater, RepeatRecord, BASIC_AUTH, DIGEST_AUTH
+from corehq.motech.repeaters.models import (
+    BASIC_AUTH,
+    DIGEST_AUTH,
+    Repeater,
+    RepeatRecord,
+)
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.repeaters.utils import get_all_repeater_types
+from corehq.motech.utils import b64_aes_encrypt
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
@@ -221,16 +228,15 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
         return repeater
 
 
-class AddDhis2RepeaterView(AddFormRepeaterView):
+class AddDhis2RepeaterView(AddRepeaterView):
     urlname = 'new_dhis2_repeater$'
-    repeater_form_class = Dhis2RepeaterForm
-    page_title = ugettext_lazy("Forward to DHIS2")
-    page_name = ugettext_lazy("Forward to DHIS2")
+    repeater_form_class = GenericRepeaterForm
+    page_title = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
+    page_name = ugettext_lazy("Forward Forms to DHIS2 as Anonymous Events")
 
-    def set_repeater_attr(self, repeater, cleaned_data):
-        repeater = super(AddDhis2RepeaterView, self).set_repeater_attr(repeater, cleaned_data)
-        repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
-        return repeater
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
 
 
 class EditRepeaterView(BaseRepeaterView):
@@ -314,7 +320,7 @@ class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
 
 class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
     urlname = 'edit_dhis2_repeater'
-    page_title = ugettext_lazy("Edit OpenMRS Repeater")
+    page_title = ugettext_lazy("Edit DHIS2 Anonymous Event Repeater")
 
 
 @require_POST
@@ -380,11 +386,11 @@ def test_repeater(request, domain):
             resp = simple_post(fake_post, url, headers=headers, auth=auth, verify=verify)
             if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
-                                                "response": resp.content,
+                                                "response": resp.text,
                                                 "status": resp.status_code}))
             else:
                 return HttpResponse(json.dumps({"success": False,
-                                                "response": resp.content,
+                                                "response": resp.text,
                                                 "status": resp.status_code}))
 
         except Exception as e:

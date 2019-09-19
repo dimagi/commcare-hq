@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
@@ -102,7 +99,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         thr_eligible = "({} AND {} > 6 AND {} <= 36)".format(valid_in_month, age_in_months_end, age_in_months)
         pnc_eligible = "({} AND {} - person_cases.dob > 0 AND {} - person_cases.dob <= 20)".format(valid_in_month, end_month_string, start_month_string)
         height_eligible = "({} AND {} > 6 AND {} <= 60)".format(valid_in_month, age_in_months_end, age_in_months)
-        fully_immunized_eligible = "({} AND {} > 12)".format(valid_in_month, age_in_months_end)
+        fully_immunized_eligible = "({} AND {} > 12)".format(valid_in_month, age_in_months)
         immunized_age_in_days = "(child_tasks.immun_one_year_date - person_cases.dob)"
         fully_immun_before_month = "(child_tasks.immun_one_year_date < {})".format(end_month_string)
 

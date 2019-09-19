@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import datetime
 import random
 import string
@@ -13,13 +11,13 @@ from casexml.apps.phone.tests.utils import (
     create_restore_user,
     deprecated_generate_restore_payload,
 )
+
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.programs.fixtures import program_fixture_generator
+from corehq.apps.commtrack.tests import util
 from corehq.apps.products.fixtures import product_fixture_generator
 from corehq.apps.products.models import Product
+from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.programs.models import Program
-from corehq.apps.commtrack.tests import util
-from six.moves import range
 
 
 class FixtureTest(TestCase, TestXmlMixin):

@@ -1,11 +1,8 @@
-from __future__ import absolute_import, unicode_literals
-
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 
 from django.db import models
 
-import six
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
 
@@ -41,7 +38,6 @@ from corehq.apps.fixtures.utils import (
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.xml_utils import serialize
 
 FIXTURE_BUCKET = 'domain-fixtures'
@@ -67,8 +63,7 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
         if not obj["doc_type"] == "FixtureDataType":
             raise ResourceNotFound
         # Migrate fixtures without attributes on item-fields to fields with attributes
-        if obj["fields"] and isinstance(obj['fields'][0], six.string_types):
-            soft_assert_type_text(obj['fields'][0])
+        if obj["fields"] and isinstance(obj['fields'][0], str):
             obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
 
         # Migrate fixtures without attributes on items to items with attributes
@@ -199,9 +194,7 @@ class FixtureDataItem(Document):
         fields_dict = {}
 
         def _is_new_type(field_val):
-            if isinstance(field_val, six.string_types):
-                soft_assert_type_text(field_val)
-            old_types = (six.string_types, int, float)
+            old_types = (str, int, float)
             return field_val is not None and not isinstance(field_val, old_types)
 
         for field in obj['fields']:
@@ -212,7 +205,7 @@ class FixtureDataItem(Document):
                 break
             fields_dict[field] = {
                 "field_list": [{
-                    'field_value': str(field_val) if not isinstance(field_val, six.string_types) else field_val,
+                    'field_value': str(field_val) if not isinstance(field_val, str) else field_val,
                     'properties': {}
                 }]
             }
@@ -484,8 +477,7 @@ class FixtureDataItem(Document):
 
 
 def _id_from_doc(doc_or_doc_id):
-    if isinstance(doc_or_doc_id, six.string_types):
-        soft_assert_type_text(doc_or_doc_id)
+    if isinstance(doc_or_doc_id, str):
         doc_id = doc_or_doc_id
     else:
         doc_id = doc_or_doc_id.get_id if doc_or_doc_id else None

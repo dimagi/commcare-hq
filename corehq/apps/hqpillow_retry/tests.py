@@ -1,9 +1,12 @@
-from __future__ import absolute_import
 import datetime
+
 from django.test import TestCase
+
 from pillow_retry.models import PillowError
-from corehq.apps.hqpillow_retry.management.commands.run_pillow_retry_queue import \
-    PillowRetryEnqueuingOperation
+
+from corehq.apps.hqpillow_retry.management.commands.run_pillow_retry_queue import (
+    PillowRetryEnqueuingOperation,
+)
 
 
 class PillowRetryEnqueuingOperationTest(TestCase):
@@ -16,6 +19,6 @@ class PillowRetryEnqueuingOperationTest(TestCase):
         )
         p.save()
         self.addCleanup(p.delete)
-        errors = list(PillowRetryEnqueuingOperation.get_items_to_be_processed(
+        errors = list(PillowRetryEnqueuingOperation().get_items_to_be_processed(
             datetime.datetime.utcnow()))
         self.assertTrue(errors)

@@ -1,17 +1,18 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 from django.contrib import messages
 from django.http.response import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
+from soil import DownloadBase
+
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from corehq.apps.hqcase.tasks import delete_exploded_case_task, explode_case_task
+from corehq.apps.hqcase.tasks import (
+    delete_exploded_case_task,
+    explode_case_task,
+)
 from corehq.form_processor.utils import should_use_sql_backend
-from soil import DownloadBase
 
 
 class ExplodeCasesView(BaseProjectSettingsView, TemplateView):

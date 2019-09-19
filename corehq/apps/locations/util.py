@@ -1,28 +1,32 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 import tempfile
 from collections import OrderedDict
 
-import six
+from memoized import memoized
 
-from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
-from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
+from couchexport.models import Format
+from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.couch.loosechange import map_reduce
+from soil import DownloadBase
+from soil.util import expose_blob_download
+
+from corehq.apps.commtrack.dbaccessors import (
+    get_supply_point_ids_in_domain_by_location,
+)
+from corehq.apps.consumption.shortcuts import (
+    build_consumption_dict,
+    get_loaded_default_monthly_consumption,
+)
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, \
-    LOCATION_SHEET_HEADERS_BASE, LOCATION_SHEET_HEADERS_OPTIONAL
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.const import (
+    LOCATION_SHEET_HEADERS_BASE,
+    LOCATION_SHEET_HEADERS_OPTIONAL,
+    LOCATION_TYPE_SHEET_HEADERS,
+)
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.products.models import Product
 from corehq.blobs import CODES, get_blob_db
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.files import safe_filename_header
-from couchexport.models import Format
-from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.couch.loosechange import map_reduce
-from memoized import memoized
-from soil import DownloadBase
-from soil.util import expose_blob_download
-from io import open
 
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,
@@ -99,7 +103,7 @@ def parent_child(domain):
     child types
     """
     return map_reduce(lambda k_v: [(p, k_v[0]) for p in k_v[1]],
-                      data=six.iteritems(dict(location_hierarchy_config(domain))))
+                      data=dict(location_hierarchy_config(domain)).items())
 
 
 def get_location_data_model(domain):

@@ -1,18 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.ui.fields import JsonField
-from corehq.motech.openmrs.const import LOG_LEVEL_CHOICES, IMPORT_FREQUENCY_CHOICES
-from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
-from corehq.motech.openmrs.models import OpenmrsImporter, ColumnMapping
-from corehq.motech.openmrs.const import PERSON_PROPERTIES, NAME_PROPERTIES, ADDRESS_PROPERTIES
-from corehq.motech.utils import b64_aes_encrypt
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-from six.moves import map
+
+from corehq.apps.userreports.ui.fields import JsonField
+from corehq.motech.openmrs.const import (
+    ADDRESS_PROPERTIES,
+    IMPORT_FREQUENCY_CHOICES,
+    LOG_LEVEL_CHOICES,
+    NAME_PROPERTIES,
+    PERSON_PROPERTIES,
+)
+from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
+from corehq.motech.openmrs.models import ColumnMapping, OpenmrsImporter
+from corehq.motech.utils import b64_aes_encrypt
 
 
 class OpenmrsConfigForm(forms.Form):
@@ -77,6 +82,8 @@ class OpenmrsImporterForm(forms.Form):
     import_frequency = forms.ChoiceField(label=_('Import Frequency'), choices=IMPORT_FREQUENCY_CHOICES,
                                          help_text=_('How often should cases be imported?'), required=False)
     log_level = forms.TypedChoiceField(label=_('Log Level'), required=False, choices=LOG_LEVEL_CHOICES, coerce=int)
+    timezone = forms.CharField(label=_('Timezone'), required=False,
+                               help_text=_("Timezone name. If not specified, the domain's timezone will be used."))
 
     report_uuid = forms.CharField(label=_('Report UUID'), required=True,
                                   help_text=_('The OpenMRS UUID of the report of patients to be imported'))

@@ -2,22 +2,19 @@
 Some of these constants correspond to constants set in corehq/apps/export/static/export/js/const.js
 so if changing a value, ensure that both places reflect the change
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from couchexport.deid import (
-    deid_ID,
-    deid_date
-)
+from couchexport.deid import deid_date, deid_ID
+
 from corehq.apps.export.transforms import (
+    case_close_to_boolean,
     case_id_to_case_name,
     case_id_to_link,
-    form_id_to_link,
-    user_id_to_username,
-    owner_id_to_display,
-    workflow_transform,
-    doc_type_transform,
     case_or_user_id_to_name,
-    case_close_to_boolean)
+    doc_type_transform,
+    form_id_to_link,
+    owner_id_to_display,
+    user_id_to_username,
+    workflow_transform,
+)
 
 # When fixing a bug that requires existing schemas to be rebuilt,
 # bump the version number.
@@ -71,7 +68,7 @@ PROPERTY_TAG_STOCK = 'stock'
 
 # Yeah... let's not hard code this list everywhere
 # This list comes from casexml.apps.case.xml.parser.CaseActionBase.from_v2
-KNOWN_CASE_PROPERTIES = ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]
+KNOWN_CASE_PROPERTIES = ["type", "name", "case_name", "external_id", "user_id", "owner_id", "opened_on"]
 
 # Attributes found on a case block. <case case_id="..." date_modified="..." ...>
 CASE_ATTRIBUTES = {

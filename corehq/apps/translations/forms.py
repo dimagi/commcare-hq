@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from zipfile import ZipFile
 
+from django import forms
+from django.forms.widgets import Select
+from django.utils.functional import cached_property
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
 import openpyxl
-from memoized import memoized
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
-from django import forms
-from django.forms.widgets import Select
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
-from django.utils.functional import cached_property
+from memoized import memoized
 
 import langcodes
 from corehq.apps.app_manager.dbaccessors import (
@@ -23,14 +21,21 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.models import Application
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
-from corehq.apps.translations.exceptions import TransifexProjectMigrationInvalidUpload
-from corehq.apps.translations.integrations.transifex.exceptions import InvalidProjectMigration
-from corehq.apps.translations.models import TransifexBlacklist, TransifexProject
-from corehq.motech.utils import b64_aes_decrypt
-from corehq.util.workbook_json.excel import WorkbookJSONReader
+from corehq.apps.translations.exceptions import (
+    TransifexProjectMigrationInvalidUpload,
+)
+from corehq.apps.translations.integrations.transifex.exceptions import (
+    InvalidProjectMigration,
+)
 from corehq.apps.translations.integrations.transifex.project_migrator import (
     ProjectMigrator,
 )
+from corehq.apps.translations.models import (
+    TransifexBlacklist,
+    TransifexProject,
+)
+from corehq.motech.utils import b64_aes_decrypt
+from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 
 class ConvertTranslationsForm(forms.Form):

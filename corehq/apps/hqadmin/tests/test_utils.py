@@ -1,17 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
 
-from django.test import TestCase, override_settings, SimpleTestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
-from corehq.apps.hqadmin.utils import check_for_rewind
-from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
-from corehq.util.test_utils import generate_cases
 from pillowtop import get_all_pillow_instances
+
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
+from corehq.apps.hqadmin.utils import check_for_rewind
+from corehq.util.test_utils import generate_cases
 from testapps.test_pillowtop.utils import real_pillow_settings
+
 from ..models import HistoricalPillowCheckpoint
-from ..utils import EPSILON, parse_celery_workers, parse_celery_pings
+from ..utils import EPSILON, parse_celery_pings, parse_celery_workers
 
 
 def _get_dummy_pillow():

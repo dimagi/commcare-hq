@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from contextlib import contextmanager
 from datetime import date
 
@@ -210,13 +208,15 @@ class AwcLocation(models.Model, AggregateMixin):
     block_map_location_name = models.TextField(blank=True, null=True)
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
-    aww_name = models.TextField(blank=True, null=True)
-    contact_phone_number = models.TextField(blank=True, null=True)
     state_is_test = models.SmallIntegerField(blank=True, null=True)
     district_is_test = models.SmallIntegerField(blank=True, null=True)
     block_is_test = models.SmallIntegerField(blank=True, null=True)
     supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
+
+    # from commcare-user case
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
 
     objects = CitusComparisonManager()
 
@@ -479,7 +479,8 @@ class AggAwc(models.Model, AggregateMixin):
     valid_visits = models.IntegerField(null=True)
     expected_visits = models.IntegerField(null=True)
     thr_distribution_image_count = models.IntegerField(null=True)
-
+    num_mother_thr_21_days = models.IntegerField(null=True)
+    num_mother_thr_eligible = models.IntegerField(null=True)
     objects = CitusComparisonManager()
 
     class Meta:

@@ -1,14 +1,17 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 import datetime
 
 from django.test import TestCase
 
-from corehq.apps.saved_reports.models import ScheduledReportsCheckpoint, ReportNotification
-from corehq.apps.saved_reports.scheduled import create_records_for_scheduled_reports
-from corehq.apps.saved_reports.tests.test_scheduled_reports import \
-    delete_all_report_notifications
+from corehq.apps.saved_reports.models import (
+    ReportNotification,
+    ScheduledReportsCheckpoint,
+)
+from corehq.apps.saved_reports.scheduled import (
+    create_records_for_scheduled_reports,
+)
+from corehq.apps.saved_reports.tests.test_scheduled_reports import (
+    delete_all_report_notifications,
+)
 
 
 class ScheduledReportsCheckpointTest(TestCase):

@@ -65,27 +65,31 @@ workflow to make sure it still makes sense, there could be for instance, ajax
 requests that must also be protected, or links to features the user shouldn't
 see.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 
-import six
-from django_prbac.decorators import requires_privilege_raise404
-from tastypie.resources import Resource
-from corehq import privileges
 from functools import wraps
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.modules import to_function
+
 from django.http import Http404
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 from django.views.generic import View
+
+from django_prbac.decorators import requires_privilege_raise404
+from tastypie.resources import Resource
+
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
+
+from corehq import privileges
+from corehq.apps.domain.decorators import (
+    domain_admin_required,
+    login_and_domain_required,
+)
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.decorators import (login_and_domain_required,
-                                           domain_admin_required)
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser
+
 from .models import SQLLocation
 
 LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(

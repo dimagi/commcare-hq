@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, time
 import logging
 import uuid
@@ -30,7 +28,6 @@ from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
 from pact.tasks import set_schedule_case_properties
 from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
 from corehq.apps.app_manager.dbaccessors import get_latest_build_id
-from six.moves import range
 
 PACT_CLOUD_APPNAME = "PACT Cloud"
 PACT_CLOUDCARE_MODULE = "PACT Cloudcare"

@@ -1,22 +1,23 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
-
 from functools import wraps
 
-import six
-from couchdbkit import ResourceConflict
 from django.utils.translation import ugettext as _
+
+from couchdbkit import ResourceConflict
 
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
-from corehq.apps.domain.auth import get_username_and_password_from_request, determine_authtype_from_request
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
+
+from corehq.apps.domain.auth import (
+    determine_authtype_from_request,
+    get_username_and_password_from_request,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.decorators import ensure_active_user_by_username
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
+
 from .exceptions import RestorePermissionDenied
 from .models import DemoUserRestore
 
@@ -43,7 +44,7 @@ def turn_on_demo_mode(commcare_user, domain):
         reset_demo_user_restore(commcare_user, domain)
         return {'errors': []}
     except Exception as e:
-        notify_exception(None, message=six.text_type(e))
+        notify_exception(None, message=str(e))
         return {'errors': [
             _("Something went wrong in creating restore for the user. Please try again or report an issue")
         ]}
@@ -122,7 +123,7 @@ def is_permitted_to_restore(domain, couch_user, as_user_obj):
             _ensure_accessible_location(domain, couch_user, as_user_obj)
             _ensure_edit_data_permission(domain, couch_user)
     except RestorePermissionDenied as e:
-        return False, six.text_type(e)
+        return False, str(e)
     else:
         return True, None
 

@@ -1,13 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import sqlite3
-from sqlite3 import dbapi2 as sqlite
 
-from sqlalchemy import create_engine, Column, Integer, ForeignKey, String, \
-    UnicodeText, Text
-from sqlalchemy import distinct
-from sqlalchemy import func
+from sqlalchemy import (
+    Column,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UnicodeText,
+    create_engine,
+    distinct,
+    func,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
@@ -81,12 +85,23 @@ class PlanningStockReportHelper(Base):
 
 class BaseDB(object):
 
-    def __init__(self, db_filepath):
+    def __init__(self, db_filepath, readonly=False):
+        def connect():
+            return sqlite3.connect(f"file:{db_filepath}{mode}", uri=True)
+        mode = "?mode=ro" if readonly else ""
         self.db_filepath = db_filepath
-        self._connection = None
-        self.engine = create_engine(
-            'sqlite+pysqlite:///{}'.format(db_filepath), module=sqlite)
+        self.engine = create_engine("sqlite://", creator=connect)
         self.Session = sessionmaker(bind=self.engine)
+
+    def __repr__(self):
+        readonly = ", readonly=True" if self.readonly else ""
+        return f"{type(self).__name__}({self.db_filepath!r}{readonly})"
+
+    def __getstate__(self):
+        return self.db_filepath
+
+    def __setstate__(self, db_filepath):
+        self.__init__(db_filepath)
 
     @classmethod
     def init(cls, db_filepath):
@@ -95,14 +110,8 @@ class BaseDB(object):
         return self
 
     @classmethod
-    def open(cls, db_filepath):
-        return cls(db_filepath)
-
-    @property
-    def connection(self):
-        if not self._connection:
-            self._connection = sqlite3.connect(self.db_filepath)
-        return self._connection
+    def open(cls, db_filepath, readonly=False):
+        return cls(db_filepath, readonly=readonly)
 
 
 class DiffDB(BaseDB):

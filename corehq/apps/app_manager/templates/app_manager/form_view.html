@@ -66,12 +66,8 @@
     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
   {% endcompress %}
-  {% if allow_form_workflow %}
-    {% compress js %}
-      <script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
-    {% endcompress %}
-  {% endif %}
   {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
     {% compress js %}
       <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
@@ -163,7 +159,6 @@
   {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
 
   {# End of form navigation #}
-  {% initial_page_data 'allow_form_workflow' allow_form_workflow %}
   {% initial_page_data 'form_links' form.form_links %}
   {% initial_page_data 'linkable_forms' linkable_forms %}
   {% if not module.put_in_root %}
@@ -175,6 +170,7 @@
   {% initial_page_data 'post_form_workflow' form.post_form_workflow %}
   {% initial_page_data 'post_form_workflow_fallback' form.post_form_workflow_fallback %}
   {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
+  {% initial_page_data 'add_ons_privileges' add_ons_privileges %}
   {% registerurl "get_form_datums" domain app.id %}
 
   <div class="tabbable appmanager-tabs-container">

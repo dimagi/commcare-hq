@@ -1,10 +1,6 @@
-from __future__ import absolute_import, division
-
-from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
@@ -96,7 +92,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         data_for_map[on_map_name]['total_weighed_and_height'] += total_weighed_and_height
         data_for_map[on_map_name]['original_name'].append(name)
 
-    for data_for_location in six.itervalues(data_for_map):
+    for data_for_location in data_for_map.values():
         numerator = data_for_location['moderate'] + data_for_location['severe']
         value = numerator * 100 / (data_for_location['total_measured'] or 1)
         if value < 5:
@@ -270,7 +266,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         data['red'][date_in_miliseconds]['weighed_and_height_measured'] += weighed_and_height_measured
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
+        [dict(loc_name=key, percent=value) for key, value in best_worst.items()],
         key=lambda x: (x['percent'], x['loc_name'])
     )
 
@@ -285,7 +281,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                         'total_measured': value['total_measured'],
                         'total_height_eligible': value['total_height_eligible'],
                         'weighed_and_height_measured': value['weighed_and_height_measured']
-                    } for key, value in six.iteritems(data['peach'])
+                    } for key, value in data['peach'].items()
                 ],
                 "key": "% normal",
                 "strokeWidth": 2,
@@ -301,7 +297,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                         'total_measured': value['total_measured'],
                         'total_height_eligible': value['total_height_eligible'],
                         'weighed_and_height_measured': value['weighed_and_height_measured']
-                    } for key, value in six.iteritems(data['orange'])
+                    } for key, value in data['orange'].items()
                 ],
                 "key": "% moderately wasted (moderate acute malnutrition)",
                 "strokeWidth": 2,
@@ -317,7 +313,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                         'total_measured': value['total_measured'],
                         'total_height_eligible': value['total_height_eligible'],
                         'weighed_and_height_measured': value['weighed_and_height_measured']
-                    } for key, value in six.iteritems(data['red'])
+                    } for key, value in data['red'].items()
                 ],
                 "key": "% severely wasted (severe acute malnutrition)",
                 "strokeWidth": 2,

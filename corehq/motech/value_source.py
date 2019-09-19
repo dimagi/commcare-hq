@@ -1,28 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from collections import namedtuple
 
-from dimagi.ext.couchdbkit import DocumentSchema
+from dimagi.ext.couchdbkit import DictProperty, DocumentSchema, StringProperty
 
-from corehq.motech.serializers import serializers
-from corehq.motech.const import (
+from corehq.motech.const import (  # pylint: disable=unused-import,F401; (F401 = flake8 "'%s' imported but unused"); Used in ValueSource.check_direction doctest; pylint: enable=unused-import,F401
     COMMCARE_DATA_TYPES,
     DATA_TYPE_UNKNOWN,
-    DIRECTIONS,
+    DIRECTION_BOTH,
     # pylint: disable=unused-import,F401
     # (F401 = flake8 "'%s' imported but unused")
     # Used in ValueSource.check_direction doctest
-    DIRECTION_IMPORT,
     DIRECTION_EXPORT,
+    DIRECTION_IMPORT,
     # pylint: enable=unused-import,F401
-    DIRECTION_BOTH,
+    DIRECTIONS,
 )
-from dimagi.ext.couchdbkit import (
-    DictProperty,
-    StringProperty
-)
-
+from corehq.motech.serializers import serializers
 
 CaseTriggerInfo = namedtuple('CaseTriggerInfo',
                              ['case_id', 'updates', 'created', 'closed', 'extra_fields', 'form_question_values'])
@@ -54,10 +46,11 @@ class ValueSource(DocumentSchema):
 
     def __eq__(self, other):
         return (
-            self.doc_type == other.doc_type and
-            self.external_data_type == other.external_data_type and
-            self.commcare_data_type == other.commcare_data_type and
-            self.direction == other.direction
+            isinstance(other, ValueSource)
+            and self.doc_type == other.doc_type
+            and self.external_data_type == other.external_data_type
+            and self.commcare_data_type == other.commcare_data_type
+            and self.direction == other.direction
         )
 
     @classmethod
@@ -253,11 +246,13 @@ class FormQuestionMap(FormQuestion):
 
 def get_form_question_values(form_json):
     """
-    Returns question-value pairs to result where questions are given as "/data/foo/bar"
+    Given form JSON, returns question-value pairs, where questions are
+    formatted "/data/foo/bar".
 
-    >>> values = get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
-    >>> values == {'/data/foo/bar': 'baz'}
-    True
+    e.g. Question "bar" in group "foo" has value "baz":
+
+    >>> get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
+    {'/data/foo/bar': 'baz'}
 
     """
     _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')

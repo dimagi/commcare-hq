@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
+from django.views.generic import View
+
 from dropbox.oauth import (
-    DropboxOAuth2Flow,
     BadRequestException,
     BadStateException,
     CsrfException,
+    DropboxOAuth2Flow,
     NotApprovedException,
     ProviderException,
 )
 
-from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponse
-from django.views.generic import View
-
-from .utils import get_dropbox_auth_flow, DROPBOX_CSRF_TOKEN
+from .utils import DROPBOX_CSRF_TOKEN, get_dropbox_auth_flow
 
 DROPBOX_ACCESS_TOKEN = 'dropbox_access_token'
 

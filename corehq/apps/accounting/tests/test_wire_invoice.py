@@ -1,12 +1,11 @@
-from __future__ import absolute_import
-
 from decimal import Decimal
+
 from django.core import mail
 
-from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
-from corehq.apps.accounting import utils, tasks
+from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.models import Invoice
+from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 
 
 class TestWireInvoice(BaseInvoiceTestCase):

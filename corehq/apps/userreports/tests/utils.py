@@ -1,27 +1,25 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import datetime, date, time
-from decimal import Decimal
 import json
 import os
-import uuid
 import re
+import uuid
+from datetime import date, datetime, time
+from decimal import Decimal
+
 import six
 import sqlalchemy
-
-
 from mock import patch
-from six.moves import zip
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.app_manager.xform_builder import XFormBuilder
-from corehq.apps.change_feed import data_sources
-from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.sql_db.connections import connection_manager
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
 
-from io import open
+from corehq.apps.app_manager.xform_builder import XFormBuilder
+from corehq.apps.change_feed import data_sources
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
+from corehq.sql_db.connections import connection_manager
 
 
 def get_sample_report_config():
@@ -162,8 +160,6 @@ def load_data_from_db(table_name):
                     row[idx] = str(value)
                 elif isinstance(value, (float, Decimal)):
                     row[idx] = _convert_decimal_to_string(row[idx])
-                elif six.PY2 and isinstance(value, six.text_type):
-                    row[idx] = value.encode('utf-8')
                 elif value is None:
                     row[idx] = ''
             yield dict(zip(columns, row))

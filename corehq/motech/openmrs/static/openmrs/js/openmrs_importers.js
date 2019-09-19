@@ -12,23 +12,6 @@ hqDefine('openmrs/js/openmrs_importers', [
     baseAce
 ) {
 
-    var initObservableJsonWidget = function (element) {
-        var $element = $(element),
-            editorElement = $element.after('<pre />').next()[0],
-            importerViewModel = ko.dataFor(element),
-            fieldName = $element.attr('name'),
-            observable = importerViewModel[fieldName];
-        var editor = baseAce.initAceEditor(editorElement, 'ace/mode/json', {
-            useWorker: true,
-            readOnly: false,
-        }, observable());
-        $element.hide();
-
-        editor.getSession().on('change', function () {
-            observable(editor.getSession().getValue());
-        });
-    };
-
     var openmrsImporter = function (properties) {
         var self = {};
 
@@ -43,6 +26,7 @@ hqDefine('openmrs/js/openmrs_importers', [
         self.location_id = ko.observable(properties["location_id"]);
         self.import_frequency = ko.observable(properties["import_frequency"]);
         self.log_level = ko.observable(properties["log_level"]);
+        self.timezone = ko.observable(properties["timezone"]);
         self.report_uuid = ko.observable(properties["report_uuid"]);
         self.report_params = ko.observable(properties["report_params"]);
         self.case_type = ko.observable(properties["case_type"]);
@@ -53,6 +37,7 @@ hqDefine('openmrs/js/openmrs_importers', [
         self.column_map = ko.observable(properties["column_map"]);
 
         self.import_frequency_options = [
+            {"value": "daily", "text": gettext("Daily")},
             {"value": "weekly", "text": gettext("Weekly")},
             {"value": "monthly", "text": gettext("Monthly")},
         ];
@@ -70,6 +55,7 @@ hqDefine('openmrs/js/openmrs_importers', [
                 "location_id": self.location_id(),
                 "import_frequency": self.import_frequency(),
                 "log_level": self.log_level(),
+                "timezone": self.timezone(),
                 "report_uuid": self.report_uuid(),
                 "report_params": self.report_params(),
                 "case_type": self.case_type(),
@@ -105,7 +91,7 @@ hqDefine('openmrs/js/openmrs_importers', [
 
         self.initOpenmrsImporterTemplate = function (elements) {
             _.each(elements, function (element) {
-                _.each($(element).find('.jsonwidget'), initObservableJsonWidget);
+                _.each($(element).find('.jsonwidget'), baseAce.initObservableJsonWidget);
             });
         };
 

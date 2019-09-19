@@ -1,12 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.util import get_indicator_adapter
-import six
 
 
 class UCRExpandDatabaseSubcolumn(DatabaseColumn):
@@ -66,7 +63,7 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
             data_source_configuration, column_config, column_config.max_expansion
         )
     except ColumnNotFoundError as e:
-        return ColumnConfig([], warnings=[six.text_type(e)])
+        return ColumnConfig([], warnings=[str(e)])
 
     if over_expansion_limit:
         column_warnings.append(_(

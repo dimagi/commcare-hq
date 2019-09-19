@@ -5,6 +5,8 @@
 {% block page_name %}{% trans "Cookies must be enabled to use CommCareHQ" %}{% endblock %}
 {% block page_content %}
   <p>
-    {% trans "If you believe this is a mistake, please contact commcarehq-support@dimagi.com" %}
+    {% blocktrans %}
+      If you believe this is a mistake, please contact {{ SUPPORT_EMAIL }}.
+    {% endblocktrans %}
   </p>
 {% endblock %}

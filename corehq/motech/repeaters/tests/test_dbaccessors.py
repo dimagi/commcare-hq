@@ -1,24 +1,26 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from datetime import datetime, timedelta
+
 from django.test import TestCase
 
+from corehq.motech.repeaters.const import (
+    RECORD_CANCELLED_STATE,
+    RECORD_PENDING_STATE,
+)
 from corehq.motech.repeaters.dbaccessors import (
+    get_domains_that_have_repeat_records,
     get_failure_repeat_record_count,
     get_overdue_repeat_record_count,
     get_paged_repeat_records,
     get_pending_repeat_record_count,
     get_repeat_record_count,
+    get_repeat_records_by_payload_id,
     get_repeaters_by_domain,
     get_success_repeat_record_count,
-    iterate_repeat_records,
     iter_repeat_records_by_domain,
-    get_domains_that_have_repeat_records,
-    get_repeat_records_by_payload_id,
+    iterate_repeat_records,
 )
-from corehq.motech.repeaters.models import RepeatRecord, CaseRepeater
-from corehq.motech.repeaters.const import RECORD_PENDING_STATE, RECORD_CANCELLED_STATE
+from corehq.motech.repeaters.models import CaseRepeater, RepeatRecord
 
 
 class TestRepeatRecordDBAccessors(TestCase):

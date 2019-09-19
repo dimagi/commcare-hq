@@ -1,46 +1,58 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import timedelta
-import dateutil
 import re
+from datetime import timedelta
+
 from django import forms
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
-from corehq.apps.export.filters import (
-    ReceivedOnRangeFilter,
-    GroupFormSubmittedByFilter,
-    OR, AND, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
-    ModifiedOnRangeFilter, FormSubmittedByFilter, NOT, SmsReceivedRangeFilter
-)
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.dbaccessors import (
-    user_ids_at_locations_and_descendants, user_ids_at_locations
-)
-from corehq.apps.export.models.new import (
-    DatePeriod,
-    CaseExportInstance,
-    FormExportInstanceFilters,
-    CaseExportInstanceFilters,
-)
-from corehq.apps.reports.filters.case_list import CaseListFilter, CaseListFilterUtils
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, EmwfUtils
-from corehq.apps.groups.models import Group
-from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.util import datespan_from_beginning
-from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
-from corehq.apps.hqwebapp.widgets import DateRangePickerWidget, Select2Ajax
-from corehq.pillows import utils
-
+import dateutil
 from crispy_forms import layout as crispy
-
 from crispy_forms.layout import Layout
+
 from dimagi.utils.dates import DateSpan
 
-from corehq.util import flatten_non_iterable_list
-
+from corehq.apps.export.filters import (
+    AND,
+    NOT,
+    OR,
+    FormSubmittedByFilter,
+    GroupFormSubmittedByFilter,
+    LastModifiedByFilter,
+    ModifiedOnRangeFilter,
+    OwnerFilter,
+    ReceivedOnRangeFilter,
+    SmsReceivedRangeFilter,
+    UserTypeFilter,
+)
+from corehq.apps.export.models.new import (
+    CaseExportInstance,
+    CaseExportInstanceFilters,
+    DatePeriod,
+    FormExportInstanceFilters,
+)
+from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
+from corehq.apps.hqwebapp.widgets import DateRangePickerWidget, Select2Ajax
+from corehq.apps.locations.dbaccessors import (
+    user_ids_at_locations,
+    user_ids_at_locations_and_descendants,
+)
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.filters.case_list import (
+    CaseListFilter,
+    CaseListFilterUtils,
+)
+from corehq.apps.reports.filters.users import (
+    EmwfUtils,
+    ExpandedMobileWorkerFilter,
+)
+from corehq.apps.reports.models import HQUserType
+from corehq.apps.reports.util import datespan_from_beginning
+from corehq.pillows import utils
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
+from corehq.util import flatten_non_iterable_list
 
 
 class DateSpanField(forms.CharField):
@@ -63,15 +75,15 @@ class CreateExportTagForm(forms.Form):
             ('form', ugettext_lazy('form')),
         ]
     )
-    app_type = forms.CharField()
-    application = forms.CharField()
+    app_type = forms.CharField(widget=forms.Select(choices=[]))
+    application = forms.CharField(widget=forms.Select(choices=[]))
 
     # Form export fields
-    module = forms.CharField(required=False)
-    form = forms.CharField(required=False)
+    module = forms.CharField(required=False, widget=forms.Select(choices=[]))
+    form = forms.CharField(required=False, widget=forms.Select(choices=[]))
 
     # Case export fields
-    case_type = forms.CharField(required=False)
+    case_type = forms.CharField(required=False, widget=forms.Select(choices=[]))
 
     def __init__(self, has_form_export_permissions, has_case_export_permissions, *args, **kwargs):
         self.has_form_export_permissions = has_form_export_permissions

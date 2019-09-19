@@ -1,15 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
+
 from django import forms
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
-from corehq.apps.userreports.models import DataSourceConfiguration, \
-    StaticDataSourceConfiguration
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    StaticDataSourceConfiguration,
+)
 from corehq.apps.userreports.ui.widgets import JsonWidget
-from corehq.util.python_compatibility import soft_assert_type_text
-import six
 
 
 class ReportDataSourceField(forms.ChoiceField):
@@ -39,8 +38,7 @@ class JsonField(forms.CharField):
         super(JsonField, self).__init__(*args, **kwargs)
 
     def prepare_value(self, value):
-        if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+        if isinstance(value, str):
             try:
                 return json.loads(value)
             except ValueError:

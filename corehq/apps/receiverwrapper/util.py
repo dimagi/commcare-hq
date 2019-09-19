@@ -1,19 +1,19 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import re
+from collections import namedtuple
+
+from django.http import Http404
+
 from couchdbkit import ResourceNotFound
+
+import couchforms
+from couchforms.models import DefaultAuthContext
+
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
-from couchforms.models import DefaultAuthContext
-import couchforms
-from django.http import Http404
-import six
 
 
 def get_submit_url(domain, app_id=None):
@@ -46,7 +46,7 @@ def get_meta_appversion_text(form_metadata):
         return None
 
     # just make sure this is a longish string and not something like '2.0'
-    if isinstance(text, (str, six.text_type)) and len(text) > 5:
+    if isinstance(text, (str, str)) and len(text) > 5:
         return text
     else:
         return None
@@ -141,11 +141,13 @@ def get_commcare_version_from_appversion_text(appversion_text):
     '2.4.1'
     >>> get_commcare_version_from_appversion_text(u'संस्करण "2.27.8" (414593)')
     '2.27.8'
+    >>> get_commcare_version_from_appversion_text(u'CommCare Android, आवृत्ती" 2.44.5"(452680). ॲप वि.29635 कॉमर्स आवृत्ती2.44. बिल्ड452680, रोजी तयार केले:2019-01-17')
+    '2.44.3'
     """
     patterns = [
         r'version "([\d.]+)"',
         r'"([\d.]+)"\s+\(\d+\)',
-        r'"([\d.]+)"',
+        r'"\s*([\d.]+)\s*"',
     ]
     return _first_group_match(appversion_text, patterns)
 

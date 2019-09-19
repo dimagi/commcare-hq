@@ -1,11 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.case_search.models import merge_queries, QueryMergeException
 from django.test import SimpleTestCase, TestCase
-from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns
-from corehq.util.test_utils import generate_cases
 
-from corehq.apps.case_search.models import SEARCH_QUERY_CUSTOM_VALUE, replace_custom_query_variables
+from corehq.apps.case_search.models import (
+    SEARCH_QUERY_CUSTOM_VALUE,
+    CaseSearchConfig,
+    IgnorePatterns,
+    QueryMergeException,
+    merge_queries,
+    replace_custom_query_variables,
+)
+from corehq.util.test_utils import generate_cases
 
 
 class TestQueryMerge(SimpleTestCase):

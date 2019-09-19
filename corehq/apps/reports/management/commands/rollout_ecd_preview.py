@@ -1,21 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import division
-
-from six.moves import input
-
 from django.core.management import BaseCommand
 from django.db.models import Q
 
-from corehq.apps.accounting.models import (
-    Subscription,
-    SoftwarePlanEdition,
-)
+from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.feature_previews import EXPLORE_CASE_DATA_PREVIEW
 from corehq.toggles import (
     ECD_MIGRATED_DOMAINS,
-    NAMESPACE_DOMAIN,
     ECD_PREVIEW_ENTERPRISE_DOMAINS,
+    NAMESPACE_DOMAIN,
 )
 
 

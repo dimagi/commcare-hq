@@ -1,21 +1,18 @@
-from __future__ import absolute_import, division, unicode_literals
-
 import itertools
 import json
 import os
 import re
 import tempfile
 import zipfile
-from io import open
 from wsgiref.util import FileWrapper
 
-from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
 from celery.task import task
 from celery.utils.log import get_task_logger
 
+from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.util import expose_cached_download, expose_file_download
 
@@ -228,6 +225,11 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
                 )
         if include_index_files and include_multimedia_files:
             multimedia_errors = check_ccz_multimedia_integrity(build.domain, fpath)
+            if multimedia_errors:
+                multimedia_errors.insert(0, _(
+                    "Please try syncing multimedia files in multimedia tab under app settings to resolve "
+                    "issues with missing media files. Report an issue if this persists."
+                ))
             errors.extend(multimedia_errors)
             if multimedia_errors:
                 notify_exception(
@@ -264,7 +266,7 @@ def _expose_download_link(fpath, filename, compress_zip, download_id):
 
 def find_missing_locale_ids_in_ccz(file_cache):
     errors = [
-        _("Could not find {file_path} in CCZ").format(file_path)
+        _("Could not find {file_path} in CCZ").format(file_path=file_path)
         for file_path in ('default/app_strings.txt', 'suite.xml') if file_path not in file_cache]
     if errors:
         return errors
@@ -288,9 +290,6 @@ def find_missing_locale_ids_in_ccz(file_cache):
 
 # Check that all media files present in media_suite.xml were added to the zip
 def check_ccz_multimedia_integrity(domain, fpath):
-    if not toggles.CAUTIOUS_MULTIMEDIA.enabled(domain):
-        return []
-
     errors = []
 
     with open(fpath, 'rb') as tmp:

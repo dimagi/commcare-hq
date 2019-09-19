@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import functools
-from corehq.util.test_utils import run_with_multiple_configs, RunConfig
 
+from corehq.util.test_utils import RunConfig, run_with_multiple_configs
 
 run_pre_and_post_timezone_migration = functools.partial(
     run_with_multiple_configs,

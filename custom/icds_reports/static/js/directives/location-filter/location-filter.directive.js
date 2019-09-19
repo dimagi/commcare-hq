@@ -128,10 +128,6 @@ function LocationModalController($uibModalInstance, $location, locationsService,
         }
     };
 
-    vm.isAwcReport = function () {
-        return $location.path().indexOf('awc_reports') !== -1;
-    };
-
     vm.close = function () {
         $uibModalInstance.dismiss('cancel');
     };
@@ -209,11 +205,13 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
         vm.selectedLocations = new Array(vm.maxLevel);
     };
 
-    vm.isAwcReport = function () {
-        return $location.path().indexOf('awc_reports') !== -1;
-    };
-
     vm.open = function () {
+
+        if (storageService.getKey('modal-opened') === 'true') {
+            return;
+        }
+        storageService.setKey('modal-opened', 'true');
+
         var modalInstance = $uibModal.open({
             animation: vm.animationsEnabled,
             ariaLabelledBy: 'modal-title',
@@ -221,7 +219,6 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             templateUrl: 'locationModalContent.html',
             controller: LocationModalController,
             controllerAs: '$ctrl',
-            backdrop: vm.isAwcReport() ? 'static' : true,
             resolve: {
                 location_id: function () {
                     return vm.location_id;
@@ -274,7 +271,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             storageService.setKey('search', $location.search());
             if (selectedLocationIndex() === 4 && $location.path().indexOf('awc_reports') === -1) {
                 var awcReportPath = 'awc_reports';
-                if ($location.path().indexOf('maternal_child') !== -1) {
+                if ($location.path().indexOf('maternal_child') !== -1 || $location.path().indexOf('maternal_and_child') !== -1) {
                     awcReportPath += '/maternal_child';
                 } else if ($location.path().indexOf('demographics') !== -1) {
                     awcReportPath += '/demographics';
@@ -288,6 +285,9 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                 $location.path(awcReportPath);
             }
             $scope.$emit('filtersChange');
+            storageService.setKey('modal-opened', 'false');
+        }, function () {
+            storageService.setKey('modal-opened', 'false');
         });
     };
 

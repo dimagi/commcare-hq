@@ -1,12 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from distutils.version import LooseVersion
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.xml_models import LocaleResource, XFormResource, \
-    PracticeUserRestoreResource, ReleaseInfoXFormResource
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    LocaleResource,
+    PracticeUserRestoreResource,
+    ReleaseInfoXFormResource,
+    XFormResource,
+)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import languages_mapping
 

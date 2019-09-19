@@ -1,12 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-from copy import copy
-from datetime import datetime, date
-from decimal import Decimal
 import uuid
+from copy import copy
+from datetime import date, datetime
+from decimal import Decimal
 
 from django.test import SimpleTestCase, TestCase
+
 from mock import patch
 
 from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
@@ -18,10 +16,13 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
-from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.indicators.utils import get_values_by_product
+from corehq.apps.userreports.specs import EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
+from corehq.form_processor.parsers.ledgers.helpers import (
+    StockReportHelper,
+    StockTransactionHelper,
+)
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.general import should_use_sql_backend

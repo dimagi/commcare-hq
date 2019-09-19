@@ -1,55 +1,58 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from django.http import Http404
-from django.http import HttpResponseRedirect
-from django.urls import reverse
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
-from corehq.apps.app_manager.const import APP_V1
-from corehq.apps.app_manager.exceptions import FormNotFoundException
+from django.urls import reverse
 
-from corehq.apps.app_manager.views.modules import get_module_template, \
-    get_module_view_context
-from corehq import privileges
-from corehq.apps.app_manager.forms import CopyApplicationForm
-from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.views.apps import get_apps_base_context, \
-    get_app_view_context
-from corehq.apps.app_manager.views.forms import \
-    get_form_view_context_and_template
-from corehq.apps.app_manager.views.releases import get_releases_context
-from corehq.apps.app_manager.views.utils import bail, set_lang_cookie
-from corehq.apps.hqmedia.controller import (
-    MultimediaImageUploadController,
-    MultimediaAudioUploadController,
-)
-from corehq.apps.domain.models import Domain
-from corehq.apps.hqmedia.models import (
-    ApplicationMediaReference,
-    CommCareImage,
-)
-from corehq.apps.hqmedia.views import (
-    ProcessImageFileUploadView,
-    ProcessAudioFileUploadView,
-)
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, is_linked_domain
-from corehq.apps.app_manager.util import (get_commcare_versions)
-from corehq import toggles
-from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
-from corehq.apps.cloudcare.utils import should_show_preview_app
-from corehq.util.soft_assert import soft_assert
+from django_prbac.utils import has_privilege
+
 from dimagi.utils.couch.resource_conflict import retry_resource
+
+from corehq import privileges, toggles
+from corehq.apps.app_manager import add_ons
+from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.exceptions import FormNotFoundException
+from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
     ANDROID_LOGO_PROPERTY_MAPPING,
+    CustomIcon,
     ModuleNotFoundException,
     ReportModule,
-    CustomIcon)
-from django_prbac.utils import has_privilege
-import six
+)
+from corehq.apps.app_manager.util import get_commcare_versions, is_remote_app
+from corehq.apps.app_manager.views.apps import (
+    get_app_view_context,
+    get_apps_base_context,
+)
+from corehq.apps.app_manager.views.forms import (
+    get_form_view_context_and_template,
+)
+from corehq.apps.app_manager.views.modules import (
+    get_module_template,
+    get_module_view_context,
+)
+from corehq.apps.app_manager.views.releases import get_releases_context
+from corehq.apps.app_manager.views.utils import bail, set_lang_cookie
+from corehq.apps.cloudcare.utils import should_show_preview_app
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqmedia.controller import (
+    MultimediaAudioUploadController,
+    MultimediaImageUploadController,
+)
+from corehq.apps.hqmedia.models import ApplicationMediaReference, CommCareImage
+from corehq.apps.hqmedia.views import (
+    ProcessAudioFileUploadView,
+    ProcessImageFileUploadView,
+)
+from corehq.apps.linked_domain.dbaccessors import (
+    get_domain_master_link,
+    is_linked_domain,
+)
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.util.soft_assert import soft_assert
 
 
 @retry_resource(3)
-def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
+def view_generic(request, domain, app_id, module_id=None, form_id=None,
                  copy_app_form=None, release_manager=False,
                  module_unique_id=None, form_unique_id=None):
     """
@@ -59,73 +62,67 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     if form_id and not module_id and module_unique_id is None:
         return bail(request, domain, app_id)
 
-    app = module = form = None
-    try:
-        if app_id:
-            app = get_app(domain, app_id)
+    app = get_app(domain, app_id)
+    module = form = None
 
-        if module_id:
-            try:
-                module = app.get_module(module_id)
-            except ModuleNotFoundException:
-                raise Http404()
-            if not module.unique_id:
-                module.get_or_create_unique_id()
-                app.save()
-        elif module_unique_id:
-            try:
-                module = app.get_module_by_unique_id(module_unique_id)
-            except ModuleNotFoundException:
-                raise Http404()
-            module_id = module.id
+    if module_id:
+        try:
+            module = app.get_module(module_id)
+        except ModuleNotFoundException:
+            raise Http404()
+        if not module.unique_id:
+            module.get_or_create_unique_id()
+            app.save()
+    elif module_unique_id:
+        try:
+            module = app.get_module_by_unique_id(module_unique_id)
+        except ModuleNotFoundException:
+            raise Http404()
+        module_id = module.id
 
-        if form_id and module is not None:
-            try:
-                form = module.get_form(form_id)
-            except IndexError:
-                raise Http404()
-        elif form_unique_id:
-            try:
-                form = app.get_form(form_unique_id)
-            except FormNotFoundException:
-                raise Http404()
-            form_id = form.id
+    if form_id and module is not None:
+        try:
+            form = module.get_form(form_id)
+        except IndexError:
+            raise Http404()
+    elif form_unique_id:
+        try:
+            form = app.get_form(form_unique_id)
+        except FormNotFoundException:
+            raise Http404()
+        form_id = form.id
 
-        if form is not None and module is None:
-            # this is the case where only the form_unique_id is given
-            module = form.get_module()
-            module_id = module.id
-
-    except (ModuleNotFoundException, FormNotFoundException):
-        return bail(request, domain, app_id)
+    if form is not None and module is None:
+        # this is the case where only the form_unique_id is given
+        module = form.get_module()
+        module_id = module.id
 
     # Application states that should no longer exist
-    if app:
-        if app.application_version == APP_V1:
-            _assert = soft_assert()
-            _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-            return render(request, "app_manager/no_longer_supported.html", {
-                'domain': domain,
-                'app': app,
-            })
-        if not app.vellum_case_management and not app.is_remote_app():
-            # Soft assert but then continue rendering; template will contain a user-facing warning
-            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
-            _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
-        if (form is not None and "usercase_preload" in getattr(form, "actions", {})
-                and form.actions.usercase_preload.preload):
-            _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
-            _assert(False, 'User property easy refs + old-style config = bad', {
-                'domain': domain,
-                'app_id': app_id,
-                'module_id': module_id,
-                'module_unique_id': module_unique_id,
-                'form_id': form_id,
-                'form_unique_id': form_unique_id,
-            })
+    if app.application_version == APP_V1:
+        _assert = soft_assert()
+        _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
+        return render(request, "app_manager/no_longer_supported.html", {
+            'domain': domain,
+            'app': app,
+        })
+    if not app.vellum_case_management and not app.is_remote_app():
+        # Soft assert but then continue rendering; template will contain a user-facing warning
+        _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
+        _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
+    if (form is not None and "usercase_preload" in getattr(form, "actions", {})
+            and form.actions.usercase_preload.preload):
+        _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
+        _assert(False, 'User property easy refs + old-style config = bad', {
+            'domain': domain,
+            'app_id': app_id,
+            'module_id': module_id,
+            'module_unique_id': module_unique_id,
+            'form_id': form_id,
+            'form_unique_id': form_unique_id,
+        })
 
     context = get_apps_base_context(request, domain, app)
-    if app and app.copy_of:
+    if app.copy_of:
         # redirect to "main" app rather than specific build
         return HttpResponseRedirect(reverse(
             "view_app", args=[domain, app.copy_of]
@@ -137,12 +134,13 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     })
 
     lang = context['lang']
-    if app and not module and hasattr(app, 'translations'):
+    if not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(lang, {})})
 
-    if app and not app.is_remote_app():
+    if not app.is_remote_app():
         context.update({
             'add_ons': add_ons.get_dict(request, app, module, form),
+            'add_ons_privileges': add_ons.get_privileges_dict(request),
             'add_ons_layout': add_ons.get_layout(request),
         })
 
@@ -157,7 +155,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         app.ensure_module_unique_ids(should_save=True)
         module_context = get_module_view_context(request, app, module, lang)
         context.update(module_context)
-    elif app:
+    else:
         context.update(get_app_view_context(request, app))
 
         template = 'app_manager/app_view_settings.html'
@@ -168,9 +166,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         context.update({
             'is_app_settings_page': not release_manager,
         })
-    else:
-        from corehq.apps.dashboard.views import DomainDashboardView
-        return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
     menu_host = form or module
@@ -235,7 +230,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             'multimedia': {
                 "object_map": app.get_object_map(),
                 'upload_managers': uploaders,
-                'upload_managers_js': {type: u.js_options for type, u in six.iteritems(uploaders)},
+                'upload_managers_js': {type: u.js_options for type, u in uploaders.items()},
             }
         })
         context['module_icon'] = None
@@ -255,17 +250,16 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     })
 
     # Pass form for Copy Application to template
-    domain_names = [
+    domain_names = {
         d.name for d in Domain.active_for_user(request.couch_user)
         if not (is_linked_domain(request.domain)
                 and get_domain_master_link(request.domain).master_domain == d.name)
-    ]
-    domain_names.sort()
-    if app and copy_app_form is None:
-        toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
-        copy_app_form = CopyApplicationForm(domain, app, export_zipped_apps_enabled=toggle_enabled)
+    }
+    domain_names.add(request.domain)
+    if copy_app_form is None:
+        copy_app_form = CopyApplicationForm(domain, app)
         context.update({
-            'domain_names': domain_names,
+            'domain_names': sorted(domain_names),
         })
     linked_domains_enabled = toggles.LINKED_DOMAINS.enabled(domain)
     context.update({
@@ -275,8 +269,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
 
-    if (app and app.doc_type in ('Application', 'LinkedApplication')
-            and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER)):
+    if not is_remote_app(app) and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
@@ -309,7 +302,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         })
 
     context.update({
-        'show_live_preview': app and should_show_preview_app(
+        'show_live_preview': should_show_preview_app(
             request,
             app,
             request.couch_user.username

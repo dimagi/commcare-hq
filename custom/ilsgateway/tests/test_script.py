@@ -1,11 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 from django.test.testcases import TestCase
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.models import SMS, OUTGOING, PhoneNumber
 from corehq.apps.sms.util import strip_plus
-import six
 
 
 class TestScript(TestCase):
@@ -43,6 +40,6 @@ class TestScript(TestCase):
                 incoming(phone_number, command['text'], v.backend_id)
             else:
                 msg = self.get_last_outbound_sms(v.owner_doc_type, v.owner_id)
-                self.assertEqual(msg.text, six.text_type(command['text']))
+                self.assertEqual(msg.text, str(command['text']))
                 self.assertEqual(strip_plus(msg.phone_number), strip_plus(phone_number))
                 msg.delete()

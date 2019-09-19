@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
 
 from custom.icds_reports.messages import awcs_launched_help_text
@@ -118,8 +116,8 @@ class TestICDSCASReach(TestCase):
                             'redirect': 'icds_cas_reach/awc_daily_status',
                             'all': 21,
                             'format': 'div',
-                            'color': 'green',
-                            'percent': 'Data in the previous reporting period was 0',
+                            'color': 'red',
+                            'percent': -100.0,
                             'value': 0,
                             'label': 'Number of AWCs Open yesterday',
                             'frequency': 'day',
@@ -201,8 +199,8 @@ class TestICDSCASReach(TestCase):
                             'redirect': 'icds_cas_reach/awc_daily_status',
                             'all': 21,
                             'format': 'div',
-                            'color': 'green',
-                            'percent': 'Data in the previous reporting period was 0',
+                            'color': 'red',
+                            'percent': -100.0,
                             'value': 0,
                             'label': 'Number of AWCs Open yesterday',
                             'frequency': 'day',

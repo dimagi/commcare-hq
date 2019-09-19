@@ -1,14 +1,8 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from collections import OrderedDict
 
-import six
 from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from memoized import memoized
-from six.moves import range
 
 from custom.icds_reports.sqldata.agg_awc_monthly import AggAWCMonthlyDataSource
 from custom.icds_reports.sqldata.agg_ccs_record_monthly import AggCCSRecordMonthlyDataSource
@@ -628,7 +622,7 @@ class FactSheetsReport(object):
 
         data_sources = [
             data_source.get_data()
-            for k, data_source in six.iteritems(self.data_sources(self.config))
+            for k, data_source in self.data_sources(self.config).items()
             if k in needed_data_sources
         ]
 

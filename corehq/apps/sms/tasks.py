@@ -1,39 +1,60 @@
-from __future__ import absolute_import
-
-from __future__ import division
-from __future__ import unicode_literals
 import hashlib
 import math
 from datetime import datetime, timedelta
 
-from celery.schedules import crontab
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge_task
 from django.conf import settings
 from django.db import DataError, transaction
 
+from celery.schedules import crontab
+
+from dimagi.utils.couch import (
+    CriticalSection,
+    get_redis_client,
+    get_redis_lock,
+    release_lock,
+)
+from dimagi.utils.rate_limit import rate_limit
+
 from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_trial
+from corehq.apps.accounting.utils import (
+    domain_has_privilege,
+    domain_is_on_trial,
+)
 from corehq.apps.domain.models import Domain
-from corehq.apps.sms.api import (create_billable_for_sms, get_utcnow,
-    log_sms_exception, process_incoming, send_message_via_backend,
-    DelayProcessing)
+from corehq.apps.sms.api import (
+    DelayProcessing,
+    create_billable_for_sms,
+    get_utcnow,
+    log_sms_exception,
+    process_incoming,
+    send_message_via_backend,
+)
 from corehq.apps.sms.change_publishers import publish_sms_saved
-from corehq.apps.sms.mixin import (InvalidFormatException,
-    PhoneNumberInUseException, apply_leniency)
-from corehq.apps.sms.models import (INCOMING, MigrationStatus, OUTGOING,
-    PhoneLoadBalancingMixin, PhoneNumber, QueuedSMS, SMS, DailyOutboundSMSLimitReached)
+from corehq.apps.sms.mixin import (
+    InvalidFormatException,
+    PhoneNumberInUseException,
+    apply_leniency,
+)
+from corehq.apps.sms.models import (
+    INCOMING,
+    OUTGOING,
+    SMS,
+    DailyOutboundSMSLimitReached,
+    MigrationStatus,
+    PhoneLoadBalancingMixin,
+    PhoneNumber,
+    QueuedSMS,
+)
 from corehq.apps.sms.util import is_contact_active
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.util import use_phone_entries
-from corehq.toggles import RETRY_SMS_INDEFINITELY, USE_SMS_WITH_INACTIVE_CONTACTS
+from corehq.toggles import USE_SMS_WITH_INACTIVE_CONTACTS
 from corehq.util.celery_utils import no_result_task
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge_task
 from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.couch import CriticalSection, get_redis_client, get_redis_lock, release_lock
-from dimagi.utils.rate_limit import rate_limit
-
 
 MAX_TRIAL_SMS = 50
 
@@ -62,8 +83,6 @@ def handle_unsuccessful_processing_attempt(msg):
     msg.num_processing_attempts += 1
     if msg.num_processing_attempts < settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS:
         delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INTERVAL)
-    elif msg.direction == OUTGOING and RETRY_SMS_INDEFINITELY.enabled(msg.domain):
-        delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INDEFINITELY_INTERVAL)
     else:
         msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
         remove_from_queue(msg)

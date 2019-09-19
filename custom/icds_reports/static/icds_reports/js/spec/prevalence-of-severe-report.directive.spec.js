@@ -32,6 +32,7 @@ describe('Prevalence Of Severe Directive feature flag disable', function () {
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToFeatures", false);
         $provide.constant("haveAccessToAllLocations", false);
+        $provide.constant("isAlertActive", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -275,6 +276,7 @@ describe('Prevalence Of Severe Directive feature flag enable', function () {
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToFeatures", true);
         $provide.constant("haveAccessToAllLocations", false);
+        $provide.constant("isAlertActive", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {

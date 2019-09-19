@@ -1,25 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
+import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import partial
-import uuid
 
-from django_bulk_update.helper import bulk_update as bulk_update_helper
-
-import jsonfield
 from django.db import models, transaction
 from django.db.models import Q
+
+import jsonfield
+from django_bulk_update.helper import bulk_update as bulk_update_helper
 from django_cte import CTEQuerySet
 from memoized import memoized
-import six
 
-from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.adjacencylist import AdjListModel, AdjListManager
+from corehq.apps.locations.adjacencylist import AdjListManager, AdjListModel
 from corehq.apps.products.models import SQLProduct
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 
 
@@ -87,7 +83,6 @@ def stock_level_config_for_domain(domain, commtrack_enabled):
         return ct_config.stock_levels_config
 
 
-@six.python_2_unicode_compatible
 class LocationType(models.Model):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255)
@@ -135,7 +130,6 @@ class LocationType(models.Model):
     def __init__(self, *args, **kwargs):
         super(LocationType, self).__init__(*args, **kwargs)
         self._administrative_old = self.administrative
-        self._has_user_old = self.has_user
 
     @property
     def expand_from(self):
@@ -168,8 +162,6 @@ class LocationType(models.Model):
         self.overstock_threshold = config.overstock_threshold
 
     def save(self, *args, **kwargs):
-        from .tasks import update_location_users
-
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
@@ -185,8 +177,6 @@ class LocationType(models.Model):
 
         if is_not_first_save:
             self.sync_administrative_status()
-            if self._has_user_old != self.has_user:
-                update_location_users.delay(self)
 
         return saved
 
@@ -372,7 +362,6 @@ class OnlyArchivedLocationManager(LocationManager):
         return list(self.accessible_to_user(domain, user).location_ids())
 
 
-@six.python_2_unicode_compatible
 class SQLLocation(AdjListModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255, null=True)
@@ -397,7 +386,7 @@ class SQLLocation(AdjListModel):
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True, blank=True)
 
-    # For locations where location_type.has_user == True
+    # No longer used. Should be removed once all references have been tracked down and removed
     user_id = models.CharField(max_length=255, blank=True)
 
     objects = _tree_manager = LocationManager()
@@ -425,8 +414,6 @@ class SQLLocation(AdjListModel):
 
         if not self.location_id:
             self.location_id = uuid.uuid4().hex
-            if six.PY2:
-                self.location_id = self.location_id.decode('utf-8')
 
         with transaction.atomic():
             set_site_code_if_needed(self)
@@ -919,7 +906,7 @@ class LocationRelation(models.Model):
         location_dict: {loc_id: distance}
         """
 
-        for loc_id, distance in six.iteritems(location_dict):
+        for loc_id, distance in location_dict.items():
             relation = cls.objects.filter(
                 (Q(location_a_id=loc_id) & Q(location_b_id=source_location_id)) |
                 (Q(location_b_id=loc_id) & Q(location_a_id=source_location_id))

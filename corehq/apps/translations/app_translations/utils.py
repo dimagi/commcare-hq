@@ -1,19 +1,19 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 from django.utils.translation import ugettext as _
 
-from corehq.apps.app_manager.exceptions import ModuleNotFoundException, FormNotFoundException
+from corehq.apps.app_manager.exceptions import (
+    FormNotFoundException,
+    ModuleNotFoundException,
+)
 from corehq.apps.translations.const import (
     MODULES_AND_FORMS_SHEET_NAME,
     SINGLE_SHEET_NAME,
+    SINGLE_SHEET_STATIC_HEADERS,
 )
-from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.apps.translations.generators import EligibleForTransifexChecker
 
 
-def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form=None, by_id=False):
+def get_bulk_app_sheet_headers(app, single_sheet=False, lang=None, eligible_for_transifex_only=False,
+                               by_id=False):
     '''
     Returns lists representing the expected structure of bulk app translation
     Excel file uploads and downloads.
@@ -25,11 +25,10 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
         ...
     ]
 
-    exclude_module and exclude_form are functions that take in one argument
-    (form or module) and return True if the module/form should be excluded
-    from the returned list
+    `eligible_for_transifex_only` will skip modules and forms that have "SKIP
+    TRANSIFEX" in their comment.
     '''
-    langs = [lang] if lang else app.langs
+    langs = [lang] if single_sheet else app.langs
 
     default_lang_list = ['default_' + l for l in langs]
     audio_lang_list = ['audio_' + l for l in langs]
@@ -37,12 +36,9 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
     video_lang_list = ['video_' + l for l in langs]
     lang_list = default_lang_list + image_lang_list + audio_lang_list + video_lang_list
 
-    if lang:
-        return ((SINGLE_SHEET_NAME, (
-            'menu_or_form',
-            'case_property',        # modules only
-            'list_or_detail',       # modules only
-            'label',                # forms only
+    if single_sheet:
+        return ((SINGLE_SHEET_NAME, tuple(
+            SINGLE_SHEET_STATIC_HEADERS
         ) + tuple(lang_list) + ('unique_id',)),)
 
     headers = []
@@ -61,7 +57,7 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
     ])
 
     for module in app.get_modules():
-        if exclude_module is not None and exclude_module(module):
+        if eligible_for_transifex_only and EligibleForTransifexChecker.exclude_module(module):
             continue
 
         sheet_name = module.unique_id if by_id else get_module_sheet_name(module)
@@ -70,7 +66,7 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
         for form in module.get_forms():
             if form.form_type == 'shadow_form':
                 continue
-            if exclude_form is not None and exclude_form(form):
+            if eligible_for_transifex_only and EligibleForTransifexChecker.exclude_form(form):
                 continue
 
             sheet_name = form.unique_id if by_id else get_form_sheet_name(form)
@@ -92,13 +88,13 @@ def get_modules_and_forms_row(row_type, sheet_name, languages, media_image, medi
     assert isinstance(languages, list)
     assert isinstance(media_image, list)
     assert isinstance(media_audio, list)
-    assert isinstance(unique_id, six.string_types)
-    soft_assert_type_text(unique_id)
+    assert isinstance(unique_id, str), type(unique_id)
 
-    return [item if item is not None else "" for item in
-            ([row_type, sheet_name] +
-             get_menu_row(languages, media_image, media_audio) +
-             [unique_id])]
+    return [item if item is not None else ""
+            for item in (
+                [row_type, sheet_name]
+                + get_menu_row(languages, media_image, media_audio)
+                + [unique_id])]
 
 
 def get_menu_row(languages, media_image, media_audio):
@@ -188,11 +184,11 @@ def get_unicode_dicts(iterable):
 
     """
     def none_or_unicode(val):
-        return six.text_type(val) if val is not None else val
+        return str(val) if val is not None else val
 
     rows = []
     for row in iterable:
-        rows.append({six.text_type(k): none_or_unicode(v) for k, v in six.iteritems(row)})
+        rows.append({str(k): none_or_unicode(v) for k, v in row.items()})
     return rows
 
 

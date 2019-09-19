@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 import logging
 import os
 import sys
@@ -11,7 +8,6 @@ from corehq.blobs.migrate import MIGRATIONS
 from corehq.blobs.util import set_max_connections
 from corehq.util.decorators import change_log_level
 from corehq.util.teeout import tee_output
-from six.moves import range
 
 
 DEFAULT_WORKER_POOL_SIZE = 10

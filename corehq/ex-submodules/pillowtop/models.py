@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from django.db import models
 from kafka.common import TopicPartition
-import six
 
 SEQUENCE_FORMATS = (
     ('text', 'text'),
@@ -25,8 +22,6 @@ def kafka_seq_to_str(seq):
     # json doesn't like tuples as keys
     seq = {'{},{}'.format(*key): val for key, val in seq.items()}
     json_seq = json.dumps(seq)
-    if six.PY2:
-        json_seq = json_seq.decode('utf-8')
     return json_seq
 
 

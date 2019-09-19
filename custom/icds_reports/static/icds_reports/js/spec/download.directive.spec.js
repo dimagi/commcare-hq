@@ -20,6 +20,7 @@ describe('Download Directive', function () {
                 ['awc', ['supervisor']],
             ]);
             $provide.constant("haveAccessToFeatures", false);
+        $provide.constant("isAlertActive", false);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -258,6 +259,7 @@ describe('Download Directive', function () {
                 ['state', [null]],
                 ['supervisor', ['block']]]);
             $provide.constant("haveAccessToFeatures", true);
+            $provide.constant("isAlertActive", false);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -287,10 +289,8 @@ describe('Download Directive', function () {
         }));
 
         it('tests that all users have access to ISSNIP monthly register', function () {
-            var expected = 9;
-            if (controller.haveAccessToFeatures) {
-                expected++;
-            }
+            var expected = 10;
+
             var length = controller.indicators.length;
             assert.equal(expected, length);
         });
@@ -363,6 +363,7 @@ describe('Download Directive', function () {
                 ['state', [null]],
                 ['supervisor', ['block']]]);
             $provide.constant("haveAccessToFeatures", false);
+            $provide.constant("isAlertActive", false);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -393,7 +394,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(9, length);
+            assert.equal(10, length);
         });
     });
 

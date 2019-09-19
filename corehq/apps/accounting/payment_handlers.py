@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from decimal import Decimal
 
 from django.conf import settings
@@ -11,12 +9,12 @@ import stripe
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
-    Invoice,
     CustomerInvoice,
+    Invoice,
+    LastPayment,
     PaymentRecord,
     PreOrPostPay,
     StripePaymentMethod,
-    LastPayment
 )
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,

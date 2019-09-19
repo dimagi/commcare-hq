@@ -1,11 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import pytz
 from django.template.loader import render_to_string
-from memoized import memoized
 # For translations
 from django.utils.translation import ugettext_noop
-from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS, CSS_FIELD_CLASS
+
+import pytz
+from memoized import memoized
+
+from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS, CSS_LABEL_CLASS
+from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
 
 
 class BaseReportFilter(object):
@@ -169,7 +170,10 @@ class BaseMultipleOptionFilter(BaseSingleOptionFilter):
 
     @classmethod
     def get_value(cls, request, domain):
-        return request.GET.getlist(cls.slug)
+        selected_ids = []
+        for ids in request.GET.getlist(cls.slug):
+            selected_ids.extend(ids.split(CHOICE_DELIMITER))
+        return selected_ids
 
     @property
     @memoized

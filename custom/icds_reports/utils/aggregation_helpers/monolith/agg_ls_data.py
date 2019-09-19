@@ -1,8 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from dateutil.relativedelta import relativedelta
-from six.moves import range
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
@@ -14,7 +10,6 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 class AggLsHelper(BaseICDSAggregationHelper):
     helper_key = 'agg-ls'
     base_tablename = 'agg_ls'
-    awc_location_ucr = 'static-awc_location'
 
     def __init__(self, month):
         self.month_start = transform_day_to_month(month)
@@ -96,12 +91,16 @@ class AggLsHelper(BaseICDSAggregationHelper):
         (
         SELECT
         {calculations}
-        from (select distinct state_id, district_id, block_id, supervisor_id from "{awc_location_ucr}" where (
-        state_is_test=0 AND
-        district_is_test=0 AND
-        block_is_test=0 AND
-        supervisor_is_test=0
-        )) location
+        from (
+            select distinct state_id, district_id, block_id, supervisor_id
+            from awc_location_local where (
+                state_is_test=0 AND
+                district_is_test=0 AND
+                block_is_test=0 AND
+                supervisor_is_test=0 AND
+                aggregation_level = 4
+            )
+        ) location
         LEFT  JOIN "{awc_table}" awc_table on (
             location.supervisor_id=awc_table.supervisor_id AND
             awc_table.month = %(start_date)s
@@ -119,7 +118,6 @@ class AggLsHelper(BaseICDSAggregationHelper):
             tablename=self.tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
-            awc_location_ucr=self._ucr_tablename(ucr_id=self.awc_location_ucr),
             awc_table=AGG_LS_AWC_VISIT_TABLE,
             vhnd_table=AGG_LS_VHND_TABLE,
             beneficiary_table=AGG_LS_BENEFICIARY_TABLE
@@ -135,18 +133,18 @@ class AggLsHelper(BaseICDSAggregationHelper):
         """
         indexes = []
         agg_locations = ['state_id']
+        tablename = self._tablename_func(aggregation_level)
         if aggregation_level > 1:
-            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(self._tablename_func(aggregation_level)))
+            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(tablename))
             agg_locations.append('district_id')
         if aggregation_level > 2:
-            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(self._tablename_func(aggregation_level)))
+            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(tablename))
             agg_locations.append('block_id')
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(self._tablename_func(aggregation_level)))
+            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(tablename))
             agg_locations.append('supervisor_id')
 
-        indexes.append('CREATE INDEX ON "{}" ({})'.format(self._tablename_func(aggregation_level),
-                                                          ', '.join(agg_locations)))
+        indexes.append('CREATE INDEX ON "{}" ({})'.format(tablename, ', '.join(agg_locations)))
         return indexes
 
     def rollup_query(self, agg_level):

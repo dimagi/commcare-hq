@@ -21,8 +21,6 @@ Example case graphs with outcomes:
 
    a(closed) <--ext-- b <--chi-- c(owned) >> []
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 from collections import defaultdict
 from itertools import chain, islice

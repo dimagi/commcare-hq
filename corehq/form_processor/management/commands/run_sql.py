@@ -3,10 +3,6 @@
 SQL statement templates may use the `{chunk_size}` placeholder, which
 will be replaced with the value of the --chunk-size=N command argument.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 import pprint
 import sys
 import traceback
@@ -15,14 +11,11 @@ from contextlib import contextmanager
 
 import attr
 import gevent
-import six
 from django.core.management.base import BaseCommand
 from django.db import connections
-from six.moves import input
 
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.teeout import tee_output
-from six.moves import zip
 
 MULTI_DB = 'Executing on ALL (%s) databases in parallel. Continue?'
 
@@ -90,7 +83,7 @@ def fetch_dicts(cursor):
     try:
         rows = cursor.fetchall()
     except Exception as err:
-        if six.text_type(err) != "no results to fetch":
+        if str(err) != "no results to fetch":
             raise
         rows = []
     if not rows:

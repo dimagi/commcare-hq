@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import pytz
 import uuid
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -27,7 +25,6 @@ from dimagi.utils.modules import to_function
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
-import six
 
 
 # The number of minutes after which a schedule instance is considered stale.
@@ -245,7 +242,7 @@ class ScheduleInstance(PartitionedModel):
         if not self.memoized_schedule.user_data_filter:
             return True
 
-        for key, value in six.iteritems(self.memoized_schedule.user_data_filter):
+        for key, value in self.memoized_schedule.user_data_filter.items():
             if key not in contact.user_data:
                 return False
 

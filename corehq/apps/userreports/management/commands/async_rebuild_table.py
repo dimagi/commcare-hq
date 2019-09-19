@@ -1,14 +1,14 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import argparse
 from collections import namedtuple
 
 from django.core.management.base import BaseCommand
 
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
-from corehq.apps.userreports.models import AsyncIndicator, get_datasource_config
+from corehq.apps.userreports.models import (
+    AsyncIndicator,
+    get_datasource_config,
+)
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 
 FakeChange = namedtuple('FakeChange', ['id', 'document'])
 CASE_DOC_TYPE = 'CommCareCase'

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import hashlib
 import binascii
 from copy import copy
@@ -14,26 +12,23 @@ CASE_STATE_HASH_PREFIX = "ccsh"
 
 
 class CaseStateHash(object):
-    
+
     def __init__(self, hash):
         self.hash = hash
-    
+
     @classmethod
     def parse(cls, str):
         assert str.lower().startswith("%s:" % CASE_STATE_HASH_PREFIX)
         return cls(str[len(CASE_STATE_HASH_PREFIX) + 1:])
-    
+
     def __str__(self):
         return "%s:%s" % (CASE_STATE_HASH_PREFIX, self.hash)
-    
+
     def __eq__(self, obj):
-        return isinstance(obj, CaseStateHash) and obj.hash == self.hash 
-    
-    def __ne__(self, obj):
-        return not self == obj
+        return isinstance(obj, CaseStateHash) and obj.hash == self.hash
 
     __hash__ = None
-        
+
 
 class Checksum(object):
     """

@@ -1,50 +1,47 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
-import os
-import uuid
-import re
 import logging
-import yaml
+import os
+import re
+import uuid
 from collections import OrderedDict, namedtuple
 from copy import deepcopy
-from io import open
 
+from django.core.cache import cache
+from django.db.models import Max
+from django.http import Http404
+from django.urls import reverse
+from django.utils.translation import ugettext as _
 
+import yaml
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
 from memoized import memoized
 
-from django.urls import reverse
-from django.core.cache import cache
-from django.http import Http404
-from django.utils.translation import ugettext as _
-from django.db.models import Max
-
-from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import (
-    get_apps_in_domain, get_app
-)
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError, PracticeUserException
-from corehq.apps.app_manager.xpath import UserCaseXPath
-from corehq.apps.builds.models import CommCareBuildConfig
-from corehq.apps.app_manager.tasks import create_user_cases
-from corehq.apps.locations.models import SQLLocation
-from corehq.util.soft_assert import soft_assert
-from corehq.apps.domain.models import Domain
-from corehq.apps.app_manager.const import (
-    AUTO_SELECT_USERCASE,
-    USERCASE_TYPE,
-    USERCASE_ID,
-    USERCASE_PREFIX,
-)
-from corehq.apps.app_manager.exceptions import XFormException
-from corehq.apps.app_manager.xform import XForm, parse_xml
-from corehq.apps.users.models import CommCareUser
-from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
 
+from corehq import toggles
+from corehq.apps.app_manager.const import (
+    AUTO_SELECT_USERCASE,
+    USERCASE_ID,
+    USERCASE_PREFIX,
+    USERCASE_TYPE,
+)
+from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.app_manager.exceptions import (
+    PracticeUserException,
+    SuiteError,
+    SuiteValidationError,
+    XFormException,
+)
+from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.app_manager.xform import XForm, parse_xml
+from corehq.apps.app_manager.xpath import UserCaseXPath
+from corehq.apps.builds.models import CommCareBuildConfig
+from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
+from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +69,23 @@ def app_doc_types():
         'LinkedApplication': LinkedApplication,
         'LinkedApplication-Deleted': LinkedApplication
     }
+
+
+def is_linked_app(app_or_doc, include_deleted=False):
+    return _get_doc_type(app_or_doc) in ('LinkedApplication', 'LinkedApplication-Deleted')
+
+
+def is_remote_app(app_or_doc, include_deleted=False):
+    return _get_doc_type(app_or_doc) in ('RemoteApp', 'RemoteApp-Deleted')
+
+
+def _get_doc_type(app_or_doc):
+    if hasattr(app_or_doc, 'doc_type'):
+        doc_type = app_or_doc.doc_type
+    elif 'doc_type' in app_or_doc:
+        doc_type = app_or_doc['doc_type']
+    assert doc_type
+    return doc_type
 
 
 def _prepare_xpath_for_validation(xpath):
@@ -563,7 +577,9 @@ class LatestAppInfo(object):
 
     def clear_caches(self):
         self.get_latest_app_version.clear(self)
+        self.get_latest_apk_version.clear(self)
 
+    @quickcache(vary_on=['self.app_id'])
     def get_latest_apk_version(self):
         from corehq.apps.app_manager.models import LATEST_APK_VALUE
         from corehq.apps.builds.models import BuildSpec

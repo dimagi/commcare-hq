@@ -1,31 +1,34 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+
+from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
-from six.moves import range
+
+from couchforms.analytics import (
+    get_all_xmlns_app_id_pairs_submitted_to_in_domain,
+)
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import (
     get_all_form_definitions_grouped_by_app_and_xmlns,
     get_all_form_details,
-    get_form_details_for_xmlns,
-    get_form_details_for_app_and_xmlns,
-    get_form_details_for_app_and_module,
     get_form_details_for_app,
+    get_form_details_for_app_and_module,
+    get_form_details_for_app_and_xmlns,
+    get_form_details_for_xmlns,
 )
-from corehq.apps.reports.analytics.esaccessors import guess_form_name_from_submissions_using_xmlns
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
+from corehq.apps.reports.analytics.esaccessors import (
+    guess_form_name_from_submissions_using_xmlns,
+)
+from corehq.apps.reports.filters.base import (
+    BaseDrilldownOptionFilter,
+    BaseSingleOptionFilter,
+)
 from corehq.const import MISSING_APP_ID
 from corehq.elastic import ESError
 from corehq.util.context_processors import commcare_hq_names
-from corehq.util.python_compatibility import soft_assert_type_text
-from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 
 PARAM_SLUG_STATUS = 'status'
 PARAM_SLUG_APP_ID = 'app_id'
@@ -134,7 +137,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 'checked': self._hide_fuzzy_results,
             },
             'display_app_type': self.display_app_type,
-            'support_email': settings.SUPPORT_EMAIL,
             'all_form_retrieval_failed': self.all_form_retrieval_failed,
         })
 
@@ -407,8 +409,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
         If obj is a string, just output that string.
         """
-        if isinstance(obj, six.string_types):
-            soft_assert_type_text(obj)
+        if isinstance(obj, str):
             return obj
         if not obj:
             return _('Untitled')
