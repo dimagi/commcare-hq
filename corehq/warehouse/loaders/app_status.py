@@ -17,7 +17,7 @@ from corehq.warehouse.models import (
 )
 
 
-class AppStatusFormStagingLoader(BaseStagingLoader, CustomSQLETLMixin):
+class AppStatusFormStagingLoader(CustomSQLETLMixin, BaseStagingLoader):
     slug = APP_STATUS_FORM_STAGING_SLUG
     model_cls = AppStatusFormStaging
 
@@ -32,7 +32,7 @@ class AppStatusFormStagingLoader(BaseStagingLoader, CustomSQLETLMixin):
         ]
 
 
-class AppStatusSynclogStagingLoader(BaseStagingLoader, CustomSQLETLMixin):
+class AppStatusSynclogStagingLoader(CustomSQLETLMixin, BaseStagingLoader):
     slug = APP_STATUS_SYNCLOG_STAGING_SLUG
     model_cls = AppStatusSynclogStaging
 
@@ -47,7 +47,7 @@ class AppStatusSynclogStagingLoader(BaseStagingLoader, CustomSQLETLMixin):
         ]
 
 
-class ApplicationStatusFactLoader(BaseLoader, CustomSQLETLMixin):
+class ApplicationStatusFactLoader(CustomSQLETLMixin, BaseLoader):
     """
     Application Status Report Fact Table
 

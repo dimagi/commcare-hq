@@ -7,7 +7,7 @@ from corehq.warehouse.models import DomainStagingTable, DomainDim
 from dimagi.utils.couch.database import iter_docs
 
 
-class DomainStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
+class DomainStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     Represents the staging table to dump data before loading into the DomainDim
 
@@ -18,17 +18,7 @@ class DomainStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
 
     @classmethod
     def dependencies(cls):
-        # TODO: change this to be 'context'
-        # return map_slugs_to_table_names([....])
         return []
-
-    def validate_field_mapping(self):
-        # TODO: call this somewhere in tests
-        model_fields = {field.name for field in self.model_cls._meta.fields}
-        mapping_fields = {field for _, field in self.field_mapping()}
-        missing = mapping_fields - model_fields
-        if missing:
-            raise Exception('Mapping fields refer to missing model fields', missing)
 
     @classmethod
     def field_mapping(cls):
@@ -60,7 +50,7 @@ class DomainStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         return iter_docs(Domain.get_db(), domain_ids)
 
 
-class DomainDimLoader(BaseLoader, CustomSQLETLMixin):
+class DomainDimLoader(CustomSQLETLMixin, BaseLoader):
     """
     Dimension for Domain
 

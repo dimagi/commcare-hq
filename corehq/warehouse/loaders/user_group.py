@@ -9,7 +9,7 @@ from corehq.warehouse.loaders.base import BaseLoader
 from corehq.warehouse.models import UserGroupDim
 
 
-class UserGroupDimLoader(BaseLoader, CustomSQLETLMixin):
+class UserGroupDimLoader(CustomSQLETLMixin, BaseLoader):
     """
     Dimension for User and Group mapping
 

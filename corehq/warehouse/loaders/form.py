@@ -5,7 +5,7 @@ from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import FormStagingTable, FormFact
 
 
-class FormStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
+class FormStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     Represents the staging table to dump data before loading into the FormFact
 
@@ -43,7 +43,7 @@ class FormStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         return get_forms_by_last_modified(start_datetime, end_datetime)
 
 
-class FormFactLoader(BaseLoader, CustomSQLETLMixin):
+class FormFactLoader(CustomSQLETLMixin, BaseLoader):
     """
     Contains all `XFormInstance`s
 

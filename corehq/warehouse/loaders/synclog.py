@@ -5,7 +5,7 @@ from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import SyncLogStagingTable, SyncLogFact
 
 
-class SyncLogStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
+class SyncLogStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     Represents the staging table to dump data before loading into the SyncLogFact
 
@@ -34,7 +34,7 @@ class SyncLogStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         return get_synclogs_by_date(start_datetime, end_datetime)
 
 
-class SyncLogFactLoader(BaseLoader, CustomSQLETLMixin):
+class SyncLogFactLoader(CustomSQLETLMixin, BaseLoader):
     """
     SyncLog Fact Table
     Grain: sync_log_id

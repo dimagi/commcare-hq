@@ -7,7 +7,7 @@ from corehq.warehouse.models import UserStagingTable, UserDim
 from dimagi.utils.couch.database import iter_docs
 
 
-class UserStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
+class UserStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     Represents the staging table to dump data before loading into the UserDim
 
@@ -48,7 +48,7 @@ class UserStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         return iter_docs(CouchUser.get_db(), user_ids)
 
 
-class UserDimLoader(BaseLoader, CustomSQLETLMixin):
+class UserDimLoader(CustomSQLETLMixin, BaseLoader):
     """
     Dimension for Users
 

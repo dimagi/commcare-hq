@@ -7,7 +7,7 @@ from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
 from corehq.warehouse.models import LocationStagingTable, LocationDim
 
 
-class LocationStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
+class LocationStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     Represents the staging table to dump data before loading into the LocationDim
 
@@ -51,7 +51,7 @@ class LocationStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         ).select_related('location_type').iterator()
 
 
-class LocationDimLoader(BaseLoader, CustomSQLETLMixin):
+class LocationDimLoader(CustomSQLETLMixin, BaseLoader):
     """
     Dimension for Locations
 

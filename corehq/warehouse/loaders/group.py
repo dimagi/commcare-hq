@@ -7,7 +7,7 @@ from corehq.warehouse.models import GroupStagingTable, GroupDim
 from dimagi.utils.couch.database import iter_docs
 
 
-class GroupStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
+class GroupStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     Represents the staging table to dump data before loading into the GroupDim
 
@@ -41,7 +41,7 @@ class GroupStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         return iter_docs(Group.get_db(), group_ids)
 
 
-class GroupDimLoader(BaseLoader, CustomSQLETLMixin):
+class GroupDimLoader(CustomSQLETLMixin, BaseLoader):
     """
     Dimension for Groups
 

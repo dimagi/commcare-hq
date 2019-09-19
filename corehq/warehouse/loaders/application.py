@@ -7,7 +7,7 @@ from corehq.warehouse.models import ApplicationStagingTable, ApplicationDim
 from dimagi.utils.couch.database import iter_docs
 
 
-class ApplicationStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
+class ApplicationStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     Represents the staging table to dump data before loading into the ApplicationDim
 
@@ -39,7 +39,7 @@ class ApplicationStagingLoader(BaseStagingLoader, HQToWarehouseETLMixin):
         return iter_docs(Application.get_db(), application_ids)
 
 
-class ApplicationDimLoader(BaseLoader, CustomSQLETLMixin):
+class ApplicationDimLoader(CustomSQLETLMixin, BaseLoader):
     """
     Dimension for Applications
 

@@ -22,6 +22,10 @@ class BaseLoader(object):
         return True
 
     @classmethod
+    def load(cls, batch):
+        raise NotImplementedError
+
+    @classmethod
     def dependencies(cls):
         """Returns a list of slugs that the warehouse table is dependent on"""
         raise NotImplementedError
@@ -34,6 +38,9 @@ class BaseLoader(object):
     @classmethod
     def target_table(cls):
         return cls.model_cls._meta.db_table
+
+    def validate(self):
+        return True
 
 
 class BaseStagingLoader(BaseLoader):

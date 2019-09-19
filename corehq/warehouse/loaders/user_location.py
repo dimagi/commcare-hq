@@ -9,7 +9,7 @@ from corehq.warehouse.loaders.base import BaseLoader
 from corehq.warehouse.models import UserLocationDim
 
 
-class UserLocationDimLoader(BaseLoader, CustomSQLETLMixin):
+class UserLocationDimLoader(CustomSQLETLMixin, BaseLoader):
     """
     Dimension for User and Location mapping
 

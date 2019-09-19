@@ -8,7 +8,7 @@ from corehq.warehouse.loaders.base import BaseLoader
 from corehq.warehouse.models import DomainMembershipDim
 
 
-class DomainMembershipDimLoader(BaseLoader, CustomSQLETLMixin):
+class DomainMembershipDimLoader(CustomSQLETLMixin, BaseLoader):
     """
     Dimension for domain memberships for Web/CommCare users
     """
