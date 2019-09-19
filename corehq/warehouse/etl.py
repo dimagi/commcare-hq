@@ -108,7 +108,7 @@ class HQToWarehouseETLMixin(BaseETLMixin):
         assert issubclass(cls, BaseLoader)
         record_iter = cls.record_iter(batch.start_datetime, batch.end_datetime)
 
-        django_batch_records(cls, record_iter, cls.field_mapping(), batch.id)
+        django_batch_records(cls.model_cls, record_iter, cls.field_mapping(), batch.id)
 
 
 def _render_template(path, context):
