@@ -188,7 +188,6 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                     unique_products_for_location = []
                     products_to_add = []
                     for product in products:
-                        print(product)
                         product_name = product['product_name']
                         if product_name not in unique_products_for_location and product_name in all_products:
                             unique_products_for_location.append(product_name)
