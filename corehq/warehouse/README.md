@@ -54,6 +54,8 @@ $ ./manage.py commit_table application_dim 73
 $ ./manage.py mark_batch_complete 73
 ```
 
+The full workflow can be seen in the Airflow UI or the [Airflow dag graphs](https://github.com/dimagi/pipes/blob/master/docs/warehouse/warehouse.md).
+
 ### Table loaders
 The ETL for each 'table' is handled by a specific 'loader' class. These classes contain the logic necessary
 to fill the warehouse table they are responsible for. There are two categories of loaders:
