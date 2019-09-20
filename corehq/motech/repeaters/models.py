@@ -1,13 +1,13 @@
 import warnings
 from datetime import datetime, timedelta
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.utils.translation import ugettext_lazy as _
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
+from requests.exceptions import ConnectionError, Timeout
 
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -50,8 +50,6 @@ from corehq.util.datadog.metrics import (
     REPEATER_SUCCESS_COUNT,
 )
 from corehq.util.quickcache import quickcache
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
-from requests.exceptions import ConnectionError, Timeout
 
 from .const import (
     MAX_RETRY_WAIT,
@@ -379,14 +377,14 @@ class FormRepeater(Repeater):
             return url
         else:
             # adapted from http://stackoverflow.com/a/2506477/10840
-            url_parts = list(six.moves.urllib.parse.urlparse(url))
-            query = six.moves.urllib.parse.parse_qsl(url_parts[4])
+            url_parts = list(urlparse(url))
+            query = parse_qsl(url_parts[4])
             try:
                 query.append(("app_id", self.payload_doc(repeat_record).app_id))
             except (XFormNotFound, ResourceNotFound):
                 return None
-            url_parts[4] = six.moves.urllib.parse.urlencode(query)
-            return six.moves.urllib.parse.urlunparse(url_parts)
+            url_parts[4] = urlencode(query)
+            return urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
         headers = super(FormRepeater, self).get_headers(repeat_record)
