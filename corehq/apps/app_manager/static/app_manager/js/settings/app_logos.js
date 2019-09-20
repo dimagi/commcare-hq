@@ -7,7 +7,7 @@ hqDefine("app_manager/js/settings/app_logos", function () {
 
     var imageRefs = {};
     for (var slug in refs) {
-        imageRefs[slug] = hqImport('hqmedia/js/reference_controller').ImageReference(refs[slug]);
+        imageRefs[slug] = hqImport('hqmedia/js/media_reference_models').ImageReference(refs[slug]);
         imageRefs[slug].upload_controller = HQMediaUploaders[slug];
         imageRefs[slug].setObjReference(media_info[slug]);
     }

@@ -30,15 +30,15 @@ hqDefine("hqmedia/js/references_main", function () {
                     self.references(_.compact(_.map(data.references, function (ref) {
                         var objRef = data.object_map[ref.path];
                         if (ref.media_class === "CommCareImage") {
-                            var imageRef = hqImport('hqmedia/js/reference_controller').ImageReference(ref);
+                            var imageRef = hqImport('hqmedia/js/media_reference_models').ImageReference(ref);
                             imageRef.setObjReference(objRef);
                             return imageRef;
                         } else if (ref.media_class === "CommCareAudio") {
-                            var audioRef = hqImport('hqmedia/js/reference_controller').AudioReference(ref);
+                            var audioRef = hqImport('hqmedia/js/media_reference_models').AudioReference(ref);
                             audioRef.setObjReference(objRef);
                             return audioRef;
                         } else if (ref.media_class === "CommCareVideo") {
-                            var videoRef = hqImport('hqmedia/js/reference_controller').VideoReference(ref);
+                            var videoRef = hqImport('hqmedia/js/media_reference_models').VideoReference(ref);
                             videoRef.setObjReference(objRef);
                             return videoRef;
                         } else {

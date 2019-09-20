@@ -1,4 +1,4 @@
-hqDefine("hqmedia/js/reference_controller",[
+hqDefine("hqmedia/js/media_reference_models", [
     'jquery',
     'knockout',
     'underscore',
