@@ -165,8 +165,8 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                     length = len(locations_with_products[location_name])
                     if length < len(products):
                         for product in products:
-                            products_in = [x for x in locations_with_products[location_name]]
-                            if product not in products_in:
+                            products_in = [x['product_name'] for x in locations_with_products[location_name]]
+                            if product['product_name'] not in products_in:
                                 locations_with_products[location_name].append({
                                     'product_name': product['product_name'],
                                     'product_id': product['product_id'],
