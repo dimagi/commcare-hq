@@ -24,8 +24,8 @@ class GenericRepeaterForm(forms.Form):
 
     url = forms.URLField(
         required=True,
-        label='URL to forward to',
-        help_text='Please enter the full url, like http://www.example.com/forwarding/',
+        label=_('URL to forward to'),
+        help_text=_('Please enter the full URL, like "http://www.example.com/forwarding/"'),
         widget=forms.TextInput(attrs={"class": "url"})
     )
     auth_type = forms.ChoiceField(
@@ -39,11 +39,11 @@ class GenericRepeaterForm(forms.Form):
     )
     username = forms.CharField(
         required=False,
-        label='Username',
+        label=_('Username'),
     )
     password = forms.CharField(
         required=False,
-        label='Password',
+        label=_('Password'),
         widget=forms.PasswordInput(render_value=True)
     )
     skip_cert_verify = forms.BooleanField(
