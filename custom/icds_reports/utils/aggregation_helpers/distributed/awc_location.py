@@ -112,8 +112,11 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         return "DELETE FROM \"{local_tablename}\"".format(local_tablename=self.local_tablename)
 
     def aggregate_to_temporary_table(self, cursor, csv_file):
+        columns = csv_file.readline().replace('\t', ',')
+
         # using csv format to not consider `\` as special value
-        query = "COPY {} FROM STDIN DELIMITER '\t' CSV HEADER".format(self.temporary_tablename)
+        query = "COPY {}({}) FROM STDIN DELIMITER '\t' CSV ".format(self.temporary_tablename,
+                                                                    columns)
 
         # double cursor to get psycopg2 cursor from django cursor
         cursor.cursor.copy_expert(query, csv_file)
