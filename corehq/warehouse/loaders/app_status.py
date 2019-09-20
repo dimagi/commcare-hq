@@ -60,5 +60,5 @@ class ApplicationStatusFactLoader(CustomSQLETLMixin, BaseLoader):
     def dependencies(cls):
         return [
             APP_STATUS_SYNCLOG_STAGING_SLUG,
-            APP_STATUS_FORM_STAGING_SLUG,
+            APP_STATUS_FORM_STAGING_SLUG
         ]

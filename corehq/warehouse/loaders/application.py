@@ -35,7 +35,6 @@ class ApplicationStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     @classmethod
     def record_iter(cls, start_datetime, end_datetime):
         application_ids = get_application_ids_by_last_modified(start_datetime, end_datetime)
-
         return iter_docs(Application.get_db(), application_ids)
 
 

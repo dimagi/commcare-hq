@@ -31,6 +31,7 @@ from corehq.warehouse.loaders.user_location import UserLocationDimLoader
 
 def get_loader_by_slug(slug):
     loaders = [
+        # dimensions
         DomainStagingLoader,
         DomainDimLoader,
         UserStagingLoader,
@@ -45,11 +46,13 @@ def get_loader_by_slug(slug):
         UserLocationDimLoader,
         DomainMembershipDimLoader,
 
+        # core fact tables
         FormStagingLoader,
         FormFactLoader,
         SyncLogStagingLoader,
         SyncLogFactLoader,
 
+        # derived fact tables
         AppStatusSynclogStagingLoader,
         AppStatusFormStagingLoader,
         ApplicationStatusFactLoader,

@@ -29,7 +29,6 @@ class DomainStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
             ('hr_name', 'hr_name'),
             ('creating_user_id', 'creating_user_id'),
             ('project_type', 'project_type'),
-
             ('is_active', 'is_active'),
             ('case_sharing', 'case_sharing'),
             ('commtrack_enabled', 'commtrack_enabled'),
@@ -37,7 +36,6 @@ class DomainStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
             ('location_restriction_for_users', 'location_restriction_for_users'),
             ('use_sql_backend', 'use_sql_backend'),
             ('first_domain_for_user', 'first_domain_for_user'),
-
             ('last_modified', 'domain_last_modified'),
             ('date_created', 'domain_created_on'),
             ('doc_type', 'doc_type'),
