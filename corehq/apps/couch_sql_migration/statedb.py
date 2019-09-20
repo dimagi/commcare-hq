@@ -64,6 +64,10 @@ class StateDB(DiffDB):
             db._set_kv("db_unique_id", datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"))
         return db
 
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.is_rebuild = False
+
     def __enter__(self):
         return self
 
@@ -211,6 +215,8 @@ class StateDB(DiffDB):
             kv = self._get_kv(resume_key, session)
             if kv is None:
                 self._set_kv(resume_key, RESUME_NOT_ALLOWED, session)
+                value = default
+            elif self.is_rebuild:
                 value = default
             elif kv.value == RESUME_NOT_ALLOWED:
                 raise ResumeError("previous session did not save resume state")

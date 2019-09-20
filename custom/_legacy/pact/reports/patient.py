@@ -70,6 +70,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
         ret['pt_root_url'] = patient_doc.get_info_url()
         ret['view_mode'] = view_mode
 
+        self.base_template = "pact/patient/base.html"
         if view_mode == 'info':
             self.report_template_path = "pact/patient/pactpatient_info.html"
             ret['cloudcare_addr_edit_url'] = api.get_cloudcare_url(patient_doc._id,

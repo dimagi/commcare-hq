@@ -1125,6 +1125,23 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_form_ids("XFormArchived"), {"arch"})
         self._compare_diffs([])
 
+    def test_rebuild_state(self):
+        def interrupt():
+            os.kill(os.getpid(), SIGINT)
+        form_ids = [f"form-{n}" for n in range(7)]
+        for i, form_id in enumerate(form_ids):
+            self.submit_form(make_test_form(form_id), timedelta(minutes=-90))
+        with self.patch_migration_chunk_size(2), self.on_doc("XFormInstance", "form-3", interrupt):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), set(form_ids[:4]))
+        statedb = init_state_db(self.domain_name, self.state_dir)
+        statedb.pop_resume_state("CaseDiffQueue", None)  # simulate failed exit
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(live=True, rebuild_state=True)
+        self.assertEqual(self._get_form_ids(), set(form_ids))
+        self._compare_diffs([])
+
     def test_case_forms_list_order(self):
         SERVER_DATES = [
             datetime.strptime("2015-07-13T11:21:00.639795Z", ISO_DATETIME_FORMAT),
