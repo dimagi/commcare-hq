@@ -62,6 +62,11 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 'awc_name': location['name'].replace("\n", ""),
                 'awc_site_code': location['site_code'],
                 'awc_is_test': 1 if metadata.get('is_test_location') == 'test' else 0,
+                # default values in case the location hierarchy is messed up
+                'supervisor_is_test': 0,
+                'block_is_test': 0,
+                'district_is_test': 0,
+                'state_is_test': 0,
             }
 
             current_location = location
