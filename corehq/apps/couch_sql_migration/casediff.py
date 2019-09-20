@@ -90,7 +90,8 @@ class CaseDiffQueue(object):
 
     def __enter__(self):
         self.statedb.set(ProcessNotAllowed.__name__, True)
-        self._load_resume_state()
+        with self.statedb.pop_resume_state(type(self).__name__, {}) as state:
+            self._load_resume_state(state)
         self._stop_status_logger = run_status_logger(
             log_status, self.get_status, self.status_interval)
         return self
@@ -283,8 +284,7 @@ class CaseDiffQueue(object):
         }
         log.info("saved %s state: %s", type(self).__name__, log_state)
 
-    def _load_resume_state(self):
-        state = self.statedb.pop_resume_state(type(self).__name__, {})
+    def _load_resume_state(self, state):
         if "num_diffed_cases" in state:
             self.num_diffed_cases = state["num_diffed_cases"]
         if "to_diff" in state:

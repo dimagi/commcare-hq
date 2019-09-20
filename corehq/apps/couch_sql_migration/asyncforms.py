@@ -30,8 +30,8 @@ class AsyncFormProcessor(object):
     def __enter__(self):
         self.pool = Pool(POOL_SIZE)
         self.queues = PartiallyLockingQueue()
-        form_ids = self.statedb.pop_resume_state(type(self).__name__, [])
-        self._rebuild_queues(form_ids)
+        with self.statedb.pop_resume_state(type(self).__name__, []) as form_ids:
+            self._rebuild_queues(form_ids)
         self.stop_status_logger = run_status_logger(
             log_status,
             self.queues.get_status,
