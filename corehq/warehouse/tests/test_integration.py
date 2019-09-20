@@ -119,19 +119,19 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
 
         seen = set()
 
-        def commit_with_dependencies(clazz, path=None):
+        def commit_with_dependencies(loader_class, path=None):
             path = path or []
-            path.append(clazz)
+            path.append(loader_class)
 
-            for dep in clazz.dependencies():
+            for dep in loader_class.dependencies():
                 dep_cls = get_loader_by_slug(dep)
                 if dep_cls in path:
                     continue
                 commit_with_dependencies(dep_cls, path)
 
-            if clazz not in seen:
-                seen.add(clazz)
-                clazz.commit(batch)
+            if loader_class not in seen:
+                seen.add(loader_class)
+                loader_class.commit(batch)
 
         commit_with_dependencies(ApplicationStatusFactLoader)
 
