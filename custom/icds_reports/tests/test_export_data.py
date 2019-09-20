@@ -15,6 +15,7 @@ from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
 
+
 class TestExportData(TestCase):
     maxDiff = None
 
@@ -59,8 +60,8 @@ class TestExportData(TestCase):
                         'State',
                         'st1'],
                     [
-                        'Supervisor',
-                        's1'],
+                        'District',
+                        'd1'],
                     [
                         "Block",
                         "b1"
@@ -543,7 +544,7 @@ class TestExportData(TestCase):
                     [
                         ['Generated at', '16:21:11 15 November 2017'],
                         ['State', 'st1'],
-                        ['Supervisor', 's1'],
+                        ['District', 'd1'],
                         ['Block', 'b1']
                     ]
                 ]
@@ -680,7 +681,7 @@ class TestExportData(TestCase):
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
                     ['State', 'st1'],
-                    ['Supervisor', 's1'],
+                    ['District', 'd1'],
                     ['Block', 'b1'],
                     ['Month', 'May'],
                     ['Year', 2017]
@@ -776,7 +777,7 @@ class TestExportData(TestCase):
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
                     ['State', 'st1'],
-                    ['Supervisor', 's1'],
+                    ['District', 'd1'],
                     ['Block', 'b1'],
                     ['Grouped By', 'AWC'],
                     ['Month', 'May'],
@@ -1097,8 +1098,8 @@ class TestExportData(TestCase):
                             'st1'
                         ],
                         [
-                            'Supervisor',
-                            's1'
+                            'District',
+                            'd1'
                         ],
                         [
                             "Block",
@@ -2081,6 +2082,22 @@ class TestExportData(TestCase):
                             "16:21:11 15 November 2017"
                         ],
                         [
+                            'State',
+                            'st1'
+                        ],
+                        [
+                            'District',
+                            'd1'
+                        ],
+                        [
+                            'Block',
+                            'b1'
+                        ],
+                        [
+                            'Supervisor',
+                            's1'
+                        ],
+                        [
                             "Awc",
                             "a7"
                         ],
@@ -2292,7 +2309,7 @@ class TestExportData(TestCase):
              ['Export Info', [
                  ['Generated at', india_now()],
                  ['State', 'st1'],
-                 ['Supervisor', 's1'],
+                 ['District', 'd1'],
                  ['Block', 'b1'],
                  ['Month', 'May'],
                  ['Year', 2017]]
