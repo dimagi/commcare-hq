@@ -4105,7 +4105,8 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
                 for r in range(0, length):
                     current_product = rows_to_return[r]
                     current_location_id = current_product[self.loc_id_to_get] \
-                        if current_product[self.loc_id_to_get] is not None else current_product[self.loc_name_to_get]
+                        if current_product[self.loc_id_to_get] is not None \
+                        else current_product[self.loc_name_to_get]
                     current_product_id = current_product['product_id']
                     _row_id = row[self.loc_id_to_get] \
                         if row[self.loc_id_to_get] is not None else row[self.loc_name_to_get]
@@ -4277,7 +4278,8 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
                 for r in range(0, length):
                     current_product = rows_to_return[r]
                     current_location_id = current_product[self.loc_id_to_get] \
-                        if current_product[self.loc_id_to_get] is not None else current_product[self.loc_name_to_get]
+                        if current_product[self.loc_id_to_get] is not None \
+                        else current_product[self.loc_name_to_get]
                     current_product_id = current_product['product_id']
                     _row_id = row[self.loc_id_to_get] \
                         if row[self.loc_id_to_get] is not None else row[self.loc_name_to_get]

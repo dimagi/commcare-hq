@@ -144,7 +144,9 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
 
             return [
                 {
-                    'key': 'Méthode de calcul: Nombre total de produits PNA perdus (non compris les produits périmés) sur PNA stock final',
+                    'key':
+                        'Méthode de calcul: Nombre total de produits PNA perdus '
+                        '(non compris les produits périmés) sur PNA stock final',
                     'values': com
                 },
             ]
