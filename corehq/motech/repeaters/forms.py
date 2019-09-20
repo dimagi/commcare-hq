@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
@@ -5,6 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
+from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
 
 from corehq.apps.es.users import UserES
@@ -50,6 +53,11 @@ class GenericRepeaterForm(forms.Form):
         label=_('Skip SSL certificate verification'),
         required=False,
         help_text=_('FOR TESTING ONLY: DO NOT ENABLE THIS FOR PRODUCTION INTEGRATIONS'),
+    )
+    notify_addresses_str = forms.CharField(
+        required=False,
+        label=_("Addresses to send notifications"),
+        help_text=_("A comma-separated list of email addresses to send error notifications"),
     )
 
     def __init__(self, *args, **kwargs):
@@ -108,6 +116,7 @@ class GenericRepeaterForm(forms.Form):
             self.special_crispy_fields["auth_type"],
             "username",
             "password",
+            "notify_addresses_str",
             self.special_crispy_fields["skip_cert_verify"],
         ])
         return form_fields
@@ -137,6 +146,15 @@ class GenericRepeaterForm(forms.Form):
             "auth_type": twbscrispy.PrependedText('auth_type', ''),
             "skip_cert_verify": twbscrispy.PrependedText('skip_cert_verify', ''),
         }
+
+    def clean_notify_addresses_str(self):
+        data = self.cleaned_data['notify_addresses_str']
+        are_valid = (validate_email(addr) for addr in re.split('[, ]+', data) if addr)
+        try:
+            all(are_valid)
+        except EmailNotValidError:
+            raise forms.ValidationError(_("Contains an invalid email address."))
+        return data
 
     def clean(self):
         cleaned_data = super(GenericRepeaterForm, self).clean()
