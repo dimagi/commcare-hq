@@ -51,6 +51,10 @@ class GenericRepeaterForm(forms.Form):
         required=False,
         help_text=_('FOR TESTING ONLY: DO NOT ENABLE THIS FOR PRODUCTION INTEGRATIONS'),
     )
+    notify_email = forms.CharField(
+        required=False,
+        label=_("Address to send notifications"),
+    )
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain')
@@ -109,6 +113,7 @@ class GenericRepeaterForm(forms.Form):
             "username",
             "password",
             self.special_crispy_fields["skip_cert_verify"],
+            "notify_email",
         ])
         return form_fields
 

@@ -111,6 +111,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
     username = StringProperty()
     password = StringProperty()
     skip_cert_verify = BooleanProperty(default=False)
+    notify_email = StringProperty()
+
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)
 
