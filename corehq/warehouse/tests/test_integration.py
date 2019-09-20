@@ -43,6 +43,7 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
         super(AppStatusIntegrationTest, cls).setUpClass()
         delete_all_docs_by_doc_type(Domain.get_db(), ['Domain', 'Domain-Deleted'])
         delete_all_docs_by_doc_type(CommCareUser.get_db(), ['CommCareUser', 'WebUser'])
+        delete_all_docs_by_doc_type(CommCareUser.get_db(), ['Application', 'Application-Deleted'])
         cls.domain_records = [
             Domain(name=cls.domain, hr_name='One', creating_user_id='abc', is_active=True),
         ]
