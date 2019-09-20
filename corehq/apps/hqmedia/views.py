@@ -186,6 +186,7 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
 
     def get(self, request, *args, **kwargs):
         if request.GET.get('json', None):
+            only_missing = bool(int(request.GET.get('only_missing', 0)))
             limit = int(request.GET.get('limit', 5))
             page = int(request.GET.get('page', 1))
             start = limit * (page - 1)
@@ -194,6 +195,8 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
             def _add_references(source, reference_index, references):
                 media = source.get_references()
                 media = [m for m in media if m['media_class'] in ["CommCareImage", "CommCareAudio", "CommCareVideo"]]
+                if only_missing:
+                    media = [m for m in media if m['path'] not in self.app.multimedia_map]
                 for m in media:
                     if reference_index >= start and reference_index < end:
                         references.append(m)

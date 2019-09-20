@@ -36,6 +36,7 @@ hqDefine("hqmedia/js/reference_controller",[
                     json: 1,
                     page: page,
                     limit: self.itemsPerPage(),
+                    only_missing: self.showMissingReferences() ? 1 : 0,
                 },
                 success: function (data) {
                     self.isInitialLoad(false);
@@ -74,6 +75,7 @@ hqDefine("hqmedia/js/reference_controller",[
 
         self.toggleMissingRefs = function (sender, event) {
             self.showMissingReferences(!self.showMissingReferences());
+            self.goToPage(1);
         };
 
         self.incrementTotals = function (trigger, event, data) {
