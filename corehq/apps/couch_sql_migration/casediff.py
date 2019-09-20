@@ -99,6 +99,7 @@ class CaseDiffQueue(object):
         try:
             if exc_type is None:
                 self.process_remaining_diffs()
+            log.info("preparing to save resume state... DO NOT BREAK!")
         finally:
             self._save_resume_state()
             self._stop_status_logger()

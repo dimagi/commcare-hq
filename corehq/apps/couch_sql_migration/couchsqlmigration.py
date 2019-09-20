@@ -695,11 +695,10 @@ class Stopper:
 
     def __exit__(self, exc_type, exc, tb):
         signal.signal(signal.SIGINT, signal.default_int_handler)
-        if self.clean_break:
-            # raise keyboard interrupt to signal early termination to
-            # __exit__ and exception handlers further up the stack
-            # (CaseDiffQueue will not diff cases with unprocessed forms)
-            raise KeyboardInterrupt
+        # the case diff queue can safely be stopped with ^C at this
+        # point, although proceed with care so as not to interrupt it at
+        # a point where it is saving resume state. There will be a log
+        # message indicating "DO NOT BREAK" just before it saves state.
 
     def on_break(self, signum, frame):
         if self.clean_break:
