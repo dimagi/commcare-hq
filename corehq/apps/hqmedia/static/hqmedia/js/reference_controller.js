@@ -22,12 +22,7 @@ hqDefine("hqmedia/js/reference_controller",[
         self.isInitialLoad = ko.observable(true);
         self.showPaginationSpinner = ko.observable(false);
         self.itemsPerPage = ko.observable();
-        self.totalItems = ko.computed(function () {
-            // TODO: this isn't quite right because some files appear in multiple places and therefore have multiple rows
-            return _.reduce(_.pluck(self.totals(), 'matched'), function (memo, num) {
-                return memo + num;
-            }, 0);
-        });
+        self.totalItems = ko.observable();
 
         self.toggleRefsText = ko.computed(function () {
             return (self.showMissingReferences()) ? gettext("Show All References") : gettext("Show Only Missing References");
@@ -65,6 +60,7 @@ hqDefine("hqmedia/js/reference_controller",[
                         // Other multimedia, like HTML print templates, is ignored by the reference checker
                         return null;
                     })));
+                    self.totalItems(data.total_rows);
                     self.totals(data.totals);
                     $('.preview-media').tooltip();
                 },

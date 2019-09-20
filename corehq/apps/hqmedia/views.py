@@ -188,11 +188,25 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         if request.GET.get('json', None):
             limit = int(request.GET.get('limit', 5))
             page = int(request.GET.get('page', 1))
-            skip = limit * (page - 1)
+            start = limit * (page - 1)
+            end = start + limit
 
-            references = self.app.get_references()
-            references = [r for r in references if r['media_type'] in ["Image", "Audio", "Video"]]
-            references = references[skip:skip + limit]   # TODO: be less ridiculous
+            def _add_references(source, reference_index, references):
+                media = source.get_references()
+                media = [m for m in media if m['media_class'] in ["CommCareImage", "CommCareAudio", "CommCareVideo"]]
+                for m in media:
+                    if reference_index >= start and reference_index < end:
+                        references.append(m)
+                    reference_index += 1
+                return (reference_index, references)
+
+            reference_index = 0
+            references = []
+            # TODO: don't loop through entire app unless looking for totals (page == 1)
+            for module in self.app.get_modules():
+                (reference_index, references) = _add_references(module, reference_index, references)
+                for form in module.get_forms():
+                    (reference_index, references) = _add_references(form, reference_index, references)
 
             multimedia_map = {r['path']: self.app.multimedia_map[r['path']]
                               for r in references
@@ -203,6 +217,7 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
                 "references": references,
                 "object_map": object_map,
                 "totals": self.app.get_reference_totals(),  # TODO: provide on page load? how slow is this?
+                "total_rows": reference_index,
             })
         return super(MultimediaReferencesView, self).get(request, *args, **kwargs)
 

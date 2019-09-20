@@ -553,6 +553,12 @@ class MediaMixin(object):
         """
         raise NotImplementedError
 
+    def get_references(self, lang=None):
+        """
+            Used for the multimedia controller.
+        """
+        return [m.as_dict(lang) for m in self.all_media()]
+
     def rename_media(self, old_path, new_path):
         """
             Returns a count of number of changes made.
@@ -942,12 +948,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 except ResourceNotFound as e:
                     if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
                         raise e
-
-    def get_references(self, lang=None):
-        """
-            Used for the multimedia controller.
-        """
-        return [m.as_dict(lang) for m in self.all_media()]
 
     def get_object_map(self, multimedia_map=None):
         object_map = {}
