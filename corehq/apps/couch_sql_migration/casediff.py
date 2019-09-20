@@ -270,9 +270,11 @@ class CaseDiffQueue(object):
                     pending[case_id] += processed_forms
             state["pending"] = dict(pending)
         if self.diff_batcher or self.diff_spawner or self.cases_to_diff:
-            state["to_diff"] = list(chain.from_iterable(self.diff_batcher))
-            state["to_diff"].extend(chain.from_iterable(self.diff_spawner))
-            state["to_diff"].extend(self.cases_to_diff)
+            # use dict to approximate ordered set (remove duplicates)
+            to_diff = dict.fromkeys(chain.from_iterable(self.diff_batcher))
+            to_diff.update((k, None) for k in chain.from_iterable(self.diff_spawner))
+            to_diff.update((k, None) for k in self.cases_to_diff)
+            state["to_diff"] = list(to_diff)
         if self.num_diffed_cases:
             state["num_diffed_cases"] = self.num_diffed_cases
         self.statedb.set_resume_state(type(self).__name__, state)
@@ -286,7 +288,7 @@ class CaseDiffQueue(object):
         if "num_diffed_cases" in state:
             self.num_diffed_cases = state["num_diffed_cases"]
         if "to_diff" in state:
-            for case_id in set(state["to_diff"]):
+            for case_id in state["to_diff"]:
                 self.enqueue(case_id)
         if "pending" in state:
             for chunk in chunked(state["pending"].items(), self.BATCH_SIZE, list):
