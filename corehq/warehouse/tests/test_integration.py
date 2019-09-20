@@ -102,17 +102,22 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
 
         FormProcessorTestUtils.delete_all_sql_forms(cls.domain)
 
-        FormStagingLoader.clear_records()
-        FormFactLoader.clear_records()
-        DomainStagingLoader.clear_records()
-        DomainDimLoader.clear_records()
-        UserStagingLoader.clear_records()
-        UserDimLoader.clear_records()
-        SyncLogStagingLoader.clear_records()
-        SyncLogFactLoader.clear_records()
-        AppStatusFormStagingLoader.clear_records()
-        AppStatusSynclogStagingLoader.clear_records()
         ApplicationStatusFactLoader.clear_records()
+        AppStatusSynclogStagingLoader.clear_records()
+        AppStatusFormStagingLoader.clear_records()
+
+        SyncLogFactLoader.clear_records()
+        SyncLogStagingLoader.clear_records()
+
+        FormFactLoader.clear_records()
+        FormStagingLoader.clear_records()
+
+        DomainDimLoader.clear_records()
+        DomainStagingLoader.clear_records()
+
+        UserDimLoader.clear_records()
+        UserStagingLoader.clear_records()
+
         super(AppStatusIntegrationTest, cls).tearDownClass()
 
     def test_loading_app_stats_fact(self):
