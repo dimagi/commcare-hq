@@ -910,7 +910,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 updated_doc = self.get(self._id)
                 updated_doc.create_mapping(multimedia, form_path)
 
-    def get_media_objects(self, build_profile_id=None, remove_unused=False):
+    def get_media_objects(self, build_profile_id=None, remove_unused=False, multimedia_map=None):
         """
             Gets all the media objects stored in the multimedia map.
             If passed a profile, will only get those that are used
@@ -923,11 +923,12 @@ class ApplicationMediaMixin(Document, MediaMixin):
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
         build_profile = self.build_profiles[build_profile_id] if build_profile_id else None
-        multimedia_map_for_build = self.multimedia_map_for_build(build_profile=build_profile,
-                                                                 remove_unused=remove_unused)
-        expected_ids = [map_item.multimedia_id for map_item in multimedia_map_for_build.values()]
+        if not multimedia_map:
+            multimedia_map = self.multimedia_map_for_build(build_profile=build_profile,
+                                                           remove_unused=remove_unused)
+        expected_ids = [map_item.multimedia_id for map_item in multimedia_map.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
-        for path, map_item in multimedia_map_for_build.items():
+        for path, map_item in multimedia_map.items():
             media_item = raw_docs.get(map_item.multimedia_id)
             if media_item:
                 media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
@@ -948,9 +949,9 @@ class ApplicationMediaMixin(Document, MediaMixin):
         """
         return [m.as_dict(lang) for m in self.all_media()]
 
-    def get_object_map(self):
+    def get_object_map(self, multimedia_map=None):
         object_map = {}
-        for path, media_obj in self.get_media_objects(remove_unused=False):
+        for path, media_obj in self.get_media_objects(remove_unused=False, multimedia_map=multimedia_map):
             object_map[path] = media_obj.get_media_info(path)
         return object_map
 

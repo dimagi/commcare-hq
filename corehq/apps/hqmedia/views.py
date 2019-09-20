@@ -189,8 +189,16 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
             limit = int(request.GET.get('limit', 5))
             page = int(request.GET.get('page', 1))
             skip = limit * (page - 1)
-            references = self.app.get_references()[skip:skip + limit]   # TODO: be less ridiculous
-            object_map = self.app.get_object_map()                      # TODO: limit to references
+
+            references = self.app.get_references()
+            references = [r for r in references if r['media_type'] in ["Image", "Audio", "Video"]]
+            references = references[skip:skip + limit]   # TODO: be less ridiculous
+
+            multimedia_map = {r['path']: self.app.multimedia_map[r['path']]
+                              for r in references
+                              if r['path'] in self.app.multimedia_map}
+            object_map = self.app.get_object_map(multimedia_map=multimedia_map)
+
             return JsonResponse({
                 "references": references,
                 "object_map": object_map,

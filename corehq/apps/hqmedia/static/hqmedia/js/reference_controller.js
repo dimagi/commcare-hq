@@ -59,6 +59,8 @@ hqDefine("hqmedia/js/reference_controller",[
                             var videoRef = VideoReference(ref);
                             videoRef.setObjReference(objRef);
                             return videoRef;
+                        } else {
+                            throw new Error("Found unexpected media class: " + ref.media_class);
                         }
                         // Other multimedia, like HTML print templates, is ignored by the reference checker
                         return null;
