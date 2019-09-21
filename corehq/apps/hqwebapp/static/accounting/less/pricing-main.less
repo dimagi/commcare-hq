@@ -184,12 +184,20 @@ input:checked + .slider:before {
 }
 
 ._make-color-tile(@_color-tile) {
+  width: 230px;
+  height: 350px;
+  position: relative;
+
   h3 {
     color: @_color-tile !important;
   }
 
   .btn {
     color: @_color-tile !important;
+    width: 140px;
+    position: absolute;
+    bottom: 30px;
+    left: 50px;
   }
 
   .btn-current {
@@ -234,10 +242,17 @@ input:checked + .slider:before {
 .select-plan-row {
   margin-bottom: 20px;
   margin-top: 20px;
+  text-align: center;
 }
 
-.tile-enterprise {
-  ._make-color-tile(@cc-brand-mid);
+.select-plan-col {
+  display: inline-block;
+  width: 240px;
+  text-align: center;
+
+  .tile {
+    margin: 0 auto;
+  }
 }
 
 .plan-next {
@@ -279,7 +294,16 @@ input:checked + .slider:before {
   }
 }
 
-.select-plan-row {
-  margin-bottom: 20px;
+.pause-icon {
+  text-align: center;
+  font-size: 4em;
+  line-height: 60px;
+}
+
+.select-plan-header {
+  text-align: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
   margin-top: 20px;
 }
