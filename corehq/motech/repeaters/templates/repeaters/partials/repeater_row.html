@@ -106,7 +106,7 @@
             </div>
         </div>
         {% endif %}
-        {% if has_config and gefingerpoken %}
+        {% if has_config and user_can_configure %}
         <a class="btn btn-default" href="{% url 'config_repeater' domain cls repeater.get_id %}">
             {% trans "Configure" %}
         </a>
