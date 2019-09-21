@@ -1,24 +1,7 @@
 {% extends "domain/base_change_plan.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% load compress %}
 {% load menu_tags %}
-
-{% block stylesheets %}{{ block.super }}
-  {% if less_debug %}
-    <link type="text/less"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'accounting/less/pricing.debug.less' %}" />
-  {% else %}
-    {% compress css %}
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'accounting/less/pricing.less' %}" />
-    {% endcompress %}
-  {% endif %}
-{% endblock %}
 
 {% requirejs_main 'accounting/js/pricing_table' %}
 
@@ -73,9 +56,9 @@
       </a>
     </p>
 
-    <div class="row select-plan-row">
+    <div class="select-plan-row">
       <!-- ko foreach: planOptions -->
-      <div class="col-xs-3">
+      <div class="select-plan-col">
         <a href="#"
            class="tile"
            data-bind="css: cssClass, click: selectPlan">
