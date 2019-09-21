@@ -248,7 +248,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         - Reset initial roles to standard permissions.
         """
         custom_roles = [r.get_id for r in UserRole.get_custom_roles_by_domain(domain.name)]
-        if not custom_roles:
+        from corehq.apps.accounting.models import SoftwarePlanEdition
+        if not custom_roles or (new_plan_version.plan.edition == SoftwarePlanEdition.PAUSED):
             return True
         # temporarily disable this part of the downgrade until we
         # have a better user experience for notifying the downgraded user
@@ -667,6 +668,11 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(domain.name)]
         num_roles = len(custom_roles)
+        from corehq.apps.accounting.models import SoftwarePlanEdition
+        if new_plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
+            # don't perform this downgrade for paused plans, as we don't want
+            # users to lose their original role assignments when the plan is un-paused.
+            return
         if num_roles > 0:
             return _fmt_alert(
                 ungettext(
