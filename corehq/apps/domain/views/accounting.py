@@ -1249,12 +1249,11 @@ class ConfirmSelectedPlanView(SelectPlanView):
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
-            'show_community_notice': (self.edition == SoftwarePlanEdition.COMMUNITY
-                                      and self.current_subscription is None),
             'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
             'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT),
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
-            'new_plan_edition': self.edition
+            'new_plan_edition': self.edition,
+            'tile_css': 'tile-{}'.format(self.edition.lower()),
         }
 
     @property
