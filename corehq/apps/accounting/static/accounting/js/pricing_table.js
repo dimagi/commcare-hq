@@ -52,15 +52,15 @@ hqDefine('accounting/js/pricing_table', [
 
         self.isCurrentPlanCommunity = ko.observable(options.currentPlan === 'community');
 
-        self.selectCommunityPlan = function () {
-            self.selectedPlan('community');
+        self.selectPausedPlan = function () {
+            self.selectedPlan('paused');
         };
         self.isDowngrade = function () {
             return self.editions.indexOf(self.selectedPlan()) < self.editions.indexOf(self.currentPlan());
         };
 
-        self.communityCss = ko.computed(function () {
-            if (self.selectedPlan() === 'community') {
+        self.pausedCss = ko.computed(function () {
+            if (self.selectedPlan() === 'paused') {
                 return "selected-plan";
             }
             return "";
@@ -71,7 +71,7 @@ hqDefine('accounting/js/pricing_table', [
         }));
 
         self.showNext = ko.computed(function () {
-            return self.selectedPlan() === 'community' || !self.showAnnualPricing();
+            return !self.showAnnualPricing();
         });
 
         self.form = undefined;

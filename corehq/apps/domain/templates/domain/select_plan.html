@@ -101,29 +101,37 @@
       <!-- /ko -->
     </div>
 
-    <div class="row"
-         data-bind="visible: !isCurrentPlanCommunity()">
-      <div class="col-xs-4 col-xs-offset-4">
-        <a href="#"
-           class="tile tile-community"
-           data-bind="click: selectCommunityPlan, css: communityCss">
-          <h4>
+    <div data-bind="visible: !isCurrentPlanCommunity()">
+      <a href="#"
+         class="tile tile-paused"
+         data-bind="click: selectPausedPlan, css: pausedCss">
+        <div class="pause-icon">
+          <i class="fa fa-pause-circle-o"></i>
+        </div>
+        <h4 class="text-center">
+          {% blocktrans %}
+            Pause Subscription
+          {% endblocktrans %}
+        </h4>
+        <p>
+          {% blocktrans %}
+            What happens if you pause?
+          {% endblocktrans %}
+        </p>
+        <ul>
+          <li>
             {% blocktrans %}
-              Select FREE CommCare Community Plan
+              You will lose access to your project space, but you will be
+              able to re-subscribe anytime in the future.
             {% endblocktrans %}
-          </h4>
-          <p>
+          </li>
+          <li>
             {% blocktrans %}
-              This does not include any paid features.
+              You will no longer be billed.
             {% endblocktrans %}
-          </p>
-
-          <div class="btn btn-select">
-            {% trans "Select Plan" %}
-          </div>
-        </a>
-      </div>
-
+          </li>
+        </ul>
+      </a>
     </div>
 
     <form
