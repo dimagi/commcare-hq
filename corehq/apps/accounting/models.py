@@ -147,6 +147,7 @@ class SoftwarePlanEdition(object):
         (MANAGED_HOSTING, MANAGED_HOSTING),
     )
     SELF_SERVICE_ORDER = [
+        PAUSED,
         COMMUNITY,
         STANDARD,
         PRO,
