@@ -152,14 +152,12 @@
       {% endif %}
 
       <input type="hidden" name="plan_edition" data-bind="value: selectedPlan">
-      <div class="form-actions" data-bind="visible: isSubmitVisible">
-        <div class="text-center">
-          <button type="submit"
-                  class="btn btn-primary btn-lg"
-                  data-bind="click: openMinimumSubscriptionModal">
-            {% trans 'Next' %}
-          </button>
-        </div>
+      <div class="text-center plan-next">
+        <button type="submit"
+                class="btn btn-primary btn-lg"
+                data-bind="click: openMinimumSubscriptionModal, disable: isSubmitDisabled">
+          {% trans 'Next' %}
+        </button>
       </div>
     </form>
 
@@ -167,12 +165,10 @@
           data-bind="visible: !showNext()">
       {% csrf_token %}
       <input type="hidden" name="plan_edition" data-bind="value: selectedPlan">
-      <div class="form-actions ">
-        <div class="text-center">
-          <button class="btn btn-primary btn-lg" data-bind="click: contactSales">
-            {% trans 'Talk to Sales' %}
-          </button>
-        </div>
+      <div class="text-center plan-next">
+        <button class="btn btn-primary btn-lg" data-bind="click: contactSales">
+          {% trans 'Talk to Sales' %}
+        </button>
       </div>
     </form>
 
