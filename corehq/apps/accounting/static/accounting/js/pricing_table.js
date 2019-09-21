@@ -84,8 +84,23 @@ hqDefine('accounting/js/pricing_table', [
                 var newPlan = utils.capitalize(self.selectedPlan());
                 var newStartDate = "<strong>" + self.startDateAfterMinimumSubscription + "</strong>";
 
-                var message = "";
-                if (self.nextSubscriptionEdition) {
+                var message = "",
+                    title = gettext("Downgrading?");
+                if (self.selectedPlan() === 'paused') {
+                    title = gettext("Pausing Subscription?");
+                    message = _.template(gettext(
+                        "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
+                        "<p>Continuing ahead will allow you to schedule your current <%= oldPlan %> " +
+                        "Edition Plan subscription to be paused on <%= date %>.</p>" +
+                        "<p>If you have questions or if you would like to speak to us about your subscription, " +
+                        "please reach out to <%= email %>.</p>"
+                    ))({
+                        date: newStartDate,
+                        newPlan: newPlan,
+                        oldPlan: oldPlan,
+                        email: mailto,
+                    });
+                } else if (self.nextSubscriptionEdition) {
                     message = _.template(gettext(
                         "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
                         "<p>Your current <%= oldPlan %> Edition Plan subscription is scheduled to be downgraded " +
@@ -119,6 +134,7 @@ hqDefine('accounting/js/pricing_table', [
                 }
                 var $modal = $("#modal-minimum-subscription");
                 $modal.find('.modal-body')[0].innerHTML = message;
+                $modal.find('.modal-title')[0].innerHTML = title;
                 $modal.modal('show');
             } else {
                 self.form.submit();
