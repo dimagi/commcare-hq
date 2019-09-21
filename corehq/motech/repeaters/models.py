@@ -119,6 +119,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
     payload_generator_classes = ()
 
     @classmethod
+    def has_config(cls):
+        return False
+
+    @classmethod
     def available_for_domain(cls, domain):
         """Returns whether this repeater can be used by a particular domain
         """

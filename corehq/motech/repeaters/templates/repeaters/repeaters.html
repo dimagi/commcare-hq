@@ -7,7 +7,7 @@
         {{ pending_record_count }} pending items to be forwarded
     {% endblocktrans %}
     </div>
-    {% for cls, form_repeaters, type in repeaters %}
+    {% for cls, form_repeaters, type, has_config in repeaters %}
     <div style="padding-bottom:2em;">
         <h2>{{ type }}</h2>
         {% if form_repeaters %}
