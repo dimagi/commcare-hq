@@ -231,10 +231,6 @@ input:checked + .slider:before {
   ._make-color-tile(@cc-brand-mid);
 }
 
-.tile-community {
-  ._make-color-tile(@cc-neutral-mid);
-}
-
 .select-plan-row {
   margin-bottom: 20px;
   margin-top: 20px;
@@ -244,8 +240,39 @@ input:checked + .slider:before {
   ._make-color-tile(@cc-brand-mid);
 }
 
-.tile-community {
+
+.tile-paused {
   ._make-color-tile(@cc-neutral-mid);
+
+  width: 475px;
+  height: auto;
+  text-align: left;
+  margin: 0 auto;
+
+  h4 {
+    margin-top: 0;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  h4,
+  .pause-icon {
+    color: @cc-neutral-mid;
+
+    &:hover {
+      color: @cc-neutral-mid;
+    }
+  }
+
+  p {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  ul {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
 }
 
 .select-plan-row {
