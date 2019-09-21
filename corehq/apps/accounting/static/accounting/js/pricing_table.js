@@ -38,11 +38,11 @@ hqDefine('accounting/js/pricing_table', [
 
         self.selectedPlan = ko.observable(options.currentPlan);
 
-        self.showMonthlyPricing = ko.observable(false);
+        self.showAnnualPricing = ko.observable(false);
 
         self.refundCss = ko.computed(function () {
-            if (self.showMonthlyPricing()) {
-                return "hide-refund";
+            if (self.showAnnualPricing()) {
+                return "show-refund";
             }
         });
 
@@ -71,7 +71,7 @@ hqDefine('accounting/js/pricing_table', [
         }));
 
         self.showNext = ko.computed(function () {
-            return self.selectedPlan() === 'community' || self.showMonthlyPricing();
+            return self.selectedPlan() === 'community' || !self.showAnnualPricing();
         });
 
         self.form = undefined;
@@ -179,24 +179,24 @@ hqDefine('accounting/js/pricing_table', [
         };
 
         self.pricingTypeText = ko.computed(function () {
-            if (parent.showMonthlyPricing()) {
-                return django.gettext("Billed Monthly");
+            if (parent.showAnnualPricing()) {
+                return django.gettext("Billed Annually");
             }
-            return django.gettext("Billed Annually");
+            return django.gettext("Billed Monthly");
         });
 
         self.pricingTypeCssClass = ko.computed(function () {
-            if (parent.showMonthlyPricing()) {
-                return 'pricing-type-monthly';
+            if (parent.showAnnualPricing()) {
+                return 'pricing-type-annual';
             }
-            return 'pricing-type-annual';
+            return 'pricing-type-monthly';
         });
 
         self.displayPrice = ko.computed(function () {
-            if (parent.showMonthlyPricing()) {
-                return self.monthlyPrice();
+            if (parent.showAnnualPricing()) {
+                return self.annualPrice();
             }
-            return self.annualPrice();
+            return self.monthlyPrice();
         });
 
     };
