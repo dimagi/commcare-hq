@@ -84,7 +84,6 @@ from corehq.motech.repeaters.views import (
     requeue_repeat_record,
 )
 
-
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
     url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
@@ -121,7 +120,6 @@ urlpatterns = [
          'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}},
         name='password_reset_complete')
 ]
-
 
 domain_settings = [
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
