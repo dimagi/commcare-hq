@@ -107,12 +107,12 @@
         </div>
         {% endif %}
         {% if cls == 'OpenmrsRepeater' and gefingerpoken %}
-        <a class="btn btn-default" href="{% url 'openmrs_edit_config' domain repeater.get_id %}">
+        <a class="btn btn-default" href="{% url 'config_openmrs_repeater' domain repeater.get_id %}">
             {% trans "Configure" %}
         </a>
         {% endif %}
         {% if cls == 'Dhis2Repeater' and gefingerpoken %}
-        <a class="btn btn-default" href="{% url 'dhis2_edit_config' domain repeater.get_id %}">
+        <a class="btn btn-default" href="{% url 'config_dhis2_repeater' domain repeater.get_id %}">
             {% trans "Configure" %}
         </a>
         {% endif %}

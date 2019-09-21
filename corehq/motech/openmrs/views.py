@@ -37,7 +37,7 @@ from corehq.motech.utils import b64_aes_encrypt
 
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
-def openmrs_edit_config(request, domain, repeater_id):
+def config_openmrs_repeater(request, domain, repeater_id):
     helper = OpenmrsModelListViewHelper(request, domain, repeater_id)
     repeater = helper.repeater
 

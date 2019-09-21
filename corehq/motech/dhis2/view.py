@@ -146,7 +146,7 @@ class Dhis2ModelListViewHelper(object):
 
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
-def dhis2_edit_config(request, domain, repeater_id):
+def config_dhis2_repeater(request, domain, repeater_id):
     helper = Dhis2ModelListViewHelper(request, domain, repeater_id)
     repeater = helper.repeater
 
