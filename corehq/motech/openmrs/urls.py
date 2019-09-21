@@ -2,7 +2,6 @@ from django.conf.urls import url
 
 from corehq.motech.openmrs.views import (
     OpenmrsImporterView,
-    openmrs_edit_config,
     openmrs_import_now,
     openmrs_patient_identifier_types,
     openmrs_person_attribute_types,
@@ -12,11 +11,6 @@ from corehq.motech.openmrs.views import (
 from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
 
 urlpatterns = [
-    url(
-        r'^(?P<repeater_id>\w+)/edit_config/$',
-        openmrs_edit_config,
-        name='openmrs_edit_config',
-    ),
     url(
         r'^(?P<repeater_id>\w+)/patientidentifiertypes/$',
         openmrs_patient_identifier_types,
