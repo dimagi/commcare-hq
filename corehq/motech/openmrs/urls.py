@@ -13,12 +13,6 @@ from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
 
 urlpatterns = [
     url(
-        r'^new_openmrs_repeater$',
-        AddOpenmrsRepeaterView.as_view(),
-        {'repeater_type': 'OpenmrsRepeater'},
-        name=AddOpenmrsRepeaterView.urlname
-    ),
-    url(
         r'^(?P<repeater_id>\w+)/edit_config/$',
         openmrs_edit_config,
         name='openmrs_edit_config',

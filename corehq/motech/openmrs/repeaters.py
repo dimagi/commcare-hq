@@ -148,11 +148,6 @@ class OpenmrsRepeater(CaseRepeater):
     def available_for_domain(cls, domain):
         return OPENMRS_INTEGRATION.enabled(domain)
 
-    @classmethod
-    def get_custom_url(cls, domain):
-        from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
-        return reverse(AddOpenmrsRepeaterView.urlname, args=[domain])
-
     def allowed_to_forward(self, payload):
         """
         Forward the payload if ...

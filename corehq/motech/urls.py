@@ -13,10 +13,11 @@ from corehq.motech.repeaters.views import (
     pause_repeater,
     resume_repeater,
     test_repeater,
+    AddDhis2RepeaterView,
+    AddOpenmrsRepeaterView,
+    EditDhis2RepeaterView,
 )
-from corehq.motech.repeaters.views.repeaters import EditDhis2RepeaterView
 from corehq.motech.views import MotechLogDetailView, MotechLogListView
-
 
 urlpatterns = [
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
@@ -24,6 +25,10 @@ urlpatterns = [
         name=AddFormRepeaterView.urlname),
     url(r'^forwarding/new/CaseRepeater/$', AddCaseRepeaterView.as_view(), {'repeater_type': 'CaseRepeater'},
         name=AddCaseRepeaterView.urlname),
+    url(r'^forwarding/new/OpenmrsRepeater/$', AddOpenmrsRepeaterView.as_view(), {'repeater_type': 'OpenmrsRepeater'},
+        name=AddOpenmrsRepeaterView.urlname),
+    url(r'^forwarding/new/Dhis2Repeater/$', AddDhis2RepeaterView.as_view(), {'repeater_type': 'Dhis2Repeater'},
+        name=AddDhis2RepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
 
     url(r'^forwarding/edit/CaseRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),

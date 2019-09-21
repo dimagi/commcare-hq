@@ -55,10 +55,6 @@ class Dhis2Repeater(FormRepeater):
     def available_for_domain(cls, domain):
         return DHIS2_INTEGRATION.enabled(domain)
 
-    @classmethod
-    def get_custom_url(cls, domain):
-        return reverse(AddDhis2RepeaterView.urlname, args=[domain])
-
     def get_payload(self, repeat_record):
         payload = super(Dhis2Repeater, self).get_payload(repeat_record)
         return json.loads(payload)

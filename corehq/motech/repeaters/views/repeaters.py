@@ -58,7 +58,6 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
                 r.__name__,
                 r.by_domain(self.domain),
                 r.friendly_name,
-                r.get_custom_url(self.domain)
             )
             for r in get_all_repeater_types().values() if r.available_for_domain(self.domain)
         ]
