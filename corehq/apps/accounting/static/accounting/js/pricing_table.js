@@ -50,6 +50,10 @@ hqDefine('accounting/js/pricing_table', [
             return !! self.selectedPlan() && !(self.selectedPlan() === self.currentPlan());
         });
 
+        self.isSubmitDisabled = ko.computed(function () {
+            return !self.selectedPlan() || (self.selectedPlan() === self.currentPlan());
+        });
+
         self.isCurrentPlanCommunity = ko.observable(options.currentPlan === 'community');
 
         self.selectPausedPlan = function () {
