@@ -14,7 +14,7 @@
   {% registerurl 'email_on_downgrade' domain %}
   {% registerurl 'confirm_billing_account_info' domain %}
 
-  <div class="container ko-template" id="confirm-plan-content">
+  <div class="ko-template" id="confirm-plan-content">
     {% if is_paused %}
       {% include 'accounting/partials/confirm_pause_summary.html' %}
     {% else %}
