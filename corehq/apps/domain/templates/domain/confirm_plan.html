@@ -48,7 +48,7 @@
           {% endif %}
         </a>
         <button class="btn btn-primary btn-lg"
-                data-bind="enable: userAgreementSigned, click: openDowngradeModal">
+                data-bind="enable: oUserAgreementSigned, click: openDowngradeModal">
           {% if is_paused %}
             {% trans 'Confirm Pause' %}
           {% else %}
@@ -98,11 +98,11 @@
             {% endif %}
             <select multiple="multiple"
                     class="form-control"
-                    data-bind="selectedOptions: downgradeReason,
+                    data-bind="selectedOptions: oDowngradeReason,
                                options: downgradeReasonList"></select>
           </p>
 
-          <!-- ko if: projectEnded -->
+          <!-- ko if: oProjectEnded -->
             <p>
               {% blocktrans %}
                 Is there a chance your project may start again?
@@ -120,13 +120,13 @@
             </p>
           <!-- /ko -->
 
-          <!-- ko if: newToolNeeded -->
+          <!-- ko if: oNewToolNeeded -->
             <p>
               {% blocktrans %}
                 Could you indicate which new tool you’re using?
               {% endblocktrans %}
               <textarea class="form-control"
-                        data-bind="textInput: newTool"></textarea>
+                        data-bind="textInput: oNewTool"></textarea>
             </p>
             <p>
               {% blocktrans %}
@@ -134,18 +134,18 @@
               {% endblocktrans %}
               <select multiple="multiple"
                       class="form-control"
-                      data-bind="selectedOptions: newToolReason,
+                      data-bind="selectedOptions: oNewToolReason,
                                  options: newToolReasonList"></select>
             </p>
           <!-- /ko -->
 
-          <!-- ko if: otherSelected -->
+          <!-- ko if: oOtherSelected -->
             <p>
               {% blocktrans %}
                 Please specify
               {% endblocktrans %}
               <textarea class="form-control"
-                        data-bind="textInput: otherNewToolReason"></textarea>
+                        data-bind="textInput: oOtherNewToolReason"></textarea>
             </p>
           <!-- /ko -->
 
@@ -162,7 +162,7 @@
           <button type="button"
                   class="btn btn-primary"
                   data-bind="click: submitDowngrade,
-                             enable: requiredQuestionsAnswered">
+                             enable: oRequiredQuestionsAnswered">
             {% trans "Continue" %}
           </button>
         </div>
