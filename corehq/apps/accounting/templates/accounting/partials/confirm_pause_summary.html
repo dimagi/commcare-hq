@@ -51,8 +51,7 @@
       {% blocktrans with current_plan as p %}
         You’ll have access to the features on your
         <strong>{{ p }} Edition Software Plan </strong> through {{ current_subscription_end_date }}.<br />
-        On {{ start_date_after_minimum_subscription }} your current subscription will be downgraded
-        to the {{ new_plan_edition }} Edition Software Plan.
+        On {{ current_subscription_end_date }} your current subscription will be paused.
       {% endblocktrans %}
     </p>
   {% else %}
@@ -61,9 +60,7 @@
     </h4>
     <p>
       {% blocktrans with current_plan as p %}
-        You’ll have access to the features on your
-        <strong>{{ p }} Edition Software Plan </strong> through {{ current_subscription_end_date }}.<br />
-        On {{ current_subscription_end_date }} your current subscription will be paused.
+        Your subscription will be paused immediately upon clicking the Confirm Pause button.
       {% endblocktrans %}
     </p>
   {% endif %}
