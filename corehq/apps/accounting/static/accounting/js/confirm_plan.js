@@ -26,7 +26,7 @@ hqDefine('accounting/js/confirm_plan', [
         self.currentPlan = currentPlan;
 
         // If the user is upgrading, don't let them continue until they agree to the minimum subscription terms
-        self.userAgreementSigned = ko.observable(!isUpgrade);
+        self.oUserAgreementSigned = ko.observable(!isUpgrade);
 
         self.downgradeReasonList = [
             PROJECT_ENDED,
@@ -41,33 +41,32 @@ hqDefine('accounting/js/confirm_plan', [
             OTHER,
         ];
 
-        self.downgradeReason = ko.observableArray();
-        self.newTool = ko.observable("");
-        self.newToolReason = ko.observableArray();
-        self.otherNewToolReason = ko.observable("");
+        self.oDowngradeReason = ko.observableArray();
+        self.oNewTool = ko.observable("");
+        self.oNewToolReason = ko.observableArray();
+        self.oOtherNewToolReason = ko.observable("");
         self.oWillProjectRestart = ko.observable("");
         self.oFeedback = ko.observable("");
-        self.requiredQuestionsAnswered = ko.observable(false);
 
-        self.projectEnded = ko.computed(function () {
-            return _.contains(self.downgradeReason(), PROJECT_ENDED);
+        self.oProjectEnded = ko.computed(function () {
+            return _.contains(self.oDowngradeReason(), PROJECT_ENDED);
         });
-        self.newToolNeeded = ko.computed(function () {
-            return _.contains(self.downgradeReason(), SWITCH_TOOLS);
+        self.oNewToolNeeded = ko.computed(function () {
+            return _.contains(self.oDowngradeReason(), SWITCH_TOOLS);
         });
-        self.otherSelected = ko.computed(function () {
-            return _.contains(self.newToolReason(), OTHER);
+        self.oOtherSelected = ko.computed(function () {
+            return _.contains(self.oNewToolReason(), OTHER);
         });
-        self.requiredQuestionsAnswered = ko.computed(function () {
-            if (!self.downgradeReason()) {
+        self.oRequiredQuestionsAnswered = ko.computed(function () {
+            if (!self.oDowngradeReason()) {
                 return false;
             }
-            var newToolNeeded = _.contains(self.downgradeReason(), SWITCH_TOOLS),
-                newToolAnswered = self.newTool() !== "",
-                newToolReasonAnswered = (self.newToolReason() && !_.contains(self.newToolReason(), OTHER))
-                    || (self.otherNewToolReason() && _.contains(self.newToolReason(), OTHER));
+            var newToolNeeded = _.contains(self.oDowngradeReason(), SWITCH_TOOLS),
+                newToolAnswered = self.oNewTool() !== "",
+                newToolReasonAnswered = (self.oNewToolReason() && !_.contains(self.oNewToolReason(), OTHER))
+                    || (self.oOtherNewToolReason() && _.contains(self.oNewToolReason(), OTHER));
 
-            return (self.downgradeReason() && !newToolNeeded) || (newToolNeeded && newToolAnswered && newToolReasonAnswered);
+            return (self.oDowngradeReason() && !newToolNeeded) || (newToolNeeded && newToolAnswered && newToolReasonAnswered);
         });
 
         self.form = undefined;
@@ -84,14 +83,14 @@ hqDefine('accounting/js/confirm_plan', [
             var $button = $(e.currentTarget);
             $button.disableButton();
             if (self.form) {
-                var newToolReason = self.newToolReason().join(", ");
-                if (self.otherSelected()) {
-                    newToolReason = newToolReason + ': "' + self.otherNewToolReason() + '"';
+                var newToolReason = self.oNewToolReason().join(", ");
+                if (self.oOtherSelected()) {
+                    newToolReason = newToolReason + ': "' + self.oOtherNewToolReason() + '"';
                 }
-                $('#new-tool').val(self.newTool());
+                $('#new-tool').val(self.oNewTool());
                 $("#new-tool-reason").val(newToolReason);
 
-                $('#downgrade-reason').val(self.downgradeReason().join(", "));
+                $('#downgrade-reason').val(self.oDowngradeReason().join(", "));
                 $('#will-project-restart').val(self.oWillProjectRestart());
                 $('#feedback').val(self.oFeedback());
 
