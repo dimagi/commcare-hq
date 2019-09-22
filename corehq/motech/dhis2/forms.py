@@ -95,6 +95,45 @@ class Dhis2ConfigForm(forms.Form):
         return self.cleaned_data['form_configs']
 
 
+class Dhis2EntityConfigForm(forms.Form):
+    """
+    Dhis2EntityConfig.case_configs is a list. Dhis2EntityConfigForm has
+    one case_config, and is used in a formset.
+    """
+    case_config = JsonField()
+
+    def clean_case_config(self):
+        errors = []
+        case_config = self.cleaned_data['case_config']
+        if not isinstance(case_config, dict):
+            raise ValidationError(
+                _('The "case_type" property is a dictionary, not a "%(data_type)s".'),
+                params={'data_type': type(case_config).__name__}
+            )
+        if not case_config.get('case_type'):
+            errors.append(ValidationError(
+                _('The "%(property)s" property is required.'),
+                params={'property': 'case_type'},
+                code='required_property',
+            ))
+        if 'form_configs' not in case_config:
+            errors.append(ValidationError(
+                _('The "%(property)s" property is required.'),
+                params={'property': 'form_configs'},
+                code='required_property',
+            ))
+        elif not isinstance(case_config['form_configs'], list):
+            raise ValidationError(
+                _('The "form_configs" property is a dictionary, not a "%(data_type)s".'),
+                params={'data_type': type(case_config['form_configs']).__name__}
+            )
+        else:
+            errors.extend(_validate_form_configs(case_config['form_configs']))
+        if errors:
+            raise ValidationError(errors)
+        return self.cleaned_data['case_config']
+
+
 def _validate_form_configs(form_configs):
     errors = []
     for form_config in form_configs:
