@@ -13,105 +13,17 @@
   {% initial_page_data 'start_date_after_minimum_subscription' start_date_after_minimum_subscription %}
   {% registerurl 'email_on_downgrade' domain %}
   {% registerurl 'confirm_billing_account_info' domain %}
+
   <div class="container" id="confirm-plan-content">
-    <p class="lead text-center">
-      {% blocktrans with plan.name as p %}
-        You have selected the <strong>{{ p }} Edition</strong> subscription.
-      {% endblocktrans %}
-    </p>
-    <div class="confirm-plan-summary">
-      <div class="tile {{ tile_css }}">
-        <h3>
-          {% blocktrans with plan.name as p %}
-            {{ p }} Edition
-          {% endblocktrans %}
-        </h3>
-        <p class="plan-price">
-          {{ plan.monthly_fee }}
-        </p>
-        <p class="plan-monthly-label">
-          <strong>
-            {% trans "Monthly Fee" %}
-          </strong>
-        </p>
-        <h4>
-          {% trans 'Included each month' %}
-        </h4>
-        <div class="plan-included well well-sm">
-          <dl class="dl-horizontal">
-            {% for rate in plan.rates %}
-              <dt>{{ rate.name }}</dt>
-              <dd>{{ rate.included }}</dd>
-            {% endfor %}
-          </dl>
-        </div>
-        <p class="plan-desc">
-          {{ plan.description }}
-        </p>
-      </div>
-    </div>
-    {% if current_plan %}
-      <div class="alert alert-warning alert-subscription">
-        {% if is_upgrade %}
-          <h4>
-            <i class="fa fa-warning"></i>
-            {% trans "Note: Continuing will change your current subscription." %}
-          </h4>
-          <p>
-            {% blocktrans with next_invoice_date as invoice_date %}
-              CommCare is billed on a monthly basis, and all subscriptions require a 30 day minimum commitment.
-              You should expect your first invoice on {{ invoice_date }}, or you can prepay for your
-              subscription by following the instructions
-              <a href="https://confluence.dimagi.com/display/commcarepublic/How+to+Pay+by+Credit+Card+or+Wire+Payment">here</a>.
-            {% endblocktrans %}
-          </p>
-          <p>
-            {% blocktrans %}
-              <input type="checkbox" data-bind="checked: userAgreementSigned"> I understand and wish to continue.
-            {% endblocktrans %}
-          </p>
-        {% elif is_downgrade_before_minimum %}
-          <p>
-            {% blocktrans with current_plan as p %}
-              We're sorry to see you downgrade! You’ll have access to the features on your
-              <strong>{{ p }} Edition Software Plan </strong> through {{ current_subscription_end_date }}.
-              On {{ start_date_after_minimum_subscription }} your current subscription will be downgraded
-              to the {{ new_plan_edition }} Edition Software Plan.
-            {% endblocktrans %}
-          </p>
-        {% else %}
-          <h4>
-            <i class="fa fa-warning"></i>
-            {% trans "Note: Continuing will change your current subscription." %}
-          </h4>
-          <p>
-            {% blocktrans with current_plan as p %}
-              We're sorry to see you downgrade! You are currently subscribed to the
-              <strong>{{ p }} Software Plan.</strong>
-            {% endblocktrans %}
-          </p>
-        {% endif %}
-      </div>
+    {% if is_paused %}
+      {% include 'accounting/partials/confirm_pause_summary.html' %}
+    {% else %}
+      {% include 'accounting/partials/confirm_plan_summary.html' %}
     {% endif %}
 
-    {% if downgrade_messages %}
-      <hr />
-      <h4 class="text-center">
-        {% trans 'Note: Selecting this plan will result in the following changes to your project.' %}
-      </h4>
-    {% endif %}
-    {% for message in downgrade_messages %}
-      <div class="alert alert-warning alert-downgrade">
-        {{ message.message }}
-        <ul>
-          {% for detail in message.details %}
-            <li>{{ detail|safe }}</li>
-          {% endfor %}
-        </ul>
-      </div>
-    {% endfor %}
-
-    <form action="{% url 'confirm_billing_account_info' domain %}" method="post" class="form">
+    <form action="{% if is_paused %}{% url 'pause_subscription' domain %}{% else %}{% url 'confirm_billing_account_info' domain %}{% endif %}"
+          method="post"
+          class="form">
       {% csrf_token %}
       <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
       <input type="hidden" value="" name="downgrade_reason" id="downgrade-reason"/>
@@ -119,21 +31,35 @@
       <input type="hidden" value="" name="new_tool" id="new-tool"/>
       <input type="hidden" value="" name="new_tool_reason" id="new-tool-reason"/>
       <input type="hidden" value="" name="feedback" id="feedback"/>
-      <hr />
-      <p class="text-center">
-        {% blocktrans %}
-          Clicking the 'Confirm Plan' button below will bring you to a page where you can confirm your billing information.
-        {% endblocktrans %}
-      </p>
+      {% if not is_paused %}
+        <hr />
+        <p class="text-center">
+          {% blocktrans %}
+            Clicking the 'Confirm Plan' button below will bring you to a page where you can confirm your billing information.
+          {% endblocktrans %}
+        </p>
+      {% endif %}
       <div class="text-center plan-next">
-        <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default btn-lg">{% trans 'Select different plan' %}</a>
-        <button class="btn btn-primary btn-lg" data-bind="enable: userAgreementSigned, click: openDowngradeModal">
-          {% trans 'Confirm Plan' %}
+        <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default btn-lg">
+          {% if is_paused %}
+            {% trans 'Select different option' %}
+          {% else %}
+            {% trans 'Select different plan' %}
+          {% endif %}
+        </a>
+        <button class="btn btn-primary btn-lg"
+                data-bind="enable: userAgreementSigned, click: openDowngradeModal">
+          {% if is_paused %}
+            {% trans 'Confirm Pause' %}
+          {% else %}
+            {% trans "Confirm PLan" %}
+          {% endif %}
         </button>
       </div>
     </form>
+
+  </div>
 {% endblock %}
-</div>
 
 {% block modals %}{{ block.super }}
   <div class="modal fade" id="modal-downgrade">
