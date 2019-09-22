@@ -41,29 +41,31 @@ hqDefine('accounting/js/confirm_plan', [
             OTHER,
         ];
 
-        self.downgradeReason = ko.observable("");
+        self.downgradeReason = ko.observableArray();
         self.newTool = ko.observable("");
-        self.newToolReason = ko.observable("");
+        self.newToolReason = ko.observableArray();
         self.otherNewToolReason = ko.observable("");
+        self.oWillProjectRestart = ko.observable("");
+        self.oFeedback = ko.observable("");
         self.requiredQuestionsAnswered = ko.observable(false);
 
         self.projectEnded = ko.computed(function () {
-            return self.downgradeReason() === PROJECT_ENDED;
+            return _.contains(self.downgradeReason(), PROJECT_ENDED);
         });
         self.newToolNeeded = ko.computed(function () {
-            return self.downgradeReason() === SWITCH_TOOLS;
+            return _.contains(self.downgradeReason(), SWITCH_TOOLS);
         });
         self.otherSelected = ko.computed(function () {
-            return self.newToolReason() === OTHER;
+            return _.contains(self.newToolReason(), OTHER);
         });
         self.requiredQuestionsAnswered = ko.computed(function () {
             if (!self.downgradeReason()) {
                 return false;
             }
-            var newToolNeeded = self.downgradeReason() === SWITCH_TOOLS;
-            var newToolAnswered = self.newTool() !== "";
-            var newToolReasonAnswered = (self.newToolReason() && self.newToolReason() !== OTHER) ||
-                (self.otherNewToolReason() && self.newToolReason() === OTHER);
+            var newToolNeeded = _.contains(self.downgradeReason(), SWITCH_TOOLS),
+                newToolAnswered = self.newTool() !== "",
+                newToolReasonAnswered = (self.newToolReason() && !_.contains(self.newToolReason(), OTHER))
+                    || (self.otherNewToolReason() && _.contains(self.newToolReason(), OTHER));
 
             return (self.downgradeReason() && !newToolNeeded) || (newToolNeeded && newToolAnswered && newToolReasonAnswered);
         });
@@ -82,16 +84,16 @@ hqDefine('accounting/js/confirm_plan', [
             var $button = $(e.currentTarget);
             $button.disableButton();
             if (self.form) {
+                var newToolReason = self.newToolReason().join(", ");
                 if (self.otherSelected()) {
-                    document.getElementById("new-tool-reason").value = document.getElementById("text-tool-reason").value;
-                } else {
-                    document.getElementById("new-tool-reason").value = $("#select-tool-reason").val().join(", ");
+                    newToolReason = newToolReason + ': "' + self.otherNewToolReason() + '"';
                 }
+                $('#new-tool').val(self.newTool());
+                $("#new-tool-reason").val(newToolReason);
 
-                document.getElementById("downgrade-reason").value = $("#select-downgrade-reason").val().join(", ");
-                document.getElementById("will-project-restart").value = document.getElementById("select-project-restart").value;
-                document.getElementById("new-tool").value = document.getElementById("text-new-tool").value;
-                document.getElementById("feedback").value = document.getElementById("text-feedback").value;
+                $('#downgrade-reason').val(self.downgradeReason().join(", "));
+                $('#will-project-restart').val(self.oWillProjectRestart());
+                $('#feedback').val(self.oFeedback());
 
                 self.form.submit();
             }
