@@ -188,16 +188,26 @@ input:checked + .slider:before {
   height: 350px;
   position: relative;
 
+  &:not(.tile-paused) {
+    @media (max-width: 1199px) {
+      width: 95%;
+    }
+
+    @media (max-width: 939px) {
+      height: 400px;
+    }
+  }
+
   h3 {
     color: @_color-tile !important;
   }
 
   .btn {
     color: @_color-tile !important;
-    width: 140px;
     position: absolute;
     bottom: 30px;
-    left: 50px;
+    width: 76%;
+    left: 12%;
   }
 
   .btn-current {
@@ -243,12 +253,19 @@ input:checked + .slider:before {
   margin-bottom: 20px;
   margin-top: 20px;
   text-align: center;
+  vertical-align: top;
 }
 
 .select-plan-col {
   display: inline-block;
   width: 240px;
   text-align: center;
+  vertical-align: top;
+
+  @media (max-width: 1199px) {
+    width: 24%;
+  }
+
 
   .tile {
     margin: 0 auto;
