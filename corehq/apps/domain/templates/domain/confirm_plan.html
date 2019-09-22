@@ -70,60 +70,101 @@
             <span aria-hidden="true">&times;</span>
             <span class="sr-only">{% trans "Close" %}</span>
           </button>
-          <h4 class="modal-title">{% trans 'Downgrading?' %}</h4>
+          <h4 class="modal-title">
+            {% if is_paused %}
+              {% trans 'Pausing your subscription?' %}
+            {% else %}
+              {% trans 'Downgrading?' %}
+            {% endif %}
+          </h4>
         </div>
         <div class="modal-body">
-          {% blocktrans %}
-            We’d love to make CommCare work better for you.
-            Please help us, by answering these simple questions.
-          {% endblocktrans %}
-
-          <br><br>
-          {% blocktrans %}
-            Why are you downgrading your subscription today?
-          {% endblocktrans %}
-          <select multiple="multiple" class="form-control" id="select-downgrade-reason" data-bind="value: downgradeReason, options: downgradeReasonList"></select>
-          <br><br>
-
-          <div data-bind="visible: projectEnded">
+          <p class="lead">
             {% blocktrans %}
-              Is there a chance your project may start again?
+              We’d love to make CommCare work better for you.
+              Please help us, by answering these simple questions.
             {% endblocktrans %}
-            <select class="form-control" id="select-project-restart">
-              <option value='yes'>{% trans "Yes" %}</option>
-              <option value='no' selected="selected">{% trans "No" %}</option>
-            </select>
-            <br><br>
-          </div>
+          </p>
 
-          <div data-bind="visible: newToolNeeded">
-            {% blocktrans %}
-              Could you indicate which new tool you’re using?
-            {% endblocktrans %}
-            <textarea class="form-control" id="text-new-tool" data-bind="textInput: newTool"></textarea>
-            <br><br>
-            {% blocktrans %}
-              Why are you switching to a new tool?
-            {% endblocktrans %}
-            <select multiple="multiple" class="form-control" id="select-tool-reason" data-bind="options: newToolReasonList, value: newToolReason"></select>
-            <br><br>
+          <p>
+            {% if is_paused %}
+              {% blocktrans %}
+                Why are you pausing your subscription today?
+              {% endblocktrans %}
+            {% else %}
+              {% blocktrans %}
+                Why are you downgrading your subscription today?
+              {% endblocktrans %}
+            {% endif %}
+            <select multiple="multiple"
+                    class="form-control"
+                    data-bind="selectedOptions: downgradeReason,
+                               options: downgradeReasonList"></select>
+          </p>
 
-            <div data-bind="visible: otherSelected">
+          <!-- ko if: projectEnded -->
+            <p>
+              {% blocktrans %}
+                Is there a chance your project may start again?
+              {% endblocktrans %}
+              <select class="form-control"
+                      data-bind="value: oWillProjectRestart">
+                <option value="yes">
+                  {% trans "Yes" %}
+                </option>
+                <option value="no"
+                        selected="selected">
+                  {% trans "No" %}
+                </option>
+              </select>
+            </p>
+          <!-- /ko -->
+
+          <!-- ko if: newToolNeeded -->
+            <p>
+              {% blocktrans %}
+                Could you indicate which new tool you’re using?
+              {% endblocktrans %}
+              <textarea class="form-control"
+                        data-bind="textInput: newTool"></textarea>
+            </p>
+            <p>
+              {% blocktrans %}
+                Why are you switching to a new tool?
+              {% endblocktrans %}
+              <select multiple="multiple"
+                      class="form-control"
+                      data-bind="selectedOptions: newToolReason,
+                                 options: newToolReasonList"></select>
+            </p>
+          <!-- /ko -->
+
+          <!-- ko if: otherSelected -->
+            <p>
               {% blocktrans %}
                 Please specify
               {% endblocktrans %}
-              <textarea class="form-control" id="text-tool-reason" data-bind="textInput: otherNewToolReason"></textarea>
-              <br><br>
-            </div>
-          </div>
+              <textarea class="form-control"
+                        data-bind="textInput: otherNewToolReason"></textarea>
+            </p>
+          <!-- /ko -->
 
-          {% blocktrans %}
-            Please let us know any other feedback you have
-          {% endblocktrans %}
-          <textarea class="form-control" id="text-feedback"></textarea>
+          <p>
+            {% blocktrans %}
+              Please let us know any other feedback you have
+            {% endblocktrans %}
+            <textarea class="form-control"
+                      data-bind="textInput: oFeedback"></textarea>
+          </p>
+
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-primary" data-bind="click: submitDowngrade, enable: requiredQuestionsAnswered">{% trans "Continue" %}</button>
+          <button type="button"
+                  class="btn btn-primary"
+                  data-bind="click: submitDowngrade,
+                             enable: requiredQuestionsAnswered">
+            {% trans "Continue" %}
+          </button>
         </div>
       </div>
     </div>
