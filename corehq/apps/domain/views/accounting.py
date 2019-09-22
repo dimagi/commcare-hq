@@ -1169,16 +1169,25 @@ class SelectedAnnualPlanView(SelectPlanView):
 class ConfirmSelectedPlanView(SelectPlanView):
     template_name = 'domain/confirm_plan.html'
     urlname = 'confirm_selected_plan'
-    step_title = ugettext_lazy("Confirm Plan")
+
+    @property
+    def step_title(self):
+        if self.is_paused:
+            return _("Confirm Pause")
+        return _("Confirm Subscription")
 
     @property
     def steps(self):
         last_steps = super(ConfirmSelectedPlanView, self).steps
         last_steps.append({
-            'title': _("2. Confirm Plan"),
+            'title': _("2. Confirm Pause") if self.is_paused else _("2. Confirm Subscription"),
             'url': reverse(SelectPlanView.urlname, args=[self.domain]),
         })
         return last_steps
+
+    @property
+    def is_paused(self):
+        return self.edition == SoftwarePlanEdition.PAUSED
 
     @property
     @memoized
@@ -1253,6 +1262,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
             'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT),
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
             'new_plan_edition': self.edition,
+            'is_paused': self.is_paused,
             'tile_css': 'tile-{}'.format(self.edition.lower()),
         }
 
@@ -1646,3 +1656,15 @@ class CardsView(BaseCardView):
             return self._generic_error()
 
         return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+
+
+@require_POST
+@require_permission(Permissions.edit_billing)
+@login_and_domain_required
+def pause_subscription(request, domain):
+    messages.success(
+        request, _("Your project's subscription has been paused.")
+    )
+    return HttpResponseRedirect(
+        reverse(DomainSubscriptionView.urlname, args=[domain])
+    )
