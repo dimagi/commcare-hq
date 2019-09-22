@@ -28,7 +28,7 @@ hqDefine('accounting/js/pricing_table', [
         'use strict';
         var self = {};
 
-        self.currentPlan = ko.observable(options.currentPlan);
+        self.oCurrentPlan = ko.observable(options.currentPlan);
         self.editions = options.editions;
         self.isRenewal = options.isRenewal;
         self.startDateAfterMinimumSubscription = options.startDateAfterMinimum;
@@ -36,46 +36,42 @@ hqDefine('accounting/js/pricing_table', [
         self.nextSubscriptionEdition = options.nextSubscriptionEdition;
         self.invoicingContact = options.invoicingContact;
 
-        self.selectedPlan = ko.observable(options.currentPlan);
+        self.oSelectedPlan = ko.observable(options.currentPlan);
 
-        self.showAnnualPricing = ko.observable(false);
+        self.oShowAnnualPricing = ko.observable(false);
 
-        self.refundCss = ko.computed(function () {
-            if (self.showAnnualPricing()) {
+        self.oRefundCss = ko.computed(function () {
+            if (self.oShowAnnualPricing()) {
                 return "show-refund";
             }
         });
 
-        self.isSubmitVisible = ko.computed(function () {
-            return !! self.selectedPlan() && !(self.selectedPlan() === self.currentPlan());
+        self.oIsSubmitDisabled = ko.computed(function () {
+            return !self.oSelectedPlan() || (self.oSelectedPlan() === self.oCurrentPlan());
         });
 
-        self.isSubmitDisabled = ko.computed(function () {
-            return !self.selectedPlan() || (self.selectedPlan() === self.currentPlan());
-        });
-
-        self.isCurrentPlanCommunity = ko.observable(options.currentPlan === 'community');
+        self.oIsCurrentPlanCommunity = ko.observable(options.currentPlan === 'community');
 
         self.selectPausedPlan = function () {
-            self.selectedPlan('paused');
+            self.oSelectedPlan('paused');
         };
         self.isDowngrade = function () {
-            return self.editions.indexOf(self.selectedPlan()) < self.editions.indexOf(self.currentPlan());
+            return self.editions.indexOf(self.oSelectedPlan()) < self.editions.indexOf(self.oCurrentPlan());
         };
 
-        self.pausedCss = ko.computed(function () {
-            if (self.selectedPlan() === 'paused') {
+        self.oPausedCss = ko.computed(function () {
+            if (self.oSelectedPlan() === 'paused') {
                 return "selected-plan";
             }
             return "";
         });
 
-        self.planOptions = ko.observableArray(_.map(options.planOptions, function (opt) {
+        self.oPlanOptions = ko.observableArray(_.map(options.planOptions, function (opt) {
             return new PlanOption(opt, self);
         }));
 
-        self.showNext = ko.computed(function () {
-            return !self.showAnnualPricing();
+        self.oShowNext = ko.computed(function () {
+            return !self.oShowAnnualPricing();
         });
 
         self.form = undefined;
@@ -84,13 +80,13 @@ hqDefine('accounting/js/pricing_table', [
 
             var mailto = "<a href='mailto:" + self.invoicingContact + "'>" + self.invoicingContact + "</a>";
             if (self.isDowngrade() && self.subscriptionBelowMinimum) {
-                var oldPlan = utils.capitalize(self.currentPlan());
-                var newPlan = utils.capitalize(self.selectedPlan());
+                var oldPlan = utils.capitalize(self.oCurrentPlan());
+                var newPlan = utils.capitalize(self.oSelectedPlan());
                 var newStartDate = "<strong>" + self.startDateAfterMinimumSubscription + "</strong>";
 
                 var message = "",
                     title = gettext("Downgrading?");
-                if (self.selectedPlan() === 'paused') {
+                if (self.oSelectedPlan() === 'paused') {
                     title = gettext("Pausing Subscription?");
                     message = _.template(gettext(
                         "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
@@ -156,7 +152,7 @@ hqDefine('accounting/js/pricing_table', [
             $button.disableButton();
 
             self.form = $(e.currentTarget).closest("form");
-            self.currentPlan = self.currentPlan + " - annual pricing";
+            self.oCurrentPlan(self.oCurrentPlan() + " - annual pricing");
             self.form.submit();
         };
 
@@ -171,52 +167,52 @@ hqDefine('accounting/js/pricing_table', [
         'use strict';
         var self = this;
 
-        self.name = ko.observable(data.name);
-        self.slug = ko.observable(data.name.toLowerCase());
+        self.oName = ko.observable(data.name);
+        self.oSlug = ko.observable(data.name.toLowerCase());
 
-        self.monthlyPrice = ko.observable(data.monthly_price);
-        self.annualPrice = ko.observable(data.annual_price);
-        self.description = ko.observable(data.description);
+        self.oMonthlyPrice = ko.observable(data.monthly_price);
+        self.oAnnualPrice = ko.observable(data.annual_price);
+        self.oDescription = ko.observable(data.description);
 
-        self.isCurrentPlan = ko.computed(function () {
-            return self.slug() === parent.currentPlan();
+        self.oIsCurrentPlan = ko.computed(function () {
+            return self.oSlug() === parent.oCurrentPlan();
         });
 
-        self.isSelectedPlan = ko.computed(function () {
-            return self.slug() === parent.selectedPlan();
+        self.oIsSelectedPlan = ko.computed(function () {
+            return self.oSlug() === parent.oSelectedPlan();
         });
 
-        self.cssClass = ko.computed(function () {
-            var cssClass = "tile-" + self.slug();
-            if (self.isSelectedPlan()) {
+        self.oCssClass = ko.computed(function () {
+            var cssClass = "tile-" + self.oSlug();
+            if (self.oIsSelectedPlan()) {
                 cssClass = cssClass + " selected-plan";
             }
             return cssClass;
         });
 
         self.selectPlan = function () {
-            parent.selectedPlan(self.slug());
+            parent.oSelectedPlan(self.oSlug());
         };
 
-        self.pricingTypeText = ko.computed(function () {
-            if (parent.showAnnualPricing()) {
+        self.oPricingTypeText = ko.computed(function () {
+            if (parent.oShowAnnualPricing()) {
                 return django.gettext("Billed Annually");
             }
             return django.gettext("Billed Monthly");
         });
 
-        self.pricingTypeCssClass = ko.computed(function () {
-            if (parent.showAnnualPricing()) {
+        self.oPricingTypeCssClass = ko.computed(function () {
+            if (parent.oShowAnnualPricing()) {
                 return 'pricing-type-annual';
             }
             return 'pricing-type-monthly';
         });
 
-        self.displayPrice = ko.computed(function () {
-            if (parent.showAnnualPricing()) {
-                return self.annualPrice();
+        self.oDisplayPrice = ko.computed(function () {
+            if (parent.oShowAnnualPricing()) {
+                return self.oAnnualPrice();
             }
-            return self.monthlyPrice();
+            return self.oMonthlyPrice();
         });
 
     };

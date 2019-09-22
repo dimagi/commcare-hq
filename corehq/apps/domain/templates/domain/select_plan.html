@@ -26,7 +26,7 @@
   <section id="plans">
 
     <p class="community-plan-notice text-center"
-       data-bind="visible: isCurrentPlanCommunity">
+       data-bind="visible: oIsCurrentPlanCommunity">
       {% blocktrans %}
         You are currently on the FREE CommCare Community plan.
       {% endblocktrans %}
@@ -35,7 +35,7 @@
     <p class="switch-label text-center">
       {% trans "Pay Monthly" %}
       <label class="switch">
-        <input type="checkbox" id="pricing-toggle" data-bind="{checked: showAnnualPricing}">
+        <input type="checkbox" id="pricing-toggle" data-bind="{checked: oShowAnnualPricing}">
         <span class="slider round slider-blue slider-blue-on"></span>
       </label>
       {% trans "Pay Annually" %}
@@ -48,7 +48,7 @@
     </p>
 
     <p class="refund-text text-center"
-       data-bind="css: refundCss">
+       data-bind="css: oRefundCss">
       <i class="fa fa-check"></i>
       <a href="https://dimagi.com/terms/latest/tos/"
          class="check-icon blue">
@@ -57,26 +57,26 @@
     </p>
 
     <div class="select-plan-row">
-      <!-- ko foreach: planOptions -->
+      <!-- ko foreach: oPlanOptions -->
       <div class="select-plan-col">
         <a href="#"
            class="tile"
-           data-bind="css: cssClass, click: selectPlan">
-          <h3 data-bind="text: name"></h3>
+           data-bind="css: oCssClass, click: selectPlan">
+          <h3 data-bind="text: oName"></h3>
           <p class="pricing-type"
-             data-bind="text: pricingTypeText, css: pricingTypeCssClass"></p>
+             data-bind="text: oPricingTypeText, css: oPricingTypeCssClass"></p>
 
-          <p class="plan-price" data-bind="text: displayPrice"></p>
+          <p class="plan-price" data-bind="text: oDisplayPrice"></p>
           <p class="plan-monthly-label">{% trans "monthly" %}</p>
-          <p class="plan-desc" data-bind="text: description"></p>
+          <p class="plan-desc" data-bind="text: oDescription"></p>
 
           <div class="btn btn-current"
-               data-bind="visible: isCurrentPlan">
+               data-bind="visible: oIsCurrentPlan">
             {% trans "Current Plan" %}
           </div>
 
           <div class="btn btn-select"
-               data-bind="visible: !isCurrentPlan()">
+               data-bind="visible: !oIsCurrentPlan()">
             {% trans "Select Plan" %}
           </div>
         </a>
@@ -84,10 +84,10 @@
       <!-- /ko -->
     </div>
 
-    <div data-bind="visible: !isCurrentPlanCommunity()">
+    <div data-bind="visible: !oIsCurrentPlanCommunity()">
       <a href="#"
          class="tile tile-paused"
-         data-bind="click: selectPausedPlan, css: pausedCss">
+         data-bind="click: selectPausedPlan, css: oPausedCss">
         <div class="pause-icon">
           <i class="fa fa-pause-circle-o"></i>
         </div>
@@ -126,7 +126,7 @@
         class="form"
         id="select-plan-form"
         method="post"
-        data-bind="visible: showNext"
+        data-bind="visible: oShowNext"
         style="display: none;"
         action="{% url 'confirm_selected_plan' domain %}">
       {% csrf_token %}
@@ -134,20 +134,20 @@
         <input type="hidden" name="from_plan_page" value="true">
       {% endif %}
 
-      <input type="hidden" name="plan_edition" data-bind="value: selectedPlan">
+      <input type="hidden" name="plan_edition" data-bind="value: oSelectedPlan">
       <div class="text-center plan-next">
         <button type="submit"
                 class="btn btn-primary btn-lg"
-                data-bind="click: openMinimumSubscriptionModal, disable: isSubmitDisabled">
+                data-bind="click: openMinimumSubscriptionModal, disable: oIsSubmitDisabled">
           {% trans 'Next' %}
         </button>
       </div>
     </form>
 
     <form action="{% url 'annual_plan_request_quote' domain %}"
-          data-bind="visible: !showNext()">
+          data-bind="visible: !oShowNext()">
       {% csrf_token %}
-      <input type="hidden" name="plan_edition" data-bind="value: selectedPlan">
+      <input type="hidden" name="plan_edition" data-bind="value: oSelectedPlan">
       <div class="text-center plan-next">
         <button class="btn btn-primary btn-lg" data-bind="click: contactSales">
           {% trans 'Talk to Sales' %}
