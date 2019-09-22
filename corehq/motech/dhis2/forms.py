@@ -89,32 +89,37 @@ class Dhis2ConfigForm(forms.Form):
         self.helper.add_input(Submit('submit', _('Save Changes')))
 
     def clean_form_configs(self):
-        errors = []
-        for form_config in self.cleaned_data['form_configs']:
-            if form_config.get('xmlns'):
-                required_msg = _('The "%(property)s" property is required for '
-                                 'form "{}".').format(form_config['xmlns'])
-            else:
-                required_msg = _('The "%(property)s" property is required.')
-
-            if not form_config.get('xmlns'):
-                errors.append(ValidationError(
-                    '{} {}'.format(required_msg, _('Please specify the XMLNS of the form.')),
-                    params={'property': 'xmlns'},
-                    code='required_property',
-                ))
-            if not form_config.get('program_id'):
-                errors.append(ValidationError(
-                    '{} {}'.format(required_msg, _('Please specify the DHIS2 Program of the event.')),
-                    params={'property': 'program_id'},
-                    code='required_property',
-                ))
-            if not form_config.get('datavalue_maps'):
-                errors.append(ValidationError(
-                    '{} {}'.format(required_msg, _('Please map CommCare values to DHIS2 data elements.')),
-                    params={'property': 'datavalue_maps'},
-                    code='required_property',
-                ))
+        errors = _validate_form_configs(self.cleaned_data['form_configs'])
         if errors:
             raise ValidationError(errors)
         return self.cleaned_data['form_configs']
+
+
+def _validate_form_configs(form_configs):
+    errors = []
+    for form_config in form_configs:
+        if form_config.get('xmlns'):
+            required_msg = _('The "%(property)s" property is required for '
+                             'form "{}".').format(form_config['xmlns'])
+        else:
+            required_msg = _('The "%(property)s" property is required.')
+
+        if not form_config.get('xmlns'):
+            errors.append(ValidationError(
+                '{} {}'.format(required_msg, _('Please specify the XMLNS of the form.')),
+                params={'property': 'xmlns'},
+                code='required_property',
+            ))
+        if not form_config.get('program_id'):
+            errors.append(ValidationError(
+                '{} {}'.format(required_msg, _('Please specify the DHIS2 Program of the event.')),
+                params={'property': 'program_id'},
+                code='required_property',
+            ))
+        if not form_config.get('datavalue_maps'):
+            errors.append(ValidationError(
+                '{} {}'.format(required_msg, _('Please map CommCare values to DHIS2 data elements.')),
+                params={'property': 'datavalue_maps'},
+                code='required_property',
+            ))
+    return errors
