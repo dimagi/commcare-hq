@@ -10,7 +10,7 @@ from django.db import connections
 from django.template import engines
 
 from corehq.sql_db.routers import db_for_read_write
-from corehq.warehouse.utils import django_batch_records, ProgressIterator
+from corehq.warehouse.utils import ProgressIterator, django_batch_records
 
 
 class BaseETLMixin(object):
