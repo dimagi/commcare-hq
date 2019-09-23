@@ -1200,6 +1200,22 @@ def build_incentive_report(agg_date=None):
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
 
+    aggregate_validation_helper()
+
+    for file_format in ['xlsx', 'csv']:
+        for location in locations:
+            if location.location_type.name == 'state':
+                build_incentive_files.delay(location, agg_date, file_format, 1, location)
+            elif location.location_type.name == 'district':
+                build_incentive_files.delay(location, agg_date, file_format, 2, location.parent, location)
+            else:
+                build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
+
+
+def aggregate_validation_helper():
+    """
+    Validates the performance reports vs aggregate reports and send mails with mismatches
+    """
     awc_performance_rows_list = list(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched',
                                                                             'valid_visits', 'visit_denominator',
                                                                             'wer_weighed', 'wer_eligible',
@@ -1229,30 +1245,38 @@ def build_incentive_report(agg_date=None):
         if row_data is not None:
             eligibility_check_bad_data.append(row_data)
 
-    # sending email with is_launched mismatch csv
+    file_attachments = []
     if len(is_launched_check_bad_data) > 0:
-        awc_is_launched_mismatch_mail_helper(is_launched_check_bad_data)
-    # sending email with home conduct % mismatch csv
+        csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
+        file_attachments.append({"csv_columns": csv_columns, "data": is_launched_check_bad_data,
+                                 "filename": datetime.now().strftime('incentive_report_awc_is_launched_mismatch_%s.csv'
+                                                                     % SERVER_DATETIME_FORMAT)})
+
     if len(home_conduct_check_bad_data) > 0:
-        awc_home_conduct_mismatch_mail_helper(home_conduct_check_bad_data)
-    # sending email with eligibility mismatch csv
+        csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
+        file_attachments.append({"csv_columns": csv_columns, "data": home_conduct_check_bad_data,
+                                 "filename": datetime.now().strftime('incentive_report_awc_home_conduct mismatch_%s.csv'
+                                                                     % SERVER_DATETIME_FORMAT)})
+
     if len(eligibility_check_bad_data) > 0:
-        awc_eligibility_mismatch_mail_helper(eligibility_check_bad_data)
+        csv_columns = ['awc_id_from_performance', 'Expected eligibility', 'Eligibility from performance record']
+        file_attachments.append({"csv_columns": csv_columns, "data": eligibility_check_bad_data,
+                                 "filename": datetime.now().strftime('incentive_report_awc_eligibility_mismatch_%s.csv'
+                                                                     % SERVER_DATETIME_FORMAT)})
 
-    for file_format in ['xlsx', 'csv']:
-        for location in locations:
-            if location.location_type.name == 'state':
-                build_incentive_files.delay(location, agg_date, file_format, 1, location)
-            elif location.location_type.name == 'district':
-                build_incentive_files.delay(location, agg_date, file_format, 2, location.parent, location)
-            else:
-                build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
+    if len(file_attachments) > 0:
+        # sending email with mismatches
+        _send_incentive_report_validation_email(file_attachments)
 
 
-# performance row is AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
-# 'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'
-# awcagg_row is AggAwc object with 'awc_id', 'is_launched', 'valid_visits', 'expected_visits'
 def get_awc_is_launched_mismatch_row(performance_row, awcagg_row):
+    """
+    :param performance_row: AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
+    'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'.
+    :param awcagg_row: AggAwc object with 'awc_id', 'is_launched', 'valid_visits', 'expected_visits'
+    :return: None if no mismatch or returns a row with awc_id from performance report, awc_id from aggregate report,
+    is_launched from performance report and is_launched from aggregate report
+    """
     is_launched_from_awc = False
     if awcagg_row[1].lower() == 'yes':
         is_launched_from_awc = True
@@ -1263,10 +1287,14 @@ def get_awc_is_launched_mismatch_row(performance_row, awcagg_row):
     return None
 
 
-# performance row is AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
-# 'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'
-# awcagg_row is AggAwc object with 'awc_id', 'is_launched', 'valid_visits', 'expected_visits'
 def get_awc_home_conduct_mismatch_row(performance_row, awcagg_row):
+    """
+    :param performance_row: AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
+    'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'.
+    :param awcagg_row: AggAwc object with 'awc_id', 'is_launched', 'valid_visits', 'expected_visits'
+    :return: None if no mismatch or returns a row with awc_id from performance report, awc_id from aggregate report,
+    home_conduct percentage from performance report and home_conduct percentage from aggregate report
+    """
     # checking if valid_visits or valid_denominator is zero or None as they are treated as valid cases
     if performance_row[2] in [0, None] or performance_row[3] in [0, None]:
         home_conduct_from_report = 'None'
@@ -1283,9 +1311,12 @@ def get_awc_home_conduct_mismatch_row(performance_row, awcagg_row):
     return None
 
 
-# performance row is AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
-# 'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'
 def get_awc_eligibility_mismatch_row(performance_row):
+    """
+    :param performance_row: AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
+    'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'.
+    :return: None if no mismatch or return a row with expected eligibility and actual eligibility
+    """
     # checking if valid_visits or valid_denominator is zero or None as they are treated as valid cases
     if performance_row[2] in [0, None] or performance_row[3] in [0, None]:
         is_eligible = True
@@ -1316,44 +1347,22 @@ def get_awc_eligibility_mismatch_row(performance_row):
     return None
 
 
-def awc_is_launched_mismatch_mail_helper(csv_data):
-    csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
-    content = """
-    Please see attached file for is_launched mismatch in awc incentive report
+def _send_incentive_report_validation_email(mail_data_list):
+    attachments_list = []
+    for mail_item in mail_data_list:
+        csv_file = io.StringIO()
+        writer = csv.writer(csv_file)
+        writer.writerow(mail_item['csv_columns'])
+        for data in mail_item['data']:
+            writer.writerow(data)
+        attachments_list.append({'file_obj': csv_file, 'title': mail_item['filename'],
+                                 'mimetype': 'text/csv'})
+    email_content = """
+    Please see the attachments for mismatch in awc performance report vs awc aggregate report
     """
-    _send_incentive_report_validation_email(content, csv_columns, csv_data)
-
-
-def awc_home_conduct_mismatch_mail_helper(csv_data):
-    csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
-    content = """
-    Please see attached file for home conduct percentage mismatch in awc incentive report
-    """
-    _send_incentive_report_validation_email(content, csv_columns, csv_data)
-
-
-def awc_eligibility_mismatch_mail_helper(csv_data):
-    csv_columns = ['awc_id_from_performance', 'Expected eligibility', 'Eligibility from performance record']
-    content = """
-    Please see attached file for eligibility check mismatch in awc incentive report
-    """
-    _send_incentive_report_validation_email(content, csv_columns, csv_data)
-
-
-def _send_incentive_report_validation_email(content, csv_columns, bad_data):
-    csv_file = io.StringIO()
-    writer = csv.writer(csv_file)
-    writer.writerow(csv_columns)
-    for data in bad_data:
-        writer.writerow(data)
-
-    email_content = content
-
-    filename = datetime.now().strftime('incentive_report_awc_mismatch_%s.csv' % SERVER_DATETIME_FORMAT)
     send_HTML_email(
         '[{}] - ICDS Dashboard AWC Incentive Report Mismatch'.format(settings.SERVER_ENVIRONMENT),
-        DASHBOARD_TEAM_EMAILS, email_content,
-        file_attachments=[{'file_obj': csv_file, 'title': filename, 'mimetype': 'text/csv'}],
+        DASHBOARD_TEAM_EMAILS, email_content, file_attachments=attachments_list
     )
 
 
