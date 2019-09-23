@@ -428,7 +428,8 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
     filter = get_or_init_anded_filter_from_query_dict(q)
 
     def convert(param):
-        #todo: find a better way to handle bools, something that won't break fields that may be 'T' or 'F' but not bool
+        # todo: find a better way to handle bools,
+        # todo: something that won't break fields that may be 'T' or 'F' but not bool
         if param == 'T' or param is True:
             return 1
         elif param == 'F' or param is False:

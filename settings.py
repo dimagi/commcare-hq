@@ -725,6 +725,8 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+# TODO: set this from commcare-cloud coordinated with ES upgrade
+ELASTICSEARCH_VERSION = 2 if UNIT_TESTING else 1
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
