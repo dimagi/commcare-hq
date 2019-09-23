@@ -1216,12 +1216,12 @@ def aggregate_validation_helper():
     """
     Validates the performance reports vs aggregate reports and send mails with mismatches
     """
-    awc_performance_rows_list = list(AWWIncentiveReport.objects.values_list('awc_id', 'is_launched',
+    awc_performance_rows_list = list(AWWIncentiveReport.objects.values('awc_id', 'is_launched',
                                                                             'valid_visits', 'visit_denominator',
                                                                             'wer_weighed', 'wer_eligible',
                                                                             'incentive_eligible')
                                      .order_by('awc_id'))
-    awc_aggregate_rows_list = list(AggAwc.objects.values_list('awc_id', 'is_launched',
+    awc_aggregate_rows_list = list(AggAwc.objects.values('awc_id', 'is_launched',
                                                               'valid_visits', 'expected_visits')
                                    .order_by('awc_id'))
     is_launched_check_bad_data = []
@@ -1278,11 +1278,12 @@ def get_awc_is_launched_mismatch_row(performance_row, awcagg_row):
     is_launched from performance report and is_launched from aggregate report
     """
     is_launched_from_awc = False
-    if awcagg_row[1].lower() == 'yes':
+    if awcagg_row['is_launched'].lower() == 'yes':
         is_launched_from_awc = True
     # checking if is_launched from incentive report is same as that of aggregate
-    if performance_row[1] != is_launched_from_awc:
-        row_data = [performance_row[0], awcagg_row[0], performance_row[1], is_launched_from_awc]
+    if performance_row['is_launched'] != is_launched_from_awc:
+        row_data = [performance_row['awc_id'], awcagg_row['awc_id'], performance_row['is_launched'],
+                    is_launched_from_awc]
         return row_data
     return None
 
@@ -1296,17 +1297,17 @@ def get_awc_home_conduct_mismatch_row(performance_row, awcagg_row):
     home_conduct percentage from performance report and home_conduct percentage from aggregate report
     """
     # checking if valid_visits or valid_denominator is zero or None as they are treated as valid cases
-    if performance_row[2] in [0, None] or performance_row[3] in [0, None]:
+    if performance_row['valid_visits'] is None or performance_row['visit_denominator'] in [0, None]:
         home_conduct_from_report = 'None'
     else:
-        home_conduct_from_report = performance_row[2] / performance_row[3]
-    if awcagg_row[2] in [0, None] or awcagg_row[3] in [0, None]:
+        home_conduct_from_report = performance_row['valid_visits'] / performance_row['visit_denominator']
+    if awcagg_row['valid_visits'] is None or awcagg_row['expected_visits'] in [0, None]:
         home_conduct_from_awc = 'None'
     else:
-        home_conduct_from_awc = awcagg_row[2] / awcagg_row[3]
+        home_conduct_from_awc = awcagg_row['valid_visits'] / awcagg_row['expected_visits']
     # checking if home conduct (valid_visits/valid_denominator) from incentive report is same as that of aggregate
     if home_conduct_from_report != home_conduct_from_awc:
-        row_data = [performance_row[0], awcagg_row[0], home_conduct_from_report, home_conduct_from_awc]
+        row_data = [performance_row['awc_id'], awcagg_row['awc_id'], home_conduct_from_report, home_conduct_from_awc]
         return row_data
     return None
 
@@ -1318,32 +1319,34 @@ def get_awc_eligibility_mismatch_row(performance_row):
     :return: None if no mismatch or return a row with expected eligibility and actual eligibility
     """
     # checking if valid_visits or valid_denominator is zero or None as they are treated as valid cases
-    if performance_row[2] in [0, None] or performance_row[3] in [0, None]:
+    if performance_row['valid_visits'] is None or performance_row['visit_denominator'] in [0, None]:
         is_eligible = True
     else:
         # checking if valid_visits/valid_denominator > 0.6(60%)
-        home_conduct_from_report = performance_row[2] / performance_row[3]
+        home_conduct_from_report = performance_row['valid_visits'] / performance_row['visit_denominator']
         if home_conduct_from_report > 0.6:
             is_eligible = True
         else:
             is_eligible = False
     if is_eligible:
         # checking if wer_weighed or wer_eligible is zero or None as they are treated as valid cases
-        if performance_row[4] in [0, None] or performance_row[5] in [0, None]:
+        if performance_row['wer_weighed'] is None or performance_row['wer_eligible'] in [0, None]:
             is_eligible = True
         else:
             # checking if wer_weighed/wer_eligible > 0.6(60%)
-            weigh_eligibility = performance_row[4] / performance_row[5]
+            weigh_eligibility = performance_row['wer_weighed'] / performance_row['wer_eligible']
             if weigh_eligibility > 0.6:
                 is_eligible = True
             else:
                 is_eligible = False
-    if not performance_row[6]:
-        if is_eligible and performance_row[1]:
-            return [performance_row[0], is_eligible and performance_row[1], performance_row[6]]
+    if not performance_row['incentive_eligible']:
+        if is_eligible and performance_row['is_launched']:
+            return [performance_row['awc_id'], is_eligible and performance_row['is_launched'],
+                    performance_row['incentive_eligible']]
     else:
-        if not (is_eligible and performance_row[1]):
-            return [performance_row[0], is_eligible and performance_row[1], performance_row[6]]
+        if not (is_eligible and performance_row['is_launched']):
+            return [performance_row['awc_id'], is_eligible and performance_row['is_launched'],
+                    performance_row['incentive_eligible']]
     return None
 
 
