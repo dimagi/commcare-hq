@@ -1,3 +1,4 @@
+/* globals hqDefine hqImport django */
 hqDefine("app_manager/js/releases/app_view_release_manager", function () {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
@@ -10,8 +11,6 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
         recipient_contacts: initial_page_data('sms_contacts'),
         download_modal_id: '#download-zip-modal',
         latestReleasedVersion: initial_page_data('latestReleasedVersion'),
-        masterBriefs: initial_page_data('master_briefs'),
-        upstreamUrl: initial_page_data('upstream_url'),
     };
     var el = $('#releases-table');
     if (el.length) {

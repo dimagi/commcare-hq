@@ -80,7 +80,6 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
     get_build_by_version,
-    get_build_ids,
     get_latest_build_doc,
     get_latest_released_app_doc,
     wrap_app,
@@ -160,8 +159,7 @@ from corehq.apps.hqmedia.models import (
 from corehq.apps.integration.models import ApplicationIntegrationMixin
 from corehq.apps.linked_domain.applications import (
     get_latest_master_app_release,
-    get_latest_master_releases_versions,
-    get_master_app_briefs,
+    get_master_app_version,
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.locations.models import SQLLocation
@@ -4099,15 +4097,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         ).first()
 
     @memoized
-    def _get_version_comparison_build(self):
-        '''
-        Returns an earlier build to be used for comparing forms and multimedia
-        when making a new build and setting the versions of those items.
-        For normal applications, this is just the previous build.
-        '''
-        return self.get_latest_build()
-
-    @memoized
     def get_latest_saved(self):
         """
         This looks really similar to get_latest_app, not sure why tim added
@@ -4500,7 +4489,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             cache.delete('app_build_cache_{}_{}'.format(self.domain, self.get_id))
 
         if increment_version is None:
-            increment_version = not self.copy_of
+            increment_version = not self.copy_of and not is_linked_app(self)
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(ApplicationBase, self).save(**params)
@@ -4738,7 +4727,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         def _hash(val):
             return hashlib.md5(val).hexdigest()
 
-        latest_build = self._get_version_comparison_build()
+        latest_build = self.get_latest_build()
         if not latest_build:
             return
         force_new_version = self.build_profiles != latest_build.build_profiles
@@ -4774,8 +4763,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         """
 
         # access to .multimedia_map is slow
-        previous_version = self._get_version_comparison_build()
-        prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
+        latest_build = self.get_latest_build()
+        prev_multimedia_map = latest_build.multimedia_map if latest_build else {}
 
         for path, map_item in self.multimedia_map.items():
             prev_map_item = prev_multimedia_map.get(path, None)
@@ -5561,6 +5550,7 @@ class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
+    master = StringProperty()  # Legacy, should be removed once all linked apps support multiple masters
     upstream_app_id = StringProperty()  # ID of the app that was most recently pulled
     upstream_version = IntegerProperty()  # Version of the app that was most recently pulled
 
@@ -5583,48 +5573,20 @@ class LinkedApplication(Application):
         from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
         return get_domain_master_link(self.domain)
 
-    @memoized
-    def get_master_app_briefs(self):
+    def get_master_version(self):
         if self.domain_link:
-            return get_master_app_briefs(self.domain_link, self.family_id)
-        return []
+            return get_master_app_version(self.domain_link, self.master)
 
     @property
     def master_is_remote(self):
         if self.domain_link:
             return self.domain_link.is_remote
 
-    def get_latest_master_release(self, master_app_id):
+    def get_latest_master_release(self):
         if self.domain_link:
-            return get_latest_master_app_release(self.domain_link, master_app_id)
-        raise ActionNotPermitted
-
-    def get_latest_master_releases_versions(self):
-        if self.domain_link:
-            versions = get_latest_master_releases_versions(self.domain_link)
-            # Use self.get_master_app_briefs to limit return value by family_id
-            master_ids = [b.id for b in self.get_master_app_briefs()]
-            return {key: value for key, value in versions.items() if key in master_ids}
-        return {}
-
-    @memoized
-    def get_latest_build_from_upstream(self, upstream_app_id):
-        build_ids = get_build_ids(self.domain, self.master_id)
-        for build_id in build_ids:
-            build_doc = Application.get_db().get(build_id)
-            if build_doc.get('upstream_app_id') == upstream_app_id:
-                return self.wrap(build_doc)
-        return None
-
-    @memoized
-    def _get_version_comparison_build(self):
-        previous_version = self.get_latest_build_from_upstream(self.upstream_app_id)
-        if not previous_version:
-            # If there's no previous version, check for a previous version in the same family.
-            # This allows projects using multiple masters to copy a master app and start pulling
-            # from that copy without resetting the form and multimedia versions.
-            previous_version = self.get_latest_build_from_upstream(self.family_id)
-        return previous_version
+            return get_latest_master_app_release(self.domain_link, self.master)
+        else:
+            raise ActionNotPermitted
 
     def reapply_overrides(self):
         # Used by app_manager.views.utils.update_linked_app()
