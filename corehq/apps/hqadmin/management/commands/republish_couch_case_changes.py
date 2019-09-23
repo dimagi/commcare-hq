@@ -8,7 +8,7 @@ from corehq.doctypemigrations.continuous_migrate import bulk_get_revs
 
 class Command(BaseCommand):
     """
-    Republish case changes
+    Republish case changes. Meant to be used in conjunction with stale_cases_in_es command
             $ ./manage.py republish_couch_case_changes <DOMAIN> <case_ids.txt>
     """
 
