@@ -103,7 +103,7 @@ class HQToWarehouseETLMixin(BaseETLMixin):
         mapping_fields = {field for _, field in self.field_mapping()}
         missing = mapping_fields - model_fields
         if missing:
-            raise Exception('Mapping fields refer to missing model fields', missing)
+            raise Exception('Mapping fields not present on model', missing)
 
     @classmethod
     def record_iter(cls, start_datetime, end_datetime):
