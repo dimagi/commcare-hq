@@ -1687,6 +1687,7 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'Manage releases per location',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 
