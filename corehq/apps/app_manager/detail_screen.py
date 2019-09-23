@@ -1,19 +1,19 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import re
+
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.suite_xml import const
+from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.xpath import (
     CaseXPath,
     CommCareSession,
     IndicatorXpath,
     LedgerdbXpath,
     LocationXpath,
+    UserCaseXPath,
     XPath,
     dot_interpolate,
-    UserCaseXPath)
+)
 from corehq.apps.hqmedia.models import CommCareMultimedia
-import re
 
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit

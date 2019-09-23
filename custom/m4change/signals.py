@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from casexml.apps.case.signals import cases_received
 from casexml.apps.case.models import XFormInstance
 from fluff.signals import indicator_document_updated
@@ -10,7 +8,6 @@ from custom.m4change.constants import M4CHANGE_DOMAINS, ALL_M4CHANGE_FORMS, IMMU
     BOOKED_DELIVERY_FORMS, UNBOOKED_DELIVERY_FORMS, BOOKING_FORMS, FOLLOW_UP_FORMS, REDIS_FIXTURE_KEYS, \
     REDIS_FIXTURE_LOCK_KEYS
 from custom.m4change.models import McctStatus
-from six.moves import range
 
 
 def _create_mcct_status_row(form_id, status, domain, received_on, registration_date, immunized, is_booking,

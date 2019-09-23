@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from django.conf import settings
 from django.test import TestCase
 from fakecouch import FakeCouchDb

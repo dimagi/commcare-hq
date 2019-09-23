@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 import time
 import uuid
 from datetime import datetime
@@ -17,7 +14,6 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.models import LedgerValue, CommCareCaseSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test, use_sql_backend
-from six.moves import range
 
 
 class BaseReindexAccessorTest(object):

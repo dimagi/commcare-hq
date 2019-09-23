@@ -1,7 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
-from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
+
+from corehq.apps.app_manager.management.commands.helpers import (
+    AppMigrationCommandBase,
+)
 from corehq.apps.app_manager.models import Application
 
 logger = logging.getLogger('app_migration')

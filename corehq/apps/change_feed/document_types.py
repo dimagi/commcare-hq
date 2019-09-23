@@ -1,11 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 
-from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from couchforms.models import all_known_formlike_doc_types
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.feed.interface import ChangeMeta
+
+from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 
 GROUP_DOC_TYPES = ('Group', 'Group-Deleted')
 WEB_USER_DOC_TYPES = ('WebUser', 'WebUser-Deleted')
@@ -86,6 +85,16 @@ def change_meta_from_doc_meta_and_document(doc_meta, document, data_source_type,
         document_subtype=doc_meta.subtype,
         domain=doc_meta.domain,
         is_deletion=doc_meta.is_deletion,
+    )
+
+
+def change_meta_from_hard_delete(document, data_source_type, data_source_name):
+    return ChangeMeta(
+        document_id=document['_id'],
+        document_rev=document.get('_rev', None),
+        data_source_type=data_source_type,
+        data_source_name=data_source_name,
+        is_deletion=True,
     )
 
 

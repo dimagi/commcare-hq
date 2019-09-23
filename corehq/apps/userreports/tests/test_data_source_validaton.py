@@ -1,10 +1,11 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.test import SimpleTestCase
 
 from corehq.apps.userreports.exceptions import ValidationError
 from corehq.apps.userreports.models import Validation
-from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
+from corehq.apps.userreports.tests.utils import (
+    get_sample_data_source,
+    get_sample_doc_and_indicators,
+)
 
 
 class DataSourceValidationTest(SimpleTestCase):

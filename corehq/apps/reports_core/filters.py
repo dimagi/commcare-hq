@@ -1,20 +1,23 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime, time
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
-from corehq.apps.reports_core.exceptions import FilterValueException
-from corehq.apps.userreports.util import localize
-from corehq.util.dates import iso_string_to_date, get_quarter_date_range
 
-from dimagi.utils.dates import DateSpan
-from memoized import memoized
-from django.utils.translation import ugettext, ugettext_lazy as _
 from django.conf import settings
 from django.urls import reverse
-import six
-from six.moves import range
+from django.utils.translation import ugettext
+from django.utils.translation import ugettext_lazy as _
+
+from memoized import memoized
+
+from dimagi.utils.dates import DateSpan
+
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import (
+    load_locs_json,
+    location_hierarchy_config,
+)
+from corehq.apps.reports_core.exceptions import FilterValueException
+from corehq.apps.userreports.util import localize
+from corehq.util.dates import get_quarter_date_range, iso_string_to_date
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
 REQUEST_USER_KEY = 'request_user'
@@ -146,7 +149,7 @@ class DatespanFilter(BaseFilter):
             startdate = date_or_nothing(startdate)
             enddate = date_or_nothing(enddate)
         except (ValueError, TypeError) as e:
-            raise FilterValueException('Error parsing date parameters: {}'.format(six.text_type(e)))
+            raise FilterValueException('Error parsing date parameters: {}'.format(str(e)))
 
         if startdate or enddate:
             return DateSpan(startdate, enddate, inclusive=date_range_inclusive)
@@ -257,7 +260,7 @@ class NumericFilter(BaseFilter):
             assert operator in ["=", "!=", "<", "<=", ">", ">="]
             assert isinstance(operand, float) or isinstance(operand, int)
         except AssertionError as e:
-            raise FilterValueException('Error parsing numeric filter parameters: {}'.format(six.text_type(e)))
+            raise FilterValueException('Error parsing numeric filter parameters: {}'.format(str(e)))
 
         return {"operator": operator, "operand": operand}
 
@@ -388,10 +391,10 @@ class DynamicChoiceListFilter(BaseFilter):
     def value(self, **kwargs):
         from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
         from corehq.apps.userreports.expressions.getters import transform_from_datatype
-        selection = six.text_type(kwargs.get(self.name, ""))
+        selection = kwargs.get(self.name, "")
         user = kwargs.get(REQUEST_USER_KEY, None)
         if selection:
-            choices = selection.split(CHOICE_DELIMITER)
+            choices = selection if isinstance(selection, list) else str(selection).split(CHOICE_DELIMITER)
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
             return self.choice_provider.get_sorted_choices_for_values(typed_choices, user)
         return self.default_value(user)

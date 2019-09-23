@@ -1,9 +1,9 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from copy import deepcopy
+
 from dateutil import parser
-from corehq.pillows.xform import transform_xform_for_elasticsearch
+
 from corehq.apps.es.fake.es_query_fake import HQESQueryFake
+from corehq.pillows.xform import transform_xform_for_elasticsearch
 
 
 class FormESFake(HQESQueryFake):

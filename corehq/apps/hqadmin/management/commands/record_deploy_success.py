@@ -1,19 +1,19 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
-from datadog import api as datadog_api
-import requests
-from django.core.management import call_command
-from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
-from django.core.management.base import BaseCommand
-from corehq.apps.hqadmin.models import HqDeploy
 from datetime import datetime, timedelta
+
 from django.conf import settings
-from corehq.util.log import send_HTML_email
+from django.core.management import call_command
+from django.core.management.base import BaseCommand
+
+import requests
+from datadog import api as datadog_api
 
 from dimagi.utils.parsing import json_format_datetime
 from pillow_retry.models import PillowError
+
+from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
+from corehq.apps.hqadmin.models import HqDeploy
+from corehq.util.log import send_HTML_email
 
 STYLE_MARKDOWN = 'markdown'
 DASHBOARD_URL = 'https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef'
@@ -134,19 +134,18 @@ class Command(BaseCommand):
 
 
 def create_update_sentry_release():
-    from settingshelper import get_release_name
-    from raven import fetch_git_sha
+    from settingshelper import get_release_name, get_git_commit
     release = get_release_name(settings.BASE_DIR, settings.SERVER_ENVIRONMENT)
     headers = {'Authorization': 'Bearer {}'.format(settings.SENTRY_API_KEY), }
     payload = {
         'version': release,
         'refs': [{
-            'repository': 'dimagi/commcare-hq',
-            'commit': fetch_git_sha(settings.BASE_DIR)
+            'repository': settings.SENTRY_REPOSITORY,
+            'commit': get_git_commit(settings.BASE_DIR)
         }],
-        'projects': ['commcarehq']
+        'projects': [settings.SENTRY_PROJECT_SLUG]
     }
-    releases_url = 'https://sentry.io/api/0/organizations/dimagi/releases/'
+    releases_url = f'https://sentry.io/api/0/organizations/{settings.SENTRY_ORGANIZATION_SLUG}/releases/'
     response = requests.post(releases_url, headers=headers, json=payload)
     if response.status_code == 208:
         # already created so update
@@ -167,5 +166,6 @@ def notify_sentry_deploy(duration_mins):
             'dateFinished': json_format_datetime(utcnow),
         })
     version = get_release_name(settings.BASE_DIR, settings.SERVER_ENVIRONMENT)
-    releases_url = 'https://sentry.io/api/0/organizations/dimagi/releases/{}/deploys/'.format(version)
+    org_slug = settings.SENTRY_ORGANIZATION_SLUG
+    releases_url = f'https://sentry.io/api/0/organizations/{org_slug}/releases/{version}/deploys/'
     requests.post(releases_url, headers=headers, json=payload)

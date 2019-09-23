@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import openpyxl
 import os
 
@@ -15,7 +12,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from custom.icds.tests.base import BaseICDSTest
 from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
-from six.moves import range
 
 
 class GetICDSSmsUsageTest(BaseICDSTest):

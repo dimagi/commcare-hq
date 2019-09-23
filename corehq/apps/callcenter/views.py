@@ -1,7 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.utils.translation import ugettext
 
+from memoized import memoized
 
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
@@ -12,7 +11,6 @@ from corehq.apps.reports.util import _report_user_dict
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.toggles import CALL_CENTER_LOCATION_OWNERS
-from memoized import memoized
 
 
 class _CallCenterOwnerOptionsUtils(object):

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import timedelta
 from six.moves import zip_longest
@@ -409,10 +407,6 @@ class LooselyEqualDocumentSchema(DocumentSchema):
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return self._doc == other._doc
-
-    # TODO - remove this in Python 3
-    def __ne__(self, other):
-        return not (self == other)
 
     def __hash__(self):
         return hash(json.dumps(self._doc, sort_keys=True))

@@ -1,11 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
-from corehq.apps.userreports.models import ReportConfiguration
+
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ChartFactory
-from corehq.apps.userreports.reports.specs import PieChartSpec, MultibarChartSpec, MultibarAggregateChartSpec, \
-    GraphDisplayColumn
+from corehq.apps.userreports.reports.specs import (
+    GraphDisplayColumn,
+    MultibarAggregateChartSpec,
+    MultibarChartSpec,
+    PieChartSpec,
+)
 
 
 class ChartTestCase(SimpleTestCase):

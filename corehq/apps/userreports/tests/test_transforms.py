@@ -1,8 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import six
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
+
 from django.test import SimpleTestCase
+
 from mock import patch
 
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -122,8 +121,6 @@ class DaysElapsedTransformTest(SimpleTestCase):
             "custom_type": "days_elapsed_from_date"
         })
         date = (datetime.utcnow() - timedelta(days=5)).strftime('%Y-%m-%d')
-        if six.PY2:
-            date = date.decode('utf-8')
         self.assertEqual(transform.transform(date), 5)
 
 

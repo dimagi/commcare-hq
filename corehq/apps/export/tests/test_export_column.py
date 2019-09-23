@@ -1,34 +1,34 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import namedtuple
+
 from django.test import SimpleTestCase
+
 from mock import patch
 
-from corehq.util.view_utils import absolute_reverse
 from corehq.apps.export.const import (
-    PLAIN_USER_DEFINED_SPLIT_TYPE,
-    MULTISELCT_USER_DEFINED_SPLIT_TYPE,
-    MISSING_VALUE,
     EMPTY_VALUE,
+    MISSING_VALUE,
+    MULTISELCT_USER_DEFINED_SPLIT_TYPE,
+    PLAIN_USER_DEFINED_SPLIT_TYPE,
 )
 from corehq.apps.export.models import (
-    ExportColumn,
-    StockExportColumn,
-    RowNumberColumn,
     CaseIndexExportColumn,
     CaseIndexItem,
+    ExportColumn,
+    ExportItem,
+    GeopointItem,
     MultiMediaExportColumn,
     MultiMediaItem,
-    PathNode,
-    SplitGPSExportColumn,
-    GeopointItem,
-    ExportItem,
-    SplitUserDefinedExportColumn,
-    SplitExportColumn,
-    UserDefinedExportColumn,
     MultipleChoiceItem,
     Option,
+    PathNode,
+    RowNumberColumn,
+    SplitExportColumn,
+    SplitGPSExportColumn,
+    SplitUserDefinedExportColumn,
+    StockExportColumn,
+    UserDefinedExportColumn,
 )
+from corehq.util.view_utils import absolute_reverse
 
 MockLedgerValue = namedtuple('MockLedgerValue', ['entry_id', 'section_id'])
 
@@ -190,9 +190,8 @@ class StockExportColumnTest(SimpleTestCase):
         with patch(
                 'corehq.apps.export.models.new.get_ledger_section_entry_combinations',
                 return_value=[
-                    MockLedgerValue(section_id='abc', entry_id='def'),
-                    MockLedgerValue(section_id='abc', entry_id='def'),
                     MockLedgerValue(section_id='123', entry_id='456'),
+                    MockLedgerValue(section_id='abc', entry_id='def'),
                 ]):
 
             headers = list(column.get_headers())

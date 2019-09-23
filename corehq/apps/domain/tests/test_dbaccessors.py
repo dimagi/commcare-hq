@@ -1,25 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import datetime
 import functools
 import uuid
-import datetime
+
 from django.test import TestCase
+
 from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import get_db
+
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.domain.dbaccessors import (
     count_downloads_for_all_snapshots,
     get_doc_count_in_domain_by_class,
     get_doc_ids_in_domain_by_class,
+    get_doc_ids_in_domain_by_type,
     get_docs_in_domain_by_class,
     get_domain_ids_by_names,
+    iterate_doc_ids_in_domain_by_type,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import UserRole
-from couchforms.models import XFormInstance
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type, iterate_doc_ids_in_domain_by_type
-from dimagi.utils.couch.database import get_db
 
 
 class DBAccessorsTest(TestCase):

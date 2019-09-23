@@ -1,12 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import sys
 import json
-import requests
+import sys
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
 from django.core.mail import mail_admins
+from django.core.management.base import BaseCommand
+
+import requests
 
 
 class Command(BaseCommand):

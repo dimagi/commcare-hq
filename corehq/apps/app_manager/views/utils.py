@@ -1,48 +1,44 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import uuid
 from functools import partial
-from six.moves.urllib.parse import urlencode
+
 from django.contrib import messages
-from django.urls import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import Http404, HttpResponseRedirect
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    wrap_app,
     get_apps_in_domain,
     get_current_app,
+    wrap_app,
 )
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
-    ModuleNotFoundException,
-    FormNotFoundException,
     AppLinkError,
+    FormNotFoundException,
+    ModuleNotFoundException,
     MultimediaMissingError,
 )
 from corehq.apps.app_manager.models import (
     Application,
-    enable_usercase_if_necessary,
     CustomIcon,
+    enable_usercase_if_necessary,
 )
+from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.es import FormES
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.exceptions import (
-    RemoteRequestError,
-    RemoteAuthError,
     ActionNotPermitted,
+    RemoteAuthError,
+    RemoteRequestError,
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
-
-from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.userreports.util import get_static_report_mapping
-import six
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -130,7 +126,7 @@ def bail(request, domain, app_id, not_found=""):
 
 
 def encode_if_unicode(s):
-    return s.encode('utf-8') if isinstance(s, six.text_type) else s
+    return s.encode('utf-8') if isinstance(s, str) else s
 
 
 def validate_langs(request, existing_langs):
@@ -167,16 +163,18 @@ def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
         'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
-        'custom_base_url'
+        'custom_base_url', 'family_id',
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
     form_ids_by_xmlns = _get_form_ids_by_xmlns(app_json)  # do this before we change the source
 
-    for key, value in six.iteritems(master_json):
+    for key, value in master_json.items():
         if key not in excluded_fields:
             app_json[key] = value
     app_json['version'] = master_json['version']
+    app_json['upstream_version'] = master_json['version']
+    app_json['upstream_app_id'] = master_json['copy_of']
     wrapped_app = wrap_app(app_json)
     for module in wrapped_app.get_report_modules():
         if report_map is None:
@@ -230,7 +228,7 @@ def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
     def _practice_mode_configured(app):
         if is_set(app):
             return True
-        return any(is_set(profile) for _, profile in app.build_profiles.items())
+        return any(is_set(profile) for profile in app.build_profiles.values())
 
     return [app for app in get_apps_in_domain(domain) if _practice_mode_configured(app)]
 
@@ -261,7 +259,7 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
     apps = get_practice_mode_configured_apps(domain, mobile_worker_id)
     for app in apps:
         unset_user(app)
-        for _, profile in six.iteritems(app.build_profiles):
+        for profile in app.build_profiles.values():
             unset_user(profile)
         app.save()
 
@@ -300,7 +298,7 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
     try:
         update_linked_app(app, user_id)
     except (AppLinkError, MultimediaMissingError) as e:
-        message = six.text_type(e)
+        message = str(e)
     except Exception:
         # Send an email but then crash the process
         # so we know what the error was
@@ -314,41 +312,47 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
     send_html_email_async.delay(subject, email, message)
 
 
-def update_linked_app(app, user_id):
+def update_linked_app(app, user_id, master_build=None):
     if not app.domain_link:
         raise AppLinkError(_(
             'This project is not authorized to update from the master application. '
             'Please contact the maintainer of the master app if you believe this is a mistake. '
         ))
-    try:
-        master_version = app.get_master_version()
-    except RemoteRequestError:
-        raise AppLinkError(_(
-            'Unable to pull latest master from remote CommCare HQ. Please try again later.'
-        ))
 
-    if app.version is None or master_version > app.version:
+    if master_build:
+        master_version = master_build.version
+    else:
         try:
-            latest_master_build = app.get_latest_master_release()
-        except ActionNotPermitted:
-            raise AppLinkError(_(
-                'This project is not authorized to update from the master application. '
-                'Please contact the maintainer of the master app if you believe this is a mistake. '
-            ))
-        except RemoteAuthError:
-            raise AppLinkError(_(
-                'Authentication failure attempting to pull latest master from remote CommCare HQ.'
-                'Please verify your authentication details for the remote link are correct.'
-            ))
+            master_version = app.get_master_version()
         except RemoteRequestError:
             raise AppLinkError(_(
                 'Unable to pull latest master from remote CommCare HQ. Please try again later.'
             ))
 
-        report_map = get_static_report_mapping(latest_master_build.domain, app['domain'])
+    if app.version is None or master_version > app.version:
+        if not master_build:
+            try:
+                master_build = app.get_latest_master_release()
+            except ActionNotPermitted:
+                raise AppLinkError(_(
+                    'This project is not authorized to update from the master application. '
+                    'Please contact the maintainer of the master app if you believe this is a mistake. '
+                ))
+            except RemoteAuthError:
+                raise AppLinkError(_(
+                    'Authentication failure attempting to pull latest master from remote CommCare HQ.'
+                    'Please verify your authentication details for the remote link are correct.'
+                ))
+            except RemoteRequestError:
+                raise AppLinkError(_(
+                    'Unable to pull latest master from remote CommCare HQ. Please try again later.'
+                ))
+
         old_multimedia_ids = set([media_info.multimedia_id for path, media_info in app.multimedia_map.items()])
+        report_map = get_static_report_mapping(master_build.domain, app['domain'])
+
         try:
-            app = overwrite_app(app, latest_master_build, report_map)
+            app = overwrite_app(app, master_build, report_map)
         except AppEditingError as e:
             raise AppLinkError(
                 _(

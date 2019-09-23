@@ -1,25 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import logging
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
 
 import gevent
-import six
 from gevent.pool import Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form, get_case_updates
+from couchforms.models import XFormInstance, XFormOperation
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
     PROBLEM_TEMPLATE_START,
 )
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.exceptions import MissingFormXml
-from couchforms.models import XFormInstance, XFormOperation
-from dimagi.utils.chunked import chunked
 
 log = logging.getLogger(__name__)
+POOL_SIZE = 15
 
 
 class AsyncFormProcessor(object):
@@ -29,17 +26,22 @@ class AsyncFormProcessor(object):
         self.migrate_form = migrate_form
 
     def __enter__(self):
-        self.pool = Pool(15)
+        self.pool = Pool(POOL_SIZE)
         self.queues = PartiallyLockingQueue()
         form_ids = self.statedb.pop_resume_state(type(self).__name__, [])
         self._rebuild_queues(form_ids)
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
-        if exc_type is None:
-            self._finish_processing_queues()
-        self.statedb.set_resume_state(type(self).__name__, self.queues.queue_ids)
-        self.queues = self.pool = None
+        queue_ids = self.queues.queue_ids
+        try:
+            if exc_type is None:
+                queue_ids = self._finish_processing_queues()
+            else:
+                self.pool.kill()  # stop workers -> reduce chaos in logs
+        finally:
+            self.statedb.set_resume_state(type(self).__name__, queue_ids)
+            self.queues = self.pool = None
 
     def _rebuild_queues(self, form_ids):
         for chunk in chunked(form_ids, 100, list):
@@ -52,7 +54,7 @@ class AsyncFormProcessor(object):
         form_id = doc["_id"]
         log.debug('Processing doc: XFormInstance(%s)', form_id)
         if doc.get('problem'):
-            if six.text_type(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
+            if str(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
                 doc = _fix_replacement_form_problem_in_couch(doc)
             else:
                 self.statedb.add_problem_form(form_id)
@@ -61,8 +63,10 @@ class AsyncFormProcessor(object):
             wrapped_form = XFormInstance.wrap(doc)
         except Exception:
             log.exception("Error migrating form %s", form_id)
-        self._try_to_process_form(wrapped_form)
-        self._try_to_empty_queues()
+            self.statedb.save_form_diffs(doc, {})
+        else:
+            self._try_to_process_form(wrapped_form)
+            self._try_to_empty_queues()
 
     def _try_to_process_form(self, wrapped_form):
         case_ids = get_case_ids(wrapped_form)
@@ -107,6 +111,7 @@ class AsyncFormProcessor(object):
         unprocessed = self.queues.queue_ids
         if unprocessed:
             log.error("Unprocessed forms (unexpected): %s", unprocessed)
+        return unprocessed
 
 
 class PartiallyLockingQueue(object):
@@ -187,7 +192,7 @@ class PartiallyLockingQueue(object):
 
         queue_by_lock_id = self.queue_by_lock_id
         lock_ids_by_queue_id = self.lock_ids_by_queue_id
-        for queue in six.itervalues(queue_by_lock_id):
+        for queue in queue_by_lock_id.values():
             if not queue:
                 continue
             queue_id = queue[0]
@@ -201,7 +206,7 @@ class PartiallyLockingQueue(object):
 
         Returns :boolean: True if there are objs left, False if not
         """
-        for queue in six.itervalues(self.queue_by_lock_id):
+        for queue in self.queue_by_lock_id.values():
             if queue:
                 return True
         return False

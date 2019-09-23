@@ -1,11 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import mimetypes
 
 from corehq.form_processor.abstract_models import IsImageMixin
 from dimagi.ext.couchdbkit import StringProperty, IntegerProperty, DictProperty
 from dimagi.utils.couch import LooselyEqualDocumentSchema
-import six
 
 
 """
@@ -13,7 +10,6 @@ Shared models live here to avoid cyclical import issues
 """
 
 
-@six.python_2_unicode_compatible
 class CommCareCaseIndex(LooselyEqualDocumentSchema):
     """
     In CaseXML v2 we support indices, which link a case to other cases.
@@ -56,8 +52,8 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema):
             ")"
         ).format(index=self)
 
-    def __cmp__(self, other):
-        return cmp(six.text_type(self), six.text_type(other))
+    def __lt__(self, other):
+        return str(self) < str(other)
 
     def __repr__(self):
         return str(self)

@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import traceback
 from collections import defaultdict, namedtuple
@@ -265,7 +262,7 @@ def send_keys_to_couch(db, keys):
     return r.json()['rows']
 
 
-def iter_update(db, fn, ids, max_retries=3, verbose=False):
+def iter_update(db, fn, ids, max_retries=3, verbose=False, chunksize=100):
     """
     Map `fn` over every doc in `db` matching `ids`
 
@@ -307,8 +304,8 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False):
         return updated_doc_id
 
     def _iter_update(doc_ids, try_num):
-        with IterDB(db, chunksize=100) as iter_db:
-            for chunk in chunked(set(doc_ids), 100):
+        with IterDB(db, chunksize=chunksize) as iter_db:
+            for chunk in chunked(set(doc_ids), chunksize):
                 for res in send_keys_to_couch(db, keys=chunk):
                     raw_doc = res.get('doc')
                     doc_id = res.get('id', None)

@@ -1,22 +1,15 @@
 '''
 Fields for use in Tastypie Resources
 '''
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import six
-
 from tastypie.fields import ApiField, CharField
-import dimagi.utils.modules
 
-from corehq.util.python_compatibility import soft_assert_type_text
+import dimagi.utils.modules
 
 
 def get_referenced_class(class_or_str):
     # Simplified from https://github.com/toastdriven/django-tastypie/blob/master/tastypie/fields.py#L519
 
-    if isinstance(class_or_str, six.string_types):
-        soft_assert_type_text(class_or_str)
+    if isinstance(class_or_str, str):
         return dimagi.utils.modules.to_function(class_or_str)
     else:
         return class_or_str
@@ -28,9 +21,9 @@ class AttributeOrCallable(object):
         self.attribute = attribute
 
     def __call__(self, v):
-        if isinstance(self.attribute, six.string_types):
-            soft_assert_type_text(self.attribute)
-            accessor = lambda v: getattr(v, self.attribute)
+        if isinstance(self.attribute, str):
+            def accessor(v):
+                return getattr(v, self.attribute)
         else:
             accessor = self.attribute
 
@@ -248,4 +241,3 @@ class ToOneDocumentField(ApiField):
             return None
         else:
             return self.related_resource.full_dehydrate(self.related_resource.build_bundle(obj=hydrated, request=bundle.request)).data
-

@@ -1,15 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from abc import ABCMeta, abstractmethod
-import argparse
 from datetime import datetime
 import time
 
 from elasticsearch import TransportError
-import six
 
 from corehq.apps.change_feed.document_types import is_deletion
+from corehq.util.argparse_types import date_type
 from corehq.util.doc_processor.interface import BaseDocProcessor, BulkDocProcessor
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, initialize_mapping_if_necessary
@@ -21,18 +17,9 @@ from pillowtop.utils import prepare_bulk_payloads, build_bulk_payload, ErrorColl
 MAX_TRIES = 3
 RETRY_TIME_DELAY_FACTOR = 15
 MAX_PAYLOAD_SIZE = 10 ** 7  # ~10 MB
-DATE_FORMAT = "%Y-%m-%d"
 
 
-def valid_date(s):
-    try:
-        return datetime.strptime(s, DATE_FORMAT)
-    except ValueError:
-        msg = "Not a valid date: '{0}'.".format(s)
-        raise argparse.ArgumentTypeError(msg)
-
-
-class Reindexer(six.with_metaclass(ABCMeta)):
+class Reindexer(metaclass=ABCMeta):
     def clean(self):
         """
             Cleans the index.
@@ -48,7 +35,7 @@ class Reindexer(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
 
-class ReindexerFactory(six.with_metaclass(ABCMeta)):
+class ReindexerFactory(metaclass=ABCMeta):
     slug = None
     arg_contributors = None
 
@@ -117,13 +104,13 @@ class ReindexerFactory(six.with_metaclass(ABCMeta)):
         parser.add_argument(
             '--startdate',
             dest='start_date',
-            type=valid_date,
+            type=date_type,
             help='The start date (inclusive). format YYYY-MM-DD'
         )
         parser.add_argument(
             '--enddate',
             dest='end_date',
-            type=valid_date,
+            type=date_type,
             help='The end date (exclusive). format YYYY-MM-DD'
         )
 

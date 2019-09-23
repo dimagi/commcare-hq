@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from collections import OrderedDict
 import re
 import os
@@ -9,10 +6,6 @@ import json
 from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from corehq.apps.reports.sqlreport import DataFormatter
-import six
-from six.moves import range
-from six.moves import map
-from io import open
 
 
 @quickcache(['domain'], timeout=5 * 60)
@@ -94,7 +87,7 @@ class CareDataFormatter(DataFormatter):
                     missing_rows[key] = {'0', '1', '2'}.difference({row[-1]})
                 else:
                     missing_rows[key] = missing_rows[key].difference({row[-1]})
-            for k, v in six.iteritems(missing_rows):
+            for k, v in missing_rows.items():
                 for missing_val in v:
                     dict_key = k + (missing_val,)
                     tmp_missing.update({dict_key: dict(all=0, some=0, none=0, gender=missing_val)})
@@ -112,7 +105,7 @@ class CareDataFormatter(DataFormatter):
             group_row = dict(all=0, some=0, none=0)
             disp_name = None
             for val in chunk:
-                for k, v in six.iteritems(val[1]):
+                for k, v in val[1].items():
                     if k in group_row:
                         group_row[k] += v
                 value_chains = get_domain_configuration(domain).by_type_hierarchy
@@ -132,7 +125,7 @@ class CareDataFormatter(DataFormatter):
             result = [disp_name]
 
             for element in row[1:]:
-                result.append(six.text_type(round(element['html'] * sum_of_elements)) + '%')
+                result.append(str(round(element['html'] * sum_of_elements)) + '%')
             yield result
 
             for value in chunk:
@@ -243,7 +236,7 @@ class TableCardDataIndividualFormatter(DataFormatter):
         for group in groups:
             result[group] = self._init_row(practices)
 
-        for key, row in six.iteritems(data):
+        for key, row in data.items():
             formatted_row = self._format.format_row(row)
             result[key[0]][row['practices']] = formatted_row[1]
 
@@ -277,7 +270,7 @@ class TableCardDataGroupsIndividualFormatter(TableCardDataIndividualFormatter):
         for group in groups:
             result[group] = self._init_row(practices)
 
-        for key, row in six.iteritems(data):
+        for key, row in data.items():
             formatted_row = self._format.format_row(row)
             result[key[0]][row['practices']] = formatted_row[1]
             id_to_name[key[0]] = '{} ({})'.format(key[1], key[2])

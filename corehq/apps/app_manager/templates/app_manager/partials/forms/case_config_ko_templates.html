@@ -153,6 +153,7 @@
                             data: {
                               'property': $data,
                               'suggestedProperties': case_transaction.suggestedPreloadProperties,
+                              'isDisabled': false,
                             }
                           }"></div>
           <p class="help-block"
@@ -246,7 +247,7 @@
           <p class="help-block"
              data-bind="html: validate,
                         visible: validate"></p>
-          <!-- ko if: $data.description && $parent.hasPrivilege -->
+          <!-- ko if: $data.description() && $parent.hasPrivilege -->
           <inline-edit params="value: $data.description,
                                rows: 3,
                                cols: 30,

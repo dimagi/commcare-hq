@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import uuid
 from copy import deepcopy
 from datetime import datetime, timedelta

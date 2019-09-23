@@ -1,23 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf.urls import url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
+
 from .views import (
+    DefaultProjectUserSettingsView,
+    DomainRequestView,
+    EditWebUserView,
+    InviteWebUserView,
+    ListRolesView,
+    ListWebUsersView,
     accept_invitation,
     add_domain_membership,
     change_password,
-    DefaultProjectUserSettingsView,
     delete_invitation,
     delete_phone_number,
     delete_request,
     delete_user_role,
     domain_accounts,
-    DomainRequestView,
-    EditWebUserView,
-    InviteWebUserView,
-    ListWebUsersView,
-    ListRolesView,
     make_phone_number_default,
     paginate_web_users,
     post_user_role,
@@ -37,29 +36,30 @@ from .views.mobile.groups import (
 from .views.mobile.users import (
     CommCareUserSelfRegistrationView,
     ConfirmBillingAccountForExtraUsersView,
+    ConfirmTurnOffDemoModeView,
     CreateCommCareUserModal,
+    DemoRestoreStatusView,
+    DownloadUsersStatusView,
+    EditCommCareUserView,
+    FilteredUserDownload,
+    MobileWorkerListView,
+    UploadCommCareUsers,
+    UserUploadStatusView,
+    activate_commcare_user,
+    count_users,
+    deactivate_commcare_user,
     delete_commcare_user,
     demo_restore_job_poll,
-    DemoRestoreStatusView,
     download_commcare_users,
-    FilteredUserDownload,
-    count_users,
-    EditCommCareUserView,
-    MobileWorkerListView,
-    activate_commcare_user,
-    deactivate_commcare_user,
     paginate_mobile_workers,
     reset_demo_user_restore,
     restore_commcare_user,
     toggle_demo_mode,
-    ConfirmTurnOffDemoModeView,
     update_user_data,
     update_user_groups,
-    UploadCommCareUsers,
+    user_download_job_poll,
     user_upload_job_poll,
-    UserUploadStatusView,
-    DownloadUsersStatusView, user_download_job_poll)
-
+)
 
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),

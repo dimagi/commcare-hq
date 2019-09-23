@@ -1,10 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import TestCase
-from corehq.apps.users.models import WebUser
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
-from six.moves import range
+from corehq.apps.users.models import WebUser
 
 
 class PasswordLockoutTest(TestCase):

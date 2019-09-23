@@ -1,9 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime
 
 import jsonfield
-import six
 from django.dispatch.dispatcher import receiver
 from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.signals import location_edited
@@ -132,7 +129,6 @@ class SupplyPointStatusTypes(object):
 
 
 # Ported from: https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L124
-@six.python_2_unicode_compatible
 class SupplyPointStatus(models.Model):
     status_type = models.CharField(choices=((k, k) for k in SupplyPointStatusTypes.CHOICE_MAP.keys()),
                                    max_length=50)
@@ -201,7 +197,6 @@ class ReportingModel(models.Model):
 
 # Ported from:
 # https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L9
-@six.python_2_unicode_compatible
 class OrganizationSummary(ReportingModel):
     total_orgs = models.PositiveIntegerField(default=0)
     average_lead_time_in_days = models.FloatField(default=0)
@@ -215,7 +210,6 @@ class OrganizationSummary(ReportingModel):
 
 # Ported from:
 # https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L16
-@six.python_2_unicode_compatible
 class GroupSummary(models.Model):
     """
     Warehouse data related to a particular category of reporting

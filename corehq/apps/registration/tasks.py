@@ -1,19 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
-from celery.schedules import crontab
-from celery.task import periodic_task, task
+
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
-
 from django.utils.translation import ugettext
+
+from celery.schedules import crontab
+from celery.task import periodic_task, task
 
 from dimagi.utils.web import get_site_domain
 
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.users.models import WebUser
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 @periodic_task(

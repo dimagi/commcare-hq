@@ -1,38 +1,36 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import json
 from collections import defaultdict
 from datetime import timedelta
 
-import csv342 as csv
-import six
-import six.moves.html_parser
 from django.contrib import messages
-from django.http import (
-    HttpResponse,
-    HttpResponseBadRequest,
-)
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 from django.views.generic import TemplateView
 
-from corehq.apps.data_analytics.admin import MALTRowAdmin
-from corehq.apps.data_analytics.const import GIR_FIELDS
-from corehq.apps.data_analytics.models import MALTRow, GIRRow
-from corehq.apps.domain.decorators import (
-    require_superuser)
-from corehq.apps.es import filters
-from corehq.apps.es.domains import DomainES
-from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
-from corehq.apps.hqadmin.reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
-from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
-from corehq.elastic import parse_args_for_es
+import csv
+import six.moves.html_parser
+
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.web import json_response
+
+from corehq.apps.data_analytics.admin import MALTRowAdmin
+from corehq.apps.data_analytics.const import GIR_FIELDS
+from corehq.apps.data_analytics.models import GIRRow, MALTRow
+from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.es import filters
+from corehq.apps.es.domains import DomainES
+from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
+from corehq.apps.hqadmin.reporting.reports import (
+    HISTO_TYPE_TO_FUNC,
+    get_project_spaces,
+    get_stats_data,
+)
+from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
+from corehq.elastic import parse_args_for_es
 
 
 @require_superuser
@@ -82,14 +80,6 @@ def stats_data(request):
 @datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
 def admin_reports_stats_data(request):
     return stats_data(request)
-
-
-class DimagisphereView(TemplateView):
-
-    def get_context_data(self, **kwargs):
-        context = super(DimagisphereView, self).get_context_data(**kwargs)
-        context['tvmode'] = 'tvmode' in self.request.GET
-        return context
 
 
 def top_five_projects_by_country(request):

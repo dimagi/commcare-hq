@@ -1,18 +1,20 @@
-from __future__ import print_function, unicode_literals
-from __future__ import absolute_import
 from datetime import datetime
-from mock import patch
 
-from django.urls import reverse
 from django.test import TestCase
 from django.test.client import Client
+from django.urls import reverse
+
+from mock import patch
 
 from corehq import toggles
-from corehq.apps.users.models import WebUser
-from corehq.apps.domain.models import Domain, TransferDomainRequest
-from corehq.apps.domain.forms import TransferDomainForm, TransferDomainFormErrors
-from corehq.apps.domain.views.internal import TransferDomainView
 from corehq.apps.domain.exceptions import InactiveTransferDomainException
+from corehq.apps.domain.forms import (
+    TransferDomainForm,
+    TransferDomainFormErrors,
+)
+from corehq.apps.domain.models import Domain, TransferDomainRequest
+from corehq.apps.domain.views.internal import TransferDomainView
+from corehq.apps.users.models import WebUser
 
 
 class BaseDomainTest(TestCase):

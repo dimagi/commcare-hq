@@ -1,20 +1,25 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
-from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.domain.decorators import (
-    require_superuser, require_superuser_or_contractor)
+    require_superuser,
+    require_superuser_or_contractor,
+)
 from corehq.apps.hqadmin.forms import (
-    EmailForm, ReprocessMessagingCaseUpdatesForm)
+    EmailForm,
+    ReprocessMessagingCaseUpdatesForm,
+)
 from corehq.apps.hqadmin.tasks import send_mass_emails
-from corehq.apps.hqadmin.views.utils import BaseAdminSectionView, get_hqadmin_base_context
+from corehq.apps.hqadmin.views.utils import (
+    BaseAdminSectionView,
+    get_hqadmin_base_context,
+)
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound

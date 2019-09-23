@@ -223,6 +223,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
         var caseConfigViewModel = function (caseConfig) {
             var self = {};
 
+            self.hasPrivilege = true;
             self.caseConfig = caseConfig;
             self.moduleCaseTypes = caseConfig.moduleCaseTypes;
             self.caseTypes = _.unique(_(self.moduleCaseTypes).map(function (moduleCaseType) {
@@ -514,6 +515,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             wrap: function (data, caseConfig) {
                 var self = {};
+
+                self.hasPrivilege = true;
+                
                 ko.mapping.fromJS(data, userCaseTransaction.mapping(self), self);
                 self.caseConfig = caseConfig;
                 self.case_type = function () {

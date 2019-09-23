@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 XFormBuilder is intended to be a simple way to create an XForm, and add
 questions to it.
@@ -19,15 +18,11 @@ seem to be a good fit.
 
 
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import re
 import uuid
+
 from lxml import etree
 from lxml.builder import E
-import six
-
-from corehq.util.python_compatibility import soft_assert_type_text
 
 EMPTY_XFORM = """<?xml version="1.0"?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml"
@@ -135,11 +130,9 @@ class XFormBuilder(object):
         """
         if data_type is not None and data_type not in ODK_TYPES + GROUP_TYPES:
             raise TypeError('Unknown question data type "{}"'.format(data_type))
-        if isinstance(group, six.string_types):
-            soft_assert_type_text(group)
-        if group is not None and not isinstance(group, six.string_types) and not hasattr(group, '__iter__'):
+        if group is not None and not isinstance(group, str) and not hasattr(group, '__iter__'):
             raise TypeError('group parameter needs to be a string or iterable')
-        groups = [group] if isinstance(group, six.string_types) else group
+        groups = [group] if isinstance(group, str) else group
         self._append_to_data(name, groups)
         self._append_to_model(name, data_type, groups, **params)
         if data_type is not None:
@@ -171,15 +164,15 @@ class XFormBuilder(object):
         """
         Builds a text node "id" parameter
 
-        >>> XFormBuilder.get_text_id('foo') if six.PY3 else XFormBuilder.get_text_id('foo').encode('utf-8')
+        >>> XFormBuilder.get_text_id('foo')
         'foo-label'
-        >>> XFormBuilder.get_text_id('foo', ['bar']) if six.PY3 else XFormBuilder.get_text_id('foo', ['bar']).encode('utf-8')
+        >>> XFormBuilder.get_text_id('foo', ['bar'])
         'bar/foo-label'
-        >>> XFormBuilder.get_text_id('foo', ['bar', 'baz']) if six.PY3 else XFormBuilder.get_text_id('foo', ['bar', 'baz']).encode('utf-8')
+        >>> XFormBuilder.get_text_id('foo', ['bar', 'baz'])
         'bar/baz/foo-label'
-        >>> XFormBuilder.get_text_id('foo', ['bar', 'baz'], 'choice1') if six.PY3 else XFormBuilder.get_text_id('foo', ['bar', 'baz'], 'choice1').encode('utf-8')
+        >>> XFormBuilder.get_text_id('foo', ['bar', 'baz'], 'choice1')
         'bar/baz/foo-choice1-label'
-        >>> XFormBuilder.get_text_id('foo', is_hint=True) if six.PY3 else XFormBuilder.get_text_id('foo', is_hint=True).encode('utf-8')
+        >>> XFormBuilder.get_text_id('foo', is_hint=True)
         'foo-hint'
 
         """
@@ -197,11 +190,11 @@ class XFormBuilder(object):
         """
         Returns the reference to the data node of the given question
 
-        >>> XFormBuilder.get_data_ref('foo') if six.PY3 else XFormBuilder.get_data_ref('foo').encode('utf-8')
+        >>> XFormBuilder.get_data_ref('foo')
         '/data/foo'
-        >>> XFormBuilder.get_data_ref('foo', ['bar']) if six.PY3 else XFormBuilder.get_data_ref('foo', ['bar']).encode('utf-8')
+        >>> XFormBuilder.get_data_ref('foo', ['bar'])
         '/data/bar/foo'
-        >>> XFormBuilder.get_data_ref('foo', ['bar', 'baz']) if six.PY3 else XFormBuilder.get_data_ref('foo', ['bar', 'baz']).encode('utf-8')
+        >>> XFormBuilder.get_data_ref('foo', ['bar', 'baz'])
         '/data/bar/baz/foo'
 
         """
@@ -214,9 +207,9 @@ class XFormBuilder(object):
         Return a namespaced parameter/tag name
 
         >>> xform = XFormBuilder()
-        >>> xform.get_namespaced('jr:constraintMsg') if six.PY3 else xform.get_namespaced('jr:constraintMsg').encode('utf-8')
+        >>> xform.get_namespaced('jr:constraintMsg')
         '{http://openrosa.org/javarosa}constraintMsg'
-        >>> xform.get_namespaced('constraint') if six.PY3 else xform.get_namespaced('constraint').encode('utf-8')
+        >>> xform.get_namespaced('constraint')
         'constraint'
 
         """
@@ -359,12 +352,10 @@ class XFormBuilder(object):
                     E.hint({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, is_hint=True))})
                 )
             for choice_name in choices_.keys():
-                if isinstance(choice_name, six.string_types):
-                    soft_assert_type_text(choice_name)
                 node_.append(
                     E.item(
                         E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, choice_name))}),
-                        E.value(choice_name if isinstance(choice_name, six.string_types) else str(choice_name))
+                        E.value(choice_name if isinstance(choice_name, str) else str(choice_name))
                     )
                 )
             return node_

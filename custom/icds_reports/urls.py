@@ -1,18 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.conf.urls import url, include
 
-from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView, \
-    PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView, \
-    ExportIndicatorView, FactSheetsView, PrevalenceOfSevereView, PrevalenceOfStuntingView, \
-    ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding, \
-    ChildrenInitiatedView, InstitutionalDeliveriesView, ImmunizationCoverageView, AWCDailyStatusView, \
-    AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView, \
-    LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
-    FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
-    ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI, \
-    HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView, \
-    CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers
+from custom.icds_reports.views import (
+    LegacyTableauRedirectView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView,
+    PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView,
+    ExportIndicatorView, FactSheetsView, PrevalenceOfSevereView, PrevalenceOfStuntingView,
+    ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding,
+    ChildrenInitiatedView, InstitutionalDeliveriesView, ImmunizationCoverageView, AWCDailyStatusView,
+    AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView,
+    LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView,
+    FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage,
+    ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI,
+    HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView,
+    CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice
+)
 
 dashboardurls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
@@ -122,7 +122,8 @@ awc_infrastructure_urls = [
 ]
 
 urlpatterns = [
-    url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
+    url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', LegacyTableauRedirectView.as_view(),
+        name='icds_tableau'),
     url(r'^icds_dashboard/', include(dashboardurls)),
     url(r'^icds-ng-template/(?P<template>[\w-].+)', IcdsDynamicTemplateView.as_view(), name='icds-ng-template'),
     url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
@@ -139,18 +140,21 @@ urlpatterns = [
     url(r'^awc_reports/(?P<step>[\w-]+)/', AwcReportsView.as_view(), name='awc_reports'),
     url(r'^locations$', LocationView.as_view(), name='icds_locations'),
     url(r'^locations/ancestors$', LocationAncestorsView.as_view(), name='icds_locations_ancestors'),
-    url(r'^export_indicator$', ExportIndicatorView.as_view(), name='icds_export_indicator'),
+    url(r'^icds_export_indicator$', ExportIndicatorView.as_view(), name='icds_export_indicator'),
     url(r'^fact_sheets$', FactSheetsView.as_view(), name='fact_sheets'),
     url(r'^aggregation_script/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname),
     url(r'^bug_report/', ICDSBugReportView.as_view(), name='icds_bug_report'),
     url(r'^awc_locations/', AWCLocationView.as_view(), name='awc_locations'),
-    url(r'^download_pdf/', DownloadPDFReport.as_view(), name='icds_download_pdf'),
-    url(r'^download_excel/', DownloadExportReport.as_view(), name='icds_download_excel'),
+    url(r'^icds_download_pdf/', DownloadPDFReport.as_view(), name='icds_download_pdf'),
+    url(r'^icds_download_excel/', DownloadExportReport.as_view(), name='icds_download_excel'),
     url(r'^issnip_pdf_status/', CheckExportReportStatus.as_view(), name='issnip_pdf_status'),
     url(r'^have_access_to_location/', HaveAccessToLocation.as_view(), name='have_access_to_location'),
     url(r'^inactive_aww', InactiveAWW.as_view(), name='inactive_aww'),
-    url(r'^inactive_dashboard_users', InactiveDashboardUsers.as_view(), name='inactive_aww'),
+    url(r'^inactive_dashboard_users', InactiveDashboardUsers.as_view(), name='inactive_dashboard_users'),
     url(r'^health_indicators', DishaAPIView.as_view(), name='disha_api'),
     url(r'^nic_indicators', NICIndicatorAPIView.as_view(), name='nic_indicator_api'),
     url(r'^cas_export', CasDataExport.as_view(), name='cas_export'),
+    url(r'^ap_webservice', APWebservice.as_view(), name='ap_webservice'),
 ]
+
+DASHBOARD_URL_GROUPS = urlpatterns + dashboardurls + maternal_and_child_urls + cas_reach_urls + demographics_urls + awc_infrastructure_urls

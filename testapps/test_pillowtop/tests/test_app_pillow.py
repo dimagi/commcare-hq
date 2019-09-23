@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import uuid
 from mock import patch, MagicMock
 
@@ -73,13 +71,14 @@ class AppPillowTest(TestCase):
         self.assertEqual(app['_id'], app_doc['_id'])
         self.assertEqual(app_name, app_doc['name'])
 
-    def _create_app(self, name):
+    def _create_app(self, name, cleanup=True):
         factory = AppFactory(domain=self.domain, name=name, build_version='2.11.0')
         module1, form1 = factory.new_basic_module('open_case', 'house')
         factory.form_opens_case(form1)
         app = factory.app
         app.save()
-        self.addCleanup(app.delete)
+        if cleanup:
+            self.addCleanup(app.delete)
         return app
 
     def refresh_elasticsearch(self, kafka_seq, couch_seq):
@@ -121,3 +120,46 @@ class AppPillowTest(TestCase):
         self.refresh_elasticsearch(kafka_seq, couch_seq)
         build_ids_in_es = AppES().domain(self.domain).is_build().values_list('_id', flat=True)
         self.assertItemsEqual(build_ids_in_es, [build1._id, build3._id])
+
+    def test_hard_delete_app(self):
+        consumer = get_test_kafka_consumer(topics.APP)
+        # have to get the seq id before the change is processed
+        kafka_seq = get_topic_offset(topics.APP)
+        couch_seq = get_current_seq(Application.get_db())
+
+        app = self._create_app('test_hard_deleted_app', cleanup=False)
+        app_db_pillow = get_application_db_kafka_pillow('test_app_db_pillow')
+        app_db_pillow.process_changes(couch_seq, forever=False)
+
+        # confirm change made it to kafka
+        message = next(consumer)
+        change_meta = change_meta_from_kafka_message(message.value)
+        self.assertEqual(app._id, change_meta.document_id)
+        self.assertEqual(self.domain, change_meta.domain)
+
+        # send to elasticsearch
+        app_pillow = get_app_to_elasticsearch_pillow()
+        app_pillow.process_changes(since=kafka_seq, forever=False)
+        self.es.indices.refresh(APP_INDEX_INFO.index)
+
+        # confirm change made it to elasticserach
+        results = AppES().run()
+        self.assertEqual(1, results.total)
+
+        couch_seq = get_current_seq(Application.get_db())
+        kafka_seq = get_topic_offset(topics.APP)
+
+        app.delete()
+        app_db_pillow.process_changes(couch_seq, forever=False)
+
+        # confirm change made it to kafka. Would raise StopIteration otherwise
+        next(consumer)
+
+        # send to elasticsearch
+        app_pillow = get_app_to_elasticsearch_pillow()
+        app_pillow.process_changes(since=kafka_seq, forever=False)
+        self.es.indices.refresh(APP_INDEX_INFO.index)
+
+        # confirm deletion made it to elasticserach
+        results = AppES().run()
+        self.assertEqual(0, results.total)

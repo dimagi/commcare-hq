@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
-
 from django.db import migrations
 
 from custom.icds_reports.utils.migrations import (

@@ -1,18 +1,16 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import itertools
 import os
 import shlex
 from io import BytesIO
 from subprocess import PIPE
 from tempfile import NamedTemporaryFile
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from django.conf import settings
+
 from lxml import etree
 
 from dimagi.utils.subprocess_manager import subprocess_context
-from io import open
 
 CONVERTED_PATHS = set(['profile.xml', 'media_profile.xml', 'media_profile.ccpr', 'profile.ccpr'])
 

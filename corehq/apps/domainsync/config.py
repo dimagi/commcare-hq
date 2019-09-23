@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
-from corehq.blobs.mixin import BlobHelper, CODES
 
+from corehq.blobs.mixin import CODES, BlobHelper
 
 COUCH_DOC_TYPE_CODES = {
     "CommCareBuild": CODES.commcarebuild,

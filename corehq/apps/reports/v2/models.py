@@ -1,16 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 import json
-
-from collections import namedtuple
 from abc import ABCMeta, abstractmethod
+from collections import namedtuple
+
+from django.core.cache import cache
+from django.utils.translation import ugettext as _
 
 from memoized import memoized
-
-from django.utils.translation import ugettext as _
-from django.core.cache import cache
 
 from corehq.apps.reports.v2.exceptions import (
     EndpointNotFoundError,
@@ -183,7 +178,7 @@ class BaseDataFormatter(object):
         raise NotImplementedError("please implement get_context")
 
 
-class BaseFilter(six.with_metaclass(ABCMeta)):
+class BaseFilter(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod

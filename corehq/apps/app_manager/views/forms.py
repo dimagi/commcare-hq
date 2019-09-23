@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import hashlib
 import itertools
 import json
@@ -22,11 +20,9 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-import six
 from couchdbkit import ResourceNotFound
 from diff_match_patch import diff_match_patch
 from lxml import etree
-from six.moves import zip
 from unidecode import unidecode
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
@@ -117,7 +113,6 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.view_utils import set_file_download
 
 
@@ -139,7 +134,7 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
     try:
         module_id = app.get_module_by_unique_id(module_unique_id).id
     except ModuleNotFoundException as e:
-        messages.error(request, six.text_type(e))
+        messages.error(request, str(e))
         module_id = None
 
     return back_to_main(request, domain, app_id=app_id, module_id=module_id)
@@ -228,8 +223,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
         form.actions.load_from_form = old_load_from_form
 
     for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
-        if isinstance(condition.answer, six.string_types):
-            soft_assert_type_text(condition.answer)
+        if isinstance(condition.answer, str):
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
     if actions_use_usercase(form.actions):
@@ -271,7 +265,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         form = app.get_form(form_unique_id)
     except FormNotFoundException as e:
         if ajax:
-            return HttpResponseBadRequest(six.text_type(e))
+            return HttpResponseBadRequest(str(e))
         else:
             messages.error(request, _("There was an error saving, please try again!"))
             return back_to_main(request, domain, app_id=app_id)
@@ -311,7 +305,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 xform = request.POST.get('xform')
             else:
                 try:
-                    xform = six.text_type(xform, encoding="utf-8")
+                    xform = str(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
             if request.POST.get('cleanup', False):
@@ -325,17 +319,17 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 except Exception:
                     pass
             if xform:
-                if isinstance(xform, six.text_type):
+                if isinstance(xform, str):
                     xform = xform.encode('utf-8')
                 save_xform(app, form, xform)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
-            notify_exception(request, six.text_type(e))
+            notify_exception(request, str(e))
             if ajax:
-                return HttpResponseBadRequest(six.text_type(e))
+                return HttpResponseBadRequest(str(e))
             else:
-                messages.error(request, six.text_type(e))
+                messages.error(request, str(e))
     if should_edit("references") or should_edit("case_references"):
         form.case_references = _get_case_references(request.POST)
     if should_edit("show_count"):
@@ -685,11 +679,11 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
                 has_case_error = True
                 messages.error(request, "Error in Case Management: %s" % e)
             except XFormException as e:
-                messages.error(request, six.text_type(e))
+                messages.error(request, str(e))
             except Exception as e:
                 if settings.DEBUG:
                     raise
-                logging.exception(six.text_type(e))
+                logging.exception(str(e))
                 messages.error(request, "Unexpected Error: %s" % e)
 
     try:
@@ -750,7 +744,6 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'xform_validation_missing': xform_validation_missing,
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not form_has_schedule,
-        'allow_form_workflow': True,
         'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
@@ -782,7 +775,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
-    if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
+    if toggles.FORM_LINK_WORKFLOW.enabled(domain):
         def qualified_form_name(form, auto_link):
             module_name = trans(module.name, langs)
             form_name = trans(form.name, langs)

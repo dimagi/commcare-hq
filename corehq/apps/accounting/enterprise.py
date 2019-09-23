@@ -1,23 +1,22 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import re
-
 from datetime import datetime, timedelta
+
 from django.utils.translation import ugettext as _
+
 from memoized import memoized
 
+from couchforms.analytics import get_last_form_submission_received
 from dimagi.utils.dates import DateSpan
 
-from couchforms.analytics import get_last_form_submission_received
 from corehq.apps.accounting.exceptions import EnterpriseReportError
 from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.calculations import sms_in_in_last
+from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.users import \
+    ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_rows,
     get_mobile_user_count,

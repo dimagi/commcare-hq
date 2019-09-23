@@ -15,6 +15,7 @@ hqDefine("app_manager/js/widgets", [
             'onlyShowReleased']);
         var idValue = options.idValue || 'id';
 
+        $select.append(new Option("", ""));     // necessary if there's a placeholder
         $select.select2({
             ajax: {
                 url: options.url || initialPageData.reverse('paginate_releases'),
@@ -44,6 +45,7 @@ hqDefine("app_manager/js/widgets", [
                     };
                 },
             },
+            placeholder: $select.attr("placeholder" || ""),
             templateSelection: function (data) {
                 // Only show the version number when selected
                 if (initialPageData.get("latest_app_id") === data.id) {

@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import re
 from copy import deepcopy
 from pydoc import html
@@ -7,9 +5,6 @@ from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-
-import six
-from six.moves import map
 
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     FormQuestionResponse,
@@ -205,7 +200,7 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
         path_context += '/'
     if not output_context:
         output_context = {
-            '%s%s' % (path_context, '/'.join(map(six.text_type, key))): six.text_type(value)
+            '%s%s' % (path_context, '/'.join(map(str, key))): str(value)
             for key, value in _flatten_json(relative_data).items()
         }
 
@@ -274,7 +269,7 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
 
     if relative_data:
         for key, response in sorted(_flatten_json(relative_data).items()):
-            joined_key = '/'.join(map(six.text_type, key))
+            joined_key = '/'.join(map(str, key))
             result.append(
                 FormQuestionResponse(
                     label=joined_key,

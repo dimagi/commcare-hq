@@ -1,8 +1,10 @@
-from __future__ import absolute_import
 from django.dispatch.dispatcher import receiver
 
 from casexml.apps.case.signals import case_post_save
-from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
+
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_types_for_domain_es,
+)
 from corehq.form_processor.signals import sql_case_post_save
 
 

@@ -1,30 +1,30 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import io
+import json
 from datetime import date, timedelta
 
-import csv342 as csv
-import io
-import attr
-import requests
-import json
-
-from celery.schedules import crontab
-from celery.task import task
-from celery.task.base import periodic_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.template import Context, Template
 from django.template.loader import render_to_string
 
+import attr
+import csv
+import requests
+from celery.schedules import crontab
+from celery.task import task
+from celery.task.base import periodic_task
+
+from dimagi.utils.django.email import send_HTML_email
+from dimagi.utils.logging import notify_error
+from dimagi.utils.web import get_site_domain
+from pillowtop.utils import get_couch_pillow_instances
+
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.logging import notify_error
-from dimagi.utils.django.email import send_HTML_email
-from dimagi.utils.web import get_site_domain
-from pillowtop.utils import get_couch_pillow_instances
+
 from .utils import check_for_rewind
 
 _soft_assert_superusers = soft_assert(notify_admins=True)

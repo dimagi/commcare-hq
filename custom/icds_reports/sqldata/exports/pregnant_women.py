@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from sqlagg import SumWhen
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn

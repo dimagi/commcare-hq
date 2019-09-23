@@ -1,9 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from unittest import TestCase
-
-from six.moves import range
 
 import corehq.blobs.util as mod
 

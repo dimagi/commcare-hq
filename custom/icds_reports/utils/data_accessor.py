@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from copy import deepcopy
 
 from time import sleep
-
+from datetime import datetime, timedelta
 from corehq.util.datadog.utils import create_datadog_event
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes
@@ -15,6 +12,7 @@ from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 from custom.icds_reports.models.views import NICIndicatorsView
 from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data, \
     get_awcs_covered_data_chart
+from corehq.sql_db.routers import force_citus_engine
 
 import logging
 
@@ -63,23 +61,47 @@ def get_program_summary_data_with_retrying(step, domain, config, now, include_te
 
 # keeping cache timeout as 2 hours as this is going to be used
 # in some script/tool which might flood us with requests
-@icds_quickcache(['state_id', 'month'], timeout=120 * 60)
-def get_inc_indicator_api_data(state_id, month):
+@icds_quickcache(['use_citus'], timeout=120 * 60)
+def get_inc_indicator_api_data(use_citus=False):
+    latest_available_month = datetime.utcnow() - timedelta(days=1)
+    first_day_month = latest_available_month.replace(day=1)
+    with force_citus_engine(use_citus):
+        data = NICIndicatorsView.objects.filter(month=first_day_month).all().values('state_name',
+                                                                                    'state_id',
+                                                                                    'month',
+                                                                                    'num_launched_awcs',
+                                                                                    'cases_household',
+                                                                                    'cases_ccs_pregnant',
+                                                                                    'cases_ccs_lactating',
+                                                                                    'cases_child_health',
+                                                                                    'bf_at_birth',
+                                                                                    'ebf_in_month',
+                                                                                    'cf_initiation_in_month')
+        nic_data = []
+        total_launched_awcs = 0
 
-    data = NICIndicatorsView.objects.get(month=month,
-                                         state_id=state_id)
-    return {
-        'state': data.state_name,
-        'month': data.month,
-        'num_launched_awcs': data.num_launched_awcs,
-        'num_households_registered': data.cases_household,
-        'pregnant_enrolled': data.cases_ccs_pregnant,
-        'lactating_enrolled': data.cases_ccs_lactating,
-        'children_enrolled': data.cases_child_health,
-        'bf_at_birth': data.bf_at_birth,
-        'ebf_in_month': data.ebf_in_month,
-        'cf_in_month': data.cf_initiation_in_month
-    }
+        for row in data:
+            total_launched_awcs += row['num_launched_awcs'] if row['num_launched_awcs'] else 0
+            nic_data.append({
+                'state_name': row['state_name'],
+                'state_id': row['state_id'],
+                'month': row['month'],
+                'num_launched_awcs': row['num_launched_awcs'],
+                'num_households_registered': row['cases_household'],
+                'pregnant_enrolled': row['cases_ccs_pregnant'],
+                'lactating_enrolled': row['cases_ccs_lactating'],
+                'children_enrolled': row['cases_child_health'],
+                'bf_at_birth': row['bf_at_birth'],
+                'ebf_in_month': row['ebf_in_month'],
+                'cf_in_month': row['cf_initiation_in_month']
+            }
+            )
+
+        return {
+            'scheme_code': 'C002',
+            'total_launched_awcs': total_launched_awcs,
+            'dataarray1': nic_data
+        }
 
 
 def _all_zeros_graph(step, data, agg_level):

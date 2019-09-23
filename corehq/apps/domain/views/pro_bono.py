@@ -1,12 +1,14 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy
 
-from corehq.apps.domain.forms import ProBonoForm
-from corehq.apps.domain.views.accounting import DomainAccountingSettings, DomainSubscriptionView
-from corehq.apps.hqwebapp.views import BasePageView
 from memoized import memoized
+
+from corehq.apps.domain.forms import ProBonoForm
+from corehq.apps.domain.views.accounting import (
+    DomainAccountingSettings,
+    DomainSubscriptionView,
+)
+from corehq.apps.hqwebapp.views import BasePageView
 
 
 class ProBonoMixin(object):

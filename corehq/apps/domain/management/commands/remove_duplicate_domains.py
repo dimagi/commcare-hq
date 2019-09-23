@@ -1,6 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.core.management import BaseCommand
+
 from corehq.apps.domain.models import Domain
 
 

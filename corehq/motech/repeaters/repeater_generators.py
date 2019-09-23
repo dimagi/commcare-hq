@@ -1,21 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
 import json
-
+import warnings
+from collections import namedtuple
 from datetime import datetime
 from uuid import uuid4
-import warnings
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import ugettext_lazy as _
+
 from casexml.apps.case.xform import get_case_ids_from_form
-from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
-
 from casexml.apps.case.xml import V2
-
 from dimagi.utils.parsing import json_format_datetime
-import six
+
+from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 
 
 def _get_test_form(domain):
@@ -133,7 +129,7 @@ class GeneratorCollection(object):
 
     def get_all_formats(self, for_domain=None):
         """returns all the formats added to this repeater collection"""
-        return [(name, format.label) for name, format in six.iteritems(self.format_generator_map)
+        return [(name, format.label) for name, format in self.format_generator_map.items()
                 if not for_domain or format.generator_class.enabled_for_domain(for_domain)]
 
     def get_generator_by_format(self, format):
@@ -239,7 +235,7 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
             create=True,
             case_type='test',
             case_name='test case',
-        ).as_string()
+        ).as_text()
 
 
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):

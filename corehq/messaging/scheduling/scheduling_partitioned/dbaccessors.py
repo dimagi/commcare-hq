@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from uuid import UUID
 
 from django.db.models import Q

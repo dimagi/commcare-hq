@@ -1,35 +1,36 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
-from __future__ import print_function
 from datetime import datetime, timedelta
-
-import argparse
-from six.moves import zip_longest
 
 from django.core.management.base import BaseCommand, CommandError
 
+from itertools import zip_longest
+
+from corehq.util.argparse_types import date_type
+from couchforms.models import doc_types
+
 from corehq.apps.change_feed.document_types import CASE_DOC_TYPES
-from corehq.apps.data_pipeline_audit.dbacessors import get_es_user_ids, get_es_form_ids, get_primary_db_form_ids, \
-    get_primary_db_case_ids, get_es_case_ids, get_es_case_counts, get_es_case_range
+from corehq.apps.data_pipeline_audit.dbacessors import (
+    get_es_case_counts,
+    get_es_case_ids,
+    get_es_case_range,
+    get_es_form_ids,
+    get_es_user_ids,
+    get_primary_db_case_ids,
+    get_primary_db_form_ids,
+)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain, get_mobile_user_ids
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_all_user_ids_by_domain,
+    get_mobile_user_ids,
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.util.markup import SimpleTableWriter, CSVRowFormatter, TableRowFormatter
-from couchforms.models import doc_types
-from six.moves import range
+from corehq.util.markup import (
+    CSVRowFormatter,
+    SimpleTableWriter,
+    TableRowFormatter,
+)
 
 DATE_FORMAT = "%Y-%m-%d"
-
-
-def valid_date(s):
-    try:
-        return datetime.strptime(s, DATE_FORMAT)
-    except ValueError:
-        msg = "Not a valid date: '{0}'.".format(s)
-        raise argparse.ArgumentTypeError(msg)
 
 
 class Command(BaseCommand):
@@ -42,14 +43,14 @@ class Command(BaseCommand):
             '-s',
             '--startdate',
             dest='start',
-            type=valid_date,
+            type=date_type,
             help="The start date. Only applicable to forms and cases on SQL domains. - format YYYY-MM-DD",
         )
         parser.add_argument(
             '-e',
             '--enddate',
             dest='end',
-            type=valid_date,
+            type=date_type,
             help="The end date. Only applicable to forms and cases on SQL domains. - format YYYY-MM-DD",
         )
         parser.add_argument('--csv', action='store_true', default=False, dest='csv',

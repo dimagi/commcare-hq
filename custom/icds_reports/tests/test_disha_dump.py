@@ -1,11 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
 import mock
 
 from datetime import date
-from io import open
 
 from django.test import TestCase
 

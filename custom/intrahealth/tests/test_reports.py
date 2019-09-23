@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from copy import copy
 from datetime import datetime
 import os
@@ -14,7 +12,6 @@ import xml.etree.ElementTree as ElementTree
 
 from dimagi.utils.parsing import json_format_date
 from testapps.test_pillowtop.utils import real_pillow_settings
-from io import open
 
 
 class TestReports(IntraHealthTestCase):

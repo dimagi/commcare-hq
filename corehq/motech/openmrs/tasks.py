@@ -3,26 +3,26 @@ Tasks are used to pull data from OpenMRS. They either use OpenMRS's
 Reporting REST API to import cases on a regular basis (like weekly), or
 its Atom Feed (daily or more) to track changes.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
+import time
 import uuid
 from collections import namedtuple
 from datetime import datetime
+
 from celery.schedules import crontab
-from celery.task import task, periodic_task
+from celery.task import periodic_task, task
 from couchdbkit import ResourceNotFound
 from jinja2 import Template
-from requests import HTTPError
-import time
+
 from casexml.apps.case.mock import CaseBlock
+from toggle.shortcuts import find_domains_with_toggle_enabled
+
 from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.openmrs.atom_feed import (
     get_feed_updates,
@@ -32,8 +32,9 @@ from corehq.motech.openmrs.atom_feed import (
 from corehq.motech.openmrs.const import (
     ATOM_FEED_NAME_ENCOUNTER,
     ATOM_FEED_NAME_PATIENT,
-    IMPORT_FREQUENCY_WEEKLY,
+    IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
+    IMPORT_FREQUENCY_WEEKLY,
     OPENMRS_ATOM_FEED_POLL_INTERVAL,
     OPENMRS_IMPORTER_DEVICE_ID_PREFIX,
     XMLNS_OPENMRS,
@@ -44,12 +45,12 @@ from corehq.motech.openmrs.models import POSIX_MILLISECONDS
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
-from corehq.util.python_compatibility import soft_assert_type_text
-from toggle.shortcuts import find_domains_with_toggle_enabled
-import six
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
-LOCATION_OPENMRS = 'openmrs_uuid'  # The location metadata key that maps to its corresponding OpenMRS location UUID
+# REQUEST_TIMEOUT is 5 minutes, but reports can take up to an hour
+REPORT_REQUEST_TIMEOUT = 60 * 60
+# The location metadata key that maps to its corresponding OpenMRS location UUID
+LOCATION_OPENMRS = 'openmrs_uuid'
 
 
 def parse_params(params, location=None):
@@ -61,8 +62,7 @@ def parse_params(params, location=None):
 
     parsed = {}
     for key, value in params.items():
-        if isinstance(value, six.string_types) and '{{' in value:
-            soft_assert_type_text(value)
+        if isinstance(value, str) and '{{' in value:
             template = Template(value)
             value = template.render(today=today, location=location_uuid)
         parsed[key] = value
@@ -73,9 +73,10 @@ def get_openmrs_patients(requests, importer, location=None):
     """
     Send request to OpenMRS Reporting API and return results
     """
-    endpoint = '/ws/rest/v1/reportingrest/reportdata/' + importer.report_uuid
+    endpoint = f'/ws/rest/v1/reportingrest/reportdata/{importer.report_uuid}'
     params = parse_params(importer.report_params, location)
-    response = requests.get(endpoint, params=params, raise_for_status=True)
+    response = requests.get(endpoint, params=params, raise_for_status=True,
+                            timeout=REPORT_REQUEST_TIMEOUT)
     data = response.json()
     return data['dataSets'][0]['rows']  # e.g. ...
     #     [{u'familyName': u'Hornblower', u'givenName': u'Horatio', u'personId': 2},
@@ -146,9 +147,9 @@ def import_patients_of_owner(requests, importer, domain_name, owner, location=No
             case_blocks.append(RowAndCase(i, case_block))
 
     submit_case_blocks(
-        [cb.case.as_string() for cb in case_blocks],
+        [cb.case.as_text() for cb in case_blocks],
         domain_name,
-        device_id='{}{}'.format(OPENMRS_IMPORTER_DEVICE_ID_PREFIX, importer.get_id),
+        device_id=f'{OPENMRS_IMPORTER_DEVICE_ID_PREFIX}{importer.get_id}',
         user_id=owner.user_id,
         xmlns=XMLNS_OPENMRS,
     )
@@ -188,13 +189,9 @@ def import_patients_to_domain(domain_name, force=False):
     :param domain_name: The name of the domain
     :param force: Import regardless of the configured import frequency / today's date
     """
-    today = datetime.today()
     for importer in get_openmrs_importers_by_domain(domain_name):
-        if not force and importer.import_frequency == IMPORT_FREQUENCY_WEEKLY and today.weekday() != 1:
-            continue  # Import on Tuesdays
-        if not force and importer.import_frequency == IMPORT_FREQUENCY_MONTHLY and today.day != 1:
-            continue  # Import on the first of the month
-        # TODO: ^^^ Make those configurable
+        if not _should_import_today(importer) and not force:
+            continue
 
         password = b64_aes_decrypt(importer.password)
         requests = Requests(domain_name, importer.server_url, importer.username, password)
@@ -203,8 +200,8 @@ def import_patients_to_domain(domain_name, force=False):
                 location_type = LocationType.objects.get(domain=domain_name, name=importer.location_type_name)
             except LocationType.DoesNotExist:
                 logger.error(
-                    'No organization level named "{location_type}" found in project space "{domain}".'.format(
-                        location_type=importer.location_type_name, domain=domain_name)
+                    f'No organization level named "{importer.location_type_name}" '
+                    f'found in project space "{domain_name}".'
                 )
                 continue
             if importer.location_id:
@@ -217,9 +214,9 @@ def import_patients_to_domain(domain_name, force=False):
                 owner = get_one_commcare_user_at_location(domain_name, location.location_id)
                 if not owner:
                     logger.error(
-                        'Project space "{domain}" at location "{location}" has no user to own cases imported from '
-                        'OpenMRS Importer "{importer}"'.format(
-                            domain=domain_name, location=location.name, importer=importer)
+                        f'Project space "{domain_name}" at location '
+                        f'"{location.name}" has no user to own cases imported '
+                        f'from OpenMRS Importer "{importer}"'
                     )
                     continue
                 import_patients_of_owner(requests, importer, domain_name, owner, location)
@@ -228,19 +225,33 @@ def import_patients_to_domain(domain_name, force=False):
                 owner = CommCareUser.get(importer.owner_id)
             except ResourceNotFound:
                 logger.error(
-                    'Project space "{domain}" has no user to own cases imported from OpenMRS Importer '
-                    '"{importer}"'.format(
-                        domain=domain_name, importer=importer)
+                    f'Project space "{domain_name}" has no user to own cases '
+                    f'imported from OpenMRS Importer "{importer}"'
                 )
                 continue
             import_patients_of_owner(requests, importer, domain_name, owner)
         else:
             logger.error(
-                'Error importing patients for project space "{domain}" from OpenMRS Importer "{importer}": Unable '
-                'to determine the owner of imported cases without either owner_id or location_type_name'.format(
-                    domain=domain_name, importer=importer)
+                f'Error importing patients for project space "{domain_name}" from '
+                f'OpenMRS Importer "{importer}": Unable to determine the owner of '
+                'imported cases without either owner_id or location_type_name'
             )
             continue
+
+
+def _should_import_today(importer):
+    today = datetime.today()
+    return (
+        importer.import_frequency == IMPORT_FREQUENCY_DAILY
+        or (
+            importer.import_frequency == IMPORT_FREQUENCY_WEEKLY
+            and today.weekday() == 1  # Tuesday
+        )
+        or (
+            importer.import_frequency == IMPORT_FREQUENCY_MONTHLY
+            and today.day == 1
+        )
+    )
 
 
 @periodic_task(

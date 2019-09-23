@@ -182,6 +182,26 @@
                 "transform": {},
                 "type": "expression"
             },
+             {
+                "column_id": "inspection_date",
+                "datatype": "datetime",
+                "display_name": "inspection_date",
+                "expression": {
+                    "expression": {
+                        "datatype": null,
+                        "property_path": [
+                            "form",
+                            "date"
+                        ],
+                        "type": "property_path"
+                    },
+                    "type": "root_doc"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
             {
                 "column_id": "country",
                 "datatype": "string",

@@ -1,57 +1,65 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 import calendar
 import functools
 import hashlib
 import json
 import logging
-import six
 import uuid
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
-from django.db import models
-from six.moves.urllib.parse import urlencode
-from six.moves import range
-
-from couchdbkit.ext.django.schema import StringProperty, StringListProperty, BooleanProperty, \
-    IntegerProperty, DateProperty, DictProperty
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.db import models
 from django.http import Http404, HttpRequest, QueryDict
 from django.utils.translation import ugettext as _
+
+from couchdbkit.ext.django.schema import (
+    BooleanProperty,
+    DateProperty,
+    DictProperty,
+    IntegerProperty,
+    StringListProperty,
+    StringProperty,
+)
 from django_prbac.exceptions import PermissionDenied
 from memoized import memoized
+from six.moves.urllib.parse import urlencode
 from sqlalchemy.util import immutabledict
 
-from corehq.elastic import ESError
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
-from corehq.apps.domain.middleware import CCHQPRBACMiddleware
-from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.reports.daterange import get_all_daterange_slugs, \
-    get_daterange_start_end_dates
-from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
-    CustomProjectReportDispatcher
-from corehq.apps.reports.exceptions import InvalidDaterangeException
-from corehq.apps.saved_reports.exceptions import UnsupportedSavedReportError, \
-    UnsupportedScheduledReportError
-from corehq.apps.reports.tasks import export_all_rows_task
-from corehq.apps.userreports.util import default_language as ucr_default_language, \
-    localize as ucr_localize
-from corehq.apps.users.dbaccessors import get_user_docs_by_username
-from corehq.apps.users.models import CouchUser
-from corehq.util.translation import localize
-from corehq.util.view_utils import absolute_reverse
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_request
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request
 
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.domain.middleware import CCHQPRBACMiddleware
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.reports.daterange import (
+    get_all_daterange_slugs,
+    get_daterange_start_end_dates,
+)
+from corehq.apps.reports.dispatcher import (
+    CustomProjectReportDispatcher,
+    ProjectReportDispatcher,
+)
+from corehq.apps.reports.exceptions import InvalidDaterangeException
+from corehq.apps.reports.tasks import export_all_rows_task
+from corehq.apps.saved_reports.exceptions import (
+    UnsupportedSavedReportError,
+    UnsupportedScheduledReportError,
+)
+from corehq.apps.userreports.util import \
+    default_language as ucr_default_language
+from corehq.apps.userreports.util import localize as ucr_localize
+from corehq.apps.users.dbaccessors import get_user_docs_by_username
+from corehq.apps.users.models import CouchUser
+from corehq.elastic import ESError
+from corehq.util.translation import localize
+from corehq.util.view_utils import absolute_reverse
 
 ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
 DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
@@ -228,9 +236,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         params = {}
         if self._id != 'dummy':
             params['config_id'] = self._id
-        if not self.is_configurable_report:
-            params.update(self.filters)
-            params.update(self.get_date_range())
+        params.update(self.filters)
+        params.update(self.get_date_range())
 
         return urlencode(params, True)
 
@@ -268,7 +275,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except UnsupportedSavedReportError:
             return "#"
         except Exception as e:
-            logging.exception(six.text_type(e))
+            logging.exception(str(e))
             return "#"
 
     @property

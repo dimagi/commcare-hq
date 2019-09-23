@@ -9,11 +9,9 @@ from corehq.apps.es import case_search as case_search_es
     q = (case_search_es.CaseSearchES()
          .domain('testproject')
 """
-from __future__ import absolute_import, unicode_literals
 
 from warnings import warn
 
-import six
 from django.utils.dateparse import parse_date
 
 from corehq.apps.case_search.const import (
@@ -26,10 +24,8 @@ from corehq.apps.case_search.const import (
     SYSTEM_PROPERTIES,
     VALUE,
 )
-from corehq.apps.es.aggregations import BucketResult, TermsAggregation
 from corehq.apps.es.cases import CaseES, owner
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
-from corehq.util.python_compatibility import soft_assert_type_text
 
 from . import filters, queries
 
@@ -121,8 +117,7 @@ class CaseSearchES(CaseES):
     def get_child_cases(self, case_ids, identifier):
         """Returns all cases that reference cases with ids: `case_ids`
         """
-        if isinstance(case_ids, six.string_types):
-            soft_assert_type_text(case_ids)
+        if isinstance(case_ids, str):
             case_ids = [case_ids]
 
         return self.add_query(
@@ -202,7 +197,7 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
     # if its a number, use it
     try:
         # numeric range
-        kwargs = {key: float(value) for key, value in six.iteritems(kwargs) if value is not None}
+        kwargs = {key: float(value) for key, value in kwargs.items() if value is not None}
         return _base_property_query(
             case_property_name,
             queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
@@ -213,7 +208,7 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
     # if its a date, use it
     # date range
     kwargs = {
-        key: parse_date(value) for key, value in six.iteritems(kwargs)
+        key: parse_date(value) for key, value in kwargs.items()
         if value is not None and parse_date(value) is not None
     }
     if not kwargs:
@@ -233,8 +228,7 @@ def reverse_index_case_query(case_ids, identifier=None):
     with identifier `parent`.
 
     """
-    if isinstance(case_ids, six.string_types):
-        soft_assert_type_text(case_ids)
+    if isinstance(case_ids, str):
         case_ids = [case_ids]
 
     if identifier is None:      # some old relationships don't have an identifier specified

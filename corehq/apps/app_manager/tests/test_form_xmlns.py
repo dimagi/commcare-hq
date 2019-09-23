@@ -1,12 +1,8 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.models import AdvancedModule, Application, Module
-from corehq.apps.app_manager.util import save_xform
-
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.util import save_xform
 
 XMLNS_PREFIX = 'http://openrosa.org/formdesigner/'
 GENERIC_XMLNS = "http://www.w3.org/2002/xforms"

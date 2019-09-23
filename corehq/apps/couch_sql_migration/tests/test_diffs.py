@@ -1,9 +1,8 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from copy import deepcopy
 
-from attr import fields_dict
 from django.test import SimpleTestCase
+
+from attr import fields_dict
 
 from corehq.apps.couch_sql_migration.diff import (
     filter_case_diffs,
@@ -11,11 +10,14 @@ from corehq.apps.couch_sql_migration.diff import (
     filter_ledger_diffs,
     load_ignore_rules,
 )
-from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, json_diff, MISSING
+from corehq.apps.tzmigration.timezonemigration import (
+    MISSING,
+    FormJsonDiff,
+    json_diff,
+)
 from corehq.util.test_utils import softer_assert
 
 from ..diffrule import ANY
-
 
 DATE_DIFFS = [
     FormJsonDiff(
@@ -500,6 +502,17 @@ class DiffTestCases(SimpleTestCase):
             "xmlns": "http://commtrack.org/supply_point",
         }
         self._test_form_diff_filter(couch_doc, sql_doc)
+
+    def test_form_server_modified_on_diff(self):
+        couch_form = {
+            "doc_type": "XFormInstance",
+            "server_modified_on": None,
+        }
+        sql_form = {
+            "doc_type": "XFormInstance",
+            "server_modified_on": "2019-09-03T18:33:32.777366Z",
+        }
+        self._test_form_diff_filter(couch_form, sql_form)
 
     def test_form_with_opened_by_diff(self):
         couch_case = {

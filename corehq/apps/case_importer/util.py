@@ -1,13 +1,9 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 from collections import OrderedDict, namedtuple
 from contextlib import contextmanager
 
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
-
-import six
 
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.exceptions import (
@@ -185,11 +181,11 @@ def get_spreadsheet(filename):
         with open_any_workbook(filename) as workbook:
             yield WorksheetWrapper.from_workbook(workbook)
     except SpreadsheetFileEncrypted as e:
-        raise ImporterExcelFileEncrypted(six.text_type(e))
+        raise ImporterExcelFileEncrypted(str(e))
     except SpreadsheetFileNotFound as e:
-        raise ImporterFileNotFound(six.text_type(e))
+        raise ImporterFileNotFound(str(e))
     except SpreadsheetFileInvalidError as e:
-        raise ImporterExcelError(six.text_type(e))
+        raise ImporterExcelError(str(e))
 
 
 def get_importer_error_message(e):
@@ -206,6 +202,6 @@ def get_importer_error_message(e):
         return _('The file you want to import is password protected. '
                  'Please choose a file that is not password protected.')
     elif isinstance(e, ImporterExcelError):
-        return _("The file uploaded has the following error: {}").format(six.text_type(e))
+        return _("The file uploaded has the following error: {}").format(str(e))
     else:
-        return _("Error: {}").format(six.text_type(e))
+        return _("Error: {}").format(str(e))

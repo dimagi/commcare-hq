@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 import hashlib
 import hmac
 from functools import wraps
-import six
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -15,7 +12,7 @@ _soft_assert = soft_assert(notify_admins=True)
 
 
 def convert_to_bytestring_if_unicode(shared_key):
-    return shared_key.encode('utf-8') if isinstance(shared_key, six.text_type) else shared_key
+    return shared_key.encode('utf-8') if isinstance(shared_key, str) else shared_key
 
 
 def get_hmac_digest(shared_key, data):

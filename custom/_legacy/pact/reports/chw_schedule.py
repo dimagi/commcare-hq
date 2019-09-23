@@ -1,6 +1,3 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, timedelta, time
 from dateutil.parser import parser
 from django.core.cache import cache
@@ -14,8 +11,6 @@ from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
 from pact.utils import get_patient_display_cache, get_report_script_field
 import logging
-from six.moves import zip
-from six.moves import range
 
 cached_schedules = {}
 

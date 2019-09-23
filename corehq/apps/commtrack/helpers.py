@@ -1,13 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import six
 import uuid
 
+import six
+
 from casexml.apps.case.mock import CaseBlock
+
 from corehq.apps.commtrack import const
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import Product
 from corehq.form_processor.interfaces.supply import SupplyInterface
+
 
 """
 helper code to populate the various commtrack models, for ease of
@@ -27,8 +28,6 @@ def make_product(domain, name, code):
 def make_supply_point(domain, location):
     # a supply point is currently just a case with a special type
     case_id = uuid.uuid4().hex
-    if six.PY2:
-        case_id = case_id.decode('utf-8')
     user_id = const.get_commtrack_user_id(domain)
     owner_id = location.location_id
     kwargs = {'external_id': location.external_id} if location.external_id else {}
@@ -78,7 +77,7 @@ def update_supply_point_from_location(supply_point, location):
 
 def _submit_commtrack_caseblock(domain, caseblock, source):
     submit_case_blocks(
-        caseblock.as_string().decode('utf-8'),
+        caseblock.as_text(),
         domain,
         const.COMMTRACK_USERNAME,
         const.get_commtrack_user_id(domain),

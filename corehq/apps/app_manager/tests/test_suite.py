@@ -1,19 +1,23 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import hashlib
-import mock
 import re
-from lxml.etree import tostring
 
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateInstanceIdError
+import mock
+from lxml.etree import tostring
+
+import commcare_translations
+from corehq.apps.app_manager.exceptions import (
+    DuplicateInstanceIdError,
+    SuiteValidationError,
+)
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     CaseSearch,
     CaseSearchProperty,
+    CustomAssertion,
+    CustomInstance,
     DetailColumn,
     FormActionCondition,
     GraphConfiguration,
@@ -27,19 +31,19 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     SortElement,
     UpdateCaseAction,
-    CustomInstance,
-    CustomAssertion,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled, parse_normalize
-from corehq.apps.app_manager.xpath import (
-    session_var,
+from corehq.apps.app_manager.tests.util import (
+    SuiteMixin,
+    TestXmlMixin,
+    commtrack_enabled,
+    parse_normalize,
 )
+from corehq.apps.app_manager.xpath import session_var
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
-import commcare_translations
 
 
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
@@ -989,6 +993,14 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite,
             "entry/session/datum"
         )
+
+    def test_custom_xml_with_wrong_module_index(self):
+        factory = AppFactory()
+        module, form = factory.new_advanced_module("my_module", "person")
+        # This should be 'm0_case_short'
+        module.case_details.short.custom_xml = '<detail id="m1_case_short"></detail>'
+        with self.assertRaises(SuiteValidationError):
+            factory.app.create_suite()
 
     def test_subcase_repeat_mixed(self):
         app = Application.new_app(None, "Untitled Application")

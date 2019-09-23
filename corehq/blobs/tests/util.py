@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from shutil import rmtree
 from tempfile import mkdtemp
 from uuid import uuid4

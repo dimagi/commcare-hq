@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.test.testcases import TestCase
 
 from corehq.apps.app_manager.app_schemas.form_metadata import (

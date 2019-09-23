@@ -1,17 +1,18 @@
-# encoding: utf-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import logging
 import os
-from itertools import groupby
+import sys
+from itertools import groupby, zip_longest
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from six.moves import input, zip_longest
+from django.db.models import Q
+
 from sqlalchemy.exc import OperationalError
+
+from corehq.apps.domain.models import Domain
+from couchforms.dbaccessors import get_form_ids_by_type
+from couchforms.models import XFormInstance, doc_types
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     CASE_DOC_TYPES,
@@ -36,10 +37,14 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
 )
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.sql_db.util import (
+    estimate_partitioned_row_count,
+    paginate_query_across_partitioned_databases,
+)
+from corehq.util.log import with_progress_bar
 from corehq.util.markup import shell_green, shell_red
-from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms.models import XFormInstance, doc_types
 
 log = logging.getLogger('main_couch_sql_datamigration')
 
@@ -81,39 +86,70 @@ class Command(BaseCommand):
                 reside on an NFS volume for migration state consistency.
                 Can be set in environment: CCHQ_MIGRATION_STATE_DIR
             """)
-        parser.add_argument('--dry-run', action='store_true', default=False,
+        parser.add_argument('--live',
+            dest="live_migrate", action='store_true', default=False,
             help='''
                 Do migration in a way that will not be seen by
                 `any_migrations_in_progress(...)` so it does not block
                 operations like syncs, form submissions, sms activity,
-                etc. Dry-run migrations cannot be committed.
+                etc. A "live" migration will stop when it encounters a
+                form that has been submitted within an hour of the
+                current time. Live migrations can be resumed after
+                interruption or to top off a previous live migration by
+                processing unmigrated forms that are older than one
+                hour. Migration state must be present in the state
+                directory to resume. A live migration may be followed by
+                a normal (non-live) migration, which will commit the
+                result if all goes well.
+            ''')
+        parser.add_argument('--no-diff-process',
+            dest='diff_process', action='store_false', default=True,
+            help='''
+                Migrate forms and diff cases in the same process. The
+                case diff queue will run in a separate process if this
+                option is not specified.
             ''')
 
     def handle(self, domain, action, **options):
         if should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
-        for opt in ["no_input", "verbose", "state_dir", "dry_run"]:
+        for opt in ["no_input", "verbose", "state_dir", "live_migrate", "diff_process"]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('--no-input only allowed for unit testing')
-        if action != MIGRATE and self.dry_run:
-            raise CommandError("--dry-run only allowed for `MIGRATE`")
+        if action != MIGRATE and self.live_migrate:
+            raise CommandError("--live only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
 
-        setup_logging(self.state_dir, options['debug'])
+        assert Domain.get_by_name(domain), f'Unknown domain "{domain}"'
+        slug = f"{action.lower()}-{domain}"
+        setup_logging(self.state_dir, slug, options['debug'])
         getattr(self, "do_" + action)(domain)
 
     def do_MIGRATE(self, domain):
-        path = self.state_dir
-        set_couch_sql_migration_started(domain, self.dry_run)
-        do_couch_to_sql_migration(domain, path, with_progress=not self.no_input)
+        set_couch_sql_migration_started(domain, self.live_migrate)
+        do_couch_to_sql_migration(
+            domain,
+            self.state_dir,
+            with_progress=not self.no_input,
+            live_migrate=self.live_migrate,
+            diff_process=self.diff_process,
+        )
 
-        has_diffs = self.print_stats(domain, short=True, diffs_only=True)
+        return_code = 0
+        if self.live_migrate:
+            print("Live migration completed.")
+            has_diffs = True
+        else:
+            has_diffs = self.print_stats(domain, short=True, diffs_only=True)
+            return_code = int(has_diffs)
         if has_diffs:
-            print("\nRun `diff` or `stats --verbose` for more details.\n")
+            print("\nRun `diff` or `stats [--verbose]` for more details.\n")
+        if return_code:
+            sys.exit(return_code)
 
     def do_reset(self, domain):
         if not self.no_input:
@@ -158,6 +194,9 @@ class Command(BaseCommand):
         has_diffs = False
         for doc_type in doc_types():
             form_ids_in_couch = set(get_form_ids_by_type(domain, doc_type))
+            if doc_type == "XFormInstance":
+                form_ids_in_couch.update(get_doc_ids_in_domain_by_type(
+                    domain, "HQSubmission", XFormInstance.get_db()))
             form_ids_in_sql = set(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type))
             diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
             has_diffs |= self._print_status(
@@ -271,16 +310,27 @@ def blow_away_migration(domain, state_dir):
     assert not should_use_sql_backend(domain)
     delete_state_db(domain, state_dir)
 
-    for doc_type in doc_types():
-        sql_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type)
-        FormAccessorSQL.hard_delete_forms(domain, sql_form_ids, delete_attachments=False)
+    log.info("deleting forms...")
+    for form_ids in iter_chunks(XFormInstanceSQL, "form_id", domain):
+        FormAccessorSQL.hard_delete_forms(domain, form_ids, delete_attachments=False)
 
-    sql_form_ids = FormAccessorSQL.get_deleted_form_ids_in_domain(domain)
-    FormAccessorSQL.hard_delete_forms(domain, sql_form_ids, delete_attachments=False)
+    log.info("deleting cases...")
+    for case_ids in iter_chunks(CommCareCaseSQL, "case_id", domain):
+        CaseAccessorSQL.hard_delete_cases(domain, case_ids)
 
-    sql_case_ids = CaseAccessorSQL.get_case_ids_in_domain(domain)
-    CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
+    log.info("blew away migration for domain %s\n", domain)
 
-    sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)
-    CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
-    log.info("blew away migration for domain {}\n".format(domain))
+
+def iter_chunks(model_class, field, domain, chunk_size=5000):
+    where = Q(domain=domain)
+    row_count = estimate_partitioned_row_count(model_class, where)
+    rows = paginate_query_across_partitioned_databases(
+        model_class,
+        where,
+        values=[field],
+        load_source='couch_to_sql_migration',
+        query_size=chunk_size,
+    )
+    values = (r[0] for r in rows)
+    values = with_progress_bar(values, row_count, oneline="concise")
+    yield from chunked(values, chunk_size, list)

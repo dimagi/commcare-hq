@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from corehq.apps.reports.v2.models import BaseDataEndpoint
 from corehq.elastic import ESError
 

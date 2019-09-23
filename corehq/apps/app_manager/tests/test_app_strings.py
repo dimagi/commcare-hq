@@ -1,6 +1,3 @@
-# coding=utf-8
-from __future__ import absolute_import, unicode_literals
-
 import os
 from collections import OrderedDict
 
@@ -14,7 +11,9 @@ from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.models import Application, BuildProfile
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import SuiteMixin
-from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
+from corehq.apps.translations.app_translations.upload_form import (
+    BulkAppTranslationFormUpdater,
+)
 
 
 def get_app():

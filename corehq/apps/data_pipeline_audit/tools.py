@@ -1,13 +1,18 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from collections import Counter
 
 from corehq.apps import es
-from corehq.apps.data_pipeline_audit.dbacessors import get_primary_db_form_counts, get_es_counts_by_doc_type, \
-    get_primary_db_case_counts, get_es_user_counts_by_doc_type
+from corehq.apps.data_pipeline_audit.dbacessors import (
+    get_es_counts_by_doc_type,
+    get_es_user_counts_by_doc_type,
+    get_primary_db_case_counts,
+    get_primary_db_form_counts,
+)
 from corehq.apps.data_pipeline_audit.utils import map_counter_doc_types
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
-from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_count, get_web_user_count
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_mobile_user_count,
+    get_web_user_count,
+)
 from corehq.apps.users.models import CommCareUser
 
 

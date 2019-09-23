@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, timedelta, time
 import uuid
 from casexml.apps.case.models import CommCareCase

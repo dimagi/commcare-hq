@@ -1,29 +1,27 @@
 """
 API endpoints for filter options
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
 
 from django.views.generic import View
 
 from braces.views import JSONResponseMixin
+from memoized import memoized
+
+from dimagi.utils.logging import notify_exception
+from phonelog.models import DeviceReportEntry
 
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
-from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.elastic import ESError
-from memoized import memoized
-from dimagi.utils.logging import notify_exception
-
 from corehq.apps.reports.filters.controllers import (
+    CaseListFilterOptionsController,
     EmwfOptionsController,
     MobileWorkersOptionsController,
-    CaseListFilterOptionsController,
+    ReassignCaseOptionsController,
 )
-
-from phonelog.models import DeviceReportEntry
+from corehq.apps.users.analytics import get_search_users_in_domain_es_query
+from corehq.elastic import ESError
 
 logger = logging.getLogger(__name__)
 
@@ -121,19 +119,10 @@ class CaseListFilterOptions(EmwfOptionsView):
 
 @location_safe
 class ReassignCaseOptions(CaseListFilterOptions):
-
     @property
-    def data_sources(self):
-        """
-        Includes case-sharing groups but not reporting groups
-        """
-        sources = []
-        if self.request.can_access_all_locations:
-            sources.append((self.get_sharing_groups_size, self.get_sharing_groups))
-        sources.append((self.get_locations_size, self.get_locations))
-        sources.append((self.get_all_users_size, self.get_all_users))
-        return sources
-
+    @memoized
+    def options_controller(self):
+        return ReassignCaseOptionsController(self.request, self.domain, self.search)
 
 
 class DeviceLogFilter(LoginAndDomainMixin, JSONResponseMixin, View):

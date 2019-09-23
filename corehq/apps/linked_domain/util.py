@@ -1,10 +1,6 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
-
-import six
-from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext as _
+
+from couchdbkit import ResourceNotFound
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -52,7 +48,7 @@ def pull_missing_multimedia_for_app_and_notify(domain, app_id, email):
     try:
         pull_missing_multimedia_for_app(app)
     except MultimediaMissingError as e:
-        message = six.text_type(e)
+        message = str(e)
     except Exception:
         # Send an email but then crash the process
         # so we know what the error was

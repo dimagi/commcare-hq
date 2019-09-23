@@ -1,32 +1,32 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import collections
 import os
 from copy import deepcopy
 from itertools import chain
 
-from couchdbkit import ResourceNotFound
 from django.conf import settings
+
+from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import get_case_updates
-from corehq.apps.tzmigration.api import set_tz_migration_started, \
-    set_tz_migration_complete, force_phone_timezones_should_be_processed
+from couchforms.dbaccessors import get_form_ids_by_type
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import iter_docs
+
+from corehq.apps.tzmigration.api import (
+    force_phone_timezones_should_be_processed,
+    set_tz_migration_complete,
+    set_tz_migration_started,
+)
 from corehq.apps.tzmigration.planning import PlanningDB
 from corehq.blobs import CODES
 from corehq.blobs.mixin import BlobHelper
 from corehq.form_processor.parsers.ledgers import get_stock_actions
-from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
+from corehq.form_processor.utils import adjust_datetimes, convert_xform_to_json
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.util import eval_lazy
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.python_compatibility import soft_assert_type_text
-from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
-import six
-from six.moves import range
 
 
 def run_timezone_migration_for_domain(domain):
@@ -42,11 +42,6 @@ FormJsonDiff = collections.namedtuple('FormJsonDiff', [
 def _json_diff(obj1, obj2, path, track_list_indices=True):
     obj1 = eval_lazy(obj1)
     obj2 = eval_lazy(obj2)
-    if isinstance(obj1, str):
-        obj1 = six.text_type(obj1)
-    if isinstance(obj2, str):
-        obj2 = six.text_type(obj2)
-
     if obj1 == obj2:
         return
     elif MISSING in (obj1, obj2):
@@ -207,9 +202,8 @@ def prepare_case_json(planning_db):
 
 
 def is_datetime_string(string):
-    if not isinstance(string, six.string_types):
+    if not isinstance(string, str):
         return False
-    soft_assert_type_text(string)
     try:
         iso_string_to_datetime(string, strict=True)
     except (ValueError, OverflowError, TypeError):

@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-
-from __future__ import unicode_literals
 from django.test import TestCase
 
 from custom.icds_reports.messages import lady_supervisor_number_of_awcs_visited_help_text, \

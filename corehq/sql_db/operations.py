@@ -1,8 +1,5 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 import re
-from io import open
 
 from django.conf import settings
 from django.db import connection, router

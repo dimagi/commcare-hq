@@ -1,12 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import pickle
+
+from django.test.utils import override_settings
+
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.models import WebUser
 
 from ..models import SQLLocation
 from .util import LocationHierarchyTestCase
-from corehq.apps.users.models import WebUser
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from django.test.utils import override_settings
 
 
 class BaseTestLocationQuerysetMethods(LocationHierarchyTestCase):

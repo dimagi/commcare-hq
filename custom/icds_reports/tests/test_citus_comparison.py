@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from datetime import datetime
 
 from django.test import TestCase
@@ -90,6 +88,7 @@ class TestSqlData(TestCase):
                 'age_60': '60',
                 'age_0': '0',
                 'aggregation_level': 1,
+                'excluded_states_0': 'test_state',
                 'age_6': '6'
             },
         )

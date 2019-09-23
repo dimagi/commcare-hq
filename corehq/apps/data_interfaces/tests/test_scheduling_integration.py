@@ -1,51 +1,66 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from datetime import date, datetime, time
+
+from django.db.models import Q
+from django.test import TestCase
+
+from mock import call, patch
+
 from corehq.apps.app_manager.models import (
-    AdvancedModule,
     AdvancedForm,
+    AdvancedModule,
     FormSchedule,
-    ScheduleVisit,
     SchedulePhase,
     SchedulePhaseForm,
+    ScheduleVisit,
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
-    MatchPropertyDefinition,
     CreateScheduleInstanceActionDefinition,
+    MatchPropertyDefinition,
     VisitSchedulerIntegrationHelper,
 )
-from corehq.apps.data_interfaces.tests.util import create_case, create_empty_rule
+from corehq.apps.data_interfaces.tests.util import (
+    create_case,
+    create_empty_rule,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.messaging.scheduling.const import VISIT_WINDOW_START, VISIT_WINDOW_END, VISIT_WINDOW_DUE_DATE
+from corehq.messaging.scheduling.const import (
+    VISIT_WINDOW_DUE_DATE,
+    VISIT_WINDOW_END,
+    VISIT_WINDOW_START,
+)
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
-    TimedSchedule,
-    TimedEvent,
     CasePropertyTimedEvent,
     SMSContent,
+    TimedEvent,
+    TimedSchedule,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+    delete_case_schedule_instance,
     get_case_alert_schedule_instances_for_schedule,
     get_case_timed_schedule_instances_for_schedule,
-    delete_case_schedule_instance,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
 )
-from corehq.messaging.scheduling.tasks import handle_case_timed_schedule_instance
-from corehq.messaging.scheduling.tests.util import delete_alert_schedules, delete_timed_schedules
-from corehq.messaging.tasks import run_messaging_rule, sync_case_for_messaging_rule
+from corehq.messaging.scheduling.tasks import (
+    handle_case_timed_schedule_instance,
+)
+from corehq.messaging.scheduling.tests.util import (
+    delete_alert_schedules,
+    delete_timed_schedules,
+)
+from corehq.messaging.tasks import (
+    run_messaging_rule,
+    sync_case_for_messaging_rule,
+)
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
-from datetime import datetime, date, time
-from django.db.models import Q
-from django.test import TestCase
-from mock import patch, call
-from six.moves import range
 
 
 def get_visit_scheduler_module_and_form_for_test():

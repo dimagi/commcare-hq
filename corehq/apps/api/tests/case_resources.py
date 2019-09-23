@@ -1,8 +1,7 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 import uuid
 from datetime import datetime
+
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
@@ -10,7 +9,7 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.api.models import ESCase
-from corehq.apps.api.resources import v0_4, v0_3
+from corehq.apps.api.resources import v0_3, v0_4
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
@@ -155,7 +154,7 @@ class TestCommCareCaseResource(APIResourceTest):
                 case_id=parent_case_id,
                 create=True,
                 case_type=parent_type,
-            ).as_string().decode('utf-8'),
+            ).as_text(),
             self.domain.name
         )[1][0]
         child_case_id = uuid.uuid4().hex
@@ -164,7 +163,7 @@ class TestCommCareCaseResource(APIResourceTest):
                 case_id=child_case_id,
                 create=True,
                 index={'parent': (parent_type, parent_case_id)}
-            ).as_string().decode('utf-8'),
+            ).as_text(),
             self.domain.name
         )[1][0]
 

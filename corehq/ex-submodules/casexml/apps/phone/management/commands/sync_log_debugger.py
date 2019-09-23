@@ -1,12 +1,8 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 import os
 from django.core.management import BaseCommand
 from casexml.apps.phone.checksum import Checksum
 from six.moves import range
-from io import open
 
 
 class Command(BaseCommand):

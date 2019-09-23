@@ -1,13 +1,15 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from eulxml.xmlmap import (
-    IntegerField, NodeField, NodeListField,
-    SimpleBooleanField, StringField, XmlObject,
+    IntegerField,
+    NodeField,
+    NodeListField,
+    SimpleBooleanField,
+    StringField,
+    XmlObject,
     load_xmlobject_from_string,
 )
 from lxml import etree
+
 from corehq.apps.app_manager.exceptions import UnknownInstanceError
-import six
 
 
 class XPathField(StringField):
@@ -344,9 +346,6 @@ class Instance(IdNode, OrderedXmlObject):
     def __eq__(self, other):
         return self.src == other.src and self.id == other.id
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     def __hash__(self):
         return hash((self.src, self.id))
 
@@ -612,10 +611,10 @@ class GraphTemplate(Template):
                                     #       figure out why their unquoted colors
                                     #       aren't working.
                                     ConfigurationItem(id=k, xpath_function=v)
-                                    for k, v in six.iteritems(s.config)
+                                    for k, v in s.config.items()
                                 ] + [
                                     ConfigurationItem(id=k, locale_id=locale_series_config(index, k))
-                                    for k, v in sorted(six.iteritems(s.locale_specific_config))
+                                    for k, v in sorted(s.locale_specific_config.items())
                                 ]
                             )
                         )
@@ -626,11 +625,11 @@ class GraphTemplate(Template):
                         [
                             ConfigurationItem(id=k, xpath_function=v)
                             for k, v
-                            in six.iteritems(graph.config)
+                            in graph.config.items()
                         ] + [
                             ConfigurationItem(id=k, locale_id=locale_config(k))
                             for k, v
-                            in six.iteritems(graph.locale_specific_config)
+                            in graph.locale_specific_config.items()
                         ]
                     )
                 ),
@@ -844,7 +843,7 @@ class Detail(OrderedXmlObject, IdNode):
                 if field.template.text.xpath:
                     for variable in field.template.text.xpath.variables:
                         if variable.xpath:
-                            result.add(six.text_type(variable.xpath.function))
+                            result.add(str(variable.xpath.function))
 
         for detail in self.details:
             result.update(detail.get_all_xpaths())

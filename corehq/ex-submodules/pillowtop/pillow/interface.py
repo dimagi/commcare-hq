@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 from abc import ABCMeta, abstractproperty, abstractmethod
 from collections import Counter
 from datetime import datetime
@@ -19,7 +16,6 @@ from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
-import six
 
 
 def _topic_for_ddog(topic):
@@ -42,7 +38,7 @@ class PillowRuntimeContext(object):
         self.changes_seen = changes_seen
 
 
-class PillowBase(six.with_metaclass(ABCMeta, object)):
+class PillowBase(metaclass=ABCMeta):
     """
     This defines the external pillowtop API. Everything else should be considered a specialization
     on top of it.
@@ -324,7 +320,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             'pillow_name:{}'.format(self.get_name()),
         ])
         checkpoint_sequence = self._normalize_checkpoint_sequence()
-        for topic, value in six.iteritems(checkpoint_sequence):
+        for topic, value in checkpoint_sequence.items():
             datadog_gauge('commcare.change_feed.checkpoint_offsets', value, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 _topic_for_ddog(topic),
@@ -387,7 +383,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         return unique
 
 
-class ChangeEventHandler(six.with_metaclass(ABCMeta, object)):
+class ChangeEventHandler(metaclass=ABCMeta):
     """
     A change-event-handler object used in constructed pillows.
     """

@@ -1,120 +1,115 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import logging
+from collections import OrderedDict, defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
-from itertools import groupby
 from functools import partial
-from collections import defaultdict, OrderedDict, namedtuple
+from itertools import groupby
 
-from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
-from couchdbkit import ResourceConflict
-from dimagi.ext.couchdbkit import IntegerProperty
 from django.core.exceptions import ValidationError
-from django.utils.datastructures import OrderedSet
-from django.utils.translation import ugettext as _
 from django.db import models
 from django.db.models import Sum
 from django.http import Http404
-from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
-    get_case_properties
+from django.utils.datastructures import OrderedSet
+from django.utils.translation import ugettext as _
 
-from corehq.apps.reports.models import HQUserType
-from corehq.apps.userreports.app_manager.data_source_meta import get_form_indicator_data_type
-from corehq.blobs import CODES, get_blob_db
-from corehq.blobs.models import BlobMeta
-from corehq.blobs.exceptions import NotFound
-from corehq.blobs.util import random_url_id
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
-from corehq.util.global_request import get_request_domain
-from soil.progress import set_task_progress
-
-from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.reports.daterange import get_daterange_start_end_dates
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.timezones.utils import get_timezone_for_domain
-from memoized import memoized
 from couchdbkit import (
-    SchemaListProperty,
-    SchemaProperty,
     BooleanProperty,
     DictProperty,
+    ResourceConflict,
+    SchemaListProperty,
+    SchemaProperty,
 )
+from memoized import memoized
+
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from couchexport.models import Format
+from couchexport.transforms import couch_to_excel_datetime
+from dimagi.ext.couchdbkit import (
+    DateProperty,
+    DateTimeProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    SetProperty,
+    StringProperty,
+)
+from dimagi.utils.couch.database import iter_docs
+from soil.progress import set_task_progress
 
 from corehq import feature_previews
-from corehq.apps.userreports.expressions.getters import NestedDictGetter
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    ParentCasePropertyBuilder,
+    get_case_properties,
+)
 from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_app_ids_in_domain,
     get_built_app_ids_with_submissions_for_app_id,
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_latest_app_ids_and_versions,
-    get_app_ids_in_domain,
-    get_app,
 )
 from corehq.apps.app_manager.models import (
-    Application, AdvancedFormActions, RemoteApp, OpenSubCaseAction, CaseIndex
+    AdvancedFormActions,
+    Application,
+    CaseIndex,
+    OpenSubCaseAction,
+    RemoteApp,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.products.models import SQLProduct
-from corehq.apps.reports.display import xmlns_to_name
-from corehq.blobs.mixin import BlobMixin
-from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
-from corehq.util.view_utils import absolute_reverse
-from couchexport.models import Format
-from couchexport.transforms import couch_to_excel_datetime
-from dimagi.utils.couch.database import iter_docs
-from dimagi.ext.couchdbkit import (
-    Document,
-    DocumentSchema,
-    ListProperty,
-    StringProperty,
-    DateTimeProperty,
-    SetProperty,
-    DateProperty,
-)
 from corehq.apps.export.const import (
-    PROPERTY_TAG_UPDATE,
-    PROPERTY_TAG_DELETED,
-    FORM_EXPORT,
+    CASE_ATTRIBUTES,
+    CASE_CLOSE_TO_BOOLEAN,
+    CASE_CREATE_ELEMENTS,
+    CASE_DATA_SCHEMA_VERSION,
     CASE_EXPORT,
+    CASE_ID_TO_LINK,
+    CASE_NAME_TRANSFORM,
+    DEID_TRANSFORM_FUNCTIONS,
+    EMPTY_VALUE,
+    FORM_DATA_SCHEMA_VERSION,
+    FORM_EXPORT,
+    FORM_ID_TO_LINK,
+    KNOWN_CASE_PROPERTIES,
+    MISSING_VALUE,
+    PLAIN_USER_DEFINED_SPLIT_TYPE,
+    PROPERTY_TAG_CASE,
+    PROPERTY_TAG_DELETED,
+    PROPERTY_TAG_UPDATE,
+    SMS_DATA_SCHEMA_VERSION,
     SMS_EXPORT,
     TRANSFORM_FUNCTIONS,
-    DEID_TRANSFORM_FUNCTIONS,
-    PROPERTY_TAG_CASE,
-    USER_DEFINED_SPLIT_TYPES,
-    PLAIN_USER_DEFINED_SPLIT_TYPE,
-    CASE_DATA_SCHEMA_VERSION,
-    FORM_DATA_SCHEMA_VERSION,
-    SMS_DATA_SCHEMA_VERSION,
-    MISSING_VALUE,
-    EMPTY_VALUE,
-    KNOWN_CASE_PROPERTIES,
-    CASE_ATTRIBUTES,
-    CASE_CREATE_ELEMENTS,
     UNKNOWN_INFERRED_FROM,
-    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM,
+    USER_DEFINED_SPLIT_TYPES,
     SharingOption,
-    CASE_ID_TO_LINK,
-    FORM_ID_TO_LINK,
 )
 from corehq.apps.export.dbaccessors import (
-    get_latest_case_export_schema,
-    get_latest_form_export_schema,
     get_case_inferred_schema,
     get_form_inferred_schema,
+    get_latest_case_export_schema,
+    get_latest_form_export_schema,
 )
-from corehq.apps.export.utils import (
-    is_occurrence_deleted,
-    domain_has_daily_saved_export_access,
-    domain_has_excel_dashboard_access,
+from corehq.apps.export.utils import is_occurrence_deleted
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.products.models import SQLProduct
+from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.models import HQUserType
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    get_form_indicator_data_type,
 )
-import six
-from six.moves import range
-from six.moves import map
-from six.moves import filter
+from corehq.apps.userreports.expressions.getters import NestedDictGetter
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.exceptions import NotFound
+from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.models import BlobMeta
+from corehq.blobs.util import random_url_id
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+from corehq.util.global_request import get_request_domain
+from corehq.util.timezones.utils import get_timezone_for_domain
+from corehq.util.view_utils import absolute_reverse
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -149,9 +144,6 @@ class PathNode(DocumentSchema):
 
     def __eq__(self, other):
         return self.__key() == other.__key()
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def __hash__(self):
         return hash(self.__key())
@@ -197,9 +189,6 @@ class ExportItem(DocumentSchema, ReadablePathMixin):
 
     def __eq__(self, other):
         return self.__key() == other.__key()
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     @classmethod
     def wrap(cls, data):
@@ -487,11 +476,14 @@ class TableConfiguration(DocumentSchema):
             headers.extend(column.get_headers(split_column=split_columns))
         return headers
 
-    def get_rows(self, document, row_number, split_columns=False, transform_dates=False):
+    def get_rows(self, document, row_number, split_columns=False,
+                 transform_dates=False, as_json=False):
         """
         Return a list of ExportRows generated for the given document.
         :param document: dictionary representation of a form submission or case
         :param row_number: number indicating this documents index in the sequence of all documents in the export
+        :param as_json: optional parameter, mainly used in APIs, to spit out
+                        the data as a json-ready dict
         :return: List of ExportRows
         """
         document_id = document.get('_id')
@@ -507,7 +499,7 @@ class TableConfiguration(DocumentSchema):
         for doc_row in sub_documents:
             doc, row_index = doc_row.doc, doc_row.row
 
-            row_data = []
+            row_data = {} if as_json else []
             for col in self.selected_columns:
                 val = col.get_value(
                     domain,
@@ -518,13 +510,22 @@ class TableConfiguration(DocumentSchema):
                     split_column=split_columns,
                     transform_dates=transform_dates,
                 )
-                if isinstance(val, list):
+                if as_json:
+                    for index, header in enumerate(col.get_headers(split_column=split_columns)):
+                        if isinstance(val, list):
+                            row_data[header] = "{}".format(val[index])
+                        else:
+                            row_data[header] = "{}".format(val)
+                elif isinstance(val, list):
                     row_data.extend(val)
                 else:
                     row_data.append(val)
-            rows.append(ExportRow(
-                data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns)
-            ))
+            if as_json:
+                rows.append(row_data)
+            else:
+                rows.append(ExportRow(
+                    data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns)
+                ))
         return rows
 
     def get_column(self, item_path, item_doc_type, column_transform):
@@ -714,11 +715,10 @@ class ExportInstance(BlobMixin, Document):
 
     @classmethod
     def wrap(cls, data):
-        from corehq.apps.export.views.utils import clean_odata_columns, remove_row_number_from_export_columns
+        from corehq.apps.export.views.utils import clean_odata_columns
         export_instance = super(ExportInstance, cls).wrap(data)
         if export_instance.is_odata_config:
             clean_odata_columns(export_instance)
-            remove_row_number_from_export_columns(export_instance)
         return export_instance
 
     @property
@@ -1895,7 +1895,7 @@ class FormExportDataSchema(ExportDataSchema):
             _add_to_group_schema(path, case_attribute, datatype=datatype)
 
         # Add case updates
-        for case_property, case_path in six.iteritems(case_properties):
+        for case_property, case_path in case_properties.items():
             path_suffix = case_property
             path = '{}/case/update/{}'.format(root_path, path_suffix)
             _add_to_group_schema(path, 'update.{}'.format(case_property))
@@ -2101,7 +2101,7 @@ class CaseExportDataSchema(ExportDataSchema):
             last_occurrences={app_id: app_version},
         )
 
-        for case_type, case_properties in six.iteritems(case_property_mapping):
+        for case_type, case_properties in case_property_mapping.items():
 
             for prop in case_properties:
                 group_schema.items.append(ScalarItem(
@@ -2271,13 +2271,13 @@ def _merge_dicts(one, two, resolvefn):
     # keys either in one or two, but not both
     merged = {
         key: one.get(key, two.get(key))
-        for key in six.viewkeys(one) ^ six.viewkeys(two)
+        for key in one.keys() ^ two.keys()
     }
 
     # merge keys that exist in both
     merged.update({
         key: resolvefn(one[key], two[key])
-        for key in six.viewkeys(one) & six.viewkeys(two)
+        for key in one.keys() & two.keys()
     })
     return merged
 
@@ -2324,10 +2324,8 @@ class SplitUserDefinedExportColumn(ExportColumn):
         if self.split_type == PLAIN_USER_DEFINED_SPLIT_TYPE:
             return value
 
-        if not isinstance(value, six.string_types):
+        if not isinstance(value, str):
             return [None] * len(self.user_defined_options) + [value]
-        else:
-            soft_assert_type_text(value)
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
@@ -2411,10 +2409,8 @@ class SplitGPSExportColumn(ExportColumn):
 
         values = [EMPTY_VALUE] * 4
 
-        if not isinstance(value, six.string_types):
+        if not isinstance(value, str):
             return values
-        else:
-            soft_assert_type_text(value)
 
         for index, coordinate in enumerate(value.split(' ')):
             values[index] = coordinate
@@ -2463,11 +2459,9 @@ class SplitExportColumn(ExportColumn):
                 value.append(MISSING_VALUE)
             return value
 
-        if not isinstance(value, six.string_types):
+        if not isinstance(value, str):
             unspecified_options = [] if self.ignore_unspecified_options else [value]
             return [EMPTY_VALUE] * len(self.item.options) + unspecified_options
-        else:
-            soft_assert_type_text(value)
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
@@ -2515,7 +2509,7 @@ class RowNumberColumn(ExportColumn):
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, **kwargs):
         assert row_index, 'There must be a row_index for number column'
         return (
-            [".".join([six.text_type(i) for i in row_index])]
+            [".".join([str(i) for i in row_index])]
             + (list(row_index) if len(row_index) > 1 else [])
         )
 
@@ -2616,9 +2610,7 @@ class StockExportColumn(ExportColumn):
     @property
     @memoized
     def _column_tuples(self):
-        combos = get_ledger_section_entry_combinations(self.domain)
-        section_and_product_ids = sorted(set([(combo.entry_id, combo.section_id) for combo in combos]))
-        return section_and_product_ids
+        return get_ledger_section_entry_combinations(self.domain)
 
     def _get_product_name(self, product_id):
         try:
@@ -2769,6 +2761,25 @@ class EmailExportWhenDoneRequest(models.Model):
     domain = models.CharField(max_length=255)
     download_id = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255)
+
+
+class LedgerSectionEntry(models.Model):
+    domain = models.CharField(max_length=255)
+    section_id = models.CharField(max_length=255)
+    entry_id = models.CharField(max_length=255)
+
+    class Meta(object):
+        unique_together = ('domain', 'section_id', 'entry_id')
+
+
+def get_ledger_section_entry_combinations(domain):
+    return list(
+        LedgerSectionEntry.objects
+        .filter(domain=domain)
+        .order_by('entry_id', 'section_id')
+        .values_list('entry_id', 'section_id')
+        .all()
+    )
 
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js

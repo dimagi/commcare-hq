@@ -1,8 +1,12 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.users.analytics import get_count_of_active_commcare_users_in_domain, \
-    get_count_of_inactive_commcare_users_in_domain, get_active_commcare_users_in_domain, \
-    get_inactive_commcare_users_in_domain
+from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class, \
+    get_docs_in_domain_by_class
+from corehq.apps.groups.models import Group
+from corehq.apps.users.analytics import (
+    get_active_commcare_users_in_domain,
+    get_count_of_active_commcare_users_in_domain,
+    get_count_of_inactive_commcare_users_in_domain,
+    get_inactive_commcare_users_in_domain,
+)
 
 
 class UserQuerySetAdapter(object):
@@ -24,4 +28,20 @@ class UserQuerySetAdapter(object):
                 return get_inactive_commcare_users_in_domain(self.domain, start_at=item.start, limit=limit)
             else:
                 return get_active_commcare_users_in_domain(self.domain, start_at=item.start, limit=limit)
-        raise ValueError('Invalid type of argument. Item should be an instance of slice class.')
+        raise ValueError(
+            'Invalid type of argument. Item should be an instance of slice class.')
+
+
+class GroupQuerySetAdapter(object):
+    def __init__(self, domain):
+        self.domain = domain
+
+    def count(self):
+        return get_doc_count_in_domain_by_class(self.domain, Group)
+
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            limit = item.stop - item.start
+            return get_docs_in_domain_by_class(self.domain, Group, limit=limit, skip=item.start)
+        raise ValueError(
+            'Invalid type of argument. Item should be an instance of slice class.')

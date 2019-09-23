@@ -1,14 +1,13 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 
 from django.test import SimpleTestCase
 
-import requests
 from mock import Mock, patch
 
-from corehq.motech.requests import Requests
+import requests
 
+from corehq.motech.const import REQUEST_TIMEOUT
+from corehq.motech.requests import Requests
 
 TEST_API_URL = 'http://localhost:9080/api/'
 TEST_API_USERNAME = 'admin'
@@ -41,7 +40,7 @@ class RequestsTests(SimpleTestCase):
                 allow_redirects=True,
                 headers={'Accept': 'application/json'},
                 auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
-                timeout=600,
+                timeout=REQUEST_TIMEOUT,
             )
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json()['code'], TEST_API_USERNAME)
@@ -71,7 +70,7 @@ class RequestsTests(SimpleTestCase):
                 json=payload,
                 headers={'Content-type': 'application/json', 'Accept': 'application/json'},
                 auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
-                timeout=600,
+                timeout=REQUEST_TIMEOUT,
             )
             self.assertEqual(response.status_code, 201)
             self.assertEqual(response.json()['status'], 'SUCCESS')
@@ -89,7 +88,7 @@ class RequestsTests(SimpleTestCase):
                 allow_redirects=True,
                 headers={'Accept': 'application/json'},
                 auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
-                timeout=600,
+                timeout=REQUEST_TIMEOUT,
                 verify=False
             )
 

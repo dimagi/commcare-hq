@@ -1,27 +1,14 @@
-from __future__ import print_function
-
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import argparse
 import difflib
 import pprint
 import re
-from datetime import datetime
 
 from django.core.management import BaseCommand, CommandError
 
-from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
+from corehq.util.argparse_types import date_type
 from pillowtop.models import str_to_kafka_seq
 from pillowtop.utils import get_all_pillow_instances
-from six.moves import input
 
-
-def valid_date(s):
-    try:
-        return datetime.strptime(s, "%Y-%m-%d")
-    except ValueError:
-        msg = "Not a valid date: '{0}'.".format(s)
-        raise argparse.ArgumentTypeError(msg)
+from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 
 
 def confirm(msg):
@@ -36,7 +23,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             'date',
-            type=valid_date,
+            type=date_type,
             help="Take first checkpoint before date - format = YYYY-MM-DD",
         )
         parser.add_argument(

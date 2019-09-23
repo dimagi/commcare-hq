@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from django.db import models
 
 from custom.icds_reports.models.manager import CitusComparisonManager
@@ -1084,6 +1081,7 @@ class DishaIndicatorView(models.Model):
 class NICIndicatorsView(models.Model):
     state_id = models.TextField(primary_key=True)
     state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
 
     cases_household = models.IntegerField(blank=True, null=True)

@@ -1,9 +1,17 @@
-/* globals hqDefine, d3, nv */
-hqDefine('hqadmin/js/couch_changes', function () {
+hqDefine('hqadmin/js/couch_changes', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'd3/d3.min',
+    'nvd3/nv.d3.min',
+], function (
+    $,
+    initialPageData,
+    d3,
+    nv
+) {
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            domain_data = initial_page_data('domain_data'),
-            doc_type_data = initial_page_data('doc_type_data');
+        var domain_data = initialPageData.get('domain_data'),
+            doc_type_data = initialPageData.get('doc_type_data');
         var addGraph = function (data, divId) {
             nv.addGraph(function () {
                 var chart = nv.models.discreteBarChart()

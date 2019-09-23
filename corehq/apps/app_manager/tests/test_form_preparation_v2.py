@@ -1,25 +1,28 @@
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.app_manager.exceptions import XFormException, XFormValidationError
+from django.test import SimpleTestCase
+
+from mock import patch
+
+from corehq.apps.app_manager.exceptions import (
+    XFormException,
+    XFormValidationError,
+)
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
     AdvancedOpenCaseAction,
     Application,
+    CaseIndex,
     FormAction,
     FormActionCondition,
     LoadUpdateAction,
     Module,
     OpenCaseAction,
+    OpenSubCaseAction,
     PreloadAction,
     UpdateCaseAction,
-    OpenSubCaseAction,
-    CaseIndex)
-from django.test import SimpleTestCase
+)
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import XForm
-from mock import patch
 
 
 class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
@@ -105,7 +108,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
     def test_instance_check(self):
         xml = self.get_xml('missing_instances')
         with self.assertRaises(XFormValidationError) as cm:
-            XForm(xml).add_missing_instances(self.domain)
+            XForm(xml).add_missing_instances(self.app)
         exception_message = str(cm.exception)
         self.assertIn('casebd', exception_message)
         self.assertIn('custom2', exception_message)

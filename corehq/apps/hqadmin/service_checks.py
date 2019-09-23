@@ -1,7 +1,6 @@
 """
 A collection of functions which test the most basic operations of various services.
 """
-from __future__ import absolute_import, unicode_literals
 
 import datetime
 import logging
@@ -9,16 +8,18 @@ import time
 import uuid
 from io import BytesIO
 
-import attr
-import gevent
-import requests
-from celery import Celery
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import cache
 from django.db import connections
 from django.db.utils import OperationalError
-from six.moves import range
+
+import attr
+import gevent
+import requests
+from celery import Celery
+
+from soil import heartbeat
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client
@@ -27,11 +28,13 @@ from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
 from corehq.apps.hqadmin.utils import parse_celery_pings, parse_celery_workers
 from corehq.blobs import CODES, get_blob_db
-from corehq.celery_monitoring.heartbeat import HeartbeatNeverRecorded, Heartbeat
+from corehq.celery_monitoring.heartbeat import (
+    Heartbeat,
+    HeartbeatNeverRecorded,
+)
 from corehq.elastic import refresh_elasticsearch_index, send_to_elasticsearch
 from corehq.util.decorators import change_log_level
 from corehq.util.timer import TimingContext
-from soil import heartbeat
 
 
 @attr.s

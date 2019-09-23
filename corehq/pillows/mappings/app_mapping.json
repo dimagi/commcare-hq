@@ -68,10 +68,6 @@
                     "index": "not_analyzed",
                     "type": "string"
                 },
-                "output_size": {
-                    "type": "object",
-                    "dynamic": false
-                },
                 "version": {
                     "type": "long"
                 },
@@ -193,6 +189,15 @@
         },
         "vellum_case_management": {
             "type": "boolean"
+        },
+        "family_id": {
+            "type": "string"
+        },
+        "upstream_version": {
+            "type": "long"
+        },
+        "upstream_app_id": {
+            "type": "string"
         },
         "version": {
             "type": "long"

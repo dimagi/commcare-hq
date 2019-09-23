@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from unittest import TestCase
 
-from corehq.apps.es.es_query import HQESQuery, ESQuerySet
+from corehq.apps.es.es_query import ESQuerySet, HQESQuery
 from corehq.elastic import ESError
 
 

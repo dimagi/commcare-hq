@@ -1,13 +1,12 @@
-# Use modern Python
-from __future__ import absolute_import, print_function, unicode_literals
-
 from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,
     SoftwarePlanVisibility,
 )
-from corehq.apps.accounting.utils import log_accounting_error, log_accounting_info
-import six
+from corehq.apps.accounting.utils import (
+    log_accounting_error,
+    log_accounting_info,
+)
 
 FEATURE_TYPES = [
     FeatureType.USER,
@@ -21,7 +20,7 @@ def ensure_plans(config, verbose, apps):
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
     Role = apps.get_model('django_prbac', 'Role')
 
-    for plan_key, plan_deets in six.iteritems(config):
+    for plan_key, plan_deets in config.items():
         edition, is_trial, is_report_builder_enabled = plan_key
         features = _ensure_features(edition, verbose, apps)
         try:

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from corehq.apps.reports.filters.dates import DatespanFilter
 import json
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -8,7 +6,7 @@ from corehq.apps.reports.dont_use.fields import ReportField
 
 class DateRangeField(DatespanFilter):
     name = ugettext_noop("Date Range")
-    template = 'm4change/fields/daterange.html'
+    template = 'reports/filters/datespan.html'
     slug = "datespan"
     inclusive = True
     default_days = 30

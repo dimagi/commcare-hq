@@ -1,19 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import time
 
-import mock
-from django.http import HttpResponse
-
-from python_digest import build_authorization_request, calculate_nonce
-from django.test import TestCase, Client
 from django.conf import settings
+from django.http import HttpResponse
+from django.test import Client, TestCase
 from django.urls import reverse
 
-from corehq.apps.domain.tests.test_utils import delete_all_domains
+import mock
+
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.util.test_utils import flag_enabled
+from python_digest import build_authorization_request, calculate_nonce
 
 
 class DigestOtaRestoreTest(TestCase):

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from datetime import datetime, date, time
 from django.test import SimpleTestCase
 from corehq.util.workbook_reading import (
@@ -9,7 +7,7 @@ from corehq.util.workbook_reading import (
 )
 from corehq.util.workbook_reading.tests.utils import get_file, run_on_all_adapters
 from corehq.util.test_utils import make_make_path
-from six.moves import zip_longest
+from itertools import zip_longest
 
 
 _make_path = make_make_path(__file__)

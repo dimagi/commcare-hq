@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import six
 from dimagi.ext import jsonobject
 from django.conf import settings
 from copy import copy, deepcopy
@@ -95,7 +91,6 @@ ES_META = {
 }
 
 
-@six.python_2_unicode_compatible
 class ElasticsearchIndexInfo(jsonobject.JsonObject):
     index = jsonobject.StringProperty(required=True)
     alias = jsonobject.StringProperty()

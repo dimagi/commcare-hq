@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import io
 import json
 
@@ -20,7 +18,6 @@ from corehq.apps.userreports.reports.util import ReportExport
 from corehq.apps.userreports.reports.view import CustomConfigurableReport
 from corehq.apps.userreports.util import get_table_name
 from corehq.util.soft_assert import soft_assert
-from six.moves import range
 from custom.utils.utils import clean_IN_filter_value
 
 # Copied from custom/abt/reports/data_sources/supervisory.json

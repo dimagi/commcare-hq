@@ -1,11 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import io
 import json
 
-import csv342 as csv
-from six.moves import map, range
+import csv
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import (
@@ -22,7 +18,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
     helper_key = 'location'
     base_tablename = 'awc_location'
     local_tablename = 'awc_location_local'
-    temporary_tablename = 'tmp_awc_location'
+    temporary_tablename = 'tmp_awc_location_local'
 
     ucr_aww_table = AWW_USER_TABLE_ID
 
@@ -64,7 +60,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 'aggregation_level': 5,
                 'doc_id': location['location_id'],
                 'awc_name': location['name'].replace("\n", ""),
-                'awc_site_code': location['location_type__code'],
+                'awc_site_code': location['site_code'],
                 'awc_is_test': 1 if metadata.get('is_test_location') == 'test' else 0,
             }
 
@@ -72,10 +68,11 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             while current_location['parent_id']:
                 current_location = locations_by_pk[current_location['parent_id']]
                 loc_type = current_location['location_type__code']
+                metadata = json.loads(current_location['metadata'])
                 loc.update({
                     '{}_id'.format(loc_type): current_location['location_id'],
                     '{}_name'.format(loc_type): current_location['name'].replace("\n", ""),
-                    '{}_site_code'.format(loc_type): current_location['location_type__code'],
+                    '{}_site_code'.format(loc_type): current_location['site_code'],
                     '{}_is_test'.format(loc_type): 1 if metadata.get('is_test_location') == 'test' else 0,
                 })
                 if loc_type in ('block', 'district', 'state'):
@@ -100,12 +97,10 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             cursor.execute(rollup_query)
 
         self.assert_no_awc_missing_from_new_table(cursor)
-        old_def, new_def = self.generate_diff_of_tables(cursor)
-        # TODO figure what to do with these
 
         cursor.execute(self.delete_old_locations())
-        cursor.execute(self.move_data_to_real_table())
-        cursor.execute(self.create_local_table())
+        cursor.execute(self.move_data_to_local_table())
+        cursor.execute(self.create_distributed_table())
 
     @property
     def ucr_aww_tablename(self):
@@ -114,7 +109,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         return get_table_name(self.domain, config.table_id)
 
     def delete_old_locations(self):
-        return "DELETE FROM \"{tablename}\"".format(tablename=self.base_tablename)
+        return "DELETE FROM \"{local_tablename}\"".format(local_tablename=self.local_tablename)
 
     def aggregate_to_temporary_table(self, cursor, csv_file):
         columns = csv_file.readline().split('\t')
@@ -125,8 +120,8 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
 
     def create_temporary_table_query(self):
-        return "CREATE TABLE \"{temporary_tablename}\" (LIKE \"{tablename}\" INCLUDING INDEXES)".format(
-            tablename=self.base_tablename,
+        return "CREATE TABLE \"{temporary_tablename}\" (LIKE \"{local_tablename}\" INCLUDING INDEXES)".format(
+            local_tablename=self.local_tablename,
             temporary_tablename=self.temporary_tablename,
         )
 
@@ -134,14 +129,14 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         cursor.execute(
             """
             SELECT count(*)
-            FROM "{tablename}"
+            FROM "{local_tablename}"
             WHERE aggregation_level = 5 AND doc_id NOT IN (
                 SELECT doc_id
                 FROM "{temporary_tablename}"
                 WHERE aggregation_level = 5
             )
             """.format(
-                tablename=self.base_tablename,
+                local_tablename=self.local_tablename,
                 temporary_tablename=self.temporary_tablename,
             )
         )
@@ -149,48 +144,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         if num_locations_missing:
             raise LocationRemovedException(str(num_locations_missing))
 
-    def generate_diff_of_tables(self, cursor):
-        cursor.execute(
-            """
-            SELECT doc_id
-            FROM "{temporary_tablename}"
-            WHERE aggregation_level = 5
-            EXCEPT
-            SELECT doc_id
-            FROM "{tablename}"
-            WHERE aggregation_level = 5
-            """.format(
-                tablename=self.base_tablename,
-                temporary_tablename=self.temporary_tablename,
-            )
-        )
-        changed_awc_ids = [row[0] for row in cursor.fetchall()]
-        if not changed_awc_ids:
-            return None, None
-
-        cursor.execute(
-            """
-            SELECT *
-            FROM "{tablename}"
-            WHERE aggregation_level = 5 AND doc_id IN %s
-            """.format(
-                tablename=self.base_tablename,
-            ), changed_awc_ids
-        )
-        old_definitions = cursor.fetchall()
-        cursor.execute(
-            """
-            SELECT doc_id
-            FROM "{temporary_tablename}"
-            WHERE aggregation_level = 5 AND doc_id IN %s
-            """.format(
-                tablename=self.temporary_tablename,
-            ), changed_awc_ids
-        )
-        new_definitions = cursor.fetchall()
-        return old_definitions, new_definitions
-
-    def move_data_to_real_table(self):
+    def move_data_to_local_table(self):
         columns = (
             ('doc_id', 'doc_id'),
             ('awc_name', 'awc_name'),
@@ -221,7 +175,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         )
 
         return """
-            INSERT INTO "{tablename}" (
+            INSERT INTO "{local_tablename}" (
               {columns}
             ) (
               SELECT
@@ -229,7 +183,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
               FROM "{temporary_tablename}"
             )
         """.format(
-            tablename=self.base_tablename,
+            local_tablename=self.local_tablename,
             temporary_tablename=self.temporary_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
@@ -333,15 +287,12 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             group_by=", ".join(group_by)
         )
 
-    def create_local_table(self):
+    def create_distributed_table(self):
         return """
-        DELETE FROM "{local_tablename}";
-        CREATE TEMPORARY TABLE "{tmp_local_tablename}" AS SELECT * FROM "{tablename}";
-        INSERT INTO "{local_tablename}" SELECT * FROM "{tmp_local_tablename}";
-        DROP TABLE "{tmp_local_tablename}";
+        DELETE FROM "{tablename}";
+        INSERT INTO "{tablename}" SELECT * FROM "{local_tablename}";
         """.format(
             tablename=self.base_tablename,
-            tmp_local_tablename='tmp_awc_local',
             local_tablename=self.local_tablename
         )
 
@@ -350,5 +301,5 @@ def _get_all_locations_for_domain(domain):
     return (
         SQLLocation.objects
         .filter(domain=domain, is_archived=False)
-        .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code')
+        .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code', 'site_code')
     )

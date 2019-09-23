@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import json
 from collections import Counter
 
@@ -7,7 +5,12 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from corehq.apps.dump_reload.exceptions import DataExistsException
 from corehq.apps.dump_reload.interface import DataLoader
-from corehq.util.couch import IterDB, get_db_by_doc_type, IterDBCallback, get_document_class_by_doc_type
+from corehq.util.couch import (
+    IterDB,
+    IterDBCallback,
+    get_db_by_doc_type,
+    get_document_class_by_doc_type,
+)
 from corehq.util.exceptions import DocumentClassNotFound
 
 
