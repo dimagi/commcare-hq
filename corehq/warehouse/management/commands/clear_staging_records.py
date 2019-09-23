@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 from corehq.warehouse.const import STAGING_TABLES
-from corehq.warehouse.models import get_cls_by_slug
+from corehq.warehouse.loaders import get_loader_by_slug
 
 
 USAGE = """Usage: ./manage.py clear_staging_records
@@ -17,5 +17,5 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         for slug in STAGING_TABLES:
-            model = get_cls_by_slug(slug)
+            model = get_loader_by_slug(slug)
             model.clear_records()

@@ -25,7 +25,6 @@ class CustomSQLETLMixin(BaseETLMixin):
     Mixin for transferring data from a SQL store to another SQL store using
     a custom SQL script.
     '''
-
     @classmethod
     def additional_sql_context(cls):
         '''
@@ -36,14 +35,14 @@ class CustomSQLETLMixin(BaseETLMixin):
 
     @classmethod
     def load(cls, batch):
-        from corehq.warehouse.models.shared import WarehouseTable
+        from corehq.warehouse.loaders.base import BaseLoader
         '''
         Bulk loads records for a dim or fact table from
         their corresponding dependencies
         '''
 
-        assert issubclass(cls, WarehouseTable)
-        database = db_for_read_write(cls)
+        assert issubclass(cls, BaseLoader)
+        database = db_for_read_write(cls.model_cls)
         with connections[database].cursor() as cursor:
             cursor.execute(cls._sql_query_template(cls.slug, batch))
 
@@ -57,12 +56,12 @@ class CustomSQLETLMixin(BaseETLMixin):
             ...
         }
         '''
-        from corehq.warehouse.models import get_cls_by_slug
+        from corehq.warehouse.loaders import get_loader_by_slug
 
-        context = {cls.slug: cls._meta.db_table}
+        context = {cls.slug: cls.target_table()}
         for dep in cls.dependencies():
-            dep_cls = get_cls_by_slug(dep)
-            context[dep] = dep_cls._meta.db_table
+            loader_cls = get_loader_by_slug(dep)
+            context[dep] = loader_cls.target_table()
         context['start_datetime'] = batch.start_datetime.isoformat()
         context['end_datetime'] = batch.end_datetime.isoformat()
         context['batch_id'] = batch.id
@@ -98,18 +97,26 @@ class HQToWarehouseETLMixin(BaseETLMixin):
         # ( <source field>, <staging field> )
         raise NotImplementedError
 
+    def validate(self):
+        super(HQToWarehouseETLMixin, self).validate()
+        model_fields = {field.name for field in self.model_cls._meta.fields}
+        mapping_fields = {field for _, field in self.field_mapping()}
+        missing = mapping_fields - model_fields
+        if missing:
+            raise Exception('Mapping fields not present on model', missing)
+
     @classmethod
     def record_iter(cls, start_datetime, end_datetime):
         raise NotImplementedError
 
     @classmethod
     def load(cls, batch):
-        from corehq.warehouse.models.shared import WarehouseTable
+        from corehq.warehouse.loaders.base import BaseLoader
 
-        assert issubclass(cls, WarehouseTable)
+        assert issubclass(cls, BaseLoader)
         record_iter = cls.record_iter(batch.start_datetime, batch.end_datetime)
 
-        django_batch_records(cls, record_iter, cls.field_mapping(), batch.id)
+        django_batch_records(cls.model_cls, record_iter, cls.field_mapping(), batch.id)
 
 
 def _render_template(path, context):
