@@ -187,12 +187,15 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
     def get(self, request, *args, **kwargs):
         if request.GET.get('json', None):
             only_missing = bool(int(request.GET.get('only_missing', 0)))
+            include_totals = bool(int(request.GET.get('include_totals', 0)))
             limit = int(request.GET.get('limit', 5))
             page = int(request.GET.get('page', 1))
             start = limit * (page - 1)
             end = start + limit
 
             def _add_references(source, reference_index, references):
+                if reference_index > end and not include_totals:
+                    return (reference_index, references)
                 media = source.get_references()
                 media = [m for m in media if m['media_class'] in ["CommCareImage", "CommCareAudio", "CommCareVideo"]]
                 if only_missing:
@@ -205,7 +208,6 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
 
             reference_index = 0
             references = []
-            # TODO: don't loop through entire app unless looking for totals (page == 1)
             for module in self.app.get_modules():
                 (reference_index, references) = _add_references(module, reference_index, references)
                 for form in module.get_forms():
@@ -216,12 +218,16 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
                               if r['path'] in self.app.multimedia_map}
             object_map = self.app.get_object_map(multimedia_map=multimedia_map)
 
-            return JsonResponse({
+            data = {
                 "references": references,
                 "object_map": object_map,
-                "totals": self.app.get_reference_totals(),  # TODO: provide on page load? how slow is this?
-                "total_rows": reference_index,
-            })
+            }
+            if include_totals:
+                data.update({
+                    "totals": self.app.get_reference_totals(),
+                    "total_rows": reference_index,
+                })
+            return JsonResponse(data)
         return super(MultimediaReferencesView, self).get(request, *args, **kwargs)
 
 

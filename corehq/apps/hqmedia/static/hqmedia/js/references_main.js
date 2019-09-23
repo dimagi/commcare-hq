@@ -16,6 +16,7 @@ hqDefine("hqmedia/js/references_main", function () {
 
         self.goToPage = function (page) {
             self.showPaginationSpinner(true);
+            var include_totals = page === 1 ? 1 : 0;
             $.ajax({
                 url: hqImport("hqwebapp/js/initial_page_data").reverse('hqmedia_references'),
                 data: {
@@ -23,6 +24,7 @@ hqDefine("hqmedia/js/references_main", function () {
                     page: page,
                     limit: self.itemsPerPage(),
                     only_missing: self.showMissingReferences() ? 1 : 0,
+                    include_totals: include_totals,
                 },
                 success: function (data) {
                     self.isInitialLoad(false);
@@ -47,8 +49,10 @@ hqDefine("hqmedia/js/references_main", function () {
                         // Other multimedia, like HTML print templates, is ignored by the reference checker
                         return null;
                     })));
-                    self.totalItems(data.total_rows);
-                    self.totals(data.totals);
+                    if (include_totals) {
+                        self.totalItems(data.total_rows);
+                        self.totals(data.totals);
+                    }
                     $('.preview-media').tooltip();
                 },
                 error: function () {
