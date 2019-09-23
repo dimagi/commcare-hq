@@ -226,13 +226,18 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                         args=[app.domain, app.get_id])
             ),
         }
+
+        multimedia_map = app.multimedia_map
+        if form or module:
+            multimedia_map = (form or module).get_relevant_multimedia_map(app)
         context.update({
             'multimedia': {
-                "object_map": app.get_object_map(),
+                "object_map": app.get_object_map(multimedia_map=multimedia_map),
                 'upload_managers': uploaders,
                 'upload_managers_js': {type: u.js_options for type, u in uploaders.items()},
             }
         })
+
         context['module_icon'] = None
         if toggles.CUSTOM_ICON_BADGES.enabled(domain):
             context['module_icon'] = module.custom_icon if module.custom_icon else CustomIcon()

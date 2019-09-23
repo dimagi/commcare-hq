@@ -557,6 +557,11 @@ class MediaMixin(object):
         """
         return [m.as_dict() for m in self.all_media()]
 
+    def get_relevant_multimedia_map(self, app):
+        references = self.get_references()
+        return {r['path']: app.multimedia_map[r['path']]
+                for r in references if r['path'] in app.multimedia_map}
+
     def rename_media(self, old_path, new_path):
         """
             Returns a count of number of changes made.
