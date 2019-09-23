@@ -3916,6 +3916,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
     comment_from = StringProperty()
+    last_released = DateTimeProperty(required=False)
     build_broken = BooleanProperty(default=False)
     is_auto_generated = BooleanProperty(default=False)
     # not used yet, but nice for tagging/debugging
