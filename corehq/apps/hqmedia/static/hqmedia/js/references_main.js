@@ -16,7 +16,7 @@ hqDefine("hqmedia/js/references_main", function () {
 
         self.goToPage = function (page) {
             self.showPaginationSpinner(true);
-            var include_total = page === 1 ? 1 : 0;
+            var includeTotal = page === 1 ? 1 : 0;
             $.ajax({
                 url: hqImport("hqwebapp/js/initial_page_data").reverse('hqmedia_references'),
                 data: {
@@ -24,7 +24,7 @@ hqDefine("hqmedia/js/references_main", function () {
                     page: page,
                     limit: self.itemsPerPage(),
                     only_missing: self.showMissingReferences() ? 1 : 0,
-                    include_total: include_total,
+                    include_total: includeTotal,
                 },
                 success: function (data) {
                     self.isInitialLoad(false);
@@ -43,13 +43,12 @@ hqDefine("hqmedia/js/references_main", function () {
                             var videoRef = hqImport('hqmedia/js/media_reference_models').VideoReference(ref);
                             videoRef.setObjReference(objRef);
                             return videoRef;
-                        } else {
-                            throw new Error("Found unexpected media class: " + ref.media_class);
                         }
                         // Other multimedia, like HTML print templates, is ignored by the reference checker
-                        return null;
+                        // It should already have been filtered out server-side.
+                        throw new Error("Found unexpected media class: " + ref.media_class);
                     })));
-                    if (include_total) {
+                    if (includeTotal) {
                         self.totalItems(data.total_rows);
                         self.totals(data.totals);
                     }
@@ -63,7 +62,7 @@ hqDefine("hqmedia/js/references_main", function () {
             });
         };
 
-        self.toggleMissingRefs = function (sender, event) {
+        self.toggleMissingRefs = function () {
             self.showMissingReferences(!self.showMissingReferences());
             self.goToPage(1);
         };
