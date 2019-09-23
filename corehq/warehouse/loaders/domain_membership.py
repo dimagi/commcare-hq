@@ -15,6 +15,5 @@ class DomainMembershipDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = DOMAIN_MEMBERSHIP_DIM_SLUG
     model_cls = DomainMembershipDim
 
-    @classmethod
-    def dependencies(cls):
+    def dependant_slugs(self):
         return [USER_STAGING_SLUG, USER_DIM_SLUG]

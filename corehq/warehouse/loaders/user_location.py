@@ -19,6 +19,5 @@ class UserLocationDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = USER_LOCATION_DIM_SLUG
     model_cls = UserLocationDim
 
-    @classmethod
-    def dependencies(cls):
+    def dependant_slugs(self):
         return [USER_DIM_SLUG, LOCATION_DIM_SLUG, USER_STAGING_SLUG]

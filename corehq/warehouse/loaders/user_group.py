@@ -18,6 +18,5 @@ class UserGroupDimLoader(CustomSQLETLMixin, BaseLoader):
     slug = USER_GROUP_DIM_SLUG
     model_cls = UserGroupDim
 
-    @classmethod
-    def dependencies(cls):
+    def dependant_slugs(self):
         return [USER_DIM_SLUG, GROUP_DIM_SLUG, GROUP_STAGING_SLUG]

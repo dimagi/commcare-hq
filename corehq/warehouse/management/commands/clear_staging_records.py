@@ -17,5 +17,5 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         for slug in STAGING_TABLES:
-            model = get_loader_by_slug(slug)
-            model.clear_records()
+            loader = get_loader_by_slug(slug)
+            loader().clear_records()

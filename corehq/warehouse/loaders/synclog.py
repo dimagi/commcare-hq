@@ -1,8 +1,13 @@
-from corehq.warehouse.const import SYNCLOG_STAGING_SLUG, SYNCLOG_FACT_SLUG, USER_DIM_SLUG, DOMAIN_DIM_SLUG
+from corehq.warehouse.const import (
+    DOMAIN_DIM_SLUG,
+    SYNCLOG_FACT_SLUG,
+    SYNCLOG_STAGING_SLUG,
+    USER_DIM_SLUG,
+)
 from corehq.warehouse.dbaccessors import get_synclogs_by_date
-from corehq.warehouse.etl import HQToWarehouseETLMixin, CustomSQLETLMixin
-from corehq.warehouse.loaders.base import BaseStagingLoader, BaseLoader
-from corehq.warehouse.models import SyncLogStagingTable, SyncLogFact
+from corehq.warehouse.etl import CustomSQLETLMixin, HQToWarehouseETLMixin
+from corehq.warehouse.loaders.base import BaseLoader, BaseStagingLoader
+from corehq.warehouse.models import SyncLogFact, SyncLogStagingTable
 
 
 class SyncLogStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
@@ -14,12 +19,7 @@ class SyncLogStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     slug = SYNCLOG_STAGING_SLUG
     model_cls = SyncLogStagingTable
 
-    @classmethod
-    def dependencies(cls):
-        return []
-
-    @classmethod
-    def field_mapping(cls):
+    def field_mapping(self):
         return [
             ('synclog_id', 'sync_log_id'),
             ('date', 'sync_date'),
@@ -29,8 +29,7 @@ class SyncLogStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
             ('duration', 'duration'),
         ]
 
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
+    def record_iter(self, start_datetime, end_datetime):
         return get_synclogs_by_date(start_datetime, end_datetime)
 
 
@@ -42,8 +41,7 @@ class SyncLogFactLoader(CustomSQLETLMixin, BaseLoader):
     slug = SYNCLOG_FACT_SLUG
     model_cls = SyncLogFact
 
-    @classmethod
-    def dependencies(cls):
+    def dependant_slugs(self):
         return [
             USER_DIM_SLUG,
             DOMAIN_DIM_SLUG,

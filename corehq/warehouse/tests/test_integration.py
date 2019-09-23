@@ -2,8 +2,8 @@ from datetime import datetime
 
 from casexml.apps.phone.models import OTARestoreCommCareUser
 from casexml.apps.phone.utils import MockDevice
-from corehq.apps.app_manager.models import Application
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
@@ -19,20 +19,18 @@ from corehq.warehouse.loaders import (
     AppStatusSynclogStagingLoader,
     DomainDimLoader,
     DomainStagingLoader,
-    FormFactLoader,
     FormStagingLoader,
-    SyncLogFactLoader,
     SyncLogStagingLoader,
     UserDimLoader,
     UserStagingLoader,
     get_loader_by_slug,
 )
-from corehq.warehouse.models import ApplicationStatusFact, Batch
-from corehq.warehouse.tests.utils import BaseWarehouseTestCase, create_batch
-
-
-def teardown_module():
-    Batch.objects.all().delete()
+from corehq.warehouse.models import ApplicationStatusFact
+from corehq.warehouse.tests.utils import (
+    BaseWarehouseTestCase,
+    create_batch,
+    reset_warehouse_db,
+)
 
 
 class AppStatusIntegrationTest(BaseWarehouseTestCase):
@@ -102,22 +100,7 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
 
         FormProcessorTestUtils.delete_all_sql_forms(cls.domain)
 
-        ApplicationStatusFactLoader.clear_records()
-        AppStatusSynclogStagingLoader.clear_records()
-        AppStatusFormStagingLoader.clear_records()
-
-        SyncLogFactLoader.clear_records()
-        SyncLogStagingLoader.clear_records()
-
-        FormFactLoader.clear_records()
-        FormStagingLoader.clear_records()
-
-        DomainDimLoader.clear_records()
-        DomainStagingLoader.clear_records()
-
-        UserDimLoader.clear_records()
-        UserStagingLoader.clear_records()
-
+        reset_warehouse_db()
         super(AppStatusIntegrationTest, cls).tearDownClass()
 
     def test_loading_app_stats_fact(self):
@@ -129,7 +112,9 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
             path = path or []
             path.append(loader_class)
 
-            for dep in loader_class.dependencies():
+            loader = loader_class()
+
+            for dep in loader.dependant_slugs():
                 dep_cls = get_loader_by_slug(dep)
                 if dep_cls in path:
                     continue
@@ -137,7 +122,7 @@ class AppStatusIntegrationTest(BaseWarehouseTestCase):
 
             if loader_class not in seen:
                 seen.add(loader_class)
-                loader_class.commit(batch)
+                loader.commit(batch)
 
         commit_with_dependencies(ApplicationStatusFactLoader)
 

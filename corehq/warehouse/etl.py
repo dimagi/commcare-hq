@@ -1,7 +1,7 @@
-'''
+"""
 This files defines ETL objects that all have a common "load" function.
 Each object is meant for transferring one type of data to another type.
-'''
+"""
 
 import os
 
@@ -15,61 +15,52 @@ from corehq.warehouse.utils import django_batch_records
 
 class BaseETLMixin(object):
 
-    @classmethod
-    def load(cls, batch):
+    def load(self, batch):
         raise NotImplementedError
 
 
 class CustomSQLETLMixin(BaseETLMixin):
-    '''
+    """
     Mixin for transferring data from a SQL store to another SQL store using
     a custom SQL script.
-    '''
-    @classmethod
-    def additional_sql_context(cls):
-        '''
+    """
+    def additional_sql_context(self):
+        """
         Override this method to provide additional context
         vars to the SQL script
-        '''
+        """
         return {}
 
-    @classmethod
-    def load(cls, batch):
+    def load(self, batch):
         from corehq.warehouse.loaders.base import BaseLoader
-        '''
+        """
         Bulk loads records for a dim or fact table from
         their corresponding dependencies
-        '''
+        """
 
-        assert issubclass(cls, BaseLoader)
-        database = db_for_read_write(cls.model_cls)
+        assert isinstance(self, BaseLoader)
+        database = db_for_read_write(self.model_cls)
         with connections[database].cursor() as cursor:
-            cursor.execute(cls._sql_query_template(cls.slug, batch))
+            cursor.execute(self._sql_query_template(self.slug, batch))
 
-    @classmethod
-    def _table_context(cls, batch):
-        '''
+    def _table_context(self, batch):
+        """
         Get a dict of slugs to table name mapping
         :returns: Dict of slug to table_name
         {
             <slug>: <table_name>,
             ...
         }
-        '''
-        from corehq.warehouse.loaders import get_loader_by_slug
+        """
 
-        context = {cls.slug: cls.target_table()}
-        for dep in cls.dependencies():
-            loader_cls = get_loader_by_slug(dep)
-            context[dep] = loader_cls.target_table()
+        context = slug_to_table_map(self.dependant_slugs() + [self.slug])
         context['start_datetime'] = batch.start_datetime.isoformat()
         context['end_datetime'] = batch.end_datetime.isoformat()
         context['batch_id'] = batch.id
-        context.update(cls.additional_sql_context())
+        context.update(self.additional_sql_context())
         return context
 
-    @classmethod
-    def _sql_query_template(cls, template_name, batch):
+    def _sql_query_template(self, template_name, batch):
         path = os.path.join(
             settings.BASE_DIR,
             'corehq',
@@ -83,16 +74,15 @@ class CustomSQLETLMixin(BaseETLMixin):
                 'You must define {} in order to load data'.format(path)
             )
 
-        return _render_template(path, cls._table_context(batch))
+        return _render_template(path, self._table_context(batch))
 
 
 class HQToWarehouseETLMixin(BaseETLMixin):
-    '''
+    """
     Mixin for transferring docs from Couch to a Django model.
-    '''
+    """
 
-    @classmethod
-    def field_mapping(cls):
+    def field_mapping(self):
         # Map source model fields to staging table fields
         # ( <source field>, <staging field> )
         raise NotImplementedError
@@ -105,18 +95,16 @@ class HQToWarehouseETLMixin(BaseETLMixin):
         if missing:
             raise Exception('Mapping fields not present on model', missing)
 
-    @classmethod
-    def record_iter(cls, start_datetime, end_datetime):
+    def record_iter(self, start_datetime, end_datetime):
         raise NotImplementedError
 
-    @classmethod
-    def load(cls, batch):
+    def load(self, batch):
         from corehq.warehouse.loaders.base import BaseLoader
 
-        assert issubclass(cls, BaseLoader)
-        record_iter = cls.record_iter(batch.start_datetime, batch.end_datetime)
+        assert isinstance(self, BaseLoader)
+        record_iter = self.record_iter(batch.start_datetime, batch.end_datetime)
 
-        django_batch_records(cls.model_cls, record_iter, cls.field_mapping(), batch.id)
+        django_batch_records(self.model_cls, record_iter, self.field_mapping(), batch.id)
 
 
 def _render_template(path, context):
@@ -125,3 +113,12 @@ def _render_template(path, context):
 
     template = engines['django'].from_string(template_string)
     return template.render(context)
+
+
+def slug_to_table_map(slugs):
+    from corehq.warehouse.loaders import get_loader_by_slug
+    mapping = {}
+    for slug in slugs:
+        loader_cls = get_loader_by_slug(slug)
+        mapping[slug] = loader_cls().target_table()
+    return mapping
