@@ -1217,12 +1217,12 @@ def aggregate_validation_helper():
     Validates the performance reports vs aggregate reports and send mails with mismatches
     """
     awc_performance_rows_list = list(AWWIncentiveReport.objects.values('awc_id', 'is_launched',
-                                                                            'valid_visits', 'visit_denominator',
-                                                                            'wer_weighed', 'wer_eligible',
-                                                                            'incentive_eligible')
+                                                                       'valid_visits', 'visit_denominator',
+                                                                       'wer_weighed', 'wer_eligible',
+                                                                       'incentive_eligible')
                                      .order_by('awc_id'))
     awc_aggregate_rows_list = list(AggAwc.objects.values('awc_id', 'is_launched',
-                                                              'valid_visits', 'expected_visits')
+                                                         'valid_visits', 'expected_visits')
                                    .order_by('awc_id'))
     is_launched_check_bad_data = []
     home_conduct_check_bad_data = []
@@ -1249,20 +1249,20 @@ def aggregate_validation_helper():
     if len(is_launched_check_bad_data) > 0:
         csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
         file_attachments.append({"csv_columns": csv_columns, "data": is_launched_check_bad_data,
-                                 "filename": datetime.now().strftime('incentive_report_awc_is_launched_mismatch_%s.csv'
-                                                                     % SERVER_DATETIME_FORMAT)})
+                                 "filename": datetime.now().strftime('incentive_report_awc_is_launched_mismatch'
+                                                                     '_%s.csv' % SERVER_DATETIME_FORMAT)})
 
     if len(home_conduct_check_bad_data) > 0:
         csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
         file_attachments.append({"csv_columns": csv_columns, "data": home_conduct_check_bad_data,
-                                 "filename": datetime.now().strftime('incentive_report_awc_home_conduct mismatch_%s.csv'
-                                                                     % SERVER_DATETIME_FORMAT)})
+                                 "filename": datetime.now().strftime('incentive_report_awc_home_conduct mismatch'
+                                                                     '_%s.csv' % SERVER_DATETIME_FORMAT)})
 
     if len(eligibility_check_bad_data) > 0:
         csv_columns = ['awc_id_from_performance', 'Expected eligibility', 'Eligibility from performance record']
         file_attachments.append({"csv_columns": csv_columns, "data": eligibility_check_bad_data,
-                                 "filename": datetime.now().strftime('incentive_report_awc_eligibility_mismatch_%s.csv'
-                                                                     % SERVER_DATETIME_FORMAT)})
+                                 "filename": datetime.now().strftime('incentive_report_awc_eligibility_mismatch'
+                                                                     '_%s.csv' % SERVER_DATETIME_FORMAT)})
 
     if len(file_attachments) > 0:
         # sending email with mismatches
@@ -1272,10 +1272,10 @@ def aggregate_validation_helper():
 def get_awc_is_launched_mismatch_row(performance_row, awcagg_row):
     """
     :param performance_row: AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
-    'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'.
+     'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'.
     :param awcagg_row: AggAwc object with 'awc_id', 'is_launched', 'valid_visits', 'expected_visits'
-    :return: None if no mismatch or returns a row with awc_id from performance report, awc_id from aggregate report,
-    is_launched from performance report and is_launched from aggregate report
+    :return: None if no mismatch or returns a row with awc_id from performance report, awc_id from
+     aggregate report, is_launched from performance report and is_launched from aggregate report
     """
     is_launched_from_awc = False
     if awcagg_row['is_launched'].lower() == 'yes':
@@ -1291,10 +1291,11 @@ def get_awc_is_launched_mismatch_row(performance_row, awcagg_row):
 def get_awc_home_conduct_mismatch_row(performance_row, awcagg_row):
     """
     :param performance_row: AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
-    'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'.
+     'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'.
     :param awcagg_row: AggAwc object with 'awc_id', 'is_launched', 'valid_visits', 'expected_visits'
-    :return: None if no mismatch or returns a row with awc_id from performance report, awc_id from aggregate report,
-    home_conduct percentage from performance report and home_conduct percentage from aggregate report
+    :return: None if no mismatch or returns a row with awc_id from performance report, awc_id from
+     aggregate report, home_conduct percentage from performance report and home_conduct percentage
+     from aggregate report
     """
     # checking if valid_visits or valid_denominator is zero or None as they are treated as valid cases
     if performance_row['valid_visits'] is None or performance_row['visit_denominator'] in [0, None]:
@@ -1307,7 +1308,8 @@ def get_awc_home_conduct_mismatch_row(performance_row, awcagg_row):
         home_conduct_from_awc = awcagg_row['valid_visits'] / awcagg_row['expected_visits']
     # checking if home conduct (valid_visits/valid_denominator) from incentive report is same as that of aggregate
     if home_conduct_from_report != home_conduct_from_awc:
-        row_data = [performance_row['awc_id'], awcagg_row['awc_id'], home_conduct_from_report, home_conduct_from_awc]
+        row_data = [performance_row['awc_id'], awcagg_row['awc_id'], home_conduct_from_report,
+                    home_conduct_from_awc]
         return row_data
     return None
 
@@ -1315,7 +1317,7 @@ def get_awc_home_conduct_mismatch_row(performance_row, awcagg_row):
 def get_awc_eligibility_mismatch_row(performance_row):
     """
     :param performance_row: AWCIncentiveReport object with 'awc_id', 'is_launched', 'valid_visits',
-    'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'.
+     'visit_denominator', 'wer_weighed', 'wer_eligible', 'incentive_eligible'.
     :return: None if no mismatch or return a row with expected eligibility and actual eligibility
     """
     # checking if valid_visits or valid_denominator is zero or None as they are treated as valid cases
