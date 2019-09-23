@@ -3,7 +3,7 @@ from django.core.management import BaseCommand
 from dimagi.utils.chunked import chunked
 
 from casexml.apps.case.models import CommCareCase
-from corehq.doctypemigrations.continuous_migrate import _bulk_get_revs
+from corehq.doctypemigrations.continuous_migrate import bulk_get_revs
 
 
 class Command(BaseCommand):
@@ -30,7 +30,7 @@ class Command(BaseCommand):
         from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
             publish_change, create_case_change_meta)
         for ids in chunked(case_ids, 500):
-            doc_id_rev_list = _bulk_get_revs(CommCareCase.get_db(), ids)
+            doc_id_rev_list = bulk_get_revs(CommCareCase.get_db(), ids)
             for doc_id, doc_rev in doc_id_rev_list:
                 publish_change(
                     create_case_change_meta(domain, doc_id, doc_rev)
