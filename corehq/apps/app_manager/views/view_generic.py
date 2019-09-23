@@ -236,10 +236,6 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
         context['module_icon'] = None
         if toggles.CUSTOM_ICON_BADGES.enabled(domain):
             context['module_icon'] = module.custom_icon if module.custom_icon else CustomIcon()
-        try:
-            context['multimedia']['references'] = app.get_references()
-        except ReportConfigurationNotFoundError:
-            pass
         context['nav_menu_media_specifics'] = specific_media
 
     error = request.GET.get('error', '')

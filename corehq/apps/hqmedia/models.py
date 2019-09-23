@@ -502,15 +502,15 @@ class ApplicationMediaReference(object):
             'detailed_location': detailed_location,
         }
 
-    def as_dict(self, lang=None):
+    def as_dict(self):
         return {
             'module': {
-                'name': self.get_module_name(lang),
+                'name': self.get_module_name(),
                 'id': self.module_id,
                 'unique_id': self.module_unique_id,
             },
             'form': {
-                'name': self.get_form_name(lang),
+                'name': self.get_form_name(),
                 'unique_id': self.form_unique_id,
                 'order': self.form_order,
             },
@@ -522,20 +522,18 @@ class ApplicationMediaReference(object):
             "use_default_media": self.use_default_media,
         }
 
-    def _get_name(self, raw_name, lang=None):
+    def _get_name(self, raw_name):
         if not raw_name:
             return ""
         if not isinstance(raw_name, dict):
             return raw_name
-        if lang is None:
-            lang = self.app_lang
-        return raw_name.get(lang, list(raw_name.values())[0])
+        return raw_name.get(self.app_lang, list(raw_name.values())[0])
 
-    def get_module_name(self, lang=None):
-        return self._get_name(self.module_name, lang=lang)
+    def get_module_name(self):
+        return self._get_name(self.module_name)
 
-    def get_form_name(self, lang=None):
-        return self._get_name(self.form_name, lang=lang)
+    def get_form_name(self):
+        return self._get_name(self.form_name)
 
 
 class MediaMixin(object):
@@ -553,11 +551,11 @@ class MediaMixin(object):
         """
         raise NotImplementedError
 
-    def get_references(self, lang=None):
+    def get_references(self):
         """
             Used for the multimedia controller.
         """
-        return [m.as_dict(lang) for m in self.all_media()]
+        return [m.as_dict() for m in self.all_media()]
 
     def rename_media(self, old_path, new_path):
         """
