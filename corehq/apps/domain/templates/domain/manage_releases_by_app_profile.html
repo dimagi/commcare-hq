@@ -13,28 +13,24 @@
   {% initial_page_data 'appsProfiles' apps_profiles %}
   {% registerurl 'toggle_release_restriction_by_app_profile' domain '---'%}
   {% registerurl "paginate_releases" domain '---' %}
-<div class="container">
-  <div class="row">
-    <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
+    <ul class="nav nav-tabs sticky-tabs">
       <li><a data-toggle="tab" href="#search-form" id="search-tab">{% trans "Search" %}</a></li>
       <li><a data-toggle="tab" href="#create-form" id="create-tab">{% trans "Add" %}</a></li>
     </ul>
+    <div class="spacer"></div>
     <div class="tab-content">
       <div id="search-form" class="tab-pane">
         <form class="form form-horizontal" method="post" id="search-manage-app-releases">
-          <legend>{% trans "Search" %}</legend>
           {% crispy search_form %}
         </form>
       </div>
       <div id="create-form" class="tab-pane">
         <form class="form form-horizontal disable-on-submit" method="post" id="create-manage-app-releases">
-          <legend>{% trans "Add" %}</legend>
           {% crispy create_form %}
         </form>
       </div>
     </div>
-  </div>
-  <div class="row">
+
     {% if app_releases_by_app_profile %}
       <table id="managed-releases" class="table">
         <thead>
@@ -70,6 +66,5 @@
         </tbody>
       </table>
     {% endif %}
-  </div>
-</div>
+
 {% endblock %}
