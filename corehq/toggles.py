@@ -170,10 +170,14 @@ class StaticToggle(object):
                 if request.user.is_superuser:
                     from corehq.apps.toggle_ui.views import ToggleEditView
                     toggle_url = reverse(ToggleEditView.urlname, args=[self.slug])
-                    messages.warning(request, mark_safe((
-                        'This <a href="{}">feature flag</a> should be enabled '
-                        'to access this URL'
-                    ).format(toggle_url)))
+                    messages.warning(
+                        request,
+                        mark_safe((
+                            'This <a href="{}">feature flag</a> should be enabled '
+                            'to access this URL'
+                        ).format(toggle_url)),
+                        fail_silently=True,  # workaround for tests: https://code.djangoproject.com/ticket/17971
+                    )
                 raise Http404()
             return wrapped_view
         return decorator
@@ -1802,4 +1806,12 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     'while investigating database performance issues.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+
+GROUP_API_USE_ES_BACKEND = StaticToggle(
+    'group_api_use_es_backend',
+    'Use ES backend for Group API',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
 )

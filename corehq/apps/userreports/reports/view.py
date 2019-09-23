@@ -119,9 +119,8 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
 
     # json.loads casts strings 'true'/'false' to booleans, so undo it
     for key in string_type_params:
-        u_key = str(key)  # QueryDict's key/values are unicode strings
-        if u_key in query_dict:
-            vals = query_dict.getlist(u_key)
+        if key in query_dict:
+            vals = query_dict.getlist(key)
             if len(vals) > 1:
                 request_dict[key] = vals
             else:
@@ -229,10 +228,8 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             for filter in self.filters
             if getattr(filter, 'datatype', 'string') == "string"
         ]
-        if self.request.method == 'GET':
-            return query_dict_to_dict(self.request.GET, self.domain, string_type_params)
-        elif self.request.method == 'POST':
-            return query_dict_to_dict(self.request.POST, self.domain, string_type_params)
+        query_dict = self.request.GET if self.request.method == 'GET' else self.request.POST
+        return query_dict_to_dict(query_dict, self.domain, string_type_params)
 
     @property
     @memoized

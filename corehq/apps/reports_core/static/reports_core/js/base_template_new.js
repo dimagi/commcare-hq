@@ -99,7 +99,6 @@ hqDefine('reports_core/js/base_template_new', function () {
                 trigger: 'hover',
                 placement: 'bottom',
                 container: 'body',
-                html: true,     // needed only for pact custom reports
             });
         });
 

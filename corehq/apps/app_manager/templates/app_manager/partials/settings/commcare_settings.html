@@ -34,10 +34,9 @@
       </div>
       <div class="panel-body">
         <!-- ko foreach: settings -->
-        <div class="form-group" data-bind="
-                    visible: visible,
-                    css: {error: hasError()}
-                ">
+        <div class="form-group"
+             data-bind="visible: visible() || showUpgradeText(),
+                        css: {error: hasError()}">
           <div class="col-sm-2 control-label">
             <label data-bind="html: name, attr: {for: inputId}" class="inner-control-label"></label>
             <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
@@ -56,6 +55,16 @@
                 {% endblocktrans %}
               </span>
             </p>
+            <!-- ko if: showUpgradeText-->
+            <div class="well well-sm">
+              <i class="fa fa-info-circle"></i>
+              {% blocktrans %}
+                This feature is not available on your subscription. Please upgrade to
+                the <!-- ko text: upgrade_plan --><!-- /ko --> plan or higher.
+              {% endblocktrans %}
+              {% include "hqwebapp/partials/generic_feature_upgrade.html" %}
+            </div>
+            <!-- /ko -->
           </div>
           <div class="col-sm-4 control-label">
             <div class="pull-left">

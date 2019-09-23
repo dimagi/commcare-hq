@@ -187,20 +187,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
 
         start_time = datetime.now(pytz.utc)
         date = date or start_time.date()
-        monthly_dates = []
+        monthly_dates = _get_monthly_dates(date, intervals)
 
         # probably this should be run one time, for now I leave this in aggregations script (not a big cost)
         # but remove issues when someone add new table to mapping, also we don't need to add new rows manually
         # on production servers
         _update_ucr_table_mapping()
-
-        first_day_of_month = date.replace(day=1)
-        for interval in range(intervals - 1, 0, -1):
-            # calculate the last day of the previous months to send to the aggregation script
-            first_day_next_month = first_day_of_month - relativedelta(months=interval - 1)
-            monthly_dates.append(first_day_next_month - relativedelta(days=1))
-
-        monthly_dates.append(date)
 
         db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
         if db_alias:
@@ -328,6 +320,26 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), aggregation_start_time=start_time,
                                        force_citus=force_citus)
             ).delay()
+
+
+def _get_monthly_dates(start_date, total_intervals):
+    """
+    Gets a list of dates for the aggregation. Which all take the form of the last of the month.
+    :param start_date: The date to start from
+    :param total_intervals: The number of intervals (including start_date).
+    :return: A list of dates containing the last day of the month before `start_date` and the specified
+    number of intervals (including `start_date`).
+    """
+    monthly_dates = []
+
+    first_day_of_month = start_date.replace(day=1)
+    for interval in range(total_intervals - 1, 0, -1):
+        # calculate the last day of the previous months to send to the aggregation script
+        first_day_next_month = first_day_of_month - relativedelta(months=interval - 1)
+        monthly_dates.append(first_day_next_month - relativedelta(days=1))
+
+    monthly_dates.append(start_date)
+    return monthly_dates
 
 
 def _create_aggregate_functions(cursor):
