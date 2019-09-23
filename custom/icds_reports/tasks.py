@@ -533,10 +533,14 @@ def _run_custom_sql_script(commands, day=None, db_alias=None):
 
 @track_time
 def aggregate_awc_daily(day):
-    with transaction.atomic(using=db_for_read_write(AggAwcDaily)):
-        AggAwcDaily.aggregate(force_to_date(day) - timedelta(days=2))
-        AggAwcDaily.aggregate(force_to_date(day) - timedelta(days=1))
-        AggAwcDaily.aggregate(force_to_date(day))
+
+    agg_daily_dates = [force_to_date(day) - timedelta(days=2),
+                       force_to_date(day) - timedelta(days=1),
+                       force_to_date(day)]
+
+    for daily_date in agg_daily_dates:
+        with transaction.atomic(using=db_for_read_write(AggAwcDaily)):
+            AggAwcDaily.aggregate(daily_date)
 
 
 @track_time
