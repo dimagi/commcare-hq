@@ -311,10 +311,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 for state_id in state_ids:
                     create_mbt_for_month.delay(state_id, first_of_month_string, force_citus)
             chain(
-                icds_aggregation_task.si(date=(date-timedelta(days=2)).strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
-                                         force_citus=force_citus),
-                icds_aggregation_task.si(date=(date-timedelta(days=1)).strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
-                                         force_citus=force_citus),
                 icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
                                          force_citus=force_citus),
                 email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), aggregation_start_time=start_time,
@@ -538,6 +534,8 @@ def _run_custom_sql_script(commands, day=None, db_alias=None):
 @track_time
 def aggregate_awc_daily(day):
     with transaction.atomic(using=db_for_read_write(AggAwcDaily)):
+        AggAwcDaily.aggregate(force_to_date(day) - timedelta(days=2))
+        AggAwcDaily.aggregate(force_to_date(day) - timedelta(days=1))
         AggAwcDaily.aggregate(force_to_date(day))
 
 
