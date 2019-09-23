@@ -61,9 +61,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     if (vm.selectedYear === new Date().getFullYear()) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
-            return month.id <= new Date().getMonth();
+            return month.id <= new Date().getMonth() + 1;
         });
-        vm.selectedMonth -= 1;
     } else if (vm.selectedYear === 2017) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
             return month.id >= 3;
@@ -384,7 +383,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             vm.selectedMonth = vm.selectedMonth >= 7 ? vm.selectedMonth : 7;
         } else if (year.id === latest.getFullYear()) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
-                return month.id <= latest.getMonth();
+                return month.id <= latest.getMonth() + 1;
             });
             vm.selectedMonth = vm.selectedMonth <= latest.getMonth() + 1 ? vm.selectedMonth : latest.getMonth() + 1;
         } else if (year.id === 2017) {
