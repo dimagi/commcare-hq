@@ -1,4 +1,3 @@
-
 import os
 from datetime import datetime
 from distutils.version import LooseVersion
@@ -58,7 +57,7 @@ from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
 
-from .models import MobileRecoveryMeasure, SerialIdBucket
+from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
     demo_user_restore_response,
     get_restore_user,
@@ -316,6 +315,8 @@ def heartbeat(request, domain, app_build_id):
                 couch_user = CouchUser.get(couch_user.user_id)
                 update_user_reporting_data(app_build_id, app_id, couch_user, request)
 
+    if _should_force_log_submission(request):
+        info['force_logs'] = True
     return JsonResponse(info)
 
 
@@ -363,6 +364,14 @@ def update_user_reporting_data(app_build_id, app_id, couch_user, request):
     )
     if save_user:
         couch_user.save(fire_signals=False)
+
+
+def _should_force_log_submission(request):
+    return DeviceLogRequest.is_pending(
+        request.domain,
+        request.couch_user.username,
+        request.GET.get('device_id', ''),
+    )
 
 
 @location_safe

@@ -15,6 +15,27 @@ This does not include populating any data.
 - Add an `'icds-ucr'` entry to `settings.REPORTING_DATABASES` pointing at the desired key from
   `settings.DATABASES` where you want the report data tables to live.
 
+## Citus setup
+
+To get setup on CitusDB follow [these instructions](https://github.com/dimagi/commcare-hq/blob/master/CITUSDB_SETUP.md).
+
+## Local data
+
+To get local dashboard data you can run:
+
+```bash
+./manage.py populate_local_db_with_icds_dashboard_test_data
+```
+
+This will populate your local database with the locations and data used in the tests
+including the aggregate data.
+
+Note that the above command is destructive to local data and read the warnings
+before proceeding!
+
+If you are using CitusDB and have already initialized the database via migrations, you will need to comment out
+the `_distribute_tables_for_citus(engine)` line in `icds_reports/tests/__init__.py` for the command to succeed.
+
 Aggregate Data Tables
 ---------------------
 

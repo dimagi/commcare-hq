@@ -175,6 +175,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             cases_ccs_lactating = ut.cases_ccs_lactating,
             cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all,
             cases_ccs_lactating_all = ut.cases_ccs_lactating_all,
+            num_mother_thr_21_days = ut.rations_21_plus_distributed,
+            num_mother_thr_eligible = ut.thr_eligible,
             cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating,
             valid_visits = ut.valid_visits,
             expected_visits = CASE WHEN ut.valid_visits>ut.expected_visits THEN ut.valid_visits ELSE ut.expected_visits END
@@ -186,6 +188,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(agg_ccs_record_monthly.lactating) AS cases_ccs_lactating,
                 sum(agg_ccs_record_monthly.pregnant_all) AS cases_ccs_pregnant_all,
                 sum(agg_ccs_record_monthly.lactating_all) AS cases_ccs_lactating_all,
+                sum(agg_ccs_record_monthly.rations_21_plus_distributed) AS rations_21_plus_distributed,
+                sum(agg_ccs_record_monthly.thr_eligible) AS thr_eligible,
                 sum(agg_ccs_record_monthly.valid_visits) + COALESCE(home_visit.valid_visits, 0) AS valid_visits,
                 sum(agg_ccs_record_monthly.expected_visits) +
                 COALESCE(home_visit.expected_visits, 0) AS expected_visits
@@ -565,6 +569,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('cases_person_all',),
             ('cases_ccs_pregnant_all',),
             ('cases_ccs_lactating_all',),
+            ('num_mother_thr_21_days',),
+            ('num_mother_thr_eligible',),
             ('cases_child_health_all',),
             ('cases_person_adolescent_girls_11_14',),
             ('cases_person_adolescent_girls_15_18',),

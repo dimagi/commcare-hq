@@ -1,4 +1,3 @@
-
 import os
 import uuid
 import zipfile
@@ -72,6 +71,9 @@ def _update_calculated_properties():
         get_domains_to_update_es_filter()
     ).fields(["name", "_id"]).run().hits
 
+    all_stats = all_domain_stats()
+
+    active_users_by_domain = {}
     for r in results:
         dom = r["name"]
         domain_obj = Domain.get_by_name(dom)
@@ -80,6 +82,7 @@ def _update_calculated_properties():
             continue
         try:
             props = calced_props(domain_obj, r["_id"], all_stats)
+            active_users_by_domain[dom] = props['cp_n_active_cc_users']
             if props['cp_first_form'] is None:
                 del props['cp_first_form']
             if props['cp_last_form'] is None:
@@ -90,17 +93,23 @@ def _update_calculated_properties():
         except Exception as e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
+    datadog_report_user_stats('commcare.active_mobile_workers.count', active_users_by_domain)
 
-@periodic_task(run_every=timedelta(hours=6), queue='background_queue')
+
+@periodic_task(run_every=timedelta(minutes=1), queue='background_queue')
 def run_datadog_user_stats():
     all_stats = all_domain_stats()
-    datadog_report_user_stats(commcare_users_by_domain=all_stats['commcare_users'])
+
+    datadog_report_user_stats(
+        'commcare.mobile_workers.count',
+        commcare_users_by_domain=all_stats['commcare_users'],
+    )
 
 
-def datadog_report_user_stats(commcare_users_by_domain):
+def datadog_report_user_stats(metric_name, commcare_users_by_domain):
     commcare_users_by_domain = summarize_user_counts(commcare_users_by_domain, n=50)
     for domain, user_count in commcare_users_by_domain.items():
-        datadog_gauge('commcare.mobile_workers.count', user_count, tags=[
+        datadog_gauge(metric_name, user_count, tags=[
             'domain:{}'.format('_other' if domain is () else domain)
         ])
 
@@ -171,6 +180,12 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
     report_start = datetime.utcnow()
     file = report.excel_response
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
+
+    if report.domain is None:
+        # Some HQ-wide reports (e.g. accounting/smsbillables) will not have a domain associated with them
+        # This uses the user's first domain to store the file in the blobdb
+        report.domain = report.request.couch_user.get_domains()[0]
+
     hash_id = _store_excel_in_blobdb(report_class, file, report.domain)
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
@@ -199,15 +214,13 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
 
 
 def _send_email(user, report, hash_id, recipient, subject=None):
-    domain = report.domain or user.get_domains()[0]
-    link = absolute_reverse("export_report", args=[domain, str(hash_id),
+    link = absolute_reverse("export_report", args=[report.domain, str(hash_id),
                                                    report.export_format])
 
     send_report_download_email(report.name, recipient, link, subject)
 
 
 def _store_excel_in_blobdb(report_class, file, domain):
-
     key = uuid.uuid4().hex
     expired = 60 * 24 * 7  # 7 days
     db = get_blob_db()

@@ -1,9 +1,16 @@
-/* globals hqDefine, hqImport */
-hqDefine('hqadmin/js/hqadmin_base_report', function () {
+hqDefine('hqadmin/js/hqadmin_base_report', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'reports/js/config.dataTables.bootstrap',
+], function (
+    $,
+    initialPageData,
+    datatablesConfig
+) {
     $(function () {
-        var aoColumns = hqImport('hqwebapp/js/initial_page_data').get('aoColumns');
+        var aoColumns = initialPageData.get('aoColumns');
         if (aoColumns) {
-            var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables({
+            var reportTables = datatablesConfig.HQReportDataTables({
                 aoColumns: aoColumns,
             });
             reportTables.render();

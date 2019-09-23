@@ -1,4 +1,3 @@
-
 import datetime
 import io
 import json
@@ -353,7 +352,9 @@ class GenericReportView(object):
             Nothing specific to the report should go here, use report_context for that.
             Must return a dict.
         """
-        return dict()
+        return {
+            'rendered_as': self.rendered_as,
+        }
 
     @property
     def report_context(self):

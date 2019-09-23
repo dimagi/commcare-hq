@@ -1,4 +1,3 @@
-
 from corehq import toggles
 from corehq.toggles import ALL_TAGS
 

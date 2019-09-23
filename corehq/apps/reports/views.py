@@ -1046,7 +1046,7 @@ class CaseDataView(BaseProjectReportSectionView):
         tz_abbrev = timezone.localize(the_time_is_now).tzname()
 
         product_name_by_id = {
-            product.product_id: product.name
+            product['product_id']: product['name']
             for product in SQLProduct.objects.filter(domain=self.domain).values('product_id', 'name').all()
         }
 
@@ -1059,7 +1059,7 @@ class CaseDataView(BaseProjectReportSectionView):
                 (_product_name(product_id), entry_map[product_id])
                 for product_id in entry_map
             ]
-            product_tuples.sort(key=lambda product_name, entry_state: product_name)
+            product_tuples.sort(key=lambda x: x[0])
             ledger_map[section] = product_tuples
 
         repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)

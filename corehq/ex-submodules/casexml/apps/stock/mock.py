@@ -1,4 +1,3 @@
-
 from xml.etree import cElementTree as ElementTree
 
 from eulxml.xmlmap import (DateTimeField, IntegerField, NodeField, StringField,

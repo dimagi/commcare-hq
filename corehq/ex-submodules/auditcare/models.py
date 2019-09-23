@@ -508,4 +508,19 @@ if user_logged_out:
 def audit_login_failed(sender, **kwargs):
     AuditEvent.audit_login_failed(kwargs["request"], kwargs["username"])
 
+
 user_login_failed.connect(audit_login_failed)
+
+
+def wrap_audit_event(event):
+    doc_type = event['doc_type']
+    cls = {
+        'NavigationEventAudit': NavigationEventAudit,
+        'AccessAudit': AccessAudit,
+        'ModelActionAudit': ModelActionAudit,
+        'AuditCommand': AuditCommand,
+    }.get(doc_type, None)
+    if not cls:
+        raise ValueError(f"Unknow doc type for audit event: {doc_type}")
+
+    return cls.wrap(event)

@@ -1,4 +1,3 @@
-
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_released_app,
@@ -41,6 +40,7 @@ def link_app(linked_app, master_domain, master_id, remote_details=None):
     DomainLink.link_domains(linked_app.domain, master_domain, remote_details)
 
     linked_app.master = master_id
+    linked_app.family_id = master_id
     linked_app.doc_type = 'LinkedApplication'
     linked_app.save()
     return linked_app

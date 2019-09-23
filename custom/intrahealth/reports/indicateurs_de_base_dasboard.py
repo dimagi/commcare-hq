@@ -1,5 +1,3 @@
-# coding=utf-8
-
 from django.utils.functional import cached_property
 
 from corehq.apps.locations.models import SQLLocation, get_location

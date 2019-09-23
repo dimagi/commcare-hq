@@ -1,4 +1,3 @@
-
 from corehq.apps.domain.views.accounting import (
     BaseCardView,
     BaseStripePaymentView,

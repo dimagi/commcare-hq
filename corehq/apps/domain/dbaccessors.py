@@ -68,7 +68,7 @@ def iterate_doc_ids_in_domain_by_type(domain, doc_type, chunk_size=10000,
         yield doc['id']
 
 
-def get_docs_in_domain_by_class(domain, doc_class):
+def get_docs_in_domain_by_class(domain, doc_class, limit=None, skip=None):
     """
     Given a domain and doc class, get all docs matching that domain and type
 
@@ -90,12 +90,20 @@ def get_docs_in_domain_by_class(domain, doc_class):
     ]
     doc_type = doc_class.__name__
     assert doc_type in whitelist
+
+    kwargs = {}
+    if limit is not None:
+        kwargs['limit'] = limit
+    if skip is not None:
+        kwargs['skip'] = skip
+
     return doc_class.view(
         'by_domain_doc_type_date/view',
         startkey=[domain, doc_type],
         endkey=[domain, doc_type, {}],
         reduce=False,
         include_docs=True,
+        **kwargs
     ).all()
 
 

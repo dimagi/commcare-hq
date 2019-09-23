@@ -1,4 +1,3 @@
-
 from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound

@@ -1,4 +1,3 @@
-
 from django.core.management import BaseCommand
 from django.db.models import Q
 

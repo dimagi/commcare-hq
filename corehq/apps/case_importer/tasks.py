@@ -1,4 +1,3 @@
-
 from celery import states
 from celery.exceptions import Ignore
 from celery.schedules import crontab

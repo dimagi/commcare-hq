@@ -7,6 +7,7 @@ import json
 from django.conf import settings
 from kafka import KafkaConsumer
 
+from corehq.util.io import ClosingContextProxy
 from corehq.util.json import CommCareJSONEncoder
 from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
@@ -142,17 +143,18 @@ def safe_force_seq_int(seq, default=None):
 
 
 def _get_consumer():
-    return KafkaConsumer(
+    return ClosingContextProxy(KafkaConsumer(
         client_id='pillowtop_utils',
         bootstrap_servers=settings.KAFKA_BROKERS,
         request_timeout_ms=1000
-    )
+    ))
 
 
 def get_all_pillows_json():
     pillow_configs = get_all_pillow_configs()
     consumer = _get_consumer()
-    return [get_pillow_json(pillow_config, consumer) for pillow_config in pillow_configs]
+    with consumer:
+        return [get_pillow_json(pillow_config, consumer) for pillow_config in pillow_configs]
 
 
 def get_pillow_json(pillow_config, consumer=None):

@@ -1,4 +1,3 @@
-
 from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_LS_AWC_VISIT_TABLE

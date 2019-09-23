@@ -1,4 +1,3 @@
-
 from collections import OrderedDict, defaultdict
 
 from jsonobject import (

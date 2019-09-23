@@ -1,4 +1,3 @@
-
 from django.core.management.base import BaseCommand
 
 from corehq.apps.data_dictionary.util import (

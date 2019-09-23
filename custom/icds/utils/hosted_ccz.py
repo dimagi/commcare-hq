@@ -1,4 +1,3 @@
-
 from memoized import memoized
 from django.urls import reverse
 
