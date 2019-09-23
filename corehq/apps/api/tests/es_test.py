@@ -1,16 +1,20 @@
+import json
 import unittest
 import uuid
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from datetime import datetime
 
-from elasticsearch import Elasticsearch
+from django.core.exceptions import ObjectDoesNotExist
+from django.test import RequestFactory
+from elasticsearch import Elasticsearch, NotFoundError, ElasticsearchException
+from mock import patch
 
 from corehq.apps.api.es import XFormES, UserES, ESUserError, ReportXFormES, ESView
-from corehq.apps.api.tests.utils import ESTest
+from corehq.apps.api.tests.utils import ESTest, change_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs.mixin import BlobMetaRef
-from corehq.elastic import send_to_elasticsearch
+from corehq.elastic import send_to_elasticsearch, ESError
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
@@ -79,6 +83,9 @@ class TestESView(ESTest):
         with self.assertRaises(NotImplementedError):
             head = self.es_view.head()
 
+    def test_not_implemented_as_view(self):
+        with self.assertRaises(Exception):
+            self.es_view.as_view()
 
 
 class TestXFormES(FormTestES):
@@ -93,12 +100,45 @@ class TestXFormES(FormTestES):
         super(TestXFormES, cls).tearDownClass()
         pass
 
+    @property
+    def query(self):
+        return {
+            "query": {
+                "filtered": {
+                    "query": {"match_all": {}},
+                    "filter": {"term": {"doc_type": "xforminstance"}}
+                }
+            }
+        }
+
+    @property
+    def invalid_query(self):
+        return {
+            "query": {
+                "filtered": {
+                    "query": {"query_string": {
+                        "query": {
+                            "bool": {
+                                "must": [
+                                    {"match": {"doc_type": "xforminstance"}}
+                                ],
+                                "filter": [
+                                    {"term": {"term": {"doc_type": "xforminstance"}}}
+                                ]
+                            }
+                        }
+                    }},
+                    "filter": {"term": {"doc_type": "xforminstance"}}
+                }
+            }
+        }
+
     @run_with_all_backends
     def test_base_query(self):
-        actual = self.xform_es.base_query(terms={'a': 'b'},fields=['doc_type'])
+        actual = self.xform_es.base_query(terms={'a': 'b'}, fields=['doc_type'])
         expected = {
             'filter': {
-                'and':  [
+                'and': [
                     {'term': {'domain.exact': 'elastico'}},
                     {'term': {'a': 'b'}},
                     {'term': {'doc_type': 'xforminstance'}}
@@ -113,17 +153,66 @@ class TestXFormES(FormTestES):
 
     @run_with_all_backends
     def test_run_query(self):
-        query = {
-            "query": {
-                "filtered": {
-                    "query": {"match_all": {}},
-                    "filter": {"term": {"doc_type": "xforminstance"}}
-                }
-            }
-        }
+        result = self.xform_es.run_query(self.query)
 
-        result = self.xform_es.run_query(query)
         self.assertEqual(result['hits']['total'], 1)
+
+    @run_with_all_backends
+    def test_run_invalid_query(self):
+        with self.assertRaises(ESUserError):
+            self.xform_es.run_query(self.invalid_query)
+
+    @run_with_all_backends
+    def test_get_document(self):
+        form_id = self.es_form['_id']
+        expected = self.es_form
+        actual = self.xform_es.get_document(form_id)
+
+        self.assertEqual(expected.get('form'), actual.form)
+
+    @run_with_all_backends
+    def test_get_document_document_error(self):
+        with self.assertRaises(ObjectDoesNotExist):
+            self.xform_es.get_document('wrong_id')
+
+    @run_with_all_backends
+    def test_get_document_document_wrong_domain(self):
+        form_id = self.es_form['_id']
+
+        with change_domain(self.xform_es, 'random'),\
+             self.assertRaises(ObjectDoesNotExist):
+                self.xform_es.get_document(form_id)
+
+    @run_with_all_backends
+    def test_get_request(self):
+        request = RequestFactory().post(path='es/query')
+        self.xform_es.indent = 4
+        response = self.xform_es.get(request)
+
+        self.assertEqual(response.status_code, 200)
+
+    @run_with_all_backends
+    def test_post_request(self):
+        request = RequestFactory().post(path='es/query',
+                                        data=json.dumps(self.query),
+                                        content_type="application/json")
+        self.xform_es.indent = 4
+        response = self.xform_es.post(request)
+        result = json.loads(response.content)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(result['hits']['total'], 1)
+
+    @run_with_all_backends
+    def test_invalid_post_request(self):
+        request = RequestFactory().post(path='es/query',
+                                        data="Not very json query",
+                                        content_type="application/json")
+        self.xform_es.indent = 4
+        response = self.xform_es.post(request)
+
+        self.assertEqual(response.status_code, 406)
+
 
 
 class TestUserES(ESTest):
@@ -156,6 +245,22 @@ class TestUserES(ESTest):
         cls.es.indices.refresh(USER_INDEX_INFO.index)
         cls.user = user
 
+    @classmethod
+    def query_by_username(cls, username, *fields):
+        return {
+            "query": {
+                "filtered": {
+                    "query": {"match_all": {}},
+                    'filter': {
+                        'and': [
+                            {'term': {'username': username}}
+                        ]
+                    }
+                }
+
+            },
+            "fields": fields
+        }
     @run_with_all_backends
     def test_query_validation(self):
         query = {
@@ -167,21 +272,7 @@ class TestUserES(ESTest):
 
     @run_with_all_backends
     def test_run_query(self):
-        query = {
-            "query": {
-                "filtered": {
-                    "query": {"match_all": {}},
-                    'filter': {
-                        'and': [
-                            {'term': {'username': "johann_strauss"}}
-                        ]
-                    }
-                }
-
-            },
-            "fields": ["username", "domain"]
-        }
-
+        query = self.query_by_username("johann_strauss", "username", "domain")
         result = self.user_es.run_query(query, security_check=False)
         self.assertEqual(result['hits']['total'], 1)
         self.assertEqual(result['hits']['hits'][0]['fields']['username'][0],
@@ -194,7 +285,9 @@ class TestReportFormES(FormTestES):
     def setUpClass(cls):
         super(TestReportFormES, cls).setUpClass()
         cls.report_xform_es = ReportXFormES(cls.domain.name)
-
+        cls.es_form['form']['case'] = {'case_id': 'case_id'}
+        cls.es_form['form']['meta']['case'] = {'case_id': 'case_id'}
+        cls.es_form['form']['__retrieved_case_ids']=['case_id']
         send_to_elasticsearch('report_xforms', cls.es_form)
         cls.es.indices.refresh(REPORT_XFORM_INDEX_INFO.index)
 
@@ -208,10 +301,10 @@ class TestReportFormES(FormTestES):
 
     @run_with_all_backends
     def test_base_query(self):
-        actual = self.report_xform_es.base_query(terms={'a': 'b'},fields=['doc_type'])
+        actual = self.report_xform_es.base_query(terms={'a': 'b'}, fields=['doc_type'])
         expected = {
             'filter': {
-                'and':  [
+                'and': [
                     {'term': {'domain.exact': 'elastico'}},
                     {'term': {'a': 'b'}},
                     {'term': {'doc_type': 'xforminstance'}}
@@ -237,3 +330,13 @@ class TestReportFormES(FormTestES):
 
         result = self.report_xform_es.run_query(query)
         self.assertEqual(result['hits']['total'], 1)
+
+    @run_with_all_backends
+    def test_create_query_by_case_id(self):
+
+        query = self.report_xform_es.by_case_id_query(
+            self.domain.name,
+            case_id=self.es_form['form']['case']['case_id']
+        )
+
+        self.assertIsInstance(query, dict)

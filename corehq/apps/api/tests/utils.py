@@ -1,4 +1,4 @@
-
+import uuid
 from collections import OrderedDict
 
 from django.test import TestCase
@@ -203,3 +203,18 @@ class ESTest(TestCase):
     def tearDownClass(cls):
         cls.domain.delete()
         super(ESTest, cls).tearDownClass()
+
+
+class change_domain:
+    # temporally changes object domain to random
+
+    def __init__(self, obj, new_domain):
+        self.obj = obj
+        self.domain_old = self.obj.domain
+        self.obj.domain = new_domain or uuid.uuid4().hex
+
+    def __enter__(self):
+        return self.obj
+
+    def __exit__(self, type, value, traceback):
+        self.obj.domain = self.domain_old
