@@ -18,6 +18,7 @@ class FormStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     slug = FORM_STAGING_SLUG
     model_cls = FormStagingTable
+    log_frequency = 100000
 
     def field_mapping(self):
         return [

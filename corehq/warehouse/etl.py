@@ -10,7 +10,7 @@ from django.db import connections
 from django.template import engines
 
 from corehq.sql_db.routers import db_for_read_write
-from corehq.warehouse.utils import django_batch_records
+from corehq.warehouse.utils import django_batch_records, ProgressIterator
 
 
 class BaseETLMixin(object):
@@ -42,6 +42,8 @@ class CustomSQLETLMixin(BaseETLMixin):
         database = db_for_read_write(self.model_cls)
         with connections[database].cursor() as cursor:
             cursor.execute(self._sql_query_template(self.slug, batch))
+        if self.progress_logger:
+            self.progress_logger.complete()
 
     def _table_context(self, batch):
         """
@@ -103,6 +105,8 @@ class HQToWarehouseETLMixin(BaseETLMixin):
 
         assert isinstance(self, BaseLoader)
         record_iter = self.record_iter(batch.start_datetime, batch.end_datetime)
+        if self.progress_logger:
+            record_iter = ProgressIterator(self.progress_logger, record_iter)
 
         django_batch_records(self.model_cls, record_iter, self.field_mapping(), batch.id)
 

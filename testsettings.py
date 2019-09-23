@@ -107,6 +107,7 @@ _set_logging_levels({
     'requests.packages.urllib3': 'WARNING',
     's3transfer': 'INFO',
     'urllib3': 'WARNING',
+    'warehouse': 'INFO',
 })
 
 # use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery

@@ -1208,6 +1208,11 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
+        'warehouse': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        }
     }
 }
 
