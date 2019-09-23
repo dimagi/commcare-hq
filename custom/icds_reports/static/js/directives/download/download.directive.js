@@ -354,6 +354,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             vm.years = _.filter(vm.yearsCopy, function (y) {
                 return y.id >= 2018;
             });
+            vm.months = _.filter(vm.monthsCopy, function (month) {
+                return month.id < latest.getMonth() + 1;
+            });
             vm.setAvailableAndSelectedMonthForAWWPerformanceReport();
             return;
         }
@@ -400,8 +403,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.setAvailableAndSelectedMonthForAWWPerformanceReport = function () {
         var today = new Date();
         if (vm.selectedYear === today.getFullYear()) {
-            vm.setMonthToPreviousIfBeforeThe15th(today);
-
             if (vm.selectedMonth > vm.months[0].id) {
                 vm.selectedMonth = vm.months[0].id;
             }
