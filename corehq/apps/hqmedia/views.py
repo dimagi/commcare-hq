@@ -187,32 +187,14 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
     def get(self, request, *args, **kwargs):
         if request.GET.get('json', None):
             only_missing = bool(int(request.GET.get('only_missing', 0)))
-            include_totals = bool(int(request.GET.get('include_totals', 0)))
+            include_total = bool(int(request.GET.get('include_total', 0)))
             limit = int(request.GET.get('limit', 5))
             page = int(request.GET.get('page', 1))
-            start = limit * (page - 1)
-            end = start + limit
 
-            def _add_references(source, reference_index, references):
-                if reference_index > end and not include_totals:
-                    return (reference_index, references)
-                media = source.get_references()
-                media = [m for m in media if m['media_class'] in ["CommCareImage", "CommCareAudio", "CommCareVideo"]]
-                if only_missing:
-                    media = [m for m in media if m['path'] not in self.app.multimedia_map]
-                for m in media:
-                    if reference_index >= start and reference_index < end:
-                        references.append(m)
-                    reference_index += 1
-                return (reference_index, references)
-
-            reference_index = 0
-            references = []
-            for module in self.app.get_modules():
-                (reference_index, references) = _add_references(module, reference_index, references)
-                for form in module.get_forms():
-                    (reference_index, references) = _add_references(form, reference_index, references)
-
+            (total, references) = self._process_references(page,
+                                                           limit,
+                                                           only_missing=only_missing,
+                                                           include_total=include_total)
             multimedia_map = {r['path']: self.app.multimedia_map[r['path']]
                               for r in references
                               if r['path'] in self.app.multimedia_map}
@@ -222,13 +204,38 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
                 "references": references,
                 "object_map": object_map,
             }
-            if include_totals:
+            if include_total:
                 data.update({
                     "totals": self.app.get_reference_totals(),
-                    "total_rows": reference_index,
+                    "total_rows": total,
                 })
             return JsonResponse(data)
         return super(MultimediaReferencesView, self).get(request, *args, **kwargs)
+
+    def _process_references(self, page, limit, only_missing=False, include_total=True):
+        reference_index = 0
+        references = []
+        start = limit * (page - 1)
+        end = start + limit
+
+        def _add_references(source, reference_index, references):
+            if reference_index > end and not include_total:
+                return (reference_index, references)
+            media = source.get_references()
+            media = [m for m in media if m['media_class'] in ["CommCareImage", "CommCareAudio", "CommCareVideo"]]
+            if only_missing:
+                media = [m for m in media if m['path'] not in self.app.multimedia_map]
+            for m in media:
+                if reference_index >= start and reference_index < end:
+                    references.append(m)
+                reference_index += 1
+            return (reference_index, references)
+
+        for module in self.app.get_modules():
+            (reference_index, references) = _add_references(module, reference_index, references)
+            for form in module.get_forms():
+                (reference_index, references) = _add_references(form, reference_index, references)
+        return (reference_index, references)
 
 
 class BulkUploadMultimediaView(BaseMultimediaUploaderView):
