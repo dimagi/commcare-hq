@@ -1247,6 +1247,11 @@ def build_incentive_files(location, month, file_format, aggregation_level, state
         create_excel_file(excel_data, data_type, file_format, blob_key, timeout=None)
 
 
+def create_all_mbt(month, state_ids):
+    for state_id in state_ids:
+        create_mbt_for_month.delay(state_id, month)
+
+
 @task(queue='icds_dashboard_reports_queue')
 def create_mbt_for_month(state_id, month, force_citus=False):
     with force_citus_engine(force_citus):
