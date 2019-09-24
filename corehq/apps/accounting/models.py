@@ -915,6 +915,9 @@ class SoftwarePlanVersion(models.Model):
                     return True
         return False
 
+    def is_paused(self):
+        return self.plan.edition == SoftwarePlanEdition.PAUSED
+
 
 class SubscriberManager(models.Manager):
 
