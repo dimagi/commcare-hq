@@ -30,8 +30,8 @@ from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.repeater_helpers import (
     get_case_location_ancestor_repeaters,
     get_patient,
-    get_relevant_case_updates_from_form_json,
 )
+from corehq.motech.repeater_helpers import get_relevant_case_updates_from_form_json
 from corehq.motech.openmrs.workflow import execute_workflow
 from corehq.motech.openmrs.workflow_tasks import (
     CreatePersonAddressTask,
