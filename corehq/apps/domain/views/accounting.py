@@ -223,7 +223,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 if subscription.is_renewed:
                     next_subscription.update({
                         'exists': True,
-                        'is_paused': subscription.next_subscription.plan_version.is_paused(),
+                        'is_paused': subscription.next_subscription.plan_version.is_paused,
                         'date_start': subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT),
                         'name': subscription.next_subscription.plan_version.plan.name,
                         'price': (
@@ -272,7 +272,12 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'cards': cards,
             'next_subscription': next_subscription,
             'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line,
-            'is_annual_plan': plan_version.plan.is_annual_plan
+            'is_annual_plan': plan_version.plan.is_annual_plan,
+            'is_paused': subscription.plan_version.is_paused,
+            'previous_subscription_edition': (
+                subscription.previous_subscription.plan_version.plan.edition
+                if subscription.previous_subscription else ""
+            ),
         }
         info['has_account_level_credit'] = (
             any(

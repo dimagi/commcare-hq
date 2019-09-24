@@ -22,20 +22,30 @@
           <label class="control-label col-sm-2">{% trans 'Plan' %}</label>
           <div class="col-sm-10">
             <div class="{{ plan.css_class }}">
-              <h4>{% if plan.is_trial %}
-                {{ plan.trial_length }}{% trans ' Day Trial' %}
-              {% else %}
-                {{ plan.name }}
-              {% endif %}</h4>
+              <h4>
+                {% if plan.is_paused %}
+                  {% blocktrans %}
+                    Your Subscription is Paused
+                  {% endblocktrans %}
+                {% elif plan.is_trial %}
+                  {{ plan.trial_length }}{% trans ' Day Trial' %}
+                {% else %}
+                  {{ plan.name }}
+                {% endif %}
+              </h4>
               <p><i class="fa fa-info-circle"></i>
-                {% if plan.is_trial %}
+                {% if plan.is_paused %}
+                  {% blocktrans with date_paused=plan.date_start pe=plan.previous_subscription_edition %}
+                    Your {{ pe }} Edition subscription was paused on {{ date_paused }}. Please subscribe to a plan to gain access to your project again.
+                  {% endblocktrans %}
+                {% elif plan.is_trial %}
                   {% blocktrans with pn=plan.name trial_length=plan.trial_length %}
                     The {{ trial_length }} Day Trial includes all the features present in the
                     {{ pn }} Software Plan, which is our full set of features.
                   {% endblocktrans %}
                 {% else %}{{ plan.description }}{% endif %}</p>
             </div>
-            {% if plan.do_not_invoice %}
+            {% if plan.do_not_invoice and not plan.is_paused %}
               <div class="alert alert-info">
                 {% blocktrans %}
                   <strong>Note:</strong> This subscription will not be invoiced.
@@ -55,7 +65,11 @@
               {% else %}
                 <p>
                   <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
-                    {% trans "Change Plan" %}
+                    {% if plan.is_paused %}
+                      {% trans "Subscribe to Plan" %}
+                    {% else %}
+                      {% trans "Change Plan" %}
+                    {% endif %}
                   </a>
                 </p>
               {% endif %}
@@ -80,7 +94,7 @@
             {% endif %}
           </div>
         </div>
-        {% if not plan.is_trial %}
+        {% if not plan.is_trial and not plan.is_paused %}
           {% if plan.date_start %}
             <div class="form-group">
               <label class="control-label col-sm-2">{% trans 'Date Started' %}</label>
@@ -249,55 +263,57 @@
             {% endif %}
           </div>
         {% endif %}
-        <legend>{% trans 'Usage Summary' %}</legend>
-        {% if plan.has_credits_in_non_general_credit_line %}
-          <table class="table table-bordered table-striped">
-            <thead>
-            <tr>
-              <th>{% trans "Feature" %}</th>
-              <th>{% trans "Current Use" %}</th>
-              <th>{% trans "Remaining" %}</th>
-              <th>{% trans "Credits Available" %}</th>
-              {% if show_account_credits %}
-                <th>{% trans "Account Credits Available" %}</th>
-              {% endif %}
-            </tr>
-            </thead>
-            <tbody data-bind="foreach: features">
-            <tr>
-              <td data-bind="text: name"></td>
-              <td data-bind="text: usage"></td>
-              <td data-bind="text: remaining"></td>
-              <td data-bind="text: amount"></td>
-              {% if show_account_credits %}
-                <td data-bind="text: accountAmount"></td>
-              {% endif %}
-            </tr>
-            </tbody>
-          </table>
-        {% else %}
-          <table class="table table-bordered table-striped">
-            <thead>
-            <tr>
-              <th>{% trans "Feature" %}</th>
-              <th>{% trans "Included in Software Plan" %}</th>
-              <th>{% trans "Current Usage" %}</th>
-              {% if show_account_credits %}
-                <th>{% trans "Account Credits Available" %}</th>
-              {% endif %}
-            </tr>
-            </thead>
-            <tbody data-bind="foreach: features">
-            <tr>
-              <td data-bind="text: name"></td>
-              <td data-bind="text: limit"></td>
-              <td data-bind="text: usage"></td>
-              {% if show_account_credits %}
-                <td data-bind="text: accountAmount"></td>
-              {% endif %}
-            </tr>
-            </tbody>
-          </table>
+        {% if not plan.is_paused %}
+          <legend>{% trans 'Usage Summary' %}</legend>
+          {% if plan.has_credits_in_non_general_credit_line %}
+            <table class="table table-bordered table-striped">
+              <thead>
+              <tr>
+                <th>{% trans "Feature" %}</th>
+                <th>{% trans "Current Use" %}</th>
+                <th>{% trans "Remaining" %}</th>
+                <th>{% trans "Credits Available" %}</th>
+                {% if show_account_credits %}
+                  <th>{% trans "Account Credits Available" %}</th>
+                {% endif %}
+              </tr>
+              </thead>
+              <tbody data-bind="foreach: features">
+              <tr>
+                <td data-bind="text: name"></td>
+                <td data-bind="text: usage"></td>
+                <td data-bind="text: remaining"></td>
+                <td data-bind="text: amount"></td>
+                {% if show_account_credits %}
+                  <td data-bind="text: accountAmount"></td>
+                {% endif %}
+              </tr>
+              </tbody>
+            </table>
+          {% else %}
+            <table class="table table-bordered table-striped">
+              <thead>
+              <tr>
+                <th>{% trans "Feature" %}</th>
+                <th>{% trans "Included in Software Plan" %}</th>
+                <th>{% trans "Current Usage" %}</th>
+                {% if show_account_credits %}
+                  <th>{% trans "Account Credits Available" %}</th>
+                {% endif %}
+              </tr>
+              </thead>
+              <tbody data-bind="foreach: features">
+              <tr>
+                <td data-bind="text: name"></td>
+                <td data-bind="text: limit"></td>
+                <td data-bind="text: usage"></td>
+                {% if show_account_credits %}
+                  <td data-bind="text: accountAmount"></td>
+                {% endif %}
+              </tr>
+              </tbody>
+            </table>
+          {% endif %}
         {% endif %}
       </article>
     </div>

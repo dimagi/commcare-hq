@@ -915,6 +915,7 @@ class SoftwarePlanVersion(models.Model):
                     return True
         return False
 
+    @property
     def is_paused(self):
         return self.plan.edition == SoftwarePlanEdition.PAUSED
 
@@ -1157,6 +1158,13 @@ class Subscription(models.Model):
                 filter(Q(date_end__isnull=True) | ~Q(date_start=F('date_end'))))
 
     @property
+    def previous_subscription_filter(self):
+        return Subscription.visible_objects.filter(
+            subscriber=self.subscriber,
+            date_start__lt=self.date_start - datetime.timedelta(days=1)
+        ).exclude(pk=self.pk)
+
+    @property
     def is_renewed(self):
         """
         Checks to see if there's another Subscription for this subscriber
@@ -1168,6 +1176,13 @@ class Subscription(models.Model):
     def next_subscription(self):
         try:
             return self.next_subscription_filter.order_by('date_start')[0]
+        except (Subscription.DoesNotExist, IndexError):
+            return None
+
+    @property
+    def previous_subscription(self):
+        try:
+            return self.previous_subscription_filter.order_by('date_end')[0]
         except (Subscription.DoesNotExist, IndexError):
             return None
 
