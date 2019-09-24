@@ -4,12 +4,14 @@ hqDefine("hqmedia/js/media_reference_models", [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqmedia/js/hqmediauploaders',
+    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
     _,
     assertProperties,
-    mediaUploaders
+    mediaUploaders,
+    initialPageData
 ) {
     var HQMediaUploaders = mediaUploaders.get();
 
@@ -42,9 +44,9 @@ hqDefine("hqmedia/js/media_reference_models", [
         // Link to module or form
         self.app_url = "";
         if (self.form.unique_id) {
-            self.app_url = hqImport("hqwebapp/js/initial_page_data").reverse("form_source", self.form.unique_id);
+            self.app_url = initialPageData.reverse("form_source", self.form.unique_id);
         } else if (self.module.unique_id) {
-            self.app_url = hqImport("hqwebapp/js/initial_page_data").reverse("view_module", self.module.unique_id);
+            self.app_url = initialPageData.reverse("view_module", self.module.unique_id);
         }
 
         self.preview_template = null; // override
