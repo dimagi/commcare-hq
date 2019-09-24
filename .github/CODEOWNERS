@@ -11,7 +11,7 @@
 /corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
 /corehq/ex-submodules/pillowtop/ @emord
 /corehq/form_processor/ @snopoke
-/corehq/messaging/ @millerdev
+/corehq/messaging/ @millerdev @orangejenny
 /corehq/motech/ @kaapstorm
 /corehq/pillows/ @emord
 /corehq/sql_accessors/ @snopoke
@@ -45,7 +45,7 @@
 /corehq/apps/ota/ @snopoke
 /corehq/apps/reports/standard/cases/ @proteusvacuum
 /corehq/apps/receiverwrapper/ @snopoke @proteusvacuum
-/corehq/apps/sms*/ @millerdev
+/corehq/apps/sms*/ @millerdev @orangejenny
 /corehq/apps/smsbillables/ @gbova
 /corehq/apps/smsbillables/static/ @gbova @orangejenny
 /corehq/apps/styleguide/ @orangejenny
