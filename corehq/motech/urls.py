@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from corehq.motech.dhis2.view import config_dhis2_repeater
+from corehq.motech.dhis2.views import config_dhis2_repeater
 from corehq.motech.openmrs.views import config_openmrs_repeater
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,

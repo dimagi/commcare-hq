@@ -61,7 +61,7 @@ from corehq.messaging.scheduling.views import (
 )
 from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.messaging.util import show_messaging_dashboard
-from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
+from corehq.motech.dhis2.views import Dhis2ConnectionView, DataSetMapView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.motech.views import MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD

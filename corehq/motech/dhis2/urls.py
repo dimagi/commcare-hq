@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from corehq.motech.dhis2.view import (
+from corehq.motech.dhis2.views import (
     DataSetMapView,
     Dhis2ConnectionView,
     send_dhis2_data,
