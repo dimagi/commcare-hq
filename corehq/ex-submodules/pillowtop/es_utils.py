@@ -3,39 +3,7 @@ from django.conf import settings
 from copy import copy, deepcopy
 from datetime import datetime
 from elasticsearch import TransportError
-from pillowtop import get_all_pillow_classes
 from pillowtop.logger import pillow_logging
-
-if settings.ELASTICSEARCH_VERSION == 1:
-    INDEX_REINDEX_SETTINGS = {
-        "index": {
-            "refresh_interval": "1800s",
-            "merge.policy.merge_factor": 20,
-            "store.throttle.max_bytes_per_sec": "1mb",
-            "store.throttle.type": "merge",
-        }
-    }
-
-    INDEX_STANDARD_SETTINGS = {
-        "index": {
-            "refresh_interval": "5s",
-            "merge.policy.merge_factor": 10,
-            "store.throttle.max_bytes_per_sec": "5mb",
-            "store.throttle.type": "node",
-        }
-    }
-else:
-    INDEX_REINDEX_SETTINGS = {
-        "index": {
-            "refresh_interval": "1800s",
-        }
-    }
-
-    INDEX_STANDARD_SETTINGS = {
-        "index": {
-            "refresh_interval": "5s",
-        }
-    }
 
 
 def _get_analysis(*names):
@@ -150,6 +118,7 @@ def set_index_reindex_settings(es, index):
     """
     Set a more optimized setting setup for fast reindexing
     """
+    from pillowtop.index_settings import INDEX_REINDEX_SETTINGS
     return update_settings(es, index, INDEX_REINDEX_SETTINGS)
 
 
@@ -157,6 +126,7 @@ def set_index_normal_settings(es, index):
     """
     Normal indexing configuration
     """
+    from pillowtop.index_settings import INDEX_STANDARD_SETTINGS
     return update_settings(es, index, INDEX_STANDARD_SETTINGS)
 
 
