@@ -23,5 +23,4 @@ REPEATER_CLASSES = (
     'corehq.motech.repeaters.models.LocationRepeater',
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
-    'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
 )
