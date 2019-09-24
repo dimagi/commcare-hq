@@ -18,12 +18,13 @@ def send_dhis2_event(request, form_config, payload):
                             raise_for_status=True)
 
 
-def get_event(domain, config, form_json):
-    info = CaseTriggerInfo(
-        domain=domain,
-        case_id=None,
-        form_question_values=get_form_question_values(form_json),
-    )
+def get_event(domain, config, form_json=None, info=None):
+    if info is None:
+        info = CaseTriggerInfo(
+            domain=domain,
+            case_id=None,
+            form_question_values=get_form_question_values(form_json),
+        )
     event = {}
     event_property_functions = [
         _get_program,
