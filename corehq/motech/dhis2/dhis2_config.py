@@ -1,6 +1,7 @@
 from dimagi.ext.couchdbkit import (
     DocumentSchema,
     ListProperty,
+    SchemaDictProperty,
     SchemaListProperty,
     SchemaProperty,
     StringProperty,
@@ -55,3 +56,31 @@ class Dhis2FormConfig(DocumentSchema):
 
 class Dhis2Config(DocumentSchema):
     form_configs = ListProperty(Dhis2FormConfig)
+
+
+class Dhis2CaseConfig(DocumentSchema):
+    """
+    A Dhis2CaseConfig maps a case type to a tracked entity type.
+    """
+    case_type = StringProperty()
+
+    # The ID of the Tracked Entity type. e.g. the ID of "Person"
+    te_type_id = StringProperty()
+
+    # The case property to store the ID of the corresponding Tracked
+    # Entity instance. If this is not set, MOTECH will search for a
+    # matching Tracked Entity on every payload.
+    tei_id = SchemaProperty(ValueSource)
+
+    # The corresponding Org Unit of the case's location
+    org_unit_id = SchemaProperty(ValueSource)
+
+    # Attribute Type ID to case property / constant
+    attributes = SchemaDictProperty(ValueSource)
+
+    # Events for this Tracked Entity:
+    form_configs = ListProperty(Dhis2FormConfig)
+
+
+class Dhis2EntityConfig(DocumentSchema):
+    case_configs = ListProperty(Dhis2CaseConfig)

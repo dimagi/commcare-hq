@@ -8,17 +8,44 @@ from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import SchemaProperty
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.motech.dhis2.dhis2_config import Dhis2Config
+from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
-from corehq.motech.repeaters.models import FormRepeater
+from corehq.motech.repeaters.models import CaseRepeater, FormRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
 from corehq.motech.repeaters.signals import create_repeat_records
-from corehq.motech.repeaters.views.repeaters import AddDhis2RepeaterView
 from corehq.motech.requests import Requests
 from corehq.toggles import DHIS2_INTEGRATION
-from corehq.util import reverse
+
+
+class Dhis2EntityRepeater(CaseRepeater):
+    class Meta(object):
+        app_label = 'repeaters'
+
+    include_app_id_param = False
+    friendly_name = _("Forward Cases as DHIS2 Tracked Entities")
+    payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
+
+    dhis2_entity_config = SchemaProperty(Dhis2EntityConfig)
+
+    def __str__(self):
+        return f'Forwarding cases to "{self.url}" as DHIS2 Tracked Entity instances'
+
+    def allowed_to_forward(self, payload):
+        return True
+
+    @memoized
+    def payload_doc(self, repeat_record):
+        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+
+    @property
+    def form_class_name(self):
+        return self.__class__.__name__
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return DHIS2_INTEGRATION.enabled(domain)
 
 
 class Dhis2Repeater(FormRepeater):
@@ -86,8 +113,13 @@ class Dhis2Repeater(FormRepeater):
         return True
 
 
-def create_dhis_repeat_records(sender, xform, **kwargs):
+def create_dhis2_event_repeat_records(sender, xform, **kwargs):
     create_repeat_records(Dhis2Repeater, xform)
 
 
-successful_form_received.connect(create_dhis_repeat_records)
+def create_dhis2_entity_repeat_records(sender, xform, **kwargs):
+    create_repeat_records(Dhis2EntityRepeater, xform)
+
+
+successful_form_received.connect(create_dhis2_event_repeat_records)
+successful_form_received.connect(create_dhis2_entity_repeat_records)
