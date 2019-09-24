@@ -223,6 +223,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 if subscription.is_renewed:
                     next_subscription.update({
                         'exists': True,
+                        'is_paused': subscription.next_subscription.plan_version.is_paused(),
                         'date_start': subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT),
                         'name': subscription.next_subscription.plan_version.plan.name,
                         'price': (

@@ -59,6 +59,15 @@
                   </a>
                 </p>
               {% endif %}
+              {% if plan.next_subscription.exists and plan.next_subscription.is_paused %}
+                <div class="alert alert-warning">
+                  <i class="fa fa-warning"></i>
+                  {% blocktrans with plan.next_subscription.date_start as next_date %}
+                    This subscription will be paused on {{ next_date }} unless you
+                    change to a different plan.
+                  {% endblocktrans %}
+                </div>
+              {% endif %}
             {% endif %}
 
             {% if plan.is_trial %}
@@ -104,7 +113,7 @@
             </div>
           </div>
         {% endif %}
-        {% if plan.next_subscription.exists %}
+        {% if plan.next_subscription.exists and not plan.next_subscription.is_paused %}
           <div class="form-group">
             <label class="control-label col-sm-2">
               {% trans "Next Subscription Begins" %}
