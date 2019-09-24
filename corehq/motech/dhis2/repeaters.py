@@ -10,12 +10,17 @@ from dimagi.ext.couchdbkit import SchemaProperty
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
+from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
+from corehq.motech.repeater_helpers import (
+    get_relevant_case_updates_from_form_json,
+)
 from corehq.motech.repeaters.models import CaseRepeater, FormRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
 from corehq.motech.repeaters.signals import create_repeat_records
 from corehq.motech.requests import Requests
+from corehq.motech.value_source import get_form_question_values
 from corehq.toggles import DHIS2_INTEGRATION
 
 
@@ -48,6 +53,36 @@ class Dhis2EntityRepeater(CaseRepeater):
     @classmethod
     def available_for_domain(cls, domain):
         return DHIS2_INTEGRATION.enabled(domain)
+
+    def get_payload(self, repeat_record):
+        payload = super().get_payload(repeat_record)
+        return json.loads(payload)
+
+    def send_request(self, repeat_record, payload):
+        value_sources = []
+        for case_config in self.dhis2_entity_config.case_configs:
+            value_sources.append(case_config.org_unit_id)
+            for value_source in case_config.attributes.values():
+                value_sources.append(value_source)
+
+        case_trigger_infos = get_relevant_case_updates_from_form_json(
+            self.domain, payload, case_types=self.white_listed_case_types,
+            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')],
+            form_question_values=get_form_question_values(payload),
+        )
+        requests = Requests(
+            self.domain,
+            self.url,
+            self.username,
+            self.plaintext_password,
+            verify=self.verify,
+        )
+        return send_dhis2_entities(
+            requests,
+            payload,
+            self.dhis2_entity_config,
+            case_trigger_infos,
+        )
 
 
 class Dhis2Repeater(FormRepeater):
