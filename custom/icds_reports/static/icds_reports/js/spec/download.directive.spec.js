@@ -85,7 +85,6 @@ describe('Download Directive', function () {
                 {"name": "July", "id": 7},
                 {"name": "August", "id": 8},
                 {"name": "September", "id": 9},
-                {"name": "October", "id": 10},
             ];
 
             assert.deepEqual(expected, controller.months);
@@ -93,7 +92,7 @@ describe('Download Directive', function () {
 
         it('tests selected month', function () {
             var result = controller.selectedMonth;
-            var expected = 10;
+            var expected = 9;
             assert.equal(expected, result);
         });
 
