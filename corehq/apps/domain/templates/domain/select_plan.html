@@ -25,13 +25,6 @@
 
   <section id="plans" class="ko-template">
 
-    <p class="community-plan-notice text-center"
-       data-bind="visible: oIsCurrentPlanCommunity">
-      {% blocktrans %}
-        You are currently on the FREE CommCare Community plan.
-      {% endblocktrans %}
-    </p>
-
     <p class="switch-label text-center">
       {% trans "Pay Monthly" %}
       <label class="switch">
@@ -70,6 +63,25 @@
           <p class="plan-monthly-label">{% trans "monthly" %}</p>
           <p class="plan-desc" data-bind="text: oDescription"></p>
 
+          <p class="plan-downgrade-notice text-warning"
+             data-bind="visible: oShowDowngradeNotice">
+            <i class="fa fa-warning"></i>
+            {% blocktrans %}
+              This plan will be downgrading to
+              <span data-bind="text: oNextPlan"></span> on
+              <span data-bind="text: oNextDate"></span>.
+            {% endblocktrans %}
+          </p>
+
+          <p class="plan-downgrade-notice text-warning"
+             data-bind="visible: oShowPausedNotice">
+            <i class="fa fa-warning"></i>
+            {% blocktrans %}
+              This plan will be pausing on<br />
+              <span data-bind="text: oNextDate"></span>.
+            {% endblocktrans %}
+          </p>
+
           <div class="btn btn-current"
                data-bind="visible: oIsCurrentPlan">
             {% trans "Current Plan" %}
@@ -84,7 +96,7 @@
       <!-- /ko -->
     </div>
 
-    <div data-bind="visible: !oIsCurrentPlanCommunity()">
+    <div data-bind="visible: !oIsCurrentPlanCommunity() && !oIsNextPlanPaused()">
       <a href="#"
          class="tile tile-paused"
          data-bind="click: selectPausedPlan, css: oPausedCss">
@@ -115,6 +127,37 @@
           </li>
         </ul>
       </a>
+    </div>
+
+    <div class="alert alert-warning text-center"
+         data-bind="visible: oIsNextPlanPaused">
+      <i class="fa fa-warning"></i>
+      {% blocktrans %}
+        Your subscription will be pausing on
+        <span data-bind="text: oStartDateAfterMinimumSubscription"></span> unless
+        you select a different plan above.
+      {% endblocktrans %}
+    </div>
+
+    <div class="alert alert-warning text-center"
+         style="margin-top: 20px;"
+         data-bind="visible: oIsNextPlanDowngrade">
+      <i class="fa fa-warning"></i>
+      {% blocktrans %}
+        Your subscription will be downgrading to
+        <span data-bind="text: oNextSubscription"></span> on
+        <span data-bind="text: oStartDateAfterMinimumSubscription"></span> unless
+        you select a different plan above.
+      {% endblocktrans %}
+    </div>
+
+    <div class="community-plan-notice alert alert-info text-center"
+         data-bind="visible: oIsCurrentPlanCommunity">
+      <p class="lead">
+        {% blocktrans %}
+          You are currently on the FREE CommCare Community plan.
+        {% endblocktrans %}
+      </p>
     </div>
 
     <form
