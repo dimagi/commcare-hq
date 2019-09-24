@@ -102,7 +102,8 @@ class ProjectReportsTab(UITab):
 
     @property
     def _is_viewable(self):
-        return user_can_view_reports(self.project, self.couch_user)
+        return (user_can_view_reports(self.project, self.couch_user)
+                and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
     @property
     def view(self):

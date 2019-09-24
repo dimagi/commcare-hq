@@ -123,12 +123,15 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
 def _get_default_tiles(request):
     can_edit_apps = lambda request: (request.couch_user.is_web_user()
                                      or request.couch_user.can_edit_apps())
-    can_view_reports = lambda request: user_can_view_reports(request.project, request.couch_user)
     can_edit_users = lambda request: (request.couch_user.can_edit_commcare_users()
                                       or request.couch_user.can_edit_web_users())
 
     def can_view_apps(request):
         return can_edit_apps(request) and has_privilege(request, privileges.PROJECT_ACCESS)
+
+    def can_view_reports(request):
+        return (user_can_view_reports(request.project, request.couch_user)
+                and has_privilege(request, privileges.PROJECT_ACCESS))
 
     def can_view_data(request):
         return ((request.couch_user.can_edit_data() or request.couch_user.can_access_any_exports())
