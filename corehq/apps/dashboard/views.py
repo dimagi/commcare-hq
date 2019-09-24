@@ -129,6 +129,20 @@ def _get_default_tiles(request):
     def can_view_apps(request):
         return can_edit_apps(request) and has_privilege(request, privileges.PROJECT_ACCESS)
 
+    def can_view_users(request):
+        can_do_something = (
+            request.couch_user.can_edit_commcare_users() or
+            request.couch_user.can_view_commcare_users() or
+            request.couch_user.can_edit_groups() or
+            request.couch_user.can_view_groups() or
+            request.couch_user.can_view_roles()
+        ) and has_privilege(request, privileges.PROJECT_ACCESS)
+        return (
+            can_do_something or
+            request.couch_user.can_edit_web_users() or
+            request.couch_user.can_view_web_users()
+        )
+
     def can_view_reports(request):
         return (user_can_view_reports(request.project, request.couch_user)
                 and has_privilege(request, privileges.PROJECT_ACCESS))
@@ -221,7 +235,7 @@ def _get_default_tiles(request):
             slug='users',
             icon='fcc fcc-users',
             urlname=DefaultProjectUserSettingsView.urlname,
-            visibility_check=can_edit_users,
+            visibility_check=can_view_users,
             help_text=_('Manage accounts for mobile workers and CommCareHQ users'),
         ),
         Tile(

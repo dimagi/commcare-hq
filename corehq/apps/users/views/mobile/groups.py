@@ -125,6 +125,7 @@ class BulkSMSVerificationView(BaseDomainView):
 class BaseGroupsView(BaseUserSettingsView):
 
     @method_decorator(require_can_edit_or_view_groups)
+    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(BaseGroupsView, self).dispatch(request, *args, **kwargs)
