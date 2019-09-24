@@ -73,7 +73,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             0,
             0,
             0,
-            0
+            0,
             CASE WHEN
                 (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
