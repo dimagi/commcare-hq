@@ -1304,7 +1304,7 @@ def aggregate_validation_helper(agg_date):
                                  "filename": datetime.now().strftime('incentive_report_awc_eligibility_mismatch'
                                                                      '_%s.csv' % SERVER_DATETIME_FORMAT)})
 
-    if len(awc_ids_mismatch_count) > 0:
+    if awc_ids_mismatch_count > 0:
         csv_columns = ['awc_ids_from_performance', 'awc_ids_from_aggregate']
         file_attachments.append({"csv_columns": csv_columns, "data": awc_ids_mismatched_list,
                                  "filename": datetime.now().strftime('incentive_report_awc_ids_mismatch'
