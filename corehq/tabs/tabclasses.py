@@ -912,7 +912,9 @@ class ApplicationsTab(UITab):
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
                 (couch_user.is_member_of(self.domain) or couch_user.is_superuser) and
                 # domain hides Applications tab if user is non-admin
-                not user_has_custom_top_menu(self.domain, couch_user))
+                not user_has_custom_top_menu(self.domain, couch_user)) and (
+            has_privilege(self._request, privileges.PROJECT_ACCESS)
+        )
 
 
 class CloudcareTab(UITab):

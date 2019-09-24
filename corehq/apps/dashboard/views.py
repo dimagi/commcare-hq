@@ -129,6 +129,9 @@ def _get_default_tiles(request):
     can_edit_users = lambda request: (request.couch_user.can_edit_commcare_users()
                                       or request.couch_user.can_edit_web_users())
 
+    def can_view_apps(request):
+        return can_edit_apps(request) and has_privilege(request, privileges.PROJECT_ACCESS)
+
     def can_edit_locations_not_users(request):
         if not has_privilege(request, privileges.LOCATIONS):
             return False
@@ -173,7 +176,7 @@ def _get_default_tiles(request):
             slug='applications',
             icon='fcc fcc-applications',
             paginator_class=AppsPaginator,
-            visibility_check=can_edit_apps,
+            visibility_check=can_view_apps,
             urlname='default_new_app',
             url_generator=apps_link,
             help_text=_('Build, update, and deploy applications'),

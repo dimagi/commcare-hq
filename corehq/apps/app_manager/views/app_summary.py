@@ -3,9 +3,12 @@ from collections import namedtuple
 
 from django.http import Http404
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -29,6 +32,7 @@ from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
 
 
+@method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS), name='dispatch')
 class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
 
     @property

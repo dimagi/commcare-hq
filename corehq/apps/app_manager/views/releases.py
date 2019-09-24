@@ -21,6 +21,7 @@ from couchdbkit import NoResultFound, ResourceNotFound
 from django_prbac.decorators import requires_privilege
 from django_prbac.utils import has_privilege
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.web import json_response
 from phonelog.models import UserErrorEntry
@@ -98,6 +99,7 @@ def _get_error_counts(domain, app_id, version_numbers):
 
 @cache_control(no_cache=True, no_store=True)
 @require_deploy_apps
+@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     only_show_released = json.loads(request.GET.get('only_show_released', 'false'))
@@ -223,6 +225,7 @@ def get_releases_context(request, domain, app_id):
 
 @login_or_api_key
 @location_safe
+@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def current_app_version(request, domain, app_id):
     """
     Return current app version and the latest release
@@ -244,6 +247,7 @@ def current_app_version(request, domain, app_id):
 @no_conflict_require_POST
 @require_can_edit_apps
 @track_domain_request(calculated_prop='cp_n_click_app_deploy')
+@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
@@ -278,6 +282,7 @@ def release_build(request, domain, app_id, saved_app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def save_copy(request, domain, app_id):
     """
     Saves a copy of the app to a new doc.
@@ -354,6 +359,7 @@ def _track_build_for_app_preview(domain, couch_user, app_id, message):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def revert_to_copy(request, domain, app_id):
     """
     Copies a saved doc back to the original.
@@ -393,6 +399,7 @@ def revert_to_copy(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def delete_copy(request, domain, app_id):
     """
     Deletes a saved copy permanently from the database.
@@ -463,6 +470,7 @@ def short_odk_url(request, domain, app_id, with_media=False):
 
 
 @require_deploy_apps
+@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def update_build_comment(request, domain, app_id):
     build_id = request.POST.get('build_id')
     try:
@@ -528,6 +536,7 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     page_title = ugettext_lazy("App diff")
     template_name = 'app_manager/app_diff.html'
 
+    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
 
@@ -616,6 +625,7 @@ class LanguageProfilesView(View):
 
 
 @require_can_edit_apps
+@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def toggle_build_profile(request, domain, build_id, build_profile_id):
     build = get_app_cached(request.domain, build_id)
     status = request.GET.get('action') == 'enable'
