@@ -1216,10 +1216,9 @@ def aggregate_validation_helper(agg_date):
     """
     Validates the performance reports vs aggregate reports and send mails with mismatches
     """
-    awc_performance_rows_list = list(AWWIncentiveReport.objects.values('awc_id', 'is_launched',
-                                                                       'valid_visits', 'visit_denominator',
-                                                                       'wer_weighed', 'wer_eligible',
-                                                                       'incentive_eligible')
+    awc_performance_rows_list = list(AWWIncentiveReport.objects.filter(month=agg_date)
+                                     .values('awc_id', 'is_launched', 'valid_visits', 'visit_denominator',
+                                             'wer_weighed', 'wer_eligible', 'incentive_eligible')
                                      .order_by('awc_id'))
     awc_aggregate_rows_list = list(AggAwc.objects.filter(aggregation_level=5, month=agg_date)
                                    .values('awc_id', 'is_launched', 'valid_visits', 'expected_visits')
@@ -1228,6 +1227,7 @@ def aggregate_validation_helper(agg_date):
     home_conduct_check_bad_data = []
     eligibility_check_bad_data = []
     missed_ids_from_performance = []
+    missed_ids_from_aggregate = []
     performance_index = 0
     aggregate_index = 0
     while performance_index < len(awc_performance_rows_list) and aggregate_index < len(awc_aggregate_rows_list):
@@ -1241,6 +1241,7 @@ def aggregate_validation_helper(agg_date):
                 missed_ids_from_performance.append(awc_id_from_performance)
                 aggregate_index += 1
             else:
+                missed_ids_from_aggregate.append(awc_id_from_aggregate)
                 performance_index += 1
             awc_from_performance = awc_performance_rows_list[performance_index]
             awc_from_aggregate = awc_aggregate_rows_list[aggregate_index]
@@ -1264,6 +1265,26 @@ def aggregate_validation_helper(agg_date):
         performance_index += 1
         aggregate_index += 1
 
+    mismatched_performance_awc_ids_length = len(missed_ids_from_performance)
+    mismatched_aggregate_awc_ids_length = len(missed_ids_from_aggregate)
+
+    awc_ids_mismatch_count = mismatched_performance_awc_ids_length
+    if mismatched_performance_awc_ids_length < mismatched_aggregate_awc_ids_length:
+        awc_ids_mismatch_count = mismatched_performance_awc_ids_length
+
+    # merging two mismatched awc_ids into a single list
+    awc_ids_mismatched_list = []
+    for i in range(awc_ids_mismatch_count):
+        try:
+            awc_id_mismatched_row = [missed_ids_from_performance[i], missed_ids_from_aggregate[i]]
+        except IndexError:
+            if i >= mismatched_performance_awc_ids_length:
+                missed_ids_from_performance.append('')
+            if i >= mismatched_aggregate_awc_ids_length:
+                missed_ids_from_aggregate.append('')
+            awc_id_mismatched_row = [missed_ids_from_performance[i], missed_ids_from_aggregate[i]]
+        awc_ids_mismatched_list.append(awc_id_mismatched_row)
+
     file_attachments = []
     if len(is_launched_check_bad_data) > 0:
         csv_columns = ['awc_id_from_performance', 'awc_id_from_aggregate', 'AwwIncentiveReport', 'AggAwc']
@@ -1283,9 +1304,9 @@ def aggregate_validation_helper(agg_date):
                                  "filename": datetime.now().strftime('incentive_report_awc_eligibility_mismatch'
                                                                      '_%s.csv' % SERVER_DATETIME_FORMAT)})
 
-    if len(missed_ids_from_performance) > 0:
-        csv_columns = ['awc_id_from_performance']
-        file_attachments.append({"csv_columns": csv_columns, "data": missed_ids_from_performance,
+    if len(awc_ids_mismatch_count) > 0:
+        csv_columns = ['awc_ids_from_performance', 'awc_ids_from_aggregate']
+        file_attachments.append({"csv_columns": csv_columns, "data": awc_ids_mismatched_list,
                                  "filename": datetime.now().strftime('incentive_report_awc_ids_mismatch'
                                                                      '_%s.csv' % SERVER_DATETIME_FORMAT)})
 
