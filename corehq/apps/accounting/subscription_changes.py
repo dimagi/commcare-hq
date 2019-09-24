@@ -693,22 +693,28 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         Alert the user if they have subscriptions scheduled to start
         in the future.
         """
-        from corehq.apps.accounting.models import Subscription
+        from corehq.apps.accounting.models import (
+            Subscription,
+            SoftwarePlanEdition,
+        )
         later_subs = Subscription.visible_objects.filter(
             subscriber__domain=self.domain.name,
-            date_start__gt=self.date_start
+            date_start__gt=self.date_start,
+        ).exclude(
+            plan_version__plan__edition=SoftwarePlanEdition.PAUSED,
         ).order_by('date_start')
         if later_subs.exists():
-            next_subscription = later_subs[0]
-            plan_desc = next_subscription.plan_version.user_facing_description
-            return _fmt_alert(_(
-                "You have a subscription SCHEDULED TO START on %(date_start)s. "
-                "Changing this plan will CANCEL that %(plan_name)s "
-                "subscription."
-            ) % {
-                'date_start': next_subscription.date_start.strftime(USER_DATE_FORMAT),
-                'plan_name': plan_desc['name'],
-            })
+            for next_subscription in later_subs:
+                if next_subscription.date_start != next_subscription.date_end:
+                    plan_desc = next_subscription.plan_version.user_facing_description
+                    return _fmt_alert(_(
+                        "You have a subscription SCHEDULED TO START on %(date_start)s. "
+                        "Changing this plan will CANCEL that %(plan_name)s "
+                        "subscription."
+                    ) % {
+                        'date_start': next_subscription.date_start.strftime(USER_DATE_FORMAT),
+                        'plan_name': plan_desc['name'],
+                    })
 
     @staticmethod
     def response_data_cleanup(domain, new_plan_version):
