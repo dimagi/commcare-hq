@@ -76,8 +76,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         var latest = new Date();
         if (latest.getDate() <= 3 && vm.months[vm.months.length - 1].id === latest.getMonth() + 1 &&
             vm.selectedYear === latest.getFullYear()) {
-                vm.months.pop();
-                vm.selectedMonth = vm.months[vm.months.length - 1].id;
+            vm.months.pop();
+            vm.selectedMonth = vm.months[vm.months.length - 1].id;
         }
     };
 
