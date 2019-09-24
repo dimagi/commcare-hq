@@ -29,6 +29,8 @@ class Dhis2EntityRepeater(CaseRepeater):
 
     dhis2_entity_config = SchemaProperty(Dhis2EntityConfig)
 
+    _has_config = True
+
     def __str__(self):
         return f'Forwarding cases to "{self.url}" as DHIS2 Tracked Entity instances'
 

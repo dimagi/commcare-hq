@@ -1,6 +1,9 @@
 from django.conf.urls import url
 
-from corehq.motech.dhis2.views import config_dhis2_repeater
+from corehq.motech.dhis2.views import (
+    config_dhis2_entity_repeater,
+    config_dhis2_repeater,
+)
 from corehq.motech.openmrs.views import config_openmrs_repeater
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
@@ -54,6 +57,8 @@ urlpatterns = [
         name='config_openmrs_repeater'),
     url(r'^forwarding/config/Dhis2Repeater/(?P<repeater_id>\w+)/$', config_dhis2_repeater,
         name='config_dhis2_repeater'),
+    url(r'^forwarding/config/Dhis2EntityRepeater/(?P<repeater_id>\w+)/$', config_dhis2_entity_repeater,
+        name='config_dhis2_entity_repeater'),
     url(r'^forwarding/config/(?P<repeater_type>\w+)/(?P<repeater_id>\w+)/$', lambda: None,
         name='config_repeater'),
 
