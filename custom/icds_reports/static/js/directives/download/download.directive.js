@@ -74,10 +74,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     //if report is requested in first three days of the month, then we will remove the current month in filter
     vm.excludeCurrentMonthIfInitialThreeDays = function () {
         var latest = new Date();
-        if(latest.getDate() <= 3 && vm.months[vm.months.length-1].id === latest.getMonth() + 1 &&
-            vm.selectedYear === latest.getFullYear()){
-             vm.months.pop();
-             vm.selectedMonth = vm.months[vm.months.length-1].id
+        if (latest.getDate() <= 3 && vm.months[vm.months.length - 1].id === latest.getMonth() + 1 &&
+            vm.selectedYear === latest.getFullYear()) {
+                vm.months.pop();
+                vm.selectedMonth = vm.months[vm.months.length - 1].id
         }
     };
 
