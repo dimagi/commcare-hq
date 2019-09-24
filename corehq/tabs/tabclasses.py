@@ -488,7 +488,7 @@ class ProjectDataTab(UITab):
             self.can_edit_commcare_data
             or self.can_export_data
             or can_download_data_files(self.domain, self.couch_user)
-        )
+        ) and has_privilege(self._request, privileges.PROJECT_ACCESS)
 
     @property
     def sidebar_items(self):

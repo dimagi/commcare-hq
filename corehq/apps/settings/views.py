@@ -29,6 +29,8 @@ from two_factor.views import (
     SetupView,
 )
 
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
 
@@ -444,6 +446,7 @@ class TwoFactorResetView(TwoFactorSetupView):
         return super(TwoFactorResetView, self).get(request, *args, **kwargs)
 
 
+@method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS), name='dispatch')
 class BaseProjectDataView(BaseDomainView):
     section_name = ugettext_noop("Data")
 

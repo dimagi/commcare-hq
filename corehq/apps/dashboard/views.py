@@ -121,8 +121,6 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
 
 
 def _get_default_tiles(request):
-    can_edit_data = lambda request: (request.couch_user.can_edit_data()
-                                     or request.couch_user.can_access_any_exports())
     can_edit_apps = lambda request: (request.couch_user.is_web_user()
                                      or request.couch_user.can_edit_apps())
     can_view_reports = lambda request: user_can_view_reports(request.project, request.couch_user)
@@ -131,6 +129,10 @@ def _get_default_tiles(request):
 
     def can_view_apps(request):
         return can_edit_apps(request) and has_privilege(request, privileges.PROJECT_ACCESS)
+
+    def can_view_data(request):
+        return ((request.couch_user.can_edit_data() or request.couch_user.can_access_any_exports())
+                and has_privilege(request, privileges.PROJECT_ACCESS))
 
     def can_edit_locations_not_users(request):
         if not has_privilege(request, privileges.LOCATIONS):
@@ -207,7 +209,7 @@ def _get_default_tiles(request):
             icon='fcc fcc-data',
             paginator_class=DataPaginator,
             urlname="data_interfaces_default",
-            visibility_check=can_edit_data,
+            visibility_check=can_view_data,
             help_text=_('Export and manage data'),
         ),
         Tile(
