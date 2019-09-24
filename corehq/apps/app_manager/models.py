@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import calendar
 import datetime
 import hashlib
@@ -3918,6 +3916,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
     comment_from = StringProperty()
+    last_released = DateTimeProperty(required=False)
     build_broken = BooleanProperty(default=False)
     is_auto_generated = BooleanProperty(default=False)
     # not used yet, but nice for tagging/debugging
@@ -4604,6 +4603,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                                      choices=['none', 'all', 'some'])
     add_ons = DictProperty()
     smart_lang_display = BooleanProperty()  # null means none set so don't default to false/true
+
+    family_id = StringProperty()  # ID of earliest parent app across copies and linked apps
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
@@ -5549,8 +5550,9 @@ class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
-    # This is the id of the master application
-    master = StringProperty()
+    master = StringProperty()  # Legacy, should be removed once all linked apps support multiple masters
+    upstream_app_id = StringProperty()  # ID of the app that was most recently pulled
+    upstream_version = IntegerProperty()  # Version of the app that was most recently pulled
 
     # The following properties will overwrite their corresponding values from
     # the master app everytime the new master is pulled
@@ -5621,6 +5623,8 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     app.convert_build_to_app()
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+    if source_domain == domain:
+        app.family_id = source_app.get_id
 
     report_map = get_static_report_mapping(source_domain, domain)
     if report_map:

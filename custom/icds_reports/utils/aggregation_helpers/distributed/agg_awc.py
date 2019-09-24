@@ -55,7 +55,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
             is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe,
-            thr_distribution_image_count
+            thr_distribution_image_count, num_launched_awcs, num_launched_supervisors, num_launched_blocks,
+            num_launched_districts, num_launched_states
         )
         (
             SELECT
@@ -68,6 +69,11 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             1,
             'no',
             5,
+            0,
+            0,
+            0,
+            0,
+            0
             CASE WHEN
                 (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
@@ -243,7 +249,13 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         WHERE opened_on<= %(end_date)s
         GROUP BY owner_id;
         UPDATE "{tablename}" agg_awc SET
-           cases_household = ut.cases_household
+           cases_household = ut.cases_household,
+           is_launched = CASE WHEN ut.cases_household>0 THEN 'yes' ELSE 'no' END,
+           num_launched_states = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_districts = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_blocks = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_supervisors = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_awcs = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END
         FROM "tmp_household" ut
         WHERE ut.owner_id = agg_awc.awc_id;
         DROP TABLE "tmp_household";
@@ -359,8 +371,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             sum(gmp) AS usage_num_gmp,
             sum(thr) AS usage_num_thr,
             sum(add_household) AS usage_num_hh_reg,
-            CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched,
-            CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs,
             sum(add_person) AS usage_num_add_person,
             sum(add_pregnancy) AS usage_num_add_pregnancy,
             sum(home_visit) AS usage_num_home_visit,
@@ -384,12 +394,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             usage_num_gmp = ut.usage_num_gmp,
             usage_num_thr = ut.usage_num_thr,
             usage_num_hh_reg = ut.usage_num_hh_reg,
-            is_launched = ut.is_launched,
-            num_launched_states = ut.num_launched_awcs,
-            num_launched_districts = ut.num_launched_awcs,
-            num_launched_blocks = ut.num_launched_awcs,
-            num_launched_supervisors = ut.num_launched_awcs,
-            num_launched_awcs = ut.num_launched_awcs,
             usage_num_add_person = ut.usage_num_add_person,
             usage_num_add_pregnancy = ut.usage_num_add_pregnancy,
             usage_num_home_visit = ut.usage_num_home_visit,
@@ -411,22 +415,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             usage_table=self._ucr_tablename('static-usage_forms'),
         ), {
             'start_date': self.month_start
-        }
-
-        yield """
-        UPDATE "{tablename}" agg_awc SET
-            is_launched = 'yes',
-            num_launched_awcs = 1
-        FROM (
-            SELECT DISTINCT(awc_id)
-            FROM agg_awc
-            WHERE month = %(prev_month)s AND num_launched_awcs > 0 AND aggregation_level=5
-        ) ut
-        WHERE ut.awc_id = agg_awc.awc_id;
-        """.format(
-            tablename=self.tablename
-        ), {
-            'prev_month': self.prev_month
         }
 
         yield """

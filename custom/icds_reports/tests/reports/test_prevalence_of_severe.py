@@ -61,8 +61,7 @@ class TestPrevalenceOfSevere(TestCase):
                     'severe': 0,
                     'moderate': 0,
                     'total_height_eligible': 0,
-                    'fillKey': '0%-5%',
-                    'total_weighed_and_height': 0,
+                    'fillKey': '0%-5%'
                 },
                 'st5': {
                     'normal': 0,
@@ -72,8 +71,7 @@ class TestPrevalenceOfSevere(TestCase):
                     'severe': 0,
                     'moderate': 0,
                     'total_height_eligible': 0,
-                    'fillKey': '0%-5%',
-                    'total_weighed_and_height': 0,
+                    'fillKey': '0%-5%'
                 },
                 'st6': {
                     'normal': 0,
@@ -83,8 +81,7 @@ class TestPrevalenceOfSevere(TestCase):
                     'severe': 0,
                     'moderate': 0,
                     'total_height_eligible': 0,
-                    'fillKey': '0%-5%',
-                    'total_weighed_and_height': 0,
+                    'fillKey': '0%-5%'
                 },
                 'st7': {
                     'normal': 0,
@@ -94,8 +91,7 @@ class TestPrevalenceOfSevere(TestCase):
                     'severe': 0,
                     'moderate': 0,
                     'total_height_eligible': 1,
-                    'fillKey': '0%-5%',
-                    'total_weighed_and_height': 0,
+                    'fillKey': '0%-5%'
                 },
                 'st1': {
                     'normal': 3,
@@ -105,8 +101,7 @@ class TestPrevalenceOfSevere(TestCase):
                     'severe': 0,
                     'moderate': 4,
                     'total_height_eligible': 454,
-                    'fillKey': '7%-100%',
-                    'total_weighed_and_height': 7,
+                    'fillKey': '7%-100%'
                 },
                 'st2': {
                     'normal': 16,
@@ -116,8 +111,7 @@ class TestPrevalenceOfSevere(TestCase):
                     'severe': 0,
                     'moderate': 4,
                     'total_height_eligible': 497,
-                    'fillKey': '7%-100%',
-                    'total_weighed_and_height': 24,
+                    'fillKey': '7%-100%'
                 },
                 'st3': {
                     'normal': 0,
@@ -127,8 +121,7 @@ class TestPrevalenceOfSevere(TestCase):
                     'severe': 0,
                     'moderate': 0,
                     'total_height_eligible': 0,
-                    'fillKey': '0%-5%',
-                    'total_weighed_and_height': 0,
+                    'fillKey': '0%-5%'
                 }
             }
         )
@@ -169,13 +162,13 @@ class TestPrevalenceOfSevere(TestCase):
             data['rightLegend']['extended_info'],
             [
                 {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '696'},
-                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:', 'value': '27'},
+                {'indicator': 'Total Children (0 - 5 years) with weight and height measured in given month:',
+                 'value': '27'},
                 {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '256'},
                 {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
                 {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '29.63%'},
                 {'indicator': '% Normal (0 - 5 years):', 'value': '70.37%'}
             ]
-
         )
 
     def test_map_data_fills(self):
@@ -241,8 +234,7 @@ class TestPrevalenceOfSevere(TestCase):
                     'severe': 0,
                     'total_height_eligible': 454,
                     'total_weighed': 317,
-                    'fillKey': '7%-100%',
-                    'total_weighed_and_height': 7
+                    'fillKey': '7%-100%'
                 }
             }
         )
@@ -354,16 +346,14 @@ class TestPrevalenceOfSevere(TestCase):
                         "x": 1485907200000,
                         "total_weighed": 0,
                         'total_measured': 0,
-                        'total_height_eligible': 0,
-                        'weighed_and_height_measured': 0,
+                        'total_height_eligible': 0
                     },
                     {
                         "y": 0.0,
                         "x": 1488326400000,
                         "total_weighed": 0,
                         'total_measured': 0,
-                        'total_height_eligible': 0,
-                        'weighed_and_height_measured': 0,
+                        'total_height_eligible': 0
                     },
                     {
                         "y": 0.6666666666666666,
@@ -371,7 +361,6 @@ class TestPrevalenceOfSevere(TestCase):
                         "total_weighed": 691,
                         'total_measured': 9,
                         'total_height_eligible': 981,
-                        'weighed_and_height_measured': 11,
                     },
                     {
                         "y": 0.7037037037037037,
@@ -379,7 +368,6 @@ class TestPrevalenceOfSevere(TestCase):
                         "total_weighed": 696,
                         'total_measured': 27,
                         'total_height_eligible': 952,
-                        'weighed_and_height_measured': 31,
                     }
                 ],
                 "key": "% normal"
@@ -408,7 +396,6 @@ class TestPrevalenceOfSevere(TestCase):
                         "total_weighed": 0,
                         'total_measured': 0,
                         'total_height_eligible': 0,
-                        'weighed_and_height_measured': 0,
                     },
                     {
                         "y": 0.0,
@@ -416,7 +403,6 @@ class TestPrevalenceOfSevere(TestCase):
                         "total_weighed": 0,
                         'total_measured': 0,
                         'total_height_eligible': 0,
-                        'weighed_and_height_measured': 0,
                     },
                     {
                         "y": 0.1111111111111111,
@@ -424,7 +410,6 @@ class TestPrevalenceOfSevere(TestCase):
                         "total_weighed": 691,
                         'total_measured': 9,
                         'total_height_eligible': 981,
-                        'weighed_and_height_measured': 11,
                     },
                     {
                         "y": 0.2962962962962963,
@@ -432,7 +417,6 @@ class TestPrevalenceOfSevere(TestCase):
                         "total_weighed": 696,
                         'total_measured': 27,
                         'total_height_eligible': 952,
-                        'weighed_and_height_measured': 31,
                     }
                 ],
                 "key": "% moderately wasted (moderate acute malnutrition)"
@@ -460,16 +444,14 @@ class TestPrevalenceOfSevere(TestCase):
                         "x": 1485907200000,
                         "total_weighed": 0,
                         'total_measured': 0,
-                        'total_height_eligible': 0,
-                        'weighed_and_height_measured': 0,
+                        'total_height_eligible': 0
                     },
                     {
                         "y": 0.0,
                         "x": 1488326400000,
                         "total_weighed": 0,
                         'total_measured': 0,
-                        'total_height_eligible': 0,
-                        'weighed_and_height_measured': 0,
+                        'total_height_eligible': 0
                     },
                     {
                         "y": 0.2222222222222222,
@@ -477,7 +459,6 @@ class TestPrevalenceOfSevere(TestCase):
                         "total_weighed": 691,
                         'total_measured': 9,
                         'total_height_eligible': 981,
-                        'weighed_and_height_measured': 11,
                     },
                     {
                         "y": 0.0,
@@ -485,7 +466,6 @@ class TestPrevalenceOfSevere(TestCase):
                         "total_weighed": 696,
                         'total_measured': 27,
                         'total_height_eligible': 952,
-                        'weighed_and_height_measured': 31,
                     }
                 ],
                 "key": "% severely wasted (severe acute malnutrition)"
@@ -710,7 +690,6 @@ class TestPrevalenceOfSevere(TestCase):
                     "total_measured": 4,
                     "normal": 1,
                     "total_height_eligible": 153,
-                    "weighed_and_height_measured": 4,
                 },
                 "s1": {
                     "total_weighed": 67,
@@ -719,7 +698,6 @@ class TestPrevalenceOfSevere(TestCase):
                     "total_measured": 0,
                     "normal": 0,
                     "total_height_eligible": 71,
-                    "weighed_and_height_measured": 0,
                 }
             }
         )
@@ -777,8 +755,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     'severe': 0,
                     'moderate': 0,
                     'total_height_eligible': 0,
-                    'fillKey': '0%-5%',
-                    'total_weighed_and_height': 0
+                    'fillKey': '0%-5%'
                 },
                 'st5': {
                     'normal': 0,
@@ -788,8 +765,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     'severe': 0,
                     'moderate': 0,
                     'total_height_eligible': 0,
-                    'fillKey': '0%-5%',
-                    'total_weighed_and_height': 0
+                    'fillKey': '0%-5%'
                 },
                 'st6': {
                     'normal': 0,
@@ -799,8 +775,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     'severe': 0,
                     'moderate': 0,
                     'total_height_eligible': 0,
-                    'fillKey': '0%-5%',
-                    'total_weighed_and_height': 0
+                    'fillKey': '0%-5%'
                 },
                 'st7': {
                     'normal': 0,
@@ -810,8 +785,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     'severe': 0,
                     'moderate': 0,
                     'total_height_eligible': 1,
-                    'fillKey': '0%-5%',
-                    'total_weighed_and_height': 0
+                    'fillKey': '0%-5%'
                 },
                 'st1': {
                     'normal': 3,
@@ -821,8 +795,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     'severe': 0,
                     'moderate': 4,
                     'total_height_eligible': 454,
-                    'fillKey': '7%-100%',
-                    'total_weighed_and_height': 7
+                    'fillKey': '7%-100%'
                 },
                 'st2': {
                     'normal': 16,
@@ -832,8 +805,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     'severe': 0,
                     'moderate': 4,
                     'total_height_eligible': 497,
-                    'fillKey': '7%-100%',
-                    'total_weighed_and_height': 24
+                    'fillKey': '7%-100%'
                 },
                 'st3': {
                     'normal': 0,
@@ -843,8 +815,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     'severe': 0,
                     'moderate': 0,
                     'total_height_eligible': 0,
-                    'fillKey': '0%-5%',
-                    'total_weighed_and_height': 0
+                    'fillKey': '0%-5%'
                 }
             }
         )
@@ -890,17 +861,10 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {
-                    'indicator': (
-                        'Total number of children (0 - 5 years) eligible for weight and height measurement:'
-                    ),
-                    'value': '31'
-                },
-                {
-                    'indicator': 'Total number of children (0 - 5 years) with weight and height measured:',
-                    'value': '27'
-                },
-                {'indicator': 'Total number of children (0 - 5 years) unmeasured:', 'value': '4'},
+                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '696'},
+                {'indicator': 'Total Children (0 - 5 years) with weight and height measured in given month:',
+                 'value': '27'},
+                {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '256'},
                 {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
                 {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '29.63%'},
                 {'indicator': '% Normal (0 - 5 years):', 'value': '70.37%'}
@@ -944,8 +908,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     'severe': 0,
                     'total_height_eligible': 454,
                     'total_weighed': 317,
-                    'fillKey': '7%-100%',
-                    'total_weighed_and_height': 7
+                    'fillKey': '7%-100%'
                 }
             }
         )
@@ -1032,16 +995,14 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         "x": 1485907200000,
                         "total_weighed": 0,
                         'total_measured': 0,
-                        'total_height_eligible': 0,
-                        'weighed_and_height_measured': 0,
+                        'total_height_eligible': 0
                     },
                     {
                         "y": 0.0,
                         "x": 1488326400000,
                         "total_weighed": 0,
                         'total_measured': 0,
-                        'total_height_eligible': 0,
-                        'weighed_and_height_measured': 0,
+                        'total_height_eligible': 0
                     },
                     {
                         "y": 0.6666666666666666,
@@ -1049,7 +1010,6 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         "total_weighed": 691,
                         'total_measured': 9,
                         'total_height_eligible': 981,
-                        'weighed_and_height_measured': 11,
                     },
                     {
                         "y": 0.7037037037037037,
@@ -1057,7 +1017,6 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         "total_weighed": 696,
                         'total_measured': 27,
                         'total_height_eligible': 952,
-                        'weighed_and_height_measured': 31,
                     }
                 ],
                 "key": "% normal"
@@ -1088,7 +1047,6 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         "total_weighed": 0,
                         'total_measured': 0,
                         'total_height_eligible': 0,
-                        'weighed_and_height_measured': 0,
                     },
                     {
                         "y": 0.0,
@@ -1096,7 +1054,6 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         "total_weighed": 0,
                         'total_measured': 0,
                         'total_height_eligible': 0,
-                        'weighed_and_height_measured': 0,
                     },
                     {
                         "y": 0.1111111111111111,
@@ -1104,7 +1061,6 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         "total_weighed": 691,
                         'total_measured': 9,
                         'total_height_eligible': 981,
-                        'weighed_and_height_measured': 11,
                     },
                     {
                         "y": 0.2962962962962963,
@@ -1112,7 +1068,6 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         "total_weighed": 696,
                         'total_measured': 27,
                         'total_height_eligible': 952,
-                        'weighed_and_height_measured': 31,
                     }
                 ],
                 "key": "% moderately wasted (moderate acute malnutrition)"
@@ -1142,16 +1097,14 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         "x": 1485907200000,
                         "total_weighed": 0,
                         'total_measured': 0,
-                        'total_height_eligible': 0,
-                        'weighed_and_height_measured': 0,
+                        'total_height_eligible': 0
                     },
                     {
                         "y": 0.0,
                         "x": 1488326400000,
                         "total_weighed": 0,
                         'total_measured': 0,
-                        'total_height_eligible': 0,
-                        'weighed_and_height_measured': 0,
+                        'total_height_eligible': 0
                     },
                     {
                         "y": 0.2222222222222222,
@@ -1159,7 +1112,6 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         "total_weighed": 691,
                         'total_measured': 9,
                         'total_height_eligible': 981,
-                        'weighed_and_height_measured': 11,
                     },
                     {
                         "y": 0.0,
@@ -1167,7 +1119,6 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         "total_weighed": 696,
                         'total_measured': 27,
                         'total_height_eligible': 952,
-                        'weighed_and_height_measured': 31,
                     }
                 ],
                 "key": "% severely wasted (severe acute malnutrition)"
@@ -1223,7 +1174,6 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     "total_measured": 0,
                     "normal": 0,
                     "total_height_eligible": 71,
-                    'weighed_and_height_measured': 0
                 },
                 "s2": {
                     "total_weighed": 91,
@@ -1232,7 +1182,6 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     "total_measured": 4,
                     "normal": 1,
                     "total_height_eligible": 153,
-                    'weighed_and_height_measured': 4
                 },
             }
         )

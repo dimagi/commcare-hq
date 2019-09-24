@@ -125,6 +125,7 @@ class McMixin(object):
 
 
 class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, ProjectReportParametersMixin):
+    base_template = 'mc/base_template.html'
     report_template_path = "mc/reports/sectioned_tabular.html"
     section = None
     use_datatables = False

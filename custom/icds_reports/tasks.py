@@ -54,7 +54,7 @@ from corehq.util.view_utils import reverse
 from custom.icds_reports.const import (
     AWC_INFRASTRUCTURE_EXPORT,
     AWW_INCENTIVE_REPORT,
-    BENEFICIARY_LIST_EXPORT,
+    GROWTH_MONITORING_LIST_EXPORT,
     CHILDREN_EXPORT,
     DASHBOARD_DOMAIN,
     DEMOGRAPHICS_EXPORT,
@@ -187,20 +187,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
 
         start_time = datetime.now(pytz.utc)
         date = date or start_time.date()
-        monthly_dates = []
+        monthly_dates = _get_monthly_dates(date, intervals)
 
         # probably this should be run one time, for now I leave this in aggregations script (not a big cost)
         # but remove issues when someone add new table to mapping, also we don't need to add new rows manually
         # on production servers
         _update_ucr_table_mapping()
-
-        first_day_of_month = date.replace(day=1)
-        for interval in range(intervals - 1, 0, -1):
-            # calculate the last day of the previous months to send to the aggregation script
-            first_day_next_month = first_day_of_month - relativedelta(months=interval - 1)
-            monthly_dates.append(first_day_next_month - relativedelta(days=1))
-
-        monthly_dates.append(date)
 
         db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
         if db_alias:
@@ -319,15 +311,31 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 for state_id in state_ids:
                     create_mbt_for_month.delay(state_id, first_of_month_string, force_citus)
             chain(
-                icds_aggregation_task.si(date=(date-timedelta(days=2)).strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
-                                         force_citus=force_citus),
-                icds_aggregation_task.si(date=(date-timedelta(days=1)).strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
-                                         force_citus=force_citus),
                 icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
                                          force_citus=force_citus),
                 email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), aggregation_start_time=start_time,
                                        force_citus=force_citus)
             ).delay()
+
+
+def _get_monthly_dates(start_date, total_intervals):
+    """
+    Gets a list of dates for the aggregation. Which all take the form of the last of the month.
+    :param start_date: The date to start from
+    :param total_intervals: The number of intervals (including start_date).
+    :return: A list of dates containing the last day of the month before `start_date` and the specified
+    number of intervals (including `start_date`).
+    """
+    monthly_dates = []
+
+    first_day_of_month = start_date.replace(day=1)
+    for interval in range(total_intervals - 1, 0, -1):
+        # calculate the last day of the previous months to send to the aggregation script
+        first_day_next_month = first_day_of_month - relativedelta(months=interval - 1)
+        monthly_dates.append(first_day_next_month - relativedelta(days=1))
+
+    monthly_dates.append(start_date)
+    return monthly_dates
 
 
 def _create_aggregate_functions(cursor):
@@ -525,8 +533,14 @@ def _run_custom_sql_script(commands, day=None, db_alias=None):
 
 @track_time
 def aggregate_awc_daily(day):
-    with transaction.atomic(using=db_for_read_write(AggAwcDaily)):
-        AggAwcDaily.aggregate(force_to_date(day))
+
+    agg_daily_dates = [force_to_date(day) - timedelta(days=2),
+                       force_to_date(day) - timedelta(days=1),
+                       force_to_date(day)]
+
+    for daily_date in agg_daily_dates:
+        with transaction.atomic(using=db_for_read_write(AggAwcDaily)):
+            AggAwcDaily.aggregate(daily_date)
 
 
 @track_time
@@ -774,10 +788,10 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 show_test=include_test,
                 beta=beta,
             ).get_excel_data(location)
-        elif indicator == BENEFICIARY_LIST_EXPORT:
+        elif indicator == GROWTH_MONITORING_LIST_EXPORT:
             # this report doesn't use this configuration
             config.pop('aggregation_level', None)
-            data_type = 'Beneficiary_List'
+            data_type = 'Growth_Monitoring_list'
             excel_data = BeneficiaryExport(
                 config=config,
                 loc_level=aggregation_level,
@@ -1235,6 +1249,11 @@ def build_incentive_files(location, month, file_format, aggregation_level, state
         create_excel_file(excel_data, data_type, file_format, blob_key, timeout=None)
 
 
+def create_all_mbt(month, state_ids):
+    for state_id in state_ids:
+        create_mbt_for_month.delay(state_id, month)
+
+
 @task(queue='icds_dashboard_reports_queue')
 def create_mbt_for_month(state_id, month, force_citus=False):
     with force_citus_engine(force_citus):
@@ -1307,7 +1326,7 @@ def _child_health_monthly_aggregation(day, state_ids):
     pool = Pool(10)
     for query, params in helper.pre_aggregation_queries():
         pool.spawn(_child_health_helper, query, params)
-        pool.join()
+    pool.join()
 
     with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))

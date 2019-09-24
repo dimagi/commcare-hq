@@ -10,10 +10,15 @@ Dev Environment Setup
 The following two steps must be taken to get the dashboard to load in a development environment.
 This does not include populating any data.
 
-- [Enable the feature flag](http://localhost:8000/hq/flags/edit/dashboard_icds_reports/) for the domain you want
-  to use for testing. It's recommended to use a domain named "icds-cas" for consistency.
+- Create a domain named "icds-cas"
+- [Enable the feature flag](http://localhost:8000/hq/flags/edit/dashboard_icds_reports/) for that domain
 - Add an `'icds-ucr'` entry to `settings.REPORTING_DATABASES` pointing at the desired key from
   `settings.DATABASES` where you want the report data tables to live.
+- Update your `settings.SERVER_ENVIRONMENT` to `'icds'`
+
+## Citus setup
+
+To get setup on CitusDB follow [these instructions](https://github.com/dimagi/commcare-hq/blob/master/CITUSDB_SETUP.md).
 
 ## Local data
 
@@ -28,6 +33,20 @@ including the aggregate data.
 
 Note that the above command is destructive to local data and read the warnings
 before proceeding!
+
+If you are using CitusDB and have already initialized the database via migrations, you will need to comment out
+the `_distribute_tables_for_citus(engine)` line in `icds_reports/tests/__init__.py` for the command to succeed.
+
+## Local UCRs
+
+To populate local UCRs (on Citus), you can run:
+
+```bash
+./manage.py bootstrap_icds_citus icds-ucr
+```
+
+If this doesn't create them, you might want to double check your `setings.SERVER_ENVIRONMENT = 'icds'`
+(assuming you are testing in a local domain named `'icds-cas'`).
 
 Aggregate Data Tables
 ---------------------

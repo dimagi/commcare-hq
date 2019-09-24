@@ -34,8 +34,11 @@ def init_state_db(domain, state_dir):
 
 
 def open_state_db(domain, state_dir):
+    """Open state db in read-only mode"""
     db_filepath = _get_state_db_filepath(domain, state_dir)
-    return StateDB.open(db_filepath)
+    if not os.path.exists(db_filepath):
+        db_filepath = ":memory:"
+    return StateDB.open(db_filepath, readonly=True)
 
 
 def delete_state_db(domain, state_dir):
@@ -61,6 +64,10 @@ class StateDB(DiffDB):
             db._set_kv("db_unique_id", datetime.utcnow().strftime("%Y%m%d-%H%M%S.%f"))
         return db
 
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.is_rebuild = False
+
     def __enter__(self):
         return self
 
@@ -69,8 +76,6 @@ class StateDB(DiffDB):
 
     def close(self):
         self.engine.dispose()
-        if self._connection is not None:
-            self._connection.close()
 
     @contextmanager
     def session(self, session=None):
@@ -210,6 +215,8 @@ class StateDB(DiffDB):
             kv = self._get_kv(resume_key, session)
             if kv is None:
                 self._set_kv(resume_key, RESUME_NOT_ALLOWED, session)
+                value = default
+            elif self.is_rebuild:
                 value = default
             elif kv.value == RESUME_NOT_ALLOWED:
                 raise ResumeError("previous session did not save resume state")

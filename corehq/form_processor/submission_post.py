@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import logging
 from collections import namedtuple
 
@@ -66,7 +64,7 @@ class SubmissionPost(object):
                  domain=None, app_id=None, build_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
-                 partial_submission=False, case_db=None):
+                 partial_submission=False, case_db=None, force_logs=False):
         assert domain, "'domain' is required"
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -92,6 +90,7 @@ class SubmissionPost(object):
         self.case_db = case_db
         if case_db:
             assert case_db.domain == domain
+        self.force_logs = force_logs
 
         self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
         self.track_load = form_load_counter("form_submission", domain)
@@ -494,9 +493,9 @@ class SubmissionPost(object):
     def process_device_log(self, device_log_form):
         self._conditionally_send_device_logs_to_sumologic(device_log_form)
         ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.NO_DEVICE_LOG_ENVS
-        if not ignore_device_logs:
+        if self.force_logs or not ignore_device_logs:
             try:
-                process_device_log(self.domain, device_log_form)
+                process_device_log(self.domain, device_log_form, self.force_logs)
             except Exception as e:
                 notify_exception(None, "Error processing device log", details={
                     'xml': self.instance,

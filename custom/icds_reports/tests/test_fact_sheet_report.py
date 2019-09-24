@@ -349,14 +349,14 @@ class TestFactSheetReportInterventions(TestCase):
                 'rows_config': [
                     {
                         'average': {
-                            'html': 10.747271200671705,
-                            'sort_key': 10.747271200671705
+                            'html': 10.783487784330244,
+                            'sort_key': 10.783487784330244
                         },
                         'data': [
                             {'html': 'Children 1 year+ who have recieved complete immunization'
                                      ' required by age 1.'},
-                            {'html': 10.477001703577512, 'sort_key': 10.477001703577512},
-                            {'html': 10.747271200671705, 'sort_key': 10.747271200671705},
+                            {'html': 10.517241379310345, 'sort_key': 10.517241379310345},
+                            {'html': 10.783487784330244, 'sort_key': 10.783487784330244},
                             {'html': 0}
                         ],
                         'data_source': 'AggChildHealthMonthlyDataSource',
@@ -979,13 +979,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][0],
             {
                 'average': {
-                    'html': 6964,
-                    'sort_key': 6964
+                    'html': 2799,
+                    'sort_key': 2799
                 },
                 'data': [
                     {'html': 'Number of Households'},
-                    {'html': 6951, 'sort_key': 6951},
-                    {'html': 6964, 'sort_key': 6964},
+                    {'html': 2792, 'sort_key': 2792},
+                    {'html': 2799, 'sort_key': 2799},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
