@@ -1262,6 +1262,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return {
             'downgrade_messages': self.downgrade_messages,
             'is_upgrade': self.is_upgrade,
+            'is_same_edition': self.is_same_edition,
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
@@ -1381,9 +1382,20 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             next_subscription = self.current_subscription.next_subscription
 
             if is_saved:
-                if self.billing_account_info_form.is_downgrade_from_paid_plan() and not request.user.is_superuser:
-                    self.send_downgrade_email()
-                if next_subscription is not None:
+                if not request.user.is_superuser:
+                    if self.billing_account_info_form.is_same_edition():
+                        self.send_keep_subscription_email()
+                    elif self.billing_account_info_form.is_downgrade_from_paid_plan():
+                        self.send_downgrade_email()
+                if self.billing_account_info_form.is_same_edition():
+                    # Choosing to keep the same subscription
+                    message = _(
+                        "Thank you for choosing to stay with your %(software_plan_name)s "
+                        "Edition Plan subscription."
+                    ) % {
+                        'software_plan_name': software_plan_name,
+                    }
+                elif next_subscription is not None:
                     # New subscription has been scheduled for the future
                     current_subscription_edition = self.current_subscription.plan_version.plan.edition
                     start_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
@@ -1433,6 +1445,22 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
         send_mail_async.delay(
             '{}Subscription downgrade for {}'.format(
+                '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
+                self.request.domain
+            ), message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
+        )
+
+    def send_keep_subscription_email(self):
+        message = '\n'.join([
+            '{user} decided to keep their subscription for {domain} of {new_plan}',
+        ]).format(
+            user=self.request.couch_user.username,
+            domain=self.request.domain,
+            old_plan=self.request.POST.get('old_plan', 'unknown'),
+        )
+
+        send_mail_async.delay(
+            '{}Subscription kept for {}'.format(
                 '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
                 self.request.domain
             ), message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]

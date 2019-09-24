@@ -18,15 +18,16 @@ hqDefine('accounting/js/confirm_plan', [
     var MORE_FEATURES = gettext("I need additional/custom features");
     var OTHER = gettext("Other");
 
-    var confirmPlanModel = function (isUpgrade, currentPlan) {
+    var confirmPlanModel = function (isUpgrade, isSameEdition, currentPlan) {
         'use strict';
         var self = {};
 
         self.isUpgrade = isUpgrade;
+        self.isSameEdition = isSameEdition;
         self.currentPlan = currentPlan;
 
         // If the user is upgrading, don't let them continue until they agree to the minimum subscription terms
-        self.oUserAgreementSigned = ko.observable(!isUpgrade);
+        self.oUserAgreementSigned = ko.observable(!isUpgrade || !isSameEdition);
 
         self.downgradeReasonList = [
             PROJECT_ENDED,
@@ -72,7 +73,7 @@ hqDefine('accounting/js/confirm_plan', [
         self.form = undefined;
         self.openDowngradeModal = function (confirmPlanModel, e) {
             self.form = $(e.currentTarget).closest("form");
-            if (confirmPlanModel.isUpgrade) {
+            if (confirmPlanModel.isUpgrade || confirmPlanModel.isSameEdition) {
                 self.form.submit();
             } else {
                 var $modal = $("#modal-downgrade");
@@ -105,6 +106,7 @@ hqDefine('accounting/js/confirm_plan', [
     $(function () {
         var confirmPlan = confirmPlanModel(
             initialPageData.get('is_upgrade'),
+            initialPageData.get('is_same_edition'),
             initialPageData.get('current_plan')
         );
 
