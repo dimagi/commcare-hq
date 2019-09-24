@@ -165,7 +165,6 @@ class TestSendToElasticsearch(SimpleTestCase):
             update=update,
             es_merge_update=es_merge_update,
             delete=delete,
-            except_on_failure=True,
             retries=1
         )
 

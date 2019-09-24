@@ -140,7 +140,7 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
                                   send_to_elasticsearch.__name__, index_name),
         data={k: v for k, v in doc.items() if k != '_id'},
-        except_on_failure=True,
+        propagate_failure=True,
         update=doc_exists,
         delete=delete,
         es_merge_update=es_merge_update,
