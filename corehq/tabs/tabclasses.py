@@ -1562,10 +1562,11 @@ class ProjectSettingsTab(UITab):
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
         user_is_billing_admin = self.couch_user.can_edit_billing()
+        has_project_access = has_privilege(self._request, privileges.PROJECT_ACCESS)
 
         project_info = []
 
-        if user_is_admin:
+        if user_is_admin and has_project_access:
             from corehq.apps.domain.views.settings import EditBasicProjectInfoView, EditPrivacySecurityView
 
             project_info.extend([
@@ -1594,14 +1595,14 @@ class ProjectSettingsTab(UITab):
 
         items.append((_('Project Information'), project_info))
 
-        if user_is_admin:
+        if user_is_admin and has_project_access:
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
-        if self.couch_user.can_edit_motech():
+        if self.couch_user.can_edit_motech() and has_project_access:
             items.append((_('Integration'), _get_integration_section(self.domain)))
 
         feature_flag_items = _get_feature_flag_items(self.domain)
-        if feature_flag_items and user_is_admin:
+        if feature_flag_items and user_is_admin and has_project_access:
             items.append((_('Pre-release Features'), feature_flag_items))
 
         from corehq.apps.users.models import WebUser
