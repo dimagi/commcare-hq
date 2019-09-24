@@ -1,6 +1,6 @@
 hqDefine("intrahealth/js/multi_report_table", function () {
-   var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-   $(document).on("ajaxComplete", function (e, xhr, options) {
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+    $(document).on("ajaxComplete", function (e, xhr, options) {
         var fragment = "async/",
             pageUrl = window.location.href.split('?')[0],
             ajaxUrl = options.url.split('?')[0];
