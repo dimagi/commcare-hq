@@ -1270,7 +1270,7 @@ def aggregate_validation_helper(agg_date):
 
     awc_ids_mismatch_count = mismatched_performance_awc_ids_length
     if mismatched_performance_awc_ids_length < mismatched_aggregate_awc_ids_length:
-        awc_ids_mismatch_count = mismatched_performance_awc_ids_length
+        awc_ids_mismatch_count = mismatched_aggregate_awc_ids_length
 
     # merging two mismatched awc_ids into a single list
     awc_ids_mismatched_list = []
