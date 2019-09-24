@@ -19,17 +19,6 @@ from unittest.case import TestCase, skip
 
 from dimagi.utils.web import json_response
 
-_base_strings = [
-    None,
-    '',
-    'repeater=&record_state=&payload_id=payload_3',
-    'repeater=repeater_3&record_state=STATUS_2&payload_id=payload_2',
-    'repeater=&record_state=&payload_id=',
-    'repeater=repeater_1&record_state=STATUS_2&payload_id=payload_1',
-    'repeater=&record_state=STATUS&payload_id=payload_2',
-    'repeater=repeater_2&record_state=STATUS&payload_id=',
-]
-
 
 class TestRepeatRecordView(TestCase):
 
@@ -224,7 +213,7 @@ class TestRepeatRecordView(TestCase):
 
 
 class TestUtilities(TestCase):
-    _base_strings = [
+    _BASE_STRINGS = [
         None,
         '',
         'repeater=&record_state=&payload_id=payload_3',
@@ -291,7 +280,7 @@ class TestUtilities(TestCase):
         ]
 
         for r in range(8):
-            returned_string = repeat_records._change_record_state(self._base_strings[r], strings_to_add[r])
+            returned_string = repeat_records._change_record_state(self._BASE_STRINGS[r], strings_to_add[r])
             self.assertEqual(returned_string, desired_strings[r])
 
     def test__url_parameters_to_dict(self):
@@ -307,7 +296,7 @@ class TestUtilities(TestCase):
         ]
 
         for r in range(8):
-            returned_dict = repeat_records._url_parameters_to_dict(self._base_strings[r])
+            returned_dict = repeat_records._url_parameters_to_dict(self._BASE_STRINGS[r])
             self.assertEqual(returned_dict, desired_dicts[r])
 
     @patch('corehq.motech.repeaters.views.repeat_records.task_generate_ids_and_operate_on_payloads')

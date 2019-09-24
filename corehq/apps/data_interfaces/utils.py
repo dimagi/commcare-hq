@@ -124,6 +124,7 @@ def operate_on_payloads(payload_ids, domain, action, task=None, from_excel=False
                 message = ''
                 if action == 'resend':
                     valid_record.fire(force_send=True)
+                    message = _("Successfully resend payload (id={})").format(payload_id)
                 elif action == 'cancel':
                     valid_record.cancel()
                     valid_record.save()
@@ -181,7 +182,7 @@ def _validate_record(r, domain):
     try:
         payload = RepeatRecord.get(r)
     except ResourceNotFound:
-        return False
+        return None
     if payload.domain != domain:
-        return False
+        return None
     return payload
