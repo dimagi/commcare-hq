@@ -7,12 +7,11 @@
         {{ pending_record_count }} pending items to be forwarded
     {% endblocktrans %}
     </div>
-    {% for cls, form_repeaters, type, has_config in repeaters %}
+    {% for type_info in repeater_types_info %}
     <div style="padding-bottom:2em;">
-        <h2>{{ type }}</h2>
-        {% if form_repeaters %}
+        <h2>{{ type_info.friendly_name }}</h2>
+        {% if type_info.instances %}
             <table class="table table-striped table-bordered">
-            {% if form_repeaters %}
             <thead>
                 <tr>
                     <th class="col-sm-4">
@@ -36,8 +35,7 @@
                 </tr>
             </thead>
             <tbody>
-            {% endif %}
-            {% for repeater in form_repeaters %}
+            {% for repeater in type_info.instances %}
                 {% include "repeaters/partials/repeater_row.html" %}
             {% endfor %}
             </tbody>
@@ -46,7 +44,7 @@
             <p>{% blocktrans %}You haven't configured any urls to forward to yet.{% endblocktrans %}</p>
         {% endif %}
         <a class="btn btn-primary"
-           href="{% url 'add_repeater' domain cls %}"><i class="fa fa-plus"></i>
+           href="{% url 'add_repeater' domain type_info.class_name %}"><i class="fa fa-plus"></i>
           {% trans 'Add a forwarding location' %}
         </a>
     </div>

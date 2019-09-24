@@ -86,9 +86,7 @@ class OpenmrsRepeater(CaseRepeater):
     location_id = StringProperty(default='')
     openmrs_config = SchemaProperty(OpenmrsConfig)
 
-    @classmethod
-    def has_config(cls):
-        return True
+    _has_config = True
 
     # self.white_listed_case_types must have exactly one case type set
     # for Atom feed integration to add cases for OpenMRS patients.

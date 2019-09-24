@@ -118,9 +118,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     payload_generator_classes = ()
 
-    @classmethod
-    def has_config(cls):
-        return False
+    _has_config = False
 
     @classmethod
     def available_for_domain(cls, domain):

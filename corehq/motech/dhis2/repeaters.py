@@ -31,9 +31,7 @@ class Dhis2Repeater(FormRepeater):
 
     dhis2_config = SchemaProperty(Dhis2Config)
 
-    @classmethod
-    def has_config(cls):
-        return True
+    _has_config = True
 
     def __eq__(self, other):
         return (
