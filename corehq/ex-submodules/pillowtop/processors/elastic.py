@@ -1,6 +1,8 @@
 import math
 import time
 
+from django.conf import settings
+
 from corehq.util.es.elasticsearch import (
     ConflictError,
     ConnectionError,
@@ -126,8 +128,9 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
         return retry_changes, error_changes
 
 
-def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,
-                          except_on_failure=False, update=False, delete=False, es_merge_update=False):
+def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None,
+                          retries=MAX_RETRIES, propagate_failure=settings.UNIT_TESTING,
+                          update=False, delete=False, es_merge_update=False):
     """
     More fault tolerant es.put method
     kwargs:
@@ -157,7 +160,7 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
 
             if current_tries == retries:
                 message = "[%s] Max retry error on %s/%s/%s" % (name, index, doc_type, doc_id)
-                if except_on_failure:
+                if propagate_failure:
                     raise PillowtopIndexingError(message)
                 else:
                     pillow_logging.error(message)
@@ -170,7 +173,7 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
                 index, doc_type, doc_id,
                 list(data))
 
-            if except_on_failure:
+            if propagate_failure:
                 raise PillowtopIndexingError(error_message)
             else:
                 pillow_logging.error(error_message)
