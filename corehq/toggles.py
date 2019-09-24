@@ -1328,13 +1328,6 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
-    'include_metadata_in_ucr_excel_exports',
-    'Include metadata in UCR excel exports',
-    TAG_SOLUTIONS_CONDITIONAL,
-    [NAMESPACE_DOMAIN]
-)
-
 VIEW_APP_CHANGES = StaticToggle(
     'app-changes-with-improved-diff',
     'Improved app changes view',
