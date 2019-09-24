@@ -87,7 +87,7 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
             which merges existing ES doc and current update. If this is set to False, the doc will be replaced
 
     """
-    data = data if data is not None else {}
+    data = {k: v for k, v in data.items() if k != '_id'} if data is not None else {}
     current_tries = 0
     while current_tries < retries:
         try:
