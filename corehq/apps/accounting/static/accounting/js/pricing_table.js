@@ -29,11 +29,11 @@ hqDefine('accounting/js/pricing_table', [
         var self = {};
 
         self.oCurrentPlan = ko.observable(options.currentPlan);
+        self.oNextSubscription = ko.observable(options.nextSubscriptionEdition);
+        self.oStartDateAfterMinimumSubscription = ko.observable(options.startDateAfterMinimum);
         self.editions = options.editions;
         self.isRenewal = options.isRenewal;
-        self.startDateAfterMinimumSubscription = options.startDateAfterMinimum;
         self.subscriptionBelowMinimum = options.isSubscriptionBelowMin;
-        self.nextSubscriptionEdition = options.nextSubscriptionEdition;
         self.invoicingContact = options.invoicingContact;
 
         self.oSelectedPlan = ko.observable(options.currentPlan);
@@ -47,10 +47,20 @@ hqDefine('accounting/js/pricing_table', [
         });
 
         self.oIsSubmitDisabled = ko.computed(function () {
-            return !self.oSelectedPlan() || (self.oSelectedPlan() === self.oCurrentPlan());
+            var isCurrentPlan = self.oSelectedPlan() === self.oCurrentPlan() && !self.oNextSubscription(),
+                isNextPlan = self.oNextSubscription() && self.oSelectedPlan() === self.oNextSubscription().toLowerCase();
+            return !self.oSelectedPlan() || isNextPlan || isCurrentPlan;
         });
 
         self.oIsCurrentPlanCommunity = ko.observable(options.currentPlan === 'community');
+
+        self.oIsNextPlanPaused = ko.computed(function () {
+            return self.oNextSubscription() === 'Paused';
+        });
+
+        self.oIsNextPlanDowngrade = ko.computed(function () {
+            return self.oNextSubscription() && !self.oIsNextPlanPaused();
+        });
 
         self.selectPausedPlan = function () {
             self.oSelectedPlan('paused');
@@ -82,7 +92,7 @@ hqDefine('accounting/js/pricing_table', [
             if (self.isDowngrade() && self.subscriptionBelowMinimum) {
                 var oldPlan = utils.capitalize(self.oCurrentPlan());
                 var newPlan = utils.capitalize(self.oSelectedPlan());
-                var newStartDate = "<strong>" + self.startDateAfterMinimumSubscription + "</strong>";
+                var newStartDate = "<strong>" + self.oStartDateAfterMinimumSubscription() + "</strong>";
 
                 var message = "",
                     title = gettext("Downgrading?");
@@ -100,7 +110,23 @@ hqDefine('accounting/js/pricing_table', [
                         oldPlan: oldPlan,
                         email: mailto,
                     });
-                } else if (self.nextSubscriptionEdition) {
+                } else if (self.oIsNextPlanPaused()) {
+                    message = _.template(gettext(
+                        "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
+                        "<p>Your current <%= oldPlan %> Edition Plan subscription is scheduled to be paused " +
+                        "on <%= date %>.</p>" +
+                        "<p>Continuing ahead will allow you to schedule your current <%= oldPlan %> Edition " +
+                        "Plan subscription to be downgraded to the <%= newPlan %> Edition Plan " +
+                        "on <%= date %>.</p>" +
+                        "<p>If you have questions or if you would like to speak to us about your subscription, " +
+                        "please reach out to <%= email %>.</p>"
+                    ))({
+                        oldPlan: oldPlan,
+                        date: newStartDate,
+                        newPlan: newPlan,
+                        email: mailto,
+                    });
+                } else if (self.oIsNextPlanDowngrade()) {
                     message = _.template(gettext(
                         "<p>All CommCare subscriptions require a 30 day minimum commitment.</p>" +
                         "<p>Your current <%= oldPlan %> Edition Plan subscription is scheduled to be downgraded " +
@@ -112,7 +138,7 @@ hqDefine('accounting/js/pricing_table', [
                         "please reach out to <%= email %>.</p>"
                     ))({
                         oldPlan: oldPlan,
-                        nextSubscription: self.nextSubscriptionEdition,
+                        nextSubscription: self.oNextSubscription(),
                         date: newStartDate,
                         newPlan: newPlan,
                         email: mailto,
@@ -180,6 +206,22 @@ hqDefine('accounting/js/pricing_table', [
 
         self.oIsSelectedPlan = ko.computed(function () {
             return self.oSlug() === parent.oSelectedPlan();
+        });
+
+        self.oShowDowngradeNotice = ko.computed(function () {
+            return self.oIsCurrentPlan() && parent.oIsNextPlanDowngrade();
+        });
+
+        self.oNextPlan = ko.computed(function () {
+            return parent.oNextSubscription();
+        });
+
+        self.oNextDate = ko.computed(function () {
+            return parent.oStartDateAfterMinimumSubscription();
+        });
+
+        self.oShowPausedNotice = ko.computed(function () {
+            return parent.oIsNextPlanPaused() && self.oIsCurrentPlan();
         });
 
         self.oCssClass = ko.computed(function () {
