@@ -344,6 +344,50 @@ def cancel_future_subscriptions(domain_name, from_date, web_user):
         )
 
 
+def pause_current_subscription(domain_name, web_user, current_subscription):
+    from corehq.apps.accounting.models import (
+        Subscription,
+        DefaultProductPlan,
+        SoftwarePlanEdition,
+        SubscriptionAdjustmentMethod,
+        SubscriptionType,
+        ProBonoStatus,
+        FundingSource,
+    )
+    cancel_future_subscriptions(domain_name, datetime.date.today(), web_user)
+    paused_plan_version = DefaultProductPlan.get_default_plan_version(
+        SoftwarePlanEdition.PAUSED
+    )
+    if current_subscription.is_below_minimum_subscription:
+        current_subscription.update_subscription(
+            date_start=current_subscription.date_start,
+            date_end=current_subscription.date_start + datetime.timedelta(days=30)
+        )
+        return Subscription.new_domain_subscription(
+            account=current_subscription.account,
+            domain=domain_name,
+            plan_version=paused_plan_version,
+            date_start=current_subscription.date_start + datetime.timedelta(days=30),
+            web_user=web_user,
+            adjustment_method=SubscriptionAdjustmentMethod.USER,
+            service_type=SubscriptionType.PRODUCT,
+            pro_bono_status=ProBonoStatus.NO,
+            funding_source=FundingSource.CLIENT,
+            do_not_invoice=True,
+            no_invoice_reason='Paused plan',
+        )
+    else:
+        return current_subscription.change_plan(
+            paused_plan_version,
+            web_user=web_user,
+            adjustment_method=SubscriptionAdjustmentMethod.USER,
+            service_type=SubscriptionType.PRODUCT,
+            pro_bono_status=ProBonoStatus.NO,
+            do_not_invoice=True,
+            no_invoice_reason='Paused plan',
+        )
+
+
 def is_downgrade(current_edition, next_edition):
     from corehq.apps.accounting.models import SoftwarePlanEdition
     plans = SoftwarePlanEdition.SELF_SERVICE_ORDER + [SoftwarePlanEdition.ENTERPRISE]
