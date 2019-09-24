@@ -43,6 +43,7 @@ describe('Indie Map Directive', function () {
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
         $provide.constant("isAlertActive", false);
+        $provide.constant("haveAccessToFeatures", false);
     }));
 
     beforeEach(inject(function ($rootScope, _$compile_, _$location_, _$httpBackend_, storageService) {
@@ -119,24 +120,24 @@ describe('Indie Map Directive', function () {
 
     it('tests init topo json when location level equal 1', function () {
         $location.search('selectedLocationLevel', 1);
-        $location.search('location_name', 'test');
+        $location.search('location_name', 'Anantapur');
 
         var locationLevel = $location.search()['selectedLocationLevel'];
         var location = {
-            location_type: "state",
-            location_type_name: "state",
-            map_location_name: "test_on_map",
-            name: "test",
+            location_type: "district",
+            location_type_name: "district",
+            map_location_name: "Anantapur",
+            name: "Anantapur",
         };
 
         assert.equal(locationLevel, 1);
-        assert.equal(location.name, 'test');
+        assert.equal(location.name, 'Anantapur');
 
         controller.initTopoJson(locationLevel, location);
 
-        assert.equal(controller.scope, 'test_on_map');
-        assert.equal(controller.type, 'test_on_mapTopo');
-        assert.equal(Datamap.prototype['test_on_mapTopo'], BLOCK_TOPOJSON);
+        assert.equal(controller.scope, 'Anantapur');
+        assert.equal(controller.type, 'AnantapurTopo');
+        assert.equal(Datamap.prototype['AnantapurTopo'], BLOCK_TOPOJSON);
     });
 
     it('tests html content of update map', function () {
