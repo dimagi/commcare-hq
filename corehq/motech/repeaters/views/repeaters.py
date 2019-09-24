@@ -10,9 +10,10 @@ from django.views.decorators.http import require_POST
 
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.post import simple_post
 
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
@@ -48,6 +49,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     template_name = 'repeaters/repeaters.html'
 
     @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 

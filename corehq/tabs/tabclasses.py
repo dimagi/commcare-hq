@@ -82,7 +82,8 @@ class ProjectReportsTab(UITab):
 
     @property
     def _is_viewable(self):
-        return user_can_view_reports(self.project, self.couch_user)
+        return (user_can_view_reports(self.project, self.couch_user)
+                and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
     @property
     def view(self):
@@ -488,7 +489,7 @@ class ProjectDataTab(UITab):
             self.can_edit_commcare_data
             or self.can_export_data
             or can_download_data_files(self.domain, self.couch_user)
-        )
+        ) and has_privilege(self._request, privileges.PROJECT_ACCESS)
 
     @property
     def sidebar_items(self):
@@ -892,7 +893,9 @@ class ApplicationsTab(UITab):
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
                 (couch_user.is_member_of(self.domain) or couch_user.is_superuser) and
                 # domain hides Applications tab if user is non-admin
-                not user_has_custom_top_menu(self.domain, couch_user))
+                not user_has_custom_top_menu(self.domain, couch_user)) and (
+            has_privilege(self._request, privileges.PROJECT_ACCESS)
+        )
 
 
 class CloudcareTab(UITab):
@@ -1191,23 +1194,34 @@ class ProjectUsersTab(UITab):
 
     @property
     def _is_viewable(self):
-        return self.domain and (self.couch_user.can_edit_commcare_users() or
-                                self.couch_user.can_view_commcare_users() or
-                                self.couch_user.can_edit_groups() or
-                                self.couch_user.can_view_groups() or
-                                self.couch_user.can_edit_locations() or
-                                self.couch_user.can_view_locations() or
-                                self.couch_user.can_edit_web_users() or
-                                self.couch_user.can_view_web_users() or
-                                self.couch_user.can_view_roles())
+        can_do_something = (
+            self.couch_user.can_edit_commcare_users() or
+            self.couch_user.can_view_commcare_users() or
+            self.couch_user.can_edit_groups() or
+            self.couch_user.can_view_groups() or
+            self.couch_user.can_edit_locations() or
+            self.couch_user.can_view_locations() or
+            self.couch_user.can_view_roles()
+        ) and self.has_project_access
+
+        return self.domain and (
+            can_do_something or
+            self.couch_user.can_edit_web_users() or
+            self.couch_user.can_view_web_users()
+        )
 
     @property
     def can_view_cloudcare(self):
         return has_privilege(self._request, privileges.CLOUDCARE) and self.couch_user.is_domain_admin()
 
+    @property
+    def has_project_access(self):
+        return has_privilege(self._request, privileges.PROJECT_ACCESS)
+
     def _get_mobile_users_menu(self):
         menu = []
-        if self.couch_user.can_edit_commcare_users() or self.couch_user.can_view_commcare_users():
+        if ((self.couch_user.can_edit_commcare_users() or self.couch_user.can_view_commcare_users())
+                and self.has_project_access):
             def _get_commcare_username(request=None, couch_user=None,
                                        **context):
                 if (couch_user.user_id != request.couch_user.user_id or
@@ -1243,7 +1257,8 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if self.couch_user.can_edit_groups() or self.couch_user.can_view_groups():
+        if ((self.couch_user.can_edit_groups() or self.couch_user.can_view_groups())
+                and self.has_project_access):
             is_view_only_subpage = (hasattr(self._request, 'is_view_only')
                                     and self._request.is_view_only)
             menu.append({
@@ -1310,7 +1325,8 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if self.couch_user.is_domain_admin() or self.couch_user.can_view_roles():
+        if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
+                and self.has_project_access):
             from corehq.apps.users.views import (
                 ListRolesView,
             )
@@ -1526,10 +1542,11 @@ class ProjectSettingsTab(UITab):
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
         user_is_billing_admin = self.couch_user.can_edit_billing()
+        has_project_access = has_privilege(self._request, privileges.PROJECT_ACCESS)
 
         project_info = []
 
-        if user_is_admin:
+        if user_is_admin and has_project_access:
             from corehq.apps.domain.views.settings import EditBasicProjectInfoView, EditPrivacySecurityView
 
             project_info.extend([
@@ -1558,14 +1575,14 @@ class ProjectSettingsTab(UITab):
 
         items.append((_('Project Information'), project_info))
 
-        if user_is_admin:
+        if user_is_admin and has_project_access:
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
-        if self.couch_user.can_edit_motech():
+        if self.couch_user.can_edit_motech() and has_project_access:
             items.append((_('Integration'), _get_integration_section(self.domain)))
 
         feature_flag_items = _get_feature_flag_items(self.domain)
-        if feature_flag_items and user_is_admin:
+        if feature_flag_items and user_is_admin and has_project_access:
             items.append((_('Pre-release Features'), feature_flag_items))
 
         from corehq.apps.users.models import WebUser

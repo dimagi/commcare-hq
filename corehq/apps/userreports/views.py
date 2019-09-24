@@ -25,6 +25,7 @@ from memoized import memoized
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -39,7 +40,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from pillowtop.dao.exceptions import DocumentNotFoundError
 
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics.tasks import (
     HUBSPOT_SAVED_UCR_FORM_ID,
@@ -297,6 +298,7 @@ class CreateConfigReportView(BaseEditConfigReportView):
 class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     @cls_to_view_login_and_domain
     @use_daterangepicker
     @use_datatables

@@ -1,24 +1,7 @@
 {% extends "domain/base_change_plan.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% load compress %}
 {% load menu_tags %}
-
-{% block stylesheets %}{{ block.super }}
-  {% if less_debug %}
-    <link type="text/less"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'accounting/less/pricing.debug.less' %}" />
-  {% else %}
-    {% compress css %}
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'accounting/less/pricing.less' %}" />
-    {% endcompress %}
-  {% endif %}
-{% endblock %}
 
 {% requirejs_main 'accounting/js/pricing_table' %}
 
@@ -40,22 +23,15 @@
     </a>
   </p>
 
-  <section id="plans">
-
-    <p class="community-plan-notice text-center"
-       data-bind="visible: isCurrentPlanCommunity">
-      {% blocktrans %}
-        You are currently on the FREE CommCare Community plan.
-      {% endblocktrans %}
-    </p>
+  <section id="plans" class="ko-template">
 
     <p class="switch-label text-center">
-      {% trans "Pay Annually" %}
+      {% trans "Pay Monthly" %}
       <label class="switch">
-        <input type="checkbox" id="pricing-toggle" data-bind="{checked: showMonthlyPricing}">
+        <input type="checkbox" id="pricing-toggle" data-bind="{checked: oShowAnnualPricing}">
         <span class="slider round slider-blue slider-blue-on"></span>
       </label>
-      {% trans "Pay Monthly" %}
+      {% trans "Pay Annually" %}
     </p>
 
     <p class="text-center">
@@ -65,7 +41,7 @@
     </p>
 
     <p class="refund-text text-center"
-       data-bind="css: refundCss">
+       data-bind="css: oRefundCss">
       <i class="fa fa-check"></i>
       <a href="https://dimagi.com/terms/latest/tos/"
          class="check-icon blue">
@@ -73,27 +49,46 @@
       </a>
     </p>
 
-    <div class="row select-plan-row">
-      <!-- ko foreach: planOptions -->
-      <div class="col-xs-3">
+    <div class="select-plan-row">
+      <!-- ko foreach: oPlanOptions -->
+      <div class="select-plan-col">
         <a href="#"
            class="tile"
-           data-bind="css: cssClass, click: selectPlan">
-          <h3 data-bind="text: name"></h3>
+           data-bind="css: oCssClass, click: selectPlan">
+          <h3 data-bind="text: oName"></h3>
           <p class="pricing-type"
-             data-bind="text: pricingTypeText, css: pricingTypeCssClass"></p>
+             data-bind="text: oPricingTypeText, css: oPricingTypeCssClass"></p>
 
-          <p class="plan-price" data-bind="text: displayPrice"></p>
+          <p class="plan-price" data-bind="text: oDisplayPrice"></p>
           <p class="plan-monthly-label">{% trans "monthly" %}</p>
-          <p class="plan-desc" data-bind="text: description"></p>
+          <p class="plan-desc" data-bind="text: oDescription"></p>
+
+          <p class="plan-downgrade-notice text-warning"
+             data-bind="visible: oShowDowngradeNotice">
+            <i class="fa fa-warning"></i>
+            {% blocktrans %}
+              This plan will be downgrading to
+              <span data-bind="text: oNextPlan"></span> on
+              <span data-bind="text: oNextDate"></span>.
+            {% endblocktrans %}
+          </p>
+
+          <p class="plan-downgrade-notice text-warning"
+             data-bind="visible: oShowPausedNotice">
+            <i class="fa fa-warning"></i>
+            {% blocktrans %}
+              This plan will be pausing on<br />
+              <span data-bind="text: oNextDate"></span>.
+            {% endblocktrans %}
+          </p>
 
           <div class="btn btn-current"
-               data-bind="visible: isCurrentPlan">
+               data-bind="visible: oIsCurrentPlan">
             {% trans "Current Plan" %}
           </div>
 
           <div class="btn btn-select"
-               data-bind="visible: !isCurrentPlan()">
+               data-bind="visible: !oIsCurrentPlan()">
             {% trans "Select Plan" %}
           </div>
         </a>
@@ -101,29 +96,68 @@
       <!-- /ko -->
     </div>
 
-    <div class="row"
-         data-bind="visible: !isCurrentPlanCommunity()">
-      <div class="col-xs-4 col-xs-offset-4">
-        <a href="#"
-           class="tile tile-community"
-           data-bind="click: selectCommunityPlan, css: communityCss">
-          <h4>
+    <div data-bind="visible: !oIsCurrentPlanCommunity() && !oIsNextPlanPaused()">
+      <a href="#"
+         class="tile tile-paused"
+         data-bind="click: selectPausedPlan, css: oPausedCss">
+        <div class="pause-icon">
+          <i class="fa fa-pause-circle-o"></i>
+        </div>
+        <h4 class="text-center">
+          {% blocktrans %}
+            Pause Subscription
+          {% endblocktrans %}
+        </h4>
+        <p>
+          {% blocktrans %}
+            What happens if you pause?
+          {% endblocktrans %}
+        </p>
+        <ul>
+          <li>
             {% blocktrans %}
-              Select FREE CommCare Community Plan
+              You will lose access to your project space, but you will be
+              able to re-subscribe anytime in the future.
             {% endblocktrans %}
-          </h4>
-          <p>
+          </li>
+          <li>
             {% blocktrans %}
-              This does not include any paid features.
+              You will no longer be billed.
             {% endblocktrans %}
-          </p>
+          </li>
+        </ul>
+      </a>
+    </div>
 
-          <div class="btn btn-select">
-            {% trans "Select Plan" %}
-          </div>
-        </a>
-      </div>
+    <div class="alert alert-warning text-center"
+         data-bind="visible: oIsNextPlanPaused">
+      <i class="fa fa-warning"></i>
+      {% blocktrans %}
+        Your subscription will be pausing on
+        <span data-bind="text: oStartDateAfterMinimumSubscription"></span> unless
+        you select a different plan above.
+      {% endblocktrans %}
+    </div>
 
+    <div class="alert alert-warning text-center"
+         style="margin-top: 20px;"
+         data-bind="visible: oIsNextPlanDowngrade">
+      <i class="fa fa-warning"></i>
+      {% blocktrans %}
+        Your subscription will be downgrading to
+        <span data-bind="text: oNextSubscription"></span> on
+        <span data-bind="text: oStartDateAfterMinimumSubscription"></span> unless
+        you select a different plan above.
+      {% endblocktrans %}
+    </div>
+
+    <div class="community-plan-notice alert alert-info text-center"
+         data-bind="visible: oIsCurrentPlanCommunity">
+      <p class="lead">
+        {% blocktrans %}
+          You are currently on the FREE CommCare Community plan.
+        {% endblocktrans %}
+      </p>
     </div>
 
     <form
@@ -135,7 +169,7 @@
         class="form"
         id="select-plan-form"
         method="post"
-        data-bind="visible: showNext"
+        data-bind="visible: oShowNext"
         style="display: none;"
         action="{% url 'confirm_selected_plan' domain %}">
       {% csrf_token %}
@@ -143,28 +177,24 @@
         <input type="hidden" name="from_plan_page" value="true">
       {% endif %}
 
-      <input type="hidden" name="plan_edition" data-bind="value: selectedPlan">
-      <div class="form-actions" data-bind="visible: isSubmitVisible">
-        <div class="text-center">
-          <button type="submit"
-                  class="btn btn-primary btn-lg"
-                  data-bind="click: openMinimumSubscriptionModal">
-            {% trans 'Next' %}
-          </button>
-        </div>
+      <input type="hidden" name="plan_edition" data-bind="value: oSelectedPlan">
+      <div class="text-center plan-next">
+        <button type="submit"
+                class="btn btn-primary btn-lg"
+                data-bind="click: openMinimumSubscriptionModal, disable: oIsSubmitDisabled">
+          {% trans 'Next' %}
+        </button>
       </div>
     </form>
 
     <form action="{% url 'annual_plan_request_quote' domain %}"
-          data-bind="visible: !showNext()">
+          data-bind="visible: !oShowNext()">
       {% csrf_token %}
-      <input type="hidden" name="plan_edition" data-bind="value: selectedPlan">
-      <div class="form-actions ">
-        <div class="text-center">
-          <button class="btn btn-primary btn-lg" data-bind="click: contactSales">
-            {% trans 'Talk to Sales' %}
-          </button>
-        </div>
+      <input type="hidden" name="plan_edition" data-bind="value: oSelectedPlan">
+      <div class="text-center plan-next">
+        <button class="btn btn-primary btn-lg" data-bind="click: contactSales">
+          {% trans 'Talk to Sales' %}
+        </button>
       </div>
     </form>
 

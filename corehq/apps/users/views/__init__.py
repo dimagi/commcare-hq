@@ -26,6 +26,7 @@ from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
 
@@ -159,18 +160,21 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
     @memoized
     def redirect(self):
         redirect = None
+        has_project_access = has_privilege(self.request, privileges.PROJECT_ACCESS)
         user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
         if user:
-            if (user.has_permission(self.domain, 'edit_commcare_users')
-                    or user.has_permission(self.domain, 'view_commcare_users')):
+            if ((user.has_permission(self.domain, 'edit_commcare_users')
+                    or user.has_permission(self.domain, 'view_commcare_users'))
+                    and has_project_access):
                 from corehq.apps.users.views.mobile import MobileWorkerListView
                 redirect = reverse(
                     MobileWorkerListView.urlname,
                     args=[self.domain]
                 )
 
-            elif (user.has_permission(self.domain, 'edit_groups')
-                    or user.has_permission(self.domain, 'view_groups')):
+            elif ((user.has_permission(self.domain, 'edit_groups')
+                    or user.has_permission(self.domain, 'view_groups'))
+                    and has_project_access):
                 from corehq.apps.users.views.mobile import GroupsListView
                 redirect = reverse(
                     GroupsListView.urlname,
@@ -184,15 +188,17 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
                     args=[self.domain]
                 )
 
-            elif user.has_permission(self.domain, 'view_roles'):
+            elif (user.has_permission(self.domain, 'view_roles')
+                  and has_project_access):
                 from corehq.apps.users.views import ListRolesView
                 redirect = reverse(
                     ListRolesView.urlname,
                     args=[self.domain]
                 )
 
-            elif (user.has_permission(self.domain, 'edit_locations')
-                    or user.has_permission(self.domain, 'view_locations')):
+            elif ((user.has_permission(self.domain, 'edit_locations')
+                    or user.has_permission(self.domain, 'view_locations'))
+                    and has_project_access):
                 from corehq.apps.locations.views import LocationsListView
                 redirect = reverse(
                     LocationsListView.urlname,
@@ -524,6 +530,7 @@ class ListRolesView(BaseRoleAccessView):
     urlname = 'roles_and_permissions'
 
     @method_decorator(require_can_view_roles)
+    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         return super(ListRolesView, self).dispatch(request, *args, **kwargs)
 

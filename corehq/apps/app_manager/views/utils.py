@@ -8,7 +8,8 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_apps_in_domain,
@@ -49,6 +50,7 @@ CASE_TYPE_CONFLICT_MSG = (
 
 
 @require_deploy_apps
+@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def back_to_main(request, domain, app_id, module_id=None, form_id=None,
                  form_unique_id=None, module_unique_id=None):
     """

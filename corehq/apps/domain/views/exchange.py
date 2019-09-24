@@ -17,6 +17,8 @@ import dateutil
 from memoized import memoized
 from PIL import Image
 
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.web import get_ip, get_site_domain
 
 from corehq.apps.domain.decorators import domain_admin_required
@@ -82,6 +84,7 @@ def _notification_email_on_publish(domain, snapshot, published_by):
 
 
 @domain_admin_required
+@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def set_published_snapshot(request, domain, snapshot_name=''):
     domain = request.project
     if request.method == 'POST':
@@ -99,6 +102,7 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("CommCare Exchange")
 
     @method_decorator(domain_admin_required)
+    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         if is_linked_domain(request.domain):
             raise Http404()
@@ -120,6 +124,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     strict_domain_fetching = True
 
     @method_decorator(domain_admin_required)
+    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
