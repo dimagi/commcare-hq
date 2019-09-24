@@ -243,7 +243,7 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
                         "_id": doc['_id']
                     }
                 })
-                payload.append(doc)
+                payload.append({k: v for k, v in doc.items() if k != '_id'})
             except Exception as e:
                 if not error_collector:
                     raise
