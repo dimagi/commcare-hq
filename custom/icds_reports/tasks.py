@@ -1200,7 +1200,7 @@ def build_incentive_report(agg_date=None):
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
 
-    aggregate_validation_helper()
+    aggregate_validation_helper(agg_date)
 
     for file_format in ['xlsx', 'csv']:
         for location in locations:
@@ -1212,7 +1212,7 @@ def build_incentive_report(agg_date=None):
                 build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
 
 
-def aggregate_validation_helper():
+def aggregate_validation_helper(agg_date):
     """
     Validates the performance reports vs aggregate reports and send mails with mismatches
     """
@@ -1221,14 +1221,29 @@ def aggregate_validation_helper():
                                                                        'wer_weighed', 'wer_eligible',
                                                                        'incentive_eligible')
                                      .order_by('awc_id'))
-    awc_aggregate_rows_list = list(AggAwc.objects.values('awc_id', 'is_launched',
-                                                         'valid_visits', 'expected_visits')
+    awc_aggregate_rows_list = list(AggAwc.objects.filter(aggregation_level=5, month=agg_date)
+                                   .values('awc_id', 'is_launched', 'valid_visits', 'expected_visits')
                                    .order_by('awc_id'))
     is_launched_check_bad_data = []
     home_conduct_check_bad_data = []
     eligibility_check_bad_data = []
-    for index, awc_from_performance in enumerate(awc_performance_rows_list):
-        awc_from_aggregate = awc_aggregate_rows_list[index]
+    missed_ids_from_performance = []
+    performance_index = 0
+    aggregate_index = 0
+    while performance_index < len(awc_performance_rows_list) and aggregate_index < len(awc_aggregate_rows_list):
+        awc_from_performance = awc_performance_rows_list[performance_index]
+        awc_from_aggregate = awc_aggregate_rows_list[aggregate_index]
+        awc_id_from_performance = awc_from_performance['awc_id']
+        awc_id_from_aggregate = awc_from_aggregate['awc_id']
+        # skipping unmatched rows
+        while awc_id_from_performance != awc_id_from_aggregate:
+            if awc_id_from_performance > awc_id_from_aggregate:
+                missed_ids_from_performance.append(awc_id_from_performance)
+                aggregate_index += 1
+            else:
+                performance_index += 1
+            awc_from_performance = awc_performance_rows_list[performance_index]
+            awc_from_aggregate = awc_aggregate_rows_list[aggregate_index]
 
         # check for launched AWCs
         row_data = get_awc_is_launched_mismatch_row(awc_from_performance, awc_from_aggregate)
@@ -1244,6 +1259,10 @@ def aggregate_validation_helper():
         row_data = get_awc_eligibility_mismatch_row(awc_from_performance)
         if row_data is not None:
             eligibility_check_bad_data.append(row_data)
+
+        # incrementing the indexes
+        performance_index += 1
+        aggregate_index += 1
 
     file_attachments = []
     if len(is_launched_check_bad_data) > 0:
@@ -1262,6 +1281,12 @@ def aggregate_validation_helper():
         csv_columns = ['awc_id_from_performance', 'Expected eligibility', 'Eligibility from performance record']
         file_attachments.append({"csv_columns": csv_columns, "data": eligibility_check_bad_data,
                                  "filename": datetime.now().strftime('incentive_report_awc_eligibility_mismatch'
+                                                                     '_%s.csv' % SERVER_DATETIME_FORMAT)})
+
+    if len(missed_ids_from_performance) > 0:
+        csv_columns = ['awc_id_from_performance']
+        file_attachments.append({"csv_columns": csv_columns, "data": missed_ids_from_performance,
+                                 "filename": datetime.now().strftime('incentive_report_awc_ids_mismatch'
                                                                      '_%s.csv' % SERVER_DATETIME_FORMAT)})
 
     if len(file_attachments) > 0:
