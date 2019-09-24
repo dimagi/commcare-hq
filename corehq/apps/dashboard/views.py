@@ -166,7 +166,7 @@ def _get_default_tiles(request):
             can_edit_apps(request)
             and not settings.ENTERPRISE_MODE
             and not get_domain_master_link(request.domain)  # this isn't a linked domain
-        )
+        ) and has_privilege(request, privileges.PROJECT_ACCESS)
 
     def _can_access_sms(request):
         return has_privilege(request, privileges.OUTBOUND_SMS)
