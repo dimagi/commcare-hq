@@ -71,6 +71,18 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.months = vm.monthsCopy;
     }
 
+    //if report is requested in first three days of the month, then we will remove the current month in filter
+    vm.excludeCurrentMonthIfInitialThreeDays = function () {
+        var latest = new Date();
+        if(latest.getDate() <= 3 && vm.months[vm.months.length-1].id === latest.getMonth() + 1 &&
+            vm.selectedYear === latest.getFullYear()){
+             vm.months.pop();
+             vm.selectedMonth = vm.months[vm.months.length-1].id
+        }
+    };
+
+    vm.excludeCurrentMonthIfInitialThreeDays();
+
     for (var year=2017; year <= new Date().getFullYear(); year++ ) {
         vm.yearsCopy.push({
             name: year,
@@ -394,6 +406,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         } else {
             vm.months = vm.monthsCopy;
         }
+        vm.excludeCurrentMonthIfInitialThreeDays();
     };
 
     //if selected year is 2018 make only months from october selectable as the report is only available from october 2018
