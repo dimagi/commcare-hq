@@ -1700,7 +1700,6 @@ def pause_subscription(request, domain):
             paused_subscription = pause_current_subscription(
                 domain, request.couch_user.username, current_subscription
             )
-            print(paused_subscription)
             pause_message = '\n'.join([
                 "{user} is pausing the subscription for {domain} from {old_plan}\n",
                 "{note}"
