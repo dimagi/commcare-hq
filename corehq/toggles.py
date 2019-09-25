@@ -634,6 +634,7 @@ HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
         "compatability for old projects.  We are actively trying to remove "
         "projects from this list."
     ),
+    always_enabled={'icds-cas'}
 )
 
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
