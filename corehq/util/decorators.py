@@ -49,12 +49,17 @@ def silence_and_report_error(message, datadog_metric):
             raise
 
 
-def enterprise_skip(fn):
-    @wraps(fn)
-    def inner(*args, **kwargs):
-        if not settings.ENTERPRISE_MODE:
-            fn(*args, **kwargs)
-    return inner
+def run_only_when(condition):
+    def outer(fn):
+        @wraps(fn)
+        def inner(*args, **kwargs):
+            if condition:
+                return fn(*args, **kwargs)
+        return inner
+    return outer
+
+
+enterprise_skip = run_only_when(not settings.ENTERPRISE_MODE)
 
 
 class change_log_level(ContextDecorator):
