@@ -470,11 +470,12 @@ class SubmissionPost(object):
     @staticmethod
     def get_exception_response_and_log(error_instance, path):
         logging.exception(
-            "Problem receiving submission to %s. Doc id: %s, Error %s" % (
-                path,
-                error_instance.form_id,
-                error_instance.problem
-            )
+            "Problem receiving submission",
+            extra={
+                'submission_path': path,
+                'form_id': error_instance.form_id,
+                'error_message': error_instance.problem
+            }
         )
         return OpenRosaResponse(
             message="There was an error processing the form: %s" % error_instance.problem,
