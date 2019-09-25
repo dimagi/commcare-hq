@@ -7,6 +7,7 @@ from django.shortcuts import render
 
 import six.moves.html_parser
 from couchdbkit import ResourceNotFound
+from memoized import memoized
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.locations.models import SQLLocation
@@ -22,15 +23,41 @@ from corehq.util.couchdb_management import couch_config
 from corehq.util.json import CommCareJSONEncoder
 
 
-class _Db(object):
+class _DbWrapper(object):
+    def __init__(self, dbname, doc_type):
+        self.dbname = dbname
+        self.doc_type = doc_type
+
+    def get(self, record_id):
+        raise NotImplementedError
+
+    def get_context(self, record_id):
+        doc = self.get(record_id)
+        return {
+            "doc": json.dumps(doc, indent=4, sort_keys=True, cls=CommCareJSONEncoder),
+            "doc_type": doc.get('doc_type', self.doc_type),
+            "domain": doc.get('domain', 'Unknown'),
+            "dbname": self.dbname,
+        }
+
+
+class _CouchDb(_DbWrapper):
     """
     Light wrapper for providing interface like Couchdbkit's Database objects.
     """
 
+    def __init__(self, db):
+        self.db = db
+        super(_CouchDb, self).__init__(db.dbname, getattr(db, 'doc_type', 'Unknown'))
+
+    def get(self, record_id):
+        return self.db.get(record_id)
+
+
+class _SQLDb(_DbWrapper):
     def __init__(self, dbname, getter, doc_type):
-        self.dbname = dbname
         self._getter = getter
-        self.doc_type = doc_type
+        super(_SQLDb, self).__init__(dbname, doc_type)
 
     def get(self, record_id):
         try:
@@ -39,32 +66,42 @@ class _Db(object):
             raise ResourceNotFound("missing")
 
 
-_SQL_DBS = OrderedDict((db.dbname, db) for db in [
-    _Db(
-        XFormInstanceSQL._meta.db_table,
-        lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data,
-        XFormInstanceSQL.__name__
-    ),
-    _Db(
-        CommCareCaseSQL._meta.db_table,
-        lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data,
-        CommCareCaseSQL.__name__
-    ),
-    _Db(
-        SQLLocation._meta.db_table,
-        lambda id_: SQLLocation.objects.get(location_id=id_).to_json(),
-        SQLLocation.__name__
-    ),
-])
+@memoized
+def get_databases():
+    sql_dbs = [
+        _SQLDb(
+            XFormInstanceSQL._meta.db_table,
+            lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data,
+            XFormInstanceSQL.__name__
+        ),
+        _SQLDb(
+            CommCareCaseSQL._meta.db_table,
+            lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data,
+            CommCareCaseSQL.__name__
+        ),
+        _SQLDb(
+            SQLLocation._meta.db_table,
+            lambda id_: SQLLocation.objects.get(location_id=id_).to_json(),
+            SQLLocation.__name__
+        ),
+    ]
+
+    all_dbs = OrderedDict()
+    all_dbs['commcarehq'] = None  # make this DB first in list
+    couchdbs_by_name = couch_config.all_dbs_by_db_name
+    for dbname in sorted(couchdbs_by_name):
+        all_dbs[dbname] = _CouchDb(couchdbs_by_name[dbname])
+    for db in sql_dbs:
+        all_dbs[db.dbname] = db
+    return all_dbs
 
 
 def get_db_from_db_name(db_name):
-    if db_name in _SQL_DBS:
-        return _SQL_DBS[db_name]
-    elif db_name == couch_config.get_db(None).dbname:  # primary db
-        return couch_config.get_db(None)
+    all_dbs = get_databases()
+    if db_name in all_dbs:
+        return all_dbs[db_name]
     else:
-        return couch_config.get_db(db_name)
+        return _CouchDb(couch_config.get_db(db_name))
 
 
 def _lookup_id_in_database(doc_id, db_name=None):
@@ -79,24 +116,16 @@ def _lookup_id_in_database(doc_id, db_name=None):
         dbs = [get_db_from_db_name(db_name)]
         response['selected_db'] = db_name
     else:
-        couch_dbs = list(couch_config.all_dbs_by_slug.values())
-        sql_dbs = list(_SQL_DBS.values())
-        dbs = couch_dbs + sql_dbs
+        dbs = list(get_databases().values())
 
     db_results = []
     for db in dbs:
         try:
-            doc = db.get(doc_id)
+            response.update(db.get_context(doc_id))
         except ResourceNotFound as e:
             db_results.append(db_result(db.dbname, str(e), STATUSES[str(e)]))
         else:
             db_results.append(db_result(db.dbname, 'found', 'success'))
-            response.update({
-                "doc": json.dumps(doc, indent=4, sort_keys=True, cls=CommCareJSONEncoder),
-                "doc_type": doc.get('doc_type', getattr(db, 'doc_type', 'Unknown')),
-                "domain": doc.get('domain', 'Unknown'),
-                "dbname": db.dbname,
-            })
 
     response['db_results'] = db_results
     return response
@@ -148,6 +177,5 @@ def raw_doc(request):
             return HttpResponse(json.dumps({"status": "missing"}),
                                 content_type="application/json", status=404)
 
-    other_couch_dbs = sorted([_f for _f in couch_config.all_dbs_by_slug if _f])
-    context['all_databases'] = ['commcarehq'] + other_couch_dbs + list(_SQL_DBS)
+    context['all_databases'] = [db for db in get_databases()]
     return render(request, "hqadmin/raw_doc.html", context)
