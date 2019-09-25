@@ -126,29 +126,11 @@ def send_dhis2_data(request, domain):
     return json_response({'success': _('Data is being sent to DHIS2.')}, status_code=202)
 
 
-class Dhis2ModelListViewHelper(object):
-    def __init__(self, request, domain, repeater_id):
-        self.domain = domain
-        self.repeater_id = repeater_id
-
-    @property
-    @memoized
-    def repeater(self):
-        repeater = Dhis2Repeater.get(self.repeater_id)
-        assert repeater.domain == self.domain
-        return repeater
-
-    @property
-    @memoized
-    def requests(self):
-        return Requests(self.domain, self.repeater.url, self.repeater.username, self.repeater.password)
-
-
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
 def config_dhis2_repeater(request, domain, repeater_id):
-    helper = Dhis2ModelListViewHelper(request, domain, repeater_id)
-    repeater = helper.repeater
+    repeater = Dhis2Repeater.get(repeater_id)
+    assert repeater.domain == domain, f'"{repeater.domain}" != "{domain}"'
 
     if request.method == 'POST':
         form = Dhis2ConfigForm(data=request.POST)
