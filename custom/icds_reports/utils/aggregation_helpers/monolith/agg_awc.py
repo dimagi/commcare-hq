@@ -235,16 +235,17 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         yield """
         UPDATE "{tablename}" agg_awc SET
            cases_household = ut.cases_household,
-           is_launched = CASE WHEN ut.cases_household>0 THEN 'yes' ELSE 'no' END,
-           num_launched_states = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
-           num_launched_districts = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
-           num_launched_blocks = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
-           num_launched_supervisors = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
-           num_launched_awcs = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END
+           is_launched = CASE WHEN ut.all_cases_household>0 THEN 'yes' ELSE 'no' END,
+           num_launched_states = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_districts = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_blocks = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_supervisors = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_awcs = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END
         FROM (
             SELECT
                 owner_id,
-                sum(open_count) AS cases_household
+                sum(open_count) AS cases_household,
+                count(*) AS all_cases_household
             FROM "{household_cases}"
             WHERE opened_on<= %(end_date)s
             GROUP BY owner_id
