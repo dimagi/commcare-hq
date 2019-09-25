@@ -69,18 +69,18 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             1,
             'no',
             5,
-            0,
-            0,
-            0,
-            0,
-            0
             CASE WHEN
                 (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
             CASE WHEN
                 (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
-            thr_v2.thr_distribution_image_count
+            thr_v2.thr_distribution_image_count,
+            0,
+            0,
+            0,
+            0,
+            0
             FROM awc_location_local awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
@@ -245,18 +245,19 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         yield """
         CREATE UNLOGGED TABLE "tmp_household" AS SELECT
             owner_id,
-            sum(open_count) AS cases_household
+            sum(open_count) AS cases_household,
+            count(*) AS all_cases_household
         FROM "{household_cases}"
         WHERE opened_on<= %(end_date)s
         GROUP BY owner_id;
         UPDATE "{tablename}" agg_awc SET
            cases_household = ut.cases_household,
-           is_launched = CASE WHEN ut.cases_household>0 THEN 'yes' ELSE 'no' END,
-           num_launched_states = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
-           num_launched_districts = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
-           num_launched_blocks = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
-           num_launched_supervisors = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
-           num_launched_awcs = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END
+           is_launched = CASE WHEN ut.all_cases_household>0 THEN 'yes' ELSE 'no' END,
+           num_launched_states = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_districts = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_blocks = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_supervisors = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_awcs = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END
         FROM "tmp_household" ut
         WHERE ut.owner_id = agg_awc.awc_id;
         DROP TABLE "tmp_household";
