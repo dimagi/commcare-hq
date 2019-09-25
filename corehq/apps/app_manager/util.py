@@ -641,7 +641,7 @@ def get_form_source_download_url(xform):
 
     try:
         form = app.get_forms_by_xmlns(xform.xmlns)[0]
-    except KeyError:
+    except IndexError:
         return None
 
     return reverse("app_download_file", args=[
