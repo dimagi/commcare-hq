@@ -40,7 +40,9 @@ from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.receiverwrapper.rate_limiter import SHOULD_RATE_LIMIT_SUBMISSIONS
+from corehq.apps.receiverwrapper.rate_limiter import (
+    SHOULD_RATE_LIMIT_SUBMISSIONS,
+)
 from corehq.apps.reminders.views import (
     AddNormalKeywordView,
     AddStructuredKeywordView,

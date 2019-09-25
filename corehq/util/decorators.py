@@ -1,15 +1,17 @@
 import inspect
-from contextlib import contextmanager, ContextDecorator
-
-from celery.task import task
-from functools import wraps
 import logging
+from contextlib import ContextDecorator, contextmanager
+from functools import wraps
+
+from django.conf import settings
+
 import requests
+from celery.task import task
+
+from dimagi.utils.logging import notify_exception
 
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.global_request import get_request
-from dimagi.utils.logging import notify_exception
-from django.conf import settings
 
 
 def handle_uncaught_exceptions(mail_admins=True):

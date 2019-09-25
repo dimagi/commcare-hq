@@ -15,7 +15,6 @@ from django.views.generic import View
 
 from memoized import memoized
 
-from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
 from dimagi.utils.web import get_ip, json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -41,6 +40,7 @@ from corehq.apps.domain.views.settings import (
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
 

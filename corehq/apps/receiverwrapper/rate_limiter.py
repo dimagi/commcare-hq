@@ -1,13 +1,14 @@
 from django.conf import settings
 
-from corehq.project_limits.rate_limiter import RateDefinition, RateLimiter, \
-    PerUserRateDefinition
-
+from corehq.project_limits.rate_limiter import (
+    PerUserRateDefinition,
+    RateDefinition,
+    RateLimiter,
+)
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
-from corehq.util.decorators import silence_and_report_error, run_only_when
+from corehq.util.decorators import run_only_when, silence_and_report_error
 from corehq.util.timer import TimingContext
-
 
 # Danny promised in an Aug 2019 email not to enforce limits that were lower than this.
 # If we as a team end up regretting this decision, we'll have to reset expectations

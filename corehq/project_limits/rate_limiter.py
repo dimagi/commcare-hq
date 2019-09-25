@@ -4,8 +4,13 @@ import time
 import attr
 
 from corehq.apps.users.models import CommCareUser
-from corehq.project_limits.rate_counter.presets import week_rate_counter, \
-    day_rate_counter, hour_rate_counter, minute_rate_counter, second_rate_counter
+from corehq.project_limits.rate_counter.presets import (
+    day_rate_counter,
+    hour_rate_counter,
+    minute_rate_counter,
+    second_rate_counter,
+    week_rate_counter,
+)
 from corehq.util.quickcache import quickcache
 
 
