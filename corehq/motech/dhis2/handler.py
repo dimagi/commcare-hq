@@ -14,6 +14,29 @@ logger = logging.getLogger('dhis2')
 Dhis2Response = namedtuple('Dhis2Response', 'status_code reason content')
 
 
+def send_dhis2_event(request, dhis2_config, payload):
+    dhis_format = _to_dhis_format(dhis2_config, payload)
+    return request.post('/api/%s/events' % DHIS2_API_VERSION, json=dhis_format)
+
+
+def _to_dhis_format(config, payload):
+    info = CaseTriggerInfo(None, None, None, None, None, form_question_values=get_form_question_values(payload))
+    dhis_format = {}
+
+    to_dhis_format_functions = [
+        _get_program,
+        _get_org_unit,
+        _get_event_date,
+        _get_event_status,
+        _get_datavalues,
+    ]
+
+    for func in to_dhis_format_functions:
+        dhis_format.update(func(config, info, payload))
+
+    return dhis_format
+
+
 def _get_program(config, case_trigger_info=None, payload=None):
     return {'program': config.program_id}
 
@@ -55,26 +78,3 @@ def _get_datavalues(config, case_trigger_info=None, payload=None):
             }
         )
     return {'dataValues': values}
-
-
-def _to_dhis_format(config, payload):
-    info = CaseTriggerInfo(None, None, None, None, None, form_question_values=get_form_question_values(payload))
-    dhis_format = {}
-
-    to_dhis_format_functions = [
-        _get_program,
-        _get_org_unit,
-        _get_event_date,
-        _get_event_status,
-        _get_datavalues,
-    ]
-
-    for func in to_dhis_format_functions:
-        dhis_format.update(func(config, info, payload))
-
-    return dhis_format
-
-
-def send_dhis2_event(request, dhis2_config, payload):
-    dhis_format = _to_dhis_format(dhis2_config, payload)
-    return request.post('/api/%s/events' % DHIS2_API_VERSION, json=dhis_format)
