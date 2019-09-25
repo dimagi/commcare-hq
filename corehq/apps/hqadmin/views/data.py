@@ -4,6 +4,7 @@ from collections import OrderedDict, defaultdict, namedtuple
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
@@ -31,11 +32,15 @@ class _DbWrapper(object):
 
     def get_context(self, record_id):
         doc = self.get(record_id)
+        return self._context_for_doc(doc)
+
+    def _context_for_doc(self, doc):
         return {
             "doc": json.dumps(doc, indent=4, sort_keys=True, cls=CommCareJSONEncoder),
             "doc_type": doc.get('doc_type', self.doc_type),
             "domain": doc.get('domain', 'Unknown'),
             "dbname": self.dbname,
+            "errors": []
         }
 
 
@@ -64,12 +69,32 @@ class _SQLDb(_DbWrapper):
             raise ResourceNotFound("missing")
 
 
+class _SQLFormDb(_SQLDb):
+    def get_context(self, record_id):
+        form = self.get(record_id)
+        doc = XFormInstanceSQLRawDocSerializer(form).data
+        context = self._context_for_doc(doc)
+        if 'form' not in doc:
+            context['errors'].append(_('Missing Form XML'))
+        elif not doc['form']:
+            context['errors'].append(_('Form XML not valid. See "Raw Data" section below.'))
+            raw_data = form.get_xml()
+            if isinstance(raw_data, str):
+                context['raw_data'] = raw_data
+            else:
+                try:
+                    context['raw_data'] = raw_data.decode()
+                except (UnicodeDecodeError, AttributeError):
+                    context['raw_data'] = repr(raw_data)
+        return context
+
+
 @memoized
 def get_databases():
     sql_dbs = [
-        _SQLDb(
+        _SQLFormDb(
             XFormInstanceSQL._meta.db_table,
-            lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data,
+            lambda id_: XFormInstanceSQL.get_obj_by_id(id_),
             XFormInstanceSQL.__name__
         ),
         _SQLDb(
