@@ -161,5 +161,5 @@ class Titles(object):
             PRACTICE_MOBILE_WORKERS: _('Practice mode for mobile workers'),
             CASE_SHARING_GROUPS: _('Case Sharing via Groups'),
             CHILD_CASES: _('Child Cases'),
-            PROJECT_ACCESS: _("Access to Core Project Functionality"),
+            PROJECT_ACCESS: _("Project Features"),
         }.get(privilege, privilege)
