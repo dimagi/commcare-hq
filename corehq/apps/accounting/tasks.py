@@ -844,7 +844,7 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
 
 def _send_downgrade_notice(invoice, context):
     send_html_email_async.delay(
-        _('Oh no! Your CommCare subscription for {} has been downgraded'.format(invoice.get_domain())),
+        _('Oh no! Your CommCare subscription for {} has been paused'.format(invoice.get_domain())),
         invoice.contact_emails,
         render_to_string('accounting/email/downgrade.html', context),
         render_to_string('accounting/email/downgrade.txt', context),
@@ -868,7 +868,7 @@ def _downgrade_domain(subscription):
 def _send_downgrade_warning(invoice, context):
     if invoice.is_customer_invoice:
         subject = _(
-            "CommCare Alert: {}'s subscriptions will be downgraded to Community Plan after tomorrow!".format(
+            "CommCare Alert: {}'s subscriptions will be paused after tomorrow!".format(
                 invoice.account.name
             ))
         subscriptions_to_downgrade = _(
@@ -877,7 +877,7 @@ def _send_downgrade_warning(invoice, context):
         bcc = None
     else:
         subject = _(
-            "CommCare Alert: {}'s subscription will be downgraded to Community Plan after tomorrow!".format(
+            "CommCare Alert: {}'s subscription will be paused after tomorrow!".format(
                 invoice.get_domain()
             ))
         subscriptions_to_downgrade = _(
