@@ -1,9 +1,11 @@
+from django.conf import settings
+
 from corehq.project_limits.rate_limiter import RateDefinition, RateLimiter, \
     PerUserRateDefinition
 
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
-from corehq.util.decorators import silence_and_report_error, enterprise_skip
+from corehq.util.decorators import silence_and_report_error, run_only_when
 from corehq.util.timer import TimingContext
 
 
@@ -37,7 +39,10 @@ submission_rate_limiter = RateLimiter(
 )
 
 
-@enterprise_skip
+SHOULD_RATE_LIMIT_SUBMISSIONS = not settings.ENTERPRISE_MODE
+
+
+@run_only_when(SHOULD_RATE_LIMIT_SUBMISSIONS)
 @silence_and_report_error("Exception raised in the submission rate limiter",
                           'commcare.xform_submissions.rate_limiter_errors')
 def rate_limit_submission_by_delaying(domain, max_wait):
