@@ -45,6 +45,8 @@ class OpenmrsImporter(Document):
     username = StringProperty()
     password = StringProperty()
 
+    notify_email = StringProperty()
+
     # If a domain has multiple OpenmrsImporter instances, for which CommCare location is this one authoritative?
     location_id = StringProperty()
 
