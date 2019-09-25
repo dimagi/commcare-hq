@@ -19,6 +19,7 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
     default_rows = 10
     exportable = True
 
+    base_template_path = "intrahealth/base_multi_report.html"
     report_template_path = "intrahealth/multi_report.html"
 
     @property
