@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_noop
 
 from django_prbac.utils import has_privilege
 
+from corehq.apps.accounting.utils import get_paused_plan_context
 from dimagi.utils.web import json_response
 
 from corehq import privileges
@@ -117,17 +118,43 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
                         'has_item_list': True,
                     })
                 tile_contexts.append(tile_context)
-        return {'dashboard_tiles': tile_contexts}
+        context = {
+            'dashboard_tiles': tile_contexts,
+        }
+        context.update(get_paused_plan_context(self.request, self.domain))
+        return context
 
 
 def _get_default_tiles(request):
-    can_edit_data = lambda request: (request.couch_user.can_edit_data()
-                                     or request.couch_user.can_access_any_exports())
     can_edit_apps = lambda request: (request.couch_user.is_web_user()
                                      or request.couch_user.can_edit_apps())
-    can_view_reports = lambda request: user_can_view_reports(request.project, request.couch_user)
     can_edit_users = lambda request: (request.couch_user.can_edit_commcare_users()
                                       or request.couch_user.can_edit_web_users())
+
+    def can_view_apps(request):
+        return can_edit_apps(request) and has_privilege(request, privileges.PROJECT_ACCESS)
+
+    def can_view_users(request):
+        can_do_something = (
+            request.couch_user.can_edit_commcare_users() or
+            request.couch_user.can_view_commcare_users() or
+            request.couch_user.can_edit_groups() or
+            request.couch_user.can_view_groups() or
+            request.couch_user.can_view_roles()
+        ) and has_privilege(request, privileges.PROJECT_ACCESS)
+        return (
+            can_do_something or
+            request.couch_user.can_edit_web_users() or
+            request.couch_user.can_view_web_users()
+        )
+
+    def can_view_reports(request):
+        return (user_can_view_reports(request.project, request.couch_user)
+                and has_privilege(request, privileges.PROJECT_ACCESS))
+
+    def can_view_data(request):
+        return ((request.couch_user.can_edit_data() or request.couch_user.can_access_any_exports())
+                and has_privilege(request, privileges.PROJECT_ACCESS))
 
     def can_edit_locations_not_users(request):
         if not has_privilege(request, privileges.LOCATIONS):
@@ -144,7 +171,7 @@ def _get_default_tiles(request):
             can_edit_apps(request)
             and not settings.ENTERPRISE_MODE
             and not get_domain_master_link(request.domain)  # this isn't a linked domain
-        )
+        ) and has_privilege(request, privileges.PROJECT_ACCESS)
 
     def _can_access_sms(request):
         return has_privilege(request, privileges.OUTBOUND_SMS)
@@ -173,7 +200,7 @@ def _get_default_tiles(request):
             slug='applications',
             icon='fcc fcc-applications',
             paginator_class=AppsPaginator,
-            visibility_check=can_edit_apps,
+            visibility_check=can_view_apps,
             urlname='default_new_app',
             url_generator=apps_link,
             help_text=_('Build, update, and deploy applications'),
@@ -204,7 +231,7 @@ def _get_default_tiles(request):
             icon='fcc fcc-data',
             paginator_class=DataPaginator,
             urlname="data_interfaces_default",
-            visibility_check=can_edit_data,
+            visibility_check=can_view_data,
             help_text=_('Export and manage data'),
         ),
         Tile(
@@ -213,7 +240,7 @@ def _get_default_tiles(request):
             slug='users',
             icon='fcc fcc-users',
             urlname=DefaultProjectUserSettingsView.urlname,
-            visibility_check=can_edit_users,
+            visibility_check=can_view_users,
             help_text=_('Manage accounts for mobile workers and CommCareHQ users'),
         ),
         Tile(

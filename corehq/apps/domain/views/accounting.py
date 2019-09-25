@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
+from django.db import transaction
 from django.db.models import Sum
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
@@ -79,6 +80,8 @@ from corehq.apps.accounting.utils import (
     is_downgrade,
     log_accounting_error,
     quantize_accounting_decimal,
+    pause_current_subscription,
+    get_paused_plan_context,
 )
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -138,7 +141,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainV
 
     @property
     def page_context(self):
-        return {
+        context = {
             'domain': self.domain,
             'feature_name': self.feature_name,
             'plan_name': self.required_plan_name,
@@ -146,6 +149,8 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainV
                                                args=[self.domain]),
             'is_domain_admin': self.is_domain_admin,
         }
+        context.update(get_paused_plan_context(self.request, self.domain))
+        return context
 
     @property
     def missing_privilege(self):
@@ -221,6 +226,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 if subscription.is_renewed:
                     next_subscription.update({
                         'exists': True,
+                        'is_paused': subscription.next_subscription.plan_version.is_paused,
                         'date_start': subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT),
                         'name': subscription.next_subscription.plan_version.plan.name,
                         'price': (
@@ -269,7 +275,12 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'cards': cards,
             'next_subscription': next_subscription,
             'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line,
-            'is_annual_plan': plan_version.plan.is_annual_plan
+            'is_annual_plan': plan_version.plan.is_annual_plan,
+            'is_paused': subscription.plan_version.is_paused,
+            'previous_subscription_edition': (
+                subscription.previous_subscription.plan_version.plan.edition
+                if subscription.previous_subscription else ""
+            ),
         }
         info['has_account_level_credit'] = (
             any(
@@ -1169,16 +1180,25 @@ class SelectedAnnualPlanView(SelectPlanView):
 class ConfirmSelectedPlanView(SelectPlanView):
     template_name = 'domain/confirm_plan.html'
     urlname = 'confirm_selected_plan'
-    step_title = ugettext_lazy("Confirm Plan")
+
+    @property
+    def step_title(self):
+        if self.is_paused:
+            return _("Confirm Pause")
+        return _("Confirm Subscription")
 
     @property
     def steps(self):
         last_steps = super(ConfirmSelectedPlanView, self).steps
         last_steps.append({
-            'title': _("2. Confirm Plan"),
+            'title': _("2. Confirm Pause") if self.is_paused else _("2. Confirm Subscription"),
             'url': reverse(SelectPlanView.urlname, args=[self.domain]),
         })
         return last_steps
+
+    @property
+    def is_paused(self):
+        return self.edition == SoftwarePlanEdition.PAUSED
 
     @property
     @memoized
@@ -1218,6 +1238,10 @@ class ConfirmSelectedPlanView(SelectPlanView):
             )
 
     @property
+    def is_same_edition(self):
+        return self.current_subscription.plan_version.plan.edition == self.edition
+
+    @property
     def is_downgrade_before_minimum(self):
         if self.is_upgrade:
             return False
@@ -1246,15 +1270,16 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return {
             'downgrade_messages': self.downgrade_messages,
             'is_upgrade': self.is_upgrade,
+            'is_same_edition': self.is_same_edition,
             'next_invoice_date': self.next_invoice_date.strftime(USER_DATE_FORMAT),
             'current_plan': (self.current_subscription.plan_version.plan.edition
                              if self.current_subscription is not None else None),
-            'show_community_notice': (self.edition == SoftwarePlanEdition.COMMUNITY
-                                      and self.current_subscription is None),
             'is_downgrade_before_minimum': self.is_downgrade_before_minimum,
             'current_subscription_end_date': self.current_subscription_end_date.strftime(USER_DATE_FORMAT),
             'start_date_after_minimum_subscription': self.start_date_after_minimum_subscription,
-            'new_plan_edition': self.edition
+            'new_plan_edition': self.edition,
+            'is_paused': self.is_paused,
+            'tile_css': 'tile-{}'.format(self.edition.lower()),
         }
 
     @property
@@ -1323,19 +1348,9 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     def downgrade_email_note(self):
         if self.is_upgrade:
             return None
-
-        downgrade_reason = self.request.POST.get('downgrade_reason')
-        will_project_restart = self.request.POST.get('will_project_restart')
-        new_tool = self.request.POST.get('new_tool')
-        new_tool_reason = self.request.POST.get('new_tool_reason')
-        feedback = self.request.POST.get('feedback')
-        if not downgrade_reason:
+        if self.is_same_edition:
             return None
-        return 'Why are you downgrading your subscription today?:\n' + downgrade_reason + '\n\n' +\
-               'Is there a chance your project may start again?:\n' + will_project_restart + '\n\n' +\
-               'Could you indicate which new tool you are using?\n' + new_tool + '\n\n' +\
-               'Why are you switching to a new tool?\n' + new_tool_reason + '\n\n' +\
-               'Additional feedback:\n' + feedback
+        return _get_downgrade_or_pause_note(self.request)
 
     @property
     @memoized
@@ -1375,9 +1390,20 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             next_subscription = self.current_subscription.next_subscription
 
             if is_saved:
-                if self.billing_account_info_form.is_downgrade_from_paid_plan() and not request.user.is_superuser:
-                    self.send_downgrade_email()
-                if next_subscription is not None:
+                if not request.user.is_superuser:
+                    if self.billing_account_info_form.is_same_edition():
+                        self.send_keep_subscription_email()
+                    elif self.billing_account_info_form.is_downgrade_from_paid_plan():
+                        self.send_downgrade_email()
+                if self.billing_account_info_form.is_same_edition():
+                    # Choosing to keep the same subscription
+                    message = _(
+                        "Thank you for choosing to stay with your %(software_plan_name)s "
+                        "Edition Plan subscription."
+                    ) % {
+                        'software_plan_name': software_plan_name,
+                    }
+                elif next_subscription is not None:
                     # New subscription has been scheduled for the future
                     current_subscription_edition = self.current_subscription.plan_version.plan.edition
                     start_date = next_subscription.date_start.strftime(USER_DATE_FORMAT)
@@ -1432,6 +1458,22 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             ), message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
         )
 
+    def send_keep_subscription_email(self):
+        message = '\n'.join([
+            '{user} decided to keep their subscription for {domain} of {new_plan}',
+        ]).format(
+            user=self.request.couch_user.username,
+            domain=self.request.domain,
+            old_plan=self.request.POST.get('old_plan', 'unknown'),
+        )
+
+        send_mail_async.delay(
+            '{}Subscription kept for {}'.format(
+                '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
+                self.request.domain
+            ), message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
+        )
+
 
 class SubscriptionMixin(object):
 
@@ -1442,6 +1484,8 @@ class SubscriptionMixin(object):
         if subscription is None:
             raise Http404
         if subscription.is_renewed:
+            raise Http404
+        if subscription.plan_version.is_paused:
             raise Http404
         return subscription
 
@@ -1466,10 +1510,17 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
             current_privs, return_plan=False,
         ).lower()
 
-        context['current_edition'] = (plan
-                                      if self.current_subscription is not None
-                                      and not self.current_subscription.is_trial
-                                      else "")
+        current_edition = (plan
+                           if self.current_subscription is not None
+                           and not self.current_subscription.is_trial
+                           else "")
+
+        # never allow renewal into community
+        if current_edition == SoftwarePlanEdition.COMMUNITY:
+            raise Http404
+
+        context['current_edition'] = current_edition
+
         return context
 
 
@@ -1647,3 +1698,97 @@ class CardsView(BaseCardView):
             return self._generic_error()
 
         return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+
+
+def _get_downgrade_or_pause_note(request, is_pause=False):
+    downgrade_reason = request.POST.get('downgrade_reason')
+    will_project_restart = request.POST.get('will_project_restart')
+    new_tool = request.POST.get('new_tool')
+    new_tool_reason = request.POST.get('new_tool_reason')
+    feedback = request.POST.get('feedback')
+    if not downgrade_reason:
+        return None
+    return "\n".join([
+        "Why are you {method} your subscription today?\n{reason}\n",
+        "Is there a chance your project may start again?\n{will_project_restart}\n",
+        "Could you indicate which new tool you are using?\n{new_tool}\n",
+        "Why are you switching to a new tool?\n{new_tool_reason}\n",
+        "Additional feedback:\n{feedback}\n\n"
+    ]).format(
+        method="pausing" if is_pause else "downgrading",
+        reason=downgrade_reason,
+        will_project_restart=will_project_restart,
+        new_tool=new_tool,
+        new_tool_reason=new_tool_reason,
+        feedback=feedback,
+    )
+
+
+@require_POST
+@login_and_domain_required
+@require_permission(Permissions.edit_billing)
+def pause_subscription(request, domain):
+    current_subscription = Subscription.get_active_subscription_by_domain(domain)
+    if not current_subscription.user_can_change_subscription(request.user):
+        messages.error(
+            request, _(
+                "You do not have permission to pause the subscription for this customer-level account. "
+                "Please reach out to the %s enterprise admin for help."
+            ) % current_subscription.account.name
+        )
+        return HttpResponseRedirect(
+            reverse(DomainSubscriptionView.urlname, args=[domain])
+        )
+
+    try:
+        with transaction.atomic():
+            paused_subscription = pause_current_subscription(
+                domain, request.couch_user.username, current_subscription
+            )
+            pause_message = '\n'.join([
+                "{user} is pausing the subscription for {domain} from {old_plan}\n",
+                "{note}"
+            ]).format(
+                user=request.couch_user.username,
+                domain=domain,
+                old_plan=request.POST.get('old_plan', 'unknown'),
+                note=_get_downgrade_or_pause_note(request, True),
+            )
+
+            send_mail_async.delay(
+                "{}Subscription pausing for {}".format(
+                    '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
+                    domain,
+                ), pause_message, settings.DEFAULT_FROM_EMAIL,
+                [settings.GROWTH_EMAIL]
+            )
+
+            if current_subscription.is_below_minimum_subscription:
+                messages.success(
+                    request, _("Your project's subscription will be paused on {}. "
+                               "We hope to see you again!".format(
+                        paused_subscription.date_start.strftime(USER_DATE_FORMAT)
+                    ))
+                )
+            else:
+                messages.success(
+                    request, _("Your project's subscription has now been paused. "
+                               "We hope to see you again!")
+                )
+    except Exception as e:
+        log_accounting_error(
+            "There was an error pausing the subscription for the domain '{}'. "
+            "Message: {}".format(domain, str(e)),
+            show_stack_trace=True
+        )
+        messages.error(
+            request, _("We were not able to pause your subscription at this time. "
+                       "Please contact {} if you continue to receive this error. "
+                       "We apologize for the inconvenience.").format(
+                settings.BILLING_EMAIL,
+            )
+        )
+
+    return HttpResponseRedirect(
+        reverse(DomainSubscriptionView.urlname, args=[domain])
+    )

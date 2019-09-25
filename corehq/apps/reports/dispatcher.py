@@ -122,6 +122,7 @@ class ReportDispatcher(View):
         return self.slug_aliases.get(slug)
 
     @datespan_default
+    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, domain=None, report_slug=None, render_as=None,
                  permissions_check=None, *args, **kwargs):
         render_as = render_as or 'view'
