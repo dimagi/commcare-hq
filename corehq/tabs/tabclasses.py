@@ -27,6 +27,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.utils import user_has_custom_top_menu
+from corehq.apps.domain.views.internal import ProjectLimitsView
 from corehq.apps.domain.views.releases import (
     ManageReleasesByAppProfile,
     ManageReleasesByLocation,
@@ -39,6 +40,7 @@ from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.receiverwrapper.rate_limiter import SHOULD_RATE_LIMIT_SUBMISSIONS
 from corehq.apps.reminders.views import (
     AddNormalKeywordView,
     AddStructuredKeywordView,
@@ -1663,6 +1665,11 @@ class ProjectSettingsTab(UITab):
                     'url': reverse(FlagsAndPrivilegesView.urlname, args=[self.domain])
                 },
             ]
+            if SHOULD_RATE_LIMIT_SUBMISSIONS:
+                internal_admin.append({
+                    'title': _(ProjectLimitsView.page_title),
+                    'url': reverse(ProjectLimitsView.urlname, args=[self.domain])
+                })
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
 
         return items

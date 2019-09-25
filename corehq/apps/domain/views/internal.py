@@ -15,6 +15,7 @@ from django.views.generic import View
 
 from memoized import memoized
 
+from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
 from dimagi.utils.web import get_ip, json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -258,6 +259,31 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
             'use_sql_backend': self.domain_object.use_sql_backend,
             'privileges': self._get_privileges(),
         }
+
+
+class ProjectLimitsView(BaseAdminProjectSettingsView):
+    urlname = 'internal_project_limits_summary'
+    page_title = ugettext_lazy("Project Limits")
+    template_name = 'domain/admin/project_limits.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProjectLimitsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'project_limits': {
+                'submissions': self._get_submission_rate_limits()
+            }
+        }
+
+    def _get_submission_rate_limits(self):
+        return [
+            {'key': key, 'current_usage': int(current_usage), 'limit': int(limit),
+             'percent_usage': round(100 * current_usage / limit, 1)}
+            for key, current_usage, limit in submission_rate_limiter.iter_rates(self.domain)
+        ]
 
 
 class TransferDomainView(BaseAdminProjectSettingsView):
