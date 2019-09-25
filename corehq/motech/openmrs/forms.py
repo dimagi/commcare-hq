@@ -71,9 +71,12 @@ class OpenmrsImporterForm(forms.Form):
                                  help_text=_('e.g. "http://www.example.com/openmrs"'))
     username = forms.CharField(label=_('Username'), required=True)
     password = forms.CharField(label=_('Password'), widget=forms.PasswordInput, required=False)
+    notify_addresses_str = forms.CharField(label=_('Addresses to send notifications'), required=False,
+                                           help_text=_('A comma-separated list of email addresses to send error '
+                                                       'notifications'))
     location_id = forms.CharField(label=_('Location ID'), required=False,
-                                  help_text='If a project space has multiple OpenMRS servers to import from, for '
-                                            'which CommCare location is this OpenMRS server authoritative?')
+                                  help_text=_('If a project space has multiple OpenMRS servers to import from, '
+                                              'for which CommCare location is this OpenMRS server authoritative?'))
     import_frequency = forms.ChoiceField(label=_('Import Frequency'), choices=IMPORT_FREQUENCY_CHOICES,
                                          help_text=_('How often should cases be imported?'), required=False)
     log_level = forms.TypedChoiceField(label=_('Log Level'), required=False, choices=LOG_LEVEL_CHOICES, coerce=int)
