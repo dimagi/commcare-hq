@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_noop
 
 from django_prbac.utils import has_privilege
 
+from corehq.apps.accounting.utils import get_paused_plan_context
 from dimagi.utils.web import json_response
 
 from corehq import privileges
@@ -117,7 +118,11 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
                         'has_item_list': True,
                     })
                 tile_contexts.append(tile_context)
-        return {'dashboard_tiles': tile_contexts}
+        context = {
+            'dashboard_tiles': tile_contexts,
+        }
+        context.update(get_paused_plan_context(self.domain))
+        return context
 
 
 def _get_default_tiles(request):
