@@ -116,9 +116,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     payload_generator_classes = ()
 
-    @classmethod
-    def get_custom_url(cls, domain):
-        return None
+    _has_config = False
 
     @classmethod
     def available_for_domain(cls, domain):
