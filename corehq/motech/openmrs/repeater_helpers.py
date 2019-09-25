@@ -2,11 +2,11 @@ import re
 from collections import defaultdict
 
 from lxml import html
+from requests import RequestException
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import extract_case_blocks
-from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
@@ -30,7 +30,6 @@ from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.requests import Requests
 from corehq.motech.value_source import CaseTriggerInfo
 from corehq.util.quickcache import quickcache
-from requests import RequestException
 
 
 def get_case_location(case):
@@ -326,11 +325,7 @@ def generate_identifier(requests, identifier_type):
         try:
             source_id = get_identifier_source_id(requests_session, identifier_type)
         except OpenmrsHtmlUiChanged as err:
-            notify_exception(
-                request=None,
-                message='Unexpected OpenMRS HTML UI',
-                details=str(err),
-            )
+            requests.notify_exception('Unexpected OpenMRS HTML UI', details=str(err))
         if source_id:
             # Example request: http://www.example.com/openmrs/module/idgen/generateIdentifier.form?source=1
             response = requests_session.get('/module/idgen/generateIdentifier.form', params={'source': source_id})
@@ -343,11 +338,13 @@ def generate_identifier(requests, identifier_type):
                 except (ValueError, IndexError, KeyError):
                     raise OpenmrsException()
             except OpenmrsException:
-                notify_exception(
-                    request=None,
-                    message='OpenMRS idgen module returned an unexpected response',
-                    details='OpenMRS idgen module at "{}" returned an unexpected response {}: "{}"'.format(
-                        response.url, response.status_code, response.content)
+                requests.notify_exception(
+                    'OpenMRS idgen module returned an unexpected response',
+                    details=(
+                        f'OpenMRS idgen module at "{response.url}" '
+                        f'returned an unexpected response {response.status_code}: \r\n'
+                        f'{response.content}'
+                    )
                 )
     return identifier
 
