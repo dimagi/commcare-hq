@@ -12,16 +12,25 @@
           on {{ paused_date }}.
         {% endblocktrans %}
       </h3>
-      <p class="lead">
-        {% blocktrans %}
-          Subscribe to a plan to gain access to your project space.
-        {% endblocktrans %}
-      </p>
-      <p>
-        <a href="{{ change_plan_url }}" class="btn btn-primary">
-          {% trans "Subscribe to Plan" %}
-        </a>
-      </p>
+      {% if can_edit_billing_info %}
+        <p class="lead">
+          {% blocktrans %}
+            Subscribe to a plan to gain access to your project space.
+          {% endblocktrans %}
+        </p>
+        <p>
+          <a href="{{ change_plan_url }}" class="btn btn-primary">
+            {% trans "Subscribe to Plan" %}
+          </a>
+        </p>
+      {% else %}
+        <p class="lead">
+          {% blocktrans %}
+            Please contact your project's billing administrator about re-subscribing to a paid plan.
+            Once your project is re-subscribed, you will re-gain access to your project space and its data.
+          {% endblocktrans %}
+        </p>
+      {% endif %}
     </div>
   </div>
 </div>

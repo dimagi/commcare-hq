@@ -149,7 +149,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainV
                                                args=[self.domain]),
             'is_domain_admin': self.is_domain_admin,
         }
-        context.update(get_paused_plan_context(self.domain))
+        context.update(get_paused_plan_context(self.request, self.domain))
         return context
 
     @property

@@ -121,7 +121,7 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
         context = {
             'dashboard_tiles': tile_contexts,
         }
-        context.update(get_paused_plan_context(self.domain))
+        context.update(get_paused_plan_context(self.request, self.domain))
         return context
 
 
