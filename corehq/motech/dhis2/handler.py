@@ -75,6 +75,6 @@ def _to_dhis_format(config, payload):
     return dhis_format
 
 
-def send_data_to_dhis2(request, dhis2_config, payload):
+def send_dhis2_event(request, dhis2_config, payload):
     dhis_format = _to_dhis_format(dhis2_config, payload)
     return request.post('/api/%s/events' % DHIS2_API_VERSION, json=dhis_format)
