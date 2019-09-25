@@ -9,7 +9,7 @@ from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import WebUser
 from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
-from corehq.motech.dhis2.handler import _to_dhis_format
+from corehq.motech.dhis2.events_helpers import _to_dhis_format
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
 
 

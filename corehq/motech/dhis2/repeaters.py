@@ -9,7 +9,7 @@ from dimagi.ext.couchdbkit import SchemaProperty
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.dhis2.dhis2_config import Dhis2Config
-from corehq.motech.dhis2.handler import send_dhis2_event
+from corehq.motech.dhis2.events_helpers import send_dhis2_event
 from corehq.motech.repeaters.models import FormRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
