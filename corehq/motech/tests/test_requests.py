@@ -124,3 +124,71 @@ class RequestsTests(SimpleTestCase):
                 self.requests.get('me')
             self.requests.get('me')
             self.assertEqual(close_mock.call_count, 2)
+
+    def test_notify_error_no_address(self):
+        with patch('corehq.motech.requests.send_mail_async') as send_mail_mock:
+            self.requests.notify_error('foo')
+            send_mail_mock.delay.assert_not_called()
+
+    def test_notify_error_no_address_list(self):
+        requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+                            notify_email=[])
+        with patch('corehq.motech.requests.send_mail_async') as send_mail_mock:
+            requests.notify_error('foo')
+            send_mail_mock.delay.assert_not_called()
+
+    def test_notify_error_one_address(self):
+        requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+                            notify_email='admin@example.com')
+        with patch('corehq.motech.requests.send_mail_async') as send_mail_mock:
+            requests.notify_error('foo')
+            send_mail_mock.delay.assert_called_with(
+                'MOTECH Error',
+                (
+                    'foo\r\n'
+                    'Project space: test-domain\r\n'
+                    'Remote API base URL: http://localhost:9080/api/\r\n'
+                    'Remote API username: admin'
+                ),
+                from_email='no-reply@commcarehq.org',
+                recipient_list=['admin@example.com']
+            )
+
+    def test_notify_error_addresses_string(self):
+        requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+                            notify_email='foo@example.com bar@example.com,baz@example.com,, admin@example.com')
+        with patch('corehq.motech.requests.send_mail_async') as send_mail_mock:
+            requests.notify_error('foo')
+            send_mail_mock.delay.assert_called_with(
+                'MOTECH Error',
+                (
+                    'foo\r\n'
+                    'Project space: test-domain\r\n'
+                    'Remote API base URL: http://localhost:9080/api/\r\n'
+                    'Remote API username: admin'
+                ),
+                from_email='no-reply@commcarehq.org',
+                recipient_list=['foo@example.com', 'bar@example.com', 'baz@example.com', 'admin@example.com']
+            )
+
+    def test_notify_error_address_list(self):
+        requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+                            notify_email=['foo@example.com', 'bar@example.com'])
+        with patch('corehq.motech.requests.send_mail_async') as send_mail_mock:
+            requests.notify_error('foo')
+            send_mail_mock.delay.assert_called_with(
+                'MOTECH Error',
+                (
+                    'foo\r\n'
+                    'Project space: test-domain\r\n'
+                    'Remote API base URL: http://localhost:9080/api/\r\n'
+                    'Remote API username: admin'
+                ),
+                from_email='no-reply@commcarehq.org',
+                recipient_list=['foo@example.com', 'bar@example.com']
+            )
+
+    def test_notify_error_error(self):
+        with self.assertRaises(ValueError):
+            requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+                                notify_email=123)
