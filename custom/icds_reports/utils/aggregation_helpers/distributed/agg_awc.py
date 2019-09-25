@@ -69,18 +69,18 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             1,
             'no',
             5,
-            0,
-            0,
-            0,
-            0,
-            0,
             CASE WHEN
                 (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
             CASE WHEN
                 (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
-            thr_v2.thr_distribution_image_count
+            thr_v2.thr_distribution_image_count,
+            0,
+            0,
+            0,
+            0,
+            0
             FROM awc_location_local awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
