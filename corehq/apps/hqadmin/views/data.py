@@ -2,10 +2,9 @@ import json
 from collections import OrderedDict, defaultdict, namedtuple
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 from django.shortcuts import render
 
-import six.moves.html_parser
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
@@ -18,7 +17,6 @@ from corehq.form_processor.serializers import (
     CommCareCaseSQLRawDocSerializer,
     XFormInstanceSQLRawDocSerializer,
 )
-from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
 from corehq.util.json import CommCareJSONEncoder
 
