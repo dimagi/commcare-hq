@@ -456,10 +456,6 @@ SERVER_ENVIRONMENT = 'localdev'
 ICDS_ENVS = ('icds',)
 UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
-# temporary for the transition to the new community / trial experience
-# so that PRs don't get too big
-ENABLE_NEW_TRIAL_EXPERIENCE = False
-
 # minimum minutes between updates to user reporting metadata
 USER_REPORTING_METADATA_UPDATE_FREQUENCY = 15
 

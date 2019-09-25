@@ -69,7 +69,6 @@
   {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
   {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
   {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
-  {% initial_page_data 'is_new_trial_experience' is_new_trial_experience %}
 
   {% registerurl 'process_registration' %}
 
@@ -77,11 +76,7 @@
     <div class="row">
       <div class="col-xs-12">
 
-        {% if is_saas_environment and not is_new_trial_experience %}
-          {% include 'registration/partials/start_options.html' %}
-        {% endif %}
-
-        {% if is_saas_environment and is_new_trial_experience %}
+        {% if is_saas_environment %}
           {% include 'registration/partials/choose_your_plan.html' %}
         {% endif %}
 
@@ -136,7 +131,7 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-  {% if is_saas_environment and is_new_trial_experience %}
+  {% if is_saas_environment %}
     {% include "registration/partials/start_trial_modal.html" %}
   {% endif %}
 {% endblock modals %}

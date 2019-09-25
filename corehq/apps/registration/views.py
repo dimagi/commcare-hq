@@ -255,7 +255,6 @@ class UserRegistrationView(BasePageView):
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
-            'is_new_trial_experience': settings.ENABLE_NEW_TRIAL_EXPERIENCE,
             'features': [
                 FeatureMeta(_("Custom mobile app builder"), True, None),
                 FeatureMeta(_("Built-in reports"), True, None),
@@ -476,9 +475,6 @@ def confirm_domain(request, guid=''):
         track_confirmed_account_on_hubspot.delay(requesting_user)
         request.session['CONFIRM'] = True
 
-        if settings.IS_SAAS_ENVIRONMENT and not settings.ENABLE_NEW_TRIAL_EXPERIENCE:
-            # For AppCues v3, land new user in Web Apps
-            view_name = get_cloudcare_urlname(requested_domain.name)
         return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 
