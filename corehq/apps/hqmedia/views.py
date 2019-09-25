@@ -186,8 +186,8 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
 
     def get(self, request, *args, **kwargs):
         if request.GET.get('json', None):
-            only_missing = bool(int(request.GET.get('only_missing', 0)))
-            include_total = bool(int(request.GET.get('include_total', 0)))
+            only_missing = request.GET.get('only_missing', 'false') == 'true'
+            include_total = request.GET.get('include_total', 'true') == 'true'
             limit = int(request.GET.get('limit', 5))
             page = int(request.GET.get('page', 1))
 
