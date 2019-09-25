@@ -4,10 +4,12 @@ from collections import defaultdict, namedtuple
 
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from django_prbac.models import Grant, Role, UserRole
 
+from corehq.const import USER_DATE_FORMAT
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 
@@ -398,3 +400,21 @@ def clear_plan_version_cache():
     from corehq.apps.accounting.models import SoftwarePlan
     for software_plan in SoftwarePlan.objects.all():
         SoftwarePlan.get_version.clear(software_plan)
+
+
+def get_paused_plan_context(domain):
+    from corehq.apps.accounting.models import Subscription
+    from corehq.apps.domain.views import SelectPlanView
+
+    current_sub = Subscription.get_active_subscription_by_domain(domain)
+    if not current_sub.plan_version.is_paused:
+        return {}
+
+    previous_edition = (current_sub.previous_subscription.plan_version.plan.edition
+                        if current_sub.previous_subscription else "")
+    return {
+        'is_paused': True,
+        'previous_edition': previous_edition,
+        'paused_date': current_sub.date_start.strftime(USER_DATE_FORMAT),
+        'change_plan_url': reverse(SelectPlanView.urlname, args=[domain]),
+    }

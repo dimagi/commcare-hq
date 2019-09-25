@@ -1,0 +1,27 @@
+{% load i18n %}
+
+<div class="paused-plan well">
+  <div class="row">
+    <div class="col-xs-3 column-icon">
+      <i class="fa fa-pause-circle-o"></i>
+    </div>
+    <div class="col-xs-9 column-text">
+      <h3>
+        {% blocktrans %}
+          Your previous <strong>{{ previous_edition }} Edition</strong> subscription was paused
+          on {{ paused_date }}.
+        {% endblocktrans %}
+      </h3>
+      <p class="lead">
+        {% blocktrans %}
+          Subscribe to a plan to gain access to your project space.
+        {% endblocktrans %}
+      </p>
+      <p>
+        <a href="{{ change_plan_url }}" class="btn btn-primary">
+          {% trans "Subscribe to Plan" %}
+        </a>
+      </p>
+    </div>
+  </div>
+</div>
