@@ -27,7 +27,7 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
     SubscriptionType,
 )
-from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
+from corehq.apps.accounting.tasks import ensure_community_or_paused_subscription
 from corehq.apps.analytics.tasks import (
     HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID,
     send_hubspot_form,
@@ -118,7 +118,7 @@ def request_new_domain(request, form, is_new_user=True):
             # domains with no subscription are equivalent to be on free Community plan
             create_30_day_advanced_trial(new_domain, current_user.username)
         else:
-            ensure_explicit_community_subscription(
+            ensure_community_or_paused_subscription(
                 new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
                 web_user=current_user.username,
             )
