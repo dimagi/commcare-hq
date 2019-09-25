@@ -53,6 +53,7 @@ hqDefine('accounting/js/pricing_table', [
         });
 
         self.oIsCurrentPlanCommunity = ko.observable(options.currentPlan === 'community');
+        self.oIsCurrentPlanPaused = ko.observable(options.currentPlan === 'paused');
 
         self.oIsNextPlanPaused = ko.computed(function () {
             return self.oNextSubscription() === 'Paused';

@@ -96,7 +96,7 @@
       <!-- /ko -->
     </div>
 
-    <div data-bind="visible: !oIsCurrentPlanCommunity() && !oIsNextPlanPaused()">
+    <div data-bind="visible: !oIsCurrentPlanCommunity() && !oIsNextPlanPaused() && !oIsCurrentPlanPaused()">
       <a href="#"
          class="tile tile-paused"
          data-bind="click: selectPausedPlan, css: oPausedCss">
@@ -127,6 +127,16 @@
           </li>
         </ul>
       </a>
+    </div>
+
+    <div class="alert alert-info text-center"
+         data-bind="visible: oIsCurrentPlanPaused">
+      <p class="lead">
+        <i class="fa fa-pause-circle-o"></i>
+        {% blocktrans %}
+          Your subscription is currently paused.
+        {% endblocktrans %}
+      </p>
     </div>
 
     <div class="alert alert-warning text-center"
