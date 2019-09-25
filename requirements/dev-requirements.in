@@ -20,3 +20,5 @@ sphinx-rtd-theme~=0.3
 docutils==0.14
 sphinxcontrib-django~=0.3
 recommonmark
+isort
+flake8
