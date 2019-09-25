@@ -857,10 +857,10 @@ def _send_downgrade_notice(invoice, context):
 def _downgrade_domain(subscription):
     subscription.change_plan(
         DefaultProductPlan.get_default_plan_version(
-            SoftwarePlanEdition.COMMUNITY
+            SoftwarePlanEdition.PAUSED
         ),
         adjustment_method=SubscriptionAdjustmentMethod.AUTOMATIC_DOWNGRADE,
-        note='Automatic downgrade to community for invoice 60 days late',
+        note='Automatic pausing of subscription for invoice 60 days late',
         internal_change=True
     )
 
