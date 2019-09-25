@@ -103,6 +103,7 @@ DATABASES.update({
     },
 })
 
+ICDS_USE_CITUS = True
 
 ####### Couch Config ######
 COUCH_DATABASES = {
