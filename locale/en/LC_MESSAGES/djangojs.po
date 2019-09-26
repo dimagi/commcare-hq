@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-09-19 16:55+0000\n"
+"POT-Creation-Date: 2019-09-24 19:10+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -694,11 +694,11 @@ msgid ""
 "saved, it will no longer be inherited."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:316
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:321
 msgid "You have unsaved settings."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:469
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:480
 msgid "Settings"
 msgstr ""
 
@@ -2921,7 +2921,7 @@ msgstr ""
 msgid "Failed to save "
 msgstr ""
 
-#: corehq/apps/groups/static/groups/js/group_members.js:128
+#: corehq/apps/groups/static/groups/js/group_members.js:134
 msgid "Please wait and do not navigate away..."
 msgstr ""
 

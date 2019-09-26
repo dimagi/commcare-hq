@@ -1250,8 +1250,9 @@ def build_incentive_files(location, month, file_format, aggregation_level, state
 
 
 def create_all_mbt(month, state_ids):
+    first_of_month = month.strftime('%Y-%m-01')
     for state_id in state_ids:
-        create_mbt_for_month.delay(state_id, month)
+        create_mbt_for_month.delay(state_id, first_of_month)
 
 
 @task(queue='icds_dashboard_reports_queue')

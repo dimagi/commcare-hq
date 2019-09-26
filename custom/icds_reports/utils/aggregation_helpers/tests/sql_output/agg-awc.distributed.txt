@@ -17,18 +17,18 @@
             1,
             'no',
             5,
-            0,
-            0,
-            0,
-            0,
-            0
             CASE WHEN
                 (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
             CASE WHEN
                 (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
-            thr_v2.thr_distribution_image_count
+            thr_v2.thr_distribution_image_count,
+            0,
+            0,
+            0,
+            0,
+            0
             FROM awc_location_local awc_location
             LEFT JOIN "ucr_icds-cas_static-cbe_form_f7988a04" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "ucr_icds-cas_static-vhnd_form_28e7fd58" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
@@ -46,7 +46,7 @@
         
 {"start_date": "2019-01-01T00:00:00"}
 
-        CREATE TEMPORARY TABLE "temp_agg_awc_2019-01-01_5" AS
+        CREATE UNLOGGED TABLE "temp_agg_awc_2019-01-01_5" AS
             SELECT
                 awc_id,
                 supervisor_id,
@@ -63,7 +63,8 @@
         FROM (
             SELECT * FROM "temp_agg_awc_2019-01-01_5"
         ) ut
-        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and agg_awc.supervisor_id=ut.supervisor_id
+        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and agg_awc.supervisor_id=ut.supervisor_id;
+        DROP TABLE "temp_agg_awc_2019-01-01_5";
         
 {"start_date": "2019-01-01T00:00:00"}
 
@@ -92,7 +93,7 @@
         
 {"start_date": "2019-01-01T00:00:00"}
 
-        CREATE TEMPORARY TABLE "tmp_home_visit" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_home_visit" AS SELECT
             ucr.awc_id,
             %(start_date)s AS month,
             SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
@@ -145,7 +146,7 @@
         
 {"start_date": "2019-01-01T00:00:00"}
 
-        CREATE TEMPORARY TABLE "tmp_household" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_household" AS SELECT
             owner_id,
             sum(open_count) AS cases_household
         FROM "ucr_icds-cas_static-household_cases_eadc276d"
@@ -165,7 +166,7 @@
         
 {"end_date": "2019-01-31T23:59:59"}
 
-        CREATE TEMPORARY TABLE "tmp_person" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_person" AS SELECT
             awc_id,
             supervisor_id,
             sum(CASE WHEN registered_status IS DISTINCT FROM 0 AND migration_status IS DISTINCT FROM 1 THEN 1 ELSE 0 END) AS cases_person,
@@ -207,7 +208,7 @@
         
 {"end_date": "2019-01-31T23:59:59", "month_end_11yr": "2008-01-31T23:59:59", "month_end_15yr": "2004-01-31T23:59:59", "month_start_15yr": "2004-01-01T00:00:00", "month_start_18yr": "2001-01-01T00:00:00", "start_date": "2019-01-01T00:00:00"}
 
-        CREATE TEMPORARY TABLE "tmp_child" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_child" AS SELECT
             awc_id,
             sum(has_aadhar_id) as child_has_aadhar,
             sum(immunization_in_month) AS num_children_immunized
@@ -223,7 +224,7 @@
         
 {"month": "2019-01-01T00:00:00"}
 
-        CREATE TEMPORARY TABLE "tmp_ccs" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_ccs" AS SELECT
             awc_id,
             sum(anc_in_month) AS num_anc_visits,
             sum(has_aadhar_id) AS ccs_has_aadhar
@@ -239,7 +240,7 @@
         
 {"month": "2019-01-01T00:00:00"}
 
-        CREATE TEMPORARY TABLE "tmp_usage" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_usage" AS SELECT
             awc_id,
             month,
             sum(pse) AS usage_num_pse,
@@ -340,7 +341,7 @@
         
 {"month_start_6m": "2018-07-01T00:00:00"}
 
-        CREATE TEMPORARY TABLE "tmp_awc" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_awc" AS SELECT
             doc_id as awc_id,
             MAX(state_is_test) as state_is_test,
             MAX(district_is_test) as district_is_test,

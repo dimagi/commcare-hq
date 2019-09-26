@@ -1208,6 +1208,11 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
+        'warehouse': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        }
     }
 }
 
@@ -1766,20 +1771,6 @@ PILLOWTOPS = {
         },
     ]
 }
-
-REPEATERS = (
-    'corehq.motech.repeaters.models.FormRepeater',
-    'corehq.motech.repeaters.models.CaseRepeater',
-    'corehq.motech.repeaters.models.CreateCaseRepeater',
-    'corehq.motech.repeaters.models.UpdateCaseRepeater',
-    'corehq.motech.repeaters.models.ShortFormRepeater',
-    'corehq.motech.repeaters.models.AppStructureRepeater',
-    'corehq.motech.repeaters.models.UserRepeater',
-    'corehq.motech.repeaters.models.LocationRepeater',
-    'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
-    'corehq.motech.dhis2.repeaters.Dhis2Repeater',
-)
-
 
 STATIC_UCR_REPORTS = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),

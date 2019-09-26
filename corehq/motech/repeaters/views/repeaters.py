@@ -1,4 +1,5 @@
 import json
+from collections import namedtuple
 
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -9,6 +10,7 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
 
 from memoized import memoized
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
 from dimagi.utils.post import simple_post
 
@@ -39,7 +41,8 @@ from corehq.motech.repeaters.models import (
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.motech.utils import b64_aes_encrypt
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
+
+RepeaterTypeInfo = namedtuple('RepeaterTypeInfo', 'class_name friendly_name has_config instances')
 
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
@@ -52,25 +55,18 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
-    def repeaters(self):
+    def repeater_types_info(self):
         return [
-            (
-                r.__name__,
-                r.by_domain(self.domain),
-                r.friendly_name,
-                r.get_custom_url(self.domain)
-            )
+            RepeaterTypeInfo(r.__name__, r.friendly_name, r._has_config, r.by_domain(self.domain))
             for r in get_all_repeater_types().values() if r.available_for_domain(self.domain)
         ]
 
     @property
     def page_context(self):
         return {
-            'repeaters': self.repeaters,
+            'repeater_types_info': self.repeater_types_info,
             'pending_record_count': RepeatRecord.count(self.domain),
-            'gefingerpoken': (
-                # Set gefingerpoken_ to whether the user should be allowed to change MOTECH configuration.
-                # .. _gefingerpoken: https://en.wikipedia.org/wiki/Blinkenlights
+            'user_can_configure': (
                 self.request.couch_user.is_superuser or
                 self.request.couch_user.can_edit_motech() or
                 toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)

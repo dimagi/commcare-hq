@@ -134,6 +134,32 @@ def setUpModule():
         }
     )
 
+    district_location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='district',
+        parent_type=state_location_type,
+    )
+    d1 = SQLLocation.objects.create(
+        domain=domain.name,
+        name='d1',
+        location_id='d1',
+        location_type=district_location_type,
+        parent=st1
+    )
+
+    block_location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='block',
+        parent_type=district_location_type,
+    )
+    b1 = SQLLocation.objects.create(
+        domain=domain.name,
+        name='b1',
+        location_id='b1',
+        location_type=block_location_type,
+        parent=d1
+    )
+
     supervisor_location_type = LocationType.objects.create(
         domain=domain.name,
         name='supervisor',
@@ -144,31 +170,20 @@ def setUpModule():
         name='s1',
         location_id='s1',
         location_type=supervisor_location_type,
-        parent=st1
-    )
-
-    block_location_type = LocationType.objects.create(
-        domain=domain.name,
-        name='block',
-        parent_type=supervisor_location_type,
-    )
-    b1 = SQLLocation.objects.create(
-        domain=domain.name,
-        name='b1',
-        location_id='b1',
-        location_type=block_location_type,
-        parent=s1
+        parent=b1,
     )
 
     awc_location_type = LocationType.objects.create(
         domain=domain.name,
         name='awc',
+        parent_type=supervisor_location_type,
     )
     a7 = SQLLocation.objects.create(
         domain=domain.name,
         name='a7',
         location_id='a7',
-        location_type=awc_location_type
+        location_type=awc_location_type,
+        parent=s1,
     )
 
     with override_settings(SERVER_ENVIRONMENT='icds'):

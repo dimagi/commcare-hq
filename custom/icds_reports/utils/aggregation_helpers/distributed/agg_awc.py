@@ -69,18 +69,18 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             1,
             'no',
             5,
-            0,
-            0,
-            0,
-            0,
-            0
             CASE WHEN
                 (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
             CASE WHEN
                 (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
-            thr_v2.thr_distribution_image_count
+            thr_v2.thr_distribution_image_count,
+            0,
+            0,
+            0,
+            0,
+            0
             FROM awc_location_local awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
@@ -127,7 +127,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
     def updates(self):
         yield """
-        CREATE TEMPORARY TABLE "{temp_table}" AS
+        CREATE UNLOGGED TABLE "{temp_table}" AS
             SELECT
                 awc_id,
                 supervisor_id,
@@ -144,7 +144,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         FROM (
             SELECT * FROM "{temp_table}"
         ) ut
-        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and agg_awc.supervisor_id=ut.supervisor_id
+        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and agg_awc.supervisor_id=ut.supervisor_id;
+        DROP TABLE "{temp_table}";
         """.format(
             tablename=self.tablename,
             daily_attendance='daily_attendance',
@@ -183,7 +184,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_home_visit" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_home_visit" AS SELECT
             ucr.awc_id,
             %(start_date)s AS month,
             SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
@@ -242,7 +243,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_household" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_household" AS SELECT
             owner_id,
             sum(open_count) AS cases_household
         FROM "{household_cases}"
@@ -265,7 +266,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         ), {'end_date': self.month_end}
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_person" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_person" AS SELECT
             awc_id,
             supervisor_id,
             sum({seeking_services}) AS cases_person,
@@ -322,7 +323,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_child" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_child" AS SELECT
             awc_id,
             sum(has_aadhar_id) as child_has_aadhar,
             sum(immunization_in_month) AS num_children_immunized
@@ -343,7 +344,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_ccs" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_ccs" AS SELECT
             awc_id,
             sum(anc_in_month) AS num_anc_visits,
             sum(has_aadhar_id) AS ccs_has_aadhar
@@ -364,7 +365,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_usage" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_usage" AS SELECT
             awc_id,
             month,
             sum(pse) AS usage_num_pse,
@@ -478,7 +479,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_awc" AS SELECT
+        CREATE UNLOGGED TABLE "tmp_awc" AS SELECT
             doc_id as awc_id,
             MAX(state_is_test) as state_is_test,
             MAX(district_is_test) as district_is_test,

@@ -86,6 +86,8 @@ class OpenmrsRepeater(CaseRepeater):
     location_id = StringProperty(default='')
     openmrs_config = SchemaProperty(OpenmrsConfig)
 
+    _has_config = True
+
     # self.white_listed_case_types must have exactly one case type set
     # for Atom feed integration to add cases for OpenMRS patients.
     # self.location_id must be set to determine their case owner. The
@@ -147,11 +149,6 @@ class OpenmrsRepeater(CaseRepeater):
     @classmethod
     def available_for_domain(cls, domain):
         return OPENMRS_INTEGRATION.enabled(domain)
-
-    @classmethod
-    def get_custom_url(cls, domain):
-        from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
-        return reverse(AddOpenmrsRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, payload):
         """

@@ -503,22 +503,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             else:
                 return str(filter_value)
 
-    def _get_filter_values(self):
-        slug_to_filter = {
-            ui_filter.name: ui_filter
-            for ui_filter in self.filters
-        }
-
-        filters_without_prefilters = {
-            filter_slug: filter_value
-            for filter_slug, filter_value in self.filter_values.items()
-            if not isinstance(slug_to_filter[filter_slug], PreFilter)
-        }
-
-        for filter_slug, filter_value in filters_without_prefilters.items():
-            label = slug_to_filter[filter_slug].label
-            yield label, self._get_filter_export_format(filter_value)
-
     @property
     @memoized
     def report_export(self):
