@@ -41,7 +41,7 @@ class Command(BaseCommand):
             verified=False,
         )
         try:
-            commit_record.verified = loader().commit(batch)
+            commit_record.verified = loader(verbose=True).commit(batch)
         except Exception as e:
             commit_record.error = e
             commit_record.success = False
@@ -51,3 +51,7 @@ class Command(BaseCommand):
         finally:
             commit_record.completed_on = datetime.utcnow()
             commit_record.save()
+            print('commit_table complete for "{} ({})" with status "{}"'.format(
+                slug, batch_id,
+                'SUCCESS' if commit_record.success else 'ERROR'
+            ))
