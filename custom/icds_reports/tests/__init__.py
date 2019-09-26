@@ -306,7 +306,7 @@ class CSVTestCase(TestCase):
 
     def _fasterAssertListEqual(self, list1, list2):
         if len(list1) != len(list2):
-            self.fail('Lists are not equal')
+            self.fail(f'Unequal number of entries: list1 {len(list1)}, list2 {len(list2)}')
 
         messages = []
 
