@@ -1,4 +1,6 @@
 import os
+from datetime import datetime
+
 import postgres_copy
 import sqlalchemy
 from django.conf import settings
