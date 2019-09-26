@@ -1,4 +1,3 @@
-
 import inspect
 from collections import namedtuple
 from functools import wraps
@@ -15,7 +14,6 @@ from couchdbkit import ResourceNotFound
 from corehq.util.quickcache import quickcache
 from toggle.models import Toggle
 from toggle.shortcuts import toggle_enabled, set_toggle
-import six
 
 Tag = namedtuple('Tag', 'name css_class description')
 TAG_CUSTOM = Tag(
@@ -172,10 +170,14 @@ class StaticToggle(object):
                 if request.user.is_superuser:
                     from corehq.apps.toggle_ui.views import ToggleEditView
                     toggle_url = reverse(ToggleEditView.urlname, args=[self.slug])
-                    messages.warning(request, mark_safe((
-                        'This <a href="{}">feature flag</a> should be enabled '
-                        'to access this URL'
-                    ).format(toggle_url)))
+                    messages.warning(
+                        request,
+                        mark_safe((
+                            'This <a href="{}">feature flag</a> should be enabled '
+                            'to access this URL'
+                        ).format(toggle_url)),
+                        fail_silently=True,  # workaround for tests: https://code.djangoproject.com/ticket/17971
+                    )
                 raise Http404()
             return wrapped_view
         return decorator
@@ -230,7 +232,7 @@ def deterministic_random(input_string):
     Returns a deterministically random number between 0 and 1 based on the
     value of the string. The same input should always produce the same output.
     """
-    if isinstance(input_string, six.text_type):
+    if isinstance(input_string, str):
         input_string = input_string.encode('utf-8')
     return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 
@@ -551,7 +553,8 @@ MM_CASE_PROPERTIES = StaticToggle(
     'Multimedia Case Properties',
     TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 NEW_MULTIMEDIA_UPLOADER = StaticToggle(
@@ -600,6 +603,7 @@ ASYNC_RESTORE = StaticToggle(
     'Generate restore response in an asynchronous task to prevent timeouts',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 REPORT_BUILDER_BETA_GROUP = StaticToggle(
@@ -616,7 +620,8 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN],
     description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
     "We are actively trying to remove projects from this list. This functionality is now possible by using the "
-    "Advanced Settings on the Organization Levels page and setting the Level to Expand From option."
+    "Advanced Settings on the Organization Levels page and setting the Level to Expand From option.",
+    always_disabled={'icds-cas'}
 )
 
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
@@ -629,6 +634,7 @@ HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
         "compatability for old projects.  We are actively trying to remove "
         "projects from this list."
     ),
+    always_enabled={'icds-cas'}
 )
 
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
@@ -637,6 +643,7 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
     namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )
 
 
@@ -708,7 +715,8 @@ LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',
     TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )
 
 NO_VELLUM = StaticToggle(
@@ -892,6 +900,7 @@ FORM_SUBMISSION_BLACKLIST = StaticToggle(
     description="This is a temporary solution to an unusually high volume of "
     "form submissions from a domain.  We have some projects that automatically "
     "send forms. If that ever causes problems, we can use this to cut them off.",
+    always_disabled={'icds-cas'}
 )
 
 
@@ -1013,14 +1022,6 @@ SUPPORT = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
 )
 
-BASIC_CHILD_MODULE = StaticToggle(
-    'child_module',
-    'Basic modules can be sub-menus',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Sub-menus',
-)
-
 LEGACY_CHILD_MODULES = StaticToggle(
     'legacy_child_modules',
     'Legacy, non-nested sub-menus',
@@ -1113,6 +1114,7 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'Run Auto Case Update rules on each case save.',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 EWS_BROADCAST_BY_ROLE = StaticToggle(
@@ -1330,13 +1332,6 @@ LOCATION_SAFETY_EXEMPTION = StaticToggle(
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
-    TAG_SOLUTIONS_CONDITIONAL,
-    [NAMESPACE_DOMAIN]
-)
-
-INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
-    'include_metadata_in_ucr_excel_exports',
-    'Include metadata in UCR excel exports',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
@@ -1612,6 +1607,14 @@ ICDS_NIC_INDICATOR_API = StaticToggle(
     relevant_environments={'icds', 'india'},
 )
 
+AP_WEBSERVICE = StaticToggle(
+    'ap_webservice',
+    'ICDS: ENABLE AP webservice',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
+)
+
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS/ICDS: Allow blank case tags',
@@ -1646,6 +1649,7 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     'Sort out of order form submissions in the SQL update strategy',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 
@@ -1669,6 +1673,7 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'Manage releases per location',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 
@@ -1796,4 +1801,12 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     'while investigating database performance issues.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+
+GROUP_API_USE_ES_BACKEND = StaticToggle(
+    'group_api_use_es_backend',
+    'Use ES backend for Group API',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
 )

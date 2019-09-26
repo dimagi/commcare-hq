@@ -1,10 +1,8 @@
-
 import io
 import json
 import uuid
 
 import csv
-from six.moves import map, range
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import (
@@ -64,7 +62,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
                 'aggregation_level': 5,
                 'doc_id': location['location_id'],
                 'awc_name': location['name'].replace("\n", ""),
-                'awc_site_code': location['location_type__code'],
+                'awc_site_code': location['site_code'],
                 'awc_is_test': 1 if metadata.get('is_test_location') == 'test' else 0,
             }
 
@@ -76,7 +74,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
                 loc.update({
                     '{}_id'.format(loc_type): current_location['location_id'],
                     '{}_name'.format(loc_type): current_location['name'].replace("\n", ""),
-                    '{}_site_code'.format(loc_type): current_location['location_type__code'],
+                    '{}_site_code'.format(loc_type): current_location['site_code'],
                     '{}_is_test'.format(loc_type): 1 if metadata.get('is_test_location') == 'test' else 0,
                 })
                 if loc_type in ('block', 'district', 'state'):
@@ -117,9 +115,14 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         return "DELETE FROM \"{tablename}\"".format(tablename=self.base_tablename)
 
     def aggregate_to_temporary_table(self, cursor, csv_file):
-        columns = csv_file.readline().split('\t')
+        columns = csv_file.readline().replace('\t', ',')
+
+        # using csv format to not consider `\` as special value
+        query = "COPY {}({}) FROM STDIN DELIMITER '\t' CSV ".format(self.temporary_tablename,
+                                                                    columns)
+
         # double cursor to get psycopg2 cursor from django cursor
-        cursor.cursor.copy_from(csv_file, self.temporary_tablename, columns=columns)
+        cursor.cursor.copy_expert(query, csv_file)
 
     def drop_temporary_table_query(self):
         return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
@@ -361,5 +364,5 @@ def _get_all_locations_for_domain(domain):
     return (
         SQLLocation.objects
         .filter(domain=domain, is_archived=False)
-        .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code')
+        .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code', 'site_code')
     )

@@ -7,7 +7,6 @@ from contextlib import contextmanager
 from functools import partial
 from itertools import chain
 
-import six
 from six.moves.urllib.parse import unquote
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -21,7 +20,6 @@ from corehq.util.log import with_progress_bar
 
 
 USAGE = "Usage: ./manage.py blob_storage_report [options] FILE [FILE ...]"
-text = six.text_type
 
 
 class Command(BaseCommand):
@@ -347,10 +345,10 @@ def load_puts(fileobj, data):
 @contextmanager
 def make_row_writer(output_file, write_csv):
     def make_row_widths_writer(rows, output_file):
-        widths = [len(text(item)) for item in rows[0]]
+        widths = [len(str(item)) for item in rows[0]]
         for row in rows[1:]:
             for i, item in enumerate(row):
-                length = len(text(item))
+                length = len(str(item))
                 if length > widths[i]:
                     widths[i] = length
         template = " ".join(

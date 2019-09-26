@@ -16,7 +16,6 @@ from django.utils.translation import string_concat
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-import six
 from attr import attrib, attrs
 from memoized import memoized
 
@@ -57,15 +56,15 @@ def to_boolean(val):
 
 
 def strip(val):
-    return six.text_type(val).strip()
+    return str(val).strip()
 
 
 @attrs(frozen=True)
 class LocationTypeData(object):
     """read-only representation of location type attributes specified in an upload"""
-    name = attrib(type=six.text_type, converter=strip)
-    code = attrib(type=six.text_type, converter=strip)
-    parent_code = attrib(type=six.text_type, converter=lambda code: code or ROOT_LOCATION_TYPE)
+    name = attrib(type=str, converter=strip)
+    code = attrib(type=str, converter=strip)
+    parent_code = attrib(type=str, converter=lambda code: code or ROOT_LOCATION_TYPE)
     do_delete = attrib(type=bool, converter=to_boolean)
     shares_cases = attrib(type=bool, converter=to_boolean)
     view_descendants = attrib(type=bool, converter=to_boolean)
@@ -117,7 +116,7 @@ class LocationTypeStub(object):
 
 
 def lowercase_string(val):
-    return six.text_type(val).strip().lower()
+    return str(val).strip().lower()
 
 
 def maybe_decimal(val):
@@ -132,14 +131,14 @@ def maybe_decimal(val):
 @attrs(frozen=True)
 class LocationData(object):
     """read-only representation of location attributes specified in an upload"""
-    name = attrib(type=six.text_type, converter=strip)
-    site_code = attrib(type=six.text_type, converter=lowercase_string)
-    location_type = attrib(type=six.text_type, converter=strip)
-    parent_code = attrib(type=six.text_type,
+    name = attrib(type=str, converter=strip)
+    site_code = attrib(type=str, converter=lowercase_string)
+    location_type = attrib(type=str, converter=strip)
+    parent_code = attrib(type=str,
                          converter=lambda val: lowercase_string(val) if val else ROOT_LOCATION_TYPE)
-    location_id = attrib(type=six.text_type, converter=strip)
+    location_id = attrib(type=str, converter=strip)
     do_delete = attrib(type=bool, converter=to_boolean)
-    external_id = attrib(type=six.text_type, converter=strip)
+    external_id = attrib(type=str, converter=strip)
     latitude = attrib(converter=maybe_decimal)
     longitude = attrib(converter=maybe_decimal)
     # This can be a dict or 'NOT_PROVIDED_IN_EXCEL'
@@ -192,7 +191,7 @@ class LocationStub(object):
         # This just compiles the custom location data, the validation is done in _custom_data_errors()
         data_provided = self.new_data.custom_data != self.NOT_PROVIDED
         if data_provided:
-            metadata = {key: six.text_type(value) for key, value in self.new_data.custom_data.items()}
+            metadata = {key: str(value) for key, value in self.new_data.custom_data.items()}
         elif self.is_new:
             metadata = {}
         else:

@@ -1,7 +1,7 @@
 /* global moment */
 
 function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
-    downloadService) {
+    downloadService, isAlertActive) {
     var vm = this;
 
     vm.months = [];
@@ -12,6 +12,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.previousTaskFailed = null;
     $rootScope.report_link = '';
+    vm.isAlertActive = isAlertActive;
 
     var getTaskStatus = function () {
         downloadService.getStatus(vm.task_id).then(function (resp) {
@@ -57,6 +58,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         });
     });
 
+
     if (vm.selectedYear === new Date().getFullYear()) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
             return month.id <= new Date().getMonth() + 1;
@@ -75,6 +77,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             id: year,
         });
     }
+
     vm.years = vm.yearsCopy;
     vm.queuedTask = false;
     vm.selectedIndicator = 1;
@@ -119,7 +122,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 3, name: 'Demographics'},
         {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
-        {id: 6, name: 'Child Beneficiary List'},
+        {id: 6, name: 'Child Growth Monitoring List'},
         {id: 7, name: 'ICDS-CAS Monthly Register'},
         {id: 8, name: 'AWW Performance Report'},
         {id: 9, name: 'LS Performance Report'},
@@ -344,9 +347,18 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.onSelectYear = function (year) {
         var date = new Date();
         var latest = date;
+        vm.years = vm.yearsCopy;
+        vm.months = vm.monthsCopy;
+
         if (vm.isIncentiveReportSelected()) {
-            var offset = date.getDate() < 15 ? 2 : 1;
-            latest.setMonth(date.getMonth() - offset);
+            vm.years = _.filter(vm.yearsCopy, function (y) {
+                return y.id >= 2018;
+            });
+            vm.months = _.filter(vm.monthsCopy, function (month) {
+                return month.id < latest.getMonth() + 1;
+            });
+            vm.setAvailableAndSelectedMonthForAWWPerformanceReport();
+            return;
         }
 
         if (year.id > latest.getFullYear()) {
@@ -387,6 +399,29 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
+    //if selected year is 2018 make only months from october selectable as the report is only available from october 2018
+    vm.setAvailableAndSelectedMonthForAWWPerformanceReport = function () {
+        var today = new Date();
+        if (vm.selectedYear === today.getFullYear()) {
+            if (vm.selectedMonth > vm.months[0].id) {
+                vm.selectedMonth = vm.months[0].id;
+            }
+        } else if (vm.selectedYear === 2018) {
+            vm.months = vm.months.slice(-3);
+            if (vm.selectedMonth < 10) {
+                vm.selectedMonth = 10;
+            }
+        }
+    };
+
+    vm.setMonthToPreviousIfBeforeThe15th = function (date) {
+        var offset = date.getDate() < 15 ? 1 : 0;
+
+        vm.months = _.filter(vm.monthsCopy, function (month) {
+            return month.id <= (date.getMonth() + 1) - offset;
+        });
+    };
+
     vm.getAwcs = function () {
         vm.myPromise = locationsService.getAncestors();
     };
@@ -403,6 +438,13 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         if (vm.isChildBeneficiaryListSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
+        } else if (vm.isIncentiveReportSelected()) {
+            // if current selected year is less than 2018,
+            // change the selected year to latest as the report is not available before 2018
+            if (vm.selectedYear < 2018) {
+                vm.selectedYear = new Date().getFullYear();
+            }
+            vm.onSelectYear({'id': vm.selectedYear});
         } else {
             if (vm.isTakeHomeRationReportSelected()) {
                 var currentYear  = new Date().getFullYear();
@@ -569,7 +611,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 }
 
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
-    'haveAccessToFeatures', 'downloadService'];
+    'haveAccessToFeatures', 'downloadService', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

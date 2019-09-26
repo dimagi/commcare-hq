@@ -6,6 +6,10 @@
     "icds-cas",
     "icds-cas-sandbox",
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
     "icds-sql",
     "icds-test",
     "jessica-icds-cas",
@@ -24,11 +28,11 @@
   "mirrored_engine_ids": [
     {
       "server_environment": "icds",
-      "engine_ids": ["icds-ucr-citus"]
+      "engine_ids": ["icds-ucr"]
     },
     {
       "server_environment": "india",
-      "engine_ids": ["icds-ucr-citus"]
+      "engine_ids": ["icds-ucr"]
     }
   ],
   "config": {
@@ -527,7 +531,7 @@
     ],
     "named_expressions": {},
     "named_filters": {},
-    "engine_id": "icds-ucr",
+    "engine_id": "icds-ucr-citus",
     "sql_settings": {
       "citus_config": {
         "distribution_type": "hash",

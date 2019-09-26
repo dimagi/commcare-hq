@@ -1,4 +1,3 @@
-# coding=utf-8
 from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
 from django.utils.translation import ugettext_lazy as _

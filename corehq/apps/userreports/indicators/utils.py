@@ -1,4 +1,3 @@
-
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 

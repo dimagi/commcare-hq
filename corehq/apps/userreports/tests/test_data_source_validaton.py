@@ -1,4 +1,3 @@
-
 from django.test import SimpleTestCase
 
 from corehq.apps.userreports.exceptions import ValidationError

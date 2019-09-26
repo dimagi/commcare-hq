@@ -150,7 +150,7 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
                 name = c[0]
             query_cols.append((name, c[1]))
         return """
-        CREATE TEMPORARY TABLE "{tmp_tablename}" AS SELECT
+        CREATE UNLOGGED TABLE "{tmp_tablename}" AS SELECT
             {query_cols}
             FROM "{child_health_monthly_table}" chm
             LEFT OUTER JOIN "awc_location" awc_loc ON awc_loc.doc_id = chm.awc_id
@@ -173,7 +173,7 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
 
     def update_queries(self):
         yield """
-        CREATE TEMPORARY TABLE "{tmp_tablename}" AS SELECT
+        CREATE UNLOGGED TABLE "{tmp_tablename}" AS SELECT
             doc_id as awc_id,
             MAX(state_is_test) as state_is_test,
             MAX(district_is_test) as district_is_test,
@@ -205,7 +205,8 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
                   ut.supervisor_is_test != agg.supervisor_is_test OR
                   ut.awc_is_test != agg.awc_is_test
                 )
-            )
+            );
+        DROP TABLE "{tmp_tablename}";
         """.format(
             tablename=self.tablename,
             tmp_tablename='tmp_{}'.format(self.tablename),
@@ -355,16 +356,17 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
         )
 
     def indexes(self, aggregation_level):
+        tablename = self._tablename_func(aggregation_level)
         indexes = [
-            'CREATE INDEX ON "{}" (state_id)'.format(self.tablename),
-            'CREATE INDEX ON "{}" (gender)'.format(self.tablename),
-            'CREATE INDEX ON "{}" (age_tranche)'.format(self.tablename),
+            'CREATE INDEX ON "{}" (state_id)'.format(tablename),
+            'CREATE INDEX ON "{}" (gender)'.format(tablename),
+            'CREATE INDEX ON "{}" (age_tranche)'.format(tablename),
         ]
         if aggregation_level > 1:
-            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(tablename))
         if aggregation_level > 2:
-            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(tablename))
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(tablename))
 
         return indexes

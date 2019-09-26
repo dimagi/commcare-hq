@@ -5,7 +5,6 @@ from io import BytesIO
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
-from testil import eq
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -16,7 +15,7 @@ from corehq.blobs.tests.util import TemporaryS3BlobDB, TemporaryFilesystemBlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
-from corehq.form_processor.interfaces.dbaccessors import ARCHIVE_FORM, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
 from corehq.form_processor.parsers.form import apply_deprecation
@@ -28,7 +27,6 @@ from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMet
 from corehq.sql_db.routers import db_for_read_write
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
-from six.moves import range
 
 DOMAIN = 'test-form-accessor'
 
@@ -568,12 +566,6 @@ class DeleteAtachmentsS3DBTests(DeleteAttachmentsFSDBTests):
     def tearDown(self):
         self.s3db.close()
         super(DeleteAtachmentsS3DBTests, self).tearDown()
-
-
-def test_archive_form_system_action():
-    eq(ARCHIVE_FORM, "archive_form",
-        "Changing the value of this constant will break all "
-        "'archive_form' system action forms in existence.")
 
 
 def _simulate_form_edit():

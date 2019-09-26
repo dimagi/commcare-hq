@@ -28,8 +28,13 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
     if user_id in WEIRD_USER_IDS:
         user_id = None
 
-    if (user_id and not _user_exists(user_id)
-            and not doc_exists_in_es(USER_INDEX_INFO, user_id)):
+    if not user_id:
+        return
+
+    if _user_exists_in_couch(user_id):
+        return
+
+    if not doc_exists_in_es(USER_INDEX_INFO, user_id):
         doc_type = "AdminUser" if username == "admin" else "UnknownUser"
         doc = {
             "_id": user_id,
@@ -64,7 +69,7 @@ def transform_user_for_elasticsearch(doc_dict):
 
 
 @quickcache(['user_id'])
-def _user_exists(user_id):
+def _user_exists_in_couch(user_id):
     return CouchUser.get_db().doc_exist(user_id)
 
 
@@ -132,6 +137,7 @@ def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
     user_processor = get_user_es_processor()
     ucr_processor = ConfigurableReportPillowProcessor(
         data_source_providers=[DynamicDataSourceProvider('CommCareUser'), StaticDataSourceProvider('CommCareUser')],
+        run_migrations=(process_num == 0),  # only first process runs migrations
     )
     change_feed = KafkaChangeFeed(
         topics=topics.USER_TOPICS, client_id='users-to-es', num_processes=num_processes, process_num=process_num

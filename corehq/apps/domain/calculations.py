@@ -6,6 +6,7 @@ from django.utils.translation import ugettext as _
 
 from dateutil.relativedelta import relativedelta
 
+from corehq.util.quickcache import quickcache
 from couchforms.analytics import (
     domain_has_submission_in_last_30_days,
     get_first_form_submission_received,
@@ -339,12 +340,13 @@ def dom_calc(calc_tag, dom, extra_arg=''):
     return ans
 
 
+@quickcache([], timeout=60 * 60)
 def all_domain_stats():
-    webuser_counts = defaultdict(lambda: 0)
-    commcare_counts = defaultdict(lambda: 0)
+    webuser_counts = defaultdict(int)
+    commcare_counts = defaultdict(int)
 
     for row in CouchUser.get_db().view('users/by_domain', startkey=["active"],
-                             endkey=["active", {}], group_level=3).all():
+                                       endkey=["active", {}], group_level=3).all():
         _, domain, doc_type = row['key']
         value = row['value']
         {

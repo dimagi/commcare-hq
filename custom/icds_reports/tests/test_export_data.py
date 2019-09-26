@@ -1,4 +1,3 @@
-
 from datetime import date, datetime
 import json
 from custom.icds_reports.utils import india_now
@@ -15,6 +14,7 @@ from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExpo
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
+
 
 class TestExportData(TestCase):
     maxDiff = None
@@ -60,8 +60,8 @@ class TestExportData(TestCase):
                         'State',
                         'st1'],
                     [
-                        'Supervisor',
-                        's1'],
+                        'District',
+                        'd1'],
                     [
                         "Block",
                         "b1"
@@ -173,7 +173,7 @@ class TestExportData(TestCase):
                 6, 13, '46.15 %',
                 2, 13, '15.38 %',
                 1, 2, '50.00 %',
-                164, 1134, '14.46%',
+                163, 1128, '14.45%',
                 1, 5, '20.00 %',
                 28, 56, '50.00 %',
                 21, 32, '65.62 %',
@@ -207,7 +207,7 @@ class TestExportData(TestCase):
                 6, 13, '46.15 %',
                 2, 13, '15.38 %',
                 1, 2, '50.00 %',
-                164, 1134, '14.46%',
+                163, 1128, '14.45%',
                 1, 5, '20.00 %',
                 28, 56, '50.00 %',
                 21, 32, '65.62 %',
@@ -241,7 +241,7 @@ class TestExportData(TestCase):
                 6, 13, '46.15 %',
                 2, 13, '15.38 %',
                 1, 2, '50.00 %',
-                164, 1134, '14.46%',
+                163, 1128, '14.45%',
                 1, 5, '20.00 %',
                 28, 56, '50.00 %',
                 21, 32, '65.62 %',
@@ -276,7 +276,7 @@ class TestExportData(TestCase):
                 6, 13, '46.15 %',
                 2, 13, '15.38 %',
                 1, 2, '50.00 %',
-                164, 1134, '14.46%',
+                163, 1128, '14.45%',
                 1, 5, '20.00 %',
                 28, 56, '50.00 %',
                 21, 32, '65.62 %',
@@ -309,7 +309,7 @@ class TestExportData(TestCase):
                 6, 13, '46.15 %',
                 2, 13, '15.38 %',
                 1, 2, '50.00 %',
-                164, 1134, '14.46%',
+                163, 1128, '14.45%',
                 1, 5, '20.00 %',
                 28, 56, '50.00 %',
                 21, 32, '65.62 %',
@@ -342,7 +342,7 @@ class TestExportData(TestCase):
                 6, 32, '18.75 %',
                 15, 32, '46.88 %',
                 0, 4, '0.00 %',
-                87, 1230, '7.07%',
+                87, 1218, '7.14%',
                 3, 6, '50.00 %',
                 13, 52, '25.00 %',
                 24, 40, '60.00 %',
@@ -375,7 +375,7 @@ class TestExportData(TestCase):
                 6, 32, '18.75 %',
                 15, 32, '46.88 %',
                 0, 4, '0.00 %',
-                87, 1230, '7.07%',
+                87, 1218, '7.14%',
                 3, 6, '50.00 %',
                 13, 52, '25.00 %',
                 24, 40, '60.00 %',
@@ -408,7 +408,7 @@ class TestExportData(TestCase):
                 6, 32, '18.75 %',
                 15, 32, '46.88 %',
                 0, 4, '0.00 %',
-                87, 1230, '7.07%',
+                87, 1218, '7.14%',
                 3, 6, '50.00 %',
                 13, 52, '25.00 %',
                 24, 40, '60.00 %',
@@ -441,7 +441,7 @@ class TestExportData(TestCase):
                 6, 32, '18.75 %',
                 15, 32, '46.88 %',
                 0, 4, '0.00 %',
-                87, 1230, '7.07%',
+                87, 1218, '7.14%',
                 3, 6, '50.00 %',
                 13, 52, '25.00 %',
                 24, 40, '60.00 %',
@@ -474,7 +474,7 @@ class TestExportData(TestCase):
                 6, 32, '18.75 %',
                 15, 32, '46.88 %',
                 0, 4, '0.00 %',
-                87, 1230, '7.07%',
+                87, 1218, '7.14%',
                 3, 6, '50.00 %',
                 13, 52, '25.00 %',
                 24, 40, '60.00 %',
@@ -544,7 +544,7 @@ class TestExportData(TestCase):
                     [
                         ['Generated at', '16:21:11 15 November 2017'],
                         ['State', 'st1'],
-                        ['Supervisor', 's1'],
+                        ['District', 'd1'],
                         ['Block', 'b1']
                     ]
                 ]
@@ -576,41 +576,41 @@ class TestExportData(TestCase):
                     'Number of adolescent girls 11 to 14 years old that are enrolled for services',
                     'Number of adolescent girls 15 to 18 years old that are enrolled for services'
                 ],
-                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 7253, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st2', 6662, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
-                ['st2', 6662, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
-                ['st2', 6662, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
-                ['st2', 6662, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
-                ['st2', 6662, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
+                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
+                ['st2', 2952, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
+                ['st2', 2952, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
+                ['st2', 2952, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
+                ['st2', 2952, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
+                ['st2', 2952, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
                 ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st3', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st3', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st4', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st4', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st4', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st4', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st5', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st5', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st5', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st5', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st5', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st5', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st5', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st5', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st6', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st6', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st6', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st6', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st6', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st7', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0]
+                ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0]
                 ]],
                 [
                     'Export Info',
@@ -681,7 +681,7 @@ class TestExportData(TestCase):
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
                     ['State', 'st1'],
-                    ['Supervisor', 's1'],
+                    ['District', 'd1'],
                     ['Block', 'b1'],
                     ['Month', 'May'],
                     ['Year', 2017]
@@ -777,7 +777,7 @@ class TestExportData(TestCase):
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
                     ['State', 'st1'],
-                    ['Supervisor', 's1'],
+                    ['District', 'd1'],
                     ['Block', 'b1'],
                     ['Grouped By', 'AWC'],
                     ['Month', 'May'],
@@ -1098,8 +1098,8 @@ class TestExportData(TestCase):
                             'st1'
                         ],
                         [
-                            'Supervisor',
-                            's1'
+                            'District',
+                            'd1'
                         ],
                         [
                             "Block",
@@ -2082,6 +2082,22 @@ class TestExportData(TestCase):
                             "16:21:11 15 November 2017"
                         ],
                         [
+                            'State',
+                            'st1'
+                        ],
+                        [
+                            'District',
+                            'd1'
+                        ],
+                        [
+                            'Block',
+                            'b1'
+                        ],
+                        [
+                            'Supervisor',
+                            's1'
+                        ],
+                        [
                             "Awc",
                             "a7"
                         ],
@@ -2293,7 +2309,7 @@ class TestExportData(TestCase):
              ['Export Info', [
                  ['Generated at', india_now()],
                  ['State', 'st1'],
-                 ['Supervisor', 's1'],
+                 ['District', 'd1'],
                  ['Block', 'b1'],
                  ['Month', 'May'],
                  ['Year', 2017]]

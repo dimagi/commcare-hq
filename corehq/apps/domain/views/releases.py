@@ -1,4 +1,3 @@
-
 from datetime import datetime
 
 from django.contrib import messages
@@ -11,7 +10,10 @@ from django.http.response import (
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import (
+    ugettext as _,
+    ugettext_lazy,
+)
 from django.views.decorators.http import require_POST
 
 from corehq import toggles
@@ -30,6 +32,7 @@ from corehq.apps.domain.forms import (
 )
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.permissions import can_manage_releases
 
 
 @method_decorator([toggles.MANAGE_RELEASES_PER_LOCATION.required_decorator(),
@@ -208,6 +211,9 @@ def toggle_release_restriction_by_app_profile(request, domain, restriction_id):
     release = LatestEnabledBuildProfiles.objects.get(id=restriction_id)
     if not release:
         return HttpResponseBadRequest()
+    if not can_manage_releases(request.couch_user, domain, release.app_id):
+        return JsonResponse(data={
+            'message': _("You don't have permission to set restriction for this application")})
     if request.POST.get('active') == 'false':
         return _update_release_restriction_by_app_profile(release, restriction_id, active=False)
     elif request.POST.get('active') == 'true':

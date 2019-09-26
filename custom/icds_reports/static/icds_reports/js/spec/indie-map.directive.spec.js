@@ -42,6 +42,7 @@ describe('Indie Map Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("isAlertActive", false);
     }));
 
     beforeEach(inject(function ($rootScope, _$compile_, _$location_, _$httpBackend_, storageService) {

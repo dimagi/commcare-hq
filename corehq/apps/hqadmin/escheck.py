@@ -4,7 +4,6 @@ import time
 from django.conf import settings
 
 from couchdbkit import ResourceNotFound
-from six.moves import range
 
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance

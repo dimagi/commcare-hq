@@ -1,6 +1,3 @@
-
-import six
-
 from corehq.apps.products.models import SQLProduct
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import INVALID_PRODUCT_CODE
@@ -58,7 +55,7 @@ class ZiplineGenericHandler(KeywordHandler):
         try:
             parsed_report = self.parse_message(content)
         except ParseError as e:
-            self.respond(six.text_type(e))
+            self.respond(str(e))
             return True
 
         for product_code, quantity in parsed_report:

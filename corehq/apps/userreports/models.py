@@ -1,4 +1,3 @@
-
 import glob
 import json
 import os
@@ -142,7 +141,7 @@ class CitusConfig(DocumentSchema):
 
 
 class SQLSettings(DocumentSchema):
-    partition_config = SchemaListProperty(SQLPartition)
+    partition_config = SchemaListProperty(SQLPartition)  # no longer used
     citus_config = SchemaProperty(CitusConfig)
     primary_key = ListProperty()
 

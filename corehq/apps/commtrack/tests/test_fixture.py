@@ -5,8 +5,6 @@ from xml.etree import cElementTree as ElementTree
 
 from django.test import TestCase
 
-from six.moves import range
-
 from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
 from casexml.apps.phone.tests.utils import (
     call_fixture_generator,

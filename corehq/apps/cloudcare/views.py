@@ -23,7 +23,6 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit import ResourceConflict
-from six.moves import filter, map
 
 from casexml.apps.phone.fixtures import generator
 from dimagi.utils.parsing import string_to_boolean

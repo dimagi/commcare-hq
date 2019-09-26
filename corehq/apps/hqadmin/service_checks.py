@@ -18,7 +18,6 @@ import attr
 import gevent
 import requests
 from celery import Celery
-from six.moves import range
 
 from soil import heartbeat
 

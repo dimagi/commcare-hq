@@ -1,4 +1,3 @@
-
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.timezones.utils import get_timezone

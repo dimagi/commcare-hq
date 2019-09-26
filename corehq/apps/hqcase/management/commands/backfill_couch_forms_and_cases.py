@@ -1,11 +1,10 @@
-
 import json
 import os
 import time
 
 from django.core.management import BaseCommand
 
-from six.moves import zip_longest
+from itertools import zip_longest
 
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance

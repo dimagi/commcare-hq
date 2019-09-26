@@ -90,14 +90,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
-from corehq.apps.export.esaccessors import (
-    get_ledger_section_entry_combinations,
-)
-from corehq.apps.export.utils import (
-    domain_has_daily_saved_export_access,
-    domain_has_excel_dashboard_access,
-    is_occurrence_deleted,
-)
+from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
@@ -2617,9 +2610,7 @@ class StockExportColumn(ExportColumn):
     @property
     @memoized
     def _column_tuples(self):
-        combos = get_ledger_section_entry_combinations(self.domain)
-        section_and_product_ids = sorted(set([(combo.entry_id, combo.section_id) for combo in combos]))
-        return section_and_product_ids
+        return get_ledger_section_entry_combinations(self.domain)
 
     def _get_product_name(self, product_id):
         try:
@@ -2770,6 +2761,25 @@ class EmailExportWhenDoneRequest(models.Model):
     domain = models.CharField(max_length=255)
     download_id = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255)
+
+
+class LedgerSectionEntry(models.Model):
+    domain = models.CharField(max_length=255)
+    section_id = models.CharField(max_length=255)
+    entry_id = models.CharField(max_length=255)
+
+    class Meta(object):
+        unique_together = ('domain', 'section_id', 'entry_id')
+
+
+def get_ledger_section_entry_combinations(domain):
+    return list(
+        LedgerSectionEntry.objects
+        .filter(domain=domain)
+        .order_by('entry_id', 'section_id')
+        .values_list('entry_id', 'section_id')
+        .all()
+    )
 
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js

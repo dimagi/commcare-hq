@@ -1,4 +1,3 @@
-
 import re
 import weakref
 from io import BytesIO

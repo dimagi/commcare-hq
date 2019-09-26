@@ -1,4 +1,3 @@
-
 import json
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -22,9 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
-import six
 from couchdbkit import ResourceNotFound
-from six.moves import range
 
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.view import get_file
@@ -252,7 +249,7 @@ def data_table(request, domain):
     try:
         sheets = prepare_fixture_html(table_ids, domain)
     except FixtureDownloadError as e:
-        messages.info(request, six.text_type(e))
+        messages.info(request, str(e))
         raise Http404()
     sheets.pop("types")
     if not sheets:
@@ -399,7 +396,7 @@ def fixture_upload_job_poll(request, domain, download_id, template="fixtures/par
     try:
         context = get_download_context(download_id, require_result=True)
     except TaskFailedError as e:
-        notify_exception(request, message=six.text_type(e))
+        notify_exception(request, message=str(e))
         return HttpResponseServerError()
 
     return render(request, template, context)
@@ -469,9 +466,9 @@ def fixture_api_upload_status(request, domain, download_id, **kwargs):
     try:
         context = get_download_context(download_id, require_result=True)
     except TaskFailedError as e:
-        notify_exception(request, message=six.text_type(e))
+        notify_exception(request, message=str(e))
         response = {
-            'message': _("Upload did not complete. Reason: '{}'".format(six.text_type(e))),
+            'message': _("Upload did not complete. Reason: '{}'".format(str(e))),
             'error': True,
         }
         return json_response(response)
@@ -499,7 +496,7 @@ def _upload_fixture_api(request, domain):
     try:
         excel_file, replace, is_async, skip_orm, email = _get_fixture_upload_args_from_request(request, domain)
     except FixtureAPIRequestError as e:
-        return UploadFixtureAPIResponse('fail', six.text_type(e))
+        return UploadFixtureAPIResponse('fail', str(e))
 
     with excel_file as filename:
 

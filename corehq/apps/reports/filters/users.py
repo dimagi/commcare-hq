@@ -5,7 +5,6 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from memoized import memoized
-from six.moves import map
 
 from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.models import Domain
@@ -13,7 +12,6 @@ from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import user_can_access_other_user
-from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
@@ -275,9 +273,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @property
     @memoized
     def selected(self):
-        selected_ids = []
-        for ids in self.request.GET.getlist(self.slug):
-            selected_ids.extend(ids.split(CHOICE_DELIMITER))
+        selected_ids = self.request.GET.getlist(self.slug)
         if not selected_ids:
             return [{'id': url_id, 'text': text}
                     for url_id, text in self.get_default_selections()]

@@ -19,8 +19,10 @@
     <script src="{% static 'reports/js/reports.async.js' %}"></script>
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
     <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
-    {% include 'reports/partials/filters_js.html' %}
-    {% include 'reports/partials/graphs/charts_js.html' %}
+  {% endcompress %}
+  {% include 'reports/partials/filters_js.html' %}
+  {% include 'reports/partials/graphs/charts_js.html' %}
+  {% compress js %}
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
     <script src="{% static 'case/js/casexml.js' %}"></script>
     <script src="{% static 'reports/js/tabular.js' %}"></script>
@@ -92,6 +94,7 @@
 
 {% block page_content %}
   {% initial_page_data 'js_options' report.js_options %}
+  {% initial_page_data 'rendered_as' rendered_as %}
   {% initial_page_data 'report_table_js_options' report_table_js_options %}
 
   {# Needed for case reassignment interface #}

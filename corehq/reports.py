@@ -1,5 +1,4 @@
 import datetime
-import six
 from django.urls import reverse
 from corehq import privileges
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
@@ -203,7 +202,7 @@ def _safely_get_report_configs(project_name):
             try:
                 configs.append(ReportConfiguration.get(config_id))
             except BadSpecError as e:
-                logging.error("%s with report config %s" % (six.text_type(e), config_id))
+                logging.error("%s with report config %s" % (str(e), config_id))
 
     try:
         configs.extend(StaticReportConfiguration.by_domain(project_name))

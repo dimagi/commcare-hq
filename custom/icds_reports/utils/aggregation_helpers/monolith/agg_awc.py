@@ -56,7 +56,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
             is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe,
-            thr_distribution_image_count
+            thr_distribution_image_count,num_launched_awcs,num_launched_supervisors, num_launched_blocks,
+            num_launched_districts,num_launched_states
         )
         (
             SELECT
@@ -71,7 +72,12 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             5,
             CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
             CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END,
-            thr_v2.thr_distribution_image_count
+            thr_v2.thr_distribution_image_count,
+            0,
+            0,
+            0,
+            0,
+            0
             FROM awc_location_local awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
@@ -98,21 +104,22 @@ class AggAwcHelper(BaseICDSAggregationHelper):
     def indexes(self, aggregation_level):
         indexes = []
 
+        tablename = self._tablename_func(aggregation_level)
         agg_locations = ['state_id']
         if aggregation_level > 1:
-            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(tablename))
             agg_locations.append('district_id')
         if aggregation_level > 2:
-            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(tablename))
             agg_locations.append('block_id')
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(tablename))
             agg_locations.append('supervisor_id')
         if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (awc_id)'.format(self.tablename))
+            indexes.append('CREATE INDEX ON "{}" (awc_id)'.format(tablename))
             agg_locations.append('awc_id')
 
-        indexes.append('CREATE INDEX ON "{}" ({})'.format(self.tablename, ', '.join(agg_locations)))
+        indexes.append('CREATE INDEX ON "{}" ({})'.format(tablename, ', '.join(agg_locations)))
         return indexes
 
     def updates(self):
@@ -174,6 +181,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             cases_ccs_lactating = ut.cases_ccs_lactating,
             cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all,
             cases_ccs_lactating_all = ut.cases_ccs_lactating_all,
+            num_mother_thr_21_days = ut.rations_21_plus_distributed,
+            num_mother_thr_eligible = ut.thr_eligible,
             cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating,
             valid_visits = ut.valid_visits,
             expected_visits = CASE WHEN ut.valid_visits>ut.expected_visits THEN ut.valid_visits ELSE ut.expected_visits END
@@ -185,6 +194,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(agg_ccs_record_monthly.lactating) AS cases_ccs_lactating,
                 sum(agg_ccs_record_monthly.pregnant_all) AS cases_ccs_pregnant_all,
                 sum(agg_ccs_record_monthly.lactating_all) AS cases_ccs_lactating_all,
+                sum(agg_ccs_record_monthly.rations_21_plus_distributed) AS rations_21_plus_distributed,
+                sum(agg_ccs_record_monthly.thr_eligible) AS thr_eligible,
                 sum(agg_ccs_record_monthly.valid_visits) + COALESCE(home_visit.valid_visits, 0) AS valid_visits,
                 sum(agg_ccs_record_monthly.expected_visits) +
                 COALESCE(home_visit.expected_visits, 0) AS expected_visits
@@ -223,7 +234,13 @@ class AggAwcHelper(BaseICDSAggregationHelper):
 
         yield """
         UPDATE "{tablename}" agg_awc SET
-           cases_household = ut.cases_household
+           cases_household = ut.cases_household,
+           is_launched = CASE WHEN ut.cases_household>0 THEN 'yes' ELSE 'no' END,
+           num_launched_states = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_districts = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_blocks = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_supervisors = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_awcs = CASE WHEN ut.cases_household>0 THEN 1 ELSE 0 END
         FROM (
             SELECT
                 owner_id,
@@ -319,12 +336,6 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             usage_num_gmp = ut.usage_num_gmp,
             usage_num_thr = ut.usage_num_thr,
             usage_num_hh_reg = ut.usage_num_hh_reg,
-            is_launched = ut.is_launched,
-            num_launched_states = ut.num_launched_awcs,
-            num_launched_districts = ut.num_launched_awcs,
-            num_launched_blocks = ut.num_launched_awcs,
-            num_launched_supervisors = ut.num_launched_awcs,
-            num_launched_awcs = ut.num_launched_awcs,
             usage_num_add_person = ut.usage_num_add_person,
             usage_num_add_pregnancy = ut.usage_num_add_pregnancy,
             usage_num_home_visit = ut.usage_num_home_visit,
@@ -346,8 +357,6 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(gmp) AS usage_num_gmp,
                 sum(thr) AS usage_num_thr,
                 sum(add_household) AS usage_num_hh_reg,
-                CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched,
-                CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs,
                 sum(add_person) AS usage_num_add_person,
                 sum(add_pregnancy) AS usage_num_add_pregnancy,
                 sum(home_visit) AS usage_num_home_visit,
@@ -372,22 +381,6 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         ), {
             'start_date': self.month_start,
             'next_month': self.next_month,
-        }
-
-        yield """
-        UPDATE "{tablename}" agg_awc SET
-            is_launched = 'yes',
-            num_launched_awcs = 1
-        FROM (
-            SELECT DISTINCT(awc_id)
-            FROM agg_awc
-            WHERE month = %(prev_month)s AND num_launched_awcs > 0 AND aggregation_level=5
-        ) ut
-        WHERE ut.awc_id = agg_awc.awc_id;
-        """.format(
-            tablename=self.tablename
-        ), {
-            'prev_month': self.prev_month
         }
 
         yield """
@@ -564,6 +557,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('cases_person_all',),
             ('cases_ccs_pregnant_all',),
             ('cases_ccs_lactating_all',),
+            ('num_mother_thr_21_days',),
+            ('num_mother_thr_eligible',),
             ('cases_child_health_all',),
             ('cases_person_adolescent_girls_11_14',),
             ('cases_person_adolescent_girls_15_18',),

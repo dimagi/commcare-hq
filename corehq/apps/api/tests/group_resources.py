@@ -1,4 +1,3 @@
-
 import json
 
 from django.test import RequestFactory

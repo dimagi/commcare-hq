@@ -1,4 +1,3 @@
-
 import datetime
 import math
 from collections import defaultdict, namedtuple

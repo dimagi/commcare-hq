@@ -1,4 +1,3 @@
-
 import json
 import logging
 import os
@@ -445,10 +444,18 @@ def update_form_unique_ids(app_source, form_ids_by_xmlns=None):
 
 
 def update_report_module_ids(app_source):
+    """Make new report UUIDs so they stay unique
+
+    Otherwise there would be multiple reports in the restore with the same UUID
+    Set the report slug to the old UUID so any xpath expressions referencing
+    the report by ID continue to work, if only in mobile UCR v2
+    """
     app_source = deepcopy(app_source)
     for module in app_source['modules']:
         if module['module_type'] == 'report':
             for config in module['report_configs']:
+                if not config.get('report_slug'):
+                    config['report_slug'] = config['uuid']
                 config['uuid'] = uuid.uuid4().hex
     return app_source
 
@@ -634,7 +641,7 @@ def get_form_source_download_url(xform):
 
     try:
         form = app.get_forms_by_xmlns(xform.xmlns)[0]
-    except KeyError:
+    except IndexError:
         return None
 
     return reverse("app_download_file", args=[

@@ -1,8 +1,6 @@
 import json
 import uuid
 
-import six
-from six.moves import map
 
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
@@ -57,7 +55,7 @@ def assertContainsExportItems(item_tuples, export_group_schema):
     extra = actual - item_set
     if missing or extra:
         def prettify(list_of_tuples):
-            return '\n  '.join(map(six.text_type, list_of_tuples))
+            return '\n  '.join(map(str, list_of_tuples))
         raise AssertionError("Contains items:\n  {}\nMissing items:\n  {}\nExtra items:\n {}"
                              .format(prettify(actual), prettify(missing), prettify(extra)))
 

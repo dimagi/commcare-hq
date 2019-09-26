@@ -1,8 +1,5 @@
 from django.test import SimpleTestCase
 
-from six.moves import \
-    filter  # keep unused import so py3 conversion scripts don't rewrite file
-
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import (
     ANDFilter,

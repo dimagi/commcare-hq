@@ -3,8 +3,6 @@ from datetime import datetime, timedelta
 from django import template
 from django.urls import reverse
 
-from six.moves import range
-
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 
 xmldate_format= '%Y-%m-%dT%H:%M:%S'

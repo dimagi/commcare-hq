@@ -1,5 +1,3 @@
-# coding=utf-8
-
 from django.utils.functional import cached_property
 
 from corehq.apps.locations.models import SQLLocation, get_location
@@ -176,7 +174,5 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
         }
         config['month'] = self.request.GET.get('month')
         config['year'] = self.request.GET.get('year')
-        config['product_program'] = self.request.GET.get('product_program')
-        config['product_product'] = self.request.GET.get('product_product')
-        config['selected_location'] = self.request.GET.get('location_id')
+        config['location_id'] = self.request.GET.get('location_id')
         return config

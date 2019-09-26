@@ -9,7 +9,6 @@ from django.db.models import F, Max, Min, Q, Sum
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-import six
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
@@ -180,7 +179,7 @@ class DomainInvoiceFactory(object):
                         record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
-                    log_accounting_error(six.text_type(e))
+                    log_accounting_error(str(e))
                     self.logged_throttle_error = True
         else:
             record.skipped_email = True
@@ -325,7 +324,7 @@ class DomainWireInvoiceFactory(object):
             except InvoiceEmailThrottledError as e:
                 # Currently wire invoices are never throttled
                 if not self.logged_throttle_error:
-                    log_accounting_error(six.text_type(e))
+                    log_accounting_error(str(e))
                     self.logged_throttle_error = True
         else:
             record.skipped_email = True

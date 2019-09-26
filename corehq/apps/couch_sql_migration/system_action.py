@@ -1,10 +1,17 @@
 import json
 
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+)
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import ARCHIVE_FORM
-from corehq.form_processor.system_action import do_system_action as _do_system_action
+from corehq.form_processor.interfaces.processor import HARD_DELETE_CASE_AND_FORMS
+from corehq.form_processor.system_action import (
+    UnauthorizedSystemAction,
+    do_system_action as _do_system_action,
+)
 
 from .asyncforms import get_case_ids
 
@@ -58,9 +65,18 @@ def _archive_form_data(args_json):
     return form.domain, args, iter_forms_and_cases
 
 
+@_action(HARD_DELETE_CASE_AND_FORMS)
+def _hard_delete_data(args_json):
+    # TODO remove form and case diffs, if any, for hard-deleted items
+    case_id, form_ids = args_json
+    try:
+        case = CaseAccessorSQL.get_case(case_id)
+    except CaseNotFound:
+        # case has not been migrated yet
+        raise IgnoreSystemAction
+    forms = [FormAccessorSQL.get_form(f) for f in form_ids]
+    return case.domain, [case, forms], lambda: []
+
+
 class IgnoreSystemAction(Exception):
-    pass
-
-
-class UnauthorizedSystemAction(Exception):
     pass

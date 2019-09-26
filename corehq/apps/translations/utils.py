@@ -1,7 +1,4 @@
-
 import tempfile
-
-import six
 
 from corehq import toggles
 from corehq.apps.app_manager.models import LinkedApplication

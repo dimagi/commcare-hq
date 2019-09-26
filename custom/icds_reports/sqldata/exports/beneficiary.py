@@ -1,4 +1,3 @@
-
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, RawFilter, ORFilter, LTE
@@ -20,7 +19,7 @@ class BeneficiaryExport(ExportableMixin, IcdsSqlData):
         config.update({
             '5_years': 60,
         })
-        super(BeneficiaryExport, self).__init__(config, loc_level, show_test, beta)
+        super().__init__(config, loc_level, show_test, beta, use_excluded_states=False)
 
     @property
     def group_by(self):

@@ -7,7 +7,6 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 from django.conf import settings
 import kombu.five
-import six
 
 
 def no_result_task(*args, **kwargs):
@@ -193,7 +192,7 @@ def deserialize_run_every_setting(run_every_setting):
     generic_value_error = ValueError(
         "A run_every setting has to be an int or a dict with a single key: "
         "crontab or timedelta")
-    if isinstance(run_every_setting, six.integer_types):
+    if isinstance(run_every_setting, int):
         return run_every_setting
     elif isinstance(run_every_setting, dict):
         if len(run_every_setting) != 1:

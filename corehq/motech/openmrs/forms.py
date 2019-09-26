@@ -6,7 +6,6 @@ from django.utils.translation import ugettext as _
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-from six.moves import map
 
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.openmrs.const import (
@@ -83,6 +82,8 @@ class OpenmrsImporterForm(forms.Form):
     import_frequency = forms.ChoiceField(label=_('Import Frequency'), choices=IMPORT_FREQUENCY_CHOICES,
                                          help_text=_('How often should cases be imported?'), required=False)
     log_level = forms.TypedChoiceField(label=_('Log Level'), required=False, choices=LOG_LEVEL_CHOICES, coerce=int)
+    timezone = forms.CharField(label=_('Timezone'), required=False,
+                               help_text=_("Timezone name. If not specified, the domain's timezone will be used."))
 
     report_uuid = forms.CharField(label=_('Report UUID'), required=True,
                                   help_text=_('The OpenMRS UUID of the report of patients to be imported'))

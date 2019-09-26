@@ -1,4 +1,3 @@
-
 import json
 
 from django.utils.translation import ugettext_lazy as _
@@ -32,6 +31,8 @@ class Dhis2Repeater(FormRepeater):
 
     dhis2_config = SchemaProperty(Dhis2Config)
 
+    _has_config = True
+
     def __eq__(self, other):
         return (
             isinstance(other, self.__class__) and
@@ -55,10 +56,6 @@ class Dhis2Repeater(FormRepeater):
     @classmethod
     def available_for_domain(cls, domain):
         return DHIS2_INTEGRATION.enabled(domain)
-
-    @classmethod
-    def get_custom_url(cls, domain):
-        return reverse(AddDhis2RepeaterView.urlname, args=[domain])
 
     def get_payload(self, repeat_record):
         payload = super(Dhis2Repeater, self).get_payload(repeat_record)

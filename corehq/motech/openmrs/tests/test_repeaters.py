@@ -1,4 +1,3 @@
-
 import copy
 import doctest
 import json

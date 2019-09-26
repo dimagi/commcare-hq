@@ -1,10 +1,8 @@
-# coding=utf-8
 import re
 from collections import namedtuple
 
 from django.http import Http404
 
-import six
 from couchdbkit import ResourceNotFound
 
 import couchforms
@@ -48,7 +46,7 @@ def get_meta_appversion_text(form_metadata):
         return None
 
     # just make sure this is a longish string and not something like '2.0'
-    if isinstance(text, (str, six.text_type)) and len(text) > 5:
+    if isinstance(text, (str, str)) and len(text) > 5:
         return text
     else:
         return None
@@ -143,11 +141,13 @@ def get_commcare_version_from_appversion_text(appversion_text):
     '2.4.1'
     >>> get_commcare_version_from_appversion_text(u'संस्करण "2.27.8" (414593)')
     '2.27.8'
+    >>> get_commcare_version_from_appversion_text(u'CommCare Android, आवृत्ती" 2.44.5"(452680). ॲप वि.29635 कॉमर्स आवृत्ती2.44. बिल्ड452680, रोजी तयार केले:2019-01-17')
+    '2.44.3'
     """
     patterns = [
         r'version "([\d.]+)"',
         r'"([\d.]+)"\s+\(\d+\)',
-        r'"([\d.]+)"',
+        r'"\s*([\d.]+)\s*"',
     ]
     return _first_group_match(appversion_text, patterns)
 

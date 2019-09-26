@@ -1,4 +1,3 @@
-
 from django.test import SimpleTestCase, TestCase
 
 from elasticsearch.exceptions import ConnectionError

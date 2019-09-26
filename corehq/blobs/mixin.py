@@ -483,7 +483,7 @@ class DeferredBlobMixin(BlobMixin):
 
         This method takes the same parameters as `put_attachment`.
         """
-        if isinstance(content, six.text_type):
+        if isinstance(content, str):
             content = content.encode('utf-8')
         elif not isinstance(content, bytes):
             content = content.read()

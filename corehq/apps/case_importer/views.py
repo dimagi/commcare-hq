@@ -1,4 +1,3 @@
-
 import os.path
 
 from django.contrib import messages

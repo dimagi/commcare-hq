@@ -1,4 +1,3 @@
-
 from django.db import migrations, models
 
 from corehq.apps.smsbillables.models import add_twilio_gateway_fee

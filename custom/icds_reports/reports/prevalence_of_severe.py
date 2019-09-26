@@ -1,4 +1,3 @@
-
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -32,7 +31,6 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
             total_height_eligible=Sum('height_eligible'),
             total_weighed=Sum('nutrition_status_weighed'),
             total_measured=Sum(wfh_recorded_in_month_column(icds_feature_flag)),
-            weighed_and_height_measured=Sum('weighed_and_height_measured_in_month')
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
@@ -48,7 +46,6 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         'total_weighed': 0,
         'total_measured': 0,
         'total_height_eligible': 0,
-        'total_weighed_and_height': 0,
         'original_name': []
     })
 
@@ -58,7 +55,6 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     weighed_for_all_locations = 0
     measured_for_all_locations = 0
     height_eligible_for_all_locations = 0
-    weighed_and_height_for_all_locations = 0
 
     values_to_calculate_average = {'numerator': 0, 'denominator': 0}
     for row in get_data_for(config):
@@ -70,7 +66,6 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         moderate = row['moderate'] or 0
         normal = row['normal'] or 0
         total_measured = row['total_measured'] or 0
-        total_weighed_and_height = row['weighed_and_height_measured'] or 0
 
         values_to_calculate_average['numerator'] += moderate if moderate else 0
         values_to_calculate_average['numerator'] += severe if severe else 0
@@ -82,7 +77,6 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         weighed_for_all_locations += total_weighed
         measured_for_all_locations += total_measured
         height_eligible_for_all_locations += total_height_eligible
-        weighed_and_height_for_all_locations += total_weighed_and_height
 
         data_for_map[on_map_name]['severe'] += severe
         data_for_map[on_map_name]['moderate'] += moderate
@@ -90,7 +84,6 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         data_for_map[on_map_name]['total_weighed'] += total_weighed
         data_for_map[on_map_name]['total_measured'] += total_measured
         data_for_map[on_map_name]['total_height_eligible'] += total_height_eligible
-        data_for_map[on_map_name]['total_weighed_and_height'] += total_weighed_and_height
         data_for_map[on_map_name]['original_name'].append(name)
 
     for data_for_location in data_for_map.values():
@@ -118,55 +111,6 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         (values_to_calculate_average['numerator'] * 100) /
         float(values_to_calculate_average['denominator'] or 1)
     )
-    if icds_feature_flag:
-        indicators = [
-            {
-                'indicator': (
-                    'Total number of children{} eligible for weight and height measurement:'.format(
-                        chosen_filters
-                    )
-                ),
-                'value': indian_formatted_number(weighed_and_height_for_all_locations)
-            }, {
-                'indicator': 'Total number of children{} with weight and height measured:'.format(
-                    chosen_filters
-                ),
-                'value': indian_formatted_number(measured_for_all_locations)
-            }, {
-                'indicator': 'Total number of children{} unmeasured:'.format(chosen_filters),
-                'value': indian_formatted_number(
-                    weighed_and_height_for_all_locations - measured_for_all_locations
-                )
-            },
-        ]
-    else:
-        indicators = [
-            {
-                'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
-                'value': indian_formatted_number(weighed_for_all_locations)
-            }, {
-                'indicator': 'Total Children{} with height measured in given month:'.format(chosen_filters),
-                'value': indian_formatted_number(measured_for_all_locations)
-            }, {
-                'indicator': 'Number of children{} unmeasured:'.format(chosen_filters),
-                'value': indian_formatted_number(height_eligible_for_all_locations - weighed_for_all_locations)
-            }
-        ]
-
-    indicators.extend([
-        {
-            'indicator': '% Severely Acute Malnutrition{}:'.format(chosen_filters),
-            'value': '%.2f%%' % (severe_for_all_locations * 100 / float(measured_for_all_locations or 1))
-        },
-        {
-            'indicator': '% Moderately Acute Malnutrition{}:'.format(chosen_filters),
-            'value': '%.2f%%' % (moderate_for_all_locations * 100 / float(measured_for_all_locations or 1))
-        },
-        {
-            'indicator': '% Normal{}:'.format(chosen_filters),
-            'value': '%.2f%%' % (normal_for_all_locations * 100 / float(measured_for_all_locations or 1))
-        }
-    ])
 
     return {
         "slug": "severe",
@@ -178,7 +122,33 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         "rightLegend": {
             "average": "%.2f" % average,
             "info": wasting_help_text(age_label),
-            "extended_info": indicators
+            "extended_info": [
+                {
+                    'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
+                    'value': indian_formatted_number(weighed_for_all_locations)
+                },
+                {
+                    'indicator': 'Total Children{} with weight and height measured in given month:'
+                    .format(chosen_filters),
+                    'value': indian_formatted_number(measured_for_all_locations)
+                },
+                {
+                    'indicator': 'Number of children{} unmeasured:'.format(chosen_filters),
+                    'value': indian_formatted_number(height_eligible_for_all_locations - weighed_for_all_locations)
+                },
+                {
+                    'indicator': '% Severely Acute Malnutrition{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (severe_for_all_locations * 100 / float(measured_for_all_locations or 1))
+                },
+                {
+                    'indicator': '% Moderately Acute Malnutrition{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (moderate_for_all_locations * 100 / float(measured_for_all_locations or 1))
+                },
+                {
+                    'indicator': '% Normal{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (normal_for_all_locations * 100 / float(measured_for_all_locations or 1))
+                }
+            ]
         },
         "data": dict(data_for_map),
     }
@@ -203,7 +173,6 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         total_height_eligible=Sum('height_eligible'),
         total_weighed=Sum('nutrition_status_weighed'),
         total_measured=Sum(wfh_recorded_in_month_column(icds_feature_flag)),
-        weighed_and_height_measured=Sum('weighed_and_height_measured_in_month')
     ).order_by('month')
 
     if not show_test:
@@ -221,16 +190,9 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        default = {
-            'y': 0,
-            'total_weighed': 0,
-            'total_measured': 0,
-            'total_height_eligible': 0,
-            'weighed_and_height_measured': 0
-        }
-        data['red'][miliseconds] = dict(default)
-        data['orange'][miliseconds] = dict(default)
-        data['peach'][miliseconds] = dict(default)
+        data['red'][miliseconds] = {'y': 0, 'total_weighed': 0, 'total_measured': 0, 'total_height_eligible': 0}
+        data['orange'][miliseconds] = {'y': 0, 'total_weighed': 0, 'total_measured': 0, 'total_height_eligible': 0}
+        data['peach'][miliseconds] = {'y': 0, 'total_weighed': 0, 'total_measured': 0, 'total_height_eligible': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -238,7 +200,6 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         total_weighed = row['total_weighed'] or 0
         total_measured = row['total_measured'] or 0
         total_height_eligible = row['total_height_eligible'] or 0
-        weighed_and_height_measured = row['weighed_and_height_measured'] or 0
         location = row['%s_name' % loc_level]
         severe = row['severe'] or 0
         moderate = row['moderate'] or 0
@@ -254,17 +215,14 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         data['peach'][date_in_miliseconds]['total_weighed'] += total_weighed
         data['peach'][date_in_miliseconds]['total_measured'] += total_measured
         data['peach'][date_in_miliseconds]['total_height_eligible'] += total_height_eligible
-        data['peach'][date_in_miliseconds]['weighed_and_height_measured'] += weighed_and_height_measured
         data['orange'][date_in_miliseconds]['y'] += moderate
         data['orange'][date_in_miliseconds]['total_weighed'] += total_weighed
         data['orange'][date_in_miliseconds]['total_measured'] += total_measured
         data['orange'][date_in_miliseconds]['total_height_eligible'] += total_height_eligible
-        data['orange'][date_in_miliseconds]['weighed_and_height_measured'] += weighed_and_height_measured
         data['red'][date_in_miliseconds]['y'] += severe
         data['red'][date_in_miliseconds]['total_weighed'] += total_weighed
         data['red'][date_in_miliseconds]['total_measured'] += total_measured
         data['red'][date_in_miliseconds]['total_height_eligible'] += total_height_eligible
-        data['red'][date_in_miliseconds]['weighed_and_height_measured'] += weighed_and_height_measured
 
     top_locations = sorted(
         [dict(loc_name=key, percent=value) for key, value in best_worst.items()],
@@ -280,8 +238,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                         'y': value['y'] / float(value['total_measured'] or 1),
                         'total_weighed': value['total_weighed'],
                         'total_measured': value['total_measured'],
-                        'total_height_eligible': value['total_height_eligible'],
-                        'weighed_and_height_measured': value['weighed_and_height_measured']
+                        'total_height_eligible': value['total_height_eligible']
                     } for key, value in data['peach'].items()
                 ],
                 "key": "% normal",
@@ -296,8 +253,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                         'y': value['y'] / float(value['total_measured'] or 1),
                         'total_weighed': value['total_weighed'],
                         'total_measured': value['total_measured'],
-                        'total_height_eligible': value['total_height_eligible'],
-                        'weighed_and_height_measured': value['weighed_and_height_measured']
+                        'total_height_eligible': value['total_height_eligible']
                     } for key, value in data['orange'].items()
                 ],
                 "key": "% moderately wasted (moderate acute malnutrition)",
@@ -312,8 +268,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                         'y': value['y'] / float(value['total_measured'] or 1),
                         'total_weighed': value['total_weighed'],
                         'total_measured': value['total_measured'],
-                        'total_height_eligible': value['total_height_eligible'],
-                        'weighed_and_height_measured': value['weighed_and_height_measured']
+                        'total_height_eligible': value['total_height_eligible']
                     } for key, value in data['red'].items()
                 ],
                 "key": "% severely wasted (severe acute malnutrition)",
@@ -346,7 +301,6 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
         total_height_eligible=Sum('height_eligible'),
         total_weighed=Sum('nutrition_status_weighed'),
         total_measured=Sum(wfh_recorded_in_month_column(icds_feature_flag)),
-        weighed_and_height_measured=Sum('weighed_and_height_measured_in_month')
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -362,7 +316,6 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
         'severe': 0,
         'moderate': 0,
         'total_height_eligible': 0,
-        'weighed_and_height_measured': 0,
         'normal': 0,
         'total_weighed': 0,
         'total_measured': 0
@@ -381,7 +334,6 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
         normal = row['normal'] or 0
         total_measured = row['total_measured'] or 0
         total_height_eligible = row['total_height_eligible'] or 0
-        weighed_and_height_measured = row['weighed_and_height_measured'] or 0
 
         tooltips_data[name]['severe'] += severe
         tooltips_data[name]['moderate'] += moderate
@@ -389,7 +341,6 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
         tooltips_data[name]['normal'] += normal
         tooltips_data[name]['total_measured'] += total_measured
         tooltips_data[name]['total_height_eligible'] += total_height_eligible
-        tooltips_data[name]['weighed_and_height_measured'] += weighed_and_height_measured
 
         value = (moderate + severe) / float(total_weighed or 1)
         chart_data['blue'].append([
