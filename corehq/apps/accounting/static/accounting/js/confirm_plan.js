@@ -18,15 +18,16 @@ hqDefine('accounting/js/confirm_plan', [
     var MORE_FEATURES = gettext("I need additional/custom features");
     var OTHER = gettext("Other");
 
-    var confirmPlanModel = function (isUpgrade, currentPlan) {
+    var confirmPlanModel = function (isUpgrade, isSameEdition, currentPlan) {
         'use strict';
         var self = {};
 
         self.isUpgrade = isUpgrade;
+        self.isSameEdition = isSameEdition;
         self.currentPlan = currentPlan;
 
         // If the user is upgrading, don't let them continue until they agree to the minimum subscription terms
-        self.userAgreementSigned = ko.observable(!isUpgrade);
+        self.oUserAgreementSigned = ko.observable(!isUpgrade || !isSameEdition);
 
         self.downgradeReasonList = [
             PROJECT_ENDED,
@@ -41,37 +42,38 @@ hqDefine('accounting/js/confirm_plan', [
             OTHER,
         ];
 
-        self.downgradeReason = ko.observable("");
-        self.newTool = ko.observable("");
-        self.newToolReason = ko.observable("");
-        self.otherNewToolReason = ko.observable("");
-        self.requiredQuestionsAnswered = ko.observable(false);
+        self.oDowngradeReason = ko.observableArray();
+        self.oNewTool = ko.observable("");
+        self.oNewToolReason = ko.observableArray();
+        self.oOtherNewToolReason = ko.observable("");
+        self.oWillProjectRestart = ko.observable("");
+        self.oFeedback = ko.observable("");
 
-        self.projectEnded = ko.computed(function () {
-            return self.downgradeReason() === PROJECT_ENDED;
+        self.oProjectEnded = ko.computed(function () {
+            return _.contains(self.oDowngradeReason(), PROJECT_ENDED);
         });
-        self.newToolNeeded = ko.computed(function () {
-            return self.downgradeReason() === SWITCH_TOOLS;
+        self.oNewToolNeeded = ko.computed(function () {
+            return _.contains(self.oDowngradeReason(), SWITCH_TOOLS);
         });
-        self.otherSelected = ko.computed(function () {
-            return self.newToolReason() === OTHER;
+        self.oOtherSelected = ko.computed(function () {
+            return _.contains(self.oNewToolReason(), OTHER);
         });
-        self.requiredQuestionsAnswered = ko.computed(function () {
-            if (!self.downgradeReason()) {
+        self.oRequiredQuestionsAnswered = ko.computed(function () {
+            if (!self.oDowngradeReason()) {
                 return false;
             }
-            var newToolNeeded = self.downgradeReason() === SWITCH_TOOLS;
-            var newToolAnswered = self.newTool() !== "";
-            var newToolReasonAnswered = (self.newToolReason() && self.newToolReason() !== OTHER) ||
-                (self.otherNewToolReason() && self.newToolReason() === OTHER);
+            var newToolNeeded = _.contains(self.oDowngradeReason(), SWITCH_TOOLS),
+                newToolAnswered = self.oNewTool() !== "",
+                newToolReasonAnswered = (self.oNewToolReason() && !_.contains(self.oNewToolReason(), OTHER))
+                    || (self.oOtherNewToolReason() && _.contains(self.oNewToolReason(), OTHER));
 
-            return (self.downgradeReason() && !newToolNeeded) || (newToolNeeded && newToolAnswered && newToolReasonAnswered);
+            return (self.oDowngradeReason() && !newToolNeeded) || (newToolNeeded && newToolAnswered && newToolReasonAnswered);
         });
 
         self.form = undefined;
         self.openDowngradeModal = function (confirmPlanModel, e) {
             self.form = $(e.currentTarget).closest("form");
-            if (confirmPlanModel.isUpgrade) {
+            if (confirmPlanModel.isUpgrade || confirmPlanModel.isSameEdition) {
                 self.form.submit();
             } else {
                 var $modal = $("#modal-downgrade");
@@ -82,16 +84,16 @@ hqDefine('accounting/js/confirm_plan', [
             var $button = $(e.currentTarget);
             $button.disableButton();
             if (self.form) {
-                if (self.otherSelected()) {
-                    document.getElementById("new-tool-reason").value = document.getElementById("text-tool-reason").value;
-                } else {
-                    document.getElementById("new-tool-reason").value = $("#select-tool-reason").val().join(", ");
+                var newToolReason = self.oNewToolReason().join(", ");
+                if (self.oOtherSelected()) {
+                    newToolReason = newToolReason + ': "' + self.oOtherNewToolReason() + '"';
                 }
+                $('#new-tool').val(self.oNewTool());
+                $("#new-tool-reason").val(newToolReason);
 
-                document.getElementById("downgrade-reason").value = $("#select-downgrade-reason").val().join(", ");
-                document.getElementById("will-project-restart").value = document.getElementById("select-project-restart").value;
-                document.getElementById("new-tool").value = document.getElementById("text-new-tool").value;
-                document.getElementById("feedback").value = document.getElementById("text-feedback").value;
+                $('#downgrade-reason').val(self.oDowngradeReason().join(", "));
+                $('#will-project-restart').val(self.oWillProjectRestart());
+                $('#feedback').val(self.oFeedback());
 
                 self.form.submit();
             }
@@ -104,6 +106,7 @@ hqDefine('accounting/js/confirm_plan', [
     $(function () {
         var confirmPlan = confirmPlanModel(
             initialPageData.get('is_upgrade'),
+            initialPageData.get('is_same_edition'),
             initialPageData.get('current_plan')
         );
 

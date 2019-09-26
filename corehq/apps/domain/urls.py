@@ -36,6 +36,7 @@ from corehq.apps.domain.views.accounting import (
     SelectPlanView,
     SubscriptionRenewalView,
     WireInvoiceView,
+    pause_subscription,
 )
 from corehq.apps.domain.views.base import select
 from corehq.apps.domain.views.exchange import (
@@ -138,6 +139,7 @@ domain_settings = [
         name=SelectedAnnualPlanView.urlname),
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
+    url(r'^subscription/change/pause/$', pause_subscription, name='pause_subscription'),
     url(r'^subscription/change/email/$', EmailOnDowngradeView.as_view(), name=EmailOnDowngradeView.urlname),
     url(r'^subscription/pro_bono/$', ProBonoView.as_view(), name=ProBonoView.urlname),
     url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
