@@ -71,7 +71,7 @@ class BaseProjectSettingsView(BaseDomainView):
     @property
     @memoized
     def section_url(self):
-        return reverse(EditBasicProjectInfoView.urlname, args=[self.domain])
+        return reverse(DefaultProjectSettingsView.urlname, args=[self.domain])
 
 
 @method_decorator(always_allow_project_access, name='dispatch')
