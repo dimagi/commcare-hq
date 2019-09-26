@@ -1462,20 +1462,25 @@ class EnterpriseSettingsTab(UITab):
     @property
     def sidebar_items(self):
         items = super(EnterpriseSettingsTab, self).sidebar_items
-        items.append((_('Manage Enterprise'), [
-            {
-                'title': _('Enterprise Dashboard'),
-                'url': reverse('enterprise_dashboard', args=[self.domain]),
-            },
-            {
-                'title': _('Enterprise Settings'),
-                'url': reverse('enterprise_settings', args=[self.domain]),
-            },
-            {
-                'title': _('Billing Statements'),
-                'url': reverse('enterprise_billing_statements', args=[self.domain])
-            }
-        ]))
+        enterprise_views = []
+
+        if has_privilege(self._request, privileges.PROJECT_ACCESS):
+            enterprise_views.extend([
+                {
+                    'title': _('Enterprise Dashboard'),
+                    'url': reverse('enterprise_dashboard', args=[self.domain]),
+                },
+                {
+                    'title': _('Enterprise Settings'),
+                    'url': reverse('enterprise_settings', args=[self.domain]),
+                },
+            ])
+        enterprise_views.append({
+            'title': _('Billing Statements'),
+            'url': reverse('enterprise_billing_statements',
+                           args=[self.domain])
+        })
+        items.append((_('Manage Enterprise'), enterprise_views))
         return items
 
 
