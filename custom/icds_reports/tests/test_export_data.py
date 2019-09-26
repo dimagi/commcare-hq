@@ -642,11 +642,11 @@ class TestExportData(TestCase):
                         'Number of complementary feeding forms', 'Number of growth monitoring forms',
                         'Number of take home rations forms', 'Number of due list forms'
                     ],
-                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
                     ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
                     ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
                     ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
@@ -763,7 +763,7 @@ class TestExportData(TestCase):
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered',
-                        4, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        4, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a42', 'Data Not Entered',
@@ -2300,8 +2300,8 @@ class TestExportData(TestCase):
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
                                    ['st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
-                                   ['st1', 'd1', 'b1', 's2', 'a34', 'AWC Not Launched', 'AWC Not Launched',
-                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered', 'Data Not Entered',
+                                    7, 0, 0],
                                    ['st1', 'd1', 'b1', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
                                    ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
@@ -2351,8 +2351,7 @@ class TestExportData(TestCase):
                  'AWC Not Launched', 'AWC Not Launched'],
                 ['st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
                  'AWC Not Launched', 'AWC Not Launched'],
-                ['st1', 'd1', 'b1', 's2', 'a34', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
-                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered', 'Data Not Entered', 7, 0, 0],
                 ['st1', 'd1', 'b1', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
                  'AWC Not Launched', 'AWC Not Launched'],
                 ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
