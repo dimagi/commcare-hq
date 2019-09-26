@@ -4,11 +4,13 @@ from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.http.response import Http404
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 from django_prbac.utils import has_privilege
 
+from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.utils import get_paused_plan_context
 from dimagi.utils.web import json_response
 
@@ -83,6 +85,7 @@ def dashboard_tile_total(request, domain, slug):
     return json_response({'total': tile.paginator.total})
 
 
+@method_decorator(always_allow_project_access, name='dispatch')
 @location_safe
 class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView, DomainViewMixin):
     urlname = 'dashboard_domain'

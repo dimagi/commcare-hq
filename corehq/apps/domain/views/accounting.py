@@ -24,6 +24,7 @@ from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import always_allow_project_access
 from dimagi.utils.web import json_response
 
 from corehq import privileges
@@ -174,6 +175,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainV
 
 class DomainAccountingSettings(BaseProjectSettingsView):
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
@@ -860,6 +862,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Dimagi Internal Subscription Management")
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(require_superuser)
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):

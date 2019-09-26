@@ -19,6 +19,7 @@ from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import always_allow_project_access
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import json_response
 from toggle.models import Toggle
@@ -73,6 +74,7 @@ class BaseProjectSettingsView(BaseDomainView):
         return reverse(EditBasicProjectInfoView.urlname, args=[self.domain])
 
 
+@method_decorator(always_allow_project_access, name='dispatch')
 class DefaultProjectSettingsView(BaseDomainView):
     urlname = 'domain_settings_default'
 
@@ -208,6 +210,7 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     urlname = 'my_project_settings'
     page_title = ugettext_lazy("My Timezone")
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
