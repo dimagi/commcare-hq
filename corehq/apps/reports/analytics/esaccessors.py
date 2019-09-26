@@ -618,7 +618,6 @@ def scroll_case_names(domain, case_ids):
 
 @quickcache(['domain', 'use_case_search'], timeout=24 * 3600)
 def get_case_types_for_domain_es(domain, use_case_search=False):
-    print("CZEMU MI TO ROBISZ BAMBINIO")
     index_class = CaseSearchES if use_case_search else CaseES
     query = (
         index_class().domain(domain).size(0)

@@ -1,6 +1,10 @@
 
 import json
 
+from django.test import RequestFactory
+from django.urls import reverse
+from tastypie.exceptions import BadRequest
+
 from corehq.apps.api.resources import v0_5
 from corehq.apps.groups.models import Group
 
@@ -100,3 +104,28 @@ class TestGroupResource(APIResourceTest):
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id), '', method='DELETE')
         self.assertEqual(response.status_code, 204, response.content)
         self.assertEqual(0, len(Group.by_domain(self.domain.name)))
+
+    @property
+    def list_endpoint(self):
+        return reverse(
+            'api_dispatch_list',
+            kwargs={
+                'domain': self.domain.name,
+                'api_name': self.api_name,
+                'resource_name': self.resource.Meta.resource_name,
+            }
+        )
+
+    def test_patch_list_no_object_collection(self):
+        api = v0_5.GroupResource()
+        body = {"some": {
+                    "irrelevant": "data"
+                }}
+        request = RequestFactory().post(self.list_endpoint,
+                                        data=json.dumps(body),
+                                        content_type='application/json')
+
+        request.method = "POST"
+
+        with self.assertRaises(BadRequest):
+            api.patch_list(request)

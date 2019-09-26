@@ -1,20 +1,15 @@
 import json
-import unittest
 import uuid
-from unittest import TestCase, mock
 
 from datetime import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import RequestFactory
-from elasticsearch import Elasticsearch, NotFoundError, ElasticsearchException
-from mock import patch
 
 from corehq.apps.api.es import XFormES, UserES, ESUserError, ReportXFormES, ESView
 from corehq.apps.api.tests.utils import ESTest, change_domain
 from corehq.apps.users.models import CommCareUser
-from corehq.blobs.mixin import BlobMetaRef
-from corehq.elastic import send_to_elasticsearch, ESError
+from corehq.elastic import send_to_elasticsearch
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
@@ -214,7 +209,6 @@ class TestXFormES(FormTestES):
         self.assertEqual(response.status_code, 406)
 
 
-
 class TestUserES(ESTest):
 
     @classmethod
@@ -261,6 +255,7 @@ class TestUserES(ESTest):
             },
             "fields": fields
         }
+
     @run_with_all_backends
     def test_query_validation(self):
         query = {
@@ -301,12 +296,12 @@ class TestReportFormES(FormTestES):
 
     @run_with_all_backends
     def test_base_query(self):
-        actual = self.report_xform_es.base_query(terms={'a': 'b'}, fields=['doc_type'])
+        actual = self.report_xform_es.base_query(terms={'a': 'abc'}, fields=['doc_type'])
         expected = {
             'filter': {
                 'and': [
                     {'term': {'domain.exact': 'elastico'}},
-                    {'term': {'a': 'b'}},
+                    {'term': {'a': 'abc'}},
                     {'term': {'doc_type': 'xforminstance'}}
                 ]
             },

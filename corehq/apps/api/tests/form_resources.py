@@ -3,24 +3,28 @@ import json
 import uuid
 from datetime import datetime
 
+import mock
 from django.conf import settings
 from django.test import TestCase
 from django.utils.http import urlencode
 
 import six
+from tastypie.exceptions import NotFound, ImmediateHttpResponse
 
 from casexml.apps.case.mock import CaseBlock
+from corehq.apps.app_manager.models import Application, FormBase, ModuleBase
+from corehq.apps.users.models import WebUser
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.api.models import ESXFormInstance
-from corehq.apps.api.resources import v0_4
+from corehq.apps.api.resources import v0_4, v0_5
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 
-from .utils import APIResourceTest, FakeXFormES
+from .utils import APIResourceTest, FakeXFormES, BundleMock
 
 
 class TestXFormInstanceResource(APIResourceTest):
@@ -233,3 +237,112 @@ class TestReportPillow(TestCase):
             self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
             self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], six.text_type))
             self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
+
+
+class TestDomainForms(APIResourceTest):
+    resource = v0_5.DomainForms
+    api_name = 'v0.5'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestDomainForms, cls).setUpClass()
+        cls.create_user()
+        cls.create_app()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(TestDomainForms, cls).tearDownClass()
+        cls.unprivileged.delete()
+        cls.application.delete_app()
+
+
+    @classmethod
+    def create_user(cls):
+        cls.username2 = 'notprivileged@qwerty.commcarehq.org'
+        cls.password2 = '*****'
+        cls.unprivileged = WebUser.get_by_username(cls.username2)
+        if cls.unprivileged is not None:
+            cls.unprivileged.delete()
+        cls.unprivileged = WebUser.create(None, cls.username2, cls.password2)
+        cls.unprivileged.save()
+
+    @classmethod
+    def create_app(cls):
+        cls.app_name = 'Application'
+
+        cls.application = Application.new_app(cls.domain.name, cls.app_name)
+        cls.application.save()
+
+    @classmethod
+    def mock_form_objects(cls):
+        form_data = [
+            ('name1', 'xmlnsa1'),
+            ('form', 'xmlnsa31'),
+            ('form2', 'xmlnsa31'),
+        ]
+        forms = []
+        for name, xml in form_data:
+            forms.append(cls.mock_single_form(name, xml))
+
+        form_objects = []
+        module = cls.mock_module('mod1', iter(forms))
+        for form in forms:
+            form_objects.append({'form': form,
+                                 'module': module})
+
+        return form_objects
+
+    @classmethod
+    def mock_single_form(cls, name, xmlns):
+        form = mock.MagicMock(FormBase)
+        form.xmlns = xmlns
+        form.version = None
+        form.default_name = mock.MagicMock(return_value=name)
+
+        return form
+
+    @classmethod
+    def mock_module(cls, name, module_forms):
+        module = mock.Mock(ModuleBase)
+        module.default_name = mock.MagicMock(return_value=name)
+        module.get_forms = mock.MagicMock(return_value=module_forms)
+
+        return module
+
+    def test_obj_get_list_app_not_found_exception(self):
+        api = v0_5.DomainForms()
+        bundle = BundleMock(**{'user': self.user})
+        with self.assertRaises(NotFound):
+            api.obj_get_list(bundle)
+
+    def test_obj_get_list_unprivileged_exception(self):
+        api = v0_5.DomainForms()
+        bundle = BundleMock(**{'application_id': ['Application']})
+        bundle.request.user = self.unprivileged
+
+        with self.assertRaises(ImmediateHttpResponse):
+            api.obj_get_list(bundle, domain=self.domain.name)
+
+    @mock.patch('corehq.apps.app_manager.models.Application.get')
+    def test_obj_get_list_no_forms(self, app):
+        api = v0_5.DomainForms()
+        with mock.patch.object(Application, "get_forms", ) as mock_forms:
+            mock_forms.return_value = self.mock_form_objects()
+            self.application2 = Application.new_app(self.domain.name, 'mock_app')
+            app.return_value = self.application2
+            bundle = BundleMock(**{'application_id': [self.application.id]})
+            bundle.request.user = self.user
+            result = api.obj_get_list(bundle, domain=self.domain.name)
+            self.assertIsInstance(result, list)
+            self.assertEqual(len(result), 3)
+            self.assertRegexpMatches(result[0].form_name, '.* > .* > *.')
+
+            self.application2.delete_app()
+
+    def test_obj_get_list_no_forms2(self):
+        api = v0_5.DomainForms()
+        bundle = BundleMock(**{'application_id': [self.application.id]})
+        bundle.request.user = self.user
+        result = api.obj_get_list(bundle, domain=self.domain.name)
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 0)
