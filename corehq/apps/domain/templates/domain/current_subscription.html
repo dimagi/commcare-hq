@@ -77,8 +77,7 @@
                 <div class="alert alert-warning">
                   <i class="fa fa-warning"></i>
                   {% blocktrans with plan.next_subscription.date_start as next_date %}
-                    This subscription will be paused on {{ next_date }} unless you
-                    change to a different plan.
+                    This subscription will be paused on {{ next_date }}.
                   {% endblocktrans %}
                 </div>
               {% endif %}

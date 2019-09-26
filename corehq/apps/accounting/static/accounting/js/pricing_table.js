@@ -23,6 +23,8 @@ hqDefine('accounting/js/pricing_table', [
             'isSubscriptionBelowMin',
             'nextSubscriptionEdition',
             'invoicingContact',
+            'isPriceDiscounted',
+            'currentPrice',
         ]);
 
         'use strict';
@@ -31,6 +33,8 @@ hqDefine('accounting/js/pricing_table', [
         self.oCurrentPlan = ko.observable(options.currentPlan);
         self.oNextSubscription = ko.observable(options.nextSubscriptionEdition);
         self.oStartDateAfterMinimumSubscription = ko.observable(options.startDateAfterMinimum);
+        self.oCurrentPrice = ko.observable(options.currentPrice);
+        self.oIsPriceDiscounted = ko.observable(options.isPriceDiscounted);
         self.editions = options.editions;
         self.isRenewal = options.isRenewal;
         self.subscriptionBelowMinimum = options.isSubscriptionBelowMin;
@@ -251,7 +255,14 @@ hqDefine('accounting/js/pricing_table', [
             return 'pricing-type-monthly';
         });
 
+        self.oDisplayDiscountNotice = ko.computed(function () {
+            return self.oIsCurrentPlan() && parent.oIsPriceDiscounted() && !parent.oShowAnnualPricing();
+        });
+
         self.oDisplayPrice = ko.computed(function () {
+            if (self.oDisplayDiscountNotice()) {
+                return parent.oCurrentPrice();
+            }
             if (parent.oShowAnnualPricing()) {
                 return self.oAnnualPrice();
             }
@@ -271,6 +282,8 @@ hqDefine('accounting/js/pricing_table', [
             isSubscriptionBelowMin: initialPageData.get('subscription_below_minimum'),
             nextSubscriptionEdition: initialPageData.get('next_subscription_edition'),
             invoicingContact: initialPageData.get('invoicing_contact_email'),
+            currentPrice: initialPageData.get('current_price'),
+            isPriceDiscounted: initialPageData.get('is_price_discounted'),
         });
 
         // Applying bindings is a bit weird here, because we need logic in the modal,

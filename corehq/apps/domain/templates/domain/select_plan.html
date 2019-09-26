@@ -14,6 +14,8 @@
   {% initial_page_data 'subscription_below_minimum' subscription_below_minimum %}
   {% initial_page_data 'next_subscription_edition' next_subscription_edition %}
   {% initial_page_data 'invoicing_contact_email' INVOICING_CONTACT_EMAIL %}
+  {% initial_page_data 'current_price' current_price %}
+  {% initial_page_data 'is_price_discounted' is_price_discounted %}
   {% registerurl 'email_on_downgrade' domain %}
 
   <p class="lead text-center">
@@ -60,7 +62,10 @@
              data-bind="text: oPricingTypeText, css: oPricingTypeCssClass"></p>
 
           <p class="plan-price" data-bind="text: oDisplayPrice"></p>
-          <p class="plan-monthly-label">{% trans "monthly" %}</p>
+          <p class="plan-monthly-label">
+            {% trans "monthly" %}
+            <span data-bind="visible: oDisplayDiscountNotice">({% trans 'discounted' %})</span>
+          </p>
           <p class="plan-desc" data-bind="text: oDescription"></p>
 
           <p class="plan-downgrade-notice text-warning"
