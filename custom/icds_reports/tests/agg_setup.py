@@ -156,7 +156,7 @@ def setup_location_hierarchy(domain_name):
     )
 
 
-def setup_table_fixtures(domain_name):
+def setup_tables_and_fixtures(domain_name):
     configs = StaticDataSourceConfiguration.by_domain(domain_name)
     adapters = [get_indicator_adapter(config) for config in configs]
 

@@ -22,7 +22,7 @@ from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
     _aggregate_gm_forms)
-from .agg_setup import setup_location_hierarchy, setup_table_fixtures
+from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures
 
 
 
@@ -46,7 +46,7 @@ def setUpModule():
     setup_location_hierarchy(domain.name)
 
     with override_settings(SERVER_ENVIRONMENT='icds'):
-        setup_table_fixtures()
+        setup_tables_and_fixtures()
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
             _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
