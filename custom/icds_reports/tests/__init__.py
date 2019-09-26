@@ -24,6 +24,7 @@ from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
     _aggregate_gm_forms)
+from .agg_setup import setup_location_hierarchy
 
 from custom.icds_reports.utils.migrations import create_citus_reference_table, create_citus_distributed_table
 
@@ -75,116 +76,7 @@ def setUpModule():
     # _use_citus.enable()
 
     domain = create_domain('icds-cas')
-    SQLLocation.objects.all().delete()
-    LocationType.objects.all().delete()
-    state_location_type = LocationType.objects.create(
-        domain=domain.name,
-        name='state',
-    )
-    st1 = SQLLocation.objects.create(
-        domain=domain.name,
-        name='st1',
-        location_id='st1',
-        location_type=state_location_type
-    )
-    st2 = SQLLocation.objects.create(
-        domain=domain.name,
-        name='st2',
-        location_id='st2',
-        location_type=state_location_type
-    )
-    st3 = SQLLocation.objects.create(
-        domain=domain.name,
-        name='st3',
-        location_id='st3',
-        location_type=state_location_type
-    )
-    st4 = SQLLocation.objects.create(
-        domain=domain.name,
-        name='st4',
-        location_id='st4',
-        location_type=state_location_type
-    )
-    st5 = SQLLocation.objects.create(
-        domain=domain.name,
-        name='st5',
-        location_id='st5',
-        location_type=state_location_type
-    )
-    st6 = SQLLocation.objects.create(
-        domain=domain.name,
-        name='st6',
-        location_id='st6',
-        location_type=state_location_type
-    )
-    st7 = SQLLocation.objects.create(
-        domain=domain.name,
-        name='st7',
-        location_id='st7',
-        location_type=state_location_type
-    )
-    # exercise the logic that excludes test states by creating one
-    test_state = SQLLocation.objects.create(
-        domain=domain.name,
-        name='test_state',
-        location_id='test_state',
-        location_type=state_location_type,
-        metadata={
-            'is_test_location': 'test',
-        }
-    )
-
-    district_location_type = LocationType.objects.create(
-        domain=domain.name,
-        name='district',
-        parent_type=state_location_type,
-    )
-    d1 = SQLLocation.objects.create(
-        domain=domain.name,
-        name='d1',
-        location_id='d1',
-        location_type=district_location_type,
-        parent=st1
-    )
-
-    block_location_type = LocationType.objects.create(
-        domain=domain.name,
-        name='block',
-        parent_type=district_location_type,
-    )
-    b1 = SQLLocation.objects.create(
-        domain=domain.name,
-        name='b1',
-        location_id='b1',
-        location_type=block_location_type,
-        parent=d1
-    )
-
-    supervisor_location_type = LocationType.objects.create(
-        domain=domain.name,
-        name='supervisor',
-        parent_type=state_location_type,
-    )
-    s1 = SQLLocation.objects.create(
-        domain=domain.name,
-        name='s1',
-        location_id='s1',
-        location_type=supervisor_location_type,
-        parent=b1,
-    )
-
-    awc_location_type = LocationType.objects.create(
-        domain=domain.name,
-        name='awc',
-        parent_type=supervisor_location_type,
-    )
-    a7 = SQLLocation.objects.create(
-        domain=domain.name,
-        name='a7',
-        location_id='a7',
-        location_type=awc_location_type,
-        parent=s1,
-    )
+    setup_location_hierarchy(domain.name)
 
     with override_settings(SERVER_ENVIRONMENT='icds'):
         configs = StaticDataSourceConfiguration.by_domain('icds-cas')
