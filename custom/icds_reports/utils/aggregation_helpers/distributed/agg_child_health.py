@@ -54,9 +54,13 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
                 ORDER BY aggregation_level, state_id, district_id, block_id, supervisor_id, awc_id
             )
             """)
-            # create base set of indexes
 
-        # create rest of indexes
+        # create indexes outside of transaction
+        # this happens on the first day of the month when the table is created
+        # On the first few days queries to this table are hidden, so they do not need to be fast
+        for index_query in self.indexes:
+            cursor.execute(index_query)
+
         # drop staging table
         cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
 
@@ -387,18 +391,13 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
         )
         """
 
-    def indexes(self, aggregation_level):
-        tablename = self._tablename_func(aggregation_level)
-        indexes = [
-            'CREATE INDEX ON "{}" (state_id)'.format(tablename),
-            'CREATE INDEX ON "{}" (gender)'.format(tablename),
-            'CREATE INDEX ON "{}" (age_tranche)'.format(tablename),
+    def indexes(self):
+        tablename = self.monthly_tablename
+        return [
+            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_1" ON "{tablename}" (aggregation_level, state_id)',
+            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_2" ON "{tablename}" (aggregation_level, gender)',
+            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_3" ON "{tablename}" (aggregation_level, age_tranche)',
+            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_4" ON "{tablename}" (aggregation_level, district_id) WHERE aggregation_level > 1',
+            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_5" ON "{tablename}" (aggregation_level, block_id) WHERE aggregation_level > 2',
+            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_6" ON "{tablename}" (aggregation_level, supervisor_id) WHERE aggregation_level > 3',
         ]
-        if aggregation_level > 1:
-            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(tablename))
-        if aggregation_level > 2:
-            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(tablename))
-        if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(tablename))
-
-        return indexes
