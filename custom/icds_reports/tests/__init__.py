@@ -19,12 +19,8 @@ from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
     build_incentive_report,
-    _aggregate_child_health_pnc_forms,
-    _aggregate_bp_forms,
-    _aggregate_gm_forms)
-from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures
-
-
+)
+from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggregate_state_form_data
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
@@ -47,11 +43,7 @@ def setUpModule():
 
     with override_settings(SERVER_ENVIRONMENT='icds'):
         setup_tables_and_fixtures()
-        for state_id in ('st1', 'st2'):
-            _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
-            _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
-            _aggregate_bp_forms(state_id, datetime(2017, 3, 31))
-
+        aggregate_state_form_data()
         try:
             with mock.patch('custom.icds_reports.tasks._update_aggregate_locations_tables'):
                 move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)

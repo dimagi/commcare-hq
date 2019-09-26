@@ -9,6 +9,11 @@ from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.const import DISTRIBUTED_TABLES, REFERENCE_TABLES
 from custom.icds_reports.utils.migrations import create_citus_reference_table, create_citus_distributed_table
+from custom.icds_reports.tasks import (
+    _aggregate_child_health_pnc_forms,
+    _aggregate_bp_forms,
+    _aggregate_gm_forms
+)
 
 
 FILE_NAME_TO_TABLE_MAPPING = {
@@ -212,3 +217,10 @@ def _distribute_tables_for_citus(engine):
     for table in REFERENCE_TABLES:
         with engine.begin() as conn:
             create_citus_reference_table(conn, table)
+
+
+def aggregate_state_form_data():
+    for state_id in ('st1', 'st2'):
+        _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
+        _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
+        _aggregate_bp_forms(state_id, datetime(2017, 3, 31))
