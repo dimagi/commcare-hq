@@ -213,14 +213,11 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
         }
 
 
+@method_decorator(require_superuser, name='dispatch')
 class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     urlname = 'feature_flags_and_privileges'
     page_title = ugettext_lazy("Feature Flags and Privileges")
     template_name = 'domain/admin/flags_and_privileges.html'
-
-    @method_decorator(require_superuser)
-    def dispatch(self, request, *args, **kwargs):
-        return super(FlagsAndPrivilegesView, self).dispatch(request, *args, **kwargs)
 
     def _get_toggles(self):
 
@@ -261,14 +258,11 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
         }
 
 
+@method_decorator(require_superuser, name='dispatch')
 class ProjectLimitsView(BaseAdminProjectSettingsView):
     urlname = 'internal_project_limits_summary'
     page_title = ugettext_lazy("Project Limits")
     template_name = 'domain/admin/project_limits.html'
-
-    @method_decorator(require_superuser)
-    def dispatch(self, request, *args, **kwargs):
-        return super(ProjectLimitsView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
