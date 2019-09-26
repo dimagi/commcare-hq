@@ -4,8 +4,13 @@ import time
 import attr
 
 from corehq.apps.users.models import CommCareUser
-from corehq.project_limits.rate_counter.presets import week_rate_counter, \
-    day_rate_counter, hour_rate_counter, minute_rate_counter, second_rate_counter
+from corehq.project_limits.rate_counter.presets import (
+    day_rate_counter,
+    hour_rate_counter,
+    minute_rate_counter,
+    second_rate_counter,
+    week_rate_counter,
+)
 from corehq.util.quickcache import quickcache
 
 
@@ -40,9 +45,24 @@ class RateLimiter(object):
             rate_counter.increment((self.feature_key,) + scope, delta=delta)
 
     def allow_usage(self, scope):
+        return all(current_rate < limit
+                   for rate_counter_key, current_rate, limit in self.iter_rates(scope))
+
+    def iter_rates(self, scope):
+        """
+        Get generator of (key, current rate, rate limit) as applies to scope
+
+        e.g.
+            ('week', 92359, 115000)
+            ('day', ...)
+            ...
+
+        """
         scope = self.get_normalized_scope(scope)
-        return all(rate_counter.get((self.feature_key,) + scope) < limit
-                   for rate_counter, limit in self.get_rate_limits(*scope))
+        return (
+            (rate_counter.key, rate_counter.get((self.feature_key,) + scope), limit)
+            for rate_counter, limit in self.get_rate_limits(*scope)
+        )
 
     def wait(self, scope, timeout):
         start = time.time()
