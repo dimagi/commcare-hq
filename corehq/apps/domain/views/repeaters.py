@@ -13,7 +13,6 @@ from corehq.apps.users.decorators import require_can_edit_web_users
 
 @require_POST
 @require_can_edit_web_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def generate_repeater_payloads(request, domain):
     try:
         email_id = request.POST.get('email_id')

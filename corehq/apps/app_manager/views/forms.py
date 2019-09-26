@@ -119,7 +119,6 @@ from corehq.util.view_utils import set_file_download
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
     "Deletes a form from an app"
     app = get_app(domain, app_id)
@@ -144,7 +143,6 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def copy_form(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
@@ -172,7 +170,6 @@ def copy_form(request, domain, app_id, form_unique_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def undo_delete_form(request, domain, record_id):
     record = DeleteFormRecord.get(record_id)
     try:
@@ -195,7 +192,6 @@ def undo_delete_form(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
@@ -217,7 +213,6 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
@@ -246,20 +241,17 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
 @csrf_exempt
 @api_domain_view
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_form_attr_api(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
 @login_or_digest
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_form_attr(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
 @no_conflict_require_POST
 @require_permission(Permissions.edit_apps, login_decorator=None)
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
@@ -463,7 +455,6 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def new_form(request, domain, app_id, module_unique_id):
     """
     Adds a form to an app (under a module)
@@ -519,7 +510,6 @@ def new_form(request, domain, app_id, module_unique_id):
 @no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def patch_xform(request, domain, app_id, form_unique_id):
     patch = request.POST['patch']
@@ -558,7 +548,6 @@ def _get_xform_conflict_response(form, sha1_checksum):
 
 @require_GET
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def get_xform_source(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     try:
@@ -581,7 +570,6 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 
 @require_GET
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def get_form_questions(request, domain, app_id):
     form_unique_id = request.GET.get('form_unique_id')
     module_id_temp = request.GET.get('module_id')
@@ -865,7 +853,6 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
 
 
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def get_form_datums(request, domain, app_id):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     form_id = request.GET.get('form_id')
@@ -892,7 +879,6 @@ def get_form_datums(request, domain, app_id):
 
 @require_GET
 @require_deploy_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def view_form_legacy(request, domain, app_id, module_id, form_id):
     """
     This view has been kept around to not break any documentation on example apps
@@ -905,7 +891,6 @@ def view_form_legacy(request, domain, app_id, module_id, form_id):
 
 @require_GET
 @require_deploy_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def view_form(request, domain, app_id, form_unique_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(
@@ -915,7 +900,6 @@ def view_form(request, domain, app_id, form_unique_id):
 
 
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def form_casexml(request, domain, form_unique_id):
     try:
         form, app = Form.get_form(form_unique_id, and_app=True)

@@ -26,7 +26,6 @@ from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
 
@@ -530,7 +529,6 @@ class ListRolesView(BaseRoleAccessView):
     urlname = 'roles_and_permissions'
 
     @method_decorator(require_can_view_roles)
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         return super(ListRolesView, self).dispatch(request, *args, **kwargs)
 

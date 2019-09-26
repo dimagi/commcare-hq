@@ -149,7 +149,6 @@ class EditCommCareUserView(BaseEditUserView):
 
     @use_multiselect
     @method_decorator(require_can_edit_or_view_commcare_users)
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
 
@@ -364,7 +363,6 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
         }
 
     @method_decorator(domain_admin_required)
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         if self.account.date_confirmed_extra_charges is not None:
             return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[self.domain]))
@@ -392,7 +390,6 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
 
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @location_safe
 @require_POST
 def delete_commcare_user(request, domain, user_id):
@@ -411,7 +408,6 @@ def delete_commcare_user(request, domain, user_id):
 
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @require_POST
 def restore_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
@@ -424,7 +420,6 @@ def restore_commcare_user(request, domain, user_id):
 
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @require_POST
 def toggle_demo_mode(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
@@ -466,7 +461,6 @@ def toggle_demo_mode(request, domain, user_id):
 class BaseManageCommCareUserView(BaseUserSettingsView):
 
     @method_decorator(require_can_edit_commcare_users)
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseManageCommCareUserView, self).dispatch(request, *args, **kwargs)
 
@@ -524,7 +518,6 @@ class DemoRestoreStatusView(BaseManageCommCareUserView):
 
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def demo_restore_job_poll(request, domain, download_id, template="users/mobile/partials/demo_restore_status.html"):
 
     try:
@@ -541,7 +534,6 @@ def demo_restore_job_poll(request, domain, download_id, template="users/mobile/p
 
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @require_POST
 def reset_demo_user_restore(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
@@ -563,7 +555,6 @@ def reset_demo_user_restore(request, domain, user_id):
 
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @require_POST
 def update_user_groups(request, domain, couch_user_id):
     form = MultipleSelectionForm(request.POST)
@@ -581,7 +572,6 @@ def update_user_groups(request, domain, couch_user_id):
 
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @require_POST
 def update_user_data(request, domain, couch_user_id):
     user_data = request.POST["user-data"]
@@ -603,7 +593,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     page_title = ugettext_noop("Mobile Workers")
 
     @method_decorator(require_can_edit_or_view_commcare_users)
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
 
@@ -780,7 +769,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @require_POST
 @location_safe
 def activate_commcare_user(request, domain, user_id):
@@ -788,7 +776,6 @@ def activate_commcare_user(request, domain, user_id):
 
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @require_POST
 @location_safe
 def deactivate_commcare_user(request, domain, user_id):
@@ -815,7 +802,6 @@ def _modify_user_status(request, domain, user_id, is_active):
 
 
 @require_can_edit_or_view_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @require_GET
 @location_safe
 def paginate_mobile_workers(request, domain):
@@ -870,7 +856,6 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
     urlname = 'new_mobile_worker_modal'
 
     @method_decorator(require_can_edit_commcare_users)
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         if not can_add_extra_mobile_workers(request):
             raise PermissionDenied()
@@ -1062,7 +1047,6 @@ class UserUploadStatusView(BaseManageCommCareUserView):
 
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def user_upload_job_poll(request, domain, download_id, template="users/mobile/partials/user_upload_status.html"):
     try:
         context = get_download_context(download_id)
@@ -1104,7 +1088,6 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
 
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def user_download_job_poll(request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"):
     try:
         context = get_download_context(download_id, 'Preparing download')
@@ -1153,7 +1136,6 @@ class FilteredUserDownload(BaseManageCommCareUserView):
 
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def count_users(request, domain):
     from corehq.apps.users.dbaccessors.all_commcare_users import get_commcare_users_by_filters
     form = CommCareUserFilterForm(request.GET, domain=domain)
@@ -1168,7 +1150,6 @@ def count_users(request, domain):
     })
 
 @require_can_edit_commcare_users
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def download_commcare_users(request, domain):
     form = CommCareUserFilterForm(request.GET, domain=domain)
     user_filters = {}
@@ -1183,7 +1164,6 @@ def download_commcare_users(request, domain):
     return redirect(DownloadUsersStatusView.urlname, domain, download.download_id)
 
 
-@method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS), name='dispatch')
 class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     template_name = "users/mobile/commcare_user_self_register.html"
     urlname = "commcare_user_self_register"

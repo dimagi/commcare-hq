@@ -32,7 +32,6 @@ from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
 
 
-@method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS), name='dispatch')
 class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
 
     @property

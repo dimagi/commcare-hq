@@ -50,7 +50,6 @@ CASE_TYPE_CONFLICT_MSG = (
 
 
 @require_deploy_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def back_to_main(request, domain, app_id, module_id=None, form_id=None,
                  form_unique_id=None, module_unique_id=None):
     """

@@ -123,7 +123,6 @@ class DataInterfaceSection(BaseDomainView):
     urlname = 'data_interfaces_default'
 
     @method_decorator(require_can_edit_data)
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         return super(DataInterfaceSection, self).dispatch(request, *args, **kwargs)
 
@@ -570,7 +569,6 @@ class XFormManagementStatusView(DataInterfaceSection):
 @location_safe
 @require_can_edit_data
 @require_form_management_privilege
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def xform_management_job_poll(request, domain, download_id,
                               template="data_interfaces/partials/xform_management_status.html"):
     mode = FormManagementMode(request.GET.get('mode'), validate=True)
@@ -590,7 +588,6 @@ def xform_management_job_poll(request, domain, download_id,
 
 @login_and_domain_required
 @require_GET
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def find_by_id(request, domain):
     from corehq.apps.export.views.utils import can_view_form_exports, can_view_case_exports
     can_view_cases = can_view_case_exports(request.couch_user, domain)

@@ -298,7 +298,6 @@ class CreateConfigReportView(BaseEditConfigReportView):
 class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(Permissions.edit_data))
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     @cls_to_view_login_and_domain
     @use_daterangepicker
     @use_datatables

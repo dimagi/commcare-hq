@@ -446,7 +446,6 @@ class TwoFactorResetView(TwoFactorSetupView):
         return super(TwoFactorResetView, self).get(request, *args, **kwargs)
 
 
-@method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS), name='dispatch')
 class BaseProjectDataView(BaseDomainView):
     section_name = ugettext_noop("Data")
 

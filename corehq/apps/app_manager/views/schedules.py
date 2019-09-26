@@ -20,7 +20,6 @@ from corehq.apps.app_manager.models import FormSchedule
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_schedule_phases(request, domain, app_id, module_unique_id):
     NEW_PHASE_ID = -1
     app = get_app(domain, app_id)
@@ -50,7 +49,6 @@ def edit_schedule_phases(request, domain, app_id, module_unique_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_visit_schedule(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)

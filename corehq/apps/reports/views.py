@@ -228,7 +228,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     default_scheduled_report_length = 10
 
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):

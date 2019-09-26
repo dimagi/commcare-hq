@@ -29,7 +29,6 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 @require_GET
 @login_and_domain_required
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def commcare_profile(request, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(json.dumps(app.profile))
@@ -37,7 +36,6 @@ def commcare_profile(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_commcare_settings(request, domain, app_id):
     sub_responses = (
         edit_commcare_profile(request, domain, app_id),
@@ -53,7 +51,6 @@ def edit_commcare_settings(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_commcare_profile(request, domain, app_id):
     try:
         settings = json.loads(request.body.decode('utf-8'))
@@ -84,7 +81,6 @@ def edit_commcare_profile(request, domain, app_id):
 
 @method_decorator(no_conflict_require_POST, name='dispatch')
 @method_decorator(require_can_edit_apps, name='dispatch')
-@method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS), name='dispatch')
 class PromptSettingsUpdateView(FormView, ApplicationViewMixin):
     form_class = PromptUpdateSettingsForm
     urlname = 'update_prompt_settings'

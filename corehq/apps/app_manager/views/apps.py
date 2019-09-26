@@ -112,7 +112,6 @@ from corehq.util.view_utils import reverse as reverse_util
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def delete_app(request, domain, app_id):
     "Deletes an app from the database"
     app = get_app(domain, app_id)
@@ -131,7 +130,6 @@ def delete_app(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def undo_delete_app(request, domain, record_id):
     try:
         app = get_app(domain, record_id)
@@ -147,7 +145,6 @@ def undo_delete_app(request, domain, record_id):
 
 
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def default_new_app(request, domain):
     """New Blank Application according to defaults. So that we can link here
     instead of creating a form and posting to the above link, which was getting
@@ -406,14 +403,12 @@ def get_apps_base_context(request, domain, app):
 
 @login_or_digest
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def app_source(request, domain, app_id):
     app = get_app(domain, app_id)
     return json_response(app.export_json(dump_json=False))
 
 
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def copy_app(request, domain):
     app_id = request.POST.get('app')
     app = get_app(domain, app_id)
@@ -479,7 +474,6 @@ def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
 
 
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def app_from_template(request, domain, slug):
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
     track_workflow(request.couch_user.username, "User created an application from a template")
@@ -535,7 +529,6 @@ def _build_sample_app(app):
 
 
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def import_app(request, domain):
     template = "app_manager/import_app.html"
     if request.method == "POST":
@@ -592,7 +585,6 @@ def import_app(request, domain):
 
 @require_GET
 @require_deploy_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def app_settings(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id)
@@ -600,7 +592,6 @@ def app_settings(request, domain, app_id):
 
 @require_GET
 @require_deploy_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def view_app(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, release_manager=True)
@@ -608,7 +599,6 @@ def view_app(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def new_app(request, domain):
     "Adds an app to the database"
     lang = 'en'
@@ -635,7 +625,6 @@ def new_app(request, domain):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def rename_language(request, domain, form_unique_id):
     old_code = request.POST.get('oldCode')
     new_code = request.POST.get('newCode')
@@ -656,7 +645,6 @@ def rename_language(request, domain, form_unique_id):
 
 @require_GET
 @login_and_domain_required
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def validate_language(request, domain, app_id):
     app = get_app(domain, app_id)
     term = request.GET.get('term', '').lower()
@@ -673,7 +661,6 @@ def validate_language(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_app_langs(request, domain, app_id):
     """
     Called with post body:
@@ -722,7 +709,6 @@ def edit_app_langs(request, domain, app_id):
 
 @require_can_edit_apps
 @no_conflict_require_POST
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_app_ui_translations(request, domain, app_id):
     params = json_request(request.POST)
     lang = params.get('lang')
@@ -758,7 +744,6 @@ def get_app_ui_translations(request, domain):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def edit_app_attr(request, domain, app_id, attr):
     """
@@ -896,7 +881,6 @@ def edit_app_attr(request, domain, app_id, attr):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_add_ons(request, domain, app_id):
     app = get_app(domain, app_id)
     current = add_ons.get_dict(request, app)
@@ -909,7 +893,6 @@ def edit_add_ons(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def rearrange(request, domain, app_id, key):
     """
     This function handles any request to switch two items in a list.
@@ -956,7 +939,6 @@ def rearrange(request, domain, app_id, key):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def move_child_modules_after_parents(request, domain, app_id):
     app = get_app(domain, app_id)
     app.move_child_modules_after_parents()
@@ -966,7 +948,6 @@ def move_child_modules_after_parents(request, domain, app_id):
 
 @require_GET
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def drop_user_case(request, domain, app_id):
     app = get_app(domain, app_id)
     for module in app.get_modules():
@@ -989,7 +970,6 @@ def drop_user_case(request, domain, app_id):
 
 
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def pull_master_app(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
     if async_update:
@@ -1010,7 +990,6 @@ def pull_master_app(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def update_linked_whitelist(request, domain, app_id):
     app = get_current_app(domain, app_id)
     new_whitelist = json.loads(request.POST.get('whitelist'))

@@ -432,7 +432,6 @@ def _case_list_form_not_allowed_reasons(module):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     """
@@ -652,7 +651,6 @@ def _new_training_module(request, domain, app, name, lang):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def delete_module(request, domain, app_id, module_unique_id):
     "Deletes a module from an app"
     app = get_app(domain, app_id)
@@ -681,7 +679,6 @@ def delete_module(request, domain, app_id, module_unique_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def undo_delete_module(request, domain, record_id):
     record = DeleteModuleRecord.get(record_id)
     record.undo()
@@ -691,7 +688,6 @@ def undo_delete_module(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
     source_module_unique_id = request.POST['source_module_unique_id']
@@ -757,7 +753,6 @@ def _update_search_properties(module, search_properties, lang='en'):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     """
     Overwrite module case details. Only overwrites components that have been
@@ -916,7 +911,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def edit_report_module(request, domain, app_id, module_unique_id):
     """
     Overwrite module case details. Only overwrites components that have been
@@ -998,7 +992,6 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
 
 @no_conflict_require_POST
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def new_module(request, domain, app_id):
     "Adds a module to an app"
     app = get_app(domain, app_id)
@@ -1195,7 +1188,6 @@ def _save_case_list_lookup_params(short, case_list_lookup, lang):
 
 @require_GET
 @require_deploy_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def view_module(request, domain, app_id, module_unique_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, module_unique_id=module_unique_id)
@@ -1203,7 +1195,6 @@ def view_module(request, domain, app_id, module_unique_id):
 
 @require_GET
 @require_deploy_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def view_module_legacy(request, domain, app_id, module_id):
     """
     This view has been kept around to not break any documentation on example apps

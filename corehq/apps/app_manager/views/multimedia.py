@@ -11,7 +11,6 @@ from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 
 
 @require_deploy_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def multimedia_ajax(request, domain, app_id):
     app = get_app(domain, app_id)
     if not is_remote_app(app):

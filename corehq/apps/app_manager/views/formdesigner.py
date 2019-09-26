@@ -66,7 +66,6 @@ logger = logging.getLogger(__name__)
 
 
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 @track_domain_request(calculated_prop='cp_n_form_builder_entered')
 def form_source(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
@@ -85,7 +84,6 @@ def form_source(request, domain, app_id, form_unique_id):
 
 
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def form_source_legacy(request, domain, app_id, module_id=None, form_id=None):
     """
     This view has been kept around to not break any documentation on example apps
@@ -177,7 +175,6 @@ def _get_form_designer_view(request, domain, app, module, form):
 
 @require_GET
 @require_can_edit_apps
-@requires_privilege_with_fallback(privileges.PROJECT_ACCESS)
 def get_form_data_schema(request, domain, form_unique_id):
     """Get data schema
 

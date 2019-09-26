@@ -19,7 +19,6 @@ from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import json_response
 from toggle.models import Toggle
@@ -121,7 +120,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     page_title = ugettext_lazy("Basic")
 
     @method_decorator(domain_admin_required)
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -301,7 +299,6 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Privacy and Security")
 
     @method_decorator(domain_admin_required)
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -343,7 +340,6 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/media_manager.html'
 
     @method_decorator(domain_admin_required)
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -471,7 +467,6 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/feature_previews.html'
 
     @method_decorator(domain_admin_required)
-    @method_decorator(requires_privilege_with_fallback(privileges.PROJECT_ACCESS))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
