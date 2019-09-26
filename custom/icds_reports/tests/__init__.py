@@ -42,7 +42,7 @@ def setUpModule():
     setup_location_hierarchy(domain.name)
 
     with override_settings(SERVER_ENVIRONMENT='icds'):
-        setup_tables_and_fixtures()
+        setup_tables_and_fixtures(domain.name)
         aggregate_state_form_data()
         try:
             with mock.patch('custom.icds_reports.tasks._update_aggregate_locations_tables'):
