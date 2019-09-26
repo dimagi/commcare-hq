@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from io import BytesIO, FileIO, StringIO
 
+from django.http import Http404
 from django.test import Client
 from django.urls import reverse
 from django_otp.tests import TestCase
@@ -18,6 +19,7 @@ from corehq.apps.users.models import WebUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import CaseAttachmentSQL, CommCareCaseSQL, XFormInstanceSQL, CaseTransaction, \
     Attachment
@@ -75,10 +77,10 @@ class AttachmentAPITest(TestCase):
             server_modified_on=now,
             closed=False
         )
-
         case.track_create(CaseTransaction.form_transaction(case, form, datetime.utcnow()))
         FormProcessorSQL.save_processed_models(ProcessedForms(form, None), [case])
 
+        cls.form = form
         cls.case = CaseAccessorSQL.get_case('c4se_id')
         cls.attachment = CaseAttachmentSQL(
             case=cls.case,
@@ -101,15 +103,19 @@ class AttachmentAPITest(TestCase):
     @classmethod
     def _set_client(cls):
         cls.client = Client()
-        cls.url = cls._get_url()
 
     @classmethod
-    def _get_url(cls):
-        return reverse("api_case_attachment", kwargs={
+    def _get_url(cls, type='case'):
+        kwargs = {
             "domain": cls.domain.name,
-            "case_id": cls.case.case_id,
             "attachment_id": "image.jpg",
-        })
+        }
+        if type == 'form':
+            kwargs['form_id'] = cls.form.form_id
+            return reverse('api_form_attachment', kwargs=kwargs)
+        if type == 'case':
+            kwargs['case_id'] = cls.case.case_id
+            return reverse('api_case_attachment', kwargs=kwargs)
 
     def image_request_data(self, **kwargs):
         data = {
@@ -129,7 +135,7 @@ class AttachmentAPITest(TestCase):
     def test_get_attachment_debug(self, object_getter, _):
         with patch.object(CachedImage, "is_cached", return_value=False), \
                 patch.object(CachedImage, "cache_put", return_value=None):
-            result = self.client.get(self.url, self.image_request_data(size='debug_all'))
+            result = self.client.get(self._get_url(), self.image_request_data(size='debug_all'))
 
         self.assertEqual(result.status_code, 200)
         self.assertIn(
@@ -145,7 +151,21 @@ class AttachmentAPITest(TestCase):
     def test_get_attachment(self, object_getter, _):
         with patch.object(CachedImage, "is_cached", return_value=False), \
                 patch.object(CachedImage, "cache_put", return_value=None):
-            result = self.client.get(self.url, self.image_request_data())
+            result = self.client.get(self._get_url(), self.image_request_data())
+
+        self.assertEqual(result.status_code, 200)
+
+        object_getter.assert_called_with(
+            self.domain_name, self.case.case_id, self.attachment.name, is_image=True)
+
+    @patch.object(CaseAttachmentSQL, 'open', return_value=BytesIO(mock_image().tobytes()))
+    @patch('corehq.apps.api.object_fetch_api.get_cached_case_attachment', return_value=CachedImageMock())
+    def test_get_attachment_no_constrains(self, object_getter, _):
+        with patch.object(CachedImage, "is_cached", return_value=False), \
+                patch.object(CachedImage, "cache_put", return_value=None):
+            constrains = self.image_request_data()
+            constrains['max_image_width'] = 10
+            result = self.client.get(self._get_url(), constrains)
 
         self.assertEqual(result.status_code, 200)
 
@@ -153,8 +173,25 @@ class AttachmentAPITest(TestCase):
             self.domain_name, self.case.case_id, self.attachment.name, is_image=True
         )
 
-    def test_get_attachment_no_attachment_exception(self, ):
+    def test_get_attachment_no_attachment_exception(self):
         with patch.object(CachedImage, "is_cached", return_value=False), \
                 patch.object(CachedImage, "cache_put", return_value=None):
             with self.assertRaises(AttachmentNotFound):
-                self.client.get(self.url, self.image_request_data())
+                self.client.get(self._get_url(), self.image_request_data())
+
+    @patch.object(FormAccessors, 'get_attachment_content', return_value=CachedImageMock())
+    def test_get_form_attachment(self, image):
+        result = self.client.get(self._get_url(type='form'), self.image_request_data(size='debug_all'))
+        actual = next(result.streaming_content)
+
+        self.assertEqual(result.status_code, 200)
+        self.assertIsInstance(actual, bytes)
+
+        image.assert_called_with(self.form.form_id, self.attachment.name)
+
+    def test_get_attachment_insufficient_data(self):
+        url = reverse('api_form_attachment',
+                      kwargs={'domain': self.domain_name, 'form_id': None, 'attachment_id': None})
+        result = self.client.get(url, self.image_request_data())
+        self.assertEqual(result.status_code, 404)
+

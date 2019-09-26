@@ -251,12 +251,23 @@ def cache_meta(**kwargs):
         'content_length': kwargs.get('content_length') or 1000,
         'height': kwargs.get('height') or 1000,
         'width':  kwargs.get('width') or 1000,
-        'content_type': 'plain/text'
+        'content_type': 'image/jpeg'
     }
     return meta
 
 
 def CachedImageMock():
+    def less_cache_meta(**kwargs):
+        meta = {
+            'content_length': 1,
+            'height': 1,
+            'width':  1,
+            'content_type': 'image/jpeg'
+        }
+        return meta
+
     mock = MagicMock()
-    mock.get.return_value = (cache_meta(), mock_image())
+    mock.image = mock_image()
+    mock.get.return_value = (cache_meta(), mock.image)
+    mock.get_size.return_value = (less_cache_meta(), mock.image)
     return mock
