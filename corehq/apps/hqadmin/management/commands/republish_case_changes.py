@@ -5,6 +5,9 @@ from dimagi.utils.chunked import chunked
 
 from casexml.apps.case.models import CommCareCase
 from corehq.doctypemigrations.continuous_migrate import bulk_get_revs
+from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
+    publish_change, create_case_change_meta
+)
 
 
 class Command(BaseCommand):
@@ -36,8 +39,6 @@ def _publish_cases(domain, case_ids):
 
 
 def _publish_cases_for_couch(domain, case_ids):
-    from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
-        publish_change, create_case_change_meta)
     for ids in chunked(case_ids, 500):
         doc_id_rev_list = bulk_get_revs(CommCareCase.get_db(), ids)
         for doc_id, doc_rev in doc_id_rev_list:
@@ -47,6 +48,7 @@ def _publish_cases_for_couch(domain, case_ids):
 
 
 def _publish_cases_for_sql(domain, case_ids):
+
     print('sql domains not supported yet')
 
 
