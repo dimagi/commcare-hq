@@ -15,6 +15,7 @@ from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
 
+
 class TestExportData(TestCase):
     maxDiff = None
 
@@ -59,8 +60,8 @@ class TestExportData(TestCase):
                         'State',
                         'st1'],
                     [
-                        'Supervisor',
-                        's1'],
+                        'District',
+                        'd1'],
                     [
                         "Block",
                         "b1"
@@ -543,7 +544,7 @@ class TestExportData(TestCase):
                     [
                         ['Generated at', '16:21:11 15 November 2017'],
                         ['State', 'st1'],
-                        ['Supervisor', 's1'],
+                        ['District', 'd1'],
                         ['Block', 'b1']
                     ]
                 ]
@@ -641,11 +642,11 @@ class TestExportData(TestCase):
                         'Number of complementary feeding forms', 'Number of growth monitoring forms',
                         'Number of take home rations forms', 'Number of due list forms'
                     ],
-                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
-                    ['st1', 'Applicable at only AWC level', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
                     ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
                     ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
                     ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
@@ -680,7 +681,7 @@ class TestExportData(TestCase):
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
                     ['State', 'st1'],
-                    ['Supervisor', 's1'],
+                    ['District', 'd1'],
                     ['Block', 'b1'],
                     ['Month', 'May'],
                     ['Year', 2017]
@@ -762,7 +763,7 @@ class TestExportData(TestCase):
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered',
-                        4, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        4, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a42', 'Data Not Entered',
@@ -776,7 +777,7 @@ class TestExportData(TestCase):
                 ['Export Info', [
                     ['Generated at', '16:21:11 15 November 2017'],
                     ['State', 'st1'],
-                    ['Supervisor', 's1'],
+                    ['District', 'd1'],
                     ['Block', 'b1'],
                     ['Grouped By', 'AWC'],
                     ['Month', 'May'],
@@ -1097,8 +1098,8 @@ class TestExportData(TestCase):
                             'st1'
                         ],
                         [
-                            'Supervisor',
-                            's1'
+                            'District',
+                            'd1'
                         ],
                         [
                             "Block",
@@ -2081,6 +2082,22 @@ class TestExportData(TestCase):
                             "16:21:11 15 November 2017"
                         ],
                         [
+                            'State',
+                            'st1'
+                        ],
+                        [
+                            'District',
+                            'd1'
+                        ],
+                        [
+                            'Block',
+                            'b1'
+                        ],
+                        [
+                            'Supervisor',
+                            's1'
+                        ],
+                        [
                             "Awc",
                             "a7"
                         ],
@@ -2283,8 +2300,8 @@ class TestExportData(TestCase):
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
                                    ['st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
-                                   ['st1', 'd1', 'b1', 's2', 'a34', 'AWC Not Launched', 'AWC Not Launched',
-                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered', 'Data Not Entered',
+                                    7, 0, 0],
                                    ['st1', 'd1', 'b1', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
                                    ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
@@ -2292,7 +2309,7 @@ class TestExportData(TestCase):
              ['Export Info', [
                  ['Generated at', india_now()],
                  ['State', 'st1'],
-                 ['Supervisor', 's1'],
+                 ['District', 'd1'],
                  ['Block', 'b1'],
                  ['Month', 'May'],
                  ['Year', 2017]]
@@ -2334,8 +2351,7 @@ class TestExportData(TestCase):
                  'AWC Not Launched', 'AWC Not Launched'],
                 ['st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
                  'AWC Not Launched', 'AWC Not Launched'],
-                ['st1', 'd1', 'b1', 's2', 'a34', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
-                 'AWC Not Launched', 'AWC Not Launched'],
+                ['st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered', 'Data Not Entered', 7, 0, 0],
                 ['st1', 'd1', 'b1', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
                  'AWC Not Launched', 'AWC Not Launched'],
                 ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',

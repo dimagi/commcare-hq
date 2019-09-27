@@ -65,3 +65,25 @@ def get_warehouse_latest_modified_date(email_on_delay=False):
             _soft_assert(False, "The weekly inactive SMS rule is successfully triggered for this week")
 
     return latest_date
+
+
+class ProgressIterator(object):
+    def __init__(self, tracker, iterable):
+        self.__iterable = iter(iterable)
+        self.tracker = tracker
+        self.count = 0
+        self.complete = False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            value = next(self.__iterable)
+            self.tracker.report_progress()
+            return value
+        except StopIteration:
+            if not self.complete:  # prevent repeated calls
+                self.complete = True
+                self.tracker.complete()
+            raise

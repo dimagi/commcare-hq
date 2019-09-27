@@ -56,7 +56,7 @@ branches:
   - bmb/case-sharing  #Biyeun Aug 22
   - jls/use-compress-more # Jenny Sept 5
   - nh/omrs/import_task  # Norman Sep 11
-  - bmb/trial-revamp  # Biyeun Sep 12
   - jls/turn-off-cdn-for-requirejs # Jenny Sept 16
   - jls/paginate-mm-ref-checker # Jenny Sept 23
+  - bmb/new-plans  # Biyeun Sept 24
 submodules: {}

@@ -18,6 +18,7 @@ class SyncLogStagingLoader(HQToWarehouseETLMixin, BaseStagingLoader):
     """
     slug = SYNCLOG_STAGING_SLUG
     model_cls = SyncLogStagingTable
+    log_frequency = 10000
 
     def field_mapping(self):
         return [

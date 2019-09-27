@@ -397,21 +397,22 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         return DataTablesHeader(*[col.data_tables_column for col in self.data_source.inner_columns])
 
     def get_ajax(self, params):
+        sort_column = params.get('iSortCol_0')
+        sort_order = params.get('sSortDir_0', 'ASC')
+        echo = int(params.get('sEcho', 1))
+        datatables_params = DatatablesParams.from_request_dict(params)
+
         try:
             data_source = self.data_source
             if len(data_source.inner_columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
                 raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
 
-            sort_column = params.get('iSortCol_0')
-            sort_order = params.get('sSortDir_0', 'ASC')
-            echo = int(params.get('sEcho', 1))
             if sort_column and echo != 1:
                 data_source.set_order_by(
                     [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
                 )
 
-            datatables_params = DatatablesParams.from_request_dict(params)
             page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
             total_records = data_source.get_total_records()
             total_row = data_source.get_total_row() if data_source.has_total_row else None
@@ -502,22 +503,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 return filter_value.display
             else:
                 return str(filter_value)
-
-    def _get_filter_values(self):
-        slug_to_filter = {
-            ui_filter.name: ui_filter
-            for ui_filter in self.filters
-        }
-
-        filters_without_prefilters = {
-            filter_slug: filter_value
-            for filter_slug, filter_value in self.filter_values.items()
-            if not isinstance(slug_to_filter[filter_slug], PreFilter)
-        }
-
-        for filter_slug, filter_value in filters_without_prefilters.items():
-            label = slug_to_filter[filter_slug].label
-            yield label, self._get_filter_export_format(filter_value)
 
     @property
     @memoized
