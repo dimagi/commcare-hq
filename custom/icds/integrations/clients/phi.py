@@ -1,7 +1,6 @@
 from django.utils.functional import cached_property
 
 import requests
-
 from custom.icds.integrations.const import PHI_URLS as URLS
 
 
