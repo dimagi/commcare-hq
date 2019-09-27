@@ -727,7 +727,7 @@ class AggChildHealth(models.Model, AggregateMixin):
         db_table = 'agg_child_health'
 
     _agg_helper_cls = AggChildHealthAggregationHelper
-    _agg_atomic = True
+    _agg_atomic = False
 
 
 class AggAwcDaily(models.Model, AggregateMixin):
