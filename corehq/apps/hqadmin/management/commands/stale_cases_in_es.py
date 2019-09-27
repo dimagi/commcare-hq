@@ -1,6 +1,8 @@
 
 import inspect
+from collections import namedtuple
 
+import dateutil
 from django.core.management.base import BaseCommand
 from datetime import datetime
 
@@ -14,6 +16,10 @@ from corehq.apps.es import CaseES
 from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.couch_helpers import paginate_view
+
+
+
+RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date'])
 
 
 class Command(BaseCommand):
@@ -37,9 +43,22 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument(
+            '--start',
+            action='store',
+            help='Only include cases modified after this date',
+        )
+        parser.add_argument(
+            '--end',
+            action='store',
+            help='Only include cases modified before this date',
+        )
 
     def handle(self, domain, **options):
-        for case_id, es_date, couch_date in get_server_modified_on_for_domain(domain):
+        start = dateutil.parser.parse(options['start']) if options['start'] else datetime(2010, 1, 1)
+        end = dateutil.parser.parse(options['end']) if options['end'] else datetime.utcnow()
+        run_config = RunConfig(domain, start, end)
+        for case_id, es_date, couch_date in get_server_modified_on_for_domain(run_config):
             print("{id},{es_date},{couch_date}".format(
                 id=case_id,
                 es_date=es_date or "",
@@ -47,14 +66,15 @@ class Command(BaseCommand):
             ))
 
 
-def get_server_modified_on_for_domain(domain):
-    if should_use_sql_backend(domain):
-        return _get_data_for_sql_backend(domain)
+def get_server_modified_on_for_domain(run_config):
+    if should_use_sql_backend(run_config.domain):
+        return _get_data_for_sql_backend(run_config)
     else:
-        return _get_data_for_couch_backend(domain)
+        return _get_data_for_couch_backend(run_config)
 
 
-def _get_data_for_couch_backend(domain):
+def _get_data_for_couch_backend(run_config):
+    domain = run_config.domain
     start_time = datetime.utcnow()
     chunk_size = 1000
     chunked_iterator = chunked(paginate_view(
@@ -83,16 +103,16 @@ def _get_data_for_couch_backend(domain):
                 yield (case_id, es_modified_on, couch_modified_on)
 
 
-def _get_data_for_sql_backend(domain):
+def _get_data_for_sql_backend(run_config):
 
     for db in get_db_aliases_for_partitioned_query():
-        matching_records_for_db = _get_sql_case_data_for_db(db, domain)
+        matching_records_for_db = _get_sql_case_data_for_db(db, run_config)
         chunk_size = 1000
         for chunk in chunked(matching_records_for_db, chunk_size):
             case_ids = [val[0] for val in chunk]
             # case_ids = list(chunk)
             results = (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
-                .domain(domain)
+                .domain(run_config.domain)
                 .case_ids(case_ids)
                 .values_list('_id', 'server_modified_on'))
             es_modified_on_by_ids = dict(results)
@@ -103,12 +123,9 @@ def _get_data_for_sql_backend(domain):
                     yield (case_id, es_modified_on, sql_modified_on_str)
 
 
-def _get_sql_case_data_for_db(db, domain):
-    # todo: parameterize these
-    start_date = datetime(2010, 1, 1)
-    end_date = datetime.utcnow()
+def _get_sql_case_data_for_db(db, run_config):
     yield from CommCareCaseSQL.objects.using(db).filter(
-        domain=domain,
-        server_modified_on__gte=start_date,
-        server_modified_on__lte=end_date,
+        domain=run_config.domain,
+        server_modified_on__gte=run_config.start_date,
+        server_modified_on__lte=run_config.end_date,
     ).values_list('case_id', 'server_modified_on')
