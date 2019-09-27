@@ -4,6 +4,7 @@ import inspect
 from django.core.management.base import BaseCommand
 from datetime import datetime
 
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.chunked import chunked
 
@@ -82,5 +83,22 @@ def _get_data_for_couch_backend(domain):
 
 
 def _get_data_for_sql_backend(domain):
-    print(f"sorry the domain {domain} uses the SQL backend which isn't supported yet")
-    return iter(())
+    # todo: parameterize these
+    start_date = datetime(2010, 1, 1)
+    end_date = datetime.utcnow()
+    base_data = CaseAccessorSQL.get_last_modified_dates_by_range(
+        domain, start_date, end_date
+    )
+    chunk_size = 1000
+    for chunk in chunked(base_data, chunk_size):
+        case_ids = list(chunk)
+        results = (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
+            .domain(domain)
+            .case_ids(case_ids)
+            .values_list('_id', 'server_modified_on'))
+        es_modified_on_by_ids = dict(results)
+        for case_id in case_ids:
+            sql_modified_on = f'{base_data[case_id].isoformat()}Z'
+            es_modified_on = es_modified_on_by_ids.get(case_id)
+            if not es_modified_on or (es_modified_on != sql_modified_on):
+                yield (case_id, es_modified_on, sql_modified_on)
