@@ -12,6 +12,7 @@ class BasePHIInterface(object):
 
     def __init__(self):
         self._response = None
+        self._ensure_credentials()
 
     def _ensure_credentials(self):
         if not self._api_key or not self._password:
