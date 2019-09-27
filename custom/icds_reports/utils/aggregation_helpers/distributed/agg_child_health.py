@@ -17,15 +17,16 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
-        agg_query, agg_params = self.aggregation_query()
+        staging_queries = self.staging_queries()
         update_queries = self.update_queries()
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
 
         cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
         # create staging table
         cursor.execute(f"CREATE UNLOGGED TABLE {self.staging_tablename} (LIKE {self.base_tablename})")
-        # initial insert into staging table
-        cursor.execute(agg_query, agg_params)
+        # initial inserts into staging table
+        for staging_query, params in staging_queries:
+            cursor.execute(staging_query, params)
         # update staging table
         for query, params in update_queries:
             cursor.execute(query, params)
@@ -58,7 +59,7 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
         # create indexes outside of transaction
         # this happens on the first day of the month when the table is created
         # On the first few days queries to this table are hidden, so they do not need to be fast
-        for index_query in self.indexes:
+        for index_query in self.indexes():
             cursor.execute(index_query)
 
         # drop staging table
@@ -82,7 +83,7 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
     def drop_table_query(self):
         return 'DELETE FROM "{}"'.format(self.tablename)
 
-    def aggregation_query(self):
+    def staging_queries(self):
         columns = (
             ('state_id', 'awc_loc.state_id'),
             ('district_id', 'awc_loc.district_id'),
@@ -201,23 +202,54 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
         child_health_monthly_table = 'child_health_monthly'
         tmp_tablename = 'blah_blah_blah'
         final_columns = ", ".join([col[0] for col in columns])
+        supervisor_id_ranges = [
+            ('0', '1'),
+            ('1', '2'),
+            ('2', '3'),
+            ('3', '4'),
+            ('4', '5'),
+            ('5', '6'),
+            ('6', '7'),
+            ('7', '8'),
+            ('8', '9'),
+            ('9', 'A'),
+            ('A', 'B'),
+            ('B', 'C'),
+            ('C', 'D'),
+            ('D', 'E'),
+            ('E', 'F'),
+            ('F', 'a'),
+            ('a', 'b'),
+            ('b', 'c'),
+            ('c', 'd'),
+            ('d', 'e'),
+            ('e', 'f'),
+            ('f', 'zzzzzzzzzz'),
+        ]
 
-        return f"""
-        CREATE UNLOGGED TABLE "{tmp_tablename}" AS SELECT
-            {query_cols}
-            FROM "{child_health_monthly_table}" chm
-            LEFT OUTER JOIN "awc_location" awc_loc ON (
-                awc_loc.supervisor_id = chm.supervisor_id AND awc_loc.doc_id = chm.awc_id
-            )
-            WHERE chm.month = %(start_date)s AND awc_loc.state_id != '' AND awc_loc.state_id IS NOT NULL
-            GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, chm.supervisor_id, chm.awc_id,
-                     chm.month, chm.sex, chm.age_tranche, chm.caste,
-                     coalesce_disabled, coalesce_minority, coalesce_resident;
-        INSERT INTO "{self.staging_tablename}" ({final_columns}) SELECT * from "{tmp_tablename}";
-        DROP TABLE "{tmp_tablename}";
-        """, {
-            "start_date": self.month
-        }
+        return [
+            (f"""
+            CREATE UNLOGGED TABLE "{tmp_tablename}" AS SELECT
+                {query_cols}
+                FROM "{child_health_monthly_table}" chm
+                LEFT OUTER JOIN "awc_location" awc_loc ON (
+                    awc_loc.supervisor_id = chm.supervisor_id AND awc_loc.doc_id = chm.awc_id
+                )
+                WHERE chm.month = %(start_date)s
+                      AND awc_loc.state_id != ''
+                      AND awc_loc.state_id IS NOT NULL
+                      AND chm.supervisor_id >= '{sup_id_begin}'
+                      AND chm.supervisor_id < '{sup_id_end}'
+                GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, chm.supervisor_id, chm.awc_id,
+                         chm.month, chm.sex, chm.age_tranche, chm.caste,
+                         coalesce_disabled, coalesce_minority, coalesce_resident;
+            INSERT INTO "{self.staging_tablename}" ({final_columns}) SELECT * from "{tmp_tablename}";
+            DROP TABLE "{tmp_tablename}";
+            """, {
+                "start_date": self.month
+            })
+            for sup_id_begin, sup_id_end in supervisor_id_ranges
+        ]
 
     def update_queries(self):
         yield f"""
