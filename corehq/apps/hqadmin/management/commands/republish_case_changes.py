@@ -1,5 +1,6 @@
 from django.core.management import BaseCommand
 
+from corehq.apps.change_feed import data_sources
 from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.chunked import chunked
 
@@ -8,6 +9,7 @@ from corehq.doctypemigrations.continuous_migrate import bulk_get_revs
 from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
     publish_change, create_case_change_meta
 )
+from pillowtop.feed.interface import ChangeMeta
 
 
 class Command(BaseCommand):
@@ -48,7 +50,19 @@ def _publish_cases_for_couch(domain, case_ids):
 
 
 def _publish_cases_for_sql(domain, case_ids):
+    for case_id in case_ids:
+        publish_change(
+            _change_meta_for_sql_case(domain, case_id)
+        )
 
-    print('sql domains not supported yet')
 
-
+def _change_meta_for_sql_case(domain, case_id):
+    return ChangeMeta(
+        document_id=case_id,
+        data_source_type=data_sources.SOURCE_SQL,
+        data_source_name=data_sources.CASE_SQL,
+        document_type='CommCareCase',
+        document_subtype=None,  # should be case.type or form.xmlns, but not used anywhere
+        domain=domain,
+        is_deletion=False,
+    )
