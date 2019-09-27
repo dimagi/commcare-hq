@@ -32,10 +32,7 @@ class Command(BaseCommand):
         1. Generate couch case tuples not updated in ES with extra debug columns
         $ ./manage.py stale_cases_in_es <DOMAIN> > case_ids_info.txt
 
-        2. Strip debug columns to prepare for reprocessing
-        $ cut -d, -f2-3 --complement case_ids_info.txt > case_ids.txt
-
-        3. Republish case changes
+        2. Republish case changes
         $ ./manage.py republish_case_changes <DOMAIN> case_ids.txt
 
     """

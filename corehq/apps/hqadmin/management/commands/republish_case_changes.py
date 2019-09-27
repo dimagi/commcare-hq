@@ -35,4 +35,4 @@ class Command(BaseCommand):
 def _get_case_ids(case_ids_file):
     with open(case_ids_file, 'r') as f:
         lines = f.readlines()
-        return [l.strip() for l in lines]
+        return [l.split(',')[0].strip() for l in lines]
