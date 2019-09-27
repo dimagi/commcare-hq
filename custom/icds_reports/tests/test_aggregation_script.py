@@ -585,6 +585,7 @@ class LocationAggregationTest(TestCase):
                     # run agg again without any locations in awc_location
                     with get_cursor(AwcLocation) as cursor:
                         cursor.execute("DELETE FROM awc_location")
+                        cursor.execute("DELETE FROM awc_location_local")
                         self.helper.aggregate(cursor)
 
                     self.assertEqual(AwcLocation.objects.count(), 8)
