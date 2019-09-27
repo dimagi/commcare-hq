@@ -263,7 +263,7 @@ describe('Download Directive', function () {
             ];
             assert.deepEqual(expected, controller.months);
             clock.restore();
-        })
+        });
 
         it('test to check if current month is not enabled before first three days', function () {
             var fakeDate = new Date();
@@ -285,7 +285,7 @@ describe('Download Directive', function () {
             ];
             assert.deepEqual(expected, controller.months);
             clock.restore();
-        })
+        });
 
         it('test to check if AWW performance report is downloadable only till last month ' +
             'after current month 15th ', function () {
@@ -308,7 +308,7 @@ describe('Download Directive', function () {
             ];
             assert.deepEqual(expected, controller.months);
             clock.restore();
-        })
+        });
 
         it('test to check if AWW performance report is downloadable only till last before month ' +
             'before current month 15th ', function () {
@@ -330,7 +330,7 @@ describe('Download Directive', function () {
             ];
             assert.deepEqual(expected, controller.months);
             clock.restore();
-        })
+        });
 
     });
 
