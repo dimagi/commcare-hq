@@ -20,19 +20,20 @@ class Command(BaseCommand):
     def handle(self, domain, case_ids_file, *args, **options):
         self.domain = domain
         case_ids = _get_case_ids(case_ids_file)
-        self.publish_cases(domain, case_ids)
-
-    def publish_cases(self, domain, case_ids):
-        if should_use_sql_backend(domain):
-            _publish_cases_for_couch(domain, case_ids)
-        else:
-            _publish_cases_for_sql(domain, case_ids)
+        _publish_cases(domain, case_ids)
 
 
 def _get_case_ids(case_ids_file):
     with open(case_ids_file, 'r') as f:
         lines = f.readlines()
         return [l.split(',')[0].strip() for l in lines]
+
+
+def _publish_cases(self, domain, case_ids):
+    if should_use_sql_backend(domain):
+        _publish_cases_for_couch(domain, case_ids)
+    else:
+        _publish_cases_for_sql(domain, case_ids)
 
 
 def _publish_cases_for_couch(domain, case_ids):
