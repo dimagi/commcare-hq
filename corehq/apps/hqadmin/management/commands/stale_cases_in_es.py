@@ -124,7 +124,7 @@ def _get_data_for_sql_backend(run_config):
 
 
 def _get_sql_case_data_for_db(db, run_config):
-    yield from CommCareCaseSQL.objects.using(db).filter(
+    return CommCareCaseSQL.objects.using(db).filter(
         domain=run_config.domain,
         server_modified_on__gte=run_config.start_date,
         server_modified_on__lte=run_config.end_date,
