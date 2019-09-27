@@ -18,13 +18,8 @@ class Command(BaseCommand):
 
     def handle(self, domain, case_ids_file, *args, **options):
         self.domain = domain
-        case_ids = self.get_case_ids(case_ids_file)
+        case_ids = _get_case_ids(case_ids_file)
         self.publish_cases(domain, case_ids)
-
-    def get_case_ids(self, case_ids_file):
-        with open(case_ids_file, 'r') as f:
-            lines = f.readlines()
-            return [l.strip() for l in lines]
 
     def publish_cases(self, domain, case_ids):
         from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
@@ -35,3 +30,9 @@ class Command(BaseCommand):
                 publish_change(
                     create_case_change_meta(domain, doc_id, doc_rev)
                 )
+
+
+def _get_case_ids(case_ids_file):
+    with open(case_ids_file, 'r') as f:
+        lines = f.readlines()
+        return [l.strip() for l in lines]
