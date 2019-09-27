@@ -132,13 +132,6 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             )
 
     response = result.response
-
-    if response.status_code == 400:
-        logging.error(
-            'Status code 400 for a form submission. '
-            'Response is: \n{0}\n'
-        )
-
     _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
     return response
