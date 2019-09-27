@@ -15,6 +15,7 @@ from corehq.motech.dhis2.exceptions import (
     Dhis2Exception,
     MultipleInstancesFound,
 )
+from corehq.motech.dhis2.finders import TrackedEntityInstanceFinder
 from corehq.motech.repeater_helpers import RepeaterResponse
 from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import CaseTriggerInfo, get_value
@@ -114,14 +115,8 @@ def get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_in
 
 
 def find_tracked_entity_instances(requests, case_trigger_info, case_config):
-    """
-    Uses a
-    :param requests:
-    :param case_trigger_info:
-    :param case_config:
-    :return:
-    """
-    raise NotImplementedError
+    finder = TrackedEntityInstanceFinder(requests, case_config)
+    return finder.find_tracked_entity_instances(case_trigger_info)
 
 
 def update_tracked_entity_instance(

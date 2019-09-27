@@ -1,8 +1,10 @@
 from dimagi.ext.couchdbkit import (
+    DecimalProperty,
     DictProperty,
     DocumentSchema,
     ListProperty,
     SchemaListProperty,
+    SchemaProperty,
     StringProperty,
 )
 
@@ -15,6 +17,7 @@ from corehq.motech.dhis2.const import (
     DHIS2_PROGRAM_STATUSES,
     LOCATION_DHIS_ID,
 )
+from corehq.motech.finders import PropertyWeight
 
 
 class FormDataValueMap(DocumentSchema):
@@ -60,6 +63,11 @@ class Dhis2Config(DocumentSchema):
     form_configs = ListProperty(Dhis2FormConfig)
 
 
+class FinderConfig(DocumentSchema):
+    property_weights = ListProperty(PropertyWeight)
+    confidence_margin = DecimalProperty(default=0.5)
+
+
 class Dhis2CaseConfig(DocumentSchema):
     """
     A Dhis2CaseConfig maps a case type to a tracked entity type.
@@ -82,6 +90,8 @@ class Dhis2CaseConfig(DocumentSchema):
 
     # Events for this Tracked Entity:
     form_configs = ListProperty(Dhis2FormConfig)
+
+    finder_config = SchemaProperty(FinderConfig)
 
 
 class Dhis2EntityConfig(DocumentSchema):
