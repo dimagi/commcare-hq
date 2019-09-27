@@ -242,6 +242,99 @@ describe('Download Directive', function () {
             assert.isFalse(result);
         });
 
+        it('test to check if current month is enabled after first three days', function () {
+            var fakeDate = new Date();
+            fakeDate.setMonth(8)
+            fakeDate.setDate(4);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+            controller.selectedIndicator = 1;
+            controller.selectedYear = fakeDate.getFullYear();
+            controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+                {"name": "August", "id": 8},
+                {"name": "September", "id": 9},
+            ];
+            assert.deepEqual(expected, controller.months);
+            clock.restore();
+        })
+
+        it('test to check if current month is not enabled before first three days', function () {
+            var fakeDate = new Date();
+            fakeDate.setMonth(8)
+            fakeDate.setDate(2);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+            controller.selectedIndicator = 1;
+            controller.selectedYear = fakeDate.getFullYear();
+            controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
+            console.log(controller.months)
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+                {"name": "August", "id": 8},
+            ];
+            assert.deepEqual(expected, controller.months);
+            clock.restore();
+        })
+
+        it('test to check if AWW performance report is downloadable only till last month ' +
+            'after current month 15th ', function () {
+            var fakeDate = new Date();
+            fakeDate.setMonth(8)
+            fakeDate.setDate(17);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+            controller.selectedIndicator = 8;
+            controller.selectedYear = fakeDate.getFullYear();
+            controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
+            console.log(controller.months)
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+                {"name": "August", "id": 8},
+            ];
+            assert.deepEqual(expected, controller.months);
+            clock.restore();
+        })
+
+        it('test to check if AWW performance report is downloadable only till last before month ' +
+            'before current month 15th ', function () {
+            var fakeDate = new Date();
+            fakeDate.setMonth(8)
+            fakeDate.setDate(5);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+            controller.selectedIndicator = 8;
+            controller.selectedYear = fakeDate.getFullYear();
+            controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
+            console.log(controller.months)
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+            ];
+            assert.deepEqual(expected, controller.months);
+            clock.restore();
+        })
+
     });
 
     describe('Download Directive have access to features', function() {
