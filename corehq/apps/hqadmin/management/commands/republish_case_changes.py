@@ -18,7 +18,6 @@ class Command(BaseCommand):
         parser.add_argument('case_ids_file')
 
     def handle(self, domain, case_ids_file, *args, **options):
-        self.domain = domain
         case_ids = _get_case_ids(case_ids_file)
         _publish_cases(domain, case_ids)
 
