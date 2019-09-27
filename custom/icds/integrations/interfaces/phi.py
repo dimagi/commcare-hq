@@ -68,7 +68,7 @@ class GetBeneficiary(BasePHIInterface):
     @property
     def _data(self):
         return {
-            'phi_id': self.phi_id
+            'phiId': self.phi_id
         }
 
 
