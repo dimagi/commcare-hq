@@ -36,7 +36,7 @@ class Command(BaseCommand):
         $ cut -d, -f2-3 --complement case_ids_info.txt > case_ids.txt
 
         3. Republish case changes
-        $ ./manage.py republish_couch_case_changes <DOMAIN> case_ids.txt
+        $ ./manage.py republish_case_changes <DOMAIN> case_ids.txt
 
     """
     help = inspect.cleandoc(__doc__).split('\n')[0]
