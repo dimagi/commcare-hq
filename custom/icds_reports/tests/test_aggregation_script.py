@@ -20,9 +20,11 @@ from custom.icds_reports.models.aggregate import (
 )
 from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
 from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
+from custom.icds_reports.utils.aggregation_helpers.distributed import (
+    LocationAggregationDistributedHelper,
+)
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
     InactiveAwwsAggregationHelper,
-    LocationAggregationHelper,
 )
 
 
@@ -491,7 +493,7 @@ class LocationAggregationTest(TestCase):
         sup2.metadata = {"is_test_location": "test"}
         sup2.save()
 
-        cls.helper = LocationAggregationHelper()
+        cls.helper = LocationAggregationDistributedHelper()
 
     @classmethod
     def tearDownClass(cls):
@@ -521,6 +523,7 @@ class LocationAggregationTest(TestCase):
                     # run agg again without any locations in awc_location
                     with get_cursor(AwcLocation) as cursor:
                         cursor.execute("DELETE FROM awc_location")
+                        cursor.execute("DELETE FROM awc_location_local")
                         self.helper.aggregate(cursor)
 
                     self.assertEqual(AwcLocation.objects.count(), 8)
