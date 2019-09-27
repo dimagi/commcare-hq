@@ -4,8 +4,9 @@ import inspect
 from django.core.management.base import BaseCommand
 from datetime import datetime
 
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from dimagi.utils.chunked import chunked
 
 from casexml.apps.case.models import CommCareCase
@@ -83,22 +84,31 @@ def _get_data_for_couch_backend(domain):
 
 
 def _get_data_for_sql_backend(domain):
+
+    for db in get_db_aliases_for_partitioned_query():
+        matching_records_for_db = _get_sql_case_data_for_db(db, domain)
+        chunk_size = 1000
+        for chunk in chunked(matching_records_for_db, chunk_size):
+            case_ids = [val[0] for val in chunk]
+            # case_ids = list(chunk)
+            results = (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
+                .domain(domain)
+                .case_ids(case_ids)
+                .values_list('_id', 'server_modified_on'))
+            es_modified_on_by_ids = dict(results)
+            for case_id, sql_modified_on in chunk:
+                sql_modified_on_str = f'{sql_modified_on.isoformat()}Z'
+                es_modified_on = es_modified_on_by_ids.get(case_id)
+                if not es_modified_on or (es_modified_on != sql_modified_on_str):
+                    yield (case_id, es_modified_on, sql_modified_on_str)
+
+
+def _get_sql_case_data_for_db(db, domain):
     # todo: parameterize these
     start_date = datetime(2010, 1, 1)
     end_date = datetime.utcnow()
-    base_data = CaseAccessorSQL.get_last_modified_dates_by_range(
-        domain, start_date, end_date
-    )
-    chunk_size = 1000
-    for chunk in chunked(base_data, chunk_size):
-        case_ids = list(chunk)
-        results = (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
-            .domain(domain)
-            .case_ids(case_ids)
-            .values_list('_id', 'server_modified_on'))
-        es_modified_on_by_ids = dict(results)
-        for case_id in case_ids:
-            sql_modified_on = f'{base_data[case_id].isoformat()}Z'
-            es_modified_on = es_modified_on_by_ids.get(case_id)
-            if not es_modified_on or (es_modified_on != sql_modified_on):
-                yield (case_id, es_modified_on, sql_modified_on)
+    yield from CommCareCaseSQL.objects.using(db).filter(
+        domain=domain,
+        server_modified_on__gte=start_date,
+        server_modified_on__lte=end_date,
+    ).values_list('case_id', 'server_modified_on')
