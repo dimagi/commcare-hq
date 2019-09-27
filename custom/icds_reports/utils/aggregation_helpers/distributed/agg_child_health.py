@@ -173,15 +173,6 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
 
     def update_queries(self):
         yield """
-        CREATE UNLOGGED TABLE "{tmp_tablename}" AS SELECT
-            doc_id as awc_id,
-            MAX(state_is_test) as state_is_test,
-            MAX(district_is_test) as district_is_test,
-            MAX(block_is_test) as block_is_test,
-            MAX(supervisor_is_test) as supervisor_is_test,
-            MAX(awc_is_test) as awc_is_test
-            FROM "{awc_location_tablename}"
-            GROUP BY awc_id;
         UPDATE "{tablename}" agg SET
               state_is_test = ut.state_is_test,
               district_is_test = ut.district_is_test,
@@ -189,7 +180,15 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
               supervisor_is_test = ut.supervisor_is_test,
               awc_is_test = ut.awc_is_test
             FROM (
-              SELECT * FROM "{tmp_tablename}"
+                SELECT
+                    doc_id as awc_id,
+                    MAX(state_is_test) as state_is_test,
+                    MAX(district_is_test) as district_is_test,
+                    MAX(block_is_test) as block_is_test,
+                    MAX(supervisor_is_test) as supervisor_is_test,
+                    MAX(awc_is_test) as awc_is_test
+                FROM "{awc_location_tablename}"
+                GROUP BY awc_id
             ) ut
             WHERE ut.awc_id = agg.awc_id AND (
                 (
@@ -206,11 +205,9 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
                   ut.awc_is_test != agg.awc_is_test
                 )
             );
-        DROP TABLE "{tmp_tablename}";
         """.format(
             tablename=self.tablename,
-            tmp_tablename='tmp_{}'.format(self.tablename),
-            awc_location_tablename='awc_location',
+            awc_location_tablename='awc_location_local',
         ), {
         }
 
