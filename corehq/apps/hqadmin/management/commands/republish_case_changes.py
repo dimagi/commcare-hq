@@ -28,7 +28,7 @@ def _get_case_ids(case_ids_file):
         return [l.split(',')[0].strip() for l in lines]
 
 
-def _publish_cases(self, domain, case_ids):
+def _publish_cases(domain, case_ids):
     if should_use_sql_backend(domain):
         _publish_cases_for_couch(domain, case_ids)
     else:
