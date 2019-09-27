@@ -33,19 +33,22 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
         for query in rollup_queries:
             cursor.execute(query)
 
+        # create new monthly table if it does not exist
+        cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS "{self.monthly_tablename}" (
+            CHECK (month = DATE '{self.month.strftime('%Y-%m-01')}')
+        )
+        INHERITS ({self.base_tablename})
+        """)
+        for index_query in self.indexes():
+            cursor.execute(index_query)
+
         from custom.icds_reports.models import AggChildHealth
         db_alias = db_for_read_write(AggChildHealth)
         with transaction.atomic(using=db_alias):
             # drop old style tables if they exist
             for i in range(1, 6):
                 cursor.execute(f'DROP TABLE IF EXISTS "{self._tablename_func(i)}"')
-            # create new monthly table if it does not exist
-            cursor.execute(f"""
-            CREATE TABLE IF NOT EXISTS "{self.monthly_tablename}" (
-                CHECK (month = DATE '{self.month.strftime('%Y-%m-01')}')
-            )
-            INHERITS ({self.base_tablename})
-            """)
             # delete data from monthly table
             cursor.execute(f'DELETE FROM "{self.monthly_tablename}"')
             # insert into monthly table from staging table
@@ -55,12 +58,6 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
                 ORDER BY aggregation_level, state_id, district_id, block_id, supervisor_id, awc_id
             )
             """)
-
-        # create indexes outside of transaction
-        # this happens on the first day of the month when the table is created
-        # On the first few days queries to this table are hidden, so they do not need to be fast
-        for index_query in self.indexes():
-            cursor.execute(index_query)
 
         # drop staging table
         cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
