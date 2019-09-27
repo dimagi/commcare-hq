@@ -87,7 +87,7 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
             ('state_id', 'awc_loc.state_id'),
             ('district_id', 'awc_loc.district_id'),
             ('block_id', 'awc_loc.block_id'),
-            ('supervisor_id', 'awc_loc.supervisor_id'),
+            ('supervisor_id', 'chm.supervisor_id'),
             ('awc_id', 'chm.awc_id'),
             ('month', 'chm.month'),
             ('gender', 'chm.sex'),
@@ -206,9 +206,11 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
         CREATE UNLOGGED TABLE "{tmp_tablename}" AS SELECT
             {query_cols}
             FROM "{child_health_monthly_table}" chm
-            LEFT OUTER JOIN "awc_location" awc_loc ON awc_loc.doc_id = chm.awc_id
+            LEFT OUTER JOIN "awc_location" awc_loc ON (
+                awc_loc.supervisor_id = chm.supervisor_id AND awc_loc.doc_id = chm.awc_id
+            )
             WHERE chm.month = %(start_date)s AND awc_loc.state_id != '' AND awc_loc.state_id IS NOT NULL
-            GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id,
+            GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, chm.supervisor_id, chm.awc_id,
                      chm.month, chm.sex, chm.age_tranche, chm.caste,
                      coalesce_disabled, coalesce_minority, coalesce_resident;
         INSERT INTO "{self.staging_tablename}" ({final_columns}) SELECT * from "{tmp_tablename}";
