@@ -244,7 +244,7 @@ describe('Download Directive', function () {
 
         it('test to check if current month is enabled after first three days', function () {
             var fakeDate = new Date();
-            fakeDate.setMonth(8)
+            fakeDate.setMonth(8);
             fakeDate.setDate(4);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
             controller.selectedIndicator = 1;
@@ -267,13 +267,12 @@ describe('Download Directive', function () {
 
         it('test to check if current month is not enabled before first three days', function () {
             var fakeDate = new Date();
-            fakeDate.setMonth(8)
+            fakeDate.setMonth(8);
             fakeDate.setDate(2);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
             controller.selectedIndicator = 1;
             controller.selectedYear = fakeDate.getFullYear();
             controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
-            console.log(controller.months)
             var expected = [
                 {"name": "January", "id": 1},
                 {"name": "February", "id": 2},
@@ -291,13 +290,12 @@ describe('Download Directive', function () {
         it('test to check if AWW performance report is downloadable only till last month ' +
             'after current month 15th ', function () {
             var fakeDate = new Date();
-            fakeDate.setMonth(8)
+            fakeDate.setMonth(8);
             fakeDate.setDate(17);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
             controller.selectedIndicator = 8;
             controller.selectedYear = fakeDate.getFullYear();
             controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
-            console.log(controller.months)
             var expected = [
                 {"name": "January", "id": 1},
                 {"name": "February", "id": 2},
@@ -315,13 +313,12 @@ describe('Download Directive', function () {
         it('test to check if AWW performance report is downloadable only till last before month ' +
             'before current month 15th ', function () {
             var fakeDate = new Date();
-            fakeDate.setMonth(8)
+            fakeDate.setMonth(8);
             fakeDate.setDate(5);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
             controller.selectedIndicator = 8;
             controller.selectedYear = fakeDate.getFullYear();
             controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
-            console.log(controller.months)
             var expected = [
                 {"name": "January", "id": 1},
                 {"name": "February", "id": 2},
