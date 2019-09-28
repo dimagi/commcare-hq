@@ -169,7 +169,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         subtasks = []
         provider_uuid = getattr(self.openmrs_config, 'openmrs_provider', None)
         location_uuid = (
-            get_ancestor_location_openmrs_uuid(self.domain, self.info.case_id) or
+            get_ancestor_location_openmrs_uuid(self.info) or
             get_unknown_location_uuid(self.requests)  # If we don't set
             # a location, OpenMRS sets it to NULL. That's OK for
             # OpenMRS, but it breaks Bahmni. Bahmni has an "Unknown

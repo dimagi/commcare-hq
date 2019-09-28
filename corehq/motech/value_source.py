@@ -2,7 +2,9 @@ from collections import namedtuple
 
 from dimagi.ext.couchdbkit import DictProperty, DocumentSchema, StringProperty
 
-from corehq.motech.const import (  # pylint: disable=unused-import,F401; (F401 = flake8 "'%s' imported but unused"); Used in ValueSource.check_direction doctest; pylint: enable=unused-import,F401
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
+from corehq.motech.const import (
     COMMCARE_DATA_TYPES,
     DATA_TYPE_UNKNOWN,
     DIRECTION_BOTH,
@@ -291,6 +293,16 @@ def get_form_question_values(form_json):
     if metadata:
         _recurse_form_questions(metadata, [b'/metadata'], result)
     return result
+
+
+def get_ancestor_location_metadata_value(case, metadata_key):
+    case_location = get_case_location(case)
+    if not case_location:
+        return None
+    for location in reversed(case_location.get_ancestors(include_self=True)):
+        if location.metadata.get(metadata_key):
+            return location.metadata[metadata_key]
+    return None
 
 
 def get_case_location(case):

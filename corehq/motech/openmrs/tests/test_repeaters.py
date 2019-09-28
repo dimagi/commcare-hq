@@ -454,7 +454,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=cape_town.location_id)
 
         self.assertEqual(
-            get_ancestor_location_openmrs_uuid(self.domain, case_id),
+            get_ancestor_location_openmrs_uuid(case),
             self.openmrs_capetown_uuid
         )
 
@@ -470,7 +470,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=gardens.location_id)
 
         self.assertEqual(
-            get_ancestor_location_openmrs_uuid(self.domain, case_id),
+            get_ancestor_location_openmrs_uuid(case),
             self.openmrs_capetown_uuid
         )
 
@@ -486,7 +486,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         case_id = uuid.uuid4().hex
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=joburg.location_id)
 
-        self.assertIsNone(get_ancestor_location_openmrs_uuid(self.domain, case_id))
+        self.assertIsNone(get_ancestor_location_openmrs_uuid(case))
 
     def test_get_case_location_ancestor_repeaters_same(self):
         """

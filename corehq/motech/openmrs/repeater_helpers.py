@@ -27,7 +27,11 @@ from corehq.motech.openmrs.exceptions import (
 )
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.requests import Requests
-from corehq.motech.value_source import CaseTriggerInfo, get_case_location
+from corehq.motech.value_source import (
+    CaseTriggerInfo,
+    get_ancestor_location_metadata_value,
+    get_case_location,
+)
 from corehq.util.quickcache import quickcache
 
 
@@ -54,15 +58,8 @@ def get_case_location_ancestor_repeaters(case):
     return []
 
 
-def get_ancestor_location_openmrs_uuid(domain, case_id):
-    case = CaseAccessors(domain).get_case(case_id)
-    case_location = get_case_location(case)
-    if not case_location:
-        return None
-    for location in reversed(case_location.get_ancestors(include_self=True)):
-        if location.metadata.get(LOCATION_OPENMRS_UUID):
-            return location.metadata[LOCATION_OPENMRS_UUID]
-    return None
+def get_ancestor_location_openmrs_uuid(case):
+    return get_ancestor_location_metadata_value(case, LOCATION_OPENMRS_UUID)
 
 
 def search_patients(requests, search_string):
