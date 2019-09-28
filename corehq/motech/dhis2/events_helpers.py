@@ -13,7 +13,7 @@ def send_dhis2_event(request, form_config, payload):
     return request.post('/api/%s/events' % DHIS2_API_VERSION, json=event)
 
 
-def get_event(domain, config, payload):
+def get_event(domain, config, form_json):
     info = CaseTriggerInfo(
         domain=domain,
         case_id=None,
@@ -25,7 +25,7 @@ def get_event(domain, config, payload):
         created=None,
         closed=None,
         extra_fields=None,
-        form_question_values=get_form_question_values(payload),
+        form_question_values=get_form_question_values(form_json),
     )
     event = {}
     event_property_functions = [
@@ -36,41 +36,41 @@ def get_event(domain, config, payload):
         _get_datavalues,
     ]
     for func in event_property_functions:
-        event.update(func(config, info, payload))
+        event.update(func(config, info, form_json))
     return event
 
 
-def _get_program(config, case_trigger_info, payload):
+def _get_program(config, case_trigger_info, form_json):
     return {'program': config.program_id}
 
 
-def _get_org_unit(config, case_trigger_info, payload):
+def _get_org_unit(config, case_trigger_info, form_json):
     org_unit_id_spec = config.org_unit_id
     org_unit_id = org_unit_id_spec.get_value(case_trigger_info) if org_unit_id_spec else None
     if not org_unit_id:
-        user_id = payload.get('@user_id')
+        user_id = form_json.get('@user_id')
         user = CouchUser.get_by_user_id(user_id)
-        location = user.get_sql_location(payload.get('domain'))
+        location = user.get_sql_location(form_json.get('domain'))
         org_unit_id = location.metadata.get(LOCATION_DHIS_ID, None)
     if not org_unit_id:
         return {}
     return {'orgUnit': org_unit_id}
 
 
-def _get_event_date(config, case_trigger_info, payload):
+def _get_event_date(config, case_trigger_info, form_json):
     event_date_spec = config.event_date
     event_date = event_date_spec.get_value(case_trigger_info)
     if not event_date:
-        event_date = payload.get('received_on')
+        event_date = form_json.get('received_on')
     event_date = force_to_datetime(event_date)
     return {'eventDate': event_date.strftime("%Y-%m-%d")}
 
 
-def _get_event_status(config, case_trigger_info, payload):
+def _get_event_status(config, case_trigger_info, form_json):
     return {'status': config.event_status}
 
 
-def _get_datavalues(config, case_trigger_info, payload):
+def _get_datavalues(config, case_trigger_info, form_json):
     values = []
     for data_value in config.datavalue_maps:
         values.append({
