@@ -1,5 +1,6 @@
 import attr
 
+from couchforms.const import TAG_FORM, TAG_META
 from dimagi.ext.couchdbkit import DictProperty, DocumentSchema, StringProperty
 
 from corehq.apps.locations.models import SQLLocation
@@ -328,18 +329,18 @@ def get_form_question_values(form_json):
                 result_[question] = value
 
     result = {}
-    _recurse_form_questions(form_json['form'], [b'/data'], result)  # "/data" is just convention, hopefully
-    # familiar from form builder. The form's data will usually be immediately under "form_json['form']" but not
+    _recurse_form_questions(form_json[TAG_FORM], [b'/data'], result)  # "/data" is just convention, hopefully
+    # familiar from form builder. The form's data will usually be immediately under "form_json[TAG_FORM]" but not
     # necessarily. If this causes problems we may need a more reliable way to get to it.
 
     metadata = {}
-    if 'meta' in form_json['form']:
-        if 'timeStart' in form_json['form']['meta']:
-            metadata['timeStart'] = form_json['form']['meta']['timeStart']
-        if 'timeEnd' in form_json['form']['meta']:
-            metadata['timeEnd'] = form_json['form']['meta']['timeEnd']
-        if 'userID' in form_json['form']['meta']:
-            metadata['userID'] = form_json['form']['meta']
+    if 'meta' in form_json[TAG_FORM]:
+        if 'timeStart' in form_json[TAG_FORM][TAG_META]:
+            metadata['timeStart'] = form_json[TAG_FORM][TAG_META]['timeStart']
+        if 'timeEnd' in form_json[TAG_FORM][TAG_META]:
+            metadata['timeEnd'] = form_json[TAG_FORM][TAG_META]['timeEnd']
+        if 'userID' in form_json[TAG_FORM][TAG_META]:
+            metadata['userID'] = form_json[TAG_FORM][TAG_META]
     if 'received_on' in form_json:
         metadata['received_on'] = form_json['received_on']
     if metadata:
