@@ -45,7 +45,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     vm.type = '';
     vm.mapHeight = 0;
 
-    vm.initTopoJson = function (location_level, location, state) {
+    vm.initTopoJson = function (location_level, location) {
         if (location_level === void (0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
@@ -58,7 +58,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
             if (haveAccessToFeatures) {
-                Datamap.prototype[vm.type] = getBlockTopoJsonByState(state);
+                Datamap.prototype[vm.type] = getTopoJsonForDistrict(location.map_location_name);
             } else {
                 Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
             }
@@ -72,84 +72,18 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         }
     };
 
-    var getBlockTopoJsonByState = function (state) {
-        switch (state) {
-            case 'Maharashtra':
-                return MAHARASHTRA_BLOCK_JSON;
-            case 'Madhya Pradesh':
-                return MADHYA_PRADESH_BLOCK_JSON;
-            case 'Telangana':
-                return TELANGANA_BLOCK_JSON;
-            case 'Andhra Pradesh':
-                return ANDHRA_PRADESH_BLOCK_JSON;
-            case 'Arunachal Pradesh':
-                return ARUNACHAL_PRADESH_BLOCK_JSON;
-            case 'Tamil Nadu':
-                return TAMIL_NADU_BLOCK_JSON;
-            case 'Meghalaya':
-                return MEGHALAYA_BLOCK_JSON;
-            case 'Assam':
-                return ASSAM_BLOCK_JSON;
-            case 'Punjab':
-                return PUNJAB_BLOCK_JSON;
-            case 'Odisha':
-                return ODISHA_BLOCK_JSON;
-            case 'Gujarat':
-                return GUJARAT_BLOCK_JSON;
-            case 'Himachal Pradesh':
-                return HIMACHAL_PRADESH_BLOCK_JSON;
-            case 'Uttar Pradesh':
-                return UTTAR_PRADESH_BLOCK_JSON;
-            case 'Nagaland':
-                return NAGALAND_BLOCK_JSON;
-            case 'Haryana':
-                return HARYANA_BLOCK_JSON;
-            case 'Jharkhand':
-                return JHARKHAND_BLOCK_JSON;
-            case 'Uttarakhand':
-                return UTTARAKHAND_BLOCK_JSON;
-            case 'Bihar':
-                return BIHAR_BLOCK_JSON;
-            case 'West Bengal':
-                return WEST_BENGAL_BLOCK_JSON;
-            case 'J&K':
-                return JK_BLOCK_JSON;
-            case 'Chhattisgarh':
-                return CHHATTISGARH_BLOCK_JSON;
-            case 'Rajasthan':
-                return RAJASTHAN_BLOCK_JSON;
-            case 'Andaman & Nicobar Islands':
-                return ANDAMAN__NICOBAR_ISLANDS_BLOCK_JSON;
-            case 'Karnataka':
-                return KARNATAKA_BLOCK_JSON;
-            case 'Kerala':
-                return KERALA_BLOCK_JSON;
-            case 'Sikkim':
-                return SIKKIM_BLOCK_JSON;
-            case 'Manipur':
-                return MANIPUR_BLOCK_JSON;
-            case 'Tripura':
-                return TRIPURA_BLOCK_JSON;
-            case 'Goa':
-                return GOA_BLOCK_JSON;
-            case 'Lakshadweep':
-                return LAKSHADWEEP_BLOCK_JSON;
-            case 'Puducherry':
-                return PUDUCHERRY_BLOCK_JSON;
-            case 'Mizoram':
-                return MIZORAM_BLOCK_JSON;
-            case 'NCT of Delhi':
-                return NCT_OF_DELHI_BLOCK_JSON;
-            case 'Dadra & Nagar Haveli':
-                return DADRA__NAGAR_HAVELI_BLOCK_JSON;
-            case 'Daman & Diu':
-                return DAMAN__DIU_BLOCK_JSON;
-            case 'Chandigarh':
-                return CHANDIGARH_BLOCK_JSON;
-        }
+    var getTopoJsonForDistrict = function (district) {
+        var topoJson;
+        $.each(STATE_DISTRICT_MAP, function(key,val){
+            if (val['districts'].indexOf(district) > -1) {
+                topoJson = val.data;
+                return false;
+            }
+        });
+        return topoJson;
     };
 
-    var mapConfiguration = function (location, state) {
+    var mapConfiguration = function (location) {
 
         var location_level = -1;
 
@@ -158,7 +92,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         else if (location.location_type === 'block') location_level = 2;
         else location_level = -1;
 
-        vm.initTopoJson(location_level, location, state);
+        vm.initTopoJson(location_level, location);
 
         vm.map = {
             scope: vm.scope,
@@ -274,22 +208,9 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         }
     };
 
-    if (haveAccessToFeatures) {
-        locationsService.getLocation(location_id).then(function (location) {
-            if (location.location_type === "district") {
-                locationsService.getAncestors(location_id).then(function (data) {
-                    let parentLocation = data.locations.find(loc => loc.location_id === data.selected_location.parent_id);
-                    mapConfiguration(location, parentLocation.name)
-                });
-            } else {
-                mapConfiguration(location);
-            }
-        });
-    } else {
-        locationsService.getLocation(location_id).then(function (location) {
-            mapConfiguration(location);
-        });
-    }
+    locationsService.getLocation(location_id).then(function (location) {
+        mapConfiguration(location);
+    });
 
     vm.indicator = vm.data && vm.data !== void (0) ? vm.data.slug : null;
 
