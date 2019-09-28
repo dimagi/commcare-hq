@@ -5,7 +5,7 @@ from corehq.motech.dhis2.const import DHIS2_API_VERSION, LOCATION_DHIS_ID
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     get_form_question_values,
-)
+    get_owner_location, get_ancestor_location_metadata_value)
 
 
 def send_dhis2_event(request, form_config, payload):
@@ -45,16 +45,18 @@ def _get_program(config, case_trigger_info, form_json):
 
 
 def _get_org_unit(config, case_trigger_info, form_json):
-    org_unit_id_spec = config.org_unit_id
-    org_unit_id = org_unit_id_spec.get_value(case_trigger_info) if org_unit_id_spec else None
+    org_unit_id = None
+    if config.org_unit_id:
+        org_unit_id = config.org_unit_id.get_value(case_trigger_info)
     if not org_unit_id:
-        user_id = form_json.get('@user_id')
-        user = CouchUser.get_by_user_id(user_id)
-        location = user.get_sql_location(form_json.get('domain'))
-        org_unit_id = location.metadata.get(LOCATION_DHIS_ID, None)
-    if not org_unit_id:
-        return {}
-    return {'orgUnit': org_unit_id}
+        # Fall back to location metadata of submitter's location
+        user_id = case_trigger_info.form_question_values.get("/metadata/userID")
+        if user_id:
+            location = get_owner_location(case_trigger_info.domain, user_id)
+            org_unit_id = get_ancestor_location_metadata_value(location, LOCATION_DHIS_ID)
+    if org_unit_id:
+        return {'orgUnit': org_unit_id}
+    return {}
 
 
 def _get_event_date(config, case_trigger_info, form_json):
