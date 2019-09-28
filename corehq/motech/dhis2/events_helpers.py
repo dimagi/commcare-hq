@@ -14,7 +14,19 @@ def send_dhis2_event(request, form_config, payload):
 
 
 def get_event(config, payload):
-    info = CaseTriggerInfo(None, None, None, None, None, form_question_values=get_form_question_values(payload))
+    info = CaseTriggerInfo(
+        domain=None,
+        case_id=None,
+        type=None,
+        name=None,
+        owner_id=None,
+        modified_by=None,
+        updates=None,
+        created=None,
+        closed=None,
+        extra_fields=None,
+        form_question_values=get_form_question_values(payload),
+    )
     event = {}
     event_property_functions = [
         _get_program,

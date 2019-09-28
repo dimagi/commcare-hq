@@ -164,18 +164,23 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
             ),
             [
                 CaseTriggerInfo(
+                    domain='openmrs-repeater-test',
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+                    type='paciente',
+                    name='Elsa',
+                    owner_id=None,
+                    modified_by=None,
                     updates={
                         'case_name': 'Elsa',
                         'case_type': 'paciente',
-                        'estado_tarv': '1',
                         'owner_id': '9393007a6921eecd4a9f20eefb5c7a8e',
-                        'tb': '0',
+                        'estado_tarv': '1',
+                        'tb': '0'
                     },
                     created=True,
                     closed=False,
                     extra_fields={},
-                    form_question_values={},
+                    form_question_values={}
                 )
             ]
         )
@@ -194,10 +199,15 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
             ),
             [
                 CaseTriggerInfo(
+                    domain='openmrs-repeater-test',
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+                    type='paciente',
+                    name='Elsa',
+                    owner_id=None,
+                    modified_by=None,
                     updates={
                         'estado_tarv': '1',
-                        'tb': '1',
+                        'tb': '1'
                     },
                     created=False,
                     closed=False,
@@ -205,9 +215,9 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                         'name': 'Elsa',
                         'estado_tarv': '1',
                         'tb': '0',
-                        'bandersnatch': None,
+                        'bandersnatch': None
                     },
-                    form_question_values={},
+                    form_question_values={}
                 )
             ]
         )

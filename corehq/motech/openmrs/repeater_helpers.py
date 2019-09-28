@@ -379,7 +379,12 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
         assert case_block['@case_id'] == case.case_id
         if not case_types or case.type in case_types:
             result.append(CaseTriggerInfo(
+                domain=domain,
                 case_id=case_block['@case_id'],
+                type=case.type,
+                name=case.name,
+                owner_id=case.owner_id,
+                modified_by=case.modified_by,
                 updates=dict(
                     list(case_block.get('create', {}).items()) +
                     list(case_block.get('update', {}).items())

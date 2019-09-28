@@ -1,4 +1,4 @@
-from collections import namedtuple
+import attr
 
 from dimagi.ext.couchdbkit import DictProperty, DocumentSchema, StringProperty
 
@@ -18,8 +18,25 @@ from corehq.motech.const import (
 )
 from corehq.motech.serializers import serializers
 
-CaseTriggerInfo = namedtuple('CaseTriggerInfo',
-                             ['case_id', 'updates', 'created', 'closed', 'extra_fields', 'form_question_values'])
+
+@attr.s
+class CaseTriggerInfo:
+    domain = attr.ib()
+    case_id = attr.ib()
+    type = attr.ib()
+    name = attr.ib()
+    owner_id = attr.ib()
+    modified_by = attr.ib()
+    updates = attr.ib()
+    created = attr.ib()
+    closed = attr.ib()
+    extra_fields = attr.ib()
+    form_question_values = attr.ib()
+
+    def __str__(self):
+        if self.name:
+            return f'<CaseTriggerInfo {self.case_id} {self.name!r}>'
+        return f"<CaseTriggerInfo {self.case_id}>"
 
 
 def recurse_subclasses(cls):
@@ -137,7 +154,12 @@ class CaseProperty(ValueSource):
         been included in an integration.
 
         >>> info = CaseTriggerInfo(
+        ...     domain='test-domain',
         ...     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+        ...     type='case',
+        ...     name='',
+        ...     owner_id='c0ffee',
+        ...     modified_by='c0ffee',
         ...     updates={'foo': 1},
         ...     created=False,
         ...     closed=False,
