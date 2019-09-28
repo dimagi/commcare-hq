@@ -291,3 +291,18 @@ def get_form_question_values(form_json):
     if metadata:
         _recurse_form_questions(metadata, [b'/metadata'], result)
     return result
+
+
+def get_case_location(case):
+    """
+    If the owner of the case is a location, return it. Otherwise return
+    the owner's primary location. If the case owner does not have a
+    primary location, return None.
+    """
+    case_owner = get_wrapped_owner(get_owner_id(case))
+    if not case_owner:
+        return None
+    if isinstance(case_owner, SQLLocation):
+        return case_owner
+    location_id = case_owner.get_location_id(case.domain)
+    return SQLLocation.by_location_id(location_id) if location_id else None

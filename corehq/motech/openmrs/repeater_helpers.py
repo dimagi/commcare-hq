@@ -2,6 +2,7 @@ import re
 from collections import defaultdict
 
 from lxml import html
+from requests import RequestException
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
@@ -9,8 +10,6 @@ from casexml.apps.case.xform import extract_case_blocks
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.openmrs.const import (
@@ -28,24 +27,8 @@ from corehq.motech.openmrs.exceptions import (
 )
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.requests import Requests
-from corehq.motech.value_source import CaseTriggerInfo
+from corehq.motech.value_source import CaseTriggerInfo, get_case_location
 from corehq.util.quickcache import quickcache
-from requests import RequestException
-
-
-def get_case_location(case):
-    """
-    If the owner of the case is a location, return it. Otherwise return
-    the owner's primary location. If the case owner does not have a
-    primary location, return None.
-    """
-    case_owner = get_wrapped_owner(get_owner_id(case))
-    if not case_owner:
-        return None
-    if isinstance(case_owner, SQLLocation):
-        return case_owner
-    location_id = case_owner.get_location_id(case.domain)
-    return SQLLocation.by_location_id(location_id) if location_id else None
 
 
 def get_case_location_ancestor_repeaters(case):

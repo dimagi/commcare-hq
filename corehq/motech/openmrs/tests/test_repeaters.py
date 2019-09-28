@@ -31,7 +31,6 @@ from corehq.motech.openmrs.repeater_helpers import (
     create_patient,
     find_or_create_patient,
     get_ancestor_location_openmrs_uuid,
-    get_case_location,
     get_case_location_ancestor_repeaters,
     get_patient_by_identifier,
     get_patient_by_uuid,
@@ -41,6 +40,7 @@ from corehq.motech.openmrs.repeater_helpers import (
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.value_source import (
     CaseTriggerInfo,
+    get_case_location,
     get_form_question_values,
 )
 from corehq.util.test_utils import TestFileMixin, _create_case
