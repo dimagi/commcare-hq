@@ -277,7 +277,23 @@ class CaseOwnerAncestorLocationField(ValueSource):
     location_field = StringProperty()
 
     def _get_commcare_value(self, case_trigger_info):
-        return get_ancestor_location_metadata_value(case_trigger_info, self.location_field)
+        location = get_case_location(case_trigger_info)
+        if location:
+            return get_ancestor_location_metadata_value(location, self.location_field)
+
+
+class FormUserAncestorLocationField(ValueSource):
+    """
+    A reference to a location metadata value. The location is the form
+    user's location, or the first ancestor location of the case owner
+    where the metadata value is set.
+    """
+    location_field = StringProperty()
+    def _get_commcare_value(self, case_trigger_info):
+        user_id = case_trigger_info.form_question_values.get('/metadata/userID')
+        location = get_owner_location(case_trigger_info.domain, user_id)
+        if location:
+            return get_ancestor_location_metadata_value(location, self.location_field)
 
 
 def get_form_question_values(form_json):
@@ -322,6 +338,8 @@ def get_form_question_values(form_json):
             metadata['timeStart'] = form_json['form']['meta']['timeStart']
         if 'timeEnd' in form_json['form']['meta']:
             metadata['timeEnd'] = form_json['form']['meta']['timeEnd']
+        if 'userID' in form_json['form']['meta']:
+            metadata['userID'] = form_json['form']['meta']
     if 'received_on' in form_json:
         metadata['received_on'] = form_json['received_on']
     if metadata:
@@ -329,11 +347,9 @@ def get_form_question_values(form_json):
     return result
 
 
-def get_ancestor_location_metadata_value(case, metadata_key):
-    case_location = get_case_location(case)
-    if not case_location:
-        return None
-    for location in reversed(case_location.get_ancestors(include_self=True)):
+def get_ancestor_location_metadata_value(location, metadata_key):
+    assert isinstance(location, SQLLocation), type(location)
+    for location in reversed(location.get_ancestors(include_self=True)):
         if location.metadata.get(metadata_key):
             return location.metadata[metadata_key]
     return None
@@ -345,10 +361,14 @@ def get_case_location(case):
     the owner's primary location. If the case owner does not have a
     primary location, return None.
     """
-    case_owner = get_wrapped_owner(get_owner_id(case))
-    if not case_owner:
+    return get_owner_location(case.domain, get_owner_id(case))
+
+
+def get_owner_location(domain, owner_id):
+    owner = get_wrapped_owner(owner_id)
+    if not owner:
         return None
-    if isinstance(case_owner, SQLLocation):
-        return case_owner
-    location_id = case_owner.get_location_id(case.domain)
+    if isinstance(owner, SQLLocation):
+        return owner
+    location_id = owner.get_location_id(domain)
     return SQLLocation.by_location_id(location_id) if location_id else None

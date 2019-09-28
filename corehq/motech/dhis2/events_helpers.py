@@ -9,13 +9,13 @@ from corehq.motech.value_source import (
 
 
 def send_dhis2_event(request, form_config, payload):
-    event = get_event(form_config, payload)
+    event = get_event(request.domain_name, form_config, payload)
     return request.post('/api/%s/events' % DHIS2_API_VERSION, json=event)
 
 
-def get_event(config, payload):
+def get_event(domain, config, payload):
     info = CaseTriggerInfo(
-        domain=None,
+        domain=domain,
         case_id=None,
         type=None,
         name=None,

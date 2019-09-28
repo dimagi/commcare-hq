@@ -59,7 +59,9 @@ def get_case_location_ancestor_repeaters(case):
 
 
 def get_ancestor_location_openmrs_uuid(case):
-    return get_ancestor_location_metadata_value(case, LOCATION_OPENMRS_UUID)
+    location = get_case_location(case)
+    if location:
+        return get_ancestor_location_metadata_value(location, LOCATION_OPENMRS_UUID)
 
 
 def search_patients(requests, search_string):
