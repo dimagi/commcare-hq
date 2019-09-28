@@ -120,12 +120,11 @@ class SyncPatientIdentifiersTask(WorkflowTask):
 
 class CreateVisitsEncountersObsTask(WorkflowTask):
 
-    def __init__(self, requests, domain, info, form_json, form_question_values, openmrs_config, person_uuid):
+    def __init__(self, requests, domain, info, form_json, openmrs_config, person_uuid):
         self.requests = requests
         self.domain = domain
         self.info = info
         self.form_json = form_json
-        self.form_question_values = form_question_values
         self.openmrs_config = openmrs_config
         self.person_uuid = person_uuid
 
@@ -175,7 +174,6 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
             # OpenMRS, but it breaks Bahmni. Bahmni has an "Unknown
             # Location". Use that, if it exists.
         )
-        self.info.form_question_values.update(self.form_question_values)
         for form_config in self.openmrs_config.form_configs:
             if form_config.xmlns == self.form_json['form']['@xmlns']:
                 start_datetime, stop_datetime = self._get_start_stop_datetime(form_config)

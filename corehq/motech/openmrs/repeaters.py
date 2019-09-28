@@ -199,9 +199,9 @@ class OpenmrsRepeater(CaseRepeater):
         )
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
-            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')]
+            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')],
+            form_question_values=get_form_question_values(payload),
         )
-        form_question_values = get_form_question_values(payload)
 
         return send_openmrs_data(
             self.requests,
@@ -209,11 +209,10 @@ class OpenmrsRepeater(CaseRepeater):
             payload,
             self.openmrs_config,
             case_trigger_infos,
-            form_question_values
         )
 
 
-def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos, form_question_values):
+def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos):
     """
     Updates an OpenMRS patient and (optionally) creates visits.
 
@@ -266,7 +265,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
             )
         workflow.append(
             CreateVisitsEncountersObsTask(
-                requests, domain, info, form_json, form_question_values, openmrs_config, patient['person']['uuid']
+                requests, domain, info, form_json, openmrs_config, patient['person']['uuid']
             ),
         )
 
