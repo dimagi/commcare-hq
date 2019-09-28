@@ -83,8 +83,6 @@ if USE_PARTITIONED_DATABASE:
 
     WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
-
-
 # See CITUSDB_SETUP.md for explanation
 DATABASES.update({
     'icds-ucr': {
