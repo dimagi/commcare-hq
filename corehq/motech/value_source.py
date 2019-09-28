@@ -268,6 +268,18 @@ class FormQuestionMap(FormQuestion):
         return reverse_map.get(external_value)
 
 
+class CaseOwnerAncestorLocationField(ValueSource):
+    """
+    A reference to a location metadata value. The location may be the
+    case owner, the case owner's location, or the first ancestor
+    location of the case owner where the metadata value is set.
+    """
+    location_field = StringProperty()
+
+    def _get_commcare_value(self, case_trigger_info):
+        return get_ancestor_location_metadata_value(case_trigger_info, self.location_field)
+
+
 def get_form_question_values(form_json):
     """
     Given form JSON, returns question-value pairs, where questions are
