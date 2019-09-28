@@ -40,11 +40,11 @@ def get_event(domain, config, payload):
     return event
 
 
-def _get_program(config, case_trigger_info=None, payload=None):
+def _get_program(config, case_trigger_info, payload):
     return {'program': config.program_id}
 
 
-def _get_org_unit(config, case_trigger_info=None, payload=None):
+def _get_org_unit(config, case_trigger_info, payload):
     org_unit_id_spec = config.org_unit_id
     org_unit_id = org_unit_id_spec.get_value(case_trigger_info) if org_unit_id_spec else None
     if not org_unit_id:
@@ -57,7 +57,7 @@ def _get_org_unit(config, case_trigger_info=None, payload=None):
     return {'orgUnit': org_unit_id}
 
 
-def _get_event_date(config, case_trigger_info=None, payload=None):
+def _get_event_date(config, case_trigger_info, payload):
     event_date_spec = config.event_date
     event_date = event_date_spec.get_value(case_trigger_info)
     if not event_date:
@@ -66,11 +66,11 @@ def _get_event_date(config, case_trigger_info=None, payload=None):
     return {'eventDate': event_date.strftime("%Y-%m-%d")}
 
 
-def _get_event_status(config, case_trigger_info=None, payload=None):
+def _get_event_status(config, case_trigger_info, payload):
     return {'status': config.event_status}
 
 
-def _get_datavalues(config, case_trigger_info=None, payload=None):
+def _get_datavalues(config, case_trigger_info, payload):
     values = []
     for data_value in config.datavalue_maps:
         values.append({
