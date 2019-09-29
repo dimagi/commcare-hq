@@ -116,7 +116,7 @@ def _get_data_for_sql_backend(run_config):
             for case_id, sql_modified_on in chunk:
                 sql_modified_on_str = f'{sql_modified_on.isoformat()}Z'
                 es_modified_on = es_modified_on_by_ids.get(case_id)
-                if not es_modified_on or (es_modified_on != sql_modified_on_str):
+                if not es_modified_on or (es_modified_on < sql_modified_on_str):
                     yield (case_id, es_modified_on, sql_modified_on_str)
 
 
