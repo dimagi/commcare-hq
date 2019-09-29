@@ -60,10 +60,12 @@ def _get_org_unit(config, case_trigger_info, form_json):
 
 
 def _get_event_date(config, case_trigger_info, form_json):
-    event_date_spec = config.event_date
-    event_date = event_date_spec.get_value(case_trigger_info)
+    event_date = None
+    if config.event_date:
+        event_date = config.event_date.get_value(case_trigger_info)
     if not event_date:
-        event_date = form_json.get('received_on')
+        # Fall back to form meta "received_on"
+        event_date = case_trigger_info.form_question_values.get("/metadata/received_on")
     event_date = force_to_datetime(event_date)
     return {'eventDate': event_date.strftime("%Y-%m-%d")}
 
