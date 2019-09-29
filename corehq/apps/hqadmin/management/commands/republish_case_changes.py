@@ -1,6 +1,7 @@
 from django.core.management import BaseCommand
 
-from corehq.apps.change_feed import data_sources
+from corehq.apps.change_feed import data_sources, topics
+from corehq.apps.change_feed.producer import producer
 from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.chunked import chunked
 
@@ -51,7 +52,8 @@ def _publish_cases_for_couch(domain, case_ids):
 
 def _publish_cases_for_sql(domain, case_ids):
     for case_id in case_ids:
-        publish_change(
+        producer.send_change(
+            topics.CASE_SQL,
             _change_meta_for_sql_case(domain, case_id)
         )
 
