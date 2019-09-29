@@ -22,16 +22,6 @@
     "india",
     "icds"
   ],
-  "mirrored_engine_ids": [
-    {
-      "server_environment": "icds",
-      "engine_ids": ["icds-ucr"]
-    },
-    {
-      "server_environment": "india",
-      "engine_ids": ["icds-ucr"]
-    }
-  ],
   "config": {
     "table_id": "static-child_tasks_cases",
     "display_name": "Cases - Child Tasks (Static)",
