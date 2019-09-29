@@ -36,15 +36,15 @@ def get_event(domain, config, form_json):
         _get_datavalues,
     ]
     for func in event_property_functions:
-        event.update(func(config, info, form_json))
+        event.update(func(config, info))
     return event
 
 
-def _get_program(config, case_trigger_info, form_json):
+def _get_program(config, case_trigger_info):
     return {'program': config.program_id}
 
 
-def _get_org_unit(config, case_trigger_info, form_json):
+def _get_org_unit(config, case_trigger_info):
     org_unit_id = None
     if config.org_unit_id:
         org_unit_id = config.org_unit_id.get_value(case_trigger_info)
@@ -59,7 +59,7 @@ def _get_org_unit(config, case_trigger_info, form_json):
     return {}
 
 
-def _get_event_date(config, case_trigger_info, form_json):
+def _get_event_date(config, case_trigger_info):
     event_date = None
     if config.event_date:
         event_date = config.event_date.get_value(case_trigger_info)
@@ -70,11 +70,11 @@ def _get_event_date(config, case_trigger_info, form_json):
     return {'eventDate': event_date.strftime("%Y-%m-%d")}
 
 
-def _get_event_status(config, case_trigger_info, form_json):
+def _get_event_status(config, case_trigger_info):
     return {'status': config.event_status}
 
 
-def _get_datavalues(config, case_trigger_info, form_json):
+def _get_datavalues(config, case_trigger_info):
     values = []
     for data_value in config.datavalue_maps:
         values.append({
