@@ -97,6 +97,12 @@ class Dhis2ConfigForm(forms.Form):
             else:
                 required_msg = _('The "%(property)s" property is required.')
 
+            if not form_config.get('xmlns'):
+                errors.append(ValidationError(
+                    '{} {}'.format(required_msg, _('Please specify the XMLNS of the form.')),
+                    params={'property': 'xmlns'},
+                    code='required_property',
+                ))
             if not form_config.get('program_id'):
                 errors.append(ValidationError(
                     '{} {}'.format(required_msg, _('Please specify the DHIS2 Program of the event.')),

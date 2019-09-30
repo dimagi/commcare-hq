@@ -28,6 +28,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         self.assertFalse(form.is_valid())
         self.assertDictEqual(form.errors, {
             'form_configs': [
+                'The "xmlns" property is required. Please specify the XMLNS of the form.',
                 'The "program_id" property is required. Please specify the DHIS2 Program of the event.',
                 'The "datavalue_maps" property is required. Please map CommCare values to DHIS2 data elements.',
             ]
@@ -43,13 +44,13 @@ class TestDhisConfigValidation(SimpleTestCase):
             repeater.save()
         self.assertEqual(
             str(e.exception),
-            "Property program_id is required."
+            "Property xmlns is required."
         )
 
-    def test_missing_event_date(self):
+    def test_missing_program_id(self):
         config = {
             'form_configs': [{
-                'program_id': 'test program'
+                'xmlns': 'test_xmlns',
             }]
         }
         repeater = Dhis2Repeater()
@@ -58,12 +59,13 @@ class TestDhisConfigValidation(SimpleTestCase):
             repeater.save()
         self.assertEqual(
             str(e.exception),
-            'Property event_date is required.'
+            'Property program_id is required.'
         )
 
     def test_minimal_config(self):
         config = {
             'form_configs': json.dumps([{
+                'xmlns': 'test_xmlns',
                 'program_id': 'test program',
                 'datavalue_maps': [
                     {
@@ -149,6 +151,7 @@ class TestDhisConfigValidation(SimpleTestCase):
     def test_org_unit_id_migration(self):
         config = {
             'form_configs': json.dumps([{
+                'xmlns': 'test_xmlns',
                 'program_id': 'test program',
                 'org_unit_id': 'dhis2_location_id',
                 'event_date': {
