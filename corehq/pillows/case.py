@@ -101,7 +101,8 @@ def get_case_pillow(
     case_to_es_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch
+        doc_prep_fn=transform_case_for_elasticsearch,
+        skip_null_subtype=True
     )
     case_search_processor = get_case_search_processor()
 

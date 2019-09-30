@@ -21,17 +21,18 @@ MAX_RETRIES = 4  # exponential factor threshold for alerts
 
 class ElasticProcessor(PillowProcessor):
 
-    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
+    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None, skip_null_subtype=False):
         self.doc_filter_fn = doc_filter_fn
         self.elasticsearch = elasticsearch
         self.index_info = index_info
         self.doc_transform_fn = doc_prep_fn or identity
+        self.skip_null_subtype = skip_null_subtype
 
     def es_getter(self):
         return self.elasticsearch
 
     def process_change(self, change):
-        if change.document_subtype is None:
+        if self.skip_null_subtype and change.document_subtype is None:
             return
 
         if change.deleted and change.id:
