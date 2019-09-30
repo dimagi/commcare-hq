@@ -1,11 +1,16 @@
 import contextlib
 import uuid
+from datetime import time
+
 from django.test import TestCase
+
+from mock import patch
+
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.hqcase.utils import update_case
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import update_case
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.sms.models import PhoneNumber
@@ -14,7 +19,12 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.pillow import get_case_messaging_sync_pillow
-from corehq.messaging.scheduling.models import TimedSchedule, TimedEvent, SMSContent, Content
+from corehq.messaging.scheduling.models import (
+    Content,
+    SMSContent,
+    TimedEvent,
+    TimedSchedule,
+)
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
     CaseTimedScheduleInstance,
@@ -22,9 +32,6 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
 )
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
 from corehq.util.test_utils import create_test_case, set_parent_case
-from datetime import time
-from mock import patch
-
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
