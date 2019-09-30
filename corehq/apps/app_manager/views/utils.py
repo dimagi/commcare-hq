@@ -168,7 +168,7 @@ def overwrite_app(app, master_build, report_map=None):
     master_json = master_build.to_json()
     app_json = app.to_json()
 
-    form_ids_by_xmlns = _get_historical_form_ids_by_xmlns(app)  # before updating anything
+    old_form_ids_by_xmlns = _get_historical_form_ids_by_xmlns(app)  # before updating anything
 
     for key, value in master_json.items():
         if key not in excluded_fields:
@@ -187,7 +187,8 @@ def overwrite_app(app, master_build, report_map=None):
             except KeyError:
                 raise AppEditingError(config.report_id)
 
-    wrapped_app = _update_form_ids(wrapped_app, master_build, form_ids_by_xmlns)
+    ids_map = _map_old_form_ids_to_new(wrapped_app, old_form_ids_by_xmlns)
+    wrapped_app = _update_form_ids(wrapped_app, master_build, ids_map)
 
     # Multimedia versions should be set based on the linked app's versions, not those of the master app.
     for path in wrapped_app.multimedia_map.keys():
@@ -220,7 +221,15 @@ def _get_historical_form_ids_by_xmlns(app):
     return form_ids_by_xmlns
 
 
-def _update_form_ids(app, master_app, form_ids_by_xmlns):
+def _map_old_form_ids_to_new(app, old_form_ids_by_xmlns):
+    return {
+        form.unique_id: old_form_ids_by_xmlns[form['xmlns']]
+        for form in app.get_forms()
+        if form['xmlns'] in old_form_ids_by_xmlns and form.form_type != 'shadow_form'
+    }
+
+
+def _update_form_ids(app, master_app, ids_map):
 
     _attachments = master_app.get_attachments()
 
@@ -228,7 +237,7 @@ def _update_form_ids(app, master_app, form_ids_by_xmlns):
     app_source.pop('external_blobs')
     app_source['_attachments'] = _attachments
 
-    updated_source = update_form_unique_ids(app_source, form_ids_by_xmlns)
+    updated_source = update_form_unique_ids(app_source, ids_map)
 
     attachments = app_source.pop('_attachments')
     new_wrapped_app = wrap_app(updated_source)

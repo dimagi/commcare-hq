@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import uuid
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict, namedtuple, defaultdict
 from copy import deepcopy
 
 from django.core.cache import cache
@@ -408,8 +408,9 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     return session_data
 
 
-def update_form_unique_ids(app_source, form_ids_by_xmlns=None):
+def update_form_unique_ids(app_source, ids_map):
     from corehq.apps.app_manager.models import form_id_references, jsonpath_update
+    ids_map = defaultdict(lambda: uuid.uuid4().hex, ids_map)
 
     app_source = deepcopy(app_source)
     attachments = app_source['_attachments']
@@ -424,20 +425,16 @@ def update_form_unique_ids(app_source, form_ids_by_xmlns=None):
     if 'user_registration' in app_source:
         del app_source['user_registration']
 
-    new_ids_by_old = {}
-    if form_ids_by_xmlns is None:
-        form_ids_by_xmlns = {}
     for m, module in enumerate(app_source['modules']):
         for f, form in enumerate(module['forms']):
             old_id = form['unique_id']
-            new_id = form_ids_by_xmlns.get(form['xmlns'], uuid.uuid4().hex)
+            new_id = ids_map[old_id]
             change_form_unique_id(form, old_id, new_id)
-            new_ids_by_old[old_id] = new_id
 
     for reference_path in form_id_references:
         for reference in reference_path.find(app_source):
-            if reference.value in new_ids_by_old:
-                jsonpath_update(reference, new_ids_by_old[reference.value])
+            if reference.value in ids_map:
+                jsonpath_update(reference, ids_map[reference.value])
 
     return app_source
 

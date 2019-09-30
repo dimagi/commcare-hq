@@ -5281,7 +5281,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         that should be shown in the
         application source, such as ids, etc.
         """
-        source = update_form_unique_ids(source)
+        source = update_form_unique_ids(source, ids_map={})
         return update_report_module_ids(source)
 
     def copy_form(self, from_module, form, to_module, rename=False):
