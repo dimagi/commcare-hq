@@ -74,6 +74,8 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, pre_release_fe
             date -= relativedelta(days=1)
             daily_two_days_ago = get_data_for_daily_usage(date, config)
         daily_attendance_percent = percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago)
+
+        awcs = awc_this_month_data if pre_release_features else daily_yesterday
         number_of_awc_open_yesterday = {
             'label': _('Number of AWCs Open yesterday'),
             'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
@@ -81,7 +83,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, pre_release_fe
             'color': get_color_with_green_positive(daily_attendance_percent),
             'percent': daily_attendance_percent,
             'value': get_value(daily_yesterday, 'daily_attendance'),
-            'all': get_value(awc_this_month_data if pre_release_features else daily_yesterday, 'awcs'),
+            'all': get_value(awcs, 'awcs'),
             'format': 'div',
             'frequency': 'day',
             'redirect': 'icds_cas_reach/awc_daily_status',
@@ -89,13 +91,14 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, pre_release_fe
     else:
         awc_prev_month_data = get_data_for_awc_monthly(previous_month, config)
         monthly_attendance_percent = percent_increase('awc_num_open', awc_this_month_data, awc_prev_month_data)
+        awcs = awc_this_month_data
         number_of_awc_open_yesterday = {
             'help_text': _("Total Number of AWCs open for at least one day in month"),
             'label': _('Number of AWCs open for at least one day in month'),
             'color': get_color_with_green_positive(monthly_attendance_percent),
             'percent': monthly_attendance_percent,
             'value': get_value(awc_this_month_data, 'awc_num_open'),
-            'all': get_value(awc_this_month_data, 'awcs'),
+            'all': get_value(awcs, 'awcs'),
             'format': 'div',
             'frequency': 'month',
         }
@@ -108,7 +111,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, pre_release_fe
                     'help_text': awcs_launched_help_text(),
                     'color': None,
                     'percent': None,
-                    'value': get_value(daily_yesterday if pre_release_features and current_month_selected else awc_this_month_data, 'awcs'),
+                    'value': get_value(awcs, 'awcs'),
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',
