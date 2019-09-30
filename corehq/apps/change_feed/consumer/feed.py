@@ -82,7 +82,14 @@ class KafkaChangeFeed(ChangeFeed):
         try:
             for message in self.consumer:
                 self._processed_topic_offsets[(message.topic, message.partition)] = message.offset
-                yield change_from_kafka_message(message)
+                change = change_from_kafka_message(message)
+                skip_change = (
+                    change.metadata.document_type == 'CommCareCase' and
+                    not change.metadata.document_subtype and
+                    not change.metadata.is_deletion
+                )
+                if not skip_change:
+                    yield change_from_kafka_message(message)
         except StopIteration:
             assert not forever, 'Kafka pillow should not timeout when waiting forever!'
             # no need to do anything since this is just telling us we've reached the end of the feed
