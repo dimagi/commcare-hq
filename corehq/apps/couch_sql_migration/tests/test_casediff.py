@@ -481,9 +481,9 @@ class FakeCaseDiffQueue(object):
         self.stats = {"pending": 0, "cached": "0/0", "loaded": 0, "diffed": 0}
 
     def __enter__(self):
-        state = self.statedb.pop_resume_state(type(self).__name__, {})
-        if "stats" in state:
-            self.stats = state["stats"]
+        with self.statedb.pop_resume_state(type(self).__name__, {}) as state:
+            if "stats" in state:
+                self.stats = state["stats"]
         return self
 
     def __exit__(self, *exc_info):
