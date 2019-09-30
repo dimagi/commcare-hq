@@ -25,6 +25,12 @@ from testapps.test_pillowtop.utils import process_pillow_changes
 class CasePillowTest(TestCase):
     domain = 'case-pillowtest-domain'
 
+    @classmethod
+    def setUpClass(cls):
+        super(CasePillowTest, cls).setUpClass()
+        delete_es_index(CASE_INDEX_INFO.index)
+        delete_es_index(CASE_SEARCH_INDEX_INFO.index)
+
     def setUp(self):
         super(CasePillowTest, self).setUp()
         self.process_case_changes = process_pillow_changes('DefaultChangeFeedPillow')
@@ -34,8 +40,6 @@ class CasePillowTest(TestCase):
             self.elasticsearch = get_es_new()
             initialize_index_and_mapping(self.elasticsearch, CASE_INDEX_INFO)
             initialize_index_and_mapping(self.elasticsearch, CASE_SEARCH_INDEX_INFO)
-        delete_es_index(CASE_INDEX_INFO.index)
-        delete_es_index(CASE_SEARCH_INDEX_INFO.index)
 
     def tearDown(self):
         ensure_index_deleted(CASE_INDEX_INFO.index)
