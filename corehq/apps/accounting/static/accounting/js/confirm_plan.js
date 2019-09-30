@@ -18,23 +18,28 @@ hqDefine('accounting/js/confirm_plan', [
     var MORE_FEATURES = gettext("I need additional/custom features");
     var OTHER = gettext("Other");
 
-    var confirmPlanModel = function (isUpgrade, isSameEdition, currentPlan) {
+    var confirmPlanModel = function (isUpgrade, isSameEdition, isPaused, currentPlan) {
         'use strict';
         var self = {};
 
         self.isUpgrade = isUpgrade;
         self.isSameEdition = isSameEdition;
+        self.isPaused = isPaused;
         self.currentPlan = currentPlan;
 
         // If the user is upgrading, don't let them continue until they agree to the minimum subscription terms
-        self.oUserAgreementSigned = ko.observable(!isUpgrade || !isSameEdition);
+        self.oUserAgreementSigned = ko.observable(!(isUpgrade || isSameEdition));
 
         self.downgradeReasonList = [
             PROJECT_ENDED,
             FUNDING_ENDED,
-            CONTINUE_COMMCARE,
             SWITCH_TOOLS,
         ];
+
+        if (!self.isPaused) {
+            self.downgradeReasonList.push(CONTINUE_COMMCARE);
+        }
+
         self.newToolReasonList = [
             BUDGET_REASONS,
             LIMITED_FEATURES,
@@ -107,6 +112,7 @@ hqDefine('accounting/js/confirm_plan', [
         var confirmPlan = confirmPlanModel(
             initialPageData.get('is_upgrade'),
             initialPageData.get('is_same_edition'),
+            initialPageData.get('is_paused'),
             initialPageData.get('current_plan')
         );
 

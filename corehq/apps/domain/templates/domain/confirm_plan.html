@@ -6,6 +6,7 @@
 {% block form_content %}
   {% initial_page_data 'is_upgrade' is_upgrade %}
   {% initial_page_data 'is_same_edition' is_same_edition %}
+  {% initial_page_data 'is_paused' is_paused %}
   {% initial_page_data 'next_invoice_date' next_invoice_date %}
   {% initial_page_data 'current_plan' current_plan %}
   {% initial_page_data 'new_plan_edition' new_plan_edition %}
@@ -73,7 +74,7 @@
           </button>
           <h4 class="modal-title">
             {% if is_paused %}
-              {% trans 'Pausing your subscription?' %}
+              {% trans 'Before you pause...' %}
             {% else %}
               {% trans 'Downgrading?' %}
             {% endif %}
@@ -82,8 +83,8 @@
         <div class="modal-body">
           <p class="lead">
             {% blocktrans %}
-              We’d love to make CommCare work better for you.
-              Please help us, by answering these simple questions.
+              We'd love to make CommCare work better for you.
+              Please help us by answering these simple questions.
             {% endblocktrans %}
           </p>
 
@@ -106,7 +107,7 @@
           <!-- ko if: oProjectEnded -->
             <p>
               {% blocktrans %}
-                Is there a chance your project may start again?
+                Do you think your project may start again?
               {% endblocktrans %}
               <select class="form-control"
                       data-bind="value: oWillProjectRestart">

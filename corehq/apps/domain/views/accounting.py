@@ -1724,7 +1724,7 @@ def _get_downgrade_or_pause_note(request, is_pause=False):
         return None
     return "\n".join([
         "Why are you {method} your subscription today?\n{reason}\n",
-        "Is there a chance your project may start again?\n{will_project_restart}\n",
+        "Do you think your project may start again?\n{will_project_restart}\n",
         "Could you indicate which new tool you are using?\n{new_tool}\n",
         "Why are you switching to a new tool?\n{new_tool_reason}\n",
         "Additional feedback:\n{feedback}\n\n"
