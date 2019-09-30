@@ -38,6 +38,8 @@ class CaseMessagingSyncProcessor(BulkPillowProcessor):
         return domain_rules.by_case_type.get(case_type, [])
 
     def process_change(self, change):
+        if change.document_subtype is None:
+            pass
         try:
             case = CaseAccessors(change.metadata.domain).get_case(change.id)
         except CaseNotFound:

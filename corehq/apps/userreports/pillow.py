@@ -407,6 +407,9 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         return retry_changes, docs
 
     def process_change(self, change):
+        if change.document_subtype is None:
+            return
+
         self.bootstrap_if_needed()
 
         domain = change.metadata.domain

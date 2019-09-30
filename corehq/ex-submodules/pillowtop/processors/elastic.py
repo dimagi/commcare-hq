@@ -31,6 +31,9 @@ class ElasticProcessor(PillowProcessor):
         return self.elasticsearch
 
     def process_change(self, change):
+        if change.document_subtype is None:
+            return
+
         if change.deleted and change.id:
             self._delete_doc_if_exists(change.id)
             return
