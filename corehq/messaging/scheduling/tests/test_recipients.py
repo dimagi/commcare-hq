@@ -1,3 +1,4 @@
+import contextlib
 import uuid
 from django.test import TestCase
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -601,8 +602,7 @@ class SchedulingRecipientTest(TestCase):
 
         with self.create_user_case(user3) as case:
             # If the user has no number, the user case's number is used
-            with self.process_pillow_changes:
-                update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
+            update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
             case = CaseAccessors(self.domain).get_case(case.case_id)
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(0, only_count_two_way=True)
@@ -622,9 +622,8 @@ class SchedulingRecipientTest(TestCase):
     @run_with_all_backends
     def test_ignoring_entries(self):
         with create_case(self.domain, 'person') as case:
-            with self.process_pillow_changes:
-                update_case(self.domain, case.case_id,
-                    case_properties={'contact_phone_number': '12345', 'contact_phone_number_is_verified': '1'})
+            update_case(self.domain, case.case_id,
+                case_properties={'contact_phone_number': '12345', 'contact_phone_number_is_verified': '1'})
 
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(1, only_count_two_way=True)
@@ -634,8 +633,7 @@ class SchedulingRecipientTest(TestCase):
                     patch('corehq.messaging.scheduling.models.abstract.use_phone_entries') as patch3:
 
                 patch1.return_value = patch2.return_value = patch3.return_value = False
-                with self.process_pillow_changes:
-                    update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '23456'})
+                update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '23456'})
                 case = CaseAccessors(self.domain).get_case(case.case_id)
 
                 self.assertPhoneEntryCount(1)
@@ -643,8 +641,7 @@ class SchedulingRecipientTest(TestCase):
                 self.assertTwoWayEntry(PhoneNumber.objects.get(owner_id=case.case_id), '12345')
                 self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '23456')
 
-    @run_with_all_backends
-    def test_two_way_numbers(self):
+    def _test_two_way_numbers(self, change_context_manager):
         user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
         user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
         user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
@@ -655,7 +652,7 @@ class SchedulingRecipientTest(TestCase):
         self.assertIsNone(user1.memoized_usercase)
         self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
-        with self.process_pillow_changes:
+        with change_context_manager:
             with self.create_user_case(user2) as case:
                 self.assertIsNotNone(user2.memoized_usercase)
                 self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
@@ -663,7 +660,7 @@ class SchedulingRecipientTest(TestCase):
 
         with self.create_user_case(user3) as case:
             # If the user has no number, the user case's number is used
-            with self.process_pillow_changes:
+            with change_context_manager:
                 update_case(self.domain, case.case_id,
                     case_properties={'contact_phone_number': '12345678', 'contact_phone_number_is_verified': '1'})
             case = CaseAccessors(self.domain).get_case(case.case_id)
@@ -682,6 +679,15 @@ class SchedulingRecipientTest(TestCase):
 
             # Referencing the case directly uses the case's phone number
             self.assertTwoWayEntry(Content.get_two_way_entry_or_phone_number(case), '12345678')
+
+    @run_with_all_backends
+    def test_two_way_numbers_with_signal_task(self):
+        self._test_two_way_numbers(contextlib.nullcontext())
+
+    @run_with_all_backends
+    @patch('corehq.messaging.signals.sync_case_for_messaging')
+    def test_two_way_numbers_with_pillow(self, _):
+        self._test_two_way_numbers(self.process_pillow_changes)
 
     @run_with_all_backends
     def test_not_using_phone_entries(self):
