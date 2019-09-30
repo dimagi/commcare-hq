@@ -4071,7 +4071,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
                 if len(program_id) > 1:
                     for program in program_id:
                         if (program == wanted_program and product_id in self.program_and_products[program]) \
-                            or not wanted_program:
+                        or not wanted_program:
                             stock['program_id'] = program
                             stocks.append(stock.copy())
                 else:
@@ -4123,8 +4123,8 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
                         if location_id not in added_locations:
                             added_locations.append(location_id)
                         if program_id not in added_programs and \
-                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
-                             or not wanted_program):
+                        ((program_id == wanted_program and product_id in self.program_and_products[program_id])
+                        or not wanted_program):
                             added_programs.append(program_id)
                         if program_id == wanted_program or not wanted_program:
                             product_data = {
@@ -4291,7 +4291,7 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
                 if len(program_id) > 1:
                     for program in program_id:
                         if (program == wanted_program and product_id in self.program_and_products[program]) \
-                            or not wanted_program:
+                        or not wanted_program:
                             stock['program_id'] = program
                             stocks.append(stock.copy())
                 else:
@@ -4343,8 +4343,8 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
                         if location_id not in added_locations:
                             added_locations.append(location_id)
                         if program_id not in added_programs and \
-                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
-                            or not wanted_program):
+                        ((program_id == wanted_program and product_id in self.program_and_products[program_id])
+                        or not wanted_program):
                             added_programs.append(program_id)
                         if program_id == wanted_program or not wanted_program:
                             product_data = {
@@ -4511,7 +4511,7 @@ class ConsommationPerProductData(SqlData, LocationLevelMixin):
                 if len(program_id) > 1:
                     for program in program_id:
                         if (program == wanted_program and product_id in self.program_and_products[program]) \
-                            or not wanted_program:
+                        or not wanted_program:
                             consumption['program_id'] = program
                             consumptions.append(consumption.copy())
                 else:
@@ -4549,8 +4549,8 @@ class ConsommationPerProductData(SqlData, LocationLevelMixin):
                         if location_id not in added_locations:
                             added_locations.append(location_id)
                         if program_id not in added_programs and \
-                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
-                                or not wanted_program):
+                        ((program_id == wanted_program and product_id in self.program_and_products[program_id])
+                        or not wanted_program):
                             added_programs.append(program_id)
                         if program_id == wanted_program or not wanted_program:
                             product_data = {
@@ -4731,7 +4731,7 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
                 loc_names[record[self.loc_id]] = record[self.loc_name]
 
             if not self.date_in_selected_date_range(record['real_date_repeat']) \
-                or record['product_id'] not in self.products:
+            or record['product_id'] not in self.products:
                 continue
 
             product = self.products.index(record['product_id'])
@@ -4938,7 +4938,7 @@ class ExpirationRatePerProductData2(LossRatePerProductData2):
                 loc_names[record[self.loc_id]] = record[self.loc_name]
 
             if not self.date_in_selected_date_range(record['real_date_repeat']) \
-                or record['product_id'] not in self.products:
+            or record['product_id'] not in self.products:
                 continue
 
             product = self.products.index(record['product_id'])
@@ -5066,7 +5066,7 @@ class SatisfactionRateAfterDeliveryPerProductData(LocationLevelMixin, VisiteDeLO
                 if len(program_id) > 1:
                     for program in program_id:
                         if (program == wanted_program and product_id in self.program_and_products[program]) \
-                            or not wanted_program:
+                        or not wanted_program:
                             quantity['select_programs'] = program
                             quantities.append(quantity.copy())
                 else:
@@ -5115,8 +5115,8 @@ class SatisfactionRateAfterDeliveryPerProductData(LocationLevelMixin, VisiteDeLO
                         if location_id not in added_locations:
                             added_locations.append(location_id)
                         if program_id not in added_programs and \
-                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
-                                or not wanted_program):
+                        ((program_id == wanted_program and product_id in self.program_and_products[program_id])
+                        or not wanted_program):
                             added_programs.append(program_id)
                         if program_id == wanted_program or not wanted_program:
                             product_data = {
@@ -5262,7 +5262,7 @@ class ValuationOfPNAStockPerProductV2Data(LocationLevelMixin, VisiteDeLOperateur
                 if len(program_id) > 1:
                     for program in program_id:
                         if (program == wanted_program and product_id in self.program_and_products[program]) \
-                            or not wanted_program:
+                        or not wanted_program:
                             pna['select_programs'] = program
                             pnas.append(pna.copy())
                 else:
@@ -5309,8 +5309,8 @@ class ValuationOfPNAStockPerProductV2Data(LocationLevelMixin, VisiteDeLOperateur
                         if location_id not in added_locations:
                             added_locations.append(location_id)
                         if program_id not in added_programs and \
-                            ((program_id == wanted_program and product_id in self.program_and_products[program_id])
-                                or not wanted_program):
+                        ((program_id == wanted_program and product_id in self.program_and_products[program_id])
+                        or not wanted_program):
                             added_programs.append(program_id)
                         if program_id == wanted_program or not wanted_program:
                             product_data = {
@@ -5758,8 +5758,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         rows['Total Facturation PRA']['html'] = rows['Total Facturation District']['html'] / 1.15
 
         rows['Total a Verser a La PRA']['html'] = rows['Total Facturation PRA']['html'] + \
-                                                  rows['Frais Participation District']['html'] + \
-                                                  rows['Frais Participation PPS']['html']
+        rows['Frais Participation District']['html'] + rows['Frais Participation PPS']['html']
 
         row = [["{0:.2f}".format(v['html']) for v in rows.values()]]
         context = self.create_context(
