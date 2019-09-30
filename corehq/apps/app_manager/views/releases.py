@@ -21,6 +21,7 @@ from couchdbkit import NoResultFound, ResourceNotFound
 from django_prbac.decorators import requires_privilege
 from django_prbac.utils import has_privilege
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.web import json_response
 from phonelog.models import UserErrorEntry
@@ -527,9 +528,6 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     urlname = 'diff'
     page_title = ugettext_lazy("App diff")
     template_name = 'app_manager/app_diff.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(AppDiffView, self).dispatch(request, *args, **kwargs)
 
     @property
     def first_app_id(self):
