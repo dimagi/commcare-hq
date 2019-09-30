@@ -1,8 +1,13 @@
+from collections import defaultdict
+
 from django.core.management import BaseCommand
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
+from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from dimagi.utils.chunked import chunked
 
 from casexml.apps.case.models import CommCareCase
@@ -51,20 +56,30 @@ def _publish_cases_for_couch(domain, case_ids):
 
 
 def _publish_cases_for_sql(domain, case_ids):
-    for case_id in case_ids:
-        producer.send_change(
-            topics.CASE_SQL,
-            _change_meta_for_sql_case(domain, case_id)
-        )
+    for id_chunk in chunked(case_ids, 10000):
+        # databases will contain a mapping of shard database ids to case_ids in that DB
+        databases = ShardAccessor.get_docs_by_database(id_chunk)
+        for db, doc_ids in databases.items():
+            results = CommCareCaseSQL.objects.using(db).filter(
+                case_id__in=doc_ids,
+            ).values_list('case_id', 'type')
+            # make sure we found the same number of IDs
+            assert len(results) == len(doc_ids)
+            for case_id, case_type in results:
+                print(f'case_id: {case_id} {case_type}')
+                producer.send_change(
+                    topics.CASE_SQL,
+                    _change_meta_for_sql_case(domain, case_id, case_type)
+                )
 
 
-def _change_meta_for_sql_case(domain, case_id):
+def _change_meta_for_sql_case(domain, case_id, case_type):
     return ChangeMeta(
         document_id=case_id,
         data_source_type=data_sources.SOURCE_SQL,
         data_source_name=data_sources.CASE_SQL,
         document_type='CommCareCase',
-        document_subtype=None,  # should be case.type or form.xmlns, but not used anywhere
+        document_subtype=case_type,
         domain=domain,
         is_deletion=False,
     )
