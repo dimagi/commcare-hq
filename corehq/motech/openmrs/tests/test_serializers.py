@@ -49,9 +49,6 @@ class SerializerTests(SimpleTestCase):
         self.assertIsNone(openmrs_timestamp)
 
 
-
-class DocTests(SimpleTestCase):
-
-    def test_doctests(self):
-        results = doctest.testmod(corehq.motech.openmrs.serializers)
-        self.assertEqual(results.failed, 0)
+def test_doctests():
+    results = doctest.testmod(corehq.motech.openmrs.serializers)
+    assert results.failed == 0
