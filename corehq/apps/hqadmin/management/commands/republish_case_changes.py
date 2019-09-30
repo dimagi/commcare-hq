@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from django.core.management import BaseCommand
 
 from corehq.apps.change_feed import data_sources, topics
@@ -7,7 +5,6 @@ from corehq.apps.change_feed.producer import producer
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from dimagi.utils.chunked import chunked
 
 from casexml.apps.case.models import CommCareCase
