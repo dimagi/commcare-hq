@@ -168,22 +168,7 @@ def overwrite_app(app, master_build, report_map=None):
     master_json = master_build.to_json()
     app_json = app.to_json()
 
-    # Corresponding forms in a master app and linked app need to have the same XMLNS but different unique ids,
-    # so the linked app needs to know if there are any new forms and, if so, assign those forms new unique ids.
-    # To do this lookup, get the XMLNSes from the the most recent versions of this app pulled from each master
-    # and compare those to the XMLNSes present in this app.
-    unknown_xmlnses = {form.xmlns for form in app.get_forms()}
-    form_ids_by_xmlns = {}
-    for brief in app.get_master_app_briefs():
-        if len(unknown_xmlnses):
-            previous_app = app.get_latest_build_from_upstream(brief.master_id)
-            if previous_app:
-                form_ids_by_xmlns.update(_get_form_ids_by_xmlns(previous_app))
-                unknown_xmlnses = unknown_xmlnses.difference(form_ids_by_xmlns.keys())
-    # Add in any forms from the current linked app, before the source is overwritten.
-    # This is particularly important if there's no previous version.
-    if len(unknown_xmlnses):
-        form_ids_by_xmlns.update(_get_form_ids_by_xmlns(app))
+    form_ids_by_xmlns = _get_historical_form_ids_by_xmlns(app)  # before updating anything
 
     for key, value in master_json.items():
         if key not in excluded_fields:
@@ -213,6 +198,28 @@ def overwrite_app(app, master_build, report_map=None):
     return wrapped_app
 
 
+def _get_historical_form_ids_by_xmlns(app):
+    # Corresponding forms in a master app and linked app need to have the same
+    # XMLNS but different unique ids, so the linked app needs to know if there
+    # are any new forms and, if so, assign those forms new unique ids. To do
+    # this lookup, get the XMLNSes from the the most recent versions of this
+    # app pulled from each master and compare those to the XMLNSes present in
+    # this app.
+    unknown_xmlnses = {form.xmlns for form in app.get_forms()}
+    form_ids_by_xmlns = {}
+    for brief in app.get_master_app_briefs():
+        if len(unknown_xmlnses):
+            previous_app = app.get_latest_build_from_upstream(brief.master_id)
+            if previous_app:
+                form_ids_by_xmlns.update(_get_form_ids_by_xmlns(previous_app))
+                unknown_xmlnses = unknown_xmlnses.difference(form_ids_by_xmlns.keys())
+    # Add in any forms from the current linked app, before the source is overwritten.
+    # This is particularly important if there's no previous version.
+    if len(unknown_xmlnses):
+        form_ids_by_xmlns.update(_get_form_ids_by_xmlns(app))
+    return form_ids_by_xmlns
+
+
 def _update_form_ids(app, master_app, form_ids_by_xmlns):
 
     _attachments = master_app.get_attachments()
@@ -230,11 +237,7 @@ def _update_form_ids(app, master_app, form_ids_by_xmlns):
 
 
 def _get_form_ids_by_xmlns(app):
-    id_map = {}
-    for module in app.get_modules():
-        for form in module.get_forms():
-            id_map[form.xmlns] = form.unique_id
-    return id_map
+    return {form.xmlns: form.unique_id for form in app.get_forms()}
 
 
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
