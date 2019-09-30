@@ -9,8 +9,12 @@ from dimagi.ext.couchdbkit import (
 from corehq.motech.dhis2.const import (
     DHIS2_EVENT_STATUS_COMPLETED,
     DHIS2_EVENT_STATUSES,
+    LOCATION_DHIS_ID,
 )
-from corehq.motech.value_source import ValueSource
+from corehq.motech.value_source import (
+    FormUserAncestorLocationField,
+    ValueSource,
+)
 
 
 class FormDataValueMap(DocumentSchema):
@@ -21,7 +25,9 @@ class FormDataValueMap(DocumentSchema):
 class Dhis2FormConfig(DocumentSchema):
     xmlns = StringProperty()
     program_id = StringProperty(required=True)
-    org_unit_id = SchemaProperty(ValueSource, required=False)
+    org_unit_id = SchemaProperty(ValueSource, required=False, default=FormUserAncestorLocationField(
+        location_field=LOCATION_DHIS_ID
+    ))
     event_date = SchemaProperty(ValueSource, required=True)
     event_status = StringProperty(
         choices=DHIS2_EVENT_STATUSES,

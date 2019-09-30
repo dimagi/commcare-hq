@@ -49,12 +49,6 @@ def _get_org_unit(config, case_trigger_info):
     org_unit_id = None
     if config.org_unit_id:
         org_unit_id = config.org_unit_id.get_value(case_trigger_info)
-    if not org_unit_id:
-        # Fall back to location metadata of submitter's location
-        user_id = case_trigger_info.form_question_values.get("/metadata/userID")
-        if user_id:
-            location = get_owner_location(case_trigger_info.domain, user_id)
-            org_unit_id = get_ancestor_location_metadata_value(location, LOCATION_DHIS_ID)
     if org_unit_id:
         return {'orgUnit': org_unit_id}
     return {}
