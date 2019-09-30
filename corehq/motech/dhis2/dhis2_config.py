@@ -27,6 +27,7 @@ class Dhis2FormConfig(DocumentSchema):
         choices=DHIS2_EVENT_STATUSES,
         default=DHIS2_EVENT_STATUS_COMPLETED,
     )
+    completed_date = SchemaProperty(ValueSource, required=False)
     datavalue_maps = SchemaListProperty(FormDataValueMap)
 
     @classmethod

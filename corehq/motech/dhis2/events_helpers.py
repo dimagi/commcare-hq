@@ -33,6 +33,7 @@ def get_event(domain, config, form_json):
         _get_org_unit,
         _get_event_date,
         _get_event_status,
+        _get_completed_date,
         _get_datavalues,
     ]
     for func in event_property_functions:
@@ -72,6 +73,15 @@ def _get_event_date(config, case_trigger_info):
 
 def _get_event_status(config, case_trigger_info):
     return {'status': config.event_status}
+
+
+def _get_completed_date(config, case_trigger_info):
+    completed_date = None
+    if config.completed_date:
+        completed_date = config.completed_date.get_value(case_trigger_info)
+    if completed_date:
+        return {'completedDate': completed_date}
+    return {}
 
 
 def _get_datavalues(config, case_trigger_info):
