@@ -4,6 +4,7 @@ import uuid
 from django.test.testcases import TestCase
 
 from couchdbkit.exceptions import ResourceNotFound
+from lxml import etree
 from mock import patch
 
 from corehq.apps.app_manager.exceptions import AppEditingError
@@ -18,10 +19,10 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.utils import (
+    _get_form_ids_by_xmlns,
     get_blank_form_xml,
     overwrite_app,
     update_linked_app,
-    _get_form_ids_by_xmlns,
 )
 from corehq.apps.hqmedia.models import (
     CommCareAudio,
@@ -39,8 +40,6 @@ from corehq.apps.linked_domain.util import (
     _get_missing_multimedia,
     convert_app_for_remote_linking,
 )
-from lxml import etree
-
 from corehq.util.test_utils import flag_enabled, softer_assert
 
 
