@@ -17,7 +17,7 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
+from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import create_and_save_a_case, trap_extra_setup
 from testapps.test_pillowtop.utils import process_pillow_changes
 
@@ -34,6 +34,8 @@ class CasePillowTest(TestCase):
             self.elasticsearch = get_es_new()
             initialize_index_and_mapping(self.elasticsearch, CASE_INDEX_INFO)
             initialize_index_and_mapping(self.elasticsearch, CASE_SEARCH_INDEX_INFO)
+        delete_es_index(CASE_INDEX_INFO.index)
+        delete_es_index(CASE_SEARCH_INDEX_INFO.index)
 
     def tearDown(self):
         ensure_index_deleted(CASE_INDEX_INFO.index)
