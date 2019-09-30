@@ -15,14 +15,13 @@
         </div>
         <p class="lead">
           {% blocktrans %}
-            For organizations running projects of any size.
+            For organizations running programs at any scale.
           {% endblocktrans %}
         </p>
         {% include 'registration/partials/feature_list.html' with features=professional_features %}
         <p class="plan-price">
           {% blocktrans %}
-            Starts at $250/month.<br/>
-            See <a href="{{ pricing_url }}">pricing</a> details.
+            See <a href="{{ pricing_url }}">pricing</a> options.
           {% endblocktrans %}
         </p>
         <div class="plan-cta">
@@ -49,7 +48,7 @@
                        fullscreenButton=true
                        controlsVisibleOnLoad=false
                        popoverContent=link">
-            <a href="#" class="btn btn-default">
+            <a href="#">
               <i class="fa fa-play-circle"></i>
               {% blocktrans %}
                 Watch Demo
@@ -75,7 +74,7 @@
         </div>
         <p class="lead">
           {% blocktrans %}
-            For individuals exploring data collection workflows.
+            For individuals exploring mobile data collection.
           {% endblocktrans %}
         </p>
         {% include 'registration/partials/feature_list.html' with features=community_features %}
