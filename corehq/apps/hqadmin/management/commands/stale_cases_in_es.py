@@ -85,11 +85,7 @@ def _get_data_for_couch_backend(run_config):
     ), chunk_size)
     for chunk in chunked_iterator:
         case_ids = [row['id'] for row in chunk]
-        results = (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
-            .domain(domain)
-            .case_ids(case_ids)
-            .values_list('_id', 'server_modified_on'))
-        es_modified_on_by_ids = dict(results)
+        es_modified_on_by_ids = _get_es_modified_dates(domain, case_ids)
         for row in chunk:
             case_id, couch_modified_on = row['id'], row['value']
             if iso_string_to_datetime(couch_modified_on) > start_time:
@@ -107,12 +103,7 @@ def _get_data_for_sql_backend(run_config):
         chunk_size = 1000
         for chunk in chunked(matching_records_for_db, chunk_size):
             case_ids = [val[0] for val in chunk]
-            # case_ids = list(chunk)
-            results = (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
-                .domain(run_config.domain)
-                .case_ids(case_ids)
-                .values_list('_id', 'server_modified_on'))
-            es_modified_on_by_ids = dict(results)
+            es_modified_on_by_ids = _get_es_modified_dates(run_config.domain, case_ids)
             for case_id, sql_modified_on in chunk:
                 sql_modified_on_str = f'{sql_modified_on.isoformat()}Z'
                 es_modified_on = es_modified_on_by_ids.get(case_id)
@@ -126,3 +117,11 @@ def _get_sql_case_data_for_db(db, run_config):
         server_modified_on__gte=run_config.start_date,
         server_modified_on__lte=run_config.end_date,
     ).values_list('case_id', 'server_modified_on')
+
+
+def _get_es_modified_dates(domain, case_ids):
+    results = (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
+            .domain(domain)
+            .case_ids(case_ids)
+            .values_list('_id', 'server_modified_on'))
+    return dict(results)
