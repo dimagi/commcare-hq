@@ -1142,6 +1142,10 @@ class Subscription(models.Model):
         Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
 
     @property
+    def is_community(self):
+        return self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+
+    @property
     def allowed_attr_changes(self):
         """
         These are the attributes of a Subscription that can always be
