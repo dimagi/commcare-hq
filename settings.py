@@ -1209,6 +1209,11 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
+        'warehouse': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        }
     }
 }
 
@@ -1372,8 +1377,6 @@ seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE += LOCAL_MIDDLEWARE
-if 'icds-ucr' in DATABASES:
-    MIDDLEWARE.append('custom.icds_reports.middleware.ICDSAuditMiddleware')
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = helper.SharedDriveConfiguration(

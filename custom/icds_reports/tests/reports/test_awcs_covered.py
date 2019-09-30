@@ -24,7 +24,7 @@ class TestAWCSCovered(TestCase):
                 "rightLegend": {
                     "info": (
                         "{}<br /><br />"
-                        'Number of AWCs launched: 21 <br />'
+                        'Number of AWCs launched: 22 <br />'
                         'Number of States launched: 3'.format(awcs_launched_help_text())
                     )
                 },
@@ -72,7 +72,7 @@ class TestAWCSCovered(TestCase):
                     'st1': {
                         'districts': 1,
                         'blocks': 2,
-                        'awcs': 9,
+                        'awcs': 10,
                         'original_name': ['st1'],
                         'states': 1,
                         'supervisors': 4,
@@ -118,7 +118,7 @@ class TestAWCSCovered(TestCase):
                 "rightLegend": {
                     "info": (
                         "{}<br /><br />"
-                        'Number of AWCs launched: 9 <br />'
+                        'Number of AWCs launched: 10 <br />'
                         'Number of Blocks launched: 2'.format(awcs_launched_help_text())
                     )
                 },
@@ -131,7 +131,7 @@ class TestAWCSCovered(TestCase):
                     'block_map': {
                         'states': 1,
                         'blocks': 2,
-                        'awcs': 9,
+                        'awcs': 10,
                         'original_name': ['b1', 'b2'],
                         'districts': 1,
                         'supervisors': 4,
@@ -164,7 +164,7 @@ class TestAWCSCovered(TestCase):
                 ],
                 "top_five": [
                     {'loc_name': 'st2', 'value': 11.0},
-                    {'loc_name': 'st1', 'value': 9.0},
+                    {'loc_name': 'st1', 'value': 10.0},
                     {'loc_name': 'st7', 'value': 1.0},
                     {'loc_name': 'st3', 'value': 0.0},
                     {'loc_name': 'st4', 'value': 0.0},
@@ -186,12 +186,12 @@ class TestAWCSCovered(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 21.0,
+                                "y": 22.0,
                                 "x": 1491004800000,
                                 "all": 0
                             },
                             {
-                                "y": 21.0,
+                                "y": 22.0,
                                 "x": 1493596800000,
                                 "all": 0
                             }
@@ -201,7 +201,7 @@ class TestAWCSCovered(TestCase):
                 ],
                 "all_locations": [
                     {'loc_name': 'st2', 'value': 11.0},
-                    {'loc_name': 'st1', 'value': 9.0},
+                    {'loc_name': 'st1', 'value': 10.0},
                     {'loc_name': 'st7', 'value': 1.0},
                     {'loc_name': 'st3', 'value': 0.0},
                     {'loc_name': 'st4', 'value': 0.0},
@@ -228,7 +228,7 @@ class TestAWCSCovered(TestCase):
             {
                 "info": (
                     "{}<br /><br />"
-                    "Number of AWCs launched: 4 <br />"
+                    "Number of AWCs launched: 5 <br />"
                     "Number of Supervisors launched: 2".format(awcs_launched_help_text())
                 ),
                 "tooltips_data": {
@@ -237,7 +237,7 @@ class TestAWCSCovered(TestCase):
                         "states": 1,
                         "supervisors": 1,
                         "blocks": 1,
-                        "awcs": 2
+                        "awcs": 3
                     }, 
                     "s1": {
                         "districts": 1,
@@ -259,7 +259,7 @@ class TestAWCSCovered(TestCase):
                             ],
                             [
                                 "s2",
-                                2
+                                3
                             ]
                         ],
                         "key": ""

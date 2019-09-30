@@ -41,6 +41,7 @@ from corehq.apps.domain.views.settings import (
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
 
@@ -216,15 +217,12 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
         }
 
 
+@method_decorator(always_allow_project_access, name='dispatch')
+@method_decorator(require_superuser, name='dispatch')
 class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     urlname = 'feature_flags_and_privileges'
     page_title = ugettext_lazy("Feature Flags and Privileges")
     template_name = 'domain/admin/flags_and_privileges.html'
-
-    @method_decorator(always_allow_project_access)
-    @method_decorator(require_superuser)
-    def dispatch(self, request, *args, **kwargs):
-        return super(FlagsAndPrivilegesView, self).dispatch(request, *args, **kwargs)
 
     def _get_toggles(self):
 
@@ -263,6 +261,29 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
             'use_sql_backend': self.domain_object.use_sql_backend,
             'privileges': self._get_privileges(),
         }
+
+
+@method_decorator(always_allow_project_access, name='dispatch')
+@method_decorator(require_superuser, name='dispatch')
+class ProjectLimitsView(BaseAdminProjectSettingsView):
+    urlname = 'internal_project_limits_summary'
+    page_title = ugettext_lazy("Project Limits")
+    template_name = 'domain/admin/project_limits.html'
+
+    @property
+    def page_context(self):
+        return {
+            'project_limits': {
+                'submissions': self._get_submission_rate_limits()
+            }
+        }
+
+    def _get_submission_rate_limits(self):
+        return [
+            {'key': key, 'current_usage': int(current_usage), 'limit': int(limit),
+             'percent_usage': round(100 * current_usage / limit, 1)}
+            for key, current_usage, limit in submission_rate_limiter.iter_rates(self.domain)
+        ]
 
 
 class TransferDomainView(BaseAdminProjectSettingsView):
