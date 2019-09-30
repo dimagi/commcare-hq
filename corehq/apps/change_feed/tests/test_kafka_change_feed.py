@@ -50,6 +50,46 @@ class KafkaChangeFeedTest(SimpleTestCase):
         first_available_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
         next(feed.iter_changes(since=first_available_offsets, forever=False))
 
+    def test_skip_cases_without_subtype(self):
+        feed = KafkaChangeFeed(topics=[topics.FORM_SQL, topics.CASE_SQL], client_id='test-kafka-feed')
+        offsets = feed.get_latest_offsets()
+        valid_case_meta_normal = publish_stub_change(
+            topics.CASE_SQL,
+            document_type='CommCareCase',
+            document_subtype='a-case-type'
+        )
+        valid_case_meta_deleted = publish_stub_change(
+            topics.CASE_SQL,
+            document_type='CommCareCase',
+            document_subtype=None,
+            is_deletion=True,
+        )
+        invalid_case_meta = publish_stub_change(
+            topics.CASE_SQL,
+            document_type='CommCareCase',
+            document_subtype=''
+        )
+        valid_form_meta = publish_stub_change(
+            topics.FORM_SQL,
+            document_type='XFormInstance',
+            document_subtype='some-xmlns'
+        )
+        also_valid_form_meta = publish_stub_change(
+            topics.FORM_SQL,
+            document_type='XFormInstance',
+            document_subtype=''
+        )
+        valid_metas = [
+            valid_case_meta_normal, valid_case_meta_deleted, valid_form_meta, also_valid_form_meta,
+        ]
+        changes = list(feed.iter_changes(since=offsets, forever=False))
+        self.assertEqual(4, len(changes))
+        found_change_ids = set([change.id for change in changes])
+        self.assertEqual(
+            set([meta.document_id for meta in valid_metas]),
+            found_change_ids
+        )
+
 
 class KafkaCheckpointTest(TestCase):
 
