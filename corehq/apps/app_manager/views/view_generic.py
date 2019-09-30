@@ -175,9 +175,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             default_file_name = '%s_form%s' % (default_file_name, form_id)
 
         specific_media = [{
-            'menu_refs': app.get_menu_media(
-                module, module_id, form=form, form_index=form_id, to_language=lang
-            ),
+            'menu_refs': app.get_menu_media(module, form=form, form_index=form_id, to_language=lang),
             'default_file_name': '{name}_{lang}'.format(name=default_file_name, lang=lang),
         }]
 
@@ -190,12 +188,12 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                 )
 
             specific_media.append({
-                'menu_refs': app.get_case_list_form_media(module, module_id, to_language=lang),
+                'menu_refs': app.get_case_list_form_media(module, to_language=lang),
                 'default_file_name': _make_name('case_list_form'),
                 'qualifier': 'case_list_form_',
             })
             specific_media.append({
-                'menu_refs': app.get_case_list_menu_item_media(module, module_id, to_language=lang),
+                'menu_refs': app.get_case_list_menu_item_media(module, to_language=lang),
                 'default_file_name': _make_name('case_list_menu_item'),
                 'qualifier': 'case_list-menu_item_',
             })
@@ -203,14 +201,14 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                     toggles.CASE_LIST_LOOKUP.enabled(app.domain) or
                     toggles.BIOMETRIC_INTEGRATION.enabled(app.domain)):
                 specific_media.append({
-                    'menu_refs': app.get_case_list_lookup_image(module, module_id),
+                    'menu_refs': app.get_case_list_lookup_image(module),
                     'default_file_name': '{}_case_list_lookup'.format(default_file_name),
                     'qualifier': 'case-list-lookupcase',
                 })
 
                 if hasattr(module, 'product_details'):
                     specific_media.append({
-                        'menu_refs': app.get_case_list_lookup_image(module, module_id, type='product'),
+                        'menu_refs': app.get_case_list_lookup_image(module, type='product'),
                         'default_file_name': '{}_product_list_lookup'.format(default_file_name),
                         'qualifier': 'case-list-lookupproduct',
                     })

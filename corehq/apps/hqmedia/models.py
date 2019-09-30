@@ -464,7 +464,7 @@ class ApplicationMediaReference(object):
         Useful info for user-facing things.
     """
 
-    def __init__(self, path, module_id=None, module_unique_id=None, module_name=None,
+    def __init__(self, path, module_unique_id=None, module_name=None,
                  form_unique_id=None, form_name=None, form_order=None, media_class=None,
                  is_menu_media=False, app_lang=None, use_default_media=False):
 
@@ -475,7 +475,6 @@ class ApplicationMediaReference(object):
         if not issubclass(media_class, CommCareMultimedia):
             raise ValueError("media_class should be a type of CommCareMultimedia")
 
-        self.module_id = module_id
         self.module_unique_id = module_unique_id
         self.module_name = module_name
 
@@ -506,7 +505,6 @@ class ApplicationMediaReference(object):
         return {
             'module': {
                 'name': self.get_module_name(),
-                'id': self.module_id,
                 'unique_id': self.module_unique_id,
             },
             'form': {
@@ -614,7 +612,6 @@ class ModuleMediaMixin(MediaMixin):
         return {
             'app_lang': self.get_app().default_language,
             'module_name': self.name,
-            'module_id': self.id,
             'module_unique_id': self.unique_id,
             'form_name': None,
             'form_unique_id': None,
@@ -700,7 +697,6 @@ class FormMediaMixin(MediaMixin):
         return {
             'app_lang': module.get_app().default_language,
             'module_name': module.name,
-            'module_id': module.id,
             'module_unique_id': module.unique_id,
             'form_name': self.name,
             'form_unique_id': self.unique_id,
@@ -797,37 +793,35 @@ class ApplicationMediaMixin(Document, MediaMixin):
     # get_case_list_lookup_image, _get_item_media, and get_media_ref_kwargs) are used to set up context
     # for app manager settings pages. Ideally, they'd be moved into ModuleMediaMixin and FormMediaMixin
     # and perhaps share logic with those mixins' versions of all_media.
-    def get_menu_media(self, module, module_index, form=None, form_index=None, to_language=None):
+    def get_menu_media(self, module, form=None, form_index=None, to_language=None):
         if not module:
             # user_registration isn't a real module, for instance
             return {}
-        media_kwargs = self.get_media_ref_kwargs(
-            module, module_index, form=form, form_index=form_index,
-            is_menu_media=True)
+        media_kwargs = self.get_media_ref_kwargs(module, form=form, form_index=form_index, is_menu_media=True)
         media_kwargs.update(to_language=to_language or self.default_language)
         item = form or module
         return self._get_item_media(item, media_kwargs)
 
-    def get_case_list_form_media(self, module, module_index, to_language=None):
+    def get_case_list_form_media(self, module, to_language=None):
         if not module:
             # user_registration isn't a real module, for instance
             return {}
-        media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        media_kwargs = self.get_media_ref_kwargs(module)
         media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list_form, media_kwargs)
 
-    def get_case_list_menu_item_media(self, module, module_index, to_language=None):
+    def get_case_list_menu_item_media(self, module, to_language=None):
         if not module or not module.uses_media() or not hasattr(module, 'case_list'):
             # user_registration isn't a real module, for instance
             return {}
-        media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        media_kwargs = self.get_media_ref_kwargs(module)
         media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list, media_kwargs)
 
-    def get_case_list_lookup_image(self, module, module_index, type='case'):
+    def get_case_list_lookup_image(self, module, type='case'):
         if not module:
             return {}
-        media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        media_kwargs = self.get_media_ref_kwargs(module)
         details_name = '{}_details'.format(type)
         if not hasattr(module, details_name):
             return {}
@@ -863,12 +857,10 @@ class ApplicationMediaMixin(Document, MediaMixin):
         menu_media['audio'] = audio_ref
         return menu_media
 
-    def get_media_ref_kwargs(self, module, module_index, form=None,
-                             form_index=None, is_menu_media=False):
+    def get_media_ref_kwargs(self, module, form=None, form_index=None, is_menu_media=False):
         return {
             'app_lang': self.default_language,
             'module_name': module.name,
-            'module_id': module_index,
             'module_unique_id': module.unique_id,
             'form_name': form.name if form else None,
             'form_unique_id': form.unique_id if form else None,
