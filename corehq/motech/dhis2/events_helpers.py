@@ -1,11 +1,8 @@
-from dimagi.utils.dates import force_to_datetime
-
-from corehq.apps.users.models import CouchUser
-from corehq.motech.dhis2.const import DHIS2_API_VERSION, LOCATION_DHIS_ID
+from corehq.motech.dhis2.const import DHIS2_API_VERSION
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     get_form_question_values,
-    get_owner_location, get_ancestor_location_metadata_value)
+)
 
 
 def send_dhis2_event(request, form_config, payload):
@@ -55,14 +52,8 @@ def _get_org_unit(config, case_trigger_info):
 
 
 def _get_event_date(config, case_trigger_info):
-    event_date = None
-    if config.event_date:
-        event_date = config.event_date.get_value(case_trigger_info)
-    if not event_date:
-        # Fall back to form meta "received_on"
-        event_date = case_trigger_info.form_question_values.get("/metadata/received_on")
-    event_date = force_to_datetime(event_date)
-    return {'eventDate': event_date.strftime("%Y-%m-%d")}
+    event_date = config.event_date.get_value(case_trigger_info)
+    return {'eventDate': event_date}
 
 
 def _get_event_status(config, case_trigger_info):

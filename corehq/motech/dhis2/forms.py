@@ -103,16 +103,9 @@ class Dhis2ConfigForm(forms.Form):
                     params={'property': 'program_id'},
                     code='required_property',
                 ))
-            if not form_config.get('event_date'):
-                errors.append(ValidationError(
-                    '{} {}'.format(required_msg, _('Please provide a FormQuestion, FormQuestionMap or '
-                                                   'ConstantString to determine the date of the event.')),
-                    params={'property': 'event_date'},
-                    code='required_property',
-                ))
             if not form_config.get('datavalue_maps'):
                 errors.append(ValidationError(
-                    '{} {}'.format(required_msg, _('Please map CommCare values to OpenMRS data elements.')),
+                    '{} {}'.format(required_msg, _('Please map CommCare values to DHIS2 data elements.')),
                     params={'property': 'datavalue_maps'},
                     code='required_property',
                 ))

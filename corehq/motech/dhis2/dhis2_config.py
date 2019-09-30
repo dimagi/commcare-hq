@@ -6,12 +6,15 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
+import corehq.motech.dhis2.serializers  # Required to serialize DHIS2 data types
 from corehq.motech.dhis2.const import (
+    DHIS2_DATA_TYPE_DATE,
     DHIS2_EVENT_STATUS_COMPLETED,
     DHIS2_EVENT_STATUSES,
     LOCATION_DHIS_ID,
 )
 from corehq.motech.value_source import (
+    FormQuestion,
     FormUserAncestorLocationField,
     ValueSource,
 )
@@ -28,7 +31,10 @@ class Dhis2FormConfig(DocumentSchema):
     org_unit_id = SchemaProperty(ValueSource, required=False, default=FormUserAncestorLocationField(
         location_field=LOCATION_DHIS_ID
     ))
-    event_date = SchemaProperty(ValueSource, required=True)
+    event_date = SchemaProperty(ValueSource, required=True, default=FormQuestion(
+        form_question="/metadata/received_on",
+        external_data_type=DHIS2_DATA_TYPE_DATE,
+    ))
     event_status = StringProperty(
         choices=DHIS2_EVENT_STATUSES,
         default=DHIS2_EVENT_STATUS_COMPLETED,

@@ -29,9 +29,7 @@ class TestDhisConfigValidation(SimpleTestCase):
         self.assertDictEqual(form.errors, {
             'form_configs': [
                 'The "program_id" property is required. Please specify the DHIS2 Program of the event.',
-                'The "event_date" property is required. Please provide a FormQuestion, FormQuestionMap or '
-                'ConstantString to determine the date of the event.',
-                'The "datavalue_maps" property is required. Please map CommCare values to OpenMRS data elements.'
+                'The "datavalue_maps" property is required. Please map CommCare values to DHIS2 data elements.',
             ]
         })
 
@@ -67,10 +65,6 @@ class TestDhisConfigValidation(SimpleTestCase):
         config = {
             'form_configs': json.dumps([{
                 'program_id': 'test program',
-                'event_date': {
-                    'doc_type': 'FormQuestion',
-                    'form_question': '/data/event_date'
-                },
                 'datavalue_maps': [
                     {
                         'data_element_id': 'dhis2_element_id',
