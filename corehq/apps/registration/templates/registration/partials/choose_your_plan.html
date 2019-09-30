@@ -18,14 +18,7 @@
             For organizations running projects of any size.
           {% endblocktrans %}
         </p>
-        <ul class="check-list">
-          {% for feature in features %}
-            <li>
-              <i class="fa fa-check-square"></i>
-              {{ feature.desc }}
-            </li>
-          {% endfor %}
-        </ul>
+        {% include 'registration/partials/feature_list.html' with features=professional_features %}
         <p class="plan-price">
           {% blocktrans %}
             Starts at $250/month.<br/>
@@ -85,22 +78,7 @@
             For individuals exploring data collection workflows.
           {% endblocktrans %}
         </p>
-        <ul class="check-list">
-          {% for feature in features %}
-            <li{% if not feature.is_community %} class="not-available"{% endif %}>
-              {% if feature.is_community %}
-                <i class="fa fa-check-square"></i>
-              {% else %}
-                <i class="fa fa-square-o"></i>
-              {% endif %}
-              {% if feature.community_desc %}
-                {{ feature.community_desc }}
-              {% else %}
-                {{ feature.desc }}
-              {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
+        {% include 'registration/partials/feature_list.html' with features=community_features %}
         <p class="plan-price">
           {% blocktrans %}
             Free for personal use.

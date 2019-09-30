@@ -62,7 +62,7 @@ _domainless_new_user_soft_assert = soft_assert(to=[
     '{}@{}'.format('biyeun', 'dimagi.com')
 ], send_to_ops=False, fail_if_debug=False)
 
-FeatureMeta = namedtuple('FeatureMeta', 'desc is_community community_desc')
+FeatureMeta = namedtuple('FeatureMeta', 'desc url')
 
 
 def get_domain_context():
@@ -255,15 +255,24 @@ class UserRegistrationView(BasePageView):
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
-            'features': [
-                FeatureMeta(_("Custom mobile app builder"), True, None),
-                FeatureMeta(_("Built-in reports"), True, None),
-                FeatureMeta(_("Unlimited mobile users"), True, _("5 Mobile Users")),
-                FeatureMeta(_("Full suite of data tools"), False, None),
-                FeatureMeta(_("Web-based data collection"), False, None),
-                FeatureMeta(_("De-identified data"), False, None),
-                FeatureMeta(_("Guaranteed 1:1 support"), False, None),
-                FeatureMeta(_("Dedicated customer success"), False, None),
+            'professional_features': [
+                FeatureMeta(_("Custom mobile app builder"), None),
+                FeatureMeta(_("Fully-featured case management workflows"), None),
+                FeatureMeta(_("Referral workflows"), None),
+                FeatureMeta(_("2 way SMS workflows"), None),
+                FeatureMeta(_("Full suite of data tools"), None),
+                FeatureMeta(_("Powerful 3rd party integrations"),
+                            'https://confluence.dimagi.com/display/commcarepublic/'
+                            'The+CommCare+Ecosystem'),
+                FeatureMeta(_("Field staff performance reports"), None),
+                FeatureMeta(_("Guaranteed support SLAs"), None),
+                FeatureMeta(_("Access to our Customer Success team"), None),
+            ],
+            'community_features': [
+                FeatureMeta(_("Custom mobile app builder"), None),
+                FeatureMeta(_("Basic case management workflows"), None),
+                FeatureMeta(_("Field staff performance reports"), None),
+                FeatureMeta(_("5 mobile users"), None),\
             ],
             "pricing_url": "//dimagi.com/commcare/pricing",
         }
