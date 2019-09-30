@@ -63,7 +63,6 @@ def _publish_cases_for_sql(domain, case_ids):
             # make sure we found the same number of IDs
             assert len(results) == len(doc_ids)
             for case_id, case_type in results:
-                print(f'case_id: {case_id} {case_type}')
                 producer.send_change(
                     topics.CASE_SQL,
                     _change_meta_for_sql_case(domain, case_id, case_type)
