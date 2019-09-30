@@ -172,6 +172,13 @@ class ShardAccessor(object):
         """
         return ShardAccessor._get_doc_database_map(doc_ids, by_doc=True)
 
+    @staticmethod
+    def get_docs_by_database(doc_ids):
+        """
+        :param doc_ids:
+        :return: Dict of ``Django DB alias -> doc_id``
+        """
+        return ShardAccessor._get_doc_database_map(doc_ids, by_doc=False)
 
     @staticmethod
     def _get_doc_database_map(doc_ids, by_doc=True):
@@ -183,10 +190,17 @@ class ShardAccessor(object):
         for chunk in chunked(doc_ids, 100):
             hashes = ShardAccessor.hash_doc_ids_python(chunk)
             shards = {doc_id: hash_ & part_mask for doc_id, hash_ in hashes.items()}
-            databases.update({
-                doc_id: shard_map[shard_id].django_dbname for doc_id, shard_id in shards.items()
-            })
-
+            for doc_id, shard_id in shards.items():
+                dbname = shard_map[shard_id].django_dbname
+                if by_doc:
+                    databases.update({
+                        doc_id: dbname
+                    })
+                else:
+                    if dbname not in databases:
+                        databases[dbname] = [doc_id]
+                    else:
+                        databases[dbname].append(doc_id)
         return databases
 
     @staticmethod
