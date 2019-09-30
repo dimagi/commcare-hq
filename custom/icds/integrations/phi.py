@@ -1,3 +1,5 @@
+import json
+
 from django.conf import settings
 
 import requests
@@ -19,7 +21,7 @@ def send_request(request_type, data):
         raise MissingCredentials("Please set api key and password for phi")
     response = requests.post(
         URLS[request_type],
-        data=data,
+        data=json.dumps(data),
         headers={
             'Authorization': 'Basic {}' % password,
             'apikey': apikey,
