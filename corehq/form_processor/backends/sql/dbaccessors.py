@@ -170,6 +170,11 @@ class ShardAccessor(object):
         :param doc_ids:
         :return: Dict of ``doc_id -> Django DB alias``
         """
+        return ShardAccessor._get_doc_database_map(doc_ids, by_doc=True)
+
+
+    @staticmethod
+    def _get_doc_database_map(doc_ids, by_doc=True):
         assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
         consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         databases = {}
