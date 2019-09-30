@@ -118,7 +118,13 @@ class KafkaCheckpointTest(TestCase):
         self.assertEqual(feed.get_current_checkpoint_offsets(), current_kafka_offsets)
 
 
-def publish_stub_change(topic):
-    meta = ChangeMeta(document_id=uuid.uuid4().hex, data_source_type='dummy-type', data_source_name='dummy-name')
+def publish_stub_change(topic, **meta_kwargs):
+    default_meta_kwargs = {
+        'document_id': uuid.uuid4().hex,
+        'data_source_type': 'dummy-type',
+        'data_source_name': 'dummy-name',
+    }
+    default_meta_kwargs.update(meta_kwargs)
+    meta = ChangeMeta(**default_meta_kwargs)
     producer.send_change(topic, meta)
     return meta
