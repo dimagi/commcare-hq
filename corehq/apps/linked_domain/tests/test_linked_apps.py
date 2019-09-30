@@ -15,6 +15,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     import_app,
 )
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.utils import (
     get_blank_form_xml,
@@ -551,3 +552,54 @@ def _get_image_data():
     image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', 'commcare-hq-logo.png')
     with open(image_path, 'rb') as f:
         return f.read()
+
+
+class TestLinkedAppsWithShadowForms(TestCase):
+    maxDiff = None
+
+    def test_overwrite_app_with_shadow_forms(self):
+        upstream_app = self._make_app_with_shadow_forms()
+        linked_app = self._make_linked_app(upstream_app.domain)
+
+        linked_app = overwrite_app(linked_app, upstream_app, {})
+        original_fingerprints = self._get_form_fingerprints(linked_app)
+
+        linked_app = overwrite_app(linked_app, upstream_app, {})
+        self.assertItemsEqual(
+            original_fingerprints,
+            self._get_form_fingerprints(linked_app)
+        )
+
+    def _make_app_with_shadow_forms(self):
+        factory = AppFactory('upstream', "Upstream App", include_xmlns=True)
+        module1, form1 = factory.new_advanced_module('M1', 'casetype')
+        factory.new_form(module1)
+        module2, form2 = factory.new_advanced_module('M2', 'casetype')
+        factory.new_form(module2)
+        self._make_shadow_form(factory, 'M3', form1)
+        self._make_shadow_form(factory, 'M4', form2)
+        factory.app.save()
+        self.addCleanup(factory.app.delete)
+        # the test form names are unique
+        form_names = [f.name['en'] for f in factory.app.get_forms()]
+        self.assertEqual(len(form_names), len(set(form_names)))
+        return factory.app
+
+    @staticmethod
+    def _make_shadow_form(factory, module_name, parent_form):
+        module = factory.new_advanced_module(module_name, 'casetype', with_form=False)
+        shadow_form = factory.new_shadow_form(module)
+        shadow_form.shadow_parent_form_id = parent_form.unique_id
+
+    def _make_linked_app(self, upstream_domain):
+        linked_app = LinkedApplication.new_app('downstream', "Linked Application")
+        linked_app.save()
+        domain_link = DomainLink.link_domains('downstream', upstream_domain)
+        self.addCleanup(linked_app.delete)
+        self.addCleanup(domain_link.delete)
+        return linked_app
+
+    @staticmethod
+    def _get_form_fingerprints(app):
+        return [(form.name['en'], form.unique_id, form.xmlns, form['xmlns'])
+                for form in app.get_forms()]
