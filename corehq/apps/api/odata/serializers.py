@@ -71,6 +71,9 @@ class ODataBaseSerializer(Serializer):
         if next_page:
             return '{}{}{}'.format(get_url_base(), api_path, next_page)
 
+    def get_full_row_number(self, row_number):
+        return row_number + (self.offset * self.limit)
+
     def serialize_documents_using_config(self, documents, config, table_id):
         if table_id + 1 > len(config.tables):
             return []
@@ -83,7 +86,7 @@ class ODataBaseSerializer(Serializer):
         for row_number, document in enumerate(documents):
             rows = table.get_rows(
                 document,
-                row_number + (self.offset * self.limit),
+                self.get_full_row_number(row_number),
                 split_columns=config.split_multiselects,
                 transform_dates=config.transform_dates,
                 as_json=True,
