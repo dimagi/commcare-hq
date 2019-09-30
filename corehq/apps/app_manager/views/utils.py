@@ -205,7 +205,7 @@ def _get_historical_form_ids_by_xmlns(app):
     # this lookup, get the XMLNSes from the the most recent versions of this
     # app pulled from each master and compare those to the XMLNSes present in
     # this app.
-    unknown_xmlnses = {form.xmlns for form in app.get_forms()}
+    unknown_xmlnses = set(_get_form_ids_by_xmlns(app).keys())
     form_ids_by_xmlns = {}
     for brief in app.get_master_app_briefs():
         if len(unknown_xmlnses):
@@ -237,7 +237,8 @@ def _update_form_ids(app, master_app, form_ids_by_xmlns):
 
 
 def _get_form_ids_by_xmlns(app):
-    return {form.xmlns: form.unique_id for form in app.get_forms()}
+    return {form['xmlns']: form.unique_id
+            for form in app.get_forms() if form.form_type != 'shadow_form'}
 
 
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
