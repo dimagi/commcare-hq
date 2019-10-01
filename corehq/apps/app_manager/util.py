@@ -408,37 +408,38 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     return session_data
 
 
-def update_form_unique_ids(app_source, form_ids_by_xmlns=None):
+def update_form_unique_ids(app_source, ids_map):
+    """
+    Accepts an ids_map translating IDs in app_source to the desired replacement
+    ID. Form IDs not present in ids_map will be given new random UUIDs.
+    """
     from corehq.apps.app_manager.models import form_id_references, jsonpath_update
 
     app_source = deepcopy(app_source)
+    attachments = app_source['_attachments']
 
-    def change_form_unique_id(form, ids_by_xmlns):
-        unique_id = form['unique_id']
-        new_unique_id = ids_by_xmlns.get(form['xmlns'], uuid.uuid4().hex)
-        form['unique_id'] = new_unique_id
-        if ("%s.xml" % unique_id) in app_source['_attachments']:
-            app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
-        return new_unique_id
+    def change_form_unique_id(form, old_id, new_id):
+        form['unique_id'] = new_id
+        if f"{old_id}.xml" in attachments:
+            attachments[f"{new_id}.xml"] = attachments.pop(f"{old_id}.xml")
 
     # once Application.wrap includes deleting user_registration
     # we can remove this
     if 'user_registration' in app_source:
         del app_source['user_registration']
 
-    id_changes = {}
-    if form_ids_by_xmlns is None:
-        form_ids_by_xmlns = {}
+    new_ids_by_old = {}
     for m, module in enumerate(app_source['modules']):
         for f, form in enumerate(module['forms']):
             old_id = form['unique_id']
-            new_id = change_form_unique_id(app_source['modules'][m]['forms'][f], form_ids_by_xmlns)
-            id_changes[old_id] = new_id
+            new_id = ids_map.get(old_id, uuid.uuid4().hex)
+            new_ids_by_old[old_id] = new_id
+            change_form_unique_id(form, old_id, new_id)
 
     for reference_path in form_id_references:
         for reference in reference_path.find(app_source):
-            if reference.value in id_changes:
-                jsonpath_update(reference, id_changes[reference.value])
+            if reference.value in new_ids_by_old:
+                jsonpath_update(reference, new_ids_by_old[reference.value])
 
     return app_source
 
