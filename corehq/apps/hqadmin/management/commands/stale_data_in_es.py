@@ -69,7 +69,7 @@ class Command(BaseCommand):
                 for form_id, xmlns, es_date, primary_date in get_stale_form_data(run_config):
                     print(f"{form_id},XFormInstance,{xmlns},{es_date},{primary_date}")
             else:
-                raise CommandError('Only valid option for data models is "case"')
+                raise CommandError('Only valid options for data model are "case" and "form"')
 
 
 def get_server_modified_on_for_domain(run_config):
