@@ -98,7 +98,7 @@ def _get_data_for_couch_backend(run_config):
                 continue
             es_modified_on = es_modified_on_by_ids.get(case_id)
             if not es_modified_on or (es_modified_on != couch_modified_on):
-                yield (case_id, es_modified_on, couch_modified_on)
+                yield (case_id, 'COUCH_TYPE_NOT_SUPPORTED', es_modified_on, couch_modified_on)
 
 
 def _get_data_for_sql_backend(run_config):
