@@ -5,7 +5,6 @@ from typing import Iterable
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
-import attr
 from jsonobject.containers import JsonDict
 from memoized import memoized
 from requests import RequestException
@@ -33,7 +32,6 @@ from corehq.motech.openmrs.repeater_helpers import (
     get_case_location_ancestor_repeaters,
     get_patient,
 )
-from corehq.motech.repeater_helpers import get_relevant_case_updates_from_form_json
 from corehq.motech.openmrs.workflow import execute_workflow
 from corehq.motech.openmrs.workflow_tasks import (
     CreatePersonAddressTask,
@@ -43,6 +41,10 @@ from corehq.motech.openmrs.workflow_tasks import (
     UpdatePersonAddressTask,
     UpdatePersonNameTask,
     UpdatePersonPropertiesTask,
+)
+from corehq.motech.repeater_helpers import (
+    RepeaterResponse,
+    get_relevant_case_updates_from_form_json,
 )
 from corehq.motech.repeaters.models import CaseRepeater, Repeater
 from corehq.motech.repeaters.repeater_generators import (
@@ -56,17 +58,6 @@ from corehq.motech.value_source import (
     get_form_question_values,
 )
 from corehq.toggles import OPENMRS_INTEGRATION
-
-
-@attr.s
-class OpenmrsResponse:
-    """
-    Ducktypes an HTTP response for Repeater.handle_response(),
-    RepeatRecord.handle_success() and RepeatRecord.handle_failure()
-    """
-    status_code = attr.ib()
-    reason = attr.ib()
-    text = attr.ib(default="")
 
 
 class AtomFeedStatus(DocumentSchema):
@@ -236,7 +227,7 @@ class OpenmrsRepeater(CaseRepeater):
             )
         except Exception as err:
             requests.notify_exception(str(err))
-            return OpenmrsResponse(400, 'Bad Request', pformat_json(str(err)))
+            return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
         return response
 
 
@@ -314,12 +305,12 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         # have succeeded, but don't say everything was OK if any
         # workflows failed. (Of course most forms will only involve one
         # case, so one workflow.)
-        return OpenmrsResponse(400, 'Bad Request', "Errors: " + pformat_json([str(e) for e in errors]))
+        return RepeaterResponse(400, 'Bad Request', "Errors: " + pformat_json([str(e) for e in errors]))
 
     if warnings:
-        return OpenmrsResponse(201, "Accepted", "Warnings: " + pformat_json([str(e) for e in warnings]))
+        return RepeaterResponse(201, "Accepted", "Warnings: " + pformat_json([str(e) for e in warnings]))
 
-    return OpenmrsResponse(200, "OK")
+    return RepeaterResponse(200, "OK")
 
 
 def create_openmrs_repeat_records(sender, xform, **kwargs):
