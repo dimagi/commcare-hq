@@ -59,7 +59,6 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     THREE_MONTHS,
 )
-from custom.icds_reports.experiment import DashboardQueryExperiment
 from custom.icds_reports.models import (
     AggAwc,
     AggCcsRecord,
@@ -1257,30 +1256,6 @@ def create_mbt_for_month(state_id, month, force_citus=False):
                 )
                 icds_file.store_file_in_blobdb(f, expired=THREE_MONTHS)
                 icds_file.save()
-
-
-@task(queue='dashboard_comparison_queue')
-def run_citus_experiment_raw_sql(parameterized_sql, params, data_source="Unknown"):
-    experiment_context = {
-        "data_source": data_source,
-        "sql_query": parameterized_sql,
-        "params": params,
-    }
-    experiment = DashboardQueryExperiment(name="Dashboard Query Experiment", context=experiment_context)
-    with experiment.control() as control:
-        db_alias = 'icds-ucr'
-        with connections[db_alias].cursor() as cursor:
-            cursor.execute(parameterized_sql, params)
-            control.record(_dictfetchall(cursor))
-
-    with experiment.candidate() as candidate:
-        db_alias = get_icds_ucr_citus_db_alias()
-        with connections[db_alias].cursor() as cursor:
-            cursor.execute(parameterized_sql, params)
-            candidate.record(_dictfetchall(cursor))
-
-    objects = experiment.run()
-    return objects
 
 
 def _dictfetchall(cursor):
