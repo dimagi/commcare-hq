@@ -24,15 +24,15 @@ from corehq.motech.serializers import serializers
 class CaseTriggerInfo:
     domain = attr.ib()
     case_id = attr.ib()
-    type = attr.ib()
-    name = attr.ib()
-    owner_id = attr.ib()
-    modified_by = attr.ib()
-    updates = attr.ib()
-    created = attr.ib()
-    closed = attr.ib()
-    extra_fields = attr.ib()
-    form_question_values = attr.ib()
+    type = attr.ib(default=None)
+    name = attr.ib(default=None)
+    owner_id = attr.ib(default=None)
+    modified_by = attr.ib(default=None)
+    updates = attr.ib(default=None)
+    created = attr.ib(default=None)
+    closed = attr.ib(default=None)
+    extra_fields = attr.ib(default=None)
+    form_question_values = attr.ib(default=None)
 
     def __str__(self):
         if self.name:
