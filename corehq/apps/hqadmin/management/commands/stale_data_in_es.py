@@ -54,18 +54,18 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain, data_models, **options):
-        if ["case"] != data_models:
-            raise CommandError('Only valid option for data models is "case"')
+        data_models = set(data_models)
 
         start = dateutil.parser.parse(options['start']) if options['start'] else datetime(2010, 1, 1)
         end = dateutil.parser.parse(options['end']) if options['end'] else datetime.utcnow()
         run_config = RunConfig(domain, start, end)
-        for case_id, es_date, couch_date in get_server_modified_on_for_domain(run_config):
-            print("{id},{es_date},{couch_date}".format(
-                id=case_id,
-                es_date=es_date or "",
-                couch_date=couch_date
-            ))
+
+        for data_model in data_models:
+            if data_model.lower() == 'case':
+                for case_id, case_type, es_date, primary_date in get_server_modified_on_for_domain(run_config):
+                    print(f"{case_id},{case_type},{es_date},{primary_date}")
+            else:
+                raise CommandError('Only valid option for data models is "case"')
 
 
 def get_server_modified_on_for_domain(run_config):
@@ -102,18 +102,17 @@ def _get_data_for_couch_backend(run_config):
 
 
 def _get_data_for_sql_backend(run_config):
-
     for db in get_db_aliases_for_partitioned_query():
         matching_records_for_db = _get_sql_case_data_for_db(db, run_config)
         chunk_size = 1000
         for chunk in chunked(matching_records_for_db, chunk_size):
             case_ids = [val[0] for val in chunk]
             es_modified_on_by_ids = _get_es_modified_dates(run_config.domain, case_ids)
-            for case_id, sql_modified_on in chunk:
+            for case_id, case_type, sql_modified_on in chunk:
                 sql_modified_on_str = f'{sql_modified_on.isoformat()}Z'
                 es_modified_on = es_modified_on_by_ids.get(case_id)
                 if not es_modified_on or (es_modified_on < sql_modified_on_str):
-                    yield (case_id, es_modified_on, sql_modified_on_str)
+                    yield (case_id, case_type, es_modified_on, sql_modified_on_str)
 
 
 def _get_sql_case_data_for_db(db, run_config):
@@ -121,7 +120,7 @@ def _get_sql_case_data_for_db(db, run_config):
         domain=run_config.domain,
         server_modified_on__gte=run_config.start_date,
         server_modified_on__lte=run_config.end_date,
-    ).values_list('case_id', 'server_modified_on')
+    ).values_list('case_id', 'type', 'server_modified_on')
 
 
 def _get_es_modified_dates(domain, case_ids):
