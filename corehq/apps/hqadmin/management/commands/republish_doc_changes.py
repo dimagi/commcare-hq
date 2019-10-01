@@ -47,6 +47,7 @@ class Command(BaseCommand):
                 form_records.append(record)
 
         _publish_cases(domain, case_records)
+        _publish_forms(domain, form_records)
 
 
 def _get_document_records(doc_ids_file):
@@ -65,6 +66,13 @@ def _publish_cases(domain, case_records):
         _publish_cases_for_sql(domain, case_records)
     else:
         _publish_cases_for_couch(domain, [c.doc_id for c in case_records])
+
+
+def _publish_forms(domain, form_records):
+    if should_use_sql_backend(domain):
+        _publish_forms_for_sql(domain, form_records)
+    else:
+        raise CommandError("Republishing forms for couch domains is not supported yet!")
 
 
 def _publish_cases_for_couch(domain, case_ids):
@@ -111,6 +119,26 @@ def _change_meta_for_sql_case(domain, case_id, case_type):
         data_source_name=data_sources.CASE_SQL,
         document_type=CASE_DOC_TYPE,
         document_subtype=case_type,
+        domain=domain,
+        is_deletion=False,
+    )
+
+
+def _publish_forms_for_sql(domain, form_records):
+    for record in form_records:
+        producer.send_change(
+            topics.FORM_SQL,
+            _change_meta_for_sql_form_record(domain, record)
+        )
+
+
+def _change_meta_for_sql_form_record(domain, form_record):
+    return ChangeMeta(
+        document_id=form_record.doc_id,
+        data_source_type=data_sources.SOURCE_SQL,
+        data_source_name=data_sources.FORM_SQL,
+        document_type=FORM_DOC_TYPE,
+        document_subtype=form_record.doc_subtype,
         domain=domain,
         is_deletion=False,
     )
