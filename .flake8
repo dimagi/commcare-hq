@@ -1,5 +1,4 @@
-# https://github.com/timothycrosley/isort/wiki/isort-Settings
-[settings]
+[isort]
 multi_line_output=3
 include_trailing_comma=true
 
