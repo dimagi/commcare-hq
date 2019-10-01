@@ -19,17 +19,16 @@ class DailyFeedingFormsChildHealthAggregationDistributedHelper(BaseICDSAggregati
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
         agg_query, agg_params = self.aggregation_query()
 
-        cursor.execute(drop_query, drop_params)
-        cursor.execute(agg_query, agg_params)
-
-    def drop_table_query(self):
-        return (
+        cursor.execute(
             f'DELETE FROM "{self.tablename}" WHERE month=%(month)s',
             {'month': month_formatter(self.month)}
         )
+        cursor.execute(agg_query, agg_params)
+
+    def drop_table_query(self):
+        raise NotImplementedError
 
     def aggregation_query(self):
         current_month_start = month_formatter(self.month)
