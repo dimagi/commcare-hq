@@ -3,17 +3,8 @@ from functools import lru_cache
 from pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
 )
-from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
-from pillowtop.reindexer.change_providers.django_model import (
-    DjangoModelChangeProvider,
-)
-from pillowtop.reindexer.reindexer import (
-    ElasticPillowReindexer,
-    ReindexerFactory,
-    ResumableBulkElasticPillowReindexer,
-)
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (
@@ -22,14 +13,8 @@ from corehq.apps.change_feed.consumer.feed import (
 )
 from corehq.apps.export.models.new import LedgerSectionEntry
 from corehq.apps.locations.models import SQLLocation
-from corehq.elastic import get_es_new
-from corehq.form_processor.backends.sql.dbaccessors import (
-    LedgerReindexAccessor,
-)
-from corehq.form_processor.change_publishers import change_meta_from_ledger_v1
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
-from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.quickcache import quickcache
 
 
@@ -118,55 +103,4 @@ def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', 
         change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
-    )
-
-
-class LedgerV2ReindexerFactory(ReindexerFactory):
-    slug = 'ledger-v2'
-    arg_contributors = [
-        ReindexerFactory.resumable_reindexer_args,
-        ReindexerFactory.elastic_reindexer_args,
-        ReindexerFactory.domain_arg,
-    ]
-
-    def build(self):
-        domain = self.options.pop('domain', None)
-        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}".format(
-            LEDGER_INDEX_INFO.index, domain or 'all'
-        )
-        doc_provider = SqlDocumentProvider(iteration_key, LedgerReindexAccessor(domain=domain))
-        return ResumableBulkElasticPillowReindexer(
-            doc_provider,
-            elasticsearch=get_es_new(),
-            index_info=LEDGER_INDEX_INFO,
-            doc_transform=_prepare_ledger_for_es,
-            **self.options
-        )
-
-
-class LedgerV1ReindexerFactory(ReindexerFactory):
-    slug = 'ledger-v1'
-    arg_contributors = [
-        ReindexerFactory.elastic_reindexer_args,
-    ]
-
-    def build(self):
-        from corehq.apps.commtrack.models import StockState
-        return ElasticPillowReindexer(
-            pillow_or_processor=get_ledger_to_elasticsearch_pillow(),
-            change_provider=DjangoModelChangeProvider(StockState, _ledger_v1_to_change),
-            elasticsearch=get_es_new(),
-            index_info=LEDGER_INDEX_INFO,
-            **self.options
-        )
-
-
-def _ledger_v1_to_change(stock_state):
-    return Change(
-        id=stock_state.pk,
-        sequence_id=None,
-        document=stock_state.to_json(),
-        deleted=False,
-        metadata=change_meta_from_ledger_v1(stock_state),
-        document_store=None,
     )
