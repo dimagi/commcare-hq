@@ -14,6 +14,7 @@ def run_status_logger(log_status, get_status, status_interval):
     :returns: A function that stops the logger loop.
     """
     def status_logger():
+        log_status(get_status())
         while not exit.wait(timeout=status_interval):
             log_status(get_status())
         log_status(get_status())
