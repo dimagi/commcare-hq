@@ -3,7 +3,6 @@ import doctest
 import json
 import os
 import uuid
-import warnings
 
 from django.test import SimpleTestCase, TestCase
 
@@ -41,7 +40,6 @@ from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.value_source import (
     CaseTriggerInfo,
     get_case_location,
-    get_form_question_values,
 )
 from corehq.util.test_utils import TestFileMixin, _create_case
 
@@ -253,58 +251,6 @@ class GetPatientByUuidTests(SimpleTestCase):
     def test_valid_uuid(self):
         patient = get_patient_by_uuid(self.requests, uuid='c83d9989-585f-4db3-bf55-ca1d0ee7c0af')
         self.assertEqual(patient, self.patient)
-
-
-class GetFormQuestionValuesTests(SimpleTestCase):
-
-    def test_unicode_answer(self):
-        value = get_form_question_values({'form': {'foo': {'bar': 'b\u0105z'}}})
-        self.assertEqual(value, {'/data/foo/bar': 'b\u0105z'})
-
-    def test_utf8_answer(self):
-        value = get_form_question_values({'form': {'foo': {'bar': b'b\xc4\x85z'}}})
-        self.assertEqual(value, {'/data/foo/bar': b'b\xc4\x85z'})
-
-    def test_unicode_question(self):
-        value = get_form_question_values({'form': {'foo': {'b\u0105r': 'baz'}}})
-        self.assertEqual(value, {'/data/foo/b\u0105r': 'baz'})
-
-    def test_utf8_question(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UnicodeWarning)
-            value = get_form_question_values({'form': {'foo': {b'b\xc4\x85r': 'baz'}}})
-        self.assertEqual(value, {'/data/foo/b\u0105r': 'baz'})
-
-    def test_received_on(self):
-        value = get_form_question_values({
-            'form': {
-                'foo': {'bar': 'baz'},
-            },
-            'received_on': '2018-11-06T18:30:00.000000Z',
-        })
-        self.assertDictEqual(value, {
-            '/data/foo/bar': 'baz',
-            '/metadata/received_on': '2018-11-06T18:30:00.000000Z',
-        })
-
-    def test_metadata(self):
-        value = get_form_question_values({
-            'form': {
-                'foo': {'bar': 'baz'},
-                'meta': {
-                    'timeStart': '2018-11-06T18:00:00.000000Z',
-                    'timeEnd': '2018-11-06T18:15:00.000000Z',
-                    'spam': 'ham',
-                },
-            },
-            'received_on': '2018-11-06T18:30:00.000000Z',
-        })
-        self.assertDictEqual(value, {
-            '/data/foo/bar': 'baz',
-            '/metadata/timeStart': '2018-11-06T18:00:00.000000Z',
-            '/metadata/timeEnd': '2018-11-06T18:15:00.000000Z',
-            '/metadata/received_on': '2018-11-06T18:30:00.000000Z',
-        })
 
 
 class ExportOnlyTests(SimpleTestCase):
