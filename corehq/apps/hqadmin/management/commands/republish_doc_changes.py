@@ -46,7 +46,7 @@ class Command(BaseCommand):
                 assert record.doc_type == FORM_DOC_TYPE
                 form_records.append(record)
 
-        _publish_cases(domain, [d.doc_id for d in case_records])
+        _publish_cases(domain, case_records)
 
 
 def _get_document_records(doc_ids_file):
@@ -60,11 +60,11 @@ def _get_document_records(doc_ids_file):
             yield DocumentRecord(doc_id, doc_type, doc_subtype)
 
 
-def _publish_cases(domain, case_ids):
+def _publish_cases(domain, case_records):
     if should_use_sql_backend(domain):
-        _publish_cases_for_sql(domain, case_ids)
+        _publish_cases_for_sql(domain, case_records)
     else:
-        _publish_cases_for_couch(domain, case_ids)
+        _publish_cases_for_couch(domain, [c.doc_id for c in case_records])
 
 
 def _publish_cases_for_couch(domain, case_ids):
@@ -76,9 +76,20 @@ def _publish_cases_for_couch(domain, case_ids):
             )
 
 
-def _publish_cases_for_sql(domain, case_ids):
-    for id_chunk in chunked(case_ids, 10000):
+def _publish_cases_for_sql(domain, case_records):
+    records_with_types = filter(lambda r: r.doc_subtype, case_records)
+    records_with_no_types = filter(lambda r: not r.doc_subtype, case_records)
+    # if we already had a type just publish as-is
+    for record in records_with_types:
+        producer.send_change(
+            topics.CASE_SQL,
+            _change_meta_for_sql_case(domain, record.doc_id, record.doc_subtype)
+        )
+
+    # else lookup the type from the database
+    for record_chunk in chunked(records_with_no_types, 10000):
         # databases will contain a mapping of shard database ids to case_ids in that DB
+        id_chunk = [r.doc_id for r in record_chunk]
         databases = ShardAccessor.get_docs_by_database(id_chunk)
         for db, doc_ids in databases.items():
             results = CommCareCaseSQL.objects.using(db).filter(
