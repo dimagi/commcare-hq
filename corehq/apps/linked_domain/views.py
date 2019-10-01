@@ -92,7 +92,7 @@ def brief_apps(request, domain):
 @login_or_api_key
 @require_linked_domain
 def released_app_versions(request, domain):
-    return JsonResponse({'versions': get_latest_released_app_versions_by_app_id(domain, include_remote=False)})
+    return JsonResponse({'versions': get_latest_released_app_versions_by_app_id(domain)})
 
 
 @login_or_api_key
