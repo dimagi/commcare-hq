@@ -19,4 +19,3 @@ FormES = forms.FormES
 GroupES = groups.GroupES
 UserES = users.UserES
 CaseSearchES = case_search.CaseSearchES
-LedgerES = ledgers.LedgerES
