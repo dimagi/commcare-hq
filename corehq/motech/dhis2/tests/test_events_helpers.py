@@ -7,10 +7,10 @@ from fakecouch import FakeCouchDb
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import WebUser
-from corehq.motech.dhis2.const import DHIS2_DATA_TYPE_DATE
+from corehq.motech.dhis2.const import DHIS2_DATA_TYPE_DATE, LOCATION_DHIS_ID
 from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig
-from corehq.motech.dhis2.forms import Dhis2ConfigForm
 from corehq.motech.dhis2.events_helpers import get_event
+from corehq.motech.dhis2.forms import Dhis2ConfigForm
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
 
 DOMAIN = "dhis2-test"
@@ -31,7 +31,8 @@ class TestDhisHandler(TestCase):
             domain=domain.name,
             name='test location',
             location_id='test_location',
-            location_type=location_type
+            location_type=location_type,
+            metadata={LOCATION_DHIS_ID: "dhis2_location_id"},
         )
 
         cls.user = WebUser.create(domain.name, 'test', 'passwordtest')
@@ -80,8 +81,8 @@ class TestDhisHandler(TestCase):
                     'external_data_type': DHIS2_DATA_TYPE_DATE
                 },
                 'org_unit_id': {
-                    'doc_type': 'ConstantString',
-                    'value': 'dhis2_location_id'
+                    'doc_type': 'FormUserAncestorLocationField',
+                    'location_field': LOCATION_DHIS_ID
                 },
                 'datavalue_maps': [
                     {
