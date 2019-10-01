@@ -17,8 +17,9 @@ from pillowtop.feed.interface import ChangeMeta
 
 class Command(BaseCommand):
     """
-    Republish case changes. Meant to be used in conjunction with stale_cases_in_es command
-            $ ./manage.py republish_couch_case_changes <DOMAIN> <case_ids.txt>
+    Republish doc changes. Meant to be used in conjunction with stale_data_in_es command
+
+        $ ./manage.py republish_doc_changes <DOMAIN> <doc_ids.txt>
     """
 
     def add_arguments(self, parser):

@@ -27,7 +27,7 @@ class Command(BaseCommand):
     Returns list of (doc_id, doc_type, doc_subtype, es_server_modified_on, couch_server_modified_on)
     tuples that are not updated in ES. Works for cases and forms.
 
-    Can be used in conjunction with republish_case_changes
+    Can be used in conjunction with republish_doc_changes
 
         1. Generate tuples not updated in ES with extra debug columns
         $ ./manage.py stale_data_in_es <DOMAIN> case form > stale_ids.txt
@@ -35,7 +35,7 @@ class Command(BaseCommand):
         (Can call with just "case" or "form" if only want to use one data model type)
 
         2. Republish case changes
-        $ ./manage.py republish_case_changes <DOMAIN> stale_ids.txt
+        $ ./manage.py republish_doc_changes <DOMAIN> stale_ids.txt
     """
     help = inspect.cleandoc(__doc__).split('\n')[0]
 
