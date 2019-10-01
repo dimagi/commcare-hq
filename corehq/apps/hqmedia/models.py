@@ -715,7 +715,10 @@ class FormMediaMixin(MediaMixin):
         # Form questions
         parsed = self.wrapped_xform()
         if parsed.exists():
-            self.validate_form()
+            try:
+                self.validate_form()
+            except (XFormValidationError, XFormException):
+                return media
             for image in parsed.image_references(lang=lang):
                 if image:
                     media.append(ApplicationMediaReference(image, media_class=CommCareImage, **kwargs))
@@ -768,9 +771,11 @@ class ApplicationMediaMixin(Document, MediaMixin):
             media.extend(module.all_media(lang=lang))
             for form in module.get_forms():
                 try:
-                    media.extend(form.all_media(lang=lang))
+                    form.validate_form()
                 except (XFormValidationError, XFormException):
                     self.media_form_errors = True
+                else:
+                    media.extend(form.all_media(lang=lang))
         return media
 
     def multimedia_map_for_build(self, build_profile=None, remove_unused=False):
