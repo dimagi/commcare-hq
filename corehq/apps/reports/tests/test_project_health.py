@@ -191,7 +191,6 @@ class ProjectHealthDashboardTest(SetupProjectPerformanceMixin, TestCase):
     def tearDownClass(cls):
         super(ProjectHealthDashboardTest, cls).tearDownClass()
         cls.class_teardown()
-        cls.web_user.delete()
         GroupESFake.reset_docs()
 
     @classmethod
