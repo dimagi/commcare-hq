@@ -27,10 +27,10 @@ class Command(BaseCommand):
     Returns list of (case_id, es_server_modified_on, couch_server_modified_on)
         tuples that are not updated in ES
 
-        Can be used in conjunction with republish_couch_case_changes
+        Can be used in conjunction with republish_case_changes
 
-        1. Generate couch case tuples not updated in ES with extra debug columns
-        $ ./manage.py stale_cases_in_es <DOMAIN> > case_ids_info.txt
+        1. Generate case tuples not updated in ES with extra debug columns
+        $ ./manage.py stale_cases_in_es <DOMAIN> > case_ids.txt
 
         2. Republish case changes
         $ ./manage.py republish_case_changes <DOMAIN> case_ids.txt
