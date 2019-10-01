@@ -1745,12 +1745,6 @@ MANAGE_CCZ_HOSTING = StaticToggle(
     [NAMESPACE_USER]
 )
 
-LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
-    'load_dashboard_from_citus',
-    'Use CitusDB for loading ICDS Dashboard',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
 
 PARALLEL_AGGREGATION = StaticToggle(
     'parallel_agg',
