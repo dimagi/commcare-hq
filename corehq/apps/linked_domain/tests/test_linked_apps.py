@@ -561,13 +561,16 @@ class TestLinkedAppsWithShadowForms(TestCase):
         linked_app = self._make_linked_app(upstream_app.domain)
 
         linked_app = overwrite_app(linked_app, upstream_app, {})
-        original_fingerprints = self._get_form_fingerprints(linked_app)
+        original_forms = sorted(linked_app.get_forms(), key=lambda form: form.name['en'])
 
         linked_app = overwrite_app(linked_app, upstream_app, {})
-        self.assertItemsEqual(
-            original_fingerprints,
-            self._get_form_fingerprints(linked_app)
-        )
+        updated_forms = sorted(linked_app.get_forms(), key=lambda form: form.name['en'])
+
+        for original, updated in zip(original_forms, updated_forms):
+            self.assertEqual(original.name, updated.name)
+            self.assertEqual(original.xmlns, updated.xmlns)
+            if original.form_type != 'shadow_form':
+                self.assertEqual(original.unique_id, updated.unique_id)
 
     def _make_app_with_shadow_forms(self):
         factory = AppFactory('upstream', "Upstream App", include_xmlns=True)
@@ -597,8 +600,3 @@ class TestLinkedAppsWithShadowForms(TestCase):
         self.addCleanup(linked_app.delete)
         self.addCleanup(domain_link.delete)
         return linked_app
-
-    @staticmethod
-    def _get_form_fingerprints(app):
-        return [(form.name['en'], form.unique_id, form.xmlns, form['xmlns'])
-                for form in app.get_forms()]
