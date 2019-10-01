@@ -24,7 +24,7 @@ RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date'])
 
 class Command(BaseCommand):
     """
-    Returns list of (doc_id, es_server_modified_on, couch_server_modified_on)
+    Returns list of (doc_id, doc_type, doc_subtype, es_server_modified_on, couch_server_modified_on)
         tuples that are not updated in ES
 
         Can be used in conjunction with republish_case_changes
@@ -63,7 +63,7 @@ class Command(BaseCommand):
         for data_model in data_models:
             if data_model.lower() == 'case':
                 for case_id, case_type, es_date, primary_date in get_server_modified_on_for_domain(run_config):
-                    print(f"{case_id},{case_type},{es_date},{primary_date}")
+                    print(f"{case_id},CommCareCase,{case_type},{es_date},{primary_date}")
             else:
                 raise CommandError('Only valid option for data models is "case"')
 
