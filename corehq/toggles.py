@@ -1,6 +1,6 @@
 import hashlib
-import inspect
 import math
+import inspect
 from collections import namedtuple
 from functools import wraps
 
