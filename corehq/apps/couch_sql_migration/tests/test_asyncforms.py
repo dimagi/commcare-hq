@@ -1,6 +1,8 @@
 from django.test import SimpleTestCase
 
 import attr
+import gevent
+from mock import patch
 
 from .. import asyncforms as mod
 from ..statedb import StateDB
@@ -31,6 +33,41 @@ class TestAsyncFormProcessor(SimpleTestCase):
         self.assertEqual(migrated, forms)
         with statedb.pop_resume_state(type(queue).__name__, None) as unprocessed:
             self.assertEqual(unprocessed, [])
+
+    def test_retry_form(self):
+        def get_case_ids(form):
+            if retrying:
+                raise mod.socket.gaierror("network didn't work")
+            return form.case_ids
+
+        def spawn_later(delay, func, *args):
+            retries.append(delay)
+            return gevent.spawn(func, *args)
+
+        def migrate_form(form, case_ids):
+            migrated.append(form)
+
+        def get_forms(ids):
+            assert ids == [form.form_id], ids
+            return [form]
+
+        form = Form(1)
+        retries = []
+        migrated = []
+        statedb = StateDB.init(":memory:")
+        with patch.object(mod, "get_case_ids", get_case_ids), \
+                patch.object(mod.gevent, "spawn_later", spawn_later), \
+                patch.object(mod.FormAccessorCouch, "get_forms", get_forms):
+            retrying = True
+            with mod.AsyncFormProcessor(statedb, migrate_form) as queue:
+                queue._try_to_process_form(form)
+            self.assertEqual(retries, [2, 4, 8, 16, 32, 64, 128, 256])
+            self.assertEqual(migrated, [])
+
+            retrying = False
+            with mod.AsyncFormProcessor(statedb, migrate_form) as queue:
+                pass
+            self.assertEqual(migrated, [form])
 
 
 class TestLockingQueues(SimpleTestCase):
