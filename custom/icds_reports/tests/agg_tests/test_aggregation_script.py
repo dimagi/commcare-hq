@@ -18,7 +18,7 @@ from custom.icds_reports.models.aggregate import (
     get_cursor,
     maybe_atomic,
 )
-from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
+from custom.icds_reports.tests.agg_tests import OUTPUT_PATH, CSVTestCase
 from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     LocationAggregationDistributedHelper,
