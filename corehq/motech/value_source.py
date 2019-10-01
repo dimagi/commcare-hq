@@ -290,6 +290,7 @@ class FormUserAncestorLocationField(ValueSource):
     where the metadata value is set.
     """
     location_field = StringProperty()
+
     def _get_commcare_value(self, case_trigger_info):
         user_id = case_trigger_info.form_question_values.get('/metadata/userID')
         location = get_owner_location(case_trigger_info.domain, user_id)
@@ -335,12 +336,7 @@ def get_form_question_values(form_json):
 
     metadata = {}
     if 'meta' in form_json[TAG_FORM]:
-        if 'timeStart' in form_json[TAG_FORM][TAG_META]:
-            metadata['timeStart'] = form_json[TAG_FORM][TAG_META]['timeStart']
-        if 'timeEnd' in form_json[TAG_FORM][TAG_META]:
-            metadata['timeEnd'] = form_json[TAG_FORM][TAG_META]['timeEnd']
-        if 'userID' in form_json[TAG_FORM][TAG_META]:
-            metadata['userID'] = form_json[TAG_FORM][TAG_META]
+        metadata.update(form_json[TAG_FORM][TAG_META])
     if 'received_on' in form_json:
         metadata['received_on'] = form_json['received_on']
     if metadata:
