@@ -390,7 +390,8 @@ def get_patient(requests, domain, info, openmrs_config):
     return patient
 
 
-def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields):
+def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields,
+                                             form_question_values=None):
     result = []
     case_blocks = extract_case_blocks(form_json)
     cases = CaseAccessors(domain).get_cases(
@@ -407,7 +408,7 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
                 created='create' in case_block,
                 closed='close' in case_block,
                 extra_fields={field: case.get_case_property(field) for field in extra_fields},
-                form_question_values={}
+                form_question_values=form_question_values or {},
             ))
     return result
 
