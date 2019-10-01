@@ -26,20 +26,6 @@ def _location_id_for_case(case_id):
         return None
 
 
-def _prepare_ledger_for_es(ledger):
-    from corehq.apps.commtrack.models import CommtrackConfig
-    commtrack_config = CommtrackConfig.for_domain(ledger['domain'])
-
-    if commtrack_config and commtrack_config.use_auto_consumption:
-        daily_consumption = _get_daily_consumption_for_ledger(ledger)
-        ledger['daily_consumption'] = daily_consumption
-
-    if not ledger.get('location_id') and ledger.get('case_id'):
-        ledger['location_id'] = _location_id_for_case(ledger['case_id'])
-
-    _update_ledger_section_entry_combinations(ledger)
-
-
 def _get_daily_consumption_for_ledger(ledger):
     from corehq.apps.commtrack.consumption import get_consumption_for_ledger_json
     daily_consumption = get_consumption_for_ledger_json(ledger)
@@ -81,7 +67,18 @@ def _get_ledger_section_combinations(domain):
 class LedgerProcessor(PillowProcessor):
 
     def process_change(self, change):
-        _prepare_ledger_for_es(change.get_document())
+        ledger = change.get_document()
+        from corehq.apps.commtrack.models import CommtrackConfig
+        commtrack_config = CommtrackConfig.for_domain(ledger['domain'])
+
+        if commtrack_config and commtrack_config.use_auto_consumption:
+            daily_consumption = _get_daily_consumption_for_ledger(ledger)
+            ledger['daily_consumption'] = daily_consumption
+
+        if not ledger.get('location_id') and ledger.get('case_id'):
+            ledger['location_id'] = _location_id_for_case(ledger['case_id'])
+
+        _update_ledger_section_entry_combinations(ledger)
 
 
 def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', num_processes=1,
