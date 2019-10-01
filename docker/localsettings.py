@@ -85,7 +85,7 @@ if USE_PARTITIONED_DATABASE:
 
 # See CITUSDB_SETUP.md for explanation
 DATABASES.update({
-    'icds-ucr': {
+    'icds-ucr-citus': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'DISABLE_SERVER_SIDE_CURSORS': True,
         'NAME': 'commcare_ucr_citus',
