@@ -605,7 +605,8 @@ class FormAccessorSQL(AbstractFormAccessor):
         """
         Save a previously unsaved form
         """
-        assert not form.is_saved(), 'form already saved'
+        if form.is_saved():
+            raise XFormSaveError('form already saved')
         logging.debug('Saving new form: %s', form)
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
