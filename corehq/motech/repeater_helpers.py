@@ -1,7 +1,20 @@
+import attr
+
 from casexml.apps.case.xform import extract_case_blocks
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.value_source import CaseTriggerInfo
+
+
+@attr.s
+class RepeaterResponse:
+    """
+    Ducktypes an HTTP response for Repeater.handle_response(),
+    RepeatRecord.handle_success() and RepeatRecord.handle_failure()
+    """
+    status_code = attr.ib()
+    reason = attr.ib()
+    text = attr.ib(default="")
 
 
 def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields,
