@@ -278,6 +278,11 @@
       },
       "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
     },
+    "sql_column_indexes": [
+      {
+        "column_ids": ["state_id", "timeend"]
+      }
+    ],
     "disable_destructive_rebuild": true
   }
 }
