@@ -4361,7 +4361,7 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
                             stocks_list.append(data_dict)
                             added_products_for_locations[location_id] = [product_data]
 
-                stocks_list_to_return = sorted(stocks_list, key=lambda x: x['location_id'])
+            stocks_list_to_return = sorted(stocks_list, key=lambda x: x['location_id'])
 
             return stocks_list_to_return
 
