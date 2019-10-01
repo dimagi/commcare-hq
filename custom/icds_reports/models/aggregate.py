@@ -422,6 +422,8 @@ class AggAwc(models.Model, AggregateMixin):
     infra_type_of_building_kuccha = models.IntegerField(null=True)
     infra_type_of_building_partial_covered_space = models.IntegerField(null=True)
     infra_clean_water = models.IntegerField(null=True)
+    toilet_facility = models.IntegerField(null=True)
+    type_toilet = models.TextField(null=True)
     infra_functional_toilet = models.IntegerField(null=True)
     infra_baby_weighing_scale = models.IntegerField(null=True)
     infra_flat_weighing_scale = models.IntegerField(null=True)
@@ -1490,6 +1492,8 @@ class AggregateAwcInfrastructureForms(models.Model, AggregateMixin):
 
     awc_building = models.PositiveSmallIntegerField(null=True)
     source_drinking_water = models.PositiveSmallIntegerField(null=True)
+    toilet_facility = models.PositiveSmallIntegerField(null=True)
+    type_toilet = models.PositiveSmallIntegerField(null=True)
     toilet_functional = models.PositiveSmallIntegerField(null=True)
     electricity_awc = models.PositiveSmallIntegerField(null=True)
     adequate_space_pse = models.PositiveSmallIntegerField(null=True)
@@ -1504,7 +1508,6 @@ class AggregateAwcInfrastructureForms(models.Model, AggregateMixin):
     infantometer_usable = models.PositiveSmallIntegerField(null=True)
     medicine_kits_usable = models.PositiveSmallIntegerField(null=True)
     stadiometer_usable = models.PositiveSmallIntegerField(null=True)
-
     objects = CitusComparisonManager()
 
     class Meta(object):
