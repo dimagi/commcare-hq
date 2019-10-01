@@ -1730,13 +1730,6 @@ PARTIAL_UI_TRANSLATIONS = StaticToggle(
 )
 
 
-DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
-    'demo_workflow_v2_ab_variant',
-    'Enables the "variant" version of the Demo Workflow A/B test after login',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_USER],
-)
-
 PARALLEL_MPR_ASR_REPORT = StaticToggle(
     'parallel_mpr_asr_report',
     'Release parallel loading of MPR and ASR report',

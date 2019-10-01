@@ -60,6 +60,9 @@ from soil import DownloadBase
 from soil import views as soil_views
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.decorators import (
+    always_allow_project_access,
+)
 from corehq.apps.analytics import ab_tests
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -181,6 +184,7 @@ def not_found(request, template_name='404.html'):
 
 @require_GET
 @location_safe
+@always_allow_project_access
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated:
         if domain != None:

@@ -1778,15 +1778,15 @@ class EnterprisePlanContactForm(forms.Form):
             'company_name',
             'message',
             hqcrispy.FormActions(
-                StrictButton(
-                    _("Request Quote"),
-                    type="submit",
-                    css_class="btn-primary",
-                ),
                 hqcrispy.LinkButton(
                     _("Select different plan"),
                     reverse(SelectPlanView.urlname, args=[self.domain]),
                     css_class="btn btn-default"
+                ),
+                StrictButton(
+                    _("Request Quote"),
+                    type="submit",
+                    css_class="btn-primary",
                 ),
             )
         )
@@ -1848,15 +1848,15 @@ class AnnualPlanContactForm(forms.Form):
             'company_name',
             'message',
             hqcrispy.FormActions(
-                StrictButton(
-                    _("Submit"),
-                    type="submit",
-                    css_class="btn-primary",
-                ),
                 hqcrispy.LinkButton(
                     _(back_button_text),
                     reverse(urlname, args=[self.domain]),
                     css_class="btn btn-default"
+                ),
+                StrictButton(
+                    _("Submit"),
+                    type="submit",
+                    css_class="btn-primary",
                 ),
             )
         )
