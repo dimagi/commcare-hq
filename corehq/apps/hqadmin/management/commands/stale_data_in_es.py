@@ -3,7 +3,7 @@ import inspect
 from collections import namedtuple
 
 import dateutil
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from datetime import datetime
 
 from corehq.form_processor.models import CommCareCaseSQL
@@ -24,13 +24,13 @@ RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date'])
 
 class Command(BaseCommand):
     """
-    Returns list of (case_id, es_server_modified_on, couch_server_modified_on)
+    Returns list of (doc_id, es_server_modified_on, couch_server_modified_on)
         tuples that are not updated in ES
 
         Can be used in conjunction with republish_case_changes
 
         1. Generate case tuples not updated in ES with extra debug columns
-        $ ./manage.py stale_cases_in_es <DOMAIN> > case_ids.txt
+        $ ./manage.py stale_data_in_es <DOMAIN> case > case_ids.txt
 
         2. Republish case changes
         $ ./manage.py republish_case_changes <DOMAIN> case_ids.txt
@@ -40,18 +40,23 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument('data_models', nargs='+',
+                            help='A list of data models to check. Valid options are "case"')
         parser.add_argument(
             '--start',
             action='store',
-            help='Only include cases modified after this date',
+            help='Only include data modified after this date',
         )
         parser.add_argument(
             '--end',
             action='store',
-            help='Only include cases modified before this date',
+            help='Only include data modified before this date',
         )
 
-    def handle(self, domain, **options):
+    def handle(self, domain, data_models, **options):
+        if ["case"] != data_models:
+            raise CommandError('Only valid option for data models is "case"')
+
         start = dateutil.parser.parse(options['start']) if options['start'] else datetime(2010, 1, 1)
         end = dateutil.parser.parse(options['end']) if options['end'] else datetime.utcnow()
         run_config = RunConfig(domain, start, end)
