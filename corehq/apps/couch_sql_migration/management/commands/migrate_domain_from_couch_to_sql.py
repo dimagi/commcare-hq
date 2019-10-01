@@ -26,9 +26,11 @@ from corehq.apps.couch_sql_migration.progress import (
     set_couch_sql_migration_not_started,
     set_couch_sql_migration_started,
 )
+from corehq.apps.couch_sql_migration.rewind import rewind_iteration_state
 from corehq.apps.couch_sql_migration.statedb import (
     Counts,
     delete_state_db,
+    init_state_db,
     open_state_db,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
@@ -52,6 +54,7 @@ log = logging.getLogger('main_couch_sql_datamigration')
 MIGRATE = "MIGRATE"
 COMMIT = "COMMIT"
 RESET = "reset"  # was --blow-away
+REWIND = "rewind"
 STATS = "stats"
 DIFF = "diff"
 
@@ -71,6 +74,7 @@ class Command(BaseCommand):
             MIGRATE,
             COMMIT,
             RESET,
+            REWIND,
             STATS,
             DIFF,
         ])
@@ -122,6 +126,7 @@ class Command(BaseCommand):
                 case diff queue will run in a separate process if this
                 option is not specified.
             ''')
+        parser.add_argument('--to', dest="rewind", help="Rewind iteration state.")
 
     def handle(self, domain, action, **options):
         if should_use_sql_backend(domain):
@@ -134,6 +139,7 @@ class Command(BaseCommand):
             "live_migrate",
             "diff_process",
             "rebuild_state",
+            "rewind",
         ]:
             setattr(self, opt, options[opt])
 
@@ -145,6 +151,8 @@ class Command(BaseCommand):
             raise CommandError("--rebuild-state only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
+        if action != REWIND and self.rewind:
+            raise CommandError("--to=... only allowed for `rewind`")
 
         assert Domain.get_by_name(domain), f'Unknown domain "{domain}"'
         slug = f"{action.lower()}-{domain}"
@@ -204,6 +212,12 @@ class Command(BaseCommand):
             print('-' * 50, "Diffs for {}".format(doc_type), '-' * 50)
             for diff in diffs:
                 print('[{}({})] {}'.format(doc_type, diff.doc_id, diff.json_diff))
+
+    def do_rewind(self, domain):
+        db = open_state_db(domain, self.state_dir)
+        assert os.path.exists(db.db_filepath), db.db_filepath
+        db = init_state_db(domain, self.state_dir)
+        rewind_iteration_state(db, domain, self.rewind)
 
     def print_stats(self, domain, short=True, diffs_only=False):
         status = get_couch_sql_migration_status(domain)

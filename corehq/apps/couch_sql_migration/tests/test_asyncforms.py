@@ -29,8 +29,8 @@ class TestAsyncFormProcessor(SimpleTestCase):
             # pool.spawn(...) will block in _finish_processing_queues
 
         self.assertEqual(migrated, forms)
-        unprocessed = statedb.pop_resume_state(type(queue).__name__, None)
-        self.assertEqual(unprocessed, [])
+        with statedb.pop_resume_state(type(queue).__name__, None) as unprocessed:
+            self.assertEqual(unprocessed, [])
 
 
 class TestLockingQueues(SimpleTestCase):

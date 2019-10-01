@@ -141,7 +141,7 @@ def _get_form_designer_view(request, domain, app, module, form):
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
 
-    vellum_options = _get_base_vellum_options(request, domain, app, context['lang'])
+    vellum_options = _get_base_vellum_options(request, domain, form, context['lang'])
     vellum_options['core'] = _get_vellum_core_context(request, domain, app, module, form, context['lang'])
     vellum_options['plugins'] = _get_vellum_plugins(domain, form, module)
     vellum_options['features'] = _get_vellum_features(request, domain, app)
@@ -223,12 +223,13 @@ def ping(request):
     return HttpResponse("pong")
 
 
-def _get_base_vellum_options(request, domain, app, displayLang):
+def _get_base_vellum_options(request, domain, form, displayLang):
     """
     Returns the base set of options that will be passed into Vellum
     when it is initialized.
     :param displayLang: --> derived from the base context
     """
+    app = form.get_app()
     return {
         'intents': {
             'templates': next(app_callout_templates),
@@ -245,7 +246,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
                 'video': reverse("hqmedia_uploader_video", args=[domain, app.id]),
                 'text': reverse("hqmedia_uploader_text", args=[domain, app.id]),
             },
-            'objectMap': app.get_object_map(),
+            'objectMap': app.get_object_map(multimedia_map=form.get_relevant_multimedia_map(app)),
             'sessionid': request.COOKIES.get('sessionid'),
         },
     }

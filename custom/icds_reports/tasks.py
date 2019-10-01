@@ -603,12 +603,7 @@ def _daily_attendance_table(day):
 
 @track_time
 def _agg_child_health_table(day):
-    db_alias = db_for_read_write(AggChildHealth)
-    with transaction.atomic(using=db_alias):
-        _run_custom_sql_script([
-            "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
-        ], day, db_alias=db_alias)
-        AggChildHealth.aggregate(force_to_date(day))
+    AggChildHealth.aggregate(force_to_date(day))
 
 
 @track_time

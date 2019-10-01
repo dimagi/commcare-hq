@@ -90,7 +90,8 @@ class CaseDiffQueue(object):
 
     def __enter__(self):
         self.statedb.set(ProcessNotAllowed.__name__, True)
-        self._load_resume_state()
+        with self.statedb.pop_resume_state(type(self).__name__, {}) as state:
+            self._load_resume_state(state)
         self._stop_status_logger = run_status_logger(
             log_status, self.get_status, self.status_interval)
         return self
@@ -99,6 +100,7 @@ class CaseDiffQueue(object):
         try:
             if exc_type is None:
                 self.process_remaining_diffs()
+            log.info("preparing to save resume state... DO NOT BREAK!")
         finally:
             self._save_resume_state()
             self._stop_status_logger()
@@ -269,9 +271,11 @@ class CaseDiffQueue(object):
                     pending[case_id] += processed_forms
             state["pending"] = dict(pending)
         if self.diff_batcher or self.diff_spawner or self.cases_to_diff:
-            state["to_diff"] = list(chain.from_iterable(self.diff_batcher))
-            state["to_diff"].extend(chain.from_iterable(self.diff_spawner))
-            state["to_diff"].extend(self.cases_to_diff)
+            # use dict to approximate ordered set (remove duplicates)
+            to_diff = dict.fromkeys(chain.from_iterable(self.diff_batcher))
+            to_diff.update((k, None) for k in chain.from_iterable(self.diff_spawner))
+            to_diff.update((k, None) for k in self.cases_to_diff)
+            state["to_diff"] = list(to_diff)
         if self.num_diffed_cases:
             state["num_diffed_cases"] = self.num_diffed_cases
         self.statedb.set_resume_state(type(self).__name__, state)
@@ -280,8 +284,7 @@ class CaseDiffQueue(object):
         }
         log.info("saved %s state: %s", type(self).__name__, log_state)
 
-    def _load_resume_state(self):
-        state = self.statedb.pop_resume_state(type(self).__name__, {})
+    def _load_resume_state(self, state):
         if "num_diffed_cases" in state:
             self.num_diffed_cases = state["num_diffed_cases"]
         if "to_diff" in state:
@@ -303,7 +306,12 @@ class CaseDiffQueue(object):
             ),
             "cached": "%s/%s" % tuple(cache_hits),
             "loaded": (
-                len(self.cases) + sum(len(batch) for batch in self.diff_batcher)
+                len(self.cases)
+                + sum(len(batch) for batch in self.diff_batcher)
+                # subtract diff_spawner jobs because it blocks until
+                # diff_batcher starts the job; during that time
+                # batches will appear in both
+                - sum(len(batch) for batch in self.diff_spawner)
             ),
             "diffed": self.num_diffed_cases,
         }
@@ -398,7 +406,7 @@ class BatchProcessor(object):
                 if self._should_retry(key):
                     log.warn("retrying batch on error: %s: %s",
                         type(err).__name__, err)
-                    self._process_batch(process, key)
+                    gevent.spawn(self._process_batch, process, key)
                 else:
                     log.exception("batch processing error: %s: %s",
                         type(err).__name__, err)
@@ -648,7 +656,8 @@ def diff_ledgers(case_ids, statedb):
     }
     for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
         couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
-        diffs = json_diff(couch_state.to_json(), ledger_value.to_json(), track_list_indices=False)
+        couch_json = couch_state.to_json() if couch_state is not None else {}
+        diffs = json_diff(couch_json, ledger_value.to_json(), track_list_indices=False)
         statedb.add_diffs(
             'stock state', ledger_value.ledger_reference.as_id(),
             filter_ledger_diffs(diffs)
