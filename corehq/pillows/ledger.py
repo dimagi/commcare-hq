@@ -1,24 +1,36 @@
 from functools import lru_cache
 
+from pillowtop.checkpoints.manager import (
+    get_checkpoint_for_elasticsearch_pillow,
+)
+from pillowtop.feed.interface import Change
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors import PillowProcessor
+from pillowtop.reindexer.change_providers.django_model import (
+    DjangoModelChangeProvider,
+)
+from pillowtop.reindexer.reindexer import (
+    ElasticPillowReindexer,
+    ReindexerFactory,
+    ResumableBulkElasticPillowReindexer,
+)
+
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
 from corehq.apps.export.models.new import LedgerSectionEntry
 from corehq.apps.locations.models import SQLLocation
 from corehq.elastic import get_es_new
-from corehq.form_processor.backends.sql.dbaccessors import LedgerReindexAccessor
+from corehq.form_processor.backends.sql.dbaccessors import (
+    LedgerReindexAccessor,
+)
 from corehq.form_processor.change_publishers import change_meta_from_ledger_v1
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.quickcache import quickcache
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
-from pillowtop.feed.interface import Change
-from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import PillowProcessor
-from pillowtop.reindexer.change_providers.django_model import DjangoModelChangeProvider
-from pillowtop.reindexer.reindexer import (
-    ElasticPillowReindexer, ResumableBulkElasticPillowReindexer, ReindexerFactory
-)
 
 
 @quickcache(['case_id'])
