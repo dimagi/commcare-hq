@@ -4,18 +4,16 @@ import math
 from collections import namedtuple
 from functools import wraps
 
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from couchdbkit import ResourceNotFound
-
+from corehq.util.quickcache import quickcache
 from toggle.models import Toggle
 from toggle.shortcuts import set_toggle, toggle_enabled
-
-from corehq.util.quickcache import quickcache
 
 Tag = namedtuple('Tag', 'name css_class description')
 TAG_CUSTOM = Tag(
