@@ -64,6 +64,9 @@ class Command(BaseCommand):
             if data_model.lower() == 'case':
                 for case_id, case_type, es_date, primary_date in get_server_modified_on_for_domain(run_config):
                     print(f"{case_id},CommCareCase,{case_type},{es_date},{primary_date}")
+            elif data_model.lower() == 'form':
+                for form_id, xmlns, es_date, primary_date in get_stale_form_data(run_config):
+                    print(f"{form_id},XFormInstance,{xmlns},{es_date},{primary_date}")
             else:
                 raise CommandError('Only valid option for data models is "case"')
 
@@ -129,3 +132,16 @@ def _get_es_modified_dates(domain, case_ids):
             .case_ids(case_ids)
             .values_list('_id', 'server_modified_on'))
     return dict(results)
+
+
+def get_stale_form_data(run_config):
+    if should_use_sql_backend(run_config.domain):
+        return _get_stale_form_data_for_sql_backend(run_config)
+    else:
+        raise CommandError('Form data for couch domains is not supported!')
+
+
+def _get_stale_form_data_for_sql_backend(run_config):
+    # todo
+    return
+    yield
