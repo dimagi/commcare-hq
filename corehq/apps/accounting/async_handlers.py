@@ -250,7 +250,7 @@ class Select2CustomerInvoiceTriggerHandler(BaseSelect2AsyncHandler):
     @property
     def customer_account_response(self):
         accounts = BillingAccount.objects.filter(is_customer_billing_account=True).values_list('name', flat=True)
-        if self. search_string:
+        if self.search_string:
             search_string = self.search_string.lower()
             accounts = [x for x in accounts if x.lower().startswith(search_string)]
         return [(n, n) for n in accounts]
