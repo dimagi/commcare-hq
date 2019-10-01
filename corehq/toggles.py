@@ -1810,3 +1810,10 @@ GROUP_API_USE_ES_BACKEND = StaticToggle(
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
 )
+
+SESSION_MIDDLEWARE_LOGGING = StaticToggle(
+    'session_middleware_logging',
+    'Log all session object method calls on this domain',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
