@@ -14,7 +14,7 @@ from corehq.util.quickcache import quickcache
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.processors import PillowProcessor
 from pillowtop.reindexer.change_providers.django_model import DjangoModelChangeProvider
 from pillowtop.reindexer.reindexer import (
     ElasticPillowReindexer, ResumableBulkElasticPillowReindexer, ReindexerFactory
@@ -41,8 +41,6 @@ def _prepare_ledger_for_es(ledger):
         ledger['location_id'] = _location_id_for_case(ledger['case_id'])
 
     _update_ledger_section_entry_combinations(ledger)
-
-    return ledger
 
 
 def _get_daily_consumption_for_ledger(ledger):
@@ -83,15 +81,20 @@ def _get_ledger_section_combinations(domain):
     return list(LedgerSectionEntry.objects.filter(domain=domain).values_list('section_id', 'entry_id').all())
 
 
+class LedgerProcessor(PillowProcessor):
+
+    def process_change(self, change):
+        _prepare_ledger_for_es(change.get_document())
+
+
 def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', num_processes=1,
                                        process_num=0, **kwargs):
+    """
+    This pillow's id references Elasticsearch, but it no longer saves to ES.
+    It has been kept to keep the checkpoint consistent, and can be changed at any time.
+    """
     assert pillow_id == 'LedgerToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, LEDGER_INDEX_INFO, [topics.LEDGER])
-    processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=LEDGER_INDEX_INFO,
-        doc_prep_fn=_prepare_ledger_for_es
-    )
     change_feed = KafkaChangeFeed(
         topics=[topics.LEDGER], client_id='ledgers-to-es', num_processes=num_processes, process_num=process_num
     )
@@ -99,7 +102,7 @@ def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', 
         name=pillow_id,
         checkpoint=checkpoint,
         change_feed=change_feed,
-        processor=processor,
+        processor=LedgerProcessor(),
         change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
