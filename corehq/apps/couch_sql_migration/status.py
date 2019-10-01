@@ -1,6 +1,8 @@
 import gevent
 from gevent.event import Event
 
+from .util import exit_on_error
+
 
 def run_status_logger(log_status, get_status, status_interval):
     """Start a status logger loop in a greenlet
@@ -13,6 +15,7 @@ def run_status_logger(log_status, get_status, status_interval):
     :param status_interval: number of seconds between status logging.
     :returns: A function that stops the logger loop.
     """
+    @exit_on_error
     def status_logger():
         log_status(get_status())
         while not exit.wait(timeout=status_interval):

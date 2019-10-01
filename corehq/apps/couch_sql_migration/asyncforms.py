@@ -19,6 +19,7 @@ from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.exceptions import MissingFormXml
 
 from .status import run_status_logger
+from .util import exit_on_error
 
 log = logging.getLogger(__name__)
 POOL_SIZE = 15
@@ -96,11 +97,10 @@ class AsyncFormProcessor(object):
         elif self.queues.full:
             gevent.sleep()  # swap greenlets
 
+    @exit_on_error
     def _async_migrate_form(self, wrapped_form, case_ids):
-        try:
-            self.migrate_form(wrapped_form, case_ids)
-        finally:
-            self.queues.release_lock(wrapped_form)
+        self.migrate_form(wrapped_form, case_ids)
+        self.queues.release_lock(wrapped_form)
 
     def _try_to_empty_queues(self):
         while True:
@@ -309,6 +309,7 @@ class RetryForms(object):
                 raise TooManyUnprocessedForms
             return
 
+        @exit_on_error
         def process_form():
             self.workers.pop(form.form_id)
             self.process_form(form, retries)
