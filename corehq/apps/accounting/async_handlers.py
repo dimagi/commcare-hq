@@ -237,7 +237,7 @@ class Select2InvoiceTriggerHandler(BaseSelect2AsyncHandler):
         domain_names = [domain['key'] for domain in Domain.get_all(include_docs=False)]
         if self.search_string:
             search_string = self.search_string.lower()
-            domain_names = [x for x in domain_names if x.lower().startswith(search_string)]
+            domain_names = [x for x in domain_names if search_string in x.lower()]
         return [(d, d) for d in domain_names]
 
 
@@ -252,7 +252,7 @@ class Select2CustomerInvoiceTriggerHandler(BaseSelect2AsyncHandler):
         accounts = BillingAccount.objects.filter(is_customer_billing_account=True).values_list('name', flat=True)
         if self.search_string:
             search_string = self.search_string.lower()
-            accounts = [x for x in accounts if x.lower().startswith(search_string)]
+            accounts = [x for x in accounts if search_string in x.lower()]
         return [(n, n) for n in accounts]
 
 
