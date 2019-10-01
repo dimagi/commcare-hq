@@ -1,12 +1,12 @@
-DELETE FROM "icds_dashboard_daily_feeding_forms" WHERE month=%(month)s AND state_id = %(state)s
-{"month": "2019-01-01", "state": "st1"}
+DELETE FROM "icds_dashboard_daily_feeding_forms" WHERE month=%(month)s
+{"month": "2019-01-01"}
 
         INSERT INTO "icds_dashboard_daily_feeding_forms" (
           state_id, supervisor_id, month, case_id, latest_time_end_processed,
           sum_attended_child_ids, lunch_count
         ) (
           SELECT DISTINCT ON (ucr.child_health_case_id)
-            %(state_id)s AS state_id,
+            ucr.state_id AS state_id,
             ucr.supervisor_id,
             %(month)s AS month,
             ucr.child_health_case_id AS case_id,
@@ -18,10 +18,9 @@ DELETE FROM "icds_dashboard_daily_feeding_forms" WHERE month=%(month)s AND state
             ucr.supervisor_id = daily_attendance.supervisor_id AND
             daily_attendance.month=%(current_month_start)s
           )
-          WHERE ucr.state_id = %(state_id)s AND
-                ucr.timeend >= %(current_month_start)s AND ucr.timeend < %(next_month_start)s AND
+          WHERE ucr.timeend >= %(current_month_start)s AND ucr.timeend < %(next_month_start)s AND
                 ucr.child_health_case_id IS NOT NULL
           WINDOW w AS (PARTITION BY ucr.supervisor_id, ucr.child_health_case_id)
         )
         
-{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "state_id": "st1"}
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01"}
