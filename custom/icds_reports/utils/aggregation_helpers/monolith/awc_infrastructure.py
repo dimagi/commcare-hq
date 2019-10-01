@@ -13,7 +13,7 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
     column_names = (
         'supervisor_id',
         'timeend',
-        'awc_building', 'source_drinking_water', 'toilet_functional',
+        'awc_building', 'source_drinking_water', 'toilet_facility', 'type_toilet', 'toilet_functional',
         'electricity_awc', 'adequate_space_pse',
         'adult_scale_available', 'baby_scale_available', 'flat_scale_available',
         'adult_scale_usable', 'baby_scale_usable', 'cooking_utensils_usable',
@@ -85,7 +85,7 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
         return """
         INSERT INTO "{tablename}" (
             state_id, supervisor_id, month, awc_id, latest_time_end_processed,
-            awc_building, source_drinking_water, toilet_functional,
+            awc_building, source_drinking_water, toilet_facility, type_toilet, toilet_functional,
             electricity_awc, adequate_space_pse,
             adult_scale_available, baby_scale_available, flat_scale_available,
             adult_scale_usable, baby_scale_usable, cooking_utensils_usable,
@@ -99,6 +99,8 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
             ucr.timeend as latest_time_end_processed,
             ucr.awc_building as awc_building,
             ucr.source_drinking_water as source_drinking_water,
+            CASE WHEN ucr.toilet_facility=1 THEN 1 ELSE 0 END as toilet_facility,
+            ucr.type_toilet as type_toilet,
             ucr.toilet_functional as toilet_functional,
             ucr.electricity_awc as electricity_awc,
             ucr.adequate_space_pse as adequate_space_pse,

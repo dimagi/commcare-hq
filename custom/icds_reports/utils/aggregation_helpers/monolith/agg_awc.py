@@ -389,6 +389,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             infra_last_update_date = ut.infra_last_update_date,
             infra_type_of_building = ut.infra_type_of_building,
             infra_clean_water = ut.infra_clean_water,
+            toilet_facility = ut.toilet_facility,
+            type_toilet = ut.type_toilet,
             infra_functional_toilet = ut.infra_functional_toilet,
             infra_baby_weighing_scale = ut.infra_baby_weighing_scale,
             infra_adult_weighing_scale = ut.infra_adult_weighing_scale,
@@ -411,6 +413,13 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                   WHEN awc_building = 4 THEN 'partial_covered_space'
                 ELSE NULL END AS infra_type_of_building,
                 CASE WHEN source_drinking_water IN (1, 2, 3) THEN 1 ELSE 0 END AS infra_clean_water,
+                toilet_facility,
+                CASE
+                  WHEN type_toilet = 1 THEN 'Pit type (Latrine)'
+                  WHEN type_toilet = 2 THEN 'Only urinal'
+                  WHEN type_toilet = 3 THEN 'Flush system'
+                  WHEN type_toilet = 4 THEN 'Other'
+                ELSE NULL END AS type_toilet,
                 toilet_functional AS infra_functional_toilet,
                 baby_scale_usable AS infra_baby_weighing_scale,
                 GREATEST(adult_scale_available, adult_scale_usable, 0) AS infra_adult_weighing_scale,
@@ -534,6 +543,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('usage_awc_num_active',),
             ('infra_last_update_date', 'NULL'),
             ('infra_type_of_building', 'NULL'),
+            ('toilet_facility', 'NULL'),
+            ('type_toilet', 'NULL'),
             ('infra_clean_water',),
             ('infra_functional_toilet',),
             ('infra_baby_weighing_scale',),
