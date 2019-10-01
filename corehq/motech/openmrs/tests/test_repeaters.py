@@ -31,7 +31,6 @@ from corehq.motech.openmrs.repeater_helpers import (
     create_patient,
     find_or_create_patient,
     get_ancestor_location_openmrs_uuid,
-    get_case_location,
     get_case_location_ancestor_repeaters,
     get_patient_by_identifier,
     get_patient_by_uuid,
@@ -41,6 +40,7 @@ from corehq.motech.openmrs.repeater_helpers import (
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.value_source import (
     CaseTriggerInfo,
+    get_case_location,
     get_form_question_values,
 )
 from corehq.util.test_utils import TestFileMixin, _create_case
@@ -164,18 +164,23 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
             ),
             [
                 CaseTriggerInfo(
+                    domain='openmrs-repeater-test',
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+                    type='paciente',
+                    name='Elsa',
+                    owner_id=None,
+                    modified_by=None,
                     updates={
                         'case_name': 'Elsa',
                         'case_type': 'paciente',
-                        'estado_tarv': '1',
                         'owner_id': '9393007a6921eecd4a9f20eefb5c7a8e',
-                        'tb': '0',
+                        'estado_tarv': '1',
+                        'tb': '0'
                     },
                     created=True,
                     closed=False,
                     extra_fields={},
-                    form_question_values={},
+                    form_question_values={}
                 )
             ]
         )
@@ -194,10 +199,15 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
             ),
             [
                 CaseTriggerInfo(
+                    domain='openmrs-repeater-test',
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+                    type='paciente',
+                    name='Elsa',
+                    owner_id=None,
+                    modified_by=None,
                     updates={
                         'estado_tarv': '1',
-                        'tb': '1',
+                        'tb': '1'
                     },
                     created=False,
                     closed=False,
@@ -205,9 +215,9 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                         'name': 'Elsa',
                         'estado_tarv': '1',
                         'tb': '0',
-                        'bandersnatch': None,
+                        'bandersnatch': None
                     },
-                    form_question_values={},
+                    form_question_values={}
                 )
             ]
         )
@@ -454,7 +464,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=cape_town.location_id)
 
         self.assertEqual(
-            get_ancestor_location_openmrs_uuid(self.domain, case_id),
+            get_ancestor_location_openmrs_uuid(case),
             self.openmrs_capetown_uuid
         )
 
@@ -470,7 +480,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=gardens.location_id)
 
         self.assertEqual(
-            get_ancestor_location_openmrs_uuid(self.domain, case_id),
+            get_ancestor_location_openmrs_uuid(case),
             self.openmrs_capetown_uuid
         )
 
@@ -486,7 +496,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         case_id = uuid.uuid4().hex
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=joburg.location_id)
 
-        self.assertIsNone(get_ancestor_location_openmrs_uuid(self.domain, case_id))
+        self.assertIsNone(get_ancestor_location_openmrs_uuid(case))
 
     def test_get_case_location_ancestor_repeaters_same(self):
         """
