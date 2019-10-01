@@ -1,4 +1,6 @@
-from django.core.management import BaseCommand
+from collections import namedtuple
+
+from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
@@ -15,6 +17,13 @@ from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases impor
 from pillowtop.feed.interface import ChangeMeta
 
 
+DocumentRecord = namedtuple('DocumentRecord', ['doc_id', 'doc_type', 'doc_subtype'])
+
+
+CASE_DOC_TYPE = "CommCareCase"
+FORM_DOC_TYPE = "XFormInstance"
+
+
 class Command(BaseCommand):
     """
     Republish doc changes. Meant to be used in conjunction with stale_data_in_es command
@@ -24,17 +33,31 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('case_ids_file')
+        parser.add_argument('doc_ids_file')
 
-    def handle(self, domain, case_ids_file, *args, **options):
-        case_ids = _get_case_ids(case_ids_file)
-        _publish_cases(domain, case_ids)
+    def handle(self, domain, doc_ids_file, *args, **options):
+        document_records = _get_document_records(doc_ids_file)
+        form_records = []
+        case_records = []
+        for record in document_records:
+            if record.doc_type == CASE_DOC_TYPE:
+                case_records.append(record)
+            else:
+                assert record.doc_type == FORM_DOC_TYPE
+                form_records.append(record)
+
+        _publish_cases(domain, [d.doc_id for d in case_records])
 
 
-def _get_case_ids(case_ids_file):
-    with open(case_ids_file, 'r') as f:
+def _get_document_records(doc_ids_file):
+    with open(doc_ids_file, 'r') as f:
         lines = f.readlines()
-        return [l.split(',')[0].strip() for l in lines]
+        for l in lines:
+            doc_id, doc_type, doc_subtype = [val.strip() for val in l.split(',')[0:3]]
+            if doc_type not in [CASE_DOC_TYPE, FORM_DOC_TYPE]:
+                raise CommandError(f"Found bad doc type {doc_type}. "
+                                   "Did you use the right command to create the data?")
+            yield DocumentRecord(doc_id, doc_type, doc_subtype)
 
 
 def _publish_cases(domain, case_ids):
@@ -75,7 +98,7 @@ def _change_meta_for_sql_case(domain, case_id, case_type):
         document_id=case_id,
         data_source_type=data_sources.SOURCE_SQL,
         data_source_name=data_sources.CASE_SQL,
-        document_type='CommCareCase',
+        document_type=CASE_DOC_TYPE,
         document_subtype=case_type,
         domain=domain,
         is_deletion=False,
