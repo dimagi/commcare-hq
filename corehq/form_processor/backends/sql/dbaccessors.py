@@ -456,7 +456,7 @@ class FormAccessorSQL(AbstractFormAccessor):
                 name=attachment_name,
             )
         except BlobMeta.DoesNotExist:
-            raise AttachmentNotFound(attachment_name)
+            raise AttachmentNotFound(form_id, attachment_name)
 
     @staticmethod
     def get_attachment_content(form_id, attachment_name, stream=False):
@@ -910,7 +910,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 [case_id, attachment_name]
             )[0]
         except IndexError:
-            raise AttachmentNotFound(attachment_name)
+            raise AttachmentNotFound(case_id, attachment_name)
 
     @staticmethod
     def get_attachment_content(case_id, attachment_name):

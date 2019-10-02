@@ -1069,7 +1069,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
             bucket = self.blob_bucket
         else:
             if self.attachment_id is None:
-                raise AttachmentNotFound("cannot manipulate attachment on unidentified document")
+                raise AttachmentNotFound(self.case_id, self.name)
             bucket = os.path.join('case', self.attachment_id.hex)
         return os.path.join(bucket, self.blob_id)
 
@@ -1121,7 +1121,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
         try:
             return get_blob_db().get(key=self.key)
         except (KeyError, NotFound, BadName):
-            raise AttachmentNotFound(self.name)
+            raise AttachmentNotFound(self.case_id, self.name)
 
     @memoized
     def content_md5(self):
