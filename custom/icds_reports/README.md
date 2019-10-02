@@ -164,24 +164,6 @@ Currently number of queues on ICDS is 79
 
 The complementary feeding and PNC forms should give a good baseline for documents we haven't rebuilt before, as they have few related documents.
 
-Extracting forms references from case UCR data sources
-------------------------------------------------------
-
-### Steps
-
-1. Identify form xmlns to be extracted from either (or both) child_health or ccs_record tableau data sources
-2. Create a UCR data source for that form to collect the raw data necessary [Example here](https://github.com/dimagi/commcare-hq/blob/f19872d54fe482e130cdcf0f0c7e83eb1c894072/custom/icds_reports/ucr/data_sources/dashboard/postnatal_care_forms.json)
-3. Add tests using forms from the QA domain (icds-dashboard-qa on india) [Example here](https://github.com/dimagi/commcare-hq/blob/f19872d54fe482e130cdcf0f0c7e83eb1c894072/custom/icds_reports/ucr/tests/test_pnc_form_ucr.py)
-4. Add a model that will follow the same format as the tableau data sources (unique for case_id and month) [Example Here](https://github.com/dimagi/commcare-hq/blob/f19872d54fe482e130cdcf0f0c7e83eb1c894072/custom/icds_reports/models.py#L665-L725)
-5. Create an aggregation helper that will take data from the UCR data source and insert it into the aggregate table [Example Here](https://github.com/dimagi/commcare-hq/blob/f19872d54fe482e130cdcf0f0c7e83eb1c894072/custom/icds_reports/utils/aggregation.py#L229-L315)
-6. In that helper, write a query that compares it to the old data [Example Here](https://github.com/dimagi/commcare-hq/blob/f19872d54fe482e130cdcf0f0c7e83eb1c894072/custom/icds_reports/utils/aggregation.py#L317-L351)
-7. PR & deploy this.
-8. Build the UCR, likely using async_rebuild_table.
-9. Aggregate the data using `aggregate` on the model.
-10. Verify that the data is the same using `compare_with_old_data` on the model.
-11. Change the aggregation script to use the new tables.
-12. After some test time, remove the references to the old columns that you have replaced from the original tableau data source.
-
 Metrics to follow/tradeoff
 --------------------------
 Processing time
