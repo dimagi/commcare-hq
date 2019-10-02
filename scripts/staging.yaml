@@ -55,4 +55,5 @@ branches:
   - bmb/case-sharing  #Biyeun Aug 22
   - jls/turn-off-cdn-for-requirejs # Jenny Sept 16
   - bmb/new-plans  # Biyeun Sept 24
+  - nh/dhis2/te  # Norman Oct 2
 submodules: {}
