@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 
 from tastypie import fields, http
 from tastypie.authentication import ApiKeyAuthentication
@@ -17,6 +18,7 @@ from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
+from dimagi.utils.decorators.profile import profile
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
