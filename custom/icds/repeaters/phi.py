@@ -21,8 +21,8 @@ class SearchByParamsRepeater(BasePHIRepeater):
 
     def allowed_to_forward(self, payload):
         return (
-            super(SearchByParamsRepeater, self).allowed_to_forward(payload) and
-            not payload.get_case_property('phid_validated')
+            super(SearchByParamsRepeater, self).allowed_to_forward(payload)
+            and not payload.get_case_property('phid_validated')
         )
 
     def send_request(self, repeat_record, payload):
@@ -39,8 +39,8 @@ class ValidatePHIDRepeater(CaseRepeater):
 
     def allowed_to_forward(self, payload):
         return (
-            super(ValidatePHIDRepeater, self).allowed_to_forward(payload) and
-            payload.get_case_property('phid_for_beneficiary')
+            super(ValidatePHIDRepeater, self).allowed_to_forward(payload)
+            and payload.get_case_property('phid_for_beneficiary')
         )
 
     def send_request(self, repeat_record, payload):
