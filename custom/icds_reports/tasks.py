@@ -374,6 +374,7 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             '_agg_ls_table': _agg_ls_table,
             '_update_months_table': _update_months_table,
             '_daily_attendance_table': _daily_attendance_table,
+            '_aggregate_df_forms': _aggregate_df_forms,
             '_agg_child_health_table': _agg_child_health_table,
             '_ccs_record_monthly_table': _ccs_record_monthly_table,
             '_agg_ccs_record_table': _agg_ccs_record_table,
@@ -467,7 +468,7 @@ def _aggregate_gm_forms(state_id, day):
 
 @track_time
 def _aggregate_df_forms(day):
-    AggregateChildHealthDailyFeedingForms.aggregate(day)
+    AggregateChildHealthDailyFeedingForms.aggregate(force_to_date(day))
 
 
 @track_time
