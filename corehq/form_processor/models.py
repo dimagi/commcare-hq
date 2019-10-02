@@ -292,6 +292,7 @@ class AttachmentMixin(SaveStateMixin):
             for attachment in attachments:
                 if attachment.name == attachment_name:
                     return attachment
+            raise AttachmentNotFound(self.get_id, attachment_name)
 
         attachments = getattr(self, '_attachments_list', None)
         if attachments is not None:
@@ -547,13 +548,13 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def get_xml(self):
         try:
             return self.get_attachment('form.xml')
-        except NotFound:
+        except AttachmentNotFound:
             raise MissingFormXml(self.form_id)
 
     def xml_md5(self):
         try:
             return self.get_attachment_meta('form.xml').content_md5()
-        except NotFound:
+        except AttachmentNotFound:
             raise MissingFormXml(self.form_id)
 
     def archive(self, user_id=None, trigger_signals=True):
