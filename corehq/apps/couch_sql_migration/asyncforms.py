@@ -40,6 +40,7 @@ class AsyncFormProcessor(object):
             self.get_status,
             status_interval=1800,  # 30 minutes
         )
+        self._try_to_empty_queues()
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
@@ -62,7 +63,6 @@ class AsyncFormProcessor(object):
         for chunk in chunked(form_ids, 100, list):
             for form in FormAccessorCouch.get_forms(chunk):
                 self._try_to_process_form(form)
-        self._try_to_empty_queues()
 
     def process_xform(self, doc):
         """Process XFormInstance document asynchronously"""
