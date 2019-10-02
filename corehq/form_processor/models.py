@@ -282,8 +282,6 @@ class AttachmentMixin(SaveStateMixin):
         memory at once.
         """
         attachment = self.get_attachment_meta(attachment_name)
-        if not attachment:
-            raise AttachmentNotFound(attachment_name)
         with attachment.open() as content:
             return content.read()
 
