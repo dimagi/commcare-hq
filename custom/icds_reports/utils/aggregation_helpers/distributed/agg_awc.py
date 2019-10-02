@@ -70,7 +70,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             'no',
             5,
             CASE WHEN
-                (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
+                (count(*) filter (WHERE vhsnd_date_past_month is not null))>0
                 THEN 1 ELSE 0 END,
             CASE WHEN
                 (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
@@ -82,26 +82,20 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             0,
             0,
             CASE WHEN
-                (count(*) filter (WHERE 
-                                    date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s AND 
-                                    aww_present=1
-                                 ))>0
+                (count(*) filter (WHERE aww_present=1))>0
                 THEN 1 ELSE 0 END,
             CASE WHEN
-                (count(*) filter (WHERE 
-                                    date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s AND 
-                                    vit_a_given=1
-                                 ))>0
+                (count(*) filter (WHERE vit_a_given=1))>0
                 THEN 1 ELSE 0 END,
             CASE WHEN
-                (count(*) filter (WHERE 
-                                    date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s AND 
-                                    anc_today=1
-                                 ))>0
+                (count(*) filter (WHERE anc_today=1))>0
                 THEN 1 ELSE 0 END
             FROM awc_location_local awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
-            LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
+            LEFT JOIN "{vhnd_table}" vhnd_table on (
+                                                    awc_location.doc_id = vhnd_table.awc_id AND
+                                                    date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s
+                                                    )
             LEFT JOIN "{thr_v2_table}" thr_v2 on (awc_location.doc_id = thr_v2.awc_id AND
                                                 thr_v2.month = %(start_date)s
                                                 )
