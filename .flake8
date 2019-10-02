@@ -1,3 +1,8 @@
+[flake8]
+python = 3
+max-line-length = 115
+ignore = E128,E265,F403,W503,W1618  # http://pep8.readthedocs.org/en/latest/intro.html#error-codes
+
 [isort]
 multi_line_output=3
 include_trailing_comma=true
