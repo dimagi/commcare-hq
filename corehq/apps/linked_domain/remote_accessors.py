@@ -33,7 +33,8 @@ def get_user_roles(domain_link):
 
 
 def get_brief_apps(domain_link):
-    return _do_simple_request('linked_domain:brief_apps', domain_link)['brief_apps']
+    apps = _do_simple_request('linked_domain:brief_apps', domain_link)['brief_apps']
+    return [wrap_app(app) for app in apps]
 
 
 def get_case_search_config(domain_link):
