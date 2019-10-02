@@ -64,7 +64,7 @@ class GroupQuerySetAdapterES(object):
     def __getitem__(self, item):
         if isinstance(item, slice):
             limit = item.stop - item.start
-            result = GroupES().domain(self.domain).sort('name').size(limit).start(item.start).run()
+            result = GroupES().domain(self.domain).sort('name.exact').size(limit).start(item.start).run()
             groups = [Group.wrap(group) for group in result.hits]
 
             user_ids = {user_id for group in groups for user_id in group.users}
