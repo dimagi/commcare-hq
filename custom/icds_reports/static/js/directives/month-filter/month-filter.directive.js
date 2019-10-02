@@ -35,9 +35,9 @@ function MonthModalController($location, $uibModalInstance) {
     }
 
     if (vm.selectedYear === new Date().getFullYear()) {
-        var month_offset = new Date().getDate() < 3 ? 0 : 1;
+        var monthOffset = new Date().getDate() < 3 ? 0 : 1;
         vm.months = _.filter(vm.monthsCopy, function (month) {
-            return month.id <= new Date().getMonth() + month_offset;
+            return month.id <= new Date().getMonth() + monthOffset;
         });
         if (isSDD && vm.selectedYear === 2019) {
             vm.months.shift();
