@@ -391,6 +391,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             infra_clean_water = ut.infra_clean_water,
             toilet_facility = ut.toilet_facility,
             type_toilet = ut.type_toilet,
+            preschool_kit_available = ut.preschool_kit_available,
+            preschool_kit_usable = ut.preschool_kit_usable,
             infra_functional_toilet = ut.infra_functional_toilet,
             infra_baby_weighing_scale = ut.infra_baby_weighing_scale,
             infra_adult_weighing_scale = ut.infra_adult_weighing_scale,
@@ -420,6 +422,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                   WHEN type_toilet = 3 THEN 'Flush system'
                   WHEN type_toilet = 4 THEN 'Other'
                 ELSE NULL END AS type_toilet,
+                preschool_kit_available,
+                preschool_kit_usable,
                 toilet_functional AS infra_functional_toilet,
                 baby_scale_usable AS infra_baby_weighing_scale,
                 GREATEST(adult_scale_available, adult_scale_usable, 0) AS infra_adult_weighing_scale,
@@ -545,6 +549,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('infra_type_of_building', 'NULL'),
             ('toilet_facility', 'NULL'),
             ('type_toilet', 'NULL'),
+            ('preschool_kit_available',),
+            ('preschool_kit_usable',),
             ('infra_clean_water',),
             ('infra_functional_toilet',),
             ('infra_baby_weighing_scale',),
