@@ -31,6 +31,7 @@ class FormDataValueMap(DocumentSchema):
 class Dhis2FormConfig(DocumentSchema):
     xmlns = StringProperty(required=True)
     program_id = StringProperty(required=True)
+    program_stage_id = SchemaProperty(ValueSource, required=False)
     org_unit_id = SchemaProperty(ValueSource, required=False, default=FormUserAncestorLocationField(
         location_field=LOCATION_DHIS_ID
     ))
