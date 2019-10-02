@@ -90,7 +90,7 @@ If an appropriate data source does not exist, create one in the dashboard UCR fo
 
 New UCRs should have the following data:
 - Associated case or AWC id
-- State id
+- Supervisor/Sector id (if sharding the data source with Citus)
 - timeEnd (Only for forms. Tables should be partitioned on this attribute)
 - received_on (Only for forms)
 - data points from the app to be collected
