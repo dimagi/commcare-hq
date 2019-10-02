@@ -17,7 +17,7 @@ from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.exceptions import MissingFormXml
 
 from .status import run_status_logger
-from .util import exit_on_error
+from .util import exit_on_error, wait_for_one_task_to_complete
 
 log = logging.getLogger(__name__)
 POOL_SIZE = 15
@@ -91,8 +91,6 @@ class AsyncFormProcessor(object):
             return
         if self.queues.try_obj(case_ids, wrapped_form):
             self.pool.spawn(self._async_migrate_form, wrapped_form, case_ids)
-        elif self.queues.full:
-            gevent.sleep()  # swap greenlets
 
     @exit_on_error
     def _async_migrate_form(self, wrapped_form, case_ids):
@@ -100,11 +98,29 @@ class AsyncFormProcessor(object):
         self.queues.release_lock(wrapped_form)
 
     def _try_to_empty_queues(self):
+        """Process forms waiting in the queue
+
+        All items in the queue will be processed if the queue becomes
+        full. This is done to ensure that no items become perpetually
+        stuck in the queue. This may be masking a bug in this class or
+        `PartiallyLockingQueue` since the theory of operation should
+        prevent starvation. In any case draining the queue periodically
+        is a good thing since there is a negative correlation between
+        the number of items in the queue and `queue.pop()` performance.
+        """
+        queue = self.queues
+        was_full = queue.full
         while True:
-            new_wrapped_form, case_ids = self.queues.pop()
-            if not new_wrapped_form:
+            form, case_ids = queue.pop()
+            if form is not None:
+                self.pool.spawn(self._async_migrate_form, form, case_ids)
+            elif was_full and queue:
+                assert queue.processing, "deadlock!"
+                wait_for_one_task_to_complete(self.pool)
+            else:
                 break
-            self.pool.spawn(self._async_migrate_form, new_wrapped_form, case_ids)
+        if self.pool:
+            gevent.sleep()  # swap greenlets
 
     def _finish_processing_queues(self):
         update_interval = timedelta(seconds=10)
@@ -152,7 +168,7 @@ class PartiallyLockingQueue(object):
         with an object once finished processing
     """
 
-    def __init__(self, queue_id_param="form_id", max_size=10000):
+    def __init__(self, queue_id_param="form_id", max_size=2000):
         """
         :queue_id_param string: param of the queued objects to pull an id from
         :max_size int: the maximum size the queue should reach. -1 means no limit
