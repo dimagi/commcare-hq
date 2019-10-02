@@ -188,11 +188,13 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         if request.GET.get('json', None):
             only_missing = request.GET.get('only_missing', 'false') == 'true'
             include_total = request.GET.get('include_total', 'true') == 'true'
+            query = request.GET.get('query', '')
             limit = int(request.GET.get('limit', 5))
             page = int(request.GET.get('page', 1))
 
             (total, references) = self._process_references(page,
                                                            limit,
+                                                           query=query,
                                                            only_missing=only_missing,
                                                            include_total=include_total)
             multimedia_map = {r['path']: self.app.multimedia_map[r['path']]
@@ -212,17 +214,21 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
             return JsonResponse(data)
         return super(MultimediaReferencesView, self).get(request, *args, **kwargs)
 
-    def _process_references(self, page, limit, only_missing=False, include_total=True):
+    def _process_references(self, page, limit, query=None, only_missing=False, include_total=True):
         reference_index = 0
         references = []
         start = limit * (page - 1)
         end = start + limit
+        if query:
+            query = query.lower()
 
         def _add_references(source, reference_index, references):
             if reference_index > end and not include_total:
                 return (reference_index, references)
             media = source.get_references()
             media = [m for m in media if m['media_class'] in ["CommCareImage", "CommCareAudio", "CommCareVideo"]]
+            if query:
+                media = [m for m in media if query in m['path'].lower()]
             if only_missing:
                 media = [m for m in media if m['path'] not in self.app.multimedia_map]
             for m in media:

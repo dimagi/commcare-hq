@@ -47,6 +47,12 @@
               <a href="#" class="btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
             </p>
           {% endif %}
+          <div>
+            <search-box data-apply-bindings="false"
+                        params="value: query,
+                                action: function() { goToPage(1); },
+                                placeholder: '{% trans_html_attr "Search for a path" %}'"></search-box>
+          </div>
         </div>
         <div data-bind="visible: !isInitialLoad() && !totals().length">
           <div class="alert alert-info">

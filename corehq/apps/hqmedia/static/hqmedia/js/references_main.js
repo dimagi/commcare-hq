@@ -3,6 +3,7 @@ hqDefine("hqmedia/js/references_main", function () {
         var self = {};
         self.references = ko.observableArray();
         self.showMissingReferences = ko.observable(false);
+        self.query = ko.observable('');
         self.totals = ko.observableArray();
 
         self.isInitialLoad = ko.observable(true);
@@ -24,6 +25,7 @@ hqDefine("hqmedia/js/references_main", function () {
                     page: page,
                     limit: self.itemsPerPage(),
                     only_missing: self.showMissingReferences(),
+                    query: self.query(),
                     include_total: includeTotal,
                 },
                 success: function (data) {
