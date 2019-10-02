@@ -6,6 +6,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
+from botocore.exceptions import ConnectionClosedError
 from mock import patch
 
 from casexml.apps.case.exceptions import IllegalCaseId
@@ -275,6 +276,28 @@ class SubmissionErrorTestSQL(SubmissionErrorTest):
         form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
         self.assertFalse(form.is_error)
         self.assertTrue(form.initial_processing_complete)
+
+    def test_error_writing_to_blobdb(self):
+        error = ConnectionClosedError(endpoint_url='url')
+        with self.assertRaises(ConnectionClosedError), patch.object(get_blob_db(), 'put', side_effect=error):
+            self._submit('form_with_case.xml')
+
+        stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=False).all()
+        self.assertEqual(1, len(stubs))
+
+        form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
+        self.assertTrue(form.is_error)
+        self.assertTrue(form.initial_processing_complete)
+        expected_problem_message = f'{type(error).__name__}: {error}'
+        self.assertEqual(form.problem, expected_problem_message)
+
+        _, resp = self._submit('form_with_case.xml')
+        self.assertEqual(resp.status_code, 201)
+        form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
+        self.assertTrue(form.is_normal)
+        old_form = FormAccessors(self.domain).get_form(form.deprecated_form_id)
+        self.assertEqual(old_form.orig_id, 'ad38211be256653bceac8e2156475666')
+        self.assertEqual(old_form.problem, expected_problem_message)
 
     def test_submit_duplicate_blob_not_found(self):
         # https://dimagi-dev.atlassian.net/browse/ICDS-376
