@@ -52,6 +52,7 @@ from casexml.apps.case.views import get_wrapped_case
 from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockTransaction
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from couchexport.export import Format, export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.loosechange import parse_date

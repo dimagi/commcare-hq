@@ -4,10 +4,12 @@ from collections import defaultdict, namedtuple
 
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from django_prbac.models import Grant, Role, UserRole
 
+from corehq.const import USER_DATE_FORMAT
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 
@@ -344,6 +346,50 @@ def cancel_future_subscriptions(domain_name, from_date, web_user):
         )
 
 
+def pause_current_subscription(domain_name, web_user, current_subscription):
+    from corehq.apps.accounting.models import (
+        Subscription,
+        DefaultProductPlan,
+        SoftwarePlanEdition,
+        SubscriptionAdjustmentMethod,
+        SubscriptionType,
+        ProBonoStatus,
+        FundingSource,
+    )
+    cancel_future_subscriptions(domain_name, datetime.date.today(), web_user)
+    paused_plan_version = DefaultProductPlan.get_default_plan_version(
+        SoftwarePlanEdition.PAUSED
+    )
+    if current_subscription.is_below_minimum_subscription:
+        current_subscription.update_subscription(
+            date_start=current_subscription.date_start,
+            date_end=current_subscription.date_start + datetime.timedelta(days=30)
+        )
+        return Subscription.new_domain_subscription(
+            account=current_subscription.account,
+            domain=domain_name,
+            plan_version=paused_plan_version,
+            date_start=current_subscription.date_start + datetime.timedelta(days=30),
+            web_user=web_user,
+            adjustment_method=SubscriptionAdjustmentMethod.USER,
+            service_type=SubscriptionType.PRODUCT,
+            pro_bono_status=ProBonoStatus.NO,
+            funding_source=FundingSource.CLIENT,
+            do_not_invoice=True,
+            no_invoice_reason='Paused plan',
+        )
+    else:
+        return current_subscription.change_plan(
+            paused_plan_version,
+            web_user=web_user,
+            adjustment_method=SubscriptionAdjustmentMethod.USER,
+            service_type=SubscriptionType.PRODUCT,
+            pro_bono_status=ProBonoStatus.NO,
+            do_not_invoice=True,
+            no_invoice_reason='Paused plan',
+        )
+
+
 def is_downgrade(current_edition, next_edition):
     from corehq.apps.accounting.models import SoftwarePlanEdition
     plans = SoftwarePlanEdition.SELF_SERVICE_ORDER + [SoftwarePlanEdition.ENTERPRISE]
@@ -354,3 +400,22 @@ def clear_plan_version_cache():
     from corehq.apps.accounting.models import SoftwarePlan
     for software_plan in SoftwarePlan.objects.all():
         SoftwarePlan.get_version.clear(software_plan)
+
+
+def get_paused_plan_context(request, domain):
+    from corehq.apps.accounting.models import Subscription
+    from corehq.apps.domain.views import SelectPlanView
+
+    current_sub = Subscription.get_active_subscription_by_domain(domain)
+    if not current_sub.plan_version.is_paused:
+        return {}
+
+    previous_edition = (current_sub.previous_subscription.plan_version.plan.edition
+                        if current_sub.previous_subscription else "")
+    return {
+        'is_paused': True,
+        'previous_edition': previous_edition,
+        'paused_date': current_sub.date_start.strftime(USER_DATE_FORMAT),
+        'change_plan_url': reverse(SelectPlanView.urlname, args=[domain]),
+        'can_edit_billing_info': request.couch_user.is_domain_admin(domain),
+    }
