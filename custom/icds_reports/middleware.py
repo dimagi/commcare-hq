@@ -1,7 +1,5 @@
 from django.utils.deprecation import MiddlewareMixin
 
-from corehq import toggles
-from corehq.sql_db.routers import use_citus_for_request
 from corehq.apps.users.models import CouchUser
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import ICDSAuditEntryRecord
@@ -48,8 +46,6 @@ def is_icds_dashboard_view(request):
 class ICDSAuditMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if is_icds_dashboard_view(request):
-            if toggles.LOAD_DASHBOARD_FROM_CITUS.enabled_for_request(request):
-                use_citus_for_request()
             ICDSAuditEntryRecord.create_entry(request)
             return None
 

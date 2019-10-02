@@ -34,7 +34,6 @@ from corehq.apps.users.models import UserRole, Permissions
 from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.sql_db.routers import forced_citus
 from corehq.util.files import safe_filename_header
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.cache import icds_quickcache
@@ -718,7 +717,6 @@ class AwcReportsView(BaseReportView):
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExportIndicatorView(View):
     def post(self, request, *args, **kwargs):
-        use_citus = forced_citus()
         include_test = request.GET.get('include_test', False)
         export_format = request.POST.get('format')
         month = int(request.POST.get('month'))
@@ -774,7 +772,7 @@ class ExportIndicatorView(View):
                 month,
                 year,
                 request.couch_user,
-                force_citus=use_citus
+                force_citus=True
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})
@@ -804,7 +802,7 @@ class ExportIndicatorView(View):
                 self.kwargs['domain'],
                 export_format,
                 indicator,
-                force_citus=use_citus
+                force_citus=True
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})

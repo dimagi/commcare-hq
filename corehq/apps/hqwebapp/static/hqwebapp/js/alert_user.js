@@ -46,6 +46,9 @@ function (
                 alert.alert_class(alert.alert_class() + ' ' + tags);
             }
         }
+
+        // Scroll to top of page to see alert
+        document.body.scrollTop = document.documentElement.scrollTop = 0;
     };
 
     $(function () {

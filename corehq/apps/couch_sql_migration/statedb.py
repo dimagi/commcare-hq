@@ -209,21 +209,21 @@ class StateDB(DiffDB):
         resume_key = "resume-{}".format(key)
         self._upsert(KeyValue, KeyValue.key, resume_key, json.dumps(value))
 
+    @contextmanager
     def pop_resume_state(self, key, default):
         resume_key = "resume-{}".format(key)
         with self.session() as session:
             kv = self._get_kv(resume_key, session)
             if kv is None:
                 self._set_kv(resume_key, RESUME_NOT_ALLOWED, session)
-                value = default
+                yield default
             elif self.is_rebuild:
-                value = default
+                yield default
             elif kv.value == RESUME_NOT_ALLOWED:
                 raise ResumeError("previous session did not save resume state")
             else:
-                value = json.loads(kv.value)
+                yield json.loads(kv.value)
                 kv.value = RESUME_NOT_ALLOWED
-        return value
 
     def _get_kv(self, key, session):
         return session.query(KeyValue).filter_by(key=key).scalar()

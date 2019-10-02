@@ -1,7 +1,5 @@
 import attr
-from django.conf import settings
 
-from corehq.sql_db.routers import forced_citus
 
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDistributedHelper,
@@ -178,6 +176,4 @@ HELPERS_BY_KEY = all_helpers()
 
 def get_helper(key):
     pair = HELPERS_BY_KEY[key]
-    if (getattr(settings, 'ICDS_USE_CITUS', False) or forced_citus()) and pair.distributed:
-        return pair.distributed
-    return pair.monolith
+    return pair.distributed or pair.monolith
