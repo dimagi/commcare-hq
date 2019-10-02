@@ -172,53 +172,6 @@ UCR query time
 
 Dashboard query time
 
-Known areas that can be changed to improve performance
-------------------------------------------------------
-1. The aggregation step should be able to be split by state.
-   These tasks can then be kicked off in parallel.
-2. Caching of location lookups.
-   Locations are mostly static so they can be cached quite heavily if we believe it's effective.
-3. Moving to custom queries for some UCRs.
-
-   Following up on [this PR](https://github.com/dimagi/commcare-hq/pull/20452) it could be useful experimenting with joins, multiple queries or SQL not supported in UCR reports.
-
-   The highest ROI are moving reports based on ccs_record_monthly_v2, child_health_monthly_v2 and person_cases_v2 (in that order).
-
-   The end goal being no longer needed either monthly UCR (queries only on the base case UCR & appropriate form UCR) and reducing the number of columns in person_cases_v2.
-   
-   As of March, 2019 we have rolled out person_cases_v3 which achieves the reduction in columns in person_case_v2.
-
-4. Move to native postgres partitioning.
-
-   Postgres 10 introduced a native partitioning feature that we could use.
-
-   Postgres 11 will be adding some more features and performance improvements
-
-   Currently the dashboard tables are manually partitioned by inserting directly into the partitioned tables and UCR data sources use triggers created by architect.
-5. Reduce number of partitions on tables.
-
-   Check constraints are processed linearly so having many partitions can negatively impact query times.
-
-   Currently a new partition is created for every day in agg_awc_daily and every month 5 are created in agg_child_health & agg_ccs_record
-
-   In postgres 11, this is less of an issue as the query planner can create better queries based on native partitioning
-6. Make use of inserted_at and/or received on to intelligently update the tables
-   Currently we loop over the previous month and fully delete are re-aggregate all data for the month.
-7. Change the aggregation step to insert into temporary tables before dropping real table.
-
-   This should reduce/eliminate any locking that is not needed and also remove any on disk inefficiency introduced by inserting then updating
-8. Sort data before inserting into the aggregate table. Use BRIN indexes on those sorted columns
-9. Include full location hierarchy in each table.
-
-   Currently we join with a location table to get the location's name and full hierarchy. Testing this out may be useful
-10. General postgres config updates.
-11. Experiment with Foreign Data Wrappers
-
-    a) Try out writing different UCR data sources to different databases and aggregating them on a separate dashboard database server
-
-    b) Try out either moving old less accessed data to an older server or separating different state's data on different dashboard servers
-
-
 Troubleshooting
 ---------------
 
