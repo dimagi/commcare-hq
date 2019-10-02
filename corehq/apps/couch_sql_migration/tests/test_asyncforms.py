@@ -40,7 +40,7 @@ class TestAsyncFormProcessor(SimpleTestCase):
     def test_retry_form(self):
         def get_case_ids(form):
             if retrying:
-                raise mod.socket.gaierror("network didn't work")
+                raise Exception("network didn't work")
             return form.case_ids
 
         def spawn_later(delay, func, *args):
@@ -60,7 +60,7 @@ class TestAsyncFormProcessor(SimpleTestCase):
             retrying = True
             with mod.AsyncFormProcessor(statedb, migrate_form) as queue:
                 queue._try_to_process_form(form)
-            self.assertEqual(retries, [2, 4, 8, 16, 32, 64, 128, 256])
+            self.assertEqual(retries, [1, 8, 27])
             self.assertEqual(migrated, [])
 
             retrying = False

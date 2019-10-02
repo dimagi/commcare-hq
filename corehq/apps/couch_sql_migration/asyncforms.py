@@ -1,12 +1,10 @@
 import logging
-import socket
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
 
 import attr
 import gevent
 from gevent.pool import Pool
-from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.xform import get_case_ids_from_form, get_case_updates
 from couchforms.models import XFormInstance, XFormOperation
@@ -88,8 +86,7 @@ class AsyncFormProcessor(object):
     def _try_to_process_form(self, wrapped_form, retries=0):
         try:
             case_ids = get_case_ids(wrapped_form)
-        except (HTTPError, socket.error) as err:
-            # typically [Errno -9] Address family for hostname not supported
+        except Exception as err:
             self.retry.later(wrapped_form, retries + 1, err)
             return
         if self.queues.try_obj(case_ids, wrapped_form):
@@ -295,7 +292,7 @@ def log_status(status):
 @attr.s
 class RetryForms(object):
     process_form = attr.ib()
-    max_retries = attr.ib(default=8)
+    max_retries = attr.ib(default=3)
     workers = attr.ib(factory=dict, init=False)
     unprocessed = attr.ib(factory=list, init=False)
 
@@ -314,10 +311,10 @@ class RetryForms(object):
             self.workers.pop(form.form_id)
             self.process_form(form, retries)
 
-        (log.warn if retries > 1 else log.debug)(
-            "Retry form %s after %ss on %s: %s",
-            form.form_id, 2 ** retries, type(err).__name__, err)
-        self.workers[form.form_id] = gevent.spawn_later(2 ** retries, process_form)
+        delay = retries ** 3
+        log.warn("Retry form %s after %ss on %s: %s",
+            form.form_id, delay, type(err).__name__, err)
+        self.workers[form.form_id] = gevent.spawn_later(delay, process_form)
 
     @property
     def form_ids(self):
