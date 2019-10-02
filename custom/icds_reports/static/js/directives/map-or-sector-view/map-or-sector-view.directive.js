@@ -46,7 +46,7 @@ function MapOrSectorController($location, storageService, locationsService) {
             type: 'multiBarHorizontalChart',
             margin: {
                 bottom: 40,
-                left: 100,
+                left: 150,
             },
             x: function (d) {
                 return d[0];
@@ -112,6 +112,9 @@ function MapOrSectorController($location, storageService, locationsService) {
                     });
                 });
 
+                nv.utils.windowResize(function(){
+                    wrapXAxisLabels();
+                });
                 wrapXAxisLabels();
 
                 return chart;
