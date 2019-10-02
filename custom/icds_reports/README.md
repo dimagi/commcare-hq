@@ -106,10 +106,6 @@ If you're collecting data from a form, the first step is to aggregate the data p
 Then insert this data into the appropriate monthly table.
 If necessary, pass it through to the next tables in the work flow (such as child_health information to agg_awc)
 
-Think through the performance of your additions to this script. Previous mistakes:
-
-- https://github.com/dimagi/commcare-hq/pull/19924
-
 ### Other Notes
 
 - Don't look up other documents in a UCR
