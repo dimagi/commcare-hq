@@ -56,7 +56,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
             is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe,
             thr_distribution_image_count, num_launched_awcs, num_launched_supervisors, num_launched_blocks,
-            num_launched_districts, num_launched_states
+            num_launched_districts, num_launched_states, aww_present_vhnd, vit_a_given, anc_check_conducted
         )
         (
             SELECT
@@ -80,7 +80,25 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             0,
             0,
             0,
-            0
+            0,
+            CASE WHEN
+                (count(*) filter (WHERE 
+                                    date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s AND 
+                                    aww_present=1
+                                 ))>0
+                THEN 1 ELSE 0 END,
+            CASE WHEN
+                (count(*) filter (WHERE 
+                                    date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s AND 
+                                    vit_a_given=1
+                                 ))>0
+                THEN 1 ELSE 0 END,
+            CASE WHEN
+                (count(*) filter (WHERE 
+                                    date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s AND 
+                                    anc_today=1
+                                 ))>0
+                THEN 1 ELSE 0 END
             FROM awc_location_local awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
@@ -566,6 +584,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('cases_ccs_pregnant',),
             ('cases_ccs_lactating',),
             ('cases_child_health',),
+            ('aww_present_vhnd',),
+            ('vit_a_given',),
+            ('anc_check_conducted',),
             ('valid_visits',),
             ('expected_visits',),
             ('usage_num_pse',),
