@@ -393,6 +393,9 @@
       },
       {
         "column_ids": ["state_id", "muac_grading"]
+      },
+      {
+        "column_ids": ["state_id", "timeend"]
       }
     ],
     "disable_destructive_rebuild": true

@@ -8,3 +8,5 @@ CREATE INDEX IF NOT EXISTS chm_awc_idx ON "child_health_monthly" (awc_id)
 {}
 CREATE INDEX IF NOT EXISTS chm_mother_dob ON "child_health_monthly" (mother_case_id, dob)
 {}
+CREATE INDEX IF NOT EXISTS chm_month_supervisor_id ON "child_health_monthly" (month, supervisor_id)
+{}

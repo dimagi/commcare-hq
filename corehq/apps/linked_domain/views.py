@@ -16,6 +16,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
     get_latest_released_app,
+    get_latest_released_app_versions_by_app_id,
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.util import is_linked_app
@@ -80,6 +81,18 @@ def custom_data_models(request, domain):
 @require_linked_domain
 def user_roles(request, domain):
     return JsonResponse({'user_roles': get_user_roles(domain)})
+
+
+@login_or_api_key
+@require_linked_domain
+def brief_apps(request, domain):
+    return JsonResponse({'brief_apps': get_brief_apps_in_domain(domain, include_remote=False)})
+
+
+@login_or_api_key
+@require_linked_domain
+def released_app_versions(request, domain):
+    return JsonResponse({'versions': get_latest_released_app_versions_by_app_id(domain)})
 
 
 @login_or_api_key

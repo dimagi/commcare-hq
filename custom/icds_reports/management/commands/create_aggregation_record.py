@@ -6,7 +6,6 @@ from dateutil.relativedelta import relativedelta
 from django.core.management.base import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation
-from corehq.sql_db.routers import use_citus_for_request
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.tasks import setup_aggregation
@@ -20,7 +19,6 @@ class Command(BaseCommand):
         parser.add_argument('interval')
 
     def handle(self, agg_uuid, run_date, interval, **options):
-        use_citus_for_request()
         self.agg_uuid = agg_uuid
         self.run_date = run_date
         self.interval = int(interval)
