@@ -3,6 +3,10 @@ from django.utils.translation import ugettext_lazy as _
 from corehq import toggles
 from corehq.motech.repeaters.models import CaseRepeater
 from custom.icds.integrations.phi import send_request
+from custom.icds.repeaters.generators.phi import (
+    SearchByParamsPayloadGenerator,
+    ValidatePHIDPayloadGenerator,
+)
 
 
 class BasePHIRepeater(CaseRepeater):
@@ -12,7 +16,7 @@ class BasePHIRepeater(CaseRepeater):
 
 
 class SearchByParamsRepeater(BasePHIRepeater):
-    payload_generator_classes = ()
+    payload_generator_classes = (SearchByParamsPayloadGenerator,)
     friendly_name = _("Search for Beneficiary via params to get PHI ID")
 
     def allowed_to_forward(self, payload):
@@ -26,7 +30,7 @@ class SearchByParamsRepeater(BasePHIRepeater):
 
 
 class ValidatePHIDRepeater(CaseRepeater):
-    payload_generator_classes = ()
+    payload_generator_classes = (ValidatePHIDPayloadGenerator,)
     friendly_name = _("Validate PHI ID")
 
     @classmethod
