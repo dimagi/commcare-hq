@@ -186,19 +186,3 @@ If that doesn't work `SELECT pg_terminate_backend(pid)` probably will.
 The difference is cancel is SIGTERM and terminate is SIGKILL described in more detail [here](https://www.postgresql.org/docs/current/server-shutdown.html)
 
 Stopping all ucr_indicator_queue to reduce load: `cchq icds fab supervisorctl:"stop commcare-hq-icds-celery_ucr_indicator_queue_0"`
-
-Purging all aggregation tasks from the queue: `./manage.py celery amqp queue.purge icds_aggregation_queue`
-
-Restarting the aggregation *before doing this you should be certain that the aggregation is not running and will not start on its own*:
-
-```python
-from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
-from  dimagi.utils.couch.cache.cache_core import get_redis_client
-
-# clear out the redis key used for @serial_task
-client = get_redis_client()
-client.delete('move_ucr_data_into_aggregation_tables-move-ucr-data-into-aggregate-tables')
-
-# note that this defaults to current date from utcnow (usually what you want)
-move_ucr_data_into_aggregation_tables.delay(intervals=1)
-```
