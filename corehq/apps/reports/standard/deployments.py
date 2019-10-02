@@ -68,7 +68,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def warehouse(self):
-        return toggles.WAREHOUSE_APP_STATUS.enabled_for_request(self.request)
+        return (
+            toggles.WAREHOUSE_APP_STATUS.enabled_for_request(self.request) or
+            getattr(self.request, 'warehouse_experiment', False)
+        )
 
     @property
     def headers(self):

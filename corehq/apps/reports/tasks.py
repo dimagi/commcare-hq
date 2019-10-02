@@ -174,11 +174,18 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
     from corehq.apps.reports.standard.deployments import ApplicationStatusReport
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
+
     report.rendered_as = 'export'
 
     setattr(report.request, 'REQUEST', {})
-    report_start = datetime.utcnow()
-    file = report.excel_response
+
+    def generate_report_with_timing(report):
+        report_start = datetime.utcnow()
+        file = report.excel_response
+        report_end = datetime.utcnow()
+        return (file, report_end - report_start)
+
+    file, duration = generate_report_with_timing(report)
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
 
     if report.domain is None:
@@ -192,15 +199,21 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
     for recipient in recipient_list:
         _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject=subject)
 
-    report_end = datetime.utcnow()
     if settings.SERVER_ENVIRONMENT == 'icds' and isinstance(report, ApplicationStatusReport):
+        if report.warehouse:
+            # skip metrics for intentionally warehouse export
+            return
+        non_warehouse_dur = duration
+        report.warehouse_experiment = True
+        _, warehouse_dur = generate_report_with_timing(report)
         message = """
-            Duration: {dur},
+            Duration (warehouse enabled): {dur},
+            Duration (without warehouse): {ndur},
             Total rows: {total},
-            Warehouse Enabled: {enabled},
             User List: {users}
             """.format(
-            dur=report_end - report_start,
+            dur=warehouse_dur,
+            ndur=non_warehouse_dur,
             total=report.total_records,
             enabled=report.warehouse,
             users=recipient_list
