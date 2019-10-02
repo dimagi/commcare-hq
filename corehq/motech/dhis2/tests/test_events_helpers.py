@@ -19,34 +19,36 @@ class TestDhisHandler(TestCase):
     def setUpClass(cls):
         super(TestDhisHandler, cls).setUpClass()
 
-        domain = create_domain('dhis2')
+        cls.domain = create_domain('dhis2')
         location_type = LocationType.objects.create(
-            domain=domain.name,
+            domain=cls.domain.name,
             name='test_location_type',
         )
         cls.location = SQLLocation.objects.create(
-            domain=domain.name,
+            domain=cls.domain.name,
             name='test location',
             location_id='test_location',
             location_type=location_type
         )
 
-        cls.user = WebUser.create(domain.name, 'test', 'passwordtest')
-        cls.user.set_location(domain.name, cls.location)
+        cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest')
+        cls.user.set_location(cls.domain.name, cls.location)
 
     @classmethod
     def tearDownClass(cls):
         cls.location.delete()
-        cls.user.delete()
+        cls.domain.delete()
         super(TestDhisHandler, cls).tearDownClass()
 
     def setUp(self):
+        super().setUp()
         self.db = Dhis2Repeater.get_db()
         self.fakedb = FakeCouchDb()
         Dhis2Repeater.set_db(self.fakedb)
 
     def tearDown(self):
         Dhis2Repeater.set_db(self.db)
+        super().tearDown()
 
     def test_form_processing(self):
         form = {

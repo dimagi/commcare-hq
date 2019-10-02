@@ -145,7 +145,6 @@ class TestLocationView(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
         cls.user.delete()
         cls.awc_3.delete()
         cls.awc_2.delete()
@@ -163,6 +162,7 @@ class TestLocationView(TestCase):
         cls.state_3.delete()
         cls.state_2.delete()
         cls.state.delete()
+        cls.domain.delete()
         super(TestLocationView, cls).tearDownClass()
 
     def test_request_without_location_id(self):

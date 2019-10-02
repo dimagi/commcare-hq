@@ -189,9 +189,9 @@ class ProjectHealthDashboardTest(SetupProjectPerformanceMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(ProjectHealthDashboardTest, cls).tearDownClass()
         cls.class_teardown()
         GroupESFake.reset_docs()
+        super(ProjectHealthDashboardTest, cls).tearDownClass()
 
     @classmethod
     def _setup_group(cls):
