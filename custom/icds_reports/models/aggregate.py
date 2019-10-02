@@ -483,6 +483,9 @@ class AggAwc(models.Model, AggregateMixin):
     thr_distribution_image_count = models.IntegerField(null=True)
     num_mother_thr_21_days = models.IntegerField(null=True)
     num_mother_thr_eligible = models.IntegerField(null=True)
+    preschool_kit_available = models.SmallIntegerField(blank=True, null=True)
+    preschool_kit_usable = models.SmallIntegerField(blank=True, null=True)
+
     objects = CitusComparisonManager()
 
     class Meta:
@@ -1508,6 +1511,9 @@ class AggregateAwcInfrastructureForms(models.Model, AggregateMixin):
     infantometer_usable = models.PositiveSmallIntegerField(null=True)
     medicine_kits_usable = models.PositiveSmallIntegerField(null=True)
     stadiometer_usable = models.PositiveSmallIntegerField(null=True)
+    preschool_kit_usable = models.PositiveSmallIntegerField(null=True)
+    preschool_kit_available = models.PositiveSmallIntegerField(null=True)
+
     objects = CitusComparisonManager()
 
     class Meta(object):

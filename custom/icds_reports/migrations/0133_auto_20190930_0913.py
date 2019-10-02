@@ -24,5 +24,15 @@ class Migration(migrations.Migration):
             name='type_toilet',
             field=models.PositiveSmallIntegerField(null=True),
         ),
-        migrator.get_migration('update_tables49.sql')
+        migrations.AddField(
+            model_name='aggregateawcinfrastructureforms',
+            name='preschool_kit_available',
+            field=models.PositiveSmallIntegerField(null=True),
+        ),
+        migrations.AddField(
+            model_name='aggregateawcinfrastructureforms',
+            name='preschool_kit_usable',
+            field=models.PositiveSmallIntegerField(null=True),
+        ),
+        migrator.get_migration('update_tables49.sql'),
     ]
