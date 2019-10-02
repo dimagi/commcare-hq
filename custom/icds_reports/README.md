@@ -175,6 +175,18 @@ Connect to ICDS database: `./manage dbshell --database icds-ucr`
 
 Find the current longest running queries: `select pid, query_start, query from pg_stat_activity order by query_start limit 10`
 
+`EXPLAIN (statement)` should be the first step to understanding a slow query.
+An official introduction into explain can be found in postgres's docs https://www.postgresql.org/docs/11/using-explain.html.
+There can be a lot of information to understand when looking at your first queries.
+A good rule of thumb is to take note of the estimated total costs displayed and begin looking at the inner most operations.
+From the innermost operation, take one step out at a time and find where you see the largest cost increases.
+The largest cost increase is a good place to begin looking to optimize your query.
+
+Note that while its largely the same, there are differences in tuning Citus queries vs postgres queries.
+[http://docs.citusdata.com/en/v8.3/performance/performance_tuning.html](Citus docs) provide an overview of tuning both.
+
+## Locking queries
+
 Find locks that haven't been granted: `SELECT relation::regclass, * FROM pg_locks WHERE NOT GRANTED`
 
 More specifically for finding Citus locks:
