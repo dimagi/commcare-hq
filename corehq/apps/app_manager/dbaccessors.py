@@ -52,6 +52,24 @@ def get_latest_released_app(domain, app_id):
     return None
 
 
+@quickcache(['domain'], timeout=1 * 60 * 60)
+def get_latest_released_app_versions_by_app_id(domain):
+    """
+    Gets a dict of all apps in domain that have released at least one build
+    and the version of their most recently released build. Note that keys
+    are the app ids, not build ids.
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'app_manager/applications',
+        startkey=['^ReleasedApplications', domain],
+        endkey=['^ReleasedApplications', domain, {}],
+        include_docs=False,
+    ).all()
+    # key[3] will be latest released version since view is ordered by app_id, version asc
+    return {r['key'][2]: r['key'][3] for r in results}
+
+
 def get_latest_released_build_id(domain, app_id):
     """Get the latest starred build id for an application"""
     app = _get_latest_released_build_view_result(domain, app_id)

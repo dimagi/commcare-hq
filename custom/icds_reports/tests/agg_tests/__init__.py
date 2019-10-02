@@ -14,7 +14,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
+from corehq.sql_db.connections import connection_manager, ICDS_UCR_CITUS_ENGINE_ID
 
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
@@ -23,8 +23,6 @@ from custom.icds_reports.tasks import (
 from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggregate_state_form_data
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
-
-_use_citus = override_settings(ICDS_USE_CITUS=True)
 
 
 def setUpModule():
@@ -36,7 +34,6 @@ def setUpModule():
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
-    # _use_citus.enable()
 
     domain = create_domain('icds-cas')
     setup_location_hierarchy(domain.name)
@@ -74,7 +71,7 @@ def tearDownModule():
                 continue
             adapter.drop_table()
 
-        engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
+        engine = connection_manager.get_engine(ICDS_UCR_CITUS_ENGINE_ID)
         with engine.begin() as connection:
             metadata = sqlalchemy.MetaData(bind=engine)
             metadata.reflect(bind=engine, extend_existing=True)
@@ -86,7 +83,6 @@ def tearDownModule():
     SQLLocation.objects.filter(domain='icds-cas').delete()
 
     Domain.get_by_name('icds-cas').delete()
-    # _use_citus.disable()
     _call_center_domain_mock.stop()
 
 

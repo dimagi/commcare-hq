@@ -93,7 +93,6 @@ And for ICDS dashboard development add the following:
 ICDS_USE_CITUS = True
 
 REPORTING_DATABASES.update({
-    'icds-ucr': 'icds-ucr',
     'icds-ucr-citus': 'icds-ucr',
 })
 ```

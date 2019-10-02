@@ -368,19 +368,20 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                         availability_for_ppses[location_id]['out_in_ppses'] += out_in_ppses
                         availability_for_ppses[location_id]['all_ppses'] += all_ppses
 
+                out_in_ppses = all_ppses = 0
                 for location_id, location_info in availability_for_ppses.items():
-                    location_name = location_info['location_name'] \
-                        if self.selected_location_type != 'PPS' else 'Synthese'
-                    out_in_ppses = location_info['out_in_ppses']
-                    all_ppses = location_info['all_ppses']
-                    percent = (out_in_ppses / float(all_ppses)) * 100 if all_ppses != 0 else 0
-                    stocks_to_return.append([
-                        location_name,
-                        {
-                            'html': '{}'.format(percent),
-                            'sort_key': percent
-                        }
-                    ])
+                    out_in_ppses += location_info['out_in_ppses']
+                    all_ppses += location_info['all_ppses']
+
+                location_name = 'Synthese'
+                percent = (out_in_ppses / float(all_ppses)) * 100 if all_ppses != 0 else 0
+                stocks_to_return.append([
+                    location_name,
+                    {
+                        'html': '{}'.format(percent),
+                        'sort_key': percent
+                    }
+                ])
 
             return stocks_to_return
 
