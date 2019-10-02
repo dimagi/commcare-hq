@@ -204,17 +204,20 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
             # skip metrics for intentionally warehouse export
             return
         non_warehouse_dur = duration
+        non_warehouse_total = report.total_records
         report.warehouse_experiment = True
         _, warehouse_dur = generate_report_with_timing(report)
         message = """
-            Duration (warehouse enabled): {dur},
-            Duration (without warehouse): {ndur},
-            Total rows: {total},
+            Duration (on warehouse): {dur},
+            Duration (off warehouse): {ndur},
+            Total rows (on warehouse: {total},
+            Total rows (off warehouse: {ntotal},
             User List: {users}
             """.format(
             dur=warehouse_dur,
             ndur=non_warehouse_dur,
             total=report.total_records,
+            ntotal=non_warehouse_total,
             enabled=report.warehouse,
             users=recipient_list
         )
