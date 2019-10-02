@@ -32,6 +32,14 @@ class MPRIdentification(BaseIdentification):
                     rows.append([loc_type, loc[0].name, loc[0].site_code])
                 else:
                     rows.append([loc_type, '', ''])
+            rows.append(something)
+            rows.append(something1)
+            rows.append(something2)
+            rows.append(something3)
+            rows.append(something4)
+            rows.append(something5)
+            rows.append(something6)
+            rows.append(something7)
             return rows
 
 
