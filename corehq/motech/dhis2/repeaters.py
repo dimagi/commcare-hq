@@ -79,7 +79,6 @@ class Dhis2EntityRepeater(CaseRepeater):
         )
         return send_dhis2_entities(
             requests,
-            payload,
             self.dhis2_entity_config,
             case_trigger_infos,
         )

@@ -19,7 +19,7 @@ from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import CaseTriggerInfo
 
 
-def send_dhis2_entities(requests, form_json, dhis2_entity_config, case_trigger_infos):
+def send_dhis2_entities(requests, dhis2_entity_config, case_trigger_infos):
     """
     Send request to register / update tracked entities
     """
@@ -34,9 +34,9 @@ def send_dhis2_entities(requests, form_json, dhis2_entity_config, case_trigger_i
         try:
             tracked_entity = get_tracked_entity(requests, info, case_config)
             if tracked_entity:
-                update_tracked_entity_instance(tracked_entity, requests, info, form_json, case_config)
+                update_tracked_entity_instance(tracked_entity, requests, info, case_config)
             else:
-                tracked_entity = register_tracked_entity_instance(requests, info, form_json, case_config)
+                tracked_entity = register_tracked_entity_instance(requests, info, case_config)
                 save_tracked_entity_instance_id(requests.domain_name, tracked_entity, info, case_config)
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
@@ -112,10 +112,10 @@ def find_tracked_entity_instances(requests, case_trigger_info, case_config):
     return finder.find_tracked_entity_instances(case_trigger_info)
 
 
-def update_tracked_entity_instance(tracked_entity, requests, case_trigger_info, form_json, case_config):
+def update_tracked_entity_instance(tracked_entity, requests, case_trigger_info, case_config):
     for attr_id, value_source in case_config.attributes.items():
         set_te_attr(tracked_entity, attr_id, value_source.get_value(case_trigger_info))
-    enrollments = get_enrollments(case_trigger_info, form_json, case_config)
+    enrollments = get_enrollments(case_trigger_info, case_config)
     if enrollments:
         tracked_entity["enrollments"] = enrollments
     tei_id = tracked_entity["trackedEntityInstance"]
@@ -123,7 +123,7 @@ def update_tracked_entity_instance(tracked_entity, requests, case_trigger_info, 
     response = requests.put(endpoint, json=tracked_entity, raise_for_status=True)
 
 
-def register_tracked_entity_instance(requests, case_trigger_info, form_json, case_config):
+def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     tracked_entity = {
         "trackedEntityType": case_config.te_type_id,
         "orgUnit": case_config.org_unit_id.get_value(case_trigger_info),
@@ -131,7 +131,7 @@ def register_tracked_entity_instance(requests, case_trigger_info, form_json, cas
     }
     for attr_id, value_source in case_config.attributes.items():
         set_te_attr(tracked_entity, attr_id, value_source.get_value(case_trigger_info))
-    enrollments = get_enrollments(case_trigger_info, form_json, case_config)
+    enrollments = get_enrollments(case_trigger_info, case_config)
     if enrollments:
         tracked_entity["enrollments"] = enrollments
     endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances/"
@@ -146,8 +146,8 @@ def register_tracked_entity_instance(requests, case_trigger_info, form_json, cas
     return tracked_entity
 
 
-def get_enrollments(case_trigger_info, form_json, case_config):
-    events_by_program = get_events_by_program(case_trigger_info, form_json, case_config)
+def get_enrollments(case_trigger_info, case_config):
+    events_by_program = get_events_by_program(case_trigger_info, case_config)
     enrollments = []
     for program, events in events_by_program.items():
         enrollment = {
@@ -158,10 +158,10 @@ def get_enrollments(case_trigger_info, form_json, case_config):
     return enrollments
 
 
-def get_events_by_program(case_trigger_info, form_json, case_config):
+def get_events_by_program(case_trigger_info, case_config):
     events_by_program = defaultdict(list)
     for form_config in case_config.form_configs:
-        event = get_event(form_config, form_json, case_trigger_info)
+        event = get_event(case_trigger_info.domain, form_config, info=case_trigger_info)
         events_by_program[event["program"]].append(event)
     return events_by_program
 
