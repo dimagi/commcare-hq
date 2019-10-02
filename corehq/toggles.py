@@ -5,6 +5,7 @@ from collections import namedtuple
 from functools import wraps
 
 from couchdbkit import ResourceNotFound
+import collections
 from django.conf import settings
 from django.contrib import messages
 from django.http import Http404
