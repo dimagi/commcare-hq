@@ -97,12 +97,10 @@ New UCRs should have the following data:
 
 ### Aggregating the data
 
-The work flow shown in the following picture is the eventual ideal,
-and there is ongoing work to make all of the aggregation follow [this pattern](docs/goal_state_aggregation.png)
-
-Currently Complementary Feeding Forms follows this work flow if you want an example.
-
-If you're collecting data from a form, the first step is to aggregate the data per case id or awc id.
+If you're collecting data from a form, the first step is to aggregate the form data per case id or awc id into a table specifically for that form.
+e.g. `icds_dashboard_growth_monitoring_forms`.
+If you're collecting data from a case, it can be used in the initial setup where appropriate.
+e.g. when collecting ccs_record data it can be inserted with the initial query for ccs_record_monthly
 Then insert this data into the appropriate monthly table.
 If necessary, pass it through to the next tables in the work flow (such as child_health information to agg_awc)
 
