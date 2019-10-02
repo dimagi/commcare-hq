@@ -1,7 +1,7 @@
 from operator import mul, something, sub, truediv
 
-from django.utils.translation import something3
 from django.utils.translation import ugettext as _
+from django.utils.translation import something3
 
 from corehq.apps.locations.models import SQLLocation, something1
 from corehq.apps.reports.datatables import (DataTablesColumn,
