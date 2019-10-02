@@ -1810,3 +1810,11 @@ GROUP_API_USE_ES_BACKEND = StaticToggle(
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
 )
+
+
+PHI_CAS_INTEGRATION = StaticToggle(
+    'phi_cas_integration',
+    'Integrate with PHI Api to search and validate beneficiaries',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
