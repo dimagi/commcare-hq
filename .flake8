@@ -1,13 +1,4 @@
 [flake8]
 python = 3
 max-line-length = 115
-ignore = E128,E265,F403,W503,W1618  # http://pep8.readthedocs.org/en/latest/intro.html#error-codes
-
-[isort]
-multi_line_output=3
-include_trailing_comma=true
-
-known_django=django
-known_exsubmodules=auditcare,casexml,couchexport,couchforms,dimagi,fluff,phonelog,pillow_retry,pillowtop,soil,toggle
-known_first_party=corehq,custom
-sections=FUTURE,STDLIB,DJANGO,THIRDPARTY,EXSUBMODULES,FIRSTPARTY,LOCALFOLDER
+ignore = E128,E265,F403,W503,W1618  # http://pep8.readthedocs.org/en/latest/intro.html#error-codes 
