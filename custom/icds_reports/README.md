@@ -171,12 +171,57 @@ Troubleshooting
 
 Connect to ICDS database: `./manage dbshell --database icds-ucr`
 
-Find longest running queries: `select pid, query_start, query from pg_stat_activity order by query_start limit 10`
+## Slow Queries
+
+Find the current longest running queries: `select pid, query_start, query from pg_stat_activity order by query_start limit 10`
 
 Find locks that haven't been granted: `SELECT relation::regclass, * FROM pg_locks WHERE NOT GRANTED`
+
+More specifically for finding Citus locks:
+
+```sql
+WITH citus_xacts AS (
+  SELECT * FROM get_all_active_transactions() WHERE initiator_node_identifier = 0
+),
+citus_wait_pids AS (
+  SELECT
+    (SELECT process_id FROM citus_xacts WHERE transaction_number = waiting_transaction_num) AS waiting_pid,
+    (SELECT process_id FROM citus_xacts WHERE transaction_number = blocking_transaction_num) AS blocking_pid
+  FROM
+    dump_global_wait_edges()
+)
+SELECT
+  waiting_pid AS blocked_pid,
+  blocking_pid,
+  waiting.query AS blocked_statement,
+  blocking.query AS current_statement_in_blocking_process
+FROM
+  citus_wait_pids
+JOIN
+  pg_stat_activity waiting ON (waiting_pid = waiting.pid)
+JOIN
+  pg_stat_activity blocking ON (blocking_pid = blocking.pid)
+```
+
+More about locks:
+* https://www.citusdata.com/blog/2018/02/15/when-postgresql-blocks/
+* https://www.citusdata.com/blog/2018/02/22/seven-tips-for-dealing-with-postgres-locks/
+
+## Killing queries
 
 Killing a query should be done with `SELECT pg_cancel_backend(pid)` when possible.
 If that doesn't work `SELECT pg_terminate_backend(pid)` probably will.
 The difference is cancel is SIGTERM and terminate is SIGKILL described in more detail [here](https://www.postgresql.org/docs/current/server-shutdown.html)
 
-Stopping all ucr_indicator_queue to reduce load: `cchq icds fab supervisorctl:"stop commcare-hq-icds-celery_ucr_indicator_queue_0"`
+## Reducing load on the database
+
+Stopping all ucr_indicator_queue to reduce load: `cchq icds celery stop --only ucr_indicator_queue`
+
+Stopping pillows: `cchq icds pillowtop stop`
+
+
+Useful references
+-----------------
+
+Postgres documentation: https://www.postgresql.org/docs/11/index.html
+Citus documentation: https://docs.citusdata.com/en/v8.3/index.html
