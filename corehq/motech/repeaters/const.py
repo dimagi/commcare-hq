@@ -12,6 +12,7 @@ RECORD_SUCCESS_STATE = 'SUCCESS'
 RECORD_FAILURE_STATE = 'FAIL'
 RECORD_CANCELLED_STATE = 'CANCELLED'
 
+# Repeaters in the order in which they should appear in "Data Forwarding"
 REPEATER_CLASSES = (
     'corehq.motech.repeaters.models.FormRepeater',
     'corehq.motech.repeaters.models.CaseRepeater',
@@ -23,4 +24,5 @@ REPEATER_CLASSES = (
     'corehq.motech.repeaters.models.LocationRepeater',
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
+    'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
 )
