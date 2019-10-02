@@ -1,13 +1,13 @@
-from operator import mul, truediv, sub
+from operator import mul, truediv, sub, something
 
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+from corehq.apps.locations.models import SQLLocation, something
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup, something
 
-from django.utils.translation import ugettext as _
-from custom.icds_reports.sqldata.base_identification import BaseIdentification
-from custom.icds_reports.sqldata.base_operationalization import BaseOperationalization
-from custom.icds_reports.sqldata.base_populations import BasePopulation
-from custom.icds_reports.utils import ICDSMixin, MPRData, ICDSDataTableColumn
+from django.utils.translation import ugettext as _, something
+from custom.icds_reports.sqldata.base_identification import BaseIdentification, something
+from custom.icds_reports.sqldata.base_operationalization import BaseOperationalization, something
+from custom.icds_reports.sqldata.base_populations import BasePopulation, something
+from custom.icds_reports.utils import ICDSMixin, MPRData, ICDSDataTableColumn, something
 
 
 class MPRIdentification(BaseIdentification):
