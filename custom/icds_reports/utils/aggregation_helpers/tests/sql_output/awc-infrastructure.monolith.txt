@@ -10,7 +10,8 @@ DROP TABLE IF EXISTS "icds_db_infra_form_7a197ee47818209780c23ed9"
 
         INSERT INTO "icds_db_infra_form_7a197ee47818209780c23ed9" (
             state_id, supervisor_id, month, awc_id, latest_time_end_processed,
-            awc_building, source_drinking_water, toilet_functional,
+            awc_building, source_drinking_water, toilet_facility, type_toilet,
+            preschool_kit_usable,preschool_kit_available, toilet_functional,
             electricity_awc, adequate_space_pse,
             adult_scale_available, baby_scale_available, flat_scale_available,
             adult_scale_usable, baby_scale_usable, cooking_utensils_usable,
@@ -24,6 +25,10 @@ DROP TABLE IF EXISTS "icds_db_infra_form_7a197ee47818209780c23ed9"
             ucr.timeend as latest_time_end_processed,
             ucr.awc_building as awc_building,
             ucr.source_drinking_water as source_drinking_water,
+            CASE WHEN ucr.toilet_facility=1 THEN 1 ELSE 0 END as toilet_facility,
+            ucr.type_toilet as type_toilet,
+            ucr.preschool_kit_usable as preschool_kit_usable,
+            ucr.preschool_kit_available as preschool_kit_available,
             ucr.toilet_functional as toilet_functional,
             ucr.electricity_awc as electricity_awc,
             ucr.adequate_space_pse as adequate_space_pse,
@@ -39,7 +44,7 @@ DROP TABLE IF EXISTS "icds_db_infra_form_7a197ee47818209780c23ed9"
           FROM (
             SELECT
                 DISTINCT awc_id AS awc_id,
-                LAST_VALUE(supervisor_id) OVER supervisor_id AS supervisor_id, LAST_VALUE(timeend) OVER timeend AS timeend, LAST_VALUE(awc_building) OVER awc_building AS awc_building, LAST_VALUE(source_drinking_water) OVER source_drinking_water AS source_drinking_water, LAST_VALUE(toilet_functional) OVER toilet_functional AS toilet_functional, LAST_VALUE(electricity_awc) OVER electricity_awc AS electricity_awc, LAST_VALUE(adequate_space_pse) OVER adequate_space_pse AS adequate_space_pse, LAST_VALUE(adult_scale_available) OVER adult_scale_available AS adult_scale_available, LAST_VALUE(baby_scale_available) OVER baby_scale_available AS baby_scale_available, LAST_VALUE(flat_scale_available) OVER flat_scale_available AS flat_scale_available, LAST_VALUE(adult_scale_usable) OVER adult_scale_usable AS adult_scale_usable, LAST_VALUE(baby_scale_usable) OVER baby_scale_usable AS baby_scale_usable, LAST_VALUE(cooking_utensils_usable) OVER cooking_utensils_usable AS cooking_utensils_usable, LAST_VALUE(infantometer_usable) OVER infantometer_usable AS infantometer_usable, LAST_VALUE(medicine_kits_usable) OVER medicine_kits_usable AS medicine_kits_usable, LAST_VALUE(stadiometer_usable) OVER stadiometer_usable AS stadiometer_usable
+                LAST_VALUE(supervisor_id) OVER supervisor_id AS supervisor_id, LAST_VALUE(timeend) OVER timeend AS timeend, LAST_VALUE(awc_building) OVER awc_building AS awc_building, LAST_VALUE(source_drinking_water) OVER source_drinking_water AS source_drinking_water, LAST_VALUE(toilet_facility) OVER toilet_facility AS toilet_facility, LAST_VALUE(type_toilet) OVER type_toilet AS type_toilet, LAST_VALUE(toilet_functional) OVER toilet_functional AS toilet_functional, LAST_VALUE(electricity_awc) OVER electricity_awc AS electricity_awc, LAST_VALUE(adequate_space_pse) OVER adequate_space_pse AS adequate_space_pse, LAST_VALUE(adult_scale_available) OVER adult_scale_available AS adult_scale_available, LAST_VALUE(baby_scale_available) OVER baby_scale_available AS baby_scale_available, LAST_VALUE(flat_scale_available) OVER flat_scale_available AS flat_scale_available, LAST_VALUE(adult_scale_usable) OVER adult_scale_usable AS adult_scale_usable, LAST_VALUE(baby_scale_usable) OVER baby_scale_usable AS baby_scale_usable, LAST_VALUE(cooking_utensils_usable) OVER cooking_utensils_usable AS cooking_utensils_usable, LAST_VALUE(infantometer_usable) OVER infantometer_usable AS infantometer_usable, LAST_VALUE(medicine_kits_usable) OVER medicine_kits_usable AS medicine_kits_usable, LAST_VALUE(stadiometer_usable) OVER stadiometer_usable AS stadiometer_usable, LAST_VALUE(preschool_kit_available) OVER preschool_kit_available AS preschool_kit_available, LAST_VALUE(preschool_kit_usable) OVER preschool_kit_usable AS preschool_kit_usable
             FROM "ucr_icds-cas_static-infrastructure_form_v_9918f894"
             WHERE timeend >= %(six_months_ago)s AND timeend < %(next_month_start)s
                 AND state_id = %(state_id)s AND awc_id IS NOT NULL
@@ -70,6 +75,20 @@ DROP TABLE IF EXISTS "icds_db_infra_form_7a197ee47818209780c23ed9"
                 PARTITION BY awc_id
                 ORDER BY
                     CASE WHEN source_drinking_water IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            toilet_facility AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN toilet_facility IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            type_toilet AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN type_toilet IS NULL THEN 0 ELSE 1 END ASC,
                     timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
             )
             , 
@@ -154,6 +173,20 @@ DROP TABLE IF EXISTS "icds_db_infra_form_7a197ee47818209780c23ed9"
                 PARTITION BY awc_id
                 ORDER BY
                     CASE WHEN stadiometer_usable IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            preschool_kit_available AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN preschool_kit_available IS NULL THEN 0 ELSE 1 END ASC,
+                    timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+            , 
+            preschool_kit_usable AS (
+                PARTITION BY awc_id
+                ORDER BY
+                    CASE WHEN preschool_kit_usable IS NULL THEN 0 ELSE 1 END ASC,
                     timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
             )
             
