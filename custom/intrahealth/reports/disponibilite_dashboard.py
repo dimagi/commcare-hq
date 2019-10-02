@@ -2,6 +2,7 @@
 
 import datetime
 
+from memoized import memoized
 from django.utils.functional import cached_property
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
@@ -146,6 +147,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         return context
 
     @property
+    @memoized
     def clean_rows(self):
         return VisiteDeLOperateurPerProductV2DataSource(config=self.config).rows
 

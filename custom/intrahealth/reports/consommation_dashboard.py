@@ -3,6 +3,7 @@
 import datetime
 
 from django.utils.functional import cached_property
+from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
@@ -122,6 +123,7 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         return headers
 
     @property
+    @memoized
     def clean_rows(self):
         return ConsommationPerProductData(config=self.config).rows
 
