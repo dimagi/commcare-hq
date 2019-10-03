@@ -490,8 +490,8 @@ class CaseDiffProcess(object):
         process. A status update is requested when the remote process
         has not sent an update in `status_interval` seconds.
         """
-        requested = object()
-        result = None
+        self.request_status()
+        result = requested = object()
         action = STATUS
         while action != TERMINATE:
             with gevent.Timeout(self.status_interval, False) as timeout:
