@@ -1200,7 +1200,7 @@ def build_incentive_report(agg_date=None):
     for state in state_ids:
         AWWIncentiveReport.aggregate(state, agg_date)
 
-    aggregate_validation_helper(agg_date)
+    aggregate_validation_helper.delay(agg_date)
 
     for file_format in ['xlsx', 'csv']:
         for location in locations:
@@ -1212,6 +1212,7 @@ def build_incentive_report(agg_date=None):
                 build_incentive_files.delay(location, agg_date, file_format, 3, location.parent.parent, location.parent)
 
 
+@task(queue='icds_dashboard_reports_queue', serializer='pickle')
 def aggregate_validation_helper(agg_date):
     """
     Validates the performance reports vs aggregate reports and send mails with mismatches
