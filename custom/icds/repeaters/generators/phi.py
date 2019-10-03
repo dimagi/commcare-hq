@@ -49,7 +49,7 @@ class SearchByParamsPayloadGenerator(BasePayloadGenerator):
         return json.dumps(data, cls=DjangoJSONEncoder)
 
     def handle_success(self, response, case, repeat_record):
-        phi_id = response.json().get('result', {}).get('phi_id', None)
+        phi_id = response.json().get('result', [{}])[0].get('phi_id', None)
         if phi_id:
             update_case(case.domain, case.case_id, {'phid_for_beneficiary': phi_id},
                         device_id=__name__ + ".search")
