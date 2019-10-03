@@ -387,3 +387,6 @@ def clean_odata_columns(export_instance):
         for column in table.columns:
             column.label = column.label.replace('@', '').replace(
                 '.', ' ').replace('\n', '').replace('\t', ' ').replace('#', '')
+            # truncate labels for PowerBI limits
+            if len(column.label) >= 511:
+                column.label = column.label[:511]
