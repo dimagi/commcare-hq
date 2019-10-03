@@ -208,11 +208,13 @@ class PillowBase(metaclass=ABCMeta):
                 except Exception as ex:
                     notify_exception(
                         None,
-                        "{pillow_name} Error in processing changes chunk {change_ids}: {ex}".format(
+                        "{pillow_name} Error in processing changes chunk: {ex}".format(
                             pillow_name=self.get_name(),
-                            change_ids=[c.id for c in changes_chunk],
                             ex=ex
-                        ))
+                        ),
+                        details={
+                            'change_ids': [c.id for c in changes_chunk]
+                        })
                     self._record_batch_exception_in_datadog(processor)
                     for change in set(changes_chunk) - set(retry_changes):
                         self._record_change_success_in_datadog(change, processor)
