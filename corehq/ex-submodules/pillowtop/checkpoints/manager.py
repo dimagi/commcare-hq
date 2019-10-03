@@ -124,6 +124,7 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         self.checkpoint = checkpoint
         self.checkpoint_frequency = checkpoint_frequency
         self.last_update = datetime.utcnow()
+        self.last_log = datetime.utcnow()
         self.checkpoint_callback = checkpoint_callback
 
     def should_update_checkpoint(self, context):
@@ -145,6 +146,9 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
             if self.checkpoint_callback:
                 self.checkpoint_callback.checkpoint_updated()
             return True
+        elif (datetime.utcnow() - self.last_log).total_seconds() > 10:
+            self.last_log = datetime.utcnow()
+            pillow_logging.info("Heartbeat: %s", self.get_new_seq(change))
 
         return False
 
