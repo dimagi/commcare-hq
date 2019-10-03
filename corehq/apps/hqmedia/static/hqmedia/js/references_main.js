@@ -6,11 +6,15 @@ hqDefine("hqmedia/js/references_main", function () {
 
         // Filtering
         self.query = ko.observable('');
-        self.mediaClass = ko.observable();
+        self.lang = ko.observable('all');
+        self.lang.subscribe(function () {
+            self.goToPage(1);
+        });
+        self.mediaClass = ko.observable('all');
         self.mediaClass.subscribe(function () {
             self.goToPage(1);
         });
-        self.onlyMissing = ko.observable();
+        self.onlyMissing = ko.observable('false');
         self.onlyMissing.subscribe(function () {
             self.goToPage(1);
         });
@@ -29,6 +33,7 @@ hqDefine("hqmedia/js/references_main", function () {
                     json: 1,
                     page: page,
                     limit: self.itemsPerPage(),
+                    lang: self.lang() === "all" ? null : self.lang(),
                     media_class: self.mediaClass() === "all" ? "" : self.mediaClass(),
                     only_missing: self.onlyMissing(),
                     query: self.query(),

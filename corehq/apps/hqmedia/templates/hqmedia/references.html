@@ -93,6 +93,26 @@
                                 action: function() { goToPage(1); },
                                 placeholder: '{% trans_html_attr "Search for a path" %}'"></search-box>
           </p>
+          {% if app.langs|length > 1 %}
+            <p>
+              <select-toggle data-apply-bindings="false"
+                             params="
+                               value: lang,
+                               options: [
+                                 {
+                                   id: 'all',
+                                   text: '{% trans_html_attr 'All languages' %}',
+                                 },
+                                 {% for lang in app.langs %}
+                                   {
+                                     id: '{{ lang }}',
+                                     text: '{{ lang }}',
+                                   },
+                                 {% endfor %}
+                               ],
+                             "></select-toggle>
+            </p>
+          {% endif %}
         </div>
         <p class="help-block"  data-bind="visible: !isInitialLoad() && !totals().length">
           {% blocktrans %}This application references no multimedia.{% endblocktrans %}
