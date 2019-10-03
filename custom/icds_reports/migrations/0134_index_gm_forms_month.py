@@ -15,6 +15,7 @@ DROP_INDEX_SQL = "DROP INDEX CONCURRENTLY {}".format(INDEX_NAME)
 
 
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('icds_reports', '0133_auto_20191001_0835'),
