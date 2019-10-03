@@ -6,6 +6,10 @@ hqDefine("hqmedia/js/references_main", function () {
 
         // Filtering
         self.query = ko.observable('');
+        self.mediaClass = ko.observable();
+        self.mediaClass.subscribe(function () {
+            self.goToPage(1);
+        });
         self.onlyMissing = ko.observable();
         self.onlyMissing.subscribe(function () {
             self.goToPage(1);
@@ -25,6 +29,7 @@ hqDefine("hqmedia/js/references_main", function () {
                     json: 1,
                     page: page,
                     limit: self.itemsPerPage(),
+                    media_class: self.mediaClass() === "all" ? "" : self.mediaClass(),
                     only_missing: self.onlyMissing(),
                     query: self.query(),
                     include_total: includeTotal,

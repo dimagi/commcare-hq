@@ -57,12 +57,31 @@
                              "></select-toggle>
             </p>
           {% endif %}
-          <div>
+          <p>
+              <select-toggle data-apply-bindings="false"
+                             params="
+                               value: mediaClass,
+                               options: [{
+                                 id: 'all',
+                                 text: '{% trans_html_attr 'All types' %}',
+                               }, {
+                                 id: 'CommCareImage',
+                                 text: '{% trans_html_attr 'Images' %}',
+                               }, {
+                                 id: 'CommCareAudio',
+                                 text: '{% trans_html_attr 'Audio' %}',
+                               }, {
+                                 id: 'CommCareVideo',
+                                 text: '{% trans_html_attr 'Videos' %}',
+                               }],
+                             "></select-toggle>
+          </p>
+          <p>
             <search-box data-apply-bindings="false"
                         params="value: query,
                                 action: function() { goToPage(1); },
                                 placeholder: '{% trans_html_attr "Search for a path" %}'"></search-box>
-          </div>
+          </p>
         </div>
         <div data-bind="visible: !isInitialLoad() && !totals().length">
           <div class="alert alert-info">
