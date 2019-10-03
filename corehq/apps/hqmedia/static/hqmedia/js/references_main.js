@@ -32,7 +32,7 @@ hqDefine("hqmedia/js/references_main", function () {
                 success: function (data) {
                     self.isInitialLoad(false);
                     self.showPaginationSpinner(false);
-                    self.references(_.compact(_.map(data.references, function (ref) {
+                    self.references(_.map(data.references, function (ref) {
                         var objRef = data.object_map[ref.path];
                         if (ref.media_class === "CommCareImage") {
                             var imageRef = hqImport('hqmedia/js/media_reference_models').ImageReference(ref);
@@ -50,7 +50,7 @@ hqDefine("hqmedia/js/references_main", function () {
                         // Other multimedia, like HTML print templates, is ignored by the reference checker
                         // It should already have been filtered out server-side.
                         throw new Error("Found unexpected media class: " + ref.media_class);
-                    })));
+                    }));
                     if (includeTotal) {
                         self.totalItems(data.total_rows);
                         self.totals(data.totals);
