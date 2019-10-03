@@ -44,13 +44,10 @@ def is_icds_dashboard_view(request):
 
 
 class ICDSAuditMiddleware(MiddlewareMixin):
-    def process_view(self, request, view_func, view_args, view_kwargs):
-        if is_icds_dashboard_view(request):
-            ICDSAuditEntryRecord.create_entry(request)
-            return None
-
     def process_response(self, request, response):
-        if is_login_page(request) and request.user.is_authenticated and is_icds_domain(request):
+        if is_icds_dashboard_view(request):
+            ICDSAuditEntryRecord.create_entry(request, response)
+        elif is_login_page(request) and request.user.is_authenticated and is_icds_domain(request):
             couch_user = CouchUser.get_by_username(request.user.username)
-            ICDSAuditEntryRecord.create_entry(request, couch_user, is_login_page=True)
+            ICDSAuditEntryRecord.create_entry(request, response, couch_user, is_login_page=True)
         return response

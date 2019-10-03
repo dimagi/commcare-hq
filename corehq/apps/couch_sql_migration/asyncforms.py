@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
 
+import attr
 import gevent
 from gevent.pool import Pool
 
@@ -16,6 +17,7 @@ from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.exceptions import MissingFormXml
 
 from .status import run_status_logger
+from .util import exit_on_error
 
 log = logging.getLogger(__name__)
 POOL_SIZE = 15
@@ -30,22 +32,25 @@ class AsyncFormProcessor(object):
     def __enter__(self):
         self.pool = Pool(POOL_SIZE)
         self.queues = PartiallyLockingQueue()
+        self.retry = RetryForms(self._try_to_process_form)
         with self.statedb.pop_resume_state(type(self).__name__, []) as form_ids:
             self._rebuild_queues(form_ids)
         self.stop_status_logger = run_status_logger(
             log_status,
-            self.queues.get_status,
+            self.get_status,
             status_interval=1800,  # 30 minutes
         )
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
-        queue_ids = self.queues.queue_ids
+        queue_ids = self.queues.queue_ids + self.retry.form_ids
         try:
             if exc_type is None:
                 queue_ids = self._finish_processing_queues()
             else:
-                self.pool.kill()  # stop workers -> reduce chaos in logs
+                # stop workers -> reduce chaos in logs
+                self.pool.kill()
+                self.retry.kill()
         finally:
             key = type(self).__name__
             self.statedb.set_resume_state(key, queue_ids)
@@ -78,18 +83,21 @@ class AsyncFormProcessor(object):
             self._try_to_process_form(wrapped_form)
             self._try_to_empty_queues()
 
-    def _try_to_process_form(self, wrapped_form):
-        case_ids = get_case_ids(wrapped_form)
+    def _try_to_process_form(self, wrapped_form, retries=0):
+        try:
+            case_ids = get_case_ids(wrapped_form)
+        except Exception as err:
+            self.retry.later(wrapped_form, retries + 1, err)
+            return
         if self.queues.try_obj(case_ids, wrapped_form):
             self.pool.spawn(self._async_migrate_form, wrapped_form, case_ids)
         elif self.queues.full:
             gevent.sleep()  # swap greenlets
 
+    @exit_on_error
     def _async_migrate_form(self, wrapped_form, case_ids):
-        try:
-            self.migrate_form(wrapped_form, case_ids)
-        finally:
-            self.queues.release_lock(wrapped_form)
+        self.migrate_form(wrapped_form, case_ids)
+        self.queues.release_lock(wrapped_form)
 
     def _try_to_empty_queues(self):
         while True:
@@ -114,13 +122,19 @@ class AsyncFormProcessor(object):
                 log.info('Waiting on %s docs', len(self.queues) + len(pool))
                 next_check += update_interval
 
+        self.retry.join()
         while not pool.join(timeout=10):
             log.info('Waiting on {} docs'.format(len(pool)))
 
-        unprocessed = self.queues.queue_ids
+        unprocessed = self.queues.queue_ids + self.retry.form_ids
         if unprocessed:
             log.error("Unprocessed forms (unexpected): %s", unprocessed)
         return unprocessed
+
+    def get_status(self):
+        status = self.queues.get_status()
+        status["retry"] = len(self.retry)
+        return status
 
 
 class PartiallyLockingQueue(object):
@@ -271,7 +285,56 @@ class PartiallyLockingQueue(object):
 
 def log_status(status):
     log.info("forms in queue=%(queued)s, processing=%(proc)s, "
-             "locked cases=%(locked)s, num queues=%(queues)s", status)
+             "locked cases=%(locked)s, num queues=%(queues)s, "
+             "retry=%(retry)s", status)
+
+
+@attr.s
+class RetryForms(object):
+    process_form = attr.ib()
+    max_retries = attr.ib(default=3)
+    workers = attr.ib(factory=dict, init=False)
+    unprocessed = attr.ib(factory=list, init=False)
+
+    def later(self, form, retries, err):
+        if retries > self.max_retries:
+            log.exception("Too many retries for form %s", form.form_id)
+            self.unprocessed.append(form.form_id)
+            if len(self.unprocessed) > 100:
+                # bail if there are too many errors (long network outage?)
+                # unprocessed forms will be tried again on next resume
+                raise TooManyUnprocessedForms
+            return
+
+        @exit_on_error
+        def process_form():
+            self.workers.pop(form.form_id)
+            self.process_form(form, retries)
+
+        delay = retries ** 3
+        log.warn("Retry form %s after %ss on %s: %s",
+            form.form_id, delay, type(err).__name__, err)
+        self.workers[form.form_id] = gevent.spawn_later(delay, process_form)
+
+    @property
+    def form_ids(self):
+        return self.unprocessed + list(self.workers)
+
+    def __len__(self):
+        return len(self.unprocessed) + len(self.workers)
+
+    def join(self):
+        workers = self.workers.values()
+        while workers:
+            log.info("Waiting on %s retry workers", len(workers))
+            gevent.joinall(workers, timeout=10)
+
+    def kill(self):
+        gevent.killall(self.workers.values())
+
+
+class TooManyUnprocessedForms(Exception):
+    pass
 
 
 def _fix_replacement_form_problem_in_couch(doc):
