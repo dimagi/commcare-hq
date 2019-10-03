@@ -440,11 +440,8 @@ class TestCaseDiffProcess(SimpleTestCase):
     @contextmanager
     def process(self):
         try:
-            with init_state_db("test", self.state_dir) as statedb, mod.CaseDiffProcess(
-                statedb,
-                status_interval=1,
-                queue_class=FakeCaseDiffQueue,
-            ) as proc:
+            with init_state_db("test", self.state_dir) as statedb, \
+                    mod.CaseDiffProcess(statedb, FakeCaseDiffQueue) as proc:
                 yield proc
         finally:
             print(f"{' diff process logs ':-^40}")
