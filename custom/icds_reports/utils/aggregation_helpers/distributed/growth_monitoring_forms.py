@@ -42,6 +42,7 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
         return """
             SELECT
                 DISTINCT child_health_case_id AS case_id,
+                state_id AS state_id,
                 supervisor_id AS supervisor_id,
                 %(current_month_start)s AS month,
                 LAST_VALUE(weight_child) OVER weight_child AS weight_child,
