@@ -292,17 +292,18 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 tmp_doc = doc.copy()
                 tmp_doc['doc_type'] = 'XFormInstance'
                 rows = self.get_all_values(tmp_doc)
-                first_row = rows[0]
-                sharded_column_value = [
-                    i.value for i in first_row
-                    if i.column.database_column_name.decode('utf-8') == column
-                ]
-                if sharded_column_value:
-                    delete = table.delete().where(table.c.doc_id == doc['_id'])
-                    delete = delete.where(table.c.get(column) == sharded_column_value[0])
-                    with self.session_context() as session:
-                        session.execute(delete)
-                    continue  # skip adding doc ID into doc_ids_to_delete
+                if not rows:
+                    first_row = rows[0]
+                    sharded_column_value = [
+                        i.value for i in first_row
+                        if i.column.database_column_name.decode('utf-8') == column
+                    ]
+                    if sharded_column_value:
+                        delete = table.delete().where(table.c.doc_id == doc['_id'])
+                        delete = delete.where(table.c.get(column) == sharded_column_value[0])
+                        with self.session_context() as session:
+                            session.execute(delete)
+                        continue  # skip adding doc ID into doc_ids_to_delete
 
             doc_ids_to_delete.append(doc['_id'])
 
