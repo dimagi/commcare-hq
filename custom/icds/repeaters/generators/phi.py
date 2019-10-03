@@ -36,7 +36,7 @@ class SearchByParamsPayloadGenerator(BasePayloadGenerator):
             "subdistrictcode": 3318,
             "districtcode": 378,
             "statecode": 22,
-            "dateofbirth": case.get_case_property('date_of_birth'),
+            "dateofbirth": "",
             "mobileno": case.get_case_property('mobile_number'),
             "namelocal": "",
             "mothernamelocal": "",
