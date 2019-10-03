@@ -546,13 +546,13 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def get_xml(self):
         try:
             return self.get_attachment('form.xml')
-        except AttachmentNotFound:
+        except (NotFound, AttachmentNotFound):
             raise MissingFormXml(self.form_id)
 
     def xml_md5(self):
         try:
             return self.get_attachment_meta('form.xml').content_md5()
-        except AttachmentNotFound:
+        except (NotFound, AttachmentNotFound):
             raise MissingFormXml(self.form_id)
 
     def archive(self, user_id=None, trigger_signals=True):
