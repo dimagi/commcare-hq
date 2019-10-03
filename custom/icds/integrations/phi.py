@@ -23,7 +23,7 @@ def send_request(request_type, data):
         URLS[request_type],
         data=json.dumps(data),
         headers={
-            'Authorization': 'Basic {}' % password,
+            'Authorization': 'Basic %s' % password,
             'apikey': apikey,
             'content-type': 'application/json'
         }
