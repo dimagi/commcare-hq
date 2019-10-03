@@ -28,11 +28,11 @@ class CaseTriggerInfo:
     name = attr.ib(default=None)
     owner_id = attr.ib(default=None)
     modified_by = attr.ib(default=None)
-    updates = attr.ib(default=None)
+    updates = attr.ib(factory=dict)
     created = attr.ib(default=None)
     closed = attr.ib(default=None)
-    extra_fields = attr.ib(default=None)
-    form_question_values = attr.ib(default=None)
+    extra_fields = attr.ib(factory=dict)
+    form_question_values = attr.ib(factory=dict)
 
     def __str__(self):
         if self.name:
