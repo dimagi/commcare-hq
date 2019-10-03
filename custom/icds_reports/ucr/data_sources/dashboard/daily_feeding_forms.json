@@ -22,16 +22,6 @@
     "india",
     "icds"
   ],
-  "mirrored_engine_ids": [
-    {
-      "server_environment": "icds",
-      "engine_ids": ["icds-ucr"]
-    },
-    {
-      "server_environment": "india",
-      "engine_ids": ["icds-ucr"]
-    }
-  ],
   "config": {
     "table_id": "dashboard_child_health_daily_feeding_forms",
     "display_name": "Forms - Daily Feeding (child_health) for Dashboard",
@@ -288,6 +278,11 @@
       },
       "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
     },
+    "sql_column_indexes": [
+      {
+        "column_ids": ["state_id", "timeend"]
+      }
+    ],
     "disable_destructive_rebuild": true
   }
 }

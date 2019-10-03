@@ -158,6 +158,14 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
                 products = sorted(consumption['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations:
                     length = len(locations_with_products[location_name])
+                    product_ids = [p['product_id'] for p in locations_with_products[location_name]]
+                    for product in products:
+                        if product['product_id'] not in product_ids:
+                            locations_with_products[location_name].append({
+                                'product_name': product['product_name'],
+                                'product_id': product['product_id'],
+                                'actual_consumption': product['actual_consumption'],
+                            })
                     for r in range(0, length):
                         product_for_location = locations_with_products[location_name][r]
                         for product in products:

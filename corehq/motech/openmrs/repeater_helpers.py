@@ -2,6 +2,7 @@ import re
 from collections import defaultdict
 
 from lxml import html
+from requests import RequestException
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
@@ -9,8 +10,6 @@ from casexml.apps.case.xform import extract_case_blocks
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.openmrs.const import (
@@ -28,24 +27,12 @@ from corehq.motech.openmrs.exceptions import (
 )
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.requests import Requests
-from corehq.motech.value_source import CaseTriggerInfo
+from corehq.motech.value_source import (
+    CaseTriggerInfo,
+    get_ancestor_location_metadata_value,
+    get_case_location,
+)
 from corehq.util.quickcache import quickcache
-from requests import RequestException
-
-
-def get_case_location(case):
-    """
-    If the owner of the case is a location, return it. Otherwise return
-    the owner's primary location. If the case owner does not have a
-    primary location, return None.
-    """
-    case_owner = get_wrapped_owner(get_owner_id(case))
-    if not case_owner:
-        return None
-    if isinstance(case_owner, SQLLocation):
-        return case_owner
-    location_id = case_owner.get_location_id(case.domain)
-    return SQLLocation.by_location_id(location_id) if location_id else None
 
 
 def get_case_location_ancestor_repeaters(case):
@@ -71,15 +58,10 @@ def get_case_location_ancestor_repeaters(case):
     return []
 
 
-def get_ancestor_location_openmrs_uuid(domain, case_id):
-    case = CaseAccessors(domain).get_case(case_id)
-    case_location = get_case_location(case)
-    if not case_location:
-        return None
-    for location in reversed(case_location.get_ancestors(include_self=True)):
-        if location.metadata.get(LOCATION_OPENMRS_UUID):
-            return location.metadata[LOCATION_OPENMRS_UUID]
-    return None
+def get_ancestor_location_openmrs_uuid(case):
+    location = get_case_location(case)
+    if location:
+        return get_ancestor_location_metadata_value(location, LOCATION_OPENMRS_UUID)
 
 
 def search_patients(requests, search_string):
@@ -390,7 +372,8 @@ def get_patient(requests, domain, info, openmrs_config):
     return patient
 
 
-def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields):
+def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields,
+                                             form_question_values=None):
     result = []
     case_blocks = extract_case_blocks(form_json)
     cases = CaseAccessors(domain).get_cases(
@@ -399,7 +382,12 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
         assert case_block['@case_id'] == case.case_id
         if not case_types or case.type in case_types:
             result.append(CaseTriggerInfo(
+                domain=domain,
                 case_id=case_block['@case_id'],
+                type=case.type,
+                name=case.name,
+                owner_id=case.owner_id,
+                modified_by=case.modified_by,
                 updates=dict(
                     list(case_block.get('create', {}).items()) +
                     list(case_block.get('update', {}).items())
@@ -407,7 +395,7 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
                 created='create' in case_block,
                 closed='close' in case_block,
                 extra_fields={field: case.get_case_property(field) for field in extra_fields},
-                form_question_values={}
+                form_question_values=form_question_values or {},
             ))
     return result
 

@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from corehq.apps.commtrack.models import StockState
 from corehq.blobs.models import BlobMeta
+from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
     XFormInstanceSQL, XFormOperationSQL,
@@ -87,6 +88,14 @@ class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelS
     history = XFormOperationSQLSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     external_blobs = serializers.JSONField(source='serialized_attachments')
+
+    def __init__(self, instance=None, *args, **kwargs):
+        super(XFormInstanceSQLRawDocSerializer, self).__init__(instance=instance, *args, **kwargs)
+        if instance is not None:
+            try:
+                instance.get_xml()
+            except MissingFormXml:
+                self.fields.pop('form')
 
     class Meta(object):
         model = XFormInstanceSQL

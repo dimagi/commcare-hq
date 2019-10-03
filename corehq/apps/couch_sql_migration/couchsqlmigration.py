@@ -86,6 +86,7 @@ from .casediff import CaseDiffProcess, CaseDiffQueue
 from .statedb import init_state_db
 from .staterebuilder import iter_unmigrated_docs
 from .system_action import do_system_action
+from .util import exit_on_error
 
 log = logging.getLogger(__name__)
 
@@ -138,8 +139,6 @@ class CouchSqlDomainMigrator(object):
             self.statedb.is_rebuild = True
         diff_queue = CaseDiffProcess if diff_process else CaseDiffQueue
         self.case_diff_queue = diff_queue(self.statedb)
-        # exit immediately on uncaught greenlet error
-        gevent.get_hub().SYSTEM_ERROR = BaseException
 
     def migrate(self):
         log.info('{live}migrating domain {domain} ({state})'.format(
@@ -248,6 +247,7 @@ class CouchSqlDomainMigrator(object):
         return case_stock_result
 
     def _copy_unprocessed_forms(self):
+        @exit_on_error
         def copy_form(doc):
             self._migrate_unprocessed_form(doc)
             add_form(doc['doc_type'])
@@ -272,6 +272,7 @@ class CouchSqlDomainMigrator(object):
         self._migrate_form_and_associated_models(couch_form, form_is_processed=False)
 
     def _copy_unprocessed_cases(self):
+        @exit_on_error
         def copy_case(doc):
             self._copy_unprocessed_case(doc)
             add_case()
@@ -695,11 +696,10 @@ class Stopper:
 
     def __exit__(self, exc_type, exc, tb):
         signal.signal(signal.SIGINT, signal.default_int_handler)
-        if self.clean_break:
-            # raise keyboard interrupt to signal early termination to
-            # __exit__ and exception handlers further up the stack
-            # (CaseDiffQueue will not diff cases with unprocessed forms)
-            raise KeyboardInterrupt
+        # the case diff queue can safely be stopped with ^C at this
+        # point, although proceed with care so as not to interrupt it at
+        # a point where it is saving resume state. There will be a log
+        # message indicating "DO NOT BREAK" just before it saves state.
 
     def on_break(self, signum, frame):
         if self.clean_break:

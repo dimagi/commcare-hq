@@ -83,6 +83,16 @@ class ShardingTests(TestCase):
         for form_id, db_alias in dbs_for_docs.items():
             XFormInstanceSQL.objects.using(db_alias).get(form_id=form_id)
 
+    def test_get_docs_by_database(self):
+        # test_python_hashing_gives_correct_db ensures the hashing works correctly so this just tests
+        # that get_docs_by_database is consistent with get_database_for_docs
+        form_ids = [str(uuid4()) for i in range(100)]
+        dbs_for_docs = ShardAccessor.get_database_for_docs(form_ids)
+        docs_for_dbs = ShardAccessor.get_docs_by_database(form_ids)
+        for db, doc_ids in docs_for_dbs.items():
+            for doc_id in doc_ids:
+                self.assertEqual(db, dbs_for_docs[doc_id])
+
     def test_same_dbalias_util(self):
         from corehq.sql_db.util import get_db_alias_for_partitioned_doc, new_id_in_same_dbalias
         for i in range(10):
