@@ -259,7 +259,7 @@ class PillowBase(metaclass=ABCMeta):
         return timer.duration
 
     @abstractmethod
-    def process_change(self, change):
+    def process_change(self, change, serial_only=False):
         pass
 
     @abstractmethod
