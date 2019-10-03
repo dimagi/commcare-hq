@@ -7,6 +7,8 @@ from memoized import memoized
 
 import sys
 
+from sentry_sdk import configure_scope
+
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
@@ -101,6 +103,8 @@ class PillowBase(metaclass=ABCMeta):
         Main entry point for running pillows forever.
         """
         pillow_logging.info("Starting pillow %s" % self.__class__)
+        with configure_scope() as scope:
+            scope.set_tag("pillow_name", self.get_name())
         self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
     def _update_checkpoint(self, change, context):
