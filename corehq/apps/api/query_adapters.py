@@ -49,7 +49,7 @@ class GroupQuerySetAdapterCouch(object):
                 'Invalid type of argument. Item should be an instance of slice class.')
 
         for group in groups:
-            group._precomputed_active_users = group.get_user_ids()
+            group.__dict__['get_user_ids'] = group.get_user_ids()
 
         return groups
 
@@ -76,7 +76,7 @@ class GroupQuerySetAdapterES(object):
             )
 
             for group in groups:
-                group._precomputed_active_users = [
+                group.__dict__['get_user_ids'] = lambda: [
                     user_id for user_id in group.users
                     if user_id in active_user_ids
                 ]

@@ -304,7 +304,7 @@ class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMi
     domain = fields.CharField(attribute='domain')
     name = fields.CharField(attribute='name')
 
-    users = fields.ListField(attribute='_precomputed_active_users')
+    users = fields.ListField(attribute='get_user_ids')
     path = fields.ListField(attribute='path')
 
     case_sharing = fields.BooleanField(attribute='case_sharing', default=False)
