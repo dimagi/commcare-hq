@@ -476,8 +476,8 @@ class AggAwc(models.Model, AggregateMixin):
     thr_distribution_image_count = models.IntegerField(null=True)
     num_mother_thr_21_days = models.IntegerField(null=True)
     num_mother_thr_eligible = models.IntegerField(null=True)
-    preschool_kit_available = models.SmallIntegerField(blank=True, null=True)
-    preschool_kit_usable = models.SmallIntegerField(blank=True, null=True)
+    preschool_kit_available = models.IntegerField(blank=True, null=True)
+    preschool_kit_usable = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
