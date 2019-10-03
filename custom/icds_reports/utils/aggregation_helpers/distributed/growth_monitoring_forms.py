@@ -190,9 +190,7 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{tablename}" prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
-            AND ucr.month::DATE=prev_month.month + INTERVAL '1 month'
-          WHERE coalesce(ucr.month, %(month)s) = %(month)s
-            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
+          WHERE prev_month.month = %(previous_month)s AND ucr.month::DATE= %(month)s
         )
         """.format(
             ucr_table_query=ucr_query,

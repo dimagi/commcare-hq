@@ -134,9 +134,7 @@ DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month=%(month)s
         ) ucr
           FULL OUTER JOIN "icds_dashboard_growth_monitoring_forms" prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
-            AND ucr.month::DATE=prev_month.month + INTERVAL '1 month'
-          WHERE coalesce(ucr.month, %(month)s) = %(month)s
-            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
+          WHERE prev_month.month = %(previous_month)s AND ucr.month::DATE= %(month)s
         )
         
 {"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "previous_month": "2018-12-01"}
