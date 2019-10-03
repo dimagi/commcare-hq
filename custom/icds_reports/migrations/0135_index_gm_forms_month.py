@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ('icds_reports', '0133_auto_20191001_0835'),
+        ('icds_reports', '0134_audit_entry_record_response_code'),
     ]
 
     operations = [
