@@ -130,7 +130,7 @@ def run_case_update_rules_for_domain(domain, now=None):
 
 
 @serial_task(
-    '{domain}-{case-type}-{db}',
+    '{domain}-{case_type}-{db}',
     timeout=36 * 60 * 60,
     max_retries=0,
     queue='case_rule_queue',
