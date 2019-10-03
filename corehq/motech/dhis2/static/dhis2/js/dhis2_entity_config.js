@@ -13,23 +13,23 @@ hqDefine('dhis2/js/dhis2_entity_config', [
 ) {
     var caseConfig = function (data) {
         var self = {};
-        self.caseConfig = ko.observable(JSON.stringify(data, null, 2));
+        self.oCaseConfig = ko.observable(JSON.stringify(data, null, 2));
         self.toJSON = function () {
-            return JSON.parse(self.caseConfig());
+            return JSON.parse(self.oCaseConfig());
         };
         return self;
     };
 
     var dhis2EntityConfig = function (caseConfigs) {
         var self = {};
-        self.caseConfigs = ko.observableArray();
+        self.oCaseConfigs = ko.observableArray();
 
         self.init = function () {
             if (caseConfigs.length > 0) {
                 for (var i = 0; i < caseConfigs.length; i++) {
                     var data = caseConfigs[i],
                         conf = caseConfig(data);
-                    self.caseConfigs.push(conf);
+                    self.oCaseConfigs.push(conf);
                 }
             } else {
                 self.addCaseConfig();
@@ -38,11 +38,11 @@ hqDefine('dhis2/js/dhis2_entity_config', [
 
         self.addCaseConfig = function () {
             var conf = caseConfig({});
-            self.caseConfigs.push(conf);
+            self.oCaseConfigs.push(conf);
         };
 
         self.removeCaseConfig = function (conf) {
-            self.caseConfigs.remove(conf);
+            self.oCaseConfigs.remove(conf);
         };
 
         self.initCaseConfigTemplate = function (elements) {
@@ -54,7 +54,7 @@ hqDefine('dhis2/js/dhis2_entity_config', [
         self.submit = function (form) {
             $.post(
                 form.action,
-                {'case_configs': JSON.stringify(self.caseConfigs())},
+                {'case_configs': JSON.stringify(self.oCaseConfigs())},
                 function (data) { alertUser.alert_user(data['success'], 'success', true); }
             ).fail(
                 function (data) {
