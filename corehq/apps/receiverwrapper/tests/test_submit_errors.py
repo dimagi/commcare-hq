@@ -6,6 +6,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
+from botocore.exceptions import ConnectionClosedError
 from mock import patch
 
 from casexml.apps.case.exceptions import IllegalCaseId
@@ -28,6 +29,8 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.test_utils import TestFileMixin, flag_enabled
+
+FORM_WITH_CASE_ID = 'ad38211be256653bceac8e2156475666'
 
 
 class SubmissionErrorTest(TestCase, TestFileMixin):
@@ -112,10 +115,10 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             form = FormAccessors(self.domain.name).get_form(form_id)
             self.assertTrue(form.is_normal)
             self.assertTrue(form.initial_processing_complete)
-            stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain).all()
+            stubs = UnfinishedSubmissionStub.objects.filter(
+                domain=self.domain, xform_id=form_id, saved=True
+            ).all()
             self.assertEqual(1, len(stubs))
-            self.assertEqual(form_id, stubs[0].xform_id)
-            self.assertEqual(True, stubs[0].saved)
 
     def test_submission_error_post_save_2_0(self):
         self._test_submission_error_post_save(OPENROSA_VERSION_2)
@@ -178,10 +181,12 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             with self.assertRaises(InternalError):
                 _, res = self._submit('form_with_case.xml')
 
-        stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=False).all()
+        stubs = UnfinishedSubmissionStub.objects.filter(
+            domain=self.domain, saved=False, xform_id=FORM_WITH_CASE_ID
+        ).all()
         self.assertEqual(1, len(stubs))
 
-        form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
+        form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
         self.assertTrue(form.is_error)
         self.assertTrue(form.initial_processing_complete)
 
@@ -196,7 +201,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             self.assertEqual(201, res.status_code)
             self.assertIn(ResponseNature.SUBMIT_ERROR, res.content.decode('utf-8'))
 
-        form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
+        form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
         self.assertTrue(form.is_error)
         self.assertFalse(form.initial_processing_complete)
 
@@ -269,12 +274,38 @@ class SubmissionErrorTestSQL(SubmissionErrorTest):
             _, res = self._submit('form_with_case.xml')
 
         self.assertEqual(res.status_code, 201)
-        stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=True).all()
+        stubs = UnfinishedSubmissionStub.objects.filter(
+            domain=self.domain, saved=True, xform_id=FORM_WITH_CASE_ID
+        ).all()
         self.assertEqual(1, len(stubs))
 
-        form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
+        form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
         self.assertFalse(form.is_error)
         self.assertTrue(form.initial_processing_complete)
+
+    def test_error_writing_to_blobdb(self):
+        error = ConnectionClosedError(endpoint_url='url')
+        with self.assertRaises(ConnectionClosedError), patch.object(get_blob_db(), 'put', side_effect=error):
+            self._submit('form_with_case.xml')
+
+        stubs = UnfinishedSubmissionStub.objects.filter(
+            domain=self.domain, saved=False, xform_id=FORM_WITH_CASE_ID
+        ).all()
+        self.assertEqual(1, len(stubs))
+
+        form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
+        self.assertTrue(form.is_error)
+        self.assertTrue(form.initial_processing_complete)
+        expected_problem_message = f'{type(error).__name__}: {error}'
+        self.assertEqual(form.problem, expected_problem_message)
+
+        _, resp = self._submit('form_with_case.xml')
+        self.assertEqual(resp.status_code, 201)
+        form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
+        self.assertTrue(form.is_normal)
+        old_form = FormAccessors(self.domain).get_form(form.deprecated_form_id)
+        self.assertEqual(old_form.orig_id, FORM_WITH_CASE_ID)
+        self.assertEqual(old_form.problem, expected_problem_message)
 
     def test_submit_duplicate_blob_not_found(self):
         # https://dimagi-dev.atlassian.net/browse/ICDS-376
@@ -282,7 +313,7 @@ class SubmissionErrorTestSQL(SubmissionErrorTest):
         self.assertEqual(201, res.status_code)
         self.assertIn("   √   ".encode('utf-8'), res.content)
 
-        form = FormAccessors(self.domain.name).get_form('ad38211be256653bceac8e2156475666')
+        form = FormAccessors(self.domain.name).get_form(FORM_WITH_CASE_ID)
         form_attachment_meta = form.get_attachment_meta('form.xml')
         blobdb = get_blob_db()
         with patch.object(blobdb.metadb, 'delete'):
@@ -290,7 +321,7 @@ class SubmissionErrorTestSQL(SubmissionErrorTest):
 
         file, res = self._submit('form_with_case.xml')
         self.assertEqual(res.status_code, 201)
-        form = FormAccessors(self.domain.name).get_form('ad38211be256653bceac8e2156475666')
+        form = FormAccessors(self.domain.name).get_form(FORM_WITH_CASE_ID)
         deprecated_form = FormAccessors(self.domain.name).get_form(form.deprecated_form_id)
         self.assertTrue(deprecated_form.is_deprecated)
 
