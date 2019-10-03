@@ -37,6 +37,9 @@ class PillowRuntimeContext(object):
     def __init__(self, changes_seen=0):
         self.changes_seen = changes_seen
 
+    def reset(self):
+        self.changes_seen = 0
+
 
 class PillowBase(metaclass=ABCMeta):
     """
