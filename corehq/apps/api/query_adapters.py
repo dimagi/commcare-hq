@@ -49,8 +49,11 @@ class GroupQuerySetAdapterCouch(object):
                 'Invalid type of argument. Item should be an instance of slice class.')
 
         for group in groups:
-            group.__dict__['get_user_ids'] = group.get_user_ids()
-
+            # precompute the return value of get_users_ids here
+            # so that all the work happens here instead of in an external hidden step
+            # Not any faster, but brings it more under our direct control for optimization
+            group._precomputed_active_users = group.get_user_ids()
+            group.__class__ = WrappedGroup
         return groups
 
 
@@ -65,10 +68,10 @@ class GroupQuerySetAdapterES(object):
         if isinstance(item, slice):
             limit = item.stop - item.start
             result = GroupES().domain(self.domain).sort('name.exact').size(limit).start(item.start).run()
-            groups = [Group.wrap(group) for group in result.hits]
+            groups = [WrappedGroup.wrap(group) for group in result.hits]
 
             user_ids = {user_id for group in groups for user_id in group.users}
-            active_user_ids = (
+            active_user_ids = set(
                 UserES().domain(self.domain)
                 .user_ids(user_ids)
                 .is_active(True)
@@ -76,10 +79,25 @@ class GroupQuerySetAdapterES(object):
             )
 
             for group in groups:
-                group.__dict__['get_user_ids'] = lambda: [
+                group._precomputed_active_users = [
                     user_id for user_id in group.users
                     if user_id in active_user_ids
                 ]
             return groups
         raise ValueError(
             'Invalid type of argument. Item should be an instance of slice class.')
+
+
+class WrappedGroup(Group):
+    _precomputed_active_users = None
+
+    def get_user_ids(self, is_active=True):
+        if is_active is not True:
+            raise ValueError(
+                "Unexpected call of Group.get_user_ids(is_active=False) in read API context")
+        if self._precomputed_active_users is None:
+            raise ValueError(
+                "In the Group API read context, you must set group._precomputed_active_users "
+                "before calling group.get_user_ids"
+            )
+        return self._precomputed_active_users
