@@ -40,7 +40,11 @@ class AsyncFormProcessor(object):
             self.get_status,
             status_interval=1800,  # 30 minutes
         )
-        self._try_to_empty_queues()
+        try:
+            self._try_to_empty_queues()
+        except Exception as err:
+            self.__exit__(type(err), err, None)
+            raise
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
