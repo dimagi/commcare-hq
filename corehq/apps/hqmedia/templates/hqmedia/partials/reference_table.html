@@ -1,6 +1,6 @@
 {% load i18n %}
 
-<table class="table table-striped table-condensed" data-bind="visible: !isInitialLoad()">
+<table class="table table-striped table-condensed" data-bind="visible: !isInitialLoad() && totals().length">
   <thead>
     <tr>
       <th class="col-sm-4">{% trans 'Menu or Form' %}</th>
@@ -52,7 +52,7 @@
   </tbody>
 </table>
 
-<p data-bind="visible: !isInitialLoad() && !references().length" class="help-block">
+<p data-bind="visible: !isInitialLoad() && totals().length && !references().length" class="help-block">
   {% blocktrans %}
     No media found matching your filters.
   {% endblocktrans %}
