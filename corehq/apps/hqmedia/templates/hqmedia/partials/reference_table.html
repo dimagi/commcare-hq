@@ -52,8 +52,14 @@
   </tbody>
 </table>
 
+<p data-bind="visible: !isInitialLoad() && !references().length" class="help-block">
+  {% blocktrans %}
+    No media found matching your filters.
+  {% endblocktrans %}
+</p>
+
 <pagination data-apply-bindings="false"
-            data-bind="visible: !isInitialLoad()"
+            data-bind="visible: !isInitialLoad() && references().length"
             params="goToPage: goToPage,
                     perPage: itemsPerPage,
                     totalItems: totalItems,
