@@ -146,7 +146,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent Aadhaar-seeded Beneficiaries')
+        self.assertEquals(data['label'], 'Aadhaar-seeded Beneficiaries')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_adhaar_data_map(

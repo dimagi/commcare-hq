@@ -415,7 +415,7 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Percent Aadhaar-seeded beneficiaries',
+                                'header': 'Aadhaar-seeded Beneficiaries',
                                 'slug': 'aadhar',
                                 'format': 'percent',
                                 'average': [],

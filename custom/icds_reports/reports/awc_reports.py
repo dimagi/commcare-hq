@@ -778,7 +778,7 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'frequency': frequency
                 },
                 {
-                    'label': _('Percent Aadhaar-seeded Beneficiaries'),
+                    'label': _('Aadhaar-seeded Beneficiaries'),
                     'help_text': _(
                         'Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification '
                         'has been captured. '
@@ -803,7 +803,7 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             ],
             [
                 {
-                    'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
+                    'label': _('Children enrolled for Anganwadi Services'),
                     'help_text': percent_children_enrolled_help_text(),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
                     'color': get_color_with_green_positive(percent_diff(
@@ -816,7 +816,7 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'frequency': frequency,
                 },
                 {
-                    'label': _('Percent pregnant women enrolled for Anganwadi Services'),
+                    'label': _('Pregnant women enrolled for Anganwadi Services'),
                     'help_text': _('Of the total number of pregnant women, the percentage of pregnant '
                                    'women enrolled for Anganwadi Services'),
                     'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
@@ -835,7 +835,7 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             [
 
                 {
-                    'label': _('Percent lactating women enrolled for Anganwadi Services'),
+                    'label': _('Lactating women enrolled for Anganwadi Services'),
                     'help_text': _('Of the total number of lactating women, the percentage of '
                                    'lactating women enrolled for Anganwadi Services'),
                     'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
@@ -851,7 +851,7 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'frequency': frequency
                 },
                 {
-                    'label': _('Percent adolescent girls (11-14 years) enrolled for Anganwadi Services'),
+                    'label': _('Adolescent girls enrolled for Anganwadi Services'),
                     'help_text': _((
                         "Of the total number of adolescent girls (aged 11-14 years), the percentage "
                         "of girls enrolled for Anganwadi Services"

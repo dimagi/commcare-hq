@@ -1043,14 +1043,14 @@ class TestFactSheetReportDemographics(TestCase):
                     'sort_key': 21.490683229813666
                 },
                 'data': [
-                    {'html': 'Percent Aadhaar-seeded beneficiaries'},
+                    {'html': 'Aadhaar-seeded Beneficiaries'},
                     {'html': 19.528178243774573, 'sort_key': 19.528178243774573},
                     {'html': 21.490683229813666, 'sort_key': 21.490683229813666},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
                 'format': 'percent',
-                'header': 'Percent Aadhaar-seeded beneficiaries',
+                'header': 'Aadhaar-seeded Beneficiaries',
                 'slug': 'aadhar',
             }
         )

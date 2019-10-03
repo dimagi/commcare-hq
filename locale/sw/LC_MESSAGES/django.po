@@ -37066,27 +37066,27 @@ msgstr ""
 #: custom/icds_reports/reports/awc_reports.py:781
 #: custom/icds_reports/reports/demographics_data.py:85
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:99
-msgid "Percent Aadhaar-seeded Beneficiaries"
+msgid "Aadhaar-seeded Beneficiaries"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:806
 #: custom/icds_reports/reports/demographics_data.py:107
-msgid "Percent children (0-6 years) enrolled for Anganwadi Services"
+msgid "Children enrolled for Anganwadi Services"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:819
 #: custom/icds_reports/reports/demographics_data.py:121
-msgid "Percent pregnant women enrolled for Anganwadi Services"
+msgid "Pregnant women enrolled for Anganwadi Services"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:838
 #: custom/icds_reports/reports/demographics_data.py:140
-msgid "Percent lactating women enrolled for Anganwadi Services"
+msgid "Lactating women enrolled for Anganwadi Services"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:854
 #: custom/icds_reports/reports/demographics_data.py:156
-msgid "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services"
+msgid "Adolescent girls enrolled for Anganwadi Services"
 msgstr ""
 
 #: custom/icds_reports/reports/awc_reports.py:909
@@ -37252,7 +37252,7 @@ msgid "Demographics"
 msgstr ""
 
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:83
-msgid "Children (0-6 years) who are enrolled for Anganwadi Services"
+msgid "Children enrolled for Anganwadi Services"
 msgstr ""
 
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:87
@@ -37264,7 +37264,7 @@ msgid "Lactating Mothers enrolled for Anganwadi Services"
 msgstr ""
 
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:95
-msgid "Adolescent Girls (11-14 Years) enrolled for Anganwadi Services"
+msgid "Adolescent girls enrolled for Anganwadi Services"
 msgstr ""
 
 #: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:107

@@ -48,7 +48,7 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False, beta=False):
 
     return {
         "slug": "adhaar",
-        "label": "Percent Aadhaar-seeded Beneficiaries",
+        "label": "Aadhaar-seeded Beneficiaries",
         "fills": fills,
         "rightLegend": {
             "average": average,

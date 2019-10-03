@@ -64,7 +64,7 @@ class TestDemographics(TestCase):
             "color": "green",
             "percent": 10.049606069448492,
             "value": 346,
-            "label": "Percent Aadhaar-seeded Beneficiaries",
+            "label": "Aadhaar-seeded Beneficiaries",
             "frequency": "month",
             "help_text": "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification "
                          "has been captured. "
@@ -88,7 +88,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0.0,
             "value": 1288,
-            "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
+            "label": "Children enrolled for Anganwadi Services",
             "frequency": "month",
             "help_text": percent_children_enrolled_help_text()
         }
@@ -111,7 +111,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0.0,
             "value": 155,
-            "label": "Percent pregnant women enrolled for Anganwadi Services",
+            "label": "Pregnant women enrolled for Anganwadi Services",
             "frequency": "month",
             "help_text": percent_pregnant_women_enrolled_help_text()
         }
@@ -134,7 +134,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0.0,
             "value": 167,
-            "label": "Percent lactating women enrolled for Anganwadi Services",
+            "label": "Lactating women enrolled for Anganwadi Services",
             "frequency": "month",
             "help_text": percent_lactating_women_enrolled_help_text()
         }
@@ -157,7 +157,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0.0,
             "value": 34,
-            "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
+            "label": "Adolescent girls enrolled for Anganwadi Services",
             "frequency": "month",
             "help_text": percent_adolescent_girls_enrolled_help_text()
         }
@@ -219,7 +219,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0,
             "value": 346,
-            "label": "Percent Aadhaar-seeded Beneficiaries",
+            "label": "Aadhaar-seeded Beneficiaries",
             "frequency": "day",
             "help_text": (
                 "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has been "
@@ -245,7 +245,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0,
             "value": 1288,
-            "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
+            "label": "Children enrolled for Anganwadi Services",
             "frequency": "day",
             "help_text": percent_children_enrolled_help_text()
         }
@@ -268,7 +268,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0,
             "value": 155,
-            "label": "Percent pregnant women enrolled for Anganwadi Services",
+            "label": "Pregnant women enrolled for Anganwadi Services",
             "frequency": "day",
             "help_text": percent_pregnant_women_enrolled_help_text()
         }
@@ -291,7 +291,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0,
             "value": 167,
-            "label": "Percent lactating women enrolled for Anganwadi Services",
+            "label": "Lactating women enrolled for Anganwadi Services",
             "frequency": "day",
             "help_text": percent_lactating_women_enrolled_help_text()
         }
@@ -314,7 +314,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0,
             "value": 34,
-            "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
+            "label": "Adolescent girls enrolled for Anganwadi Services",
             "frequency": "day",
             "help_text": percent_adolescent_girls_enrolled_help_text()
         }
@@ -376,7 +376,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0,
             "value": 346,
-            "label": "Percent Aadhaar-seeded Beneficiaries",
+            "label": "Aadhaar-seeded Beneficiaries",
             "frequency": "day",
             "help_text": (
                 "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has "
@@ -402,7 +402,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0,
             "value": 1288,
-            "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
+            "label": "Children enrolled for Anganwadi Services",
             "frequency": "day",
             "help_text": percent_children_enrolled_help_text()
         }
@@ -425,7 +425,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0,
             "value": 155,
-            "label": "Percent pregnant women enrolled for Anganwadi Services",
+            "label": "Pregnant women enrolled for Anganwadi Services",
             "frequency": "day",
             "help_text": percent_pregnant_women_enrolled_help_text()
         }
@@ -448,7 +448,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0,
             "value": 167,
-            "label": "Percent lactating women enrolled for Anganwadi Services",
+            "label": "Lactating women enrolled for Anganwadi Services",
             "frequency": "day",
             "help_text": percent_lactating_women_enrolled_help_text()
         }
@@ -471,7 +471,7 @@ class TestDemographics(TestCase):
             "color": "red",
             "percent": 0,
             "value": 34,
-            "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
+            "label": "Adolescent girls enrolled for Anganwadi Services",
             "frequency": "day",
             "help_text": percent_adolescent_girls_enrolled_help_text()
         }

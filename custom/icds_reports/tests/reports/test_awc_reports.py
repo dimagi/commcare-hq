@@ -1510,7 +1510,7 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": -39.99999999999999,
                 "value": 1,
-                "label": "Percent Aadhaar-seeded Beneficiaries",
+                "label": "Aadhaar-seeded Beneficiaries",
                 "frequency": "month",
                 "help_text": percent_aadhaar_seeded_beneficiaries_help_text()
             }
@@ -1536,7 +1536,7 @@ class TestAWCReport(TestCase):
                 "color": "green",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
+                "label": "Children enrolled for Anganwadi Services",
                 "frequency": "month",
                 "help_text": percent_children_enrolled_help_text()
             }
@@ -1562,7 +1562,7 @@ class TestAWCReport(TestCase):
                 "color": "red",
                 "percent": 0,
                 "value": 2,
-                "label": "Percent pregnant women enrolled for Anganwadi Services",
+                "label": "Pregnant women enrolled for Anganwadi Services",
                 "frequency": "month",
                 "help_text": percent_pregnant_women_enrolled_help_text()
             }
@@ -1588,7 +1588,7 @@ class TestAWCReport(TestCase):
                 "color": "red",
                 "percent": 0,
                 "value": 3,
-                "label": "Percent lactating women enrolled for Anganwadi Services",
+                "label": "Lactating women enrolled for Anganwadi Services",
                 "frequency": "month",
                 "help_text": percent_lactating_women_enrolled_help_text()
             }
@@ -1614,7 +1614,7 @@ class TestAWCReport(TestCase):
                 "color": "red",
                 "percent": -100.0,
                 "value": 0,
-                "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
+                "label": "Adolescent girls enrolled for Anganwadi Services",
                 "frequency": "month",
                 "help_text": percent_adolescent_girls_enrolled_help_text()
             }
@@ -1763,7 +1763,7 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": 0,
                 "value": 1,
-                "label": "Percent Aadhaar-seeded Beneficiaries",
+                "label": "Aadhaar-seeded Beneficiaries",
                 "frequency": "day",
                 "help_text": (
                     "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification "
@@ -1792,7 +1792,7 @@ class TestAWCReport(TestCase):
                 "color": "green",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
+                "label": "Children enrolled for Anganwadi Services",
                 "frequency": "day",
                 "help_text": percent_children_enrolled_help_text()
             }
@@ -1818,7 +1818,7 @@ class TestAWCReport(TestCase):
                 "color": "red",
                 "percent": 0,
                 "value": 2,
-                "label": "Percent pregnant women enrolled for Anganwadi Services",
+                "label": "Pregnant women enrolled for Anganwadi Services",
                 "frequency": "day",
                 "help_text": percent_pregnant_women_enrolled_help_text()
             }
@@ -1844,7 +1844,7 @@ class TestAWCReport(TestCase):
                 "color": "red",
                 "percent": 0,
                 "value": 3,
-                "label": "Percent lactating women enrolled for Anganwadi Services",
+                "label": "Lactating women enrolled for Anganwadi Services",
                 "frequency": "day",
                 "help_text": percent_lactating_women_enrolled_help_text()
             }
@@ -1871,7 +1871,7 @@ class TestAWCReport(TestCase):
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
                 "label": (
-                    "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services"
+                    "Adolescent girls enrolled for Anganwadi Services"
                 ),
                 "frequency": "day",
                 "help_text": percent_adolescent_girls_enrolled_help_text()
@@ -2004,7 +2004,7 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": 0,
                 "value": 1,
-                "label": "Percent Aadhaar-seeded Beneficiaries",
+                "label": "Aadhaar-seeded Beneficiaries",
                 "frequency": "day",
                 "help_text": (
                     "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification "
@@ -2033,7 +2033,7 @@ class TestAWCReport(TestCase):
                 "color": "green",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
+                "label": "Children enrolled for Anganwadi Services",
                 "frequency": "day",
                 "help_text": percent_children_enrolled_help_text()
             }
@@ -2059,7 +2059,7 @@ class TestAWCReport(TestCase):
                 "color": "red",
                 "percent": 0,
                 "value": 2,
-                "label": "Percent pregnant women enrolled for Anganwadi Services",
+                "label": "Pregnant women enrolled for Anganwadi Services",
                 "frequency": "day",
                 "help_text": percent_pregnant_women_enrolled_help_text()
             }
@@ -2085,7 +2085,7 @@ class TestAWCReport(TestCase):
                 "color": "red",
                 "percent": 0,
                 "value": 3,
-                "label": "Percent lactating women enrolled for Anganwadi Services",
+                "label": "Lactating women enrolled for Anganwadi Services",
                 "frequency": "day",
                 "help_text": percent_lactating_women_enrolled_help_text()
             }
@@ -2112,7 +2112,7 @@ class TestAWCReport(TestCase):
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
                 "label": (
-                    "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services"
+                    "Adolescent girls enrolled for Anganwadi Services"
                 ),
                 "frequency": "day",
                 "help_text": percent_adolescent_girls_enrolled_help_text()
