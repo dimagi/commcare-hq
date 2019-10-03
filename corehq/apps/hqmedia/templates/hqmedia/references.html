@@ -94,11 +94,9 @@
                                 placeholder: '{% trans_html_attr "Search for a path" %}'"></search-box>
           </p>
         </div>
-        <div data-bind="visible: !isInitialLoad() && !totals().length">
-          <div class="alert alert-info">
-            {% blocktrans %}This application references no multimedia.{% endblocktrans %}
-          </div>
-        </div>
+        <p class="help-block"  data-bind="visible: !isInitialLoad() && !totals().length">
+          {% blocktrans %}This application references no multimedia.{% endblocktrans %}
+        </p>
       </div>
       <div class="col-sm-5" data-bind="visible: totals().length">
         <div class="well">
