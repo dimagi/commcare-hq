@@ -1,7 +1,10 @@
 from django.utils.translation import ugettext_lazy as _
 
 from corehq import toggles
+from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.signals import sql_case_post_save
 from corehq.motech.repeaters.models import CaseRepeater
+from corehq.motech.repeaters.signals import create_repeat_records
 from custom.icds.integrations.phi import send_request
 from custom.icds.repeaters.generators.phi import (
     SearchByParamsPayloadGenerator,
@@ -45,3 +48,12 @@ class ValidatePHIDRepeater(CaseRepeater):
 
     def send_request(self, repeat_record, payload):
         return send_request('validate', payload)
+
+
+def create_phi_repeat_records(sender, case, **kwargs):
+    create_repeat_records(SearchByParamsRepeater, case)
+    create_repeat_records(ValidatePHIDRepeater, case)
+
+
+sql_case_post_save.connect(create_phi_repeat_records, CommCareCaseSQL,
+                           dispatch_uid='phi_integration_case_receiver')
