@@ -14,7 +14,7 @@
   <tbody data-bind="foreach: references">
     <tr data-bind="attr: { 'data-hqmediapath': path },
                    event: { mediaUploadComplete: uploadComplete },
-                   visible: !is_matched() || !$root.showMissingReferences()">
+                   visible: !is_matched() || $root.onlyMissing()">
       <td>
           <a data-bind="attr: {href: app_url}">
             <span data-bind="text: module.name"></span>

@@ -2,18 +2,19 @@ hqDefine("hqmedia/js/references_main", function () {
     function MultimediaReferenceController() {
         var self = {};
         self.references = ko.observableArray();
-        self.showMissingReferences = ko.observable(false);
-        self.query = ko.observable('');
         self.totals = ko.observableArray();
+
+        // Filtering
+        self.query = ko.observable('');
+        self.onlyMissing = ko.observable();
+        self.onlyMissing.subscribe(function () {
+            self.goToPage(1);
+        });
 
         self.isInitialLoad = ko.observable(true);
         self.showPaginationSpinner = ko.observable(false);
         self.itemsPerPage = ko.observable();
         self.totalItems = ko.observable();
-
-        self.toggleRefsText = ko.computed(function () {
-            return (self.showMissingReferences()) ? gettext("Show All References") : gettext("Show Only Missing References");
-        }, self);
 
         self.goToPage = function (page) {
             self.showPaginationSpinner(true);
@@ -24,7 +25,7 @@ hqDefine("hqmedia/js/references_main", function () {
                     json: 1,
                     page: page,
                     limit: self.itemsPerPage(),
-                    only_missing: self.showMissingReferences(),
+                    only_missing: self.onlyMissing(),
                     query: self.query(),
                     include_total: includeTotal,
                 },
@@ -62,11 +63,6 @@ hqDefine("hqmedia/js/references_main", function () {
                         "please try again or report an issue if the problem persists."), 'danger');
                 },
             });
-        };
-
-        self.toggleMissingRefs = function () {
-            self.showMissingReferences(!self.showMissingReferences());
-            self.goToPage(1);
         };
 
         self.incrementTotals = function (trigger, event, data) {

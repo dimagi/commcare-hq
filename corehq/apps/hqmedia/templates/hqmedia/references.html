@@ -44,7 +44,17 @@
           </p>
           {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}
             <p>
-              <a href="#" class="btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
+              <select-toggle data-apply-bindings="false"
+                             params="
+                               value: onlyMissing,
+                               options: [{
+                                 id: 'false',
+                                 text: '{% trans_html_attr 'All references' %}',
+                               }, {
+                                 id: 'true',
+                                 text: '{% trans_html_attr 'Only missing references' %}',
+                               }],
+                             "></select-toggle>
             </p>
           {% endif %}
           <div>
