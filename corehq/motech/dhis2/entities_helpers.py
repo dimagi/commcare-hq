@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+from django.utils.translation import ugettext as _
+
 from requests import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
@@ -32,9 +34,9 @@ def send_dhis2_entities(requests, dhis2_entity_config, case_trigger_infos):
             continue
 
         try:
-            tracked_entity = get_tracked_entity(requests, info, case_config)
+            tracked_entity, etag = get_tracked_entity_and_etag(requests, info, case_config)
             if tracked_entity:
-                update_tracked_entity_instance(tracked_entity, requests, info, case_config)
+                update_tracked_entity_instance(requests, tracked_entity, etag, info, case_config)
             else:
                 tracked_entity = register_tracked_entity_instance(requests, info, case_config)
                 save_tracked_entity_instance_id(requests.domain_name, tracked_entity, info, case_config)
@@ -53,32 +55,29 @@ def get_case_config_for_case_type(case_type, dhis2_entity_config):
             return case_config
 
 
-def get_tracked_entity(requests, case_trigger_info, case_config):
+def get_tracked_entity_and_etag(requests, case_trigger_info, case_config):
     """
-    Returns a tracked entity that corresponds to case_trigger_info, or
-    None if a corresponding Tracked Entity was not found.
+    Returns a tracked entity that corresponds to case_trigger_info and
+    its ETag, or (None, None) if a corresponding Tracked Entity was not
+    found.
 
-    Raises BadTrackedEntityInstanceID if a Tracked Entity ID believed to have
-    been issued by the DHIS2 instance is not found on that instance.
+    Raises BadTrackedEntityInstanceID if a Tracked Entity ID believed to
+    have been issued by the DHIS2 server is not found on that server.
 
     Raises MultipleInstancesFound if unable to select a
     corresponding Tracked Entity from multiple available candidates.
-
-    :param requests:
-    :param case_trigger_info:
-    :param case_config:
-    :return:
     """
     tei_id = get_tracked_entity_instance_id(case_trigger_info, case_config)
-    if tei_id:
-        return get_tracked_entity_instance_by_id(requests, tei_id, case_trigger_info)
-    tracked_entities = find_tracked_entity_instances(requests, case_trigger_info, case_config)
-    if not tracked_entities:
-        return None
-    if len(tracked_entities) > 1:
-        msg = f'Found {len(tracked_entities)} Tracked Entity instances for case trigger info {case_trigger_info}'
-        raise MultipleInstancesFound(requests.domain_name, requests.base_url, requests.username, msg)
-    return tracked_entities[0]
+    if not tei_id:
+        tracked_entities = find_tracked_entity_instances(requests, case_trigger_info, case_config)
+        if not tracked_entities:
+            return (None, None)
+        if len(tracked_entities) > 1:
+            msg = _(f'Found {len(tracked_entities)} tracked entity instances '
+                    f'for {case_trigger_info}')
+            raise MultipleInstancesFound(requests.domain_name, requests.base_url, requests.username, msg)
+        tei_id = tracked_entities[0]["trackedEntityInstance"]
+    return get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_info)
 
 
 def get_tracked_entity_instance_id(case_trigger_info, case_config):
@@ -90,9 +89,10 @@ def get_tracked_entity_instance_id(case_trigger_info, case_config):
     return tei_id_value_source.get_value(case_trigger_info)
 
 
-def get_tracked_entity_instance_by_id(requests, tei_id, case_trigger_info):
+def get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_info):
     """
-    Fetch a Tracked Entity instance from a DHIS2 server by its TEI ID.
+    Fetch a tracked entity instance from a DHIS2 server by its TEI ID,
+    and return it with its ETag.
 
     Raises BadTrackedEntityInstanceID if the ID does not belong to an
     instance.
@@ -101,9 +101,10 @@ def get_tracked_entity_instance_by_id(requests, tei_id, case_trigger_info):
     params = {"fields": "*"}  # Tells DHIS2 to return everything
     response = requests.get(endpoint, params=params)
     if 200 <= response.status_code < 300:
-        return response.json()
+        return response.json(), response.headers["ETag"]
     else:
-        msg = f'The Tracked Entity ID "{tei_id}" of {case_trigger_info} was not found on its DHIS2 instance.'
+        msg = _(f'The tracked entity instance ID "{tei_id}" of '
+                f'{case_trigger_info} was not found on its DHIS2 server.')
         raise BadTrackedEntityInstanceID(requests.domain_name, requests.base_url, requests.username, msg)
 
 
@@ -112,7 +113,7 @@ def find_tracked_entity_instances(requests, case_trigger_info, case_config):
     return finder.find_tracked_entity_instances(case_trigger_info)
 
 
-def update_tracked_entity_instance(tracked_entity, requests, case_trigger_info, case_config):
+def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_info, case_config):
     for attr_id, value_source in case_config.attributes.items():
         set_te_attr(tracked_entity, attr_id, value_source.get_value(case_trigger_info))
     enrollments = get_enrollments(case_trigger_info, case_config)
@@ -120,7 +121,17 @@ def update_tracked_entity_instance(tracked_entity, requests, case_trigger_info, 
         tracked_entity["enrollments"] = enrollments
     tei_id = tracked_entity["trackedEntityInstance"]
     endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances/{tei_id}"
-    response = requests.put(endpoint, json=tracked_entity, raise_for_status=True)
+    headers = {
+        "Content-type": "application/json",
+        "Accept": "application/json"
+    }
+    if not etag.startswith("W/"):  # weak ETags never match
+        headers['If-Match'] = etag
+    response = requests.put(endpoint, json=tracked_entity, headers=headers, raise_for_status=True)
+    if response.status_code == 412:  # Precondition failed
+        tei_id = tracked_entity["trackedEntityInstance"]
+        tracked_entity, etag = get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_info)
+        update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_info, case_config)
 
 
 def register_tracked_entity_instance(requests, case_trigger_info, case_config):
@@ -140,7 +151,7 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     if len(summaries) != 1:
         raise Dhis2Exception(
             requests.domain_name, requests.base_url, requests.username,
-            f'{len(summaries)} tracked entity instances registered from {case_trigger_info}.'
+            _(f'{len(summaries)} tracked entity instances registered from {case_trigger_info}.')
         )
     tracked_entity["trackedEntityInstance"] = summaries[0]["reference"]
     return tracked_entity
