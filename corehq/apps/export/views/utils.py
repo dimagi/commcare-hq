@@ -386,4 +386,4 @@ def clean_odata_columns(export_instance):
     for table in export_instance.tables:
         for column in table.columns:
             column.label = column.label.replace('@', '').replace(
-                '.', ' ').replace('\n', '').replace('\t', ' ')
+                '.', ' ').replace('\n', '').replace('\t', ' ').replace('#', '')
