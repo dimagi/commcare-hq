@@ -47,13 +47,16 @@
               <select-toggle data-apply-bindings="false"
                              params="
                                value: onlyMissing,
-                               options: [{
-                                 id: 'false',
-                                 text: '{% trans_html_attr 'All references' %}',
-                               }, {
-                                 id: 'true',
-                                 text: '{% trans_html_attr 'Only missing references' %}',
-                               }],
+                               options: [
+                                 {
+                                   id: 'false',
+                                   text: '{% trans_html_attr 'All references' %}',
+                                 },
+                                 {
+                                   id: 'true',
+                                   text: '{% trans_html_attr 'Only missing references' %}',
+                                 },
+                               ],
                              "></select-toggle>
             </p>
           {% endif %}
@@ -61,22 +64,27 @@
               <select-toggle data-apply-bindings="false"
                              params="
                                value: mediaClass,
-                               options: [{
-                                 id: 'all',
-                                 text: '{% trans_html_attr 'All types' %}',
-                               }, {
-                                 id: 'CommCareImage',
-                                 text: '{% trans_html_attr 'Images' %}',
-                                 icon: 'fa fa-picture-o',
-                               }, {
-                                 id: 'CommCareAudio',
-                                 text: '{% trans_html_attr 'Audio' %}',
-                                 icon: 'fa fa-volume-up',
-                               }, {
-                                 id: 'CommCareVideo',
-                                 text: '{% trans_html_attr 'Videos' %}',
-                                 icon: 'fa fa-video-camera',
-                               }],
+                               options: [
+                                 {
+                                   id: 'all',
+                                   text: '{% trans_html_attr 'All types' %}',
+                                 },
+                                 {
+                                   id: 'CommCareImage',
+                                   text: '{% trans_html_attr 'Images' %}',
+                                   icon: 'fa fa-picture-o',
+                                 },
+                                 {
+                                   id: 'CommCareAudio',
+                                   text: '{% trans_html_attr 'Audio' %}',
+                                   icon: 'fa fa-volume-up',
+                                 },
+                                 {
+                                   id: 'CommCareVideo',
+                                   text: '{% trans_html_attr 'Videos' %}',
+                                   icon: 'fa fa-video-camera',
+                                 },
+                               ],
                              "></select-toggle>
           </p>
           <p>
