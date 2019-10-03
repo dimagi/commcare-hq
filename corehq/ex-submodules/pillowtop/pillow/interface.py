@@ -200,7 +200,6 @@ class PillowBase(metaclass=ABCMeta):
                 return set(), 0
 
             changes_chunk = self._deduplicate_changes(changes_chunk)
-            retry_changes = set()
             timer = TimingContext()
             with timer:
                 try:
@@ -216,8 +215,6 @@ class PillowBase(metaclass=ABCMeta):
                             'change_ids': [c.id for c in changes_chunk]
                         })
                     self._record_batch_exception_in_datadog(processor)
-                    for change in set(changes_chunk) - set(retry_changes):
-                        self._record_change_success_in_datadog(change, processor)
                     # fall back to processing one by one
                     reprocess_serially(changes_chunk, processor)
                 else:
