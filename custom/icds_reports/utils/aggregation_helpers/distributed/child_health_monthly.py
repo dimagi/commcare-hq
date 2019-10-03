@@ -27,7 +27,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
 class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     """This helper differs from the others in the following ways:
 
-    * It must insert into a temporary table before inserting into the final table
+    * It must insert into a staging table before inserting into the final table
     """
 
     helper_key = 'child-health-monthly'
@@ -39,8 +39,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
     def aggregate(self, cursor):
         drop_query, drop_params = self.drop_table_query()
 
-        cursor.execute(self.drop_temporary_table())
-        cursor.execute(self.create_temporary_table())
+        cursor.execute(self.drop_staging_table())
+        cursor.execute(self.create_staging_table())
         cursor.execute(*self.staging_query())
 
         from custom.icds_reports.models import ChildHealthMonthly
@@ -51,7 +51,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
         for query in self.indexes():
             cursor.execute(query)
-        cursor.execute(self.drop_temporary_table())
+        cursor.execute(self.drop_staging_table())
 
     @property
     def child_health_case_ucr_tablename(self):
@@ -76,8 +76,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         return self.base_tablename
 
     @property
-    def temporary_tablename(self):
-        return "tmp_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
+    def staging_tablename(self):
+        return "staging_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     def drop_table_query(self):
         return 'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename), {'month': self.month}
@@ -337,7 +337,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("mother_case_id", "child_health.mother_case_id")
         )
         return """
-        INSERT INTO "{tablename}" (
+        INSERT INTO "{staging_tablename}" (
             {columns}
         ) (SELECT
             {calculations}
@@ -366,7 +366,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ORDER BY child_health.supervisor_id, child_health.awc_id
         )
         """.format(
-            tablename=self.temporary_tablename,
+            staging_tablename=self.staging_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
             agg_cf_table=AGG_COMP_FEEDING_TABLE,
@@ -383,18 +383,17 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             "next_month": month_formatter(self.month + relativedelta(months=1)),
         }
 
-    def create_temporary_table(self):
-        return """
-        CREATE UNLOGGED TABLE \"{table}\" (LIKE child_health_monthly INCLUDING INDEXES);
-        SELECT create_distributed_table('{table}', 'supervisor_id');
-        """.format(table=self.temporary_tablename)
+    def create_staging_table(self):
+        return f"""
+        CREATE UNLOGGED TABLE \"{self.staging_tablename}\" (LIKE child_health_monthly INCLUDING INDEXES);
+        SELECT create_distributed_table('{self.staging_tablename}', 'supervisor_id');
+        """
 
-    def drop_temporary_table(self):
-        return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
+    def drop_staging_table(self):
+        return f"DROP TABLE IF EXISTS \"{self.staging_tablename}\""
 
     def aggregation_query(self):
-        return "INSERT INTO \"{tablename}\" (SELECT * FROM \"{tmp_tablename}\")".format(
-            tablename=self.tablename, tmp_tablename=self.temporary_tablename)
+        return f"INSERT INTO \"{self.tablename}\" (SELECT * FROM \"{self.staging_tablename}\")"
 
     def indexes(self):
         return [
