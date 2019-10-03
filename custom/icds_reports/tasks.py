@@ -264,9 +264,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                     stage_1_task_result.get(disable_sync_subtasks=False)
 
                 res_child = chain(
-                    icds_state_aggregation_task.si(
-                        state_id=state_ids, date=calculation_date, func_name='_child_health_monthly_table', force_citus=force_citus
-                    ),
+                    icds_aggregation_task.si(date=calculation_date, func_name='_child_health_monthly_table', force_citus=force_citus),
                     icds_aggregation_task.si(date=calculation_date, func_name='_agg_child_health_table', force_citus=force_citus)
                 ).apply_async()
                 res_ccs = chain(
@@ -376,6 +374,7 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             '_daily_attendance_table': _daily_attendance_table,
             '_aggregate_df_forms': _aggregate_df_forms,
             '_agg_child_health_table': _agg_child_health_table,
+            '_child_health_monthly_table': _child_health_monthly_table,
             '_ccs_record_monthly_table': _ccs_record_monthly_table,
             '_agg_ccs_record_table': _agg_ccs_record_table,
             '_agg_awc_table': _agg_awc_table,
@@ -419,7 +418,6 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
             '_aggregate_delivery_forms': _aggregate_delivery_forms,
             '_aggregate_bp_forms': _aggregate_bp_forms,
             '_aggregate_awc_infra_forms': _aggregate_awc_infra_forms,
-            '_child_health_monthly_table': _child_health_monthly_table,
             '_agg_ls_awc_mgt_form': _agg_ls_awc_mgt_form,
             '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
             '_agg_beneficiary_form': _agg_beneficiary_form,
@@ -1279,23 +1277,8 @@ def setup_aggregation(agg_date):
         _update_aggregate_locations_tables()
 
 
-def _child_health_monthly_aggregation(day, state_ids):
-    helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
-
-    with get_cursor(ChildHealthMonthly) as cursor:
-        cursor.execute(helper.drop_temporary_table())
-        cursor.execute(helper.create_temporary_table())
-
-    pool = Pool(10)
-    for query, params in helper.pre_aggregation_queries():
-        pool.spawn(_child_health_helper, query, params)
-    pool.join()
-
-    with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
-        ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
-
-    with get_cursor(ChildHealthMonthly) as cursor:
-        cursor.execute(helper.drop_temporary_table())
+def _child_health_monthly_aggregation(day):
+    ChildHealthMonthly.aggregate(force_to_date(day))
 
 
 @task

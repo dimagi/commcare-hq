@@ -33,7 +33,6 @@ STATE_TASKS = {
 }
 
 ALL_STATES_TASKS = {
-    'child_health_monthly': _child_health_monthly_aggregation,
     'create_mbt_for_month': create_all_mbt,
 }
 
@@ -48,6 +47,7 @@ NORMAL_TASKS = {
     'agg_awc_table': _agg_awc_table,
     'aggregate_awc_daily': aggregate_awc_daily,
     'aggregate_df_forms': _aggregate_df_forms,
+    'child_health_monthly': _child_health_monthly_aggregation,
 }
 
 

@@ -1,7 +1,13 @@
+from django.db import transaction
+
 from dateutil.relativedelta import relativedelta
 
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
+from corehq.apps.userreports.models import (
+    StaticDataSourceConfiguration,
+    get_datasource_config,
+)
 from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
@@ -9,36 +15,43 @@ from custom.icds_reports.const import (
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
 )
-from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from custom.icds_reports.utils.aggregation_helpers import (
+    transform_day_to_month,
+    month_formatter,
+)
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
+    BaseICDSAggregationDistributedHelper,
+)
 
 
 class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     """This helper differs from the others in the following ways:
 
     * It must insert into a temporary table before inserting into the final table
-    * It takes in multiple state_ids instead of one state_id
-    * It provides one aggregation query per state_id passed in
-
-    Future work:
-    * Partition the child_health_monthly table (may be done in citus work).
-      This would make it much easier to make it like other helpers
     """
 
     helper_key = 'child-health-monthly'
     base_tablename = 'child_health_monthly'
 
-    def __init__(self, state_ids, month):
-        self.state_ids = state_ids
+    def __init__(self, month):
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
         drop_query, drop_params = self.drop_table_query()
 
-        cursor.execute(drop_query, drop_params)
-        cursor.execute(self.aggregation_query())
+        cursor.execute(self.drop_temporary_table())
+        cursor.execute(self.create_temporary_table())
+        cursor.execute(*self.staging_query())
+
+        from custom.icds_reports.models import ChildHealthMonthly
+        db_alias = db_for_read_write(ChildHealthMonthly)
+        with transaction.atomic(using=db_alias):
+            cursor.execute(drop_query, drop_params)
+            cursor.execute(self.aggregation_query())
+
         for query in self.indexes():
             cursor.execute(query)
+        cursor.execute(self.drop_temporary_table())
 
     @property
     def child_health_case_ucr_tablename(self):
@@ -69,7 +82,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
     def drop_table_query(self):
         return 'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename), {'month': self.month}
 
-    def _state_aggregation_query(self, state_id):
+    def staging_query(self):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
         end_month_string = (self.month + relativedelta(months=1, days=-1)).strftime("'%Y-%m-%d'::date")
         age_in_days = "({} - person_cases.dob)::integer".format(end_month_string)
@@ -331,34 +344,24 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             FROM "{child_health_case_ucr}" child_health
             LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON
               child_health.doc_id = child_tasks.child_health_case_id
-              AND child_health.state_id = child_tasks.state_id
-              AND lower(substring(child_tasks.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
               AND child_health.supervisor_id = child_tasks.supervisor_id
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
-              AND child_health.state_id = person_cases.state_id
-              AND lower(substring(person_cases.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
               AND child_health.supervisor_id = person_cases.supervisor_id
             LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
-              AND child_health.state_id = cf.state_id
               AND child_health.supervisor_id = cf.supervisor_id
             LEFT OUTER JOIN "{agg_thr_table}" thr ON child_health.doc_id = thr.case_id
               AND thr.month = %(start_date)s
-              AND child_health.state_id = thr.state_id
               AND child_health.supervisor_id = thr.supervisor_id
             LEFT OUTER JOIN "{agg_gm_table}" gm ON child_health.doc_id = gm.case_id
               AND gm.month = %(start_date)s
-              AND child_health.state_id = gm.state_id
               AND child_health.supervisor_id = gm.supervisor_id
             LEFT OUTER JOIN "{agg_pnc_table}" pnc ON child_health.doc_id = pnc.case_id
               AND pnc.month = %(start_date)s
-              AND child_health.state_id = pnc.state_id
               AND child_health.supervisor_id = pnc.supervisor_id
             LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id
               AND df.month = %(start_date)s
-              AND child_health.state_id = df.state_id
               AND child_health.supervisor_id = df.supervisor_id
             WHERE child_health.doc_id IS NOT NULL
-              AND child_health.state_id = %(state_id)s
               AND {open_in_month}
             ORDER BY child_health.supervisor_id, child_health.awc_id
         )
@@ -378,12 +381,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         ), {
             "start_date": self.month,
             "next_month": month_formatter(self.month + relativedelta(months=1)),
-            "state_id": state_id,
-            "state_id_last_3": state_id[-3:],
         }
-
-    def pre_aggregation_queries(self):
-        return [self._state_aggregation_query(state_id) for state_id in self.state_ids]
 
     def create_temporary_table(self):
         return """
