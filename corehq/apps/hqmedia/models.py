@@ -549,11 +549,11 @@ class MediaMixin(object):
         """
         raise NotImplementedError
 
-    def get_references(self):
+    def get_references(self, lang=None):
         """
             Used for the multimedia controller.
         """
-        return [m.as_dict() for m in self.all_media()]
+        return [m.as_dict() for m in self.all_media(lang=lang)]
 
     def get_relevant_multimedia_map(self, app):
         references = self.get_references()

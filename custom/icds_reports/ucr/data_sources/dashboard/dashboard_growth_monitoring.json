@@ -396,6 +396,9 @@
       },
       {
         "column_ids": ["state_id", "timeend"]
+      },
+      {
+        "column_ids": ["doc_id"]
       }
     ],
     "disable_destructive_rebuild": true

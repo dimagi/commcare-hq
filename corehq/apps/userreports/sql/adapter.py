@@ -278,7 +278,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
         # these doc types were blocking the queue but the approach could be applied
         # more generally with some more testing
-        SHARDABLE_DOC_TYPES = ('XFormArchived', 'XFormDuplicate')
+        SHARDABLE_DOC_TYPES = ('XFormArchived', 'XFormDeprecated', 'XFormDuplicate', 'XFormError')
         table = self.get_table()
         doc_ids_to_delete = []
 

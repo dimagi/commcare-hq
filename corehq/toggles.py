@@ -1802,5 +1802,5 @@ GROUP_API_USE_ES_BACKEND = StaticToggle(
     'group_api_use_es_backend',
     'Use ES backend for Group API',
     TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )

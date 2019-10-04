@@ -40,7 +40,6 @@ class TestDecodePassword(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
-        cls.web_user.delete()
         super(TestDecodePassword, cls).tearDownClass()
 
     def test_no_replay_attack_for_mobile_heartbeat_attempt(self):

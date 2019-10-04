@@ -296,9 +296,9 @@ class TestTreeValidator(UploadTestUtils, TestCase):
         self.user = WebUser.create(self.domain, 'username', 'password')
 
     def tearDown(self):
-        super(TestTreeValidator, self).tearDown()
         self.user.delete()
         self.domain_obj.delete()
+        super(TestTreeValidator, self).tearDown()
 
     def get_validator(self, location_types, locations):
         old_collection = LocationCollection(self.domain_obj)
@@ -451,9 +451,9 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
         self.user = WebUser.create(self.domain, 'username', 'password')
 
     def tearDown(self):
-        super(TestBulkManagementNoInitialLocs, self).tearDown()
         self.user.delete()
         self.domain_obj.delete()
+        super(TestBulkManagementNoInitialLocs, self).tearDown()
 
     def test_location_creation(self):
         result = self.bulk_update_locations(
@@ -728,8 +728,8 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         self.user = WebUser.create(self.domain, 'username', 'password')
 
     def tearDown(self):
-        super(TestBulkManagementWithInitialLocs, self).tearDown()
         self.user.delete()
+        super(TestBulkManagementWithInitialLocs, self).tearDown()
 
     @property
     def basic_update(self):
@@ -1115,8 +1115,8 @@ class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):
         restrict_user_by_location(self.domain, self.user)
 
     def tearDown(self):
-        super(TestRestrictedUserUpload, self).tearDown()
         self.user.delete()
+        super(TestRestrictedUserUpload, self).tearDown()
 
     def test_only_additions(self):
         upload = [
