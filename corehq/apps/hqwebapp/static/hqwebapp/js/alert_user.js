@@ -25,7 +25,7 @@ function (
         var alert_obj = {
             "message": ko.observable(message),
             "alert_class": ko.observable(
-                "alert fade in alert-block page-level-alert message-alert"
+                "alert fade in page-level-alert message-alert"
             ),
         };
         if (tags) {
