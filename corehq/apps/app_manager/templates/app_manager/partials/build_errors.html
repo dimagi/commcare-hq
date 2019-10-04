@@ -18,10 +18,7 @@
         <li>
           <span>
             {% case error.type "blank form" %}
-              {% if not error.message %}
-                <strong>Add a Question</strong> to the
-              {% endif %}
-              {% include "app_manager/partials/form_error_message.html" %}
+              <strong>Add a question</strong> to the {% include "app_manager/partials/form_error_message.html" %}
             {% case "invalid xml" %}
               {% if not error.message %}
                 {% blocktrans %}
