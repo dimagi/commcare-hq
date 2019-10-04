@@ -1671,9 +1671,9 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
 MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'manage_releases_per_location',
     'Manage releases per location',
-    TAG_CUSTOM,
+    TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
+    always_disabled={'icds-cas'},
 )
 
 
