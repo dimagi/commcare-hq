@@ -20,7 +20,7 @@ from django.views.generic.base import View, TemplateView, RedirectView
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
-from corehq.apps.domain.decorators import login_and_domain_required, api_auth
+from corehq.apps.domain.decorators import login_and_domain_required, api_auth, login_or_basic_ex
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
@@ -116,10 +116,10 @@ from django.views.decorators.csrf import csrf_exempt
 
 # checks required to view the dashboard
 DASHBOARD_CHECKS = [
+    login_or_basic_ex(allow_cc_users=True),
     toggles.DASHBOARD_ICDS_REPORT.required_decorator(),
     require_permission(Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport',
                        login_decorator=None),
-    login_and_domain_required,
 ]
 
 
