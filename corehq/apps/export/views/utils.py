@@ -11,6 +11,7 @@ from django.views.generic import View
 import pytz
 from memoized import memoized
 
+from corehq.toggles import NAMESPACE_DOMAIN
 from couchexport.models import Format
 from dimagi.utils.web import get_url_base, json_response
 from soil import DownloadBase
@@ -43,6 +44,7 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     can_download_data_files,
     has_permission_to_view_report,
+    ODATA_FEED_PERMISSION,
 )
 from corehq.blobs.exceptions import NotFound
 from corehq.feature_previews import BI_INTEGRATION_PREVIEW
@@ -70,6 +72,16 @@ def user_can_view_deid_exports(domain, couch_user):
             ))
 
 
+def user_can_view_odata_feed(domain, couch_user):
+    domain_can_view_odata = BI_INTEGRATION_PREVIEW.enabled(domain, NAMESPACE_DOMAIN)
+    return (domain_can_view_odata
+            and couch_user.has_permission(
+                domain,
+                get_permission_name(Permissions.view_report),
+                data=ODATA_FEED_PERMISSION
+            ))
+
+
 class ExportsPermissionsManager(object):
     """
     Encapsulates some shortcuts for checking export permissions.
@@ -93,7 +105,7 @@ class ExportsPermissionsManager(object):
 
     @property
     def has_edit_permissions(self):
-        return self.couch_user.can_edit_data() and self.has_view_permissions
+        return self.couch_user.can_edit_data()
 
     @property
     def has_form_export_permissions(self):
@@ -118,9 +130,14 @@ class ExportsPermissionsManager(object):
         # just a convenience wrapper around user_can_view_deid_exports
         return user_can_view_deid_exports(self.domain, self.couch_user)
 
-    def access_list_exports_or_404(self, is_deid=False):
+    @property
+    def has_odata_permissions(self):
+        return user_can_view_odata_feed(self.domain, self.couch_user)
+
+    def access_list_exports_or_404(self, is_deid=False, is_odata=False):
         if not (self.has_view_permissions
-                or (is_deid and self.has_deid_view_permissions)):
+                or (is_deid and self.has_deid_view_permissions)
+                or (is_odata and self.has_odata_permissions)):
             raise Http404()
 
     def access_download_export_or_404(self):
