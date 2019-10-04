@@ -1,3 +1,5 @@
+# coding=utf-8
+
 from django.utils.functional import cached_property
 from memoized import memoized
 
