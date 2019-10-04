@@ -107,7 +107,15 @@
                 some menus.
               {% endblocktrans %}
             {% case "missing module" %}
-              {% include "app_manager/partials/module_error_message.html" %} references a missing menu.
+              {% if not_actual_build %}
+                {% blocktrans %}
+                  This menu references a missing menu.
+                {% endblocktrans %}
+              {% else %}
+                {% blocktrans with module_name=error.module.name|trans:langs %}
+                  <a href="{{ module_url }}">{{ module_name }}</a> references a missing menu.
+                {% endblocktrans %}
+              {% endif %}
               {% if error.message %}
                 {% trans "Details:" %}
               {% endif %}
