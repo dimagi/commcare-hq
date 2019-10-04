@@ -713,24 +713,27 @@ class FormMediaMixin(MediaMixin):
         media = copy(self.menu_media(self, lang=lang))
 
         # Form questions
-        parsed = self.wrapped_xform()
-        if parsed.exists():
-            try:
+        try:
+            parsed = self.wrapped_xform()
+            if parsed.exists():
                 self.validate_form()
-            except (XFormValidationError, XFormException):
+            else:
                 return media
-            for image in parsed.image_references(lang=lang):
-                if image:
-                    media.append(ApplicationMediaReference(image, media_class=CommCareImage, **kwargs))
-            for audio in parsed.audio_references(lang=lang):
-                if audio:
-                    media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **kwargs))
-            for video in parsed.video_references(lang=lang):
-                if video:
-                    media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **kwargs))
-            for text in parsed.text_references(lang=lang):
-                if text:
-                    media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **kwargs))
+        except (XFormValidationError, XFormException):
+            return media
+
+        for image in parsed.image_references(lang=lang):
+            if image:
+                media.append(ApplicationMediaReference(image, media_class=CommCareImage, **kwargs))
+        for audio in parsed.audio_references(lang=lang):
+            if audio:
+                media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **kwargs))
+        for video in parsed.video_references(lang=lang):
+            if video:
+                media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **kwargs))
+        for text in parsed.text_references(lang=lang):
+            if text:
+                media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **kwargs))
 
         return media
 

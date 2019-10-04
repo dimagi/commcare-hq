@@ -204,6 +204,12 @@ class TestViews(TestCase):
         self.app.save()
         self._test_status_codes(['view_form', 'form_source'], kwargs)
 
+        bad_form = self.app.new_form(module.id, "Form1", "en",
+                                     attachment="this is not xml")
+        kwargs['form_unique_id'] = bad_form.unique_id
+        self.app.save()
+        self._test_status_codes(['view_form', 'form_source'], kwargs)
+
     def test_advanced_module(self, mock):
         module = self.app.add_module(AdvancedModule.new_module("Module0", "en"))
         self.app.save()

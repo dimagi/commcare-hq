@@ -12,7 +12,7 @@ from corehq.apps.tzmigration.timezonemigration import (
 
 from .diffrule import Ignore
 
-load_ignore_rules = memoized(lambda: {
+load_ignore_rules = memoized(lambda: add_duplicate_rules({
     'XFormInstance*': [
         Ignore(path='_rev', new=MISSING),
         Ignore(path='migrating_blobs_from_couch', new=MISSING),
@@ -156,7 +156,7 @@ load_ignore_rules = memoized(lambda: {
         ignore_renamed('attachment_size', 'content_length'),
         ignore_renamed('identifier', 'name'),
     ]
-})
+}))
 
 
 def filter_form_diffs(couch_form, sql_form, diffs):
@@ -274,6 +274,11 @@ class ReplaceDiff(Exception):
 
 def is_case_actions(old_obj, new_obj, rule, diff):
     return diff.path[0] == "actions"
+
+
+def add_duplicate_rules(rules):
+    rules["CommCareCase-Deleted-Deleted"] = rules["CommCareCase-Deleted"]
+    return rules
 
 
 def ignore_renamed(old_name, new_name):
