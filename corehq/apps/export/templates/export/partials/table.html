@@ -553,8 +553,13 @@
         <div data-bind="if: $parent.showOwnership">
           <div data-bind="if: can_edit()">
             <div data-bind="if: isLocationSafeForUser">
-              <a data-bind="attr: {href: editUrl}"
-                 class="btn btn-default">
+              <a class="btn btn-default"
+                 {% if odata_feeds_over_limit %}
+                 href="#odataFeedLimitReachedModal"
+                 data-toggle="modal"
+                 {% else %}
+                 data-bind="attr: {href: editUrl}"
+                 {% endif %}>
                 <div data-bind="ifnot: isOData()">
                   <i class="fa fa-pencil"></i>
                   <span data-bind="visible: !isDailySaved()">
@@ -567,7 +572,9 @@
                 <div data-bind="if: isOData()">
                   <i class="fa fa-pencil"></i>
                   <span>
-                    {% trans 'Copy' %}
+                    {% blocktrans %}
+                      Copy &amp; Edit Feed
+                    {% endblocktrans %}
                   </span>
                 </div>
               </a>

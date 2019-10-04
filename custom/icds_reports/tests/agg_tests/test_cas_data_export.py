@@ -4,7 +4,7 @@ import io
 import os
 import csv
 
-from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
+from custom.icds_reports.tests.agg_tests import OUTPUT_PATH, CSVTestCase
 
 
 class TestLocationView(CSVTestCase):

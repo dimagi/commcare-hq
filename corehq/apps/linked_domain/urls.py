@@ -15,7 +15,7 @@ app_name = 'linked_domain'
 
 
 urlpatterns = [
-    url(r'^brief_apps/$', custom_data_models, name='brief_apps'),
+    url(r'^brief_apps/$', brief_apps, name='brief_apps'),
     url(r'^case_search_config/$', case_search_config, name='case_search_config'),
     url(r'^custom_data_models/$', custom_data_models, name='custom_data_models'),
     url(r'^toggles/$', toggles_and_previews, name='toggles'),

@@ -11,14 +11,14 @@ from freezegun import freeze_time
 from custom.icds_reports.exceptions import LocationRemovedException
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.tests.util import setup_locations_and_types
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager, ICDS_UCR_CITUS_ENGINE_ID
 from custom.icds_reports.models.aggregate import (
     AggregateInactiveAWW,
     AwcLocation,
     get_cursor,
     maybe_atomic,
 )
-from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
+from custom.icds_reports.tests.agg_tests import OUTPUT_PATH, CSVTestCase
 from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     LocationAggregationDistributedHelper,
@@ -60,7 +60,7 @@ class AggregationScriptTestBase(CSVTestCase):
             return value_str
 
     def _load_data_from_db(self, table_name, sort_key, filter_by=None):
-        session_helper = connection_manager.get_session_helper('icds-ucr')
+        session_helper = connection_manager.get_session_helper(ICDS_UCR_CITUS_ENGINE_ID)
         engine = session_helper.engine
         session = session_helper.Session
         metadata = sqlalchemy.MetaData(bind=engine)

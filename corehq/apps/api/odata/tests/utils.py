@@ -39,7 +39,6 @@ class OdataTestMixin(object):
     @classmethod
     def _teardownclass(cls):
         cls.domain.delete()
-        cls.web_user.delete()
 
     @classmethod
     def _setup_accounting(cls):

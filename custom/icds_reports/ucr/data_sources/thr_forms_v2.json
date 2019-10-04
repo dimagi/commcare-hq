@@ -176,6 +176,11 @@
       },
       "primary_key": ["supervisor_id","doc_id"]
     },
+    "sql_column_indexes": [
+      {
+        "column_ids": ["doc_id"]
+      }
+    ],
     "disable_destructive_rebuild": true
   }
 }
