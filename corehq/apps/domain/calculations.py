@@ -167,9 +167,9 @@ def _sms_helper(domain, direction=None, days=None):
     assert direction in (INCOMING, OUTGOING, None), repr(direction)
     query = SMSES().domain(domain).size(0)
 
-    if direction is INCOMING:
+    if direction == INCOMING:
         query = query.incoming_messages()
-    elif direction is OUTGOING:
+    elif direction == OUTGOING:
         query = query.outgoing_messages()
 
     if days:
