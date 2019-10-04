@@ -1,9 +1,9 @@
 class Dhis2Exception(Exception):
-    def __init__(self, domain, base_url, username, *args, **kwargs):
+    def __init__(self, domain, base_url, username, *args):
         self.domain = domain
         self.base_url = base_url
         self.username = username
-        super().__init__(*args, **kwargs)
+        super().__init__(*args)
 
     def __str__(self):
         string = super().__str__()
