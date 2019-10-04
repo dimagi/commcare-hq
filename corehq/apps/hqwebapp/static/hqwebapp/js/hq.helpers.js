@@ -95,7 +95,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
     };
 
     $.showMessage = function (message, level) {
-        var $notice = $('<div />').addClass("alert fade in page-level-alert")
+        var $notice = $('<div />').addClass("alert fade in")
             .addClass("alert-" + level);
         var $closeIcon = $('<a />').addClass("close").attr("data-dismiss", "alert");
         $closeIcon.attr("href", "#").html("&times;");
