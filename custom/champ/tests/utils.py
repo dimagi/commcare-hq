@@ -22,6 +22,7 @@ class ChampTestCase(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.factory = RequestFactory()
+        # gets created + removed in package level setup / teardown
         domain = Domain.get_or_create_with_name('champ-cameroon')
         domain.is_active = True
         domain.save()
@@ -34,7 +35,7 @@ class ChampTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
+        cls.user.delete()
         super().tearDownClass()
 
 

@@ -689,7 +689,8 @@ class SchedulingRecipientTest(TestCase):
 
     @run_with_all_backends
     def test_two_way_numbers_with_signal_task(self):
-        self._test_two_way_numbers(contextlib.nullcontext())
+        nullcontext = contextlib.suppress()
+        self._test_two_way_numbers(nullcontext)
 
     @run_with_all_backends
     @patch('corehq.messaging.signals.sync_case_for_messaging')

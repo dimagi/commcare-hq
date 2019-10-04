@@ -22,6 +22,7 @@ class YeksiTestCase(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.factory = RequestFactory()
+        # gets created + removed in package level setup / teardown
         domain = Domain.get_or_create_with_name('test-pna')
         domain.is_active = True
         domain.save()
@@ -37,7 +38,7 @@ class YeksiTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
+        cls.user.delete()
         super().tearDownClass()
 
 
