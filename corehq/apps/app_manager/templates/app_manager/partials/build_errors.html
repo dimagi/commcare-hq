@@ -30,8 +30,8 @@
             {% endif %}
             {% include "app_manager/partials/form_error_message.html" %}
           {% case "validation error" %}
-                  {{ error.validation_message|linebreaksbr }} in form
-                  {% include "app_manager/partials/form_error_message.html" %}
+            {{ error.validation_message|linebreaksbr }} in form
+            {% include "app_manager/partials/form_error_message.html" %}
           {% case "no form links" %}
             {% blocktrans %}
               Link to other form is selected, but no form links have been provided.
@@ -391,8 +391,8 @@
             {% if not not_actual_build %}for form {% include "app_manager/partials/form_error_message.html" %}{% endif %}
             does not exist. Select a new shadow parent in the "Advanced" section of the shadow form's settings tab.
           {% case "missing shadow parent tag" %}
-                  Shadow parent form action tags do not appear in the action configuration for the shadow form.
-                  The missing tags are: {{ error.case_tags|join:", " }}
+            Shadow parent form action tags do not appear in the action configuration for the shadow form.
+            The missing tags are: {{ error.case_tags|join:", " }}
             {% if not not_actual_build %}The shadow form is {% include "app_manager/partials/form_error_message.html" %}{% endif %}
           {% case "password_format" %}
             {# Do nothing; the full message is contained in error.message #}
