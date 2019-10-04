@@ -511,7 +511,6 @@ def _aggregate_inactive_aww(day, force_citus=False):
         AggregateInactiveAWW.aggregate(day)
 
 
-
 @track_time
 def _aggregate_delivery_forms(state_id, day):
     AggregateCcsRecordDeliveryForms.aggregate(state_id, day)
