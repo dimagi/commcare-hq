@@ -192,6 +192,20 @@ class DiffTestCases(SimpleTestCase):
         filtered = filter_case_diffs(couch_case, sql_case, diffs + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
 
+    def test_filter_twice_deleted_case(self):
+        couch_case = {
+            'doc_type': 'CommCareCase-Deleted-Deleted',
+            '-deletion_id': 'abc',
+            '-deletion_date': '123',
+        }
+        sql_case = {
+            'doc_type': 'CommCareCase-Deleted',
+            'deletion_id': 'abc',
+            'deleted_on': '123',
+        }
+        filtered = filter_case_diffs(couch_case, sql_case, DELETION_DIFFS + REAL_DIFFS)
+        self.assertEqual(filtered, REAL_DIFFS)
+
     def test_filter_case_diffs(self):
         couch_case = {'doc_type': 'CommCareCase'}
         diffs = _make_ignored_diffs('CommCareCase') + DATE_DIFFS + REAL_DIFFS

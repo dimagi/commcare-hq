@@ -254,18 +254,22 @@ def get_apps_in_domain(domain, include_remote=True):
     return apps
 
 
-def get_brief_apps_in_domain(domain, include_remote=True):
+def get_brief_app_docs_in_domain(domain, include_remote=True):
     from .models import Application
-    from corehq.apps.app_manager.util import get_correct_app_class
+    from .util import is_remote_app
     docs = [row['value'] for row in Application.get_db().view(
         'app_manager/applications_brief',
         startkey=[domain],
         endkey=[domain, {}]
     )]
-    apps = [get_correct_app_class(doc).wrap(doc) for doc in docs]
     if not include_remote:
-        apps = [app for app in apps if not app.is_remote_app()]
-    return sorted(apps, key=lambda app: app.name)
+        docs = [doc for doc in docs if not is_remote_app(doc)]
+    return sorted(docs, key=lambda doc: doc['name'])
+
+
+def get_brief_apps_in_domain(domain, include_remote=True):
+    docs = get_brief_app_docs_in_domain(domain, include_remote)
+    return [wrap_app(doc) for doc in docs]
 
 
 def get_brief_app(domain, app_id):

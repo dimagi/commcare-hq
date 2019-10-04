@@ -29,6 +29,7 @@ from .diff import filter_case_diffs, filter_ledger_diffs
 from .lrudict import LRUDict
 from .statedb import StateDB
 from .status import run_status_logger
+from .util import exit_on_error
 
 log = logging.getLogger(__name__)
 
@@ -397,7 +398,9 @@ class BatchProcessor(object):
         self.batches[key] = batch
         return self._process_batch(process, key)
 
+    @exit_on_error
     def _process_batch(self, process, key):
+        @exit_on_error
         def process_batch(key):
             log.debug("call %s key=%s", process.__name__, key)
             try:
@@ -479,6 +482,7 @@ class CaseDiffProcess(object):
         log.debug("reqeust status...")
         self.calls.put((STATUS,))
 
+    @exit_on_error
     def run_status_logger(self):
         """Request and log status from the case diff process
 
