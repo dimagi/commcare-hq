@@ -477,11 +477,12 @@ class BaseExportListView(BaseProjectDataView):
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
         for use in third-party data analysis tools.
     ''')
+    is_odata = False
 
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
-        self.permissions.access_list_exports_or_404(is_deid=self.is_deid)
+        self.permissions.access_list_exports_or_404(is_deid=self.is_deid, is_odata=self.is_odata)
 
         return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 
@@ -494,6 +495,7 @@ class BaseExportListView(BaseProjectDataView):
             'allow_bulk_export': self.allow_bulk_export,
             'has_edit_permissions': self.permissions.has_edit_permissions,
             'is_deid': self.is_deid,
+            'is_odata': self.is_odata,
             "export_type_caps": _("Export"),
             "export_type": _("export"),
             "export_type_caps_plural": _("Exports"),
@@ -526,7 +528,10 @@ def _get_task_status_json(export_instance_id):
 @location_safe
 def get_exports_page(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=json.loads(request.GET.get('is_deid')))
+    permissions.access_list_exports_or_404(
+        is_deid=json.loads(request.GET.get('is_deid')),
+        is_odata=json.loads(request.GET.get('is_odata'))
+    )
 
     helper = ExportListHelper.from_request(request)
     page = int(request.GET.get('page', 1))
@@ -795,8 +800,9 @@ def get_app_data_drilldown_values(request, domain):
         raise Http404()
 
     model_type = request.GET.get('model_type')
+    is_odata = json.loads(request.GET.get('is_odata'))
     permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=False)
+    permissions.access_list_exports_or_404(is_deid=False, is_odata=is_odata)
 
     rmi_helper = ApplicationDataRMIHelper(domain, request.couch_user)
     if model_type == 'form':
@@ -817,8 +823,9 @@ def submit_app_data_drilldown_form(request, domain):
         raise Http404()
 
     model_type = request.POST.get('model_type')
+    is_odata = json.loads(request.POST.get('is_odata'))
     permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=False)
+    permissions.access_list_exports_or_404(is_deid=False, is_odata=is_odata)
 
     form_data = json.loads(request.POST.get('form_data'))
     is_daily_saved_export = json.loads(request.POST.get('is_daily_saved_export'))
@@ -826,8 +833,8 @@ def submit_app_data_drilldown_form(request, domain):
     is_odata = json.loads(request.POST.get('is_odata'))
 
     create_form = CreateExportTagForm(
-        permissions.has_form_export_permissions,
-        permissions.has_case_export_permissions,
+        is_odata or permissions.has_form_export_permissions,
+        is_odata or permissions.has_case_export_permissions,
         form_data
     )
     if not create_form.is_valid():
@@ -888,7 +895,7 @@ class ODataFeedListHelper(ExportListHelper):
 
     @property
     def create_export_form(self):
-        form = super(ODataFeedListHelper, self).create_export_form
+        form = CreateExportTagForm(True, True)
         form.fields['model_type'].label = _("Feed Type")
         form.fields['model_type'].choices = [
             ('', _("Select field type")),
@@ -929,6 +936,7 @@ class ODataFeedListHelper(ExportListHelper):
 
 @method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
+    is_odata = True
     urlname = 'list_odata_feeds'
     page_title = ugettext_lazy("PowerBi/Tableau Integration (Preview)")
     lead_text = ugettext_lazy('''
@@ -950,7 +958,6 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     def page_context(self):
         context = super(ODataFeedListView, self).page_context
         context.update({
-            'is_odata': True,
             "export_type_caps": _("OData Feed"),
             "export_type": _("OData feed"),
             "export_type_caps_plural": _("OData Feeds"),

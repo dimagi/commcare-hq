@@ -130,9 +130,14 @@ class ExportsPermissionsManager(object):
         # just a convenience wrapper around user_can_view_deid_exports
         return user_can_view_deid_exports(self.domain, self.couch_user)
 
-    def access_list_exports_or_404(self, is_deid=False):
+    @property
+    def has_odata_permissions(self):
+        return user_can_view_odata_feed(self.domain, self.couch_user)
+
+    def access_list_exports_or_404(self, is_deid=False, is_odata=False):
         if not (self.has_view_permissions
-                or (is_deid and self.has_deid_view_permissions)):
+                or (is_deid and self.has_deid_view_permissions)
+                or (is_odata and self.has_odata_permissions)):
             raise Http404()
 
     def access_download_export_or_404(self):
