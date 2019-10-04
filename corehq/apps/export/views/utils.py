@@ -105,7 +105,7 @@ class ExportsPermissionsManager(object):
 
     @property
     def has_edit_permissions(self):
-        return self.couch_user.can_edit_data() and self.has_view_permissions
+        return self.couch_user.can_edit_data()
 
     @property
     def has_form_export_permissions(self):
