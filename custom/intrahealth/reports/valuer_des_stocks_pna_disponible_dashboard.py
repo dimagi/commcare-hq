@@ -1,6 +1,7 @@
 import datetime
 
 from django.utils.functional import cached_property
+from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
@@ -122,6 +123,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
         return headers
 
     @property
+    @memoized
     def clean_rows(self):
         return ValuationOfPNAStockPerProductV2Data(config=self.config).rows
 

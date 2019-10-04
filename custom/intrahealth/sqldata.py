@@ -4157,7 +4157,7 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
                     if current_location_id == _row_id and current_product_id == row['product_id']:
                         current_date = current_product['real_date_precise']
                         new_date = row['real_date_precise']
-                        if current_date > new_date:
+                        if new_date > current_date:
                             rows_to_return[r] = row
                     elif r == length - 1:
                         rows_to_return.append(row)
@@ -4377,7 +4377,7 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
                     if current_location_id == _row_id and current_product_id == row['product_id']:
                         current_date = current_product['real_date_precise']
                         new_date = row['real_date_precise']
-                        if current_date > new_date:
+                        if new_date > current_date:
                             rows_to_return[r] = row
                     elif r == length - 1:
                         rows_to_return.append(row)
