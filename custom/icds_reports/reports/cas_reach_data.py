@@ -83,7 +83,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, pre_release_fe
             'percent': daily_attendance_percent,
             'value': get_value(daily_yesterday, 'daily_attendance'),
             'all': awcs,
-            'format': 'number_and_percent',
+            'format': 'number_and_percent' if pre_release_features else 'div',
             'frequency': 'day',
             'redirect': 'icds_cas_reach/awc_daily_status',
         }
@@ -98,7 +98,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, pre_release_fe
             'percent': monthly_attendance_percent,
             'value': get_value(awc_this_month_data, 'awc_num_open'),
             'all': awcs,
-            'format': 'number_and_percent',
+            'format': 'number_and_percent' if pre_release_features else 'div',
             'frequency': 'month',
         }
 
