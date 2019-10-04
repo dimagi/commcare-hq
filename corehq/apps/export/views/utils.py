@@ -11,6 +11,7 @@ from django.views.generic import View
 import pytz
 from memoized import memoized
 
+from corehq.toggles import NAMESPACE_DOMAIN
 from couchexport.models import Format
 from dimagi.utils.web import get_url_base, json_response
 from soil import DownloadBase
@@ -43,6 +44,7 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     can_download_data_files,
     has_permission_to_view_report,
+    ODATA_FEED_PERMISSION,
 )
 from corehq.blobs.exceptions import NotFound
 from corehq.feature_previews import BI_INTEGRATION_PREVIEW
@@ -67,6 +69,16 @@ def user_can_view_deid_exports(domain, couch_user):
                 domain,
                 get_permission_name(Permissions.view_report),
                 data=DEID_EXPORT_PERMISSION
+            ))
+
+
+def user_can_view_odata_feed(domain, couch_user):
+    domain_can_view_odata = BI_INTEGRATION_PREVIEW.enabled(domain, NAMESPACE_DOMAIN)
+    return (domain_can_view_odata
+            and couch_user.has_permission(
+                domain,
+                get_permission_name(Permissions.view_report),
+                data=ODATA_FEED_PERMISSION
             ))
 
 
