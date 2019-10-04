@@ -451,14 +451,11 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
         response_html = ""
     else:
         response_html = render_to_string("app_manager/partials/build_errors.html", {
-            'request': request,
             'app': app,
-            'form': form,
             'build_errors': errors,
             'not_actual_build': True,
             'domain': domain,
             'langs': langs,
-            'lang': lang
         })
 
     if ajax:

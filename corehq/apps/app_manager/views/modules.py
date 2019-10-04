@@ -976,13 +976,11 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
     lang, langs = get_langs(request, app)
 
     response_html = render_to_string("app_manager/partials/build_errors.html", {
-        'request': request,
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,
         'domain': domain,
         'langs': langs,
-        'lang': lang,
     })
     if ajax:
         return json_response({'error_html': response_html})
