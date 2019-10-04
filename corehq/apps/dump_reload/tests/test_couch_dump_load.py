@@ -191,7 +191,6 @@ class CouchDumpLoadTest(TestCase):
             password='secret',
             email='webuser2@example.com',
         )
-        self.addCleanup(other_user.delete)
 
         self._dump_and_load([web_user], [other_user])
 
