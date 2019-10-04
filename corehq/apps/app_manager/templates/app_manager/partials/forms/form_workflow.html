@@ -17,16 +17,6 @@
       <div data-bind="visible: hasError" class="help-block">
         {% trans "This is an unknown value, possibly a deleted form. Please change this value." %}
       </div>
-      {% if is_case_list_form %}
-        <!-- ko if: workflow() !== 'default' -->
-        <p class="alert alert-warning">{% blocktrans %}
-          This form is being used as a Case List Registration Form.
-          Specifying End of Form Navigation here will override the Case List Registration workflow.
-          To avoid overriding the Case List Registration workflow set the End of Form Navigation
-          to the default option ('Home Screen').
-        {% endblocktrans %}</p>
-        <!-- /ko -->
-      {% endif %}
     </div>
 
     <div class="form-links-container" data-bind="
