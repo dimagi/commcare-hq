@@ -94,17 +94,6 @@ hqDefine("hqwebapp/js/hq.helpers", [
         });
     };
 
-    $.showMessage = function (message, level) {
-        var $notice = $('<div />').addClass("alert fade in")
-            .addClass("alert-" + level);
-        var $closeIcon = $('<a />').addClass("close").attr("data-dismiss", "alert");
-        $closeIcon.attr("href", "#").html("&times;");
-        $notice.append($closeIcon);
-        $notice.append(message);
-        $(".hq-page-header-container").prepend($notice);
-    };
-
-
     $.fn.addSpinnerToButton = function () {
         $(this).prepend('<i class="fa fa-refresh fa-spin icon-refresh icon-spin"></i> ');
     };
