@@ -188,11 +188,17 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         if request.GET.get('json', None):
             only_missing = request.GET.get('only_missing', 'false') == 'true'
             include_total = request.GET.get('include_total', 'true') == 'true'
+            lang = request.GET.get('lang', None) or None    # needs to be None if not present, not ''
+            query = request.GET.get('query', '')
+            media_class = request.GET.get('media_class', '')
             limit = int(request.GET.get('limit', 5))
             page = int(request.GET.get('page', 1))
 
             (total, references) = self._process_references(page,
                                                            limit,
+                                                           lang=lang,
+                                                           query=query,
+                                                           media_class=media_class,
                                                            only_missing=only_missing,
                                                            include_total=include_total)
             multimedia_map = {r['path']: self.app.multimedia_map[r['path']]
@@ -212,17 +218,23 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
             return JsonResponse(data)
         return super(MultimediaReferencesView, self).get(request, *args, **kwargs)
 
-    def _process_references(self, page, limit, only_missing=False, include_total=True):
+    def _process_references(self, page, limit, lang=None, query=None, media_class=None,
+                            only_missing=False, include_total=True):
         reference_index = 0
         references = []
         start = limit * (page - 1)
         end = start + limit
+        if query:
+            query = query.lower()
 
         def _add_references(source, reference_index, references):
             if reference_index > end and not include_total:
                 return (reference_index, references)
-            media = source.get_references()
-            media = [m for m in media if m['media_class'] in ["CommCareImage", "CommCareAudio", "CommCareVideo"]]
+            media = source.get_references(lang=lang)
+            media_classes = [media_class] if media_class else ["CommCareImage", "CommCareAudio", "CommCareVideo"]
+            media = [m for m in media if m['media_class'] in media_classes]
+            if query:
+                media = [m for m in media if query in m['path'].lower()]
             if only_missing:
                 media = [m for m in media if m['path'] not in self.app.multimedia_map]
             for m in media:
