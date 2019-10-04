@@ -412,6 +412,24 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
         celery_task_logger.info("Ended icds reports {} {}".format(date, func.__name__))
 
 
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from corehq.apps.es import filters
+
+def update_active_aww_list():
+    today = datetime.utcnow()
+    one_week_ago = today - timedelta(days=7)
+    one_month_ago = today - timedelta(days=30)
+    inactive_last_week = AggregateInactiveAWW.objects.filter(
+        last_submission__gte=one_month_ago,
+        last_submission__lt=one_week_ago
+    ).values_list('awc_site_code', flat=True)  # awc_site_code is the username by project convention
+    inactive_last_month = AggregateInactiveAWW.objects.filter(
+        last_submission__lt=one_month_ago).values_list('awc_site_code', flat=True)
+    redis = get_redis_client()
+    redis.
+
+
+
 @task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
 def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=False):
     with force_citus_engine(force_citus):
@@ -509,6 +527,7 @@ def _aggregate_awc_infra_forms(state_id, day):
 def _aggregate_inactive_aww(day, force_citus=False):
     with force_citus_engine(force_citus):
         AggregateInactiveAWW.aggregate(day)
+
 
 
 @track_time

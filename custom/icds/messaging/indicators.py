@@ -24,8 +24,6 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_last_form_submissions_by_user,
 )
 from corehq.util.quickcache import quickcache
-from corehq.warehouse.models.facts import ApplicationStatusFact
-from corehq.warehouse.utils import get_warehouse_latest_modified_date
 from custom.icds.const import (
     CHILDREN_WEIGHED_REPORT_ID,
     DAYS_AWC_OPEN_REPORT_ID,
@@ -33,8 +31,8 @@ from custom.icds.const import (
     SUPERVISOR_APP_ID,
     THR_REPORT_ID,
     VHND_SURVEY_XMLNS,
-    ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES
 )
+from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from lxml import etree
 
 DEFAULT_LANGUAGE = 'hin'
@@ -237,16 +235,11 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
     def __init__(self, domain, user):
         super(AWWSubmissionPerformanceIndicator, self).__init__(domain, user)
 
-        self.last_submission_date = ApplicationStatusFact.objects.filter(
-            user_dim__user_id=user.get_id,
-            domain=domain,
-        ).aggregate(value=Max("last_form_submission_date"))["value"]
+        self.last_submission_date = AggregateInactiveAWW.objects.filter(
+            awc_site_code=user.raw_username
+        ).last_submission
 
     def get_messages(self, language_code=None):
-        warehouse_lag = (datetime.utcnow() - get_warehouse_latest_modified_date(email_on_delay=True)).total_seconds() / 60
-        if warehouse_lag > ACCEPTABLE_WAREHOUSE_LAG_IN_MINUTES:
-            return []
-
         more_than_one_week = False
         more_than_one_month = False
         one_month_ago = datetime.utcnow() - timedelta(days=30)
