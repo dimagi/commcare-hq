@@ -4068,8 +4068,6 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
                 location_name = stock['{}'.format(self.loc_name_to_get)]
                 location_id = stock['{}'.format(self.loc_id_to_get)]
                 if location_id is None:
-                    location = SQLLocation.objects.get(location_name=location_name,
-                                                       domain=self.config['domain'])
                     location_id = location_name
                 product_name = stock['product_name']
                 product_id = stock['product_id']
@@ -5554,7 +5552,7 @@ class RecapPassageOneData(IntraHealthSqlData):
 
         # data['Net à Payer'] = int(data['Total Facture'] * 1.075)
         data['Total Facture'] = round(float(data['Total Facture']), 2)
-        data['Net à Payer'] = round(float(data['Net à Payer']),2)
+        data['Net à Payer'] = round(float(data['Net à Payer']), 2)
         rows = []
         headers = data.keys()
         for header in headers:
@@ -5789,7 +5787,8 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         rows['Total Facturation District']['html'] = \
             rows['Total Versements PPS']['html'] - rows['Frais Participation PPS']['html']
 
-        rows['Frais Participation District']['html'] = rows['Total Facturation District']['html'] * Decimal(0.15 * 0.25)
+        rows['Frais Participation District']['html'] = \
+            rows['Total Facturation District']['html'] * Decimal(0.15 * 0.25)
 
         rows['Total Facturation PRA']['html'] = rows['Total Facturation District']['html'] / Decimal(1.15)
 
@@ -6029,13 +6028,14 @@ class IndicateursDeBaseData(SqlData, LocationLevelMixin):
 
             location_name = row[self.loc_name_to_get]
             if min_date >= self.min_date and max_date <= self.max_date \
-                and self.is_requested_location(location_name):
+                    and self.is_requested_location(location_name):
                 rows_with_wanted_date.append(row)
 
         for row in rows_with_wanted_date:
             if row[self.loc_id_to_get] is None:
-                row[self.loc_id_to_get] = SQLLocation.objects.get(domain=self.config['domain'],
-                                                   name=row[self.loc_name_to_get]).location_id
+                row[self.loc_id_to_get] = SQLLocation.objects.get(
+                    domain=self.config['domain'],
+                    name=row[self.loc_name_to_get]).location_id
 
         def clean_rows(data_to_clean):
             for data_row in data_to_clean:
