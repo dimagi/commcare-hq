@@ -2,6 +2,32 @@
 {% load hq_shared_tags %}
 {% load xforms_extras %}
 
+{% comment %}
+  This file displays errors found during app validation, which is handled by the validators in corehq.apps.app_manager.helpers.validators.
+  Each error is a dict containing:
+  - type (required)
+  - message (optional)
+  - module (optional): a dict containing the module's id, name dict, and unique_id
+  - form (optional): possibly a form, possibly just a dict containing id and name dict
+  - ...and occasionally other data
+
+  This file is primarily a giant case statement that switches on the error type.
+  It's inconsistent. Best practices for new errors:
+  - This file is included in several contexts, some general to the whole app and some
+    specific to a single form or module. The flag not_actual_build is set when we're
+    only looking at part of an app. This is used to make messages less redundant: you
+    might say "Form X in menu Y is broken" in an app context, but in a form context
+    that can just become "This form is broken."
+  - For menu or form-specific errors, always link to the menu or form.
+  - For form specific errors, display the menu name ("Form X in menu Y") but only link to
+    the place where the user would go to fix the error (probably the form).
+  - For form errors, consider whether the message should link to form_source or to
+    form_settings (probably form settings).
+  - Aim to translate error messages, even though it can get complex to handle the
+    not_actual_build flag and links to menus/forms. For this reason, avoid including
+    templates like form_error_message.html.
+{% endcomment %}
+
 {% if build_errors %}
   <div class="alert alert-warning alert-block alert-build">
     <h4 class="alert-heading">
