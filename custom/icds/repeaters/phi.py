@@ -32,7 +32,7 @@ class SearchByParamsRepeater(BasePHIRepeater):
         return send_request('search', payload)
 
 
-class ValidatePHIDRepeater(CaseRepeater):
+class ValidatePHIDRepeater(BasePHIRepeater):
     payload_generator_classes = (ValidatePHIDPayloadGenerator,)
     friendly_name = _("Validate PHI ID")
 
