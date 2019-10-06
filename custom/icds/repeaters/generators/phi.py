@@ -39,9 +39,9 @@ class SearchByParamsPayloadGenerator(BasePayloadGenerator):
             "dateofbirth": case.get_case_property('date_of_birth') or "",
             "mobileno": case.get_case_property('mobile_number') or "",
             "namelocal": case.name,
-            "mothernamelocal": "",
-            "fathernamelocal": "",
-            "husbandnamelocal": "",
+            "mothernamelocal": case.get_case_property('mothers_name') or "",
+            "fathernamelocal": case.get_case_property('fathers_name') or "",
+            "husbandnamelocal": case.get_case_property('husbands_name') or "",
             "email": "",
             "govt_id_name": "",
             "govt_id_number": ""
