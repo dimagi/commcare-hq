@@ -24,6 +24,17 @@ class TestGroupResource(APIResourceTest):
         api_groups = json.loads(response.content)['objects']
         self.assertEqual(len(api_groups), 1)
         self.assertEqual(api_groups[0]['id'], backend_id)
+        self.assertEqual(api_groups[0], {
+            'case_sharing': False,
+            'domain': 'qwerty',
+            'id': backend_id,
+            'metadata': {},
+            'name': 'test',
+            'path': [],
+            'reporting': True,
+            'resource_uri': '/a/qwerty/api/v0.5/group/{}/'.format(backend_id),
+            'users': [],
+        })
 
     def test_get_single(self):
 
@@ -37,6 +48,17 @@ class TestGroupResource(APIResourceTest):
 
         api_groups = json.loads(response.content)
         self.assertEqual(api_groups['id'], backend_id)
+        self.assertEqual(api_groups, {
+            'case_sharing': False,
+            'domain': 'qwerty',
+            'id': backend_id,
+            'metadata': {},
+            'name': 'test',
+            'path': [],
+            'reporting': True,
+            'resource_uri': '/a/qwerty/api/v0.5/group/{}/'.format(backend_id),
+            'users': [],
+        })
 
     def test_create(self):
 
