@@ -146,9 +146,9 @@ class CouchSqlDomainMigrator(object):
             domain=self.domain,
             state=self.statedb.unique_id,
         ))
-        patch_case_property_validators()
+        patch = patch_case_property_validators()
         timing = TimingContext("couch_sql_migration")
-        with timing as timing_context, self.case_diff_queue, self.stopper:
+        with timing as timing_context, patch, self.case_diff_queue, self.stopper:
             self.timing_context = timing_context
             with timing_context('main_forms'):
                 self._process_main_forms()
@@ -397,17 +397,23 @@ TIMING_BUCKETS = (0.1, 1, 5, 10, 30, 60, 60 * 5, 60 * 10, 60 * 60, 60 * 60 * 12,
 NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 30)
 
 
+@contextmanager
 def patch_case_property_validators():
     def truncate_255(value):
         return value[:255]
 
     from corehq.form_processor.backends.sql.update_strategy import PROPERTY_TYPE_MAPPING
+    original = PROPERTY_TYPE_MAPPING.copy()
     PROPERTY_TYPE_MAPPING.update(
         name=truncate_255,
         type=truncate_255,
         owner_id=truncate_255,
         external_id=truncate_255,
     )
+    try:
+        yield
+    finally:
+        PROPERTY_TYPE_MAPPING.update(original)
 
 
 def _wrap_form(doc):
