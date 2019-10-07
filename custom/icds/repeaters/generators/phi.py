@@ -68,7 +68,8 @@ class SearchByParamsPayloadGenerator(BasePayloadGenerator):
     def handle_success(self, response, case, repeat_record):
         phi_id = response.json().get('result', [{}])[0].get('phi_id', None)
         if phi_id:
-            update_case(case.domain, case.case_id, {'phid_for_beneficiary': phi_id},
+            update_case(case.domain, case.case_id,
+                        {'phid_for_beneficiary': phi_id, 'phid_valid': 'yes'},
                         device_id=__name__ + ".search")
 
 
