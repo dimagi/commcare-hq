@@ -723,8 +723,7 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': True,
                     'subpages': []
                 })
-            if (BI_INTEGRATION_PREVIEW.enabled_for_request(self._request)
-                    and self.can_view_odata_feed):
+            if self.can_view_odata_feed:
                 subpages = [
                     {
                         'title': _(CreateODataCaseFeedView.page_title),
@@ -844,8 +843,7 @@ class ProjectDataTab(UITab):
                 _('Explore Case Data (Preview)'),
                 url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
-        if (BI_INTEGRATION_PREVIEW.enabled_for_request(self._request)
-                and self.can_view_odata_feed):
+        if self.can_view_odata_feed:
             from corehq.apps.export.views.list import ODataFeedListView
             items.append(dropdown_dict(
                 _(ODataFeedListView.page_title),
