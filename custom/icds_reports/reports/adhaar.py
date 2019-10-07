@@ -8,7 +8,7 @@ from django.db.models.aggregates import Sum
 
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors, \
-    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES
+    AADHAR_SEEDED_BENEFICIARIES
 from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
@@ -49,7 +49,7 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False, beta=False):
 
     return {
         "slug": "adhaar",
-        "label": ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES,
+        "label": AADHAR_SEEDED_BENEFICIARIES,
         "fills": fills,
         "rightLegend": {
             "average": average,
