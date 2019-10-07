@@ -188,10 +188,8 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
             GREATEST(ucr.muac_grading_last_recorded, prev_month.muac_grading_last_recorded)
                 AS muac_grading_last_recorded
           FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN "{tablename}" prev_month
+          FULL OUTER JOIN (SELECT * FROM "{tablename}" WHERE month = %(previous_month)s) prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
-            AND prev_month.month = %(previous_month)s
-          WHERE prev_month.month IS NULL OR prev_month.month = %(previous_month)s
         )
         """.format(
             ucr_table_query=ucr_query,
