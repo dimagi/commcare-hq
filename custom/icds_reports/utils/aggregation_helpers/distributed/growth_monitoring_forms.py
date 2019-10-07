@@ -155,7 +155,7 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
             muac_grading, muac_grading_last_recorded
         ) (
           SELECT
-            ucr.state_id AS state_id,
+            COALESCE(ucr.state_id, prev_month.state_id) AS state_id,
             COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
@@ -190,7 +190,9 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{tablename}" prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
-          WHERE prev_month.month = %(previous_month)s AND ucr.month::DATE= %(month)s
+            AND ucr.month::DATE=prev_month.month + INTERVAL '1 month'
+          WHERE (ucr.month IS NULL OR ucr.month = %(month)s)
+            AND (prev_month.month IS NULL OR prev_month.month = %(previous_month)s)
         )
         """.format(
             ucr_table_query=ucr_query,
