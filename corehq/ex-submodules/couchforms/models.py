@@ -505,7 +505,7 @@ class UnfinishedSubmissionStub(models.Model):
     class Meta(object):
         app_label = 'couchforms'
         indexes = (
-            models.Index(['xform_id'])
+            models.Index(['xform_id']),
         )
 
 
