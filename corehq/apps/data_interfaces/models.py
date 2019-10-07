@@ -1505,6 +1505,7 @@ class DomainCaseRuleRun(models.Model):
     STATUS_HALTED = 'H'
 
     domain = models.CharField(max_length=126)
+    case_type = models.CharField(max_length=255, null=True)
     started_on = models.DateTimeField(db_index=True)
     finished_on = models.DateTimeField(null=True)
     status = models.CharField(max_length=1)

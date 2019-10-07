@@ -31,7 +31,7 @@ from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import LocationType
-from corehq.apps.sms.models import SQLMobileBackend
+from corehq.apps.sms.models import SQLMobileBackend, INCOMING, OUTGOING
 from corehq.apps.userreports.util import (
     number_of_report_builder_reports,
     number_of_ucr_reports,
@@ -164,10 +164,13 @@ def j2me_forms_in_last_bool(domain, days):
 
 
 def _sms_helper(domain, direction=None, days=None):
+    assert direction in (INCOMING, OUTGOING, None), repr(direction)
     query = SMSES().domain(domain).size(0)
 
-    if direction:
-        query = query.direction(direction)
+    if direction == INCOMING:
+        query = query.incoming_messages()
+    elif direction == OUTGOING:
+        query = query.outgoing_messages()
 
     if days:
         query = query.received(date.today() - relativedelta(days=30))
@@ -188,11 +191,11 @@ def sms_in_last_bool(domain, days=None):
 
 
 def sms_in_in_last(domain, days=None):
-    return _sms_helper(domain, direction="I", days=days)
+    return _sms_helper(domain, direction=INCOMING, days=days)
 
 
 def sms_out_in_last(domain, days=None):
-    return _sms_helper(domain, direction="O", days=days)
+    return _sms_helper(domain, direction=OUTGOING, days=days)
 
 
 def active(domain, *args):
@@ -384,8 +387,8 @@ def calced_props(domain_obj, id, all_stats):
         "cp_is_active": CALC_FNS["active"](dom),
         "cp_has_app": CALC_FNS["has_app"](dom),
         "cp_last_updated": json_format_datetime(datetime.utcnow()),
-        "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
-        "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
+        "cp_n_in_sms": int(CALC_FNS["sms"](dom, INCOMING)),
+        "cp_n_out_sms": int(CALC_FNS["sms"](dom, OUTGOING)),
         "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
         "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
         "cp_n_sms_60_d": int(CALC_FNS["sms_in_last"](dom, 60)),

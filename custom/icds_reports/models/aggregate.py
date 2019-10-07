@@ -416,7 +416,7 @@ class AggAwc(models.Model, AggregateMixin):
     infra_type_of_building_partial_covered_space = models.IntegerField(null=True)
     infra_clean_water = models.IntegerField(null=True)
     toilet_facility = models.IntegerField(null=True)
-    type_toilet = models.TextField(null=True)
+    type_toilet = models.SmallIntegerField(null=True)
     infra_functional_toilet = models.IntegerField(null=True)
     infra_baby_weighing_scale = models.IntegerField(null=True)
     infra_flat_weighing_scale = models.IntegerField(null=True)
