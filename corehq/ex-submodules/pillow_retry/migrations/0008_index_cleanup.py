@@ -14,4 +14,8 @@ class Migration(migrations.Migration):
             name='doc_id',
             field=models.CharField(max_length=255),
         ),
+        migrations.RunSQL(
+            "DROP INDEX IF EXISTS pillow_retry_pillowerror_doc_id_480cab757780131d_like",
+            migrations.RunSQL.noop
+        )
     ]
