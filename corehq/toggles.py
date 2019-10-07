@@ -65,7 +65,7 @@ TAG_SOLUTIONS_LIMITED = Tag(
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
     "pricing when the project is transitioned to a subscription. Limited Use Solutions Feature Flags cannot be "
-    "enabled by GS before emailing solutions@dimagi.com and requesting the feature."
+    "enabled by GS before emailing solutions-tech@dimagi.com and requesting the feature."
 )
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
