@@ -127,11 +127,13 @@ def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_
     }
     if not etag.startswith("W/"):  # weak ETags never match
         headers['If-Match'] = etag
-    response = requests.put(endpoint, json=tracked_entity, headers=headers, raise_for_status=True)
+    response = requests.put(endpoint, json=tracked_entity, headers=headers)
     if response.status_code == 412:  # Precondition failed
         tei_id = tracked_entity["trackedEntityInstance"]
         tracked_entity, etag = get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_info)
         update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_info, case_config)
+    else:
+        response.raise_for_status()
 
 
 def register_tracked_entity_instance(requests, case_trigger_info, case_config):
