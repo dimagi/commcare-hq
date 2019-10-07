@@ -142,7 +142,6 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         new_user = WebUser.create(wrong_domain.name, 'test', 'testpass')
         new_user.save()
         self.addCleanup(wrong_domain.delete)
-        self.addCleanup(new_user.delete)
 
         response = self._assert_auth_get_resource(self.single_endpoint(self.report_configuration._id),
                                                   username='test', password='testpass')
@@ -376,7 +375,6 @@ class TestConfigurableReportDataResource(APIResourceTest):
         user_in_wrong_domain = WebUser.create(
             wrong_domain_name, user_in_wrong_domain_name, user_in_wrong_domain_password
         )
-        self.addCleanup(user_in_wrong_domain.delete)
 
         user_in_wrong_domain_credentials = self._get_basic_credentials(
             user_in_wrong_domain_name, user_in_wrong_domain_password

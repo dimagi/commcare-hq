@@ -2,17 +2,27 @@ hqDefine("hqmedia/js/references_main", function () {
     function MultimediaReferenceController() {
         var self = {};
         self.references = ko.observableArray();
-        self.showMissingReferences = ko.observable(false);
         self.totals = ko.observableArray();
+
+        // Filtering
+        self.query = ko.observable('');
+        self.lang = ko.observable('all');
+        self.lang.subscribe(function () {
+            self.goToPage(1);
+        });
+        self.mediaClass = ko.observable('all');
+        self.mediaClass.subscribe(function () {
+            self.goToPage(1);
+        });
+        self.onlyMissing = ko.observable('false');
+        self.onlyMissing.subscribe(function () {
+            self.goToPage(1);
+        });
 
         self.isInitialLoad = ko.observable(true);
         self.showPaginationSpinner = ko.observable(false);
         self.itemsPerPage = ko.observable();
         self.totalItems = ko.observable();
-
-        self.toggleRefsText = ko.computed(function () {
-            return (self.showMissingReferences()) ? gettext("Show All References") : gettext("Show Only Missing References");
-        }, self);
 
         self.goToPage = function (page) {
             self.showPaginationSpinner(true);
@@ -23,13 +33,16 @@ hqDefine("hqmedia/js/references_main", function () {
                     json: 1,
                     page: page,
                     limit: self.itemsPerPage(),
-                    only_missing: self.showMissingReferences(),
+                    lang: self.lang() === "all" ? null : self.lang(),
+                    media_class: self.mediaClass() === "all" ? "" : self.mediaClass(),
+                    only_missing: self.onlyMissing(),
+                    query: self.query(),
                     include_total: includeTotal,
                 },
                 success: function (data) {
                     self.isInitialLoad(false);
                     self.showPaginationSpinner(false);
-                    self.references(_.compact(_.map(data.references, function (ref) {
+                    self.references(_.map(data.references, function (ref) {
                         var objRef = data.object_map[ref.path];
                         if (ref.media_class === "CommCareImage") {
                             var imageRef = hqImport('hqmedia/js/media_reference_models').ImageReference(ref);
@@ -47,7 +60,7 @@ hqDefine("hqmedia/js/references_main", function () {
                         // Other multimedia, like HTML print templates, is ignored by the reference checker
                         // It should already have been filtered out server-side.
                         throw new Error("Found unexpected media class: " + ref.media_class);
-                    })));
+                    }));
                     if (includeTotal) {
                         self.totalItems(data.total_rows);
                         self.totals(data.totals);
@@ -60,11 +73,6 @@ hqDefine("hqmedia/js/references_main", function () {
                         "please try again or report an issue if the problem persists."), 'danger');
                 },
             });
-        };
-
-        self.toggleMissingRefs = function () {
-            self.showMissingReferences(!self.showMissingReferences());
-            self.goToPage(1);
         };
 
         self.incrementTotals = function (trigger, event, data) {

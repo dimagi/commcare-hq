@@ -1,6 +1,6 @@
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.const import ChartColors, MapColors, AADHAR_SEEDED_BENEFICIARIES
 from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text
 from custom.icds_reports.reports.adhaar import get_adhaar_data_map, get_adhaar_data_chart, get_adhaar_sector_data
 from django.test import TestCase
@@ -146,7 +146,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent Aadhaar-seeded Beneficiaries')
+        self.assertEquals(data['label'], AADHAR_SEEDED_BENEFICIARIES)
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_adhaar_data_map(
