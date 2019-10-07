@@ -70,6 +70,7 @@
       {
         "column_id": "timeend",
         "datatype": "datetime",
+        "create_index": true,
         "type": "expression",
         "expression": {
           "type": "root_doc",
@@ -96,8 +97,7 @@
           },
           "location_type": "state",
           "location_property": "_id"
-        },
-        "create_index": true
+        }
       },
       {
         "display_name": "Supervisor ID",
