@@ -4,17 +4,7 @@
 {% load i18n %}
 {% load compress %}
 
-{% block title %}Edit Config : DHIS2 Tracked Entities :: {% endblock %}
-
-{% block js %}{{ block.super }}
-  {% compress js %}
-    <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
-    <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
-    <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
-    <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/base_ace.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
+{% block title %}{% trans "Edit Configuration" %}{% endblock %}
 
 {% requirejs_main 'dhis2/js/dhis2_entity_config' %}
 
