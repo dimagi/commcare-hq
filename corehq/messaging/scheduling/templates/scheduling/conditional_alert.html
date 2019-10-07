@@ -56,7 +56,7 @@
     <div class="col-sm-12">
       {% if read_only_mode %}
         {% if criteria_form.requires_system_admin_to_edit or schedule_form.requires_system_admin_to_edit %}
-          <p class="alert alert-block alert-warning">
+          <p class="alert alert-warning">
             {% trans "NOTE: A system administrator is required to edit this alert." %}
           </p>
         {% endif %}

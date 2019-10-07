@@ -40,7 +40,7 @@ submission_rate_limiter = RateLimiter(
 )
 
 
-SHOULD_RATE_LIMIT_SUBMISSIONS = not settings.ENTERPRISE_MODE
+SHOULD_RATE_LIMIT_SUBMISSIONS = not settings.ENTERPRISE_MODE and not settings.UNIT_TESTING
 
 
 @run_only_when(SHOULD_RATE_LIMIT_SUBMISSIONS)

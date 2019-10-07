@@ -18,6 +18,7 @@ from corehq.apps.app_manager.const import (
     AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW,
     AUTO_SELECT_USER,
+    WORKFLOW_DEFAULT,
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
@@ -346,6 +347,12 @@ class ModuleBaseValidator(object):
                 if not form.is_registration_form(self.module.case_type):
                     errors.append({
                         'type': 'case list form not registration',
+                        'module': self.get_module_info(),
+                        'form': form,
+                    })
+                if form.post_form_workflow != WORKFLOW_DEFAULT:
+                    errors.append({
+                        'type': 'case list form eof nav',
                         'module': self.get_module_info(),
                         'form': form,
                     })
