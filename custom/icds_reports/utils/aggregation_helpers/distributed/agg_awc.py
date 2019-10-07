@@ -73,7 +73,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
             CASE WHEN
-                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
+                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))> 1
                 THEN 1 ELSE 0 END,
             thr_v2.thr_distribution_image_count,
             0,
