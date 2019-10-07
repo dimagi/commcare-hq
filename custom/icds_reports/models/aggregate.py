@@ -772,6 +772,10 @@ class DailyAttendance(models.Model, AggregateMixin):
     form_location_long = models.DecimalField(max_digits=64, decimal_places=16, null=True)
     image_name = models.TextField(null=True)
     pse_conducted = models.SmallIntegerField(null=True)
+    open_bfast_count = models.SmallIntegerField(null=True)
+    open_hotcooked_count = models.SmallIntegerField(null=True)
+    days_thr_provided_count = models.SmallIntegerField(null=True)
+    open_pse_count = models.SmallIntegerField(null=True)
 
     class Meta:
         managed = False
