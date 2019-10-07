@@ -26,27 +26,44 @@ class SearchByParamsPayloadGenerator(BasePayloadGenerator):
         return ""
 
     def get_payload(self, repeat_record, case):
-        data = {
-            "beneficaryname": case.name,
-            "fathername": case.get_case_property('fathers_name') or "",
-            "husbandname": case.get_case_property('husbands_name') or "",
-            "mothername": case.get_case_property('mothers_name') or "",
+        data = self._setup_names(case)
+        data.update({
             "gender": self._gender(case.get_case_property('gender')),
             "villagecode": 442639,
             "subdistrictcode": 3318,
             "districtcode": 378,
             "statecode": 22,
-            "namelocal": "",
             "dateofbirth": case.get_case_property('date_of_birth') or "",
             "mobileno": case.get_case_property('mobile_number') or "",
-            "mothernamelocal": "",
-            "fathernamelocal": "",
-            "husbandnamelocal": "",
             "email": "",
             "govt_id_name": "",
             "govt_id_number": ""
-        }
+        })
         return json.dumps(data, cls=DjangoJSONEncoder)
+
+    def _setup_names(self, case):
+        data = {}
+        self._setup_name(case.name, 'beneficaryname', 'namelocal', data)
+        self._setup_name(case.get_case_property('mothers_name'), 'mothername', 'mothernamelocal', data)
+        self._setup_name(case.get_case_property('fathers_name'), 'fathername', 'fathernamelocal', data)
+        self._setup_name(case.get_case_property('husbands_name'), 'husbandname', 'husbandnamelocal', data)
+        return data
+
+    def _setup_name(self, name, key_name, key_name_local, data):
+        data[key_name] = ""
+        data[key_name_local] = ""
+        if self._has_special_chars(name):
+            data[key_name_local] = name
+        else:
+            data[key_name] = name
+
+    @staticmethod
+    def _has_special_chars(value):
+        try:
+            value.encode(encoding='utf-8').decode('ascii')
+        except UnicodeDecodeError:
+            return True
+        return False
 
     def handle_success(self, response, case, repeat_record):
         phi_id = response.json().get('result', [{}])[0].get('phi_id', None)
