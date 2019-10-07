@@ -1,5 +1,5 @@
-DELETE FROM "icds_dashboard_comp_feed_form" WHERE month=%(month)s AND state_id = %(state)s
-{"month": "2019-01-01", "state": "st1"}
+DELETE FROM "icds_dashboard_comp_feed_form" WHERE month=%(month)s
+{"month": "2019-01-01"}
 
         INSERT INTO "icds_dashboard_comp_feed_form" (
           state_id, supervisor_id, month, case_id, latest_time_end_processed, comp_feeding_ever,
@@ -7,7 +7,7 @@ DELETE FROM "icds_dashboard_comp_feed_form" WHERE month=%(month)s AND state_id =
           comp_feeding_latest, diet_diversity, diet_quantity, hand_wash
         ) (
           SELECT
-            %(state_id)s AS state_id,
+            ucr.state_id AS state_id,
             COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
@@ -30,6 +30,7 @@ DELETE FROM "icds_dashboard_comp_feed_form" WHERE month=%(month)s AND state_id =
             END AS hand_wash
           FROM (
         SELECT DISTINCT child_health_case_id AS case_id,
+        LAST_VALUE(state_id) AS state_id
         %(current_month_start)s::date AS month,
         supervisor_id AS supervisor_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
@@ -42,18 +43,14 @@ DELETE FROM "icds_dashboard_comp_feed_form" WHERE month=%(month)s AND state_id =
         LAST_VALUE(diet_quantity) OVER w AS diet_quantity,
         LAST_VALUE(hand_wash) OVER w AS hand_wash
         FROM "ucr_icds-cas_static-complementary_feeding_f2d76da0"
-        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
+        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id IS NOT NULL
         WINDOW w AS (
             PARTITION BY supervisor_id, child_health_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
         )
         ) ucr
-          FULL OUTER JOIN "icds_dashboard_comp_feed_form" prev_month
+          FULL OUTER JOIN (SELECT * FROM "icds_dashboard_comp_feed_form" WHERE month = %(previous_month)s) prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
-            AND ucr.month = prev_month.month + INTERVAL '1 month'
-          WHERE coalesce(ucr.month, %(month)s) = %(month)s
-            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
-            AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
         )
         
-{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "previous_month": "2018-12-01", "state_id": "st1"}
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "previous_month": "2018-12-01"}

@@ -211,8 +211,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                     )
                 ])
                 stage_1_tasks.extend([
-                    icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_cf_forms', force_citus=force_citus)
-                    for state_id in state_ids
+                    icds_aggregation_task.si(
+                        date=calculation_date, func_name='_aggregate_cf_forms', force_citus=force_citus
+                    )
                 ])
                 stage_1_tasks.extend([
                     icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_ccs_cf_forms', force_citus=force_citus)
@@ -379,6 +380,7 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             '_aggregate_df_forms': _aggregate_df_forms,
             '_aggregate_child_health_thr_forms': _aggregate_child_health_thr_forms,
             '_aggregate_ccs_record_thr_forms': _aggregate_ccs_record_thr_forms,
+            '_aggregate_cf_forms': _aggregate_cf_forms,
             '_agg_child_health_table': _agg_child_health_table,
             '_ccs_record_monthly_table': _ccs_record_monthly_table,
             '_agg_ccs_record_table': _agg_ccs_record_table,
@@ -414,7 +416,6 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
     with force_citus_engine(force_citus):
         func = {
             '_aggregate_gm_forms': _aggregate_gm_forms,
-            '_aggregate_cf_forms': _aggregate_cf_forms,
             '_aggregate_ccs_cf_forms': _aggregate_ccs_cf_forms,
             '_aggregate_child_health_pnc_forms': _aggregate_child_health_pnc_forms,
             '_aggregate_ccs_record_pnc_forms': _aggregate_ccs_record_pnc_forms,
@@ -454,8 +455,8 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
 
 
 @track_time
-def _aggregate_cf_forms(state_id, day):
-    AggregateComplementaryFeedingForms.aggregate(state_id, day)
+def _aggregate_cf_forms(day):
+    AggregateComplementaryFeedingForms.aggregate(force_to_date(day))
 
 
 @track_time

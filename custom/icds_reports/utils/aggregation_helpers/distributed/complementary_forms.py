@@ -1,8 +1,13 @@
 from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_COMP_FEEDING_TABLE
-from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from custom.icds_reports.utils.aggregation_helpers import (
+    month_formatter,
+    transform_day_to_month,
+)
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
+    BaseICDSAggregationDistributedHelper,
+)
 
 
 class ComplementaryFormsAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -10,18 +15,20 @@ class ComplementaryFormsAggregationDistributedHelper(BaseICDSAggregationDistribu
     ucr_data_source_id = 'static-complementary_feeding_forms'
     tablename = AGG_COMP_FEEDING_TABLE
 
+    def __init__(self, month):
+        self.month = transform_day_to_month(month)
+
     def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
         agg_query, agg_params = self.aggregation_query()
 
-        cursor.execute(drop_query, drop_params)
+        cursor.execute(
+            f'DELETE FROM "{self.tablename}" WHERE month=%(month)s',
+            {'month': month_formatter(self.month)}
+        )
         cursor.execute(agg_query, agg_params)
 
     def drop_table_query(self):
-        return (
-            'DELETE FROM "{}" WHERE month=%(month)s AND state_id = %(state)s'.format(self.tablename),
-            {'month': month_formatter(self.month), 'state': self.state_id}
-        )
+        raise NotImplementedError
 
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
@@ -29,7 +36,8 @@ class ComplementaryFormsAggregationDistributedHelper(BaseICDSAggregationDistribu
 
         return """
         SELECT DISTINCT child_health_case_id AS case_id,
-        %(current_month_start)s::date AS month,
+        state_id AS state_id,
+        %(current_month_start)s AS month,
         supervisor_id AS supervisor_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(play_comp_feeding_vid) OVER w AS play_comp_feeding_vid,
@@ -41,7 +49,7 @@ class ComplementaryFormsAggregationDistributedHelper(BaseICDSAggregationDistribu
         LAST_VALUE(diet_quantity) OVER w AS diet_quantity,
         LAST_VALUE(hand_wash) OVER w AS hand_wash
         FROM "{ucr_tablename}"
-        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
+        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id IS NOT NULL
         WINDOW w AS (
             PARTITION BY supervisor_id, child_health_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
@@ -49,7 +57,6 @@ class ComplementaryFormsAggregationDistributedHelper(BaseICDSAggregationDistribu
         """.format(ucr_tablename=self.ucr_tablename), {
             "current_month_start": current_month_start,
             "next_month_start": next_month_start,
-            "state_id": self.state_id
         }
 
     def aggregation_query(self):
@@ -57,7 +64,6 @@ class ComplementaryFormsAggregationDistributedHelper(BaseICDSAggregationDistribu
         query_params = {
             "month": month_formatter(month),
             "previous_month": month_formatter(month - relativedelta(months=1)),
-            "state_id": self.state_id
         }
 
         ucr_query, ucr_query_params = self.data_from_ucr_query()
@@ -76,7 +82,7 @@ class ComplementaryFormsAggregationDistributedHelper(BaseICDSAggregationDistribu
           comp_feeding_latest, diet_diversity, diet_quantity, hand_wash
         ) (
           SELECT
-            %(state_id)s AS state_id,
+            COALESCE(ucr.state_id, prev_month.state_id) AS state_id,
             COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
@@ -98,12 +104,8 @@ class ComplementaryFormsAggregationDistributedHelper(BaseICDSAggregationDistribu
                  THEN ucr.hand_wash ELSE prev_month.hand_wash
             END AS hand_wash
           FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN "{tablename}" prev_month
+          FULL OUTER JOIN (SELECT * FROM "{tablename}" WHERE month = %(previous_month)s) prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
-            AND ucr.month = prev_month.month + INTERVAL '1 month'
-          WHERE coalesce(ucr.month, %(month)s) = %(month)s
-            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
-            AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
         )
         """.format(
             tablename=self.tablename,

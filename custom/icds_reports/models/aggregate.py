@@ -843,16 +843,6 @@ class AggregateComplementaryFeedingForms(models.Model, AggregateMixin):
     _agg_helper_cls = ComplementaryFormsAggregationHelper
     _agg_atomic = False
 
-    @classmethod
-    def compare_with_old_data(cls, state_id, month):
-        helper = ComplementaryFormsAggregationHelper(state_id, month)
-        query, params = helper.compare_with_old_data_query()
-
-        with get_cursor(AggregateComplementaryFeedingForms) as cursor:
-            cursor.execute(query, params)
-            rows = fetchall_as_namedtuple(cursor)
-            return [row.child_health_case_id for row in rows]
-
 
 class AggregateCcsRecordComplementaryFeedingForms(models.Model, AggregateMixin):
     """Aggregated data based on AWW App, Home Visit Scheduler module,
