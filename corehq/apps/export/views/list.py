@@ -944,20 +944,22 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     is_odata = True
     urlname = 'list_odata_feeds'
     page_title = ugettext_lazy("PowerBi/Tableau Integration (Preview)")
-    lead_text = ugettext_lazy('''
+
+    @property
+    def lead_text(self):
+        return _("""
         Use OData feeds to integrate your CommCare data with Power BI or Tableau.
         <a href="https://confluence.dimagi.com/display/commcarepublic/Integration+with+PowerBi+and+Tableau"
            id="js-odata-track-learn-more"
            target="_blank">
             Learn more.
         </a><br />
-        This is a Feature Preview.
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Feature+Previews"
-           id="js-odata-track-learn-more-preview"
-           target="_blank">
-            Learn more.
-        </a>
-    ''')
+        This feature allows {odata_feed_limit} feed configurations. Need more? 
+        Please write to us at <a href="mailto:{sales_email}">{sales_email}</a>.
+        """).format(
+            odata_feed_limit=self.odata_feed_limit,
+            sales_email=settings.SALES_EMAIL,
+        )
 
     @property
     def page_context(self):
