@@ -943,7 +943,7 @@ class ODataFeedListHelper(ExportListHelper):
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     is_odata = True
     urlname = 'list_odata_feeds'
-    page_title = ugettext_lazy("PowerBi/Tableau Integration (Preview)")
+    page_title = ugettext_lazy("PowerBi/Tableau Integration")
 
     @property
     def lead_text(self):
