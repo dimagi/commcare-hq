@@ -127,7 +127,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
     def updates(self):
         yield """
-        DROP TABLE IF EXISTS TABLE "{temp_table}";
+        DROP TABLE IF EXISTS "{temp_table}";
         CREATE UNLOGGED TABLE "{temp_table}" AS
             SELECT
                 awc_id,
