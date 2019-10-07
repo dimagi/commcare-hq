@@ -120,7 +120,7 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
         from corehq.apps.export.views.utils import user_can_view_odata_feed
         return {
             'dashboard_tiles': tile_contexts,
-            'user_can_view_odata_feed':  user_can_view_odata_feed(
+            'user_can_view_odata_feed': user_can_view_odata_feed(
                 self.domain, self.request.couch_user
             ),
         }
