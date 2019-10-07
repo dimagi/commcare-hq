@@ -1,4 +1,3 @@
-
 from datetime import timedelta
 
 from dateutil.parser import parse as parse_date

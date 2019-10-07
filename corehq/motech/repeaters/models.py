@@ -1,15 +1,13 @@
-
 import warnings
 from datetime import datetime, timedelta
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.utils.translation import ugettext_lazy as _
 
-import six
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
+from requests.exceptions import ConnectionError, Timeout
 
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -52,8 +50,6 @@ from corehq.util.datadog.metrics import (
     REPEATER_SUCCESS_COUNT,
 )
 from corehq.util.quickcache import quickcache
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
-from requests.exceptions import ConnectionError, Timeout
 
 from .const import (
     MAX_RETRY_WAIT,
@@ -120,9 +116,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     payload_generator_classes = ()
 
-    @classmethod
-    def get_custom_url(cls, domain):
-        return None
+    _has_config = False
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -346,7 +340,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
         return self.__class__.__name__
 
 
-@six.python_2_unicode_compatible
 class FormRepeater(Repeater):
     """
     Record that forms should be repeated to a new url
@@ -382,14 +375,14 @@ class FormRepeater(Repeater):
             return url
         else:
             # adapted from http://stackoverflow.com/a/2506477/10840
-            url_parts = list(six.moves.urllib.parse.urlparse(url))
-            query = six.moves.urllib.parse.parse_qsl(url_parts[4])
+            url_parts = list(urlparse(url))
+            query = parse_qsl(url_parts[4])
             try:
                 query.append(("app_id", self.payload_doc(repeat_record).app_id))
             except (XFormNotFound, ResourceNotFound):
                 return None
-            url_parts[4] = six.moves.urllib.parse.urlencode(query)
-            return six.moves.urllib.parse.urlunparse(url_parts)
+            url_parts[4] = urlencode(query)
+            return urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
         headers = super(FormRepeater, self).get_headers(repeat_record)
@@ -402,7 +395,6 @@ class FormRepeater(Repeater):
         return "forwarding forms to: %s" % self.url
 
 
-@six.python_2_unicode_compatible
 class CaseRepeater(Repeater):
     """
     Record that cases should be repeated to a new url
@@ -474,7 +466,6 @@ class UpdateCaseRepeater(CaseRepeater):
         return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
 
 
-@six.python_2_unicode_compatible
 class ShortFormRepeater(Repeater):
     """
     Record that form id & case ids should be repeated to a new url
@@ -513,7 +504,6 @@ class AppStructureRepeater(Repeater):
         return None
 
 
-@six.python_2_unicode_compatible
 class UserRepeater(Repeater):
     friendly_name = _("Forward Users")
 
@@ -527,7 +517,6 @@ class UserRepeater(Repeater):
         return "forwarding users to: %s" % self.url
 
 
-@six.python_2_unicode_compatible
 class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
 
@@ -704,7 +693,7 @@ class RepeatRecord(Document):
         return RepeatRecordAttempt(
             cancelled=True,
             datetime=now,
-            failure_reason=six.text_type(exception),
+            failure_reason=str(exception),
             success_response=None,
             next_check=None,
             succeeded=False,
@@ -771,7 +760,7 @@ class RepeatRecord(Document):
     def handle_exception(self, exception):
         """handle internal exceptions
         """
-        return self._make_failure_attempt(six.text_type(exception), None)
+        return self._make_failure_attempt(str(exception), None)
 
     def _make_failure_attempt(self, reason, response):
         log_repeater_error_in_datadog(self.domain, response.status_code if response else None,

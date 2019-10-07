@@ -1,6 +1,5 @@
 import logging
 
-from six.moves import map
 from tastypie import fields
 from tastypie.exceptions import NotFound
 from tastypie.resources import ModelResource, Resource

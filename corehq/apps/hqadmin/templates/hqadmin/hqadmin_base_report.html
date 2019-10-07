@@ -5,14 +5,16 @@
 {% block title %}{% if current_page and section %}{% if current_page.title %}{{ current_page.title }} : {% endif %}{{ section.page_name }} {% else %}{{ report.title }}{% endif %}: Admin Reports{% endblock %}
 
 {% block js %}{{ block.super }}
-  {% if request.use_datatables %}
-    <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
+  {% if not requirejs_main %}
+    {% if request.use_datatables %}
+      <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
+    {% endif %}
+    {% if request.use_jquery_ui %}
+      <script src="{% static 'reports/js/datepicker.js' %}"></script>
+    {% endif %}
+    <script src="{% static 'reports/js/tabular.js' %}"></script>
+    <script src="{% static 'hqadmin/js/hqadmin_base_report.js' %}"></script>
   {% endif %}
-  {% if request.use_jquery_ui %}
-    <script src="{% static 'reports/js/datepicker.js' %}"></script>
-  {% endif %}
-  <script src="{% static 'reports/js/tabular.js' %}"></script>
-  <script src="{% static 'hqadmin/js/hqadmin_base_report.js' %}"></script>
 {% endblock %}
 
 {% block page_breadcrumbs %}

@@ -2,7 +2,6 @@ from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
 
 from mock import patch
-from six.moves import map, range
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import LocationType

@@ -1,3 +1,4 @@
+import datetime
 import json
 import uuid
 from math import ceil
@@ -38,6 +39,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_id,
     get_latest_build_version,
     get_latest_released_app_version,
+    get_latest_released_app_versions_by_app_id,
 )
 from corehq.apps.app_manager.decorators import (
     avoid_parallel_build_request,
@@ -255,8 +257,10 @@ def release_build(request, domain, app_id, saved_app_id):
     if saved_app.copy_of != app_id:
         raise Http404
     saved_app.is_released = is_released
+    saved_app.last_released = datetime.datetime.utcnow() if is_released else None
     saved_app.is_auto_generated = False
     saved_app.save(increment_version=False)
+    get_latest_released_app_versions_by_app_id.clear(domain)
     from corehq.apps.app_manager.signals import app_post_release
     app_post_release.send(Application, application=saved_app)
 

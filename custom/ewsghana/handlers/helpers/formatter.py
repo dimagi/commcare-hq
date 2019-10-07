@@ -2,7 +2,6 @@ import re
 from collections import OrderedDict
 
 from corehq.apps.commtrack.sms import SMSError
-import six
 
 
 class EWSFormatter(object):
@@ -100,7 +99,7 @@ class EWSFormatter(object):
             return string
 
         result = ""
-        for product, soh_receipt_dict in six.iteritems(product_quantity):
+        for product, soh_receipt_dict in product_quantity.items():
             soh = soh_receipt_dict.get('soh')
             if not soh:
                 continue

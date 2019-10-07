@@ -11,7 +11,6 @@ from django.template.loader import get_template
 from django.http import HttpResponse
 # import weasyprint
 from custom.apps.crs_reports import MOTHER_POSTPARTUM_VISIT_FORM_XMLNS, BABY_POSTPARTUM_VISIT_FORM_XMLNS
-from six.moves import range
 
 
 @require_case_view_permission

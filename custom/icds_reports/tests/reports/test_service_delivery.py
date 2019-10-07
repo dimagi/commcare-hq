@@ -1,4 +1,3 @@
-
 from django.test import TestCase
 
 from custom.icds_reports.reports.service_delivery_dashboard import get_service_delivery_data
@@ -37,7 +36,7 @@ class TestServiceDelivery(TestCase):
                     'valid_visits': 3,
                     'expected_visits': 304,
                     'thr': '28.67 %',
-                    'num_launched_awcs': 9,
+                    'num_launched_awcs': 10,
                     'block_name': 'Data Not Entered',
                     'children_0_3': 143,
                     'gm_0_3': 83,
@@ -118,7 +117,7 @@ class TestServiceDelivery(TestCase):
                     'valid_visits': 3,
                     'expected_visits': 304,
                     'thr': '28.67 %',
-                    'num_launched_awcs': 9,
+                    'num_launched_awcs': 10,
                     'block_name': 'Data Not Entered',
                     'children_0_3': 143,
                     'gm_0_3': 83,
@@ -162,7 +161,7 @@ class TestServiceDelivery(TestCase):
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 7,
                     'awc_name': 'Data Not Entered',
-                    'num_launched_awcs': 9
+                    'num_launched_awcs': 10
                 },
                 {
                     'gm_3_5': 240,
@@ -234,7 +233,7 @@ class TestServiceDelivery(TestCase):
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 7,
                     'awc_name': 'Data Not Entered',
-                    'num_launched_awcs': 9
+                    'num_launched_awcs': 10
                 }
             ],
         }

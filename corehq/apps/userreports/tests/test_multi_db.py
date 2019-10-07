@@ -3,7 +3,6 @@ import uuid
 from django.test import TestCase
 
 from mock import patch
-from six.moves import range
 
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,

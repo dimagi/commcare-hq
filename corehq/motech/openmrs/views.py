@@ -9,7 +9,6 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
-from six.moves import map, range
 
 from dimagi.utils.web import json_response
 
@@ -38,7 +37,7 @@ from corehq.motech.utils import b64_aes_encrypt
 
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
-def openmrs_edit_config(request, domain, repeater_id):
+def config_openmrs_repeater(request, domain, repeater_id):
     helper = OpenmrsModelListViewHelper(request, domain, repeater_id)
     repeater = helper.repeater
 
@@ -131,7 +130,7 @@ def openmrs_test_fire(request, domain, repeater_id, record_id):
 @login_and_domain_required
 @require_http_methods(['POST'])
 def openmrs_import_now(request, domain):
-    import_patients_to_domain.delay(request.domain, True)
+    import_patients_to_domain(request.domain, force=True)
     return JsonResponse({'status': 'Accepted'}, status=202)
 
 

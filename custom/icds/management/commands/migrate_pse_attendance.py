@@ -1,9 +1,9 @@
-
 from django.core.management.base import BaseCommand
 
 from django.db import connections
 
 from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import ICDS_UCR_CITUS_ENGINE_ID
 
 new_table = get_table_name('icds-cas', 'static-child_cases_monthly_v2')
 old_table = get_table_name('icds-cas', 'static-child_cases_monthly_tableau_v2')
@@ -31,7 +31,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, check, **options):
-        with connections['icds-ucr'].cursor() as cursor:
+        with connections[ICDS_UCR_CITUS_ENGINE_ID].cursor() as cursor:
             if check:
                 print('Query is')
                 print(migration_query)

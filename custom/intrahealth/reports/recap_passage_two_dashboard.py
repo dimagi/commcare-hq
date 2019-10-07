@@ -1,14 +1,14 @@
-# coding=utf-8
-
 import datetime
+from decimal import Decimal
 
 from django.utils.functional import cached_property
+from memoized import memoized
 
 from corehq.apps.reports.datatables import DataTablesColumn
 from custom.intrahealth.filters import DateRangeFilter, RecapPassageTwoProgramFilter, \
     YeksiRecapPassageNaaLocationFilter
 from custom.intrahealth.reports.utils import YeksiNaaMonthYearMixin
-from custom.intrahealth.sqldata import RecapPassageTwoTables
+from custom.intrahealth.sqldata import RecapPassageTwoTables, normalize_decimal
 from custom.intrahealth.reports.tableu_de_board_report_v2 import MultiReport
 from dimagi.utils.dates import force_to_date
 
@@ -21,6 +21,7 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
     default_rows = 10
     exportable = True
 
+    base_template_path = "intrahealth/base_multi_report.html"
     report_template_path = "intrahealth/multi_report.html"
 
     @property
@@ -33,14 +34,7 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
 
         table_names = ['Recapitulatif Facturation', 'Consommations Facturables',
                        'Consommation Réelle', 'Livraison Total Effectuées', 'Stock Disponible Utilisable']
-        table_provider = RecapPassageTwoTables(config=self.config)
-        data = [
-            table_provider.sumup_context,
-            table_provider.billed_consumption_context,
-            table_provider.actual_consumption_context,
-            table_provider.amt_delivered_convenience_context,
-            table_provider.display_total_stock_context,
-        ]
+        data = self.get_tables_context()
 
         for table in data:
             headers = []
@@ -78,14 +72,22 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
         if self.needs_filters:
             return []
         else:
-            table_provider = RecapPassageTwoTables(config=self.config)
-            return [
+            return self.get_tables_context()
+
+    @memoized
+    def get_tables_context(self):
+        table_provider = RecapPassageTwoTables(config=self.config)
+        context = [
                 table_provider.sumup_context,
                 table_provider.billed_consumption_context,
                 table_provider.actual_consumption_context,
                 table_provider.amt_delivered_convenience_context,
                 table_provider.display_total_stock_context,
             ]
+
+        context = [normalize_context(c) for c in context]
+        return context
+
 
     def get_report_context(self, table_context):
         self.data_source = table_context
@@ -120,3 +122,23 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
         config['product_program'] = self.request.GET.get('program')
         config['selected_location'] = self.request.GET.get('location_id')
         return config
+
+
+def normalize_context(table_context):
+    normalized_rows = []
+    for row in table_context['rows']:
+        if row is not None:
+            row = list(map(normalize_row_element, row))
+        normalized_rows.append(row)
+    table_context['rows'] = normalized_rows
+    return table_context
+
+
+def normalize_row_element(element):
+    if isinstance(element, Decimal):
+        return normalize_decimal(element)
+    elif isinstance(element, dict) and element.get('html') is not None:
+        element['html'] = normalize_decimal(element['html'])
+        return element
+    else:
+        return element

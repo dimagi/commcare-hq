@@ -1,6 +1,3 @@
-# coding=utf-8
-
-
 import json
 import logging
 import uuid
@@ -152,7 +149,7 @@ def get_module_view_context(request, app, module, lang=None):
         context.update(_get_report_module_context(app, module))
     else:
         context.update(_get_shared_module_view_context(request, app, module, case_property_builder, lang))
-        context.update(_get_basic_module_view_context(app, module, case_property_builder))
+        context.update(_get_basic_module_view_context(request, app, module, case_property_builder))
     if isinstance(module, ShadowModule):
         context.update(_get_shadow_module_view_context(app, module, lang))
     context.update({'module_brief': module_brief})
@@ -223,13 +220,13 @@ def _get_advanced_module_view_context(app, module):
     }
 
 
-def _get_basic_module_view_context(app, module, case_property_builder):
+def _get_basic_module_view_context(request, app, module, case_property_builder):
     return {
         'parent_case_modules': _get_modules_with_parent_case_type(
             app, module, case_property_builder, module.case_type),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
-            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and not module.is_training_module
+            add_ons.show("submenus", request, app, module=module) and not module.is_training_module
         ),
     }
 

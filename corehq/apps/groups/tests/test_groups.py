@@ -1,7 +1,6 @@
 from django.test import SimpleTestCase, TestCase
 
 from couchdbkit import BadValueError
-from six.moves import range
 
 from corehq.apps.groups.dbaccessors import group_by_domain
 from corehq.apps.groups.models import Group

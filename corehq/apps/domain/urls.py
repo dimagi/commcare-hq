@@ -1,4 +1,3 @@
-
 from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib.auth.views import (
@@ -51,6 +50,7 @@ from corehq.apps.domain.views.internal import (
     EditInternalCalculationsView,
     EditInternalDomainInfoView,
     FlagsAndPrivilegesView,
+    ProjectLimitsView,
     TransferDomainView,
     calculated_properties,
     toggle_diff,
@@ -80,23 +80,10 @@ from corehq.apps.domain.views.sms import SMSRatesView
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.motech.repeaters.views import (
-    AddCaseRepeaterView,
-    AddFormRepeaterView,
-    AddRepeaterView,
-    DomainForwardingOptionsView,
-    EditCaseRepeaterView,
-    EditFormRepeaterView,
-    EditOpenmrsRepeaterView,
-    EditRepeaterView,
     RepeatRecordView,
     cancel_repeat_record,
-    drop_repeater,
-    pause_repeater,
     requeue_repeat_record,
-    resume_repeater,
-    test_repeater,
 )
-from corehq.motech.repeaters.views.repeaters import EditDhis2RepeaterView
 
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
@@ -134,7 +121,6 @@ urlpatterns = [
          'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}},
         name='password_reset_complete')
 ]
-
 
 domain_settings = [
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
@@ -187,28 +173,6 @@ domain_settings = [
     url(r'^repeat_record_report/generate_repeater_payloads/', generate_repeater_payloads,
         name='generate_repeater_payloads'),
     url(r'^integration/', include('corehq.apps.integration.urls')),
-    url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
-    url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(), {'repeater_type': 'FormRepeater'},
-        name=AddFormRepeaterView.urlname),
-    url(r'^forwarding/new/CaseRepeater/$', AddCaseRepeaterView.as_view(), {'repeater_type': 'CaseRepeater'},
-        name=AddCaseRepeaterView.urlname),
-    url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
-    url(r'^forwarding/test/$', test_repeater, name='test_repeater'),
-
-    url(r'^forwarding/CaseRepeater/edit/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
-        {'repeater_type': 'CaseRepeater'}, name=EditCaseRepeaterView.urlname),
-    url(r'^forwarding/FormRepeater/edit/(?P<repeater_id>\w+)/$', EditFormRepeaterView.as_view(),
-        {'repeater_type': 'FormRepeater'}, name=EditFormRepeaterView.urlname),
-    url(r'^forwarding/OpenmrsRepeater/edit/(?P<repeater_id>\w+)/$', EditOpenmrsRepeaterView.as_view(),
-        {'repeater_type': 'OpenmrsRepeater'}, name=EditOpenmrsRepeaterView.urlname),
-    url(r'^forwarding/Dhis2Repeater/edit/(?P<repeater_id>\w+)/$', EditDhis2RepeaterView.as_view(),
-        {'repeater_type': 'Dhis2Repeater'}, name=EditDhis2RepeaterView.urlname),
-    url(r'^forwarding/(?P<repeater_type>\w+)/edit/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
-        name=EditRepeaterView.urlname),
-
-    url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', drop_repeater, name='drop_repeater'),
-    url(r'^forwarding/(?P<repeater_id>[\w-]+)/pause/$', pause_repeater, name='pause_repeater'),
-    url(r'^forwarding/(?P<repeater_id>[\w-]+)/resume/$', resume_repeater, name='resume_repeater'),
     url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', set_published_snapshot, name='domain_set_published'),
     url(r'^snapshots/set_published/$', set_published_snapshot, name='domain_clear_published'),
     url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),
@@ -224,6 +188,7 @@ domain_settings = [
     url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
     url(r'^flags/$', FlagsAndPrivilegesView.as_view(), name=FlagsAndPrivilegesView.urlname),
+    url(r'^project_limits/$', ProjectLimitsView.as_view(), name=ProjectLimitsView.urlname),
     url(r'^toggle_diff/$', toggle_diff, name='toggle_diff'),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
     url(r'^recovery_measures_history/$',

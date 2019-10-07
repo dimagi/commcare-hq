@@ -6,7 +6,6 @@ from django.test import TestCase
 
 from couchdbkit import MultipleResultsFound
 from mock import Mock, patch
-from six.moves import range
 
 from corehq.apps.sms.handlers.form_session import (
     get_single_open_session_or_close_multiple,

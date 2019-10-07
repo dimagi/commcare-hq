@@ -1,7 +1,6 @@
 import weakref
 from abc import ABCMeta, abstractmethod
 
-import six
 
 from .progress import ProgressManager, ProcessorProgressLogger
 from ..pagination import PaginationEventHandler, TooManyRetries
@@ -11,7 +10,7 @@ class BulkProcessingFailed(Exception):
     pass
 
 
-class BaseDocProcessor(six.with_metaclass(ABCMeta)):
+class BaseDocProcessor(metaclass=ABCMeta):
     """Base class for processors that get passed"""
 
     def __enter__(self):
@@ -59,7 +58,7 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
         return True
 
 
-class DocumentProvider(six.with_metaclass(ABCMeta)):
+class DocumentProvider(metaclass=ABCMeta):
     @abstractmethod
     def get_document_iterator(self, chunk_size, event_handler=None):
         """

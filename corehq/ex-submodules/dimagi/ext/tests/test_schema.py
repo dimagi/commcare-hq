@@ -1,4 +1,3 @@
-
 from django.test import SimpleTestCase
 
 from dimagi.ext.couchdbkit import (

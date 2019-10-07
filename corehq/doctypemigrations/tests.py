@@ -10,7 +10,6 @@ from corehq.doctypemigrations.migrator import Migrator
 from corehq.doctypemigrations.stats import get_doc_counts_per_doc_type
 from dimagi.utils.couch.bulk import get_docs
 from django.conf import settings
-from six.moves import zip
 
 
 class TestDocTypeMigrations(TestCase):

@@ -1,9 +1,11 @@
+import attr
 
-from collections import namedtuple
-
+from couchforms.const import TAG_FORM, TAG_META
 from dimagi.ext.couchdbkit import DictProperty, DocumentSchema, StringProperty
 
-from corehq.motech.const import (  # pylint: disable=unused-import,F401; (F401 = flake8 "'%s' imported but unused"); Used in ValueSource.check_direction doctest; pylint: enable=unused-import,F401
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
+from corehq.motech.const import (
     COMMCARE_DATA_TYPES,
     DATA_TYPE_UNKNOWN,
     DIRECTION_BOTH,
@@ -17,8 +19,25 @@ from corehq.motech.const import (  # pylint: disable=unused-import,F401; (F401 =
 )
 from corehq.motech.serializers import serializers
 
-CaseTriggerInfo = namedtuple('CaseTriggerInfo',
-                             ['case_id', 'updates', 'created', 'closed', 'extra_fields', 'form_question_values'])
+
+@attr.s
+class CaseTriggerInfo:
+    domain = attr.ib()
+    case_id = attr.ib()
+    type = attr.ib()
+    name = attr.ib()
+    owner_id = attr.ib()
+    modified_by = attr.ib()
+    updates = attr.ib()
+    created = attr.ib()
+    closed = attr.ib()
+    extra_fields = attr.ib()
+    form_question_values = attr.ib()
+
+    def __str__(self):
+        if self.name:
+            return f'<CaseTriggerInfo {self.case_id} {self.name!r}>'
+        return f"<CaseTriggerInfo {self.case_id}>"
 
 
 def recurse_subclasses(cls):
@@ -136,7 +155,12 @@ class CaseProperty(ValueSource):
         been included in an integration.
 
         >>> info = CaseTriggerInfo(
+        ...     domain='test-domain',
         ...     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+        ...     type='case',
+        ...     name='',
+        ...     owner_id='c0ffee',
+        ...     modified_by='c0ffee',
         ...     updates={'foo': 1},
         ...     created=False,
         ...     closed=False,
@@ -245,13 +269,44 @@ class FormQuestionMap(FormQuestion):
         return reverse_map.get(external_value)
 
 
+class CaseOwnerAncestorLocationField(ValueSource):
+    """
+    A reference to a location metadata value. The location may be the
+    case owner, the case owner's location, or the first ancestor
+    location of the case owner where the metadata value is set.
+    """
+    location_field = StringProperty()
+
+    def _get_commcare_value(self, case_trigger_info):
+        location = get_case_location(case_trigger_info)
+        if location:
+            return get_ancestor_location_metadata_value(location, self.location_field)
+
+
+class FormUserAncestorLocationField(ValueSource):
+    """
+    A reference to a location metadata value. The location is the form
+    user's location, or the first ancestor location of the case owner
+    where the metadata value is set.
+    """
+    location_field = StringProperty()
+
+    def _get_commcare_value(self, case_trigger_info):
+        user_id = case_trigger_info.form_question_values.get('/metadata/userID')
+        location = get_owner_location(case_trigger_info.domain, user_id)
+        if location:
+            return get_ancestor_location_metadata_value(location, self.location_field)
+
+
 def get_form_question_values(form_json):
     """
-    Returns question-value pairs to result where questions are given as "/data/foo/bar"
+    Given form JSON, returns question-value pairs, where questions are
+    formatted "/data/foo/bar".
 
-    >>> values = get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
-    >>> values == {'/data/foo/bar': 'baz'}
-    True
+    e.g. Question "bar" in group "foo" has value "baz":
+
+    >>> get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
+    {'/data/foo/bar': 'baz'}
 
     """
     _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
@@ -275,18 +330,42 @@ def get_form_question_values(form_json):
                 result_[question] = value
 
     result = {}
-    _recurse_form_questions(form_json['form'], [b'/data'], result)  # "/data" is just convention, hopefully
-    # familiar from form builder. The form's data will usually be immediately under "form_json['form']" but not
+    _recurse_form_questions(form_json[TAG_FORM], [b'/data'], result)  # "/data" is just convention, hopefully
+    # familiar from form builder. The form's data will usually be immediately under "form_json[TAG_FORM]" but not
     # necessarily. If this causes problems we may need a more reliable way to get to it.
 
     metadata = {}
-    if 'meta' in form_json['form']:
-        if 'timeStart' in form_json['form']['meta']:
-            metadata['timeStart'] = form_json['form']['meta']['timeStart']
-        if 'timeEnd' in form_json['form']['meta']:
-            metadata['timeEnd'] = form_json['form']['meta']['timeEnd']
+    if 'meta' in form_json[TAG_FORM]:
+        metadata.update(form_json[TAG_FORM][TAG_META])
     if 'received_on' in form_json:
         metadata['received_on'] = form_json['received_on']
     if metadata:
         _recurse_form_questions(metadata, [b'/metadata'], result)
     return result
+
+
+def get_ancestor_location_metadata_value(location, metadata_key):
+    assert isinstance(location, SQLLocation), type(location)
+    for location in reversed(location.get_ancestors(include_self=True)):
+        if location.metadata.get(metadata_key):
+            return location.metadata[metadata_key]
+    return None
+
+
+def get_case_location(case):
+    """
+    If the owner of the case is a location, return it. Otherwise return
+    the owner's primary location. If the case owner does not have a
+    primary location, return None.
+    """
+    return get_owner_location(case.domain, get_owner_id(case))
+
+
+def get_owner_location(domain, owner_id):
+    owner = get_wrapped_owner(owner_id)
+    if not owner:
+        return None
+    if isinstance(owner, SQLLocation):
+        return owner
+    location_id = owner.get_location_id(domain)
+    return SQLLocation.by_location_id(location_id) if location_id else None

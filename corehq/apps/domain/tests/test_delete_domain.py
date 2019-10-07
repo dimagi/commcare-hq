@@ -9,7 +9,6 @@ from django.test import TestCase, override_settings
 
 from dateutil.relativedelta import relativedelta
 from mock import patch
-from six.moves import range
 
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, SyncLogSQL

@@ -1,4 +1,3 @@
-import six
 import sys
 from collections import defaultdict
 from itertools import islice
@@ -34,7 +33,7 @@ def clean_exception(exception):
     # couchdbkit doesn't provide a better way for us to catch this exception
     if (
         isinstance(exception, AssertionError) and
-        six.text_type(exception).startswith('received an invalid response of type')
+        str(exception).startswith('received an invalid response of type')
     ):
         message = ("It looks like couch returned an invalid response to "
                    "couchdbkit.  This could contain sensitive information, "
@@ -244,13 +243,16 @@ def display_seconds(seconds):
 
 
 def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
-                      stream=sys.stdout, step=None):
+                      stream=None, step=None):
     """Turns 'iterable' into a generator which prints a progress bar.
 
     :param oneline: Set to False to print each update on a new line.
         Useful if there will be other things printing to the terminal.
         Set to "concise" to use exactly one line for all output.
+    :param step: deprecated, not used
     """
+    if stream is None:
+        stream = sys.stdout
     if length is None:
         if hasattr(iterable, "__len__"):
             length = len(iterable)
@@ -284,29 +286,46 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
 
     if oneline != "concise":
         print("Started at {:%Y-%m-%d %H:%M:%S}".format(start), file=stream)
-    if step is None:
-        step = length // granularity
-    i = -1
+    should_update = step_calculator(length, granularity)
+    i = 0
     try:
-        for i, x in enumerate(iterable):
+        for i, x in enumerate(iterable, start=1):
             yield x
-            if i % step == 0:
+            if should_update(i):
                 draw(i)
     finally:
-        draw(i + 1, done=True)
+        draw(i, done=True)
     if oneline != "concise":
         end = datetime.now()
         print("Finished at {:%Y-%m-%d %H:%M:%S}".format(end), file=stream)
         print("Elapsed time: {}".format(display_seconds((end - start).total_seconds())), file=stream)
 
 
+def step_calculator(length, granularity):
+    """Make a function that caculates when to post progress updates
+
+    Approximates two updates per output granularity (dot) with update
+    interval bounded at 0.1s <= t <= 5m. This assumes a uniform
+    iteration rate.
+    """
+    def should_update(i):
+        assert i, "divide by zero protection"
+        nonlocal next_update
+        now = datetime.now()
+        if now > next_update:
+            rate = i / (now - start).total_seconds()  # iterations / second
+            secs = min(max(twice_per_dot / rate, 0.1), 300)  # seconds / dot / 2
+            next_update = now + timedelta(seconds=secs)
+            return True
+        return False
+    twice_per_dot = max(length / granularity, 1) / 2  # iterations / dot / 2
+    start = next_update = datetime.now()
+    return should_update
+
+
 def get_traceback_string():
-    if six.PY3:
-        from io import StringIO
-        f = StringIO()
-    else:
-        from cStringIO import StringIO
-        f = StringIO()
+    from io import StringIO
+    f = StringIO()
     traceback.print_exc(file=f)
     return f.getvalue()
 

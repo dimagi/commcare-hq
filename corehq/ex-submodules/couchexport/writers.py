@@ -1,4 +1,3 @@
-
 import io
 from base64 import b64decode
 from codecs import BOM_UTF8
@@ -17,7 +16,6 @@ from django.utils.functional import Promise
 import xlwt
 
 from couchexport.models import Format
-import six
 from openpyxl.styles import numbers
 from openpyxl.cell import WriteOnlyCell
 
@@ -289,7 +287,7 @@ class OnDiskExportWriter(ExportWriter):
     def _write_row(self, sheet_index, row):
 
         def _transform(val):
-            if isinstance(val, six.text_type):
+            if isinstance(val, str):
                 return val.encode("utf8")
             elif val is None:
                 return ''
@@ -390,12 +388,12 @@ class Excel2007ExportWriter(ExportWriter):
         )
 
         def get_write_value(value):
-            if isinstance(value, six.integer_types + (float,)):
+            if isinstance(value, (int, float)):
                 return value
             if isinstance(value, bytes):
                 value = value.decode('utf-8')
             elif value is not None:
-                value = six.text_type(value)
+                value = str(value)
             else:
                 value = ''
             return dirty_chars.sub('?', value)
@@ -440,7 +438,7 @@ class Excel2003ExportWriter(ExportWriter):
         for i, val in enumerate(row):
             if i >= MAX_XLS_COLUMNS:
                 raise XlsLengthException()
-            sheet.write(row_index, i, six.text_type(val))
+            sheet.write(row_index, i, str(val))
         self.table_indices[sheet_index] = row_index + 1
 
     def _close(self):
@@ -490,9 +488,7 @@ class JsonExportWriter(InMemoryExportWriter):
         for tablename, data in self.tables.items():
             new_tables[self.table_names[tablename]] = {"headers":data[0], "rows": data[1:]}
 
-        json_dump = json.dumps(new_tables, cls=self.ConstantEncoder)
-        if six.PY3:
-            json_dump = json_dump.encode('utf-8')
+        json_dump = json.dumps(new_tables, cls=self.ConstantEncoder).encode('utf-8')
         self.file.write(json_dump)
 
 

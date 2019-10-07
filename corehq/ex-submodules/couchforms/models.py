@@ -41,7 +41,6 @@ from corehq.form_processor.utils import clean_metadata
 from couchforms import const
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.jsonobject_extensions import GeoPointProperty
-import six
 
 
 def doc_types():
@@ -115,7 +114,6 @@ class XFormOperation(DocumentSchema):
     operation = StringProperty()  # e.g. "archived", "unarchived"
 
 
-@six.python_2_unicode_compatible
 class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
                     ComputedDocumentMixin, CouchDocLockableMixIn,
                     AbstractXFormInstance):
@@ -302,7 +300,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
     def _xml_string_to_element(self, xml_string):
 
         def _to_xml_element(payload):
-            if isinstance(payload, six.text_type):
+            if isinstance(payload, str):
                 payload = payload.encode('utf-8', errors='replace')
             return etree.fromstring(payload)
 
@@ -343,7 +341,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
             return meta_json
 
         return {name: _meta_to_json(meta)
-            for name, meta in six.iteritems(self.blobs)
+            for name, meta in self.blobs.items()
             if name != ATTACHMENT_NAME}
 
     def xml_md5(self):
@@ -444,7 +442,6 @@ class XFormArchived(XFormError):
         return True
 
 
-@six.python_2_unicode_compatible
 class SubmissionErrorLog(XFormError):
     """
     When a hard submission error (typically bad XML) is received we save it
@@ -488,7 +485,6 @@ class DefaultAuthContext(DocumentSchema):
         return True
 
 
-@six.python_2_unicode_compatible
 class UnfinishedSubmissionStub(models.Model):
     xform_id = models.CharField(max_length=200)
     timestamp = models.DateTimeField(db_index=True)
@@ -498,7 +494,7 @@ class UnfinishedSubmissionStub(models.Model):
     attempts = models.IntegerField(default=0)
 
     def __str__(self):
-        return six.text_type(
+        return str(
             "UnfinishedSubmissionStub("
             "xform_id={s.xform_id},"
             "timestamp={s.timestamp},"
@@ -510,7 +506,6 @@ class UnfinishedSubmissionStub(models.Model):
         app_label = 'couchforms'
 
 
-@six.python_2_unicode_compatible
 class UnfinishedArchiveStub(models.Model):
     xform_id = models.CharField(max_length=200)
     user_id = models.CharField(max_length=200, default=None, blank=True, null=True)
@@ -520,7 +515,7 @@ class UnfinishedArchiveStub(models.Model):
     domain = models.CharField(max_length=256)
 
     def __str__(self):
-        return six.text_type(
+        return str(
             "UnfinishedArchiveStub("
             "xform_id={s.xform_id},"
             "user_id={s.user_id},"

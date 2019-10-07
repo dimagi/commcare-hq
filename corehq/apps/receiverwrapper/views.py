@@ -5,7 +5,6 @@ from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-import six
 from couchdbkit import ResourceNotFound
 
 import couchforms
@@ -36,6 +35,7 @@ from corehq.apps.receiverwrapper.auth import (
     WaivedAuthContext,
     domain_requires_auth,
 )
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission_by_delaying
 from corehq.apps.receiverwrapper.util import (
     DEMO_SUBMIT_MODE,
     from_demo_user,
@@ -65,6 +65,9 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @profile_prod('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
+
+    rate_limit_submission_by_delaying(domain, max_wait=15)
+
     metric_tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
         'domain:{}'.format(domain),
@@ -116,6 +119,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             submit_ip=couchforms.get_submit_ip(request),
             last_sync_token=couchforms.get_last_sync_token(request),
             openrosa_headers=couchforms.get_openrosa_headers(request),
+            force_logs=bool(request.GET.get('force_logs', False)),
         )
 
         try:
@@ -128,13 +132,6 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             )
 
     response = result.response
-
-    if response.status_code == 400:
-        logging.error(
-            'Status code 400 for a form submission. '
-            'Response is: \n{0}\n'
-        )
-
     _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
     return response

@@ -1,5 +1,3 @@
-
-import six
 from django.test import SimpleTestCase, TestCase
 from mock import patch, Mock
 
@@ -130,4 +128,4 @@ class TestAWWAggregatePerformanceIndicator(BaseAggregatePerformanceTestCase):
         visits.return_value = etree.fromstring(self.get_xml('visit_fixture'))
         with self.assertRaises(IndicatorError) as e:
             run_indicator_for_user(self.aww, AWWAggregatePerformanceIndicator, language_code='en')
-        self.assertIn('Attribute awc_opened_count not found in restore for AWC AWC1', six.text_type(e.exception))
+        self.assertIn('Attribute awc_opened_count not found in restore for AWC AWC1', str(e.exception))

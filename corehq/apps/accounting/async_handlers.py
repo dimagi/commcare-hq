@@ -3,8 +3,6 @@ import json
 from django.conf import settings
 from django.db.models import F, Q
 
-import six
-
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
@@ -219,7 +217,7 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         if self.search_string:
             plan_versions = plan_versions.filter(
                 plan__name__icontains=self.search_string)
-        return [(p.id, six.text_type(p)) for p in plan_versions.order_by('plan__name')]
+        return [(p.id, str(p)) for p in plan_versions.order_by('plan__name')]
 
     @property
     def new_plan_version_response(self):
@@ -239,7 +237,7 @@ class Select2InvoiceTriggerHandler(BaseSelect2AsyncHandler):
         domain_names = [domain['key'] for domain in Domain.get_all(include_docs=False)]
         if self.search_string:
             search_string = self.search_string.lower()
-            domain_names = [x for x in domain_names if x.lower().startswith(search_string)]
+            domain_names = [x for x in domain_names if search_string in x.lower()]
         return [(d, d) for d in domain_names]
 
 
@@ -252,6 +250,9 @@ class Select2CustomerInvoiceTriggerHandler(BaseSelect2AsyncHandler):
     @property
     def customer_account_response(self):
         accounts = BillingAccount.objects.filter(is_customer_billing_account=True).values_list('name', flat=True)
+        if self.search_string:
+            search_string = self.search_string.lower()
+            accounts = [x for x in accounts if search_string in x.lower()]
         return [(n, n) for n in accounts]
 
 
@@ -457,7 +458,7 @@ class InvoiceNumberAsyncHandler(BaseSingleOptionFilterAsyncHandler):
     @property
     def invoice_number_response(self):
         return [
-            self._fmt_select2_data(six.text_type(p.id), six.text_type(p.number_on_invoice))
+            self._fmt_select2_data(str(p.id), str(p.number_on_invoice))
             for p in self.paginated_data
         ]
 
@@ -478,7 +479,7 @@ class InvoiceBalanceAsyncHandler(BaseSingleOptionFilterAsyncHandler):
     @property
     def invoice_balance_response(self):
         return [
-            self._fmt_select2_data(six.text_type(p.balance), six.text_type(p.balance))
+            self._fmt_select2_data(str(p.balance), str(p.balance))
             for p in self.paginated_data
         ]
 

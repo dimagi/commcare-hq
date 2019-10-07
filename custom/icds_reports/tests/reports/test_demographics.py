@@ -1,4 +1,3 @@
-
 from django.test import TestCase
 
 from custom.icds_reports.messages import percent_children_enrolled_help_text, \
@@ -40,8 +39,8 @@ class TestDemographics(TestCase):
             "all": None,
             "format": "number",
             "color": "green",
-            "percent": 0.18702344986332903,
-            "value": 6964,
+            "percent": 0.2507163323782235,
+            "value": 2799,
             "label": "Registered Households",
             "frequency": "month",
             "help_text": "Total number of households registered"
@@ -196,7 +195,7 @@ class TestDemographics(TestCase):
             "format": "number",
             "color": "red",
             "percent": 0,
-            "value": 6964,
+            "value": 2799,
             "label": "Registered Households",
             "frequency": "day",
             "help_text": "Total number of households registered"
@@ -353,7 +352,7 @@ class TestDemographics(TestCase):
             "format": "number",
             "color": "red",
             "percent": 0,
-            "value": 6964,
+            "value": 2799,
             "label": "Registered Households",
             "frequency": "day",
             "help_text": "Total number of households registered"

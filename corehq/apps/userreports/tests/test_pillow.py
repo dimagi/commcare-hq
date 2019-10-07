@@ -1,4 +1,3 @@
-
 import decimal
 import uuid
 from datetime import datetime, timedelta
@@ -6,7 +5,6 @@ from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase, override_settings
 
 import mock
-from six.moves import range
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase

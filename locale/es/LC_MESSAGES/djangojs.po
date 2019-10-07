@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-27 18:49+0000\n"
+"POT-Creation-Date: 2019-10-01 19:31+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -648,7 +648,7 @@ msgstr "Cargar Preguntas"
 msgid "[unknown]"
 msgstr "[desconocido]"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js:5
+#: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js:4
 msgid "Releases"
 msgstr "Publicaciones"
 
@@ -672,22 +672,28 @@ msgstr "Seleccione un usuario"
 msgid "(Default)"
 msgstr "(Predeterminado)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:219
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:51
+#, fuzzy
+#| msgid "Unknown"
+msgid "Unknown App"
+msgstr "Desconocido"
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:237
 msgid ""
 "An error occurred. Reload the page and click Make New Version to try again."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:395
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:415
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Lo sentimos, eso no se envió. Por favor cargue nuevamente su página e "
 "intente de nuevo"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:429
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:449
 msgid "The versions list has changed since you loaded the page."
 msgstr "La lista de versiones ha cambiado desde que cargó la página."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:434
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:454
 msgid "No new changes!"
 msgstr "¡No hay nuevos cambios!"
 
@@ -715,11 +721,11 @@ msgid ""
 "saved, it will no longer be inherited."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:316
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:321
 msgid "You have unsaved settings."
 msgstr "Tiene configuraciones sin guardar."
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:469
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:480
 msgid "Settings"
 msgstr "Configuración"
 
@@ -2865,7 +2871,7 @@ msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.js:78
+#: corehq/apps/users/static/users/js/mobile_workers.js:100
 msgid "Issue communicating with server. Try again."
 msgstr "Ocurrió un problema al comunicarse con el servidor. Intente otra vez."
 
@@ -2929,24 +2935,24 @@ msgstr "Ocultar versiones anteriores"
 msgid "Show previous versions"
 msgstr "Mostrar versiones anteriores"
 
-#: corehq/apps/export/static/export/js/create_export.js:94
+#: corehq/apps/export/static/export/js/create_export.js:100
 msgid "<%= count %> form submission available."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:96
+#: corehq/apps/export/static/export/js/create_export.js:102
 msgid "<%= count %> form submissions available."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:107
+#: corehq/apps/export/static/export/js/create_export.js:113
 msgid "User Registration"
 msgstr "Registro de Usuario"
 
-#: corehq/apps/export/static/export/js/create_export.js:276
+#: corehq/apps/export/static/export/js/create_export.js:297
 msgid ""
 "There was an issue fetching data. Please check your internet connection."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/create_export.js:311
+#: corehq/apps/export/static/export/js/create_export.js:332
 msgid "There is an issue communicating with the server at this time."
 msgstr "Hay un problema de comunicación con el servidor en este momento."
 
@@ -2975,16 +2981,16 @@ msgstr ""
 msgid "There was an error downloading your export."
 msgstr "Ocurrió un error al descargar su exportación."
 
-#: corehq/apps/export/static/export/js/export_list.js:118
+#: corehq/apps/export/static/export/js/export_list.js:157
 msgid "Download Requested"
 msgstr "Descarga Solicitada"
 
-#: corehq/apps/export/static/export/js/export_list.js:407
-#: corehq/apps/export/static/export/js/export_list.js:414
+#: corehq/apps/export/static/export/js/export_list.js:446
+#: corehq/apps/export/static/export/js/export_list.js:453
 msgid "Invalid date format"
 msgstr "Formato de fecha inválido"
 
-#: corehq/apps/export/static/export/js/export_list.js:538
+#: corehq/apps/export/static/export/js/export_list.js:591
 msgid "Problem saving dashboard feed filters"
 msgstr "Ocurrió un problema al guardar filtros de alimentación del tablero"
 
@@ -3036,19 +3042,19 @@ msgid ""
 "<strong>Edit and Export</strong>: All users can edit and export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:632
+#: corehq/apps/export/static/export/js/models.js:649
 msgid "The table path should end with []"
 msgstr "La ruta de la tabla debe terminar con []"
 
-#: corehq/apps/export/static/export/js/models.js:743
+#: corehq/apps/export/static/export/js/models.js:760
 msgid "Sensitive ID"
 msgstr "ID Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:745
+#: corehq/apps/export/static/export/js/models.js:762
 msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:747
+#: corehq/apps/export/static/export/js/models.js:764
 msgid "None"
 msgstr "Ninguna"
 
@@ -3068,17 +3074,9 @@ msgstr "Guardado exitosamente"
 msgid "Failed to save "
 msgstr "Error al guardar"
 
-#: corehq/apps/groups/static/groups/js/group_members.js:128
+#: corehq/apps/groups/static/groups/js/group_members.js:134
 msgid "Please wait and do not navigate away..."
 msgstr "Por favor espere y no se vaya..."
-
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:25
-msgid "Show All References"
-msgstr "Mostar Todas las Referencias"
-
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:25
-msgid "Show Only Missing References"
-msgstr "Mostrar Solo las Referencias Faltantes"
 
 #: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:7
 msgid ""
@@ -3090,11 +3088,23 @@ msgstr ""
 msgid "No items were found to update."
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:23
+#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:14
+msgid "Show All References"
+msgstr "Mostar Todas las Referencias"
+
+#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:14
+msgid "Show Only Missing References"
+msgstr "Mostrar Solo las Referencias Faltantes"
+
+#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:59
+#, fuzzy
+#| msgid "Could not clear user data. Please report an issue if this persists."
 msgid ""
-"Error loading, please refresh the page. If this persists, please report an "
-"issue."
+"Error fetching multimedia, please try again or report an issue if the "
+"problem persists."
 msgstr ""
+"No es posible borrar los datos del usuario. Por favor reporte un problema si "
+"esto continúa."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/500.js:7
 msgid "This is Danny, one of our best developers."
@@ -3162,7 +3172,7 @@ msgstr "Agregar Todos"
 msgid "Remove All"
 msgstr "Eliminar Todos"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js:12
+#: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js:18
 msgid "Your password is too weak! Try adding numbers or symbols."
 msgstr "¡Su contraseña es muy débil! Intente agregar números o símbolos."
 
@@ -3287,39 +3297,39 @@ msgstr "Seleccione una Ubicación"
 msgid "Choose a primary location"
 msgstr "Elegir una ubicación principal"
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:116
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:93
 msgid "Please enter your name."
 msgstr "Por favor ingrese su nombre."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:125
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:102
 msgid "Please specify an email."
 msgstr "Por favor especifique un correo electrónico."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:167
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:144
 msgid "Checking email..."
 msgstr "Revisando correo electrónico..."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:177
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:154
 msgid "Please specify a password."
 msgstr "Por favor especifique una contraseña."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:197
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:174
 msgid "Please specify a project name."
 msgstr "Por favor especifique un nombre de proyecto."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:214
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:191
 msgid "Please specify."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:25
+#: corehq/apps/registration/static/registration/js/password.js:37
 msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr "¡Su contraseña es muy débil! ¡Intente agregar números o simbolos!"
 
-#: corehq/apps/registration/static/registration/js/password.js:27
+#: corehq/apps/registration/static/registration/js/password.js:39
 msgid "Your password is almost strong enough! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:29
+#: corehq/apps/registration/static/registration/js/password.js:41
 msgid "Good Job! Your password is strong!"
 msgstr "¡Bien Hecho! ¡Su contraseña es segura!"
 
@@ -3350,7 +3360,7 @@ msgstr ""
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:31
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:34
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:173
-#: corehq/apps/reports/static/reports/js/tabular.js:32
+#: corehq/apps/reports/static/reports/js/tabular.js:44
 msgid "Sorry!"
 msgstr "¡Lo sentimos!"
 
@@ -3374,7 +3384,7 @@ msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:120
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:8
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:26
 msgid "Select a language..."
 msgstr "Seleccionar un idioma..."
 
@@ -3438,15 +3448,15 @@ msgstr "No hay datos disponibles en la tabla"
 msgid "Showing _START_ to _END_ of _TOTAL_ entries"
 msgstr "Mostrando_INICIO_a_FIN_del_TOTAL_de entradas"
 
-#: corehq/apps/reports/static/reports/js/reports.async.js:20
+#: corehq/apps/reports/static/reports/js/reports.async.js:17
 msgid "Please check your Internet connection!"
 msgstr "¡Por favor revise su conexión de Internet!"
 
-#: corehq/apps/reports/static/reports/js/reports.async.js:21
+#: corehq/apps/reports/static/reports/js/reports.async.js:18
 msgid "Report Not Found."
 msgstr "No se Encontró el Reporte."
 
-#: corehq/apps/reports/static/reports/js/reports.async.js:22
+#: corehq/apps/reports/static/reports/js/reports.async.js:19
 msgid ""
 "Request timed out when rendering this report. This might be an issue with "
 "our servers or with your Internet connection. We encourage you to report an "
@@ -3457,7 +3467,7 @@ msgstr ""
 "que reporte este problema a Soporte CommCare HQ para que podamos investigar "
 "posibles problemas."
 
-#: corehq/apps/reports/static/reports/js/reports.async.js:25
+#: corehq/apps/reports/static/reports/js/reports.async.js:22
 msgid ""
 "Problem Rendering Report. Our error monitoring tools have noticed this and "
 "we are working quickly to resolve this issue as soon as possible. We "
@@ -3472,11 +3482,11 @@ msgstr ""
 "cuantos minutos. Agradecemos cualquier información adicional que pueda "
 "brindarnos sobre este problema para que podamos repararlo de inmediato."
 
-#: corehq/apps/reports/static/reports/js/reports.async.js:29
+#: corehq/apps/reports/static/reports/js/reports.async.js:26
 msgid "Bad Gateway. Please contact CommCare HQ Support."
 msgstr "Portal en mal estado. Por favor contacte al Soporte de CommCare HQ."
 
-#: corehq/apps/reports/static/reports/js/reports.async.js:30
+#: corehq/apps/reports/static/reports/js/reports.async.js:27
 msgid ""
 "CommCare HQ is experiencing server difficulties. We're working quickly to "
 "resolve it. Thank you for your patience. We are extremely sorry."
@@ -3485,11 +3495,11 @@ msgstr ""
 "rápidamente para solucionarlo. Gracias por su paciencia. Lo sentimos "
 "muchísimo."
 
-#: corehq/apps/reports/static/reports/js/reports.async.js:32
+#: corehq/apps/reports/static/reports/js/reports.async.js:29
 msgid "Gateway Timeout. Please contact CommCare HQ Support."
 msgstr "Caducó el Portal. Por favor contacte al Soporte de CommCare HQ."
 
-#: corehq/apps/reports/static/reports/js/reports.async.js:189
+#: corehq/apps/reports/static/reports/js/reports.async.js:184
 msgid "We were unsuccessful loading the report:"
 msgstr "No pudimos cargar el reporte:"
 
@@ -3697,15 +3707,15 @@ msgstr ""
 msgid "Please check above for any errors in your configuration."
 msgstr "Por favor verifique arriba si hay algún error en su configuración."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:26
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:44
 msgid "Password changed successfully"
 msgstr "Cambio de contraseña exitoso"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:29
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:47
 msgid "Password was not changed "
 msgstr "No se cambió de contraseña"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:31
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:49
 msgid ""
 "Password Requirements: 1 special character, 1 number, 1 capital letter, "
 "minimum length of 8 characters."
@@ -3713,40 +3723,41 @@ msgstr ""
 "Requisitos para la Contraseña: 1 caracter especial, 1 número, 1  letra "
 "mayúscula, y largo mínimo de 8 caracteres."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:75
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:96
 msgid "Available Groups"
 msgstr "Grupos Disponibles"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:76
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:97
 msgid "Groups with this User"
 msgstr "Grupos con este Usuario"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:77
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:98
 msgid "Search Group..."
 msgstr "Buscar Grupo..."
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:88
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:109
 msgid "Group membership has changed."
 msgstr "La membresía del grupo ha cambiado."
 
-#: corehq/apps/users/static/users/js/filtered_download.js:22
-#, javascript-format
-msgid "Download %s User"
-msgid_plural "Download %s Users"
-msgstr[0] ""
-msgstr[1] ""
+#: corehq/apps/users/static/users/js/filtered_download.js:31
+msgid "Download <%= count %> user"
+msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:285
+#: corehq/apps/users/static/users/js/filtered_download.js:31
+msgid "Download <%= count %> users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js:307
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:306
+#: corehq/apps/users/static/users/js/mobile_workers.js:328
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 "Ocurrió un problema al conectarse con el servidor. Revise la conexión a "
 "Internet."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:330
+#: corehq/apps/users/static/users/js/mobile_workers.js:352
 msgid "Select location"
 msgstr ""
 
@@ -3921,27 +3932,31 @@ msgstr "Completar"
 msgid "Unable to save DataSet maps"
 msgstr "No es posible guardar los mapas DataSet"
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:39
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:40
+msgid "Daily"
+msgstr "Diariamente"
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:41
 msgid "Weekly"
 msgstr "Semanal"
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:40
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:42
 msgid "Monthly"
 msgstr "Mensual"
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:43
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:45
 msgid "Disable logging"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:109
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:112
 msgid "Unable to save OpenMRS Importers"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:114
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:117
 msgid "Importing from OpenMRS will begin shortly."
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:116
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:119
 msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 

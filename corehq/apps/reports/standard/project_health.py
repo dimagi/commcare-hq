@@ -7,7 +7,6 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 from memoized import memoized
-from six.moves import range
 
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
@@ -410,6 +409,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     @property
     def template_context(self):
+        context = super().template_context
         performance_threshold = get_performance_threshold(self.domain)
         prior_months_reports = self.previous_months_summary(self.get_number_of_months())
         six_months_reports = []
@@ -421,10 +421,11 @@ class ProjectHealthDashboard(ProjectReport):
             r.update({'inactive': report.inactive})
             six_months_reports.append(r)
 
-        return {
+        context.update({
             'six_months_reports': six_months_reports,
             'this_month': prior_months_reports[-1],
             'last_month': prior_months_reports[-2],
             'threshold': performance_threshold,
             'domain': self.domain,
-        }
+        })
+        return context

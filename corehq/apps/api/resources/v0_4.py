@@ -5,13 +5,14 @@ from django.http import (
 )
 from django.urls import reverse
 
-import six
 from tastypie import fields
 from tastypie.authentication import Authentication
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.xform import get_case_updates
+from corehq import toggles
+from corehq.apps.api.query_adapters import GroupQuerySetAdapterCouch, GroupQuerySetAdapterES
 from couchforms.models import doc_types
 
 from corehq.apps.api.es import ElasticAPIQuerySet, XFormES, es_search
@@ -153,7 +154,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         try:
             es_query = es_search(bundle.request, domain, ['include_archived'])
         except Http400 as e:
-            raise BadRequest(six.text_type(e))
+            raise BadRequest(str(e))
         if include_archived:
             es_query['filter']['and'].append({'or': [
                 {'term': {'doc_type': 'xforminstance'}},
@@ -315,8 +316,10 @@ class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMi
         return get_object_or_not_exist(Group, kwargs['pk'], kwargs['domain'])
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        groups = Group.by_domain(domain)
-        return groups
+        if toggles.GROUP_API_USE_ES_BACKEND.enabled(domain):
+            return GroupQuerySetAdapterES(domain)
+        else:
+            return GroupQuerySetAdapterCouch(domain)
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
@@ -460,7 +463,7 @@ class ApplicationResource(BaseApplicationResource):
             return dehydrated
         except Exception as e:
             return {
-                'error': six.text_type(e)
+                'error': str(e)
             }
 
     def dehydrate_modules(self, bundle):

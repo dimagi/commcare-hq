@@ -13,7 +13,6 @@ from corehq.util.soft_assert.api import soft_assert
 from couchforms import XMLSyntaxError
 from couchforms.exceptions import MissingXMLNSError
 from dimagi.utils.couch import release_lock
-import six
 
 
 @contextmanager
@@ -122,9 +121,9 @@ def _get_submission_error(domain, instance, error):
     :returns: xform error instance with raw xml as attachment
     """
     try:
-        message = six.text_type(error)
+        message = str(error)
     except UnicodeDecodeError:
-        message = six.text_type(str(error), encoding='utf-8')
+        message = str(str(error), encoding='utf-8')
 
     xform = FormProcessorInterface(domain).submission_error_form_instance(instance, message)
     return FormProcessingResult(xform)

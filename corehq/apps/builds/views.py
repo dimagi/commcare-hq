@@ -1,6 +1,7 @@
 import io
 
-from django.http import Http404, HttpResponse, HttpResponseBadRequest
+from django.contrib import messages
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -10,7 +11,6 @@ from django.views.decorators.http import require_GET, require_POST
 
 import requests
 import requests.exceptions
-import six
 from couchdbkit import BadValueError, ResourceNotFound
 
 from dimagi.utils.couch.database import get_db
@@ -74,23 +74,16 @@ class EditMenuView(BasePageView):
     @method_decorator(require_superuser)
     @use_jquery_ui
     def dispatch(self, *args, **kwargs):
-        # different local caches on different workers
-        # but this at least makes it so your changes take effect immediately
-        # while you're editing the config
-        CommCareBuildConfig.clear_local_cache()
-        self.doc = CommCareBuildConfig.fetch()
-        return super(EditMenuView, self).dispatch(*args, **kwargs)
-
-    def save_doc(self):
-        db = get_db()
-        return db.save_doc(self.doc)
+        return super().dispatch(*args, **kwargs)
 
     @property
     def page_context(self):
+        doc = CommCareBuildConfig.fetch()
         return {
-            'doc': self.doc,
+            'doc': doc,
             'all_versions': get_all_versions(
-                [v['build']['version'] for v in self.doc['menu']]),
+                [v['build']['version'] for v in doc['menu']]
+            ),
             'j2me_enabled_versions': CommCareBuild.j2me_enabled_build_versions()
         }
 
@@ -100,9 +93,11 @@ class EditMenuView(BasePageView):
 
     def post(self, request, *args, **kwargs):
         request_json = json_request(request.POST)
-        self.doc = request_json.get('doc')
-        self.save_doc()
-        return self.get(request, success=True, *args, **kwargs)
+        doc = request_json.get('doc')
+        CommCareBuildConfig.get_db().save_doc(doc)
+        CommCareBuildConfig.clear_local_cache()
+        messages.success(request, "Your changes have been saved")
+        return HttpResponseRedirect(self.page_url)
 
 
 KNOWN_BUILD_SERVER_LOGINS = {
@@ -132,8 +127,8 @@ def import_build(request):
         return json_response({
             'reason': 'Badly formatted version',
             'info': {
-                'error_message': six.text_type(e),
-                'error_type': six.text_type(type(e))
+                'error_message': str(e),
+                'error_type': str(type(e))
             }
         }, status_code=400)
 

@@ -27,7 +27,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 
-import six
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django_prbac.decorators import requires_privilege_raise404
 from memoized import memoized
@@ -187,12 +186,56 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
 
     def get(self, request, *args, **kwargs):
         if request.GET.get('json', None):
-            return JsonResponse({
-                "references": self.app.get_references(),
-                "object_map": self.app.get_object_map(),
-                "totals": self.app.get_reference_totals(),
-            })
+            only_missing = request.GET.get('only_missing', 'false') == 'true'
+            include_total = request.GET.get('include_total', 'true') == 'true'
+            limit = int(request.GET.get('limit', 5))
+            page = int(request.GET.get('page', 1))
+
+            (total, references) = self._process_references(page,
+                                                           limit,
+                                                           only_missing=only_missing,
+                                                           include_total=include_total)
+            multimedia_map = {r['path']: self.app.multimedia_map[r['path']]
+                              for r in references
+                              if r['path'] in self.app.multimedia_map}
+            object_map = self.app.get_object_map(multimedia_map=multimedia_map)
+
+            data = {
+                "references": references,
+                "object_map": object_map,
+            }
+            if include_total:
+                data.update({
+                    "totals": self.app.get_reference_totals(),
+                    "total_rows": total,
+                })
+            return JsonResponse(data)
         return super(MultimediaReferencesView, self).get(request, *args, **kwargs)
+
+    def _process_references(self, page, limit, only_missing=False, include_total=True):
+        reference_index = 0
+        references = []
+        start = limit * (page - 1)
+        end = start + limit
+
+        def _add_references(source, reference_index, references):
+            if reference_index > end and not include_total:
+                return (reference_index, references)
+            media = source.get_references()
+            media = [m for m in media if m['media_class'] in ["CommCareImage", "CommCareAudio", "CommCareVideo"]]
+            if only_missing:
+                media = [m for m in media if m['path'] not in self.app.multimedia_map]
+            for m in media:
+                if reference_index >= start and reference_index < end:
+                    references.append(m)
+                reference_index += 1
+            return (reference_index, references)
+
+        for module in self.app.get_modules():
+            (reference_index, references) = _add_references(module, reference_index, references)
+            for form in module.get_forms():
+                (reference_index, references) = _add_references(form, reference_index, references)
+        return (reference_index, references)
 
 
 class BulkUploadMultimediaView(BaseMultimediaUploaderView):
@@ -307,7 +350,7 @@ def update_multimedia_paths(request, domain, app_id):
     warnings = []
     app.remove_unused_mappings()
     app_paths = {m.path: True for m in app.all_media()}
-    for old_path, new_path in six.iteritems(paths):
+    for old_path, new_path in paths.items():
         if old_path in app_paths:
             warnings.append(_("Could not completely update path <code>{}</code>, "
                               "please check app for remaining references.").format(old_path))
@@ -441,7 +484,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
             self.validate_file()
             response.update(self.process_upload())
         except BadMediaFileException as e:
-            self.errors.append(six.text_type(e))
+            self.errors.append(str(e))
         response.update({
             'errors': self.errors,
         })
@@ -741,7 +784,7 @@ def iter_media_files(media_objects):
             try:
                 data, _ = media.get_display_file()
                 folder = path.replace(MULTIMEDIA_PREFIX, "")
-                if not isinstance(data, six.text_type):
+                if not isinstance(data, str):
                     yield os.path.join(folder), data
             except NameError as e:
                 message = "%(path)s produced an ERROR: %(error)s" % {
@@ -920,7 +963,7 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
         }.get(f, f)
 
     def _encode_if_unicode(s):
-        return s.encode('utf-8') if isinstance(s, six.text_type) else s
+        return s.encode('utf-8') if isinstance(s, str) else s
 
     def _files(files):
         for name, f in files:
@@ -948,6 +991,6 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
     try:
         files = _download_index_files(app, build_profile_id)
     except Exception as e:
-        errors = [six.text_type(e)]
+        errors = [str(e)]
 
     return _files(files), errors, len(files)

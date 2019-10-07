@@ -138,8 +138,7 @@ You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
 
-To set up elasticsearch indexes run the following (Ignore warnings
-related to Raven for the following two commands.):
+To set up elasticsearch indexes run the following:
 
     $ ./manage.py ptop_preindex
 
@@ -339,6 +338,16 @@ VELLUM_DEBUG = "dev"
 
     # symlink your Vellum code to submodules/formdesigner
     $ ln -s absolute/path/to/Vellum absolute/path/to/submodules/formdesigner/
+
+
+Airflow
+-------
+
+It is usually not required to have a local airflow environment running.
+
+However, if you do need to get setup on Airflow (which is used to back some reporting infrastructure)
+you can follow the instructions in the [pipes repository](https://github.com/dimagi/pipes/).
+
 
 Running Tests
 -------------

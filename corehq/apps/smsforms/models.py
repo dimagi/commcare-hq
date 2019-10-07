@@ -6,9 +6,7 @@ from django.db import models
 from django.db.models import Q
 from django.utils.translation import ugettext_noop
 
-import six
 from couchdbkit import MultipleResultsFound
-from six.moves import zip
 
 from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -21,7 +19,6 @@ XFORMS_SESSION_IVR = "IVR"
 XFORMS_SESSION_TYPES = [XFORMS_SESSION_SMS, XFORMS_SESSION_IVR]
 
 
-@six.python_2_unicode_compatible
 class SQLXFormsSession(models.Model):
     """
     Keeps information about an SMS XForm session.

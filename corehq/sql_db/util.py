@@ -1,27 +1,20 @@
-
+import re
 import uuid
 from collections import defaultdict
-
-from django.db import OperationalError
-
-from corehq.util.datadog.utils import load_counter_for_model
-
-try:
-    from random import choices
-except ImportError:
-    from corehq.sql_db.backports import choices
-
-from django.conf import settings
-from django import db
-from django.db.utils import InterfaceError as DjangoInterfaceError
 from functools import wraps
-from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
-import six
+from random import choices
+
+from django import db
+from django.conf import settings
+from django.db import OperationalError
+from django.db.utils import InterfaceError as DjangoInterfaceError
+
 from memoized import memoized
+from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
 from corehq.sql_db.config import partition_config
+from corehq.util.datadog.utils import load_counter_for_model
 from corehq.util.quickcache import quickcache
-
 
 ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
 STALE_CHECK_FREQUENCY = 30
@@ -108,6 +101,44 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
         filter_expression = {'{}__gt'.format(sort_col): value}
 
 
+def estimate_partitioned_row_count(model_class, q_expression):
+    """Estimate query row count summed across all partitions"""
+    db_names = get_db_aliases_for_partitioned_query()
+    query = model_class.objects.using(db_names[0]).filter(q_expression)
+    return estimate_row_count(query, db_names)
+
+
+def estimate_row_count(query, db_name="default"):
+    """Estimate query row count
+
+    Source:
+    https://www.citusdata.com/blog/2016/10/12/count-performance/#dup_counts_estimated_filtered
+
+    :param query: A queryset or two-tuple `(<SQL string>, <bind params>)`.
+    :param db_name: A database name (str) or sequence of database names
+    to query. The sum of counts from all databases will be returned.
+    """
+    def count(db_name):
+        with db.connections[db_name].cursor() as cursor:
+            cursor.execute(sql, params)
+            lines = [line for line, in cursor.fetchall()]
+            for line in lines:
+                match = rows_expr.search(line)
+                if match:
+                    return int(match.group(1))
+            return 0
+
+    rows_expr = re.compile(r" rows=(\d+) ")
+    if hasattr(query, "query"):
+        sql, params = query.query.sql_with_params()
+    else:
+        sql, params = query
+    sql = f"EXPLAIN {sql}"
+    if isinstance(db_name, str):
+        return count(db_name)
+    return sum(count(db) for db in db_name)
+
+
 def split_list_by_db_partition(partition_values):
     """
     :param partition_values: Iterable of partition values (e.g. case IDs)
@@ -158,7 +189,7 @@ def new_id_in_same_dbalias(partition_value):
     new_db_name = None
     while old_db_name != new_db_name:
         # todo; guard against infinite recursion
-        new_partition_value = six.text_type(uuid.uuid4())
+        new_partition_value = str(uuid.uuid4())
         new_db_name = get_db_alias_for_partitioned_doc(new_partition_value)
     return new_partition_value
 
@@ -258,7 +289,7 @@ def get_replication_delay_for_standby(db_alias, relevant_dbs=None):
 @memoized
 def get_standby_delays_by_db():
     ret = {}
-    for _db, config in six.iteritems(settings.DATABASES):
+    for _db, config in settings.DATABASES.items():
         delay = config.get('HQ_ACCEPTABLE_STANDBY_DELAY')
         if delay:
             ret[_db] = delay
@@ -299,7 +330,7 @@ def select_db_for_read(weighted_dbs):
     fresh_dbs = filter_out_stale_standbys(list(weights_by_db.keys()))
     dbs = []
     weights = []
-    for _db, weight in six.iteritems(weights_by_db):
+    for _db, weight in weights_by_db.items():
         if _db in fresh_dbs:
             dbs.append(_db)
             weights.append(weight)

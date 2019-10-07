@@ -8,6 +8,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models.util import AggregationRecord
+from custom.icds_reports.tasks import setup_aggregation
 
 class Command(BaseCommand):
     help = "Creates aggregation record. Used by airflow"
@@ -20,13 +21,14 @@ class Command(BaseCommand):
     def handle(self, agg_uuid, run_date, interval, **options):
         self.agg_uuid = agg_uuid
         self.run_date = run_date
-        self.interval = interval
+        self.interval = int(interval)
         state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
 
         agg_date = self.get_agg_date()
-        AggregationRecord(agg_uuid=self.agg_uuid, agg_date=agg_date, state_ids=state_ids)
+        AggregationRecord.objects.create(agg_uuid=self.agg_uuid, agg_date=agg_date, state_ids=state_ids)
+        setup_aggregation(agg_date)
 
     def get_agg_date(self):
         if self.interval == 0:

@@ -1,4 +1,3 @@
-# coding=utf-8
 from custom.intrahealth.filters import YeksiNaaLocationFilter, MonthsDateFilter, ProgramFilter
 from custom.intrahealth.sqldata import LossRateData, ExpirationRateData, RecoveryRateByPPSData, \
     RecoveryRateByDistrictData

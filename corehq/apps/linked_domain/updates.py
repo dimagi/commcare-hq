@@ -1,4 +1,3 @@
-
 from functools import partial
 
 from toggle.shortcuts import set_toggle
@@ -100,7 +99,6 @@ def update_user_roles(domain_link):
     else:
         master_results = local_get_user_roles(domain_link.master_domain)
 
-    _convert_web_apps_permissions(domain_link, master_results)
     _convert_reports_permissions(domain_link, master_results)
 
     local_roles = UserRole.view(
@@ -144,26 +142,6 @@ def update_case_search_config(domain_link):
 
     if query_addition:
         CaseSearchQueryAddition.create_from_json(domain_link.linked_domain, query_addition)
-
-
-def _convert_web_apps_permissions(domain_link, master_results):
-    """Mutates the master result docs to convert web app permissions.
-    """
-    linked_apps_by_master = {
-        app.master: app._id
-        for app in get_docs_in_domain_by_class(domain_link.linked_domain, LinkedApplication)
-    }
-    for role_def in master_results:
-        view_web_apps_list = []
-        for app_id in role_def['permissions']['view_web_apps_list']:
-            master_app_id = get_app(domain_link.master_domain, app_id).master_id
-            try:
-                linked_app_id = linked_apps_by_master[master_app_id]
-            except KeyError:
-                continue
-            view_web_apps_list.append(linked_app_id)
-
-        role_def['permissions']['view_web_apps_list'] = view_web_apps_list
 
 
 def _convert_reports_permissions(domain_link, master_results):

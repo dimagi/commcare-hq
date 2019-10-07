@@ -26,7 +26,7 @@ class TestAWCDailyStatus(TestCase):
                     "period": "Daily",
                     'extended_info': [
                         {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "0"},
-                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "21"},
+                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "22"},
                         {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
                     ]
                 },
@@ -38,7 +38,7 @@ class TestAWCDailyStatus(TestCase):
                 },
                 "data": {
                     'st7': {'in_day': 0, 'all': 1, 'original_name': ['st7'], 'fillKey': '0%-50%'},
-                    'st1': {'in_day': 0, 'all': 9, 'original_name': ['st1'], 'fillKey': '0%-50%'},
+                    'st1': {'in_day': 0, 'all': 10, 'original_name': ['st1'], 'fillKey': '0%-50%'},
                     'st2': {'in_day': 0, 'all': 11, 'original_name': ['st2'], 'fillKey': '0%-50%'}
                 },
                 "slug": "awc_daily_statuses",
@@ -67,7 +67,7 @@ class TestAWCDailyStatus(TestCase):
                         },
                         {
                             "indicator": "Total number of AWCs that have been launched:",
-                            "value": "21"
+                            "value": "22"
                         },
                         {
                             "indicator": "% of AWCs open yesterday:",
@@ -79,7 +79,7 @@ class TestAWCDailyStatus(TestCase):
                 "label": "Percent AWCs Open Yesterday",
                 "data": {
                     'st7': {'in_day': 0, 'all': 1, 'original_name': ['st7'], 'fillKey': '0%-50%'},
-                    'st1': {'in_day': 0, 'all': 9, 'original_name': ['st1'], 'fillKey': '0%-50%'},
+                    'st1': {'in_day': 0, 'all': 10, 'original_name': ['st1'], 'fillKey': '0%-50%'},
                     'st2': {'in_day': 0, 'all': 11, 'original_name': ['st2'], 'fillKey': '0%-50%'}
                 },
                 "slug": "awc_daily_statuses",
@@ -111,7 +111,7 @@ class TestAWCDailyStatus(TestCase):
                     "period": "Daily",
                     'extended_info': [
                         {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "0"},
-                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "9"},
+                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "10"},
                         {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
                     ]
                 },
@@ -124,7 +124,7 @@ class TestAWCDailyStatus(TestCase):
                 'data': {
                     'block_map': {
                         'in_day': 0,
-                        'all': 9,
+                        'all': 10,
                         'original_name': ['b1', 'b2'],
                         'fillKey': '0%-50%'
                     }
@@ -293,17 +293,17 @@ class TestAWCDailyStatus(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 21,
+                                "y": 22,
                                 "x": 1495756800000,
                                 "all": 0
                             },
                             {
-                                "y": 21,
+                                "y": 22,
                                 "x": 1495843200000,
                                 "all": 0
                             },
                             {
-                                "y": 21,
+                                "y": 22,
                                 "x": 1495929600000,
                                 "all": 0
                             }
@@ -511,7 +511,7 @@ class TestAWCDailyStatus(TestCase):
                 "tooltips_data": {
                     "s2": {
                         "in_day": 0,
-                        "all": 2
+                        "all": 3
                     },
                     "s1": {
                         "in_day": 0,
@@ -552,7 +552,7 @@ class TestAWCDailyStatus(TestCase):
                 "tooltips_data": {
                     "s2": {
                         "in_day": 0,
-                        "all": 2
+                        "all": 3
                     },
                     "s1": {
                         "in_day": 0,

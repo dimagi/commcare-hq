@@ -1,6 +1,10 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
     "laurence-project-1",
     "jessica-icds-cas",
     "marissa-test",
@@ -18,16 +22,6 @@
   "server_environment": [
     "india",
     "icds"
-  ],
-  "mirrored_engine_ids": [
-    {
-      "server_environment": "icds",
-      "engine_ids": ["icds-ucr-citus"]
-    },
-    {
-      "server_environment": "india",
-      "engine_ids": ["icds-ucr-citus"]
-    }
   ],
   "config": {
     "table_id": "static-infrastructure_form_v2",
@@ -1215,7 +1209,7 @@
       }
     },
     "named_filters": {},
-    "engine_id": "icds-ucr",
+    "engine_id": "icds-ucr-citus",
     "disable_destructive_rebuild": true
   }
 }

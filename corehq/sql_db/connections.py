@@ -1,31 +1,23 @@
-
 from contextlib import contextmanager
 
-import sqlalchemy
 from django.conf import settings
 from django.core import signals
 from django.utils.functional import cached_property
+
+import sqlalchemy
 from six.moves.urllib.parse import urlencode
 from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.orm.session import sessionmaker
 
 from corehq.util.test_utils import unit_testing_only
+
 from .util import select_db_for_read
 
 DEFAULT_ENGINE_ID = 'default'
 UCR_ENGINE_ID = 'ucr'
-ICDS_UCR_ENGINE_ID = 'icds-ucr'
 ICDS_UCR_NON_DASHBOARD_ENGINE_ID = 'icds-ucr-non-dashboard'
 AAA_DB_ENGINE_ID = 'aaa-data'
 ICDS_UCR_CITUS_ENGINE_ID = 'icds-ucr-citus'
-
-
-def get_icds_ucr_db_alias_or_citus(force_citus):
-    return get_icds_ucr_citus_db_alias() if force_citus else get_icds_ucr_db_alias()
-
-
-def get_icds_ucr_db_alias():
-    return _get_db_alias_or_none(ICDS_UCR_ENGINE_ID)
 
 
 def get_icds_ucr_citus_db_alias():

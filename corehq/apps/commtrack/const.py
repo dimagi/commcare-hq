@@ -1,7 +1,5 @@
 import uuid
 
-import six
-
 COMMTRACK_USERNAME = 'commtrack-system'
 
 COMMTRACK_SUPPLY_POINT_XMLNS = 'http://commtrack.org/supply_point'
@@ -14,7 +12,7 @@ SMS_XMLNS = 'http://commtrack.org/sms_submission'
 MOBILE_WORKER_UUID_NS = uuid.UUID(
     uuid.uuid5(
         uuid.NAMESPACE_URL,
-        'www.commcarehq.org/mobile_worker' if six.PY3 else b'www.commcarehq.org/mobile_worker'
+        'www.commcarehq.org/mobile_worker'
     ).hex
 )
 
@@ -49,7 +47,7 @@ PARENT_CASE_REF = 'parent'
 
 
 def enum(**enums):
-    return type('Enum' if six.PY3 else b'Enum', (), enums)
+    return type('Enum', (), enums)
 
 StockActions = enum(
     STOCKONHAND='stockonhand',

@@ -1,10 +1,9 @@
-
 import logging
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
 
+import attr
 import gevent
-import six
 from gevent.pool import Pool
 
 from casexml.apps.case.xform import get_case_ids_from_form, get_case_updates
@@ -17,7 +16,11 @@ from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.exceptions import MissingFormXml
 
+from .status import run_status_logger
+from .util import exit_on_error
+
 log = logging.getLogger(__name__)
+POOL_SIZE = 15
 
 
 class AsyncFormProcessor(object):
@@ -27,17 +30,33 @@ class AsyncFormProcessor(object):
         self.migrate_form = migrate_form
 
     def __enter__(self):
-        self.pool = Pool(15)
+        self.pool = Pool(POOL_SIZE)
         self.queues = PartiallyLockingQueue()
-        form_ids = self.statedb.pop_resume_state(type(self).__name__, [])
-        self._rebuild_queues(form_ids)
+        self.retry = RetryForms(self._try_to_process_form)
+        with self.statedb.pop_resume_state(type(self).__name__, []) as form_ids:
+            self._rebuild_queues(form_ids)
+        self.stop_status_logger = run_status_logger(
+            log_status,
+            self.get_status,
+            status_interval=1800,  # 30 minutes
+        )
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
-        if exc_type is None:
-            self._finish_processing_queues()
-        self.statedb.set_resume_state(type(self).__name__, self.queues.queue_ids)
-        self.queues = self.pool = None
+        queue_ids = self.queues.queue_ids + self.retry.form_ids
+        try:
+            if exc_type is None:
+                queue_ids = self._finish_processing_queues()
+            else:
+                # stop workers -> reduce chaos in logs
+                self.pool.kill()
+                self.retry.kill()
+        finally:
+            key = type(self).__name__
+            self.statedb.set_resume_state(key, queue_ids)
+            log.info("saved %s state (%s ids)", key, len(queue_ids))
+            self.stop_status_logger()
+            self.queues = self.pool = None
 
     def _rebuild_queues(self, form_ids):
         for chunk in chunked(form_ids, 100, list):
@@ -50,7 +69,7 @@ class AsyncFormProcessor(object):
         form_id = doc["_id"]
         log.debug('Processing doc: XFormInstance(%s)', form_id)
         if doc.get('problem'):
-            if six.text_type(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
+            if str(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
                 doc = _fix_replacement_form_problem_in_couch(doc)
             else:
                 self.statedb.add_problem_form(form_id)
@@ -59,25 +78,30 @@ class AsyncFormProcessor(object):
             wrapped_form = XFormInstance.wrap(doc)
         except Exception:
             log.exception("Error migrating form %s", form_id)
-        self._try_to_process_form(wrapped_form)
-        self._try_to_empty_queues()
+            self.statedb.save_form_diffs(doc, {})
+        else:
+            self._try_to_process_form(wrapped_form)
+            self._try_to_empty_queues()
 
-    def _try_to_process_form(self, wrapped_form):
-        case_ids = get_case_ids(wrapped_form)
+    def _try_to_process_form(self, wrapped_form, retries=0):
+        try:
+            case_ids = get_case_ids(wrapped_form)
+        except Exception as err:
+            self.retry.later(wrapped_form, retries + 1, err)
+            return
         if self.queues.try_obj(case_ids, wrapped_form):
             self.pool.spawn(self._async_migrate_form, wrapped_form, case_ids)
         elif self.queues.full:
             gevent.sleep()  # swap greenlets
 
+    @exit_on_error
     def _async_migrate_form(self, wrapped_form, case_ids):
-        try:
-            self.migrate_form(wrapped_form, case_ids)
-        finally:
-            self.queues.release_lock_for_queue_obj(wrapped_form)
+        self.migrate_form(wrapped_form, case_ids)
+        self.queues.release_lock(wrapped_form)
 
     def _try_to_empty_queues(self):
         while True:
-            new_wrapped_form, case_ids = self.queues.get_next()
+            new_wrapped_form, case_ids = self.queues.pop()
             if not new_wrapped_form:
                 break
             self.pool.spawn(self._async_migrate_form, new_wrapped_form, case_ids)
@@ -86,8 +110,8 @@ class AsyncFormProcessor(object):
         update_interval = timedelta(seconds=10)
         next_check = datetime.now()
         pool = self.pool
-        while self.queues.has_next():
-            wrapped_form, case_ids = self.queues.get_next()
+        while self.queues:
+            wrapped_form, case_ids = self.queues.pop()
             if wrapped_form:
                 pool.spawn(self._async_migrate_form, wrapped_form, case_ids)
             else:
@@ -95,16 +119,22 @@ class AsyncFormProcessor(object):
 
             now = datetime.now()
             if now > next_check:
-                remaining_items = self.queues.remaining_items + len(pool)
-                log.info('Waiting on {} docs'.format(remaining_items))
+                log.info('Waiting on %s docs', len(self.queues) + len(pool))
                 next_check += update_interval
 
+        self.retry.join()
         while not pool.join(timeout=10):
             log.info('Waiting on {} docs'.format(len(pool)))
 
-        unprocessed = self.queues.queue_ids
+        unprocessed = self.queues.queue_ids + self.retry.form_ids
         if unprocessed:
             log.error("Unprocessed forms (unexpected): %s", unprocessed)
+        return unprocessed
+
+    def get_status(self):
+        status = self.queues.get_status()
+        status["retry"] = len(self.retry)
+        return status
 
 
 class PartiallyLockingQueue(object):
@@ -113,11 +143,12 @@ class PartiallyLockingQueue(object):
     This is not currently thread safe
 
     Interface:
-    `.try_obj(lock_ids, queue_obj)` use to add a new object, seeing if it can be
+    `.try_obj(lock_ids, queue_obj)` add a new object, seeing if it can be
         processed immediately
-    `.get_next()` use to get the next object that can be processed
-    `.has_next()` use to make sure there are still objects in the queue
-    `.release_lock_for_queue_obj(queue_obj)` use to release the locks associated
+    `.pop()` get a locked object and lock_ids to be processed
+    `bool(queue)` find out if there are still objects in the queue
+    `len(queue)` get the number of objects in the queue
+    `.release_lock(queoe_obj)` release the locks associated
         with an object once finished processing
     """
 
@@ -127,8 +158,8 @@ class PartiallyLockingQueue(object):
         :max_size int: the maximum size the queue should reach. -1 means no limit
         """
         self.queue_by_lock_id = defaultdict(deque)
-        self.lock_ids_by_queue_id = {}
-        self.queue_objs_by_queue_id = {}
+        self.objs_by_queue_id = {}  # {queue_id: (obj, lock_ids), ...}
+        self.processing = {}  # {queue_id: lock_ids, ...}
         self.currently_locked = set()
         self.max_size = max_size
 
@@ -140,10 +171,12 @@ class PartiallyLockingQueue(object):
     def queue_ids(self):
         """Return a list of queue object ids
 
-        Queue state can be ruilt using this list by looking up each
+        This includes all objects that are currently locked (processing)
+        as well as all objects in the queue waiting to be processed.
+        Queue state can be rebuilt using this list by looking up each
         queue object and lock ids and passing them to `try_obj()`.
         """
-        return list(self.lock_ids_by_queue_id)
+        return list(self.processing) + list(self.objs_by_queue_id)
 
     def try_obj(self, lock_ids, queue_obj):
         """ Checks if the object can acquire some locks. If not, adds item to queue
@@ -156,26 +189,22 @@ class PartiallyLockingQueue(object):
 
         Returns :boolean: True if it acquired the lock, False if it was added to queue
         """
-        if not lock_ids:
-            self._add_item(lock_ids, queue_obj, to_queue=False)
-            return True
-        if self._check_lock(lock_ids):  # if it's currently locked, it can't acquire the lock
-            self._add_item(lock_ids, queue_obj)
-            return False
-        for lock_id in lock_ids:  # if other objs are waiting for the same locks, it has to wait
-            queue = self.queue_by_lock_id[lock_id]
-            if queue:
-                self._add_item(lock_ids, queue_obj)
-                return False
-        self._add_item(lock_ids, queue_obj, to_queue=False)
-        self._set_lock(lock_ids)
-        return True
+        queue_obj_id = self.get_queue_obj_id(queue_obj)
+        queue_by_lock_id = self.queue_by_lock_id
+        for lock_id in lock_ids:
+            if queue_by_lock_id.get(lock_id):
+                break  # wait behind other object(s) in the queue for this lock
+        else:
+            if not lock_ids or self._set_lock(lock_ids):
+                self.processing[queue_obj_id] = lock_ids
+                return True
+        for lock_id in lock_ids:
+            queue_by_lock_id[lock_id].append(queue_obj_id)
+        self.objs_by_queue_id[queue_obj_id] = (queue_obj, lock_ids)
+        return False
 
-    def get_next(self):
-        """Returns the next object and lock ids that can be processed
-
-        Iterates through the first object in each queue, then checks
-        that that object is the first in every lock queue it is in.
+    def pop(self):
+        """Pop a locked object and lock ids from the queue
 
         :returns: A tuple: `(<queue_obj>, <lock_ids>)`; `(None, None)`
         if nothing can acquire the lock currently.
@@ -183,101 +212,128 @@ class PartiallyLockingQueue(object):
         def is_first(queue_id, lock_id):
             return queue_by_lock_id[lock_id][0] == queue_id
 
+        seen = set()
         queue_by_lock_id = self.queue_by_lock_id
-        lock_ids_by_queue_id = self.lock_ids_by_queue_id
-        for queue in six.itervalues(queue_by_lock_id):
-            if not queue:
-                continue
+        objs_by_queue_id = self.objs_by_queue_id
+        for queue in queue_by_lock_id.values():
             queue_id = queue[0]
-            lock_ids = lock_ids_by_queue_id[queue_id]
+            if queue_id in seen:
+                continue
+            lock_ids = objs_by_queue_id[queue_id][1]
             if all(is_first(queue_id, x) for x in lock_ids) and self._set_lock(lock_ids):
-                return self._pop_queue_obj(queue_id), lock_ids
+                return self._pop_queue_obj(queue_id)
+            seen.add(queue_id)
         return None, None
-
-    def has_next(self):
-        """ Makes sure there are still objects in the queue
-
-        Returns :boolean: True if there are objs left, False if not
-        """
-        for queue in six.itervalues(self.queue_by_lock_id):
-            if queue:
-                return True
-        return False
-
-    def release_lock_for_queue_obj(self, queue_obj):
-        """ Releases all locks for an object in the queue
-
-        :queue_obj obj: An object of the type in the queues
-
-        At some point in the future it might raise an exception if it trys
-        releasing a lock that isn't held
-        """
-        queue_obj_id = self.get_queue_obj_id(queue_obj)
-        lock_ids = self.lock_ids_by_queue_id.pop(queue_obj_id, None)
-        if lock_ids:
-            self._release_lock(lock_ids)
-            return True
-        return False
-
-    @property
-    def remaining_items(self):
-        return len(self.queue_objs_by_queue_id)
-
-    @property
-    def full(self):
-        if self.max_size == -1:
-            return False
-        return self.remaining_items >= self.max_size
-
-    def _add_item(self, lock_ids, queue_obj, to_queue=True):
-        """
-        :to_queue boolean: adds object to queues if True, just do lock tracking if not
-        """
-        queue_obj_id = self.get_queue_obj_id(queue_obj)
-        if to_queue:
-            for lock_id in lock_ids:
-                self.queue_by_lock_id[lock_id].append(queue_obj_id)
-            self.queue_objs_by_queue_id[queue_obj_id] = queue_obj
-        self.lock_ids_by_queue_id[queue_obj_id] = lock_ids
 
     def _pop_queue_obj(self, queued_obj_id):
         """Removes and returns a queued obj from data model
 
         :queue_obj_id string: An id of an object of the type in the queues
 
-        Assumes the obj is the first in every queue it inhabits. This seems reasonable
-        for the intended use case, as this function should only be used by `.get_next`.
-
-        Raises UnexpectedObjectException if this assumption doesn't hold
+        Assumes the obj is the first in every queue it inhabits.
         """
-        lock_ids = self.lock_ids_by_queue_id.get(queued_obj_id)
+        queue_obj, lock_ids = self.objs_by_queue_id.pop(queued_obj_id)
+        queue_by_lock_id = self.queue_by_lock_id
         for lock_id in lock_ids:
-            queue = self.queue_by_lock_id[lock_id]
-            if queue[0] != queued_obj_id:
-                raise UnexpectedObjectException("This object shouldn't be removed")
-        for lock_id in lock_ids:
-            queue = self.queue_by_lock_id[lock_id]
-            queue.popleft()
-        return self.queue_objs_by_queue_id.pop(queued_obj_id)
+            queue = queue_by_lock_id[lock_id]
+            assert queue[0] == queued_obj_id, (queue[0], queued_obj_id)
+            if len(queue) == 1:
+                queue_by_lock_id.pop(lock_id)
+            else:
+                queue.popleft()
+        self.processing[queued_obj_id] = lock_ids
+        return queue_obj, lock_ids
 
-    def _check_lock(self, lock_ids):
-        return any(lock_id in self.currently_locked for lock_id in lock_ids)
+    def _is_any_locked(self, lock_ids):
+        locked = self.currently_locked
+        return any(lock_id in locked for lock_id in lock_ids)
 
     def _set_lock(self, lock_ids):
-        """ Trys to set locks for given lock ids
+        """ Tries to set locks for given lock ids
 
         If already locked, returns false. If acquired, returns True
         """
-        if self._check_lock(lock_ids):
+        if self._is_any_locked(lock_ids):
             return False
         self.currently_locked.update(lock_ids)
         return True
 
-    def _release_lock(self, lock_ids):
-        self.currently_locked.difference_update(lock_ids)
+    def release_lock(self, queue_obj):
+        queue_obj_id = self.get_queue_obj_id(queue_obj)
+        lock_ids = self.processing.pop(queue_obj_id)
+        if lock_ids:
+            self.currently_locked.difference_update(lock_ids)
+
+    def __len__(self):
+        """Return the number of objects in the queue"""
+        return len(self.objs_by_queue_id)
+
+    @property
+    def full(self):
+        if self.max_size == -1:
+            return False
+        return len(self) >= self.max_size
+
+    def get_status(self):
+        return {
+            "proc": len(self.processing),
+            "queued": len(self),
+            "queues": len(self.queue_by_lock_id),
+            "locked": len(self.currently_locked),
+        }
 
 
-class UnexpectedObjectException(Exception):
+def log_status(status):
+    log.info("forms in queue=%(queued)s, processing=%(proc)s, "
+             "locked cases=%(locked)s, num queues=%(queues)s, "
+             "retry=%(retry)s", status)
+
+
+@attr.s
+class RetryForms(object):
+    process_form = attr.ib()
+    max_retries = attr.ib(default=3)
+    workers = attr.ib(factory=dict, init=False)
+    unprocessed = attr.ib(factory=list, init=False)
+
+    def later(self, form, retries, err):
+        if retries > self.max_retries:
+            log.exception("Too many retries for form %s", form.form_id)
+            self.unprocessed.append(form.form_id)
+            if len(self.unprocessed) > 100:
+                # bail if there are too many errors (long network outage?)
+                # unprocessed forms will be tried again on next resume
+                raise TooManyUnprocessedForms
+            return
+
+        @exit_on_error
+        def process_form():
+            self.workers.pop(form.form_id)
+            self.process_form(form, retries)
+
+        delay = retries ** 3
+        log.warn("Retry form %s after %ss on %s: %s",
+            form.form_id, delay, type(err).__name__, err)
+        self.workers[form.form_id] = gevent.spawn_later(delay, process_form)
+
+    @property
+    def form_ids(self):
+        return self.unprocessed + list(self.workers)
+
+    def __len__(self):
+        return len(self.unprocessed) + len(self.workers)
+
+    def join(self):
+        workers = self.workers.values()
+        while workers:
+            log.info("Waiting on %s retry workers", len(workers))
+            gevent.joinall(workers, timeout=10)
+
+    def kill(self):
+        gevent.killall(self.workers.values())
+
+
+class TooManyUnprocessedForms(Exception):
     pass
 
 

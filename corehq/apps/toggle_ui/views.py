@@ -10,7 +10,6 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
 
-import six
 from couchdbkit.exceptions import ResourceNotFound
 
 from couchforms.analytics import get_last_form_submission_received
@@ -313,7 +312,7 @@ def _format_date(date):
 
 def _get_most_recently_used(last_used):
     """Returns the name and date of the most recently used toggle"""
-    last_used = {k: v for k, v in six.iteritems(last_used) if v != NOT_FOUND}
+    last_used = {k: v for k, v in last_used.items() if v != NOT_FOUND}
     most_recently_used = sorted(last_used, key=last_used.get, reverse=True)
     return {
         'name': most_recently_used[0],

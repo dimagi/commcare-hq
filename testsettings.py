@@ -1,4 +1,3 @@
-
 from copy import deepcopy
 
 import settingshelper as helper
@@ -108,6 +107,7 @@ _set_logging_levels({
     'requests.packages.urllib3': 'WARNING',
     's3transfer': 'INFO',
     'urllib3': 'WARNING',
+    'warehouse': 'INFO',
 })
 
 # use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery
@@ -119,6 +119,7 @@ LOGGING = {
 }
 
 # Default custom databases to use the same configuration as the default
+# This is so that all devs don't have to run citus locally
 if 'icds-ucr' not in DATABASES:
     DATABASES['icds-ucr'] = deepcopy(DATABASES['default'])
     # use a different name otherwise migrations don't get run
@@ -130,9 +131,9 @@ helper.assign_test_db_names(DATABASES)
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
-    'icds-ucr': 'icds-ucr',
-    'icds-ucr-non-dashboard': 'icds-ucr',
+    'icds-ucr-non-dashboard': 'default',
     'aaa-data': 'default',
+    'icds-ucr-citus': 'icds-ucr',
 }
 
 # See comment under settings.SMS_QUEUE_ENABLED

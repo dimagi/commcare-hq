@@ -1,4 +1,3 @@
-
 from functools import partial
 
 from casexml.apps.phone.fixtures import FixtureProvider

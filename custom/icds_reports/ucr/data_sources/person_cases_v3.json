@@ -6,6 +6,10 @@
     "icds-cas",
     "icds-cas-sandbox",
     "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
     "icds-sql",
     "icds-test",
     "jessica-icds-cas",
@@ -20,16 +24,6 @@
   "server_environment": [
     "india",
     "icds"
-  ],
-  "mirrored_engine_ids": [
-    {
-      "server_environment": "icds",
-      "engine_ids": ["icds-ucr-citus"]
-    },
-    {
-      "server_environment": "india",
-      "engine_ids": ["icds-ucr-citus"]
-    }
   ],
   "config": {
     "table_id": "static-person_cases_v3",
@@ -527,7 +521,7 @@
     ],
     "named_expressions": {},
     "named_filters": {},
-    "engine_id": "icds-ucr",
+    "engine_id": "icds-ucr-citus",
     "sql_settings": {
       "citus_config": {
         "distribution_type": "hash",

@@ -1,4 +1,3 @@
-
 import datetime
 import os
 import re
@@ -9,7 +8,6 @@ from itertools import chain
 from django.utils.functional import cached_property
 
 import polib
-import six
 from memoized import memoized
 
 from corehq.apps.app_manager.dbaccessors import (
@@ -164,7 +162,7 @@ class AppTranslationsGenerator(object):
         from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers
         headers = get_bulk_app_sheet_headers(
             self.app,
-            eligible_for_transifex_only=True
+            eligible_for_transifex_only=True,
         )
         for header_row in headers:
             self.headers[header_row[0]] = header_row[1]
@@ -344,7 +342,7 @@ class AppTranslationsGenerator(object):
     def get_translations(self):
         return OrderedDict(
             (filename, _translations_to_po_entries(translations))
-            for filename, translations in six.iteritems(self.translations)
+            for filename, translations in self.translations.items()
         )
 
     def _build_translations(self):
@@ -359,7 +357,7 @@ class AppTranslationsGenerator(object):
         """
         translations = OrderedDict()
         rows = self._translation_data()
-        for sheet_name, sheet in six.iteritems(rows):
+        for sheet_name, sheet in rows.items():
             file_name = self._get_filename(sheet_name)
             translations[file_name] = self._get_translation_for_sheet(
                 sheet_name, sheet

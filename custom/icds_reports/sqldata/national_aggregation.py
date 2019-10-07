@@ -1,4 +1,3 @@
-
 from sqlagg.filters import EQ, IN, NOT
 
 from corehq.apps.reports.util import get_INFilter_bindparams

@@ -1,15 +1,14 @@
-
 from django.utils.functional import lazy
 from jsonfield import JSONField
 from rest_framework import serializers
 
 from corehq.apps.commtrack.models import StockState
 from corehq.blobs.models import BlobMeta
+from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
     XFormInstanceSQL, XFormOperationSQL,
     LedgerValue, CaseAttachmentSQL)
-import six
 
 
 class DeletableModelSerializer(serializers.ModelSerializer):
@@ -72,7 +71,7 @@ class XFormStateField(serializers.ChoiceField):
     def get_attribute(self, obj):
         choice = super(serializers.ChoiceField, self).get_attribute(obj)
         readable_state = []
-        for state, state_slug in six.iteritems(self.choices):
+        for state, state_slug in self.choices.items():
             if choice & state:
                 readable_state.append(state_slug)
         return ' / '.join(readable_state)
@@ -89,6 +88,14 @@ class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelS
     history = XFormOperationSQLSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     external_blobs = serializers.JSONField(source='serialized_attachments')
+
+    def __init__(self, instance=None, *args, **kwargs):
+        super(XFormInstanceSQLRawDocSerializer, self).__init__(instance=instance, *args, **kwargs)
+        if instance is not None:
+            try:
+                instance.get_xml()
+            except MissingFormXml:
+                self.fields.pop('form')
 
     class Meta(object):
         model = XFormInstanceSQL

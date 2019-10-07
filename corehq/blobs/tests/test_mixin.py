@@ -18,7 +18,6 @@ from corehq.util.io import ClosingContextProxy
 from corehq.util.test_utils import generate_cases, trap_extra_setup
 from dimagi.ext.couchdbkit import Document
 from mock import patch
-import six
 
 
 class BaseTestCase(TestCase):
@@ -557,7 +556,7 @@ class TestBlobHelper(BaseTestCase):
         if "doc_type" not in doc:
             doc["doc_type"] = "FakeDoc"
         if doc.get("_attachments"):
-            for name, attach in six.iteritems(doc["_attachments"]):
+            for name, attach in doc["_attachments"].items():
                 self.couch.put_attachment(doc, name=name, **attach)
         external = doc.get("external_blobs", {})
         if external and all("content" in b for b in external.values()):
@@ -565,7 +564,7 @@ class TestBlobHelper(BaseTestCase):
         obj = type_(doc, self.couch, CODES.multimedia)
         if external:
             save_log = list(self.couch.save_log)
-            for name, attach in list(six.iteritems(external)):
+            for name, attach in list(external.items()):
                 obj.put_attachment(name=name, **attach)
             self.couch.save_log = save_log
         return obj

@@ -3,6 +3,8 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
+{% requirejs_main 'registration/js/login' %}
+
 {% block title %}{% trans "Log In :: CommCare HQ" %}{% endblock title %}
 
 {% block background_content %}
@@ -36,16 +38,8 @@
 
 {% block content %}
   {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
+  {% initial_page_data "hide_password_feedback" hide_password_feedback %}
   {% block login-content %}
     {% include "login_and_password/partials/login_full.html" %}
   {% endblock %}
 {% endblock content %}
-
-{% block js %}
-  {{ block.super }}
-  {% compress js %}
-    <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
-    <script src="{% static 'blazy/blazy.js' %}"></script>
-    <script src="{% static 'registration/js/login.js' %}"></script>
-  {% endcompress %}
-{% endblock %}

@@ -1,4 +1,3 @@
-
 from django.db import migrations
 
 from corehq.apps.accounting.bootstrap.config.standard_pricing_march_2018 import (

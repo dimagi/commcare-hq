@@ -7,7 +7,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 import attr
-import six
 from memoized import memoized
 
 from casexml.apps.case.xform import extract_case_blocks
@@ -87,6 +86,8 @@ class OpenmrsRepeater(CaseRepeater):
     location_id = StringProperty(default='')
     openmrs_config = SchemaProperty(OpenmrsConfig)
 
+    _has_config = True
+
     # self.white_listed_case_types must have exactly one case type set
     # for Atom feed integration to add cases for OpenMRS patients.
     # self.location_id must be set to determine their case owner. The
@@ -149,11 +150,6 @@ class OpenmrsRepeater(CaseRepeater):
     def available_for_domain(cls, domain):
         return OPENMRS_INTEGRATION.enabled(domain)
 
-    @classmethod
-    def get_custom_url(cls, domain):
-        from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
-        return reverse(AddOpenmrsRepeaterView.urlname, args=[domain])
-
     def allowed_to_forward(self, payload):
         """
         Forward the payload if ...
@@ -195,17 +191,17 @@ class OpenmrsRepeater(CaseRepeater):
 
     def send_request(self, repeat_record, payload):
         value_sources = chain(
-            six.itervalues(self.openmrs_config.case_config.patient_identifiers),
-            six.itervalues(self.openmrs_config.case_config.person_properties),
-            six.itervalues(self.openmrs_config.case_config.person_preferred_name),
-            six.itervalues(self.openmrs_config.case_config.person_preferred_address),
-            six.itervalues(self.openmrs_config.case_config.person_attributes),
+            self.openmrs_config.case_config.patient_identifiers.values(),
+            self.openmrs_config.case_config.person_properties.values(),
+            self.openmrs_config.case_config.person_preferred_name.values(),
+            self.openmrs_config.case_config.person_preferred_address.values(),
+            self.openmrs_config.case_config.person_attributes.values(),
         )
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
-            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')]
+            extra_fields=[vs.case_property for vs in value_sources if hasattr(vs, 'case_property')],
+            form_question_values=get_form_question_values(payload),
         )
-        form_question_values = get_form_question_values(payload)
 
         return send_openmrs_data(
             self.requests,
@@ -213,11 +209,10 @@ class OpenmrsRepeater(CaseRepeater):
             payload,
             self.openmrs_config,
             case_trigger_infos,
-            form_question_values
         )
 
 
-def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos, form_question_values):
+def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos):
     """
     Updates an OpenMRS patient and (optionally) creates visits.
 
@@ -270,7 +265,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
             )
         workflow.append(
             CreateVisitsEncountersObsTask(
-                requests, domain, info, form_json, form_question_values, openmrs_config, patient['person']['uuid']
+                requests, domain, info, form_json, openmrs_config, patient['person']['uuid']
             ),
         )
 

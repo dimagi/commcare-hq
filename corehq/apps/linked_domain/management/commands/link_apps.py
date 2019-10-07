@@ -1,4 +1,3 @@
-
 from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app_version
@@ -30,4 +29,4 @@ class Command(BaseCommand):
         linked_app = LinkedApplication.get(linked_id)
 
         link_app(linked_app, master_app.domain, master_id)
-        update_linked_app(linked_app, 'system')
+        update_linked_app(linked_app, master_id, 'system')

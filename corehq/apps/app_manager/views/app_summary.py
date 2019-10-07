@@ -1,4 +1,3 @@
-
 import io
 from collections import namedtuple
 

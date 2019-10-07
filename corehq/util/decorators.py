@@ -1,28 +1,17 @@
-
 import inspect
-
-from celery.task import task
-from functools import wraps
 import logging
-import requests
-from corehq.util.global_request import get_request
-from dimagi.utils.logging import notify_exception
+from contextlib import ContextDecorator, contextmanager
+from functools import wraps
+
 from django.conf import settings
-from six.moves import zip
 
+import requests
+from celery.task import task
 
-class ContextDecorator(object):
-    """
-    A base class that enables a context manager to also be used as a decorator.
-    https://docs.python.org/3/library/contextlib.html#contextlib.ContextDecorator
-    """
+from dimagi.utils.logging import notify_exception
 
-    def __call__(self, fn):
-        @wraps(fn)
-        def decorated(*args, **kwds):
-            with self:
-                return fn(*args, **kwds)
-        return decorated
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.global_request import get_request
 
 
 def handle_uncaught_exceptions(mail_admins=True):
@@ -43,6 +32,36 @@ def handle_uncaught_exceptions(mail_admins=True):
 
         return _handle_exceptions
     return _outer
+
+
+@contextmanager
+def silence_and_report_error(message, datadog_metric):
+    """
+    Prevent a piece of code from ever causing 500s if it errors
+
+    Instead, report the issue to sentry and track the overall count on datadog
+    """
+
+    try:
+        yield
+    except Exception:
+        notify_exception(None, message)
+        datadog_counter(datadog_metric)
+        if settings.UNIT_TESTING:
+            raise
+
+
+def run_only_when(condition):
+    def outer(fn):
+        @wraps(fn)
+        def inner(*args, **kwargs):
+            if condition:
+                return fn(*args, **kwargs)
+        return inner
+    return outer
+
+
+enterprise_skip = run_only_when(not settings.ENTERPRISE_MODE)
 
 
 class change_log_level(ContextDecorator):

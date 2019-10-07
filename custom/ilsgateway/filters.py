@@ -8,8 +8,6 @@ from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseReportFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from custom.common import ALL_OPTION
-import six
-from six.moves import range
 
 
 class ProductByProgramFilter(BaseDrilldownOptionFilter):
@@ -86,7 +84,7 @@ class ILSDateFilter(BaseReportFilter):
     @property
     def select_options(self):
         start_year = getattr(settings, 'START_YEAR', 2008)
-        years = [dict(val=six.text_type(y), text=y) for y in range(start_year, datetime.utcnow().year + 1)]
+        years = [dict(val=str(y), text=y) for y in range(start_year, datetime.utcnow().year + 1)]
         years.reverse()
         months = [dict(val="%02d" % m, text=calendar.month_name[m]) for m in range(1, 13)]
         quarters = [dict(val=1, text='Quarter 1'),

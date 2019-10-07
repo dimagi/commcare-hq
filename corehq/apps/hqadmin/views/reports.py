@@ -1,4 +1,3 @@
-
 import json
 from collections import defaultdict
 from datetime import timedelta
@@ -11,7 +10,6 @@ from django.utils.translation import ugettext_lazy
 from django.views.generic import TemplateView
 
 import csv
-import six
 import six.moves.html_parser
 
 from dimagi.utils.dates import add_months

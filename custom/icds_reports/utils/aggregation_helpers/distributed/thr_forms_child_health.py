@@ -1,4 +1,3 @@
-
 from dateutil.relativedelta import relativedelta
 from custom.icds_reports.const import AGG_CHILD_HEALTH_THR_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
@@ -45,7 +44,7 @@ class THRFormsChildHealthAggregationDistributedHelper(BaseICDSAggregationDistrib
             %(month)s AS month,
             child_health_case_id AS case_id,
             MAX(timeend) over w AS latest_time_end_processed,
-            SUM(days_ration_given_child) over w AS days_ration_given_child
+            CASE WHEN SUM(days_ration_given_child) over w < 32767 THEN SUM(days_ration_given_child) over w ELSE 32767 END AS days_ration_given_child
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND

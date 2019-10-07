@@ -1,7 +1,5 @@
 from django.core.management import BaseCommand
 
-from six.moves import map
-
 from corehq import privileges
 from corehq.apps.accounting.models import DefaultProductPlan
 from corehq.apps.accounting.subscription_changes import (

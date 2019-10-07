@@ -1,14 +1,12 @@
 from abc import ABCMeta, abstractmethod
 
-import six
-
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     StaticDataSourceConfiguration,
 )
 
 
-class DataSourceProvider(six.with_metaclass(ABCMeta, object)):
+class DataSourceProvider(metaclass=ABCMeta):
 
     def __init__(self, referenced_doc_type=None):
         self.referenced_doc_type = referenced_doc_type

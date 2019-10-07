@@ -1,4 +1,3 @@
-
 import mock
 from collections import Counter
 
@@ -7,7 +6,6 @@ from django.test.testcases import SimpleTestCase
 
 from corehq.sql_db.connections import ConnectionManager
 from corehq.sql_db.util import filter_out_stale_standbys
-from six.moves import range
 
 
 def _get_db_config(db_name):

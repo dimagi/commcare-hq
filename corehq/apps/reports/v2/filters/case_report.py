@@ -1,4 +1,3 @@
-
 from django.utils.translation import ugettext_lazy
 
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE

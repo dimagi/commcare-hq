@@ -1,16 +1,9 @@
-
-from datetime import datetime
-
-from django.utils.translation import ugettext as _
-
 from memoized import memoized
 
 from couchexport.export import export_from_tables
 
 from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.models import get_report_config
-from corehq.toggles import INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS
-from corehq.util.timezones.utils import get_timezone_for_domain
 
 
 def get_expanded_columns(column_configs, data_source_config):
@@ -92,15 +85,5 @@ class ReportExport(object):
                 [headers] + rows + total_rows
             ]
         ]
-
-        if INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS.enabled(self.domain):
-            time_zone = get_timezone_for_domain(self.domain)
-            export_table.append([
-                'metadata',
-                [
-                    [_('Report Name'), self.title],
-                    [_('Generated On'), datetime.now(time_zone).strftime('%Y-%m-%d %H:%M')],
-                ] + list(self._get_filter_values())
-            ])
 
         return export_table

@@ -1,4 +1,3 @@
-
 import functools
 import itertools
 import logging
@@ -15,7 +14,6 @@ import csiphash
 import re
 
 import operator
-import six
 from ddtrace import tracer
 from django.conf import settings
 from django.db import connections, InternalError, transaction
@@ -61,6 +59,7 @@ from corehq.form_processor.utils.sql import (
 from corehq.sql_db.config import partition_config
 from corehq.sql_db.routers import db_for_read_write, get_cursor
 from corehq.sql_db.util import (
+    estimate_row_count,
     split_list_by_db_partition,
     get_db_aliases_for_partitioned_query,
 )
@@ -155,7 +154,7 @@ class ShardAccessor(object):
 
     @staticmethod
     def hash_doc_id_python(doc_id):
-        if isinstance(doc_id, six.text_type):
+        if isinstance(doc_id, str):
             doc_id = doc_id.encode('utf-8')
         elif isinstance(doc_id, UUID):
             # Hash the 16-byte string
@@ -172,6 +171,18 @@ class ShardAccessor(object):
         :param doc_ids:
         :return: Dict of ``doc_id -> Django DB alias``
         """
+        return ShardAccessor._get_doc_database_map(doc_ids, by_doc=True)
+
+    @staticmethod
+    def get_docs_by_database(doc_ids):
+        """
+        :param doc_ids:
+        :return: Dict of ``Django DB alias -> doc_id``
+        """
+        return ShardAccessor._get_doc_database_map(doc_ids, by_doc=False)
+
+    @staticmethod
+    def _get_doc_database_map(doc_ids, by_doc=True):
         assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
         consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         databases = {}
@@ -180,10 +191,17 @@ class ShardAccessor(object):
         for chunk in chunked(doc_ids, 100):
             hashes = ShardAccessor.hash_doc_ids_python(chunk)
             shards = {doc_id: hash_ & part_mask for doc_id, hash_ in hashes.items()}
-            databases.update({
-                doc_id: shard_map[shard_id].django_dbname for doc_id, shard_id in shards.items()
-            })
-
+            for doc_id, shard_id in shards.items():
+                dbname = shard_map[shard_id].django_dbname
+                if by_doc:
+                    databases.update({
+                        doc_id: dbname
+                    })
+                else:
+                    if dbname not in databases:
+                        databases[dbname] = [doc_id]
+                    else:
+                        databases[dbname].append(doc_id)
         return databases
 
     @staticmethod
@@ -207,7 +225,7 @@ class ShardAccessor(object):
 DocIds = namedtuple('DocIds', 'doc_id primary_key')
 
 
-class ReindexAccessor(six.with_metaclass(ABCMeta)):
+class ReindexAccessor(metaclass=ABCMeta):
     primary_key_field_name = 'id'
 
     def __init__(self, limit_db_aliases=None):
@@ -312,19 +330,11 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
     def get_approximate_doc_count(self, from_db):
         """Get the approximate doc count from the given DB
+
         :param from_db: The DB alias to query
         """
         query = self.query(from_db, for_count=True)
-        sql, params = query.query.sql_with_params()
-        explain_query = 'EXPLAIN {}'.format(sql)
-        db_cursor = connections[from_db].cursor()
-        with db_cursor as cursor:
-            cursor.execute(explain_query, params)
-            for row in cursor.fetchall():
-                search = re.search(r' rows=(\d+)', row[0])
-                if search:
-                    return int(search.group(1))
-        return 0
+        return estimate_row_count(query, from_db)
 
 
 class FormReindexAccessor(ReindexAccessor):
@@ -500,7 +510,6 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def hard_delete_forms(domain, form_ids, delete_attachments=True):
         assert isinstance(form_ids, list)
-        NotAllowed.check(domain)
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
@@ -888,7 +897,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
-        NotAllowed.check(domain)
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT hard_delete_cases(%s, %s) as deleted_count', [domain, case_ids])
             results = fetchall_as_namedtuple(cursor)
@@ -1305,20 +1313,25 @@ class LedgerReindexAccessor(ReindexAccessor):
 class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
-    def get_ledger_values_for_cases(case_ids, section_id=None, entry_id=None, date_start=None, date_end=None):
+    def get_ledger_values_for_cases(case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
         assert isinstance(case_ids, list)
         if not case_ids:
             return []
 
+        if section_ids:
+            assert isinstance(section_ids, list)
+        if entry_ids:
+            assert isinstance(entry_ids, list)
+
         return list(LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_cases(%s, %s, %s, %s, %s)',
-            [case_ids, section_id, entry_id, date_start, date_end]
+            'SELECT * FROM get_ledger_values_for_cases_2(%s, %s, %s, %s, %s)',
+            [case_ids, section_ids, entry_ids, date_start, date_end]
         ))
 
     @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_cases(%s)',
+            'SELECT * FROM get_ledger_values_for_cases_2(%s)',
             [[case_id]]
         ))
 
@@ -1397,7 +1410,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):
         ledger_values = LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_cases(%s)',
+            'SELECT * FROM get_ledger_values_for_cases_2(%s)',
             [case_ids]
         )
         ret = {case_id: {} for case_id in case_ids}
