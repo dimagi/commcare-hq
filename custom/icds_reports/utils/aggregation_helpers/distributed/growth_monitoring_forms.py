@@ -191,8 +191,7 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
           FULL OUTER JOIN "{tablename}" prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
             AND ucr.month::DATE=prev_month.month + INTERVAL '1 month'
-          WHERE (ucr.month IS NULL OR ucr.month = %(month)s)
-            AND (prev_month.month IS NULL OR prev_month.month = %(previous_month)s)
+          WHERE prev_month.month IS NULL OR prev_month.month = %(previous_month)s
         )
         """.format(
             ucr_table_query=ucr_query,
