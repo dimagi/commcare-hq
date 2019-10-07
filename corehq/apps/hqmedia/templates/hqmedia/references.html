@@ -44,15 +44,79 @@
           </p>
           {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}
             <p>
-              <a href="#" class="btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
+              <select-toggle data-apply-bindings="false"
+                             params="
+                               value: onlyMissing,
+                               options: [
+                                 {
+                                   id: 'false',
+                                   text: '{% trans_html_attr 'All references' %}',
+                                 },
+                                 {
+                                   id: 'true',
+                                   text: '{% trans_html_attr 'Only missing references' %}',
+                                 },
+                               ],
+                             "></select-toggle>
+            </p>
+          {% endif %}
+          <p>
+              <select-toggle data-apply-bindings="false"
+                             params="
+                               value: mediaClass,
+                               options: [
+                                 {
+                                   id: 'all',
+                                   text: '{% trans_html_attr 'All types' %}',
+                                 },
+                                 {
+                                   id: 'CommCareImage',
+                                   text: '{% trans_html_attr 'Images' %}',
+                                   icon: 'fa fa-picture-o',
+                                 },
+                                 {
+                                   id: 'CommCareAudio',
+                                   text: '{% trans_html_attr 'Audio' %}',
+                                   icon: 'fa fa-volume-up',
+                                 },
+                                 {
+                                   id: 'CommCareVideo',
+                                   text: '{% trans_html_attr 'Videos' %}',
+                                   icon: 'fa fa-video-camera',
+                                 },
+                               ],
+                             "></select-toggle>
+          </p>
+          <p>
+            <search-box data-apply-bindings="false"
+                        params="value: query,
+                                action: function() { goToPage(1); },
+                                placeholder: '{% trans_html_attr "Search for a path" %}'"></search-box>
+          </p>
+          {% if app.langs|length > 1 %}
+            <p>
+              <select-toggle data-apply-bindings="false"
+                             params="
+                               value: lang,
+                               options: [
+                                 {
+                                   id: 'all',
+                                   text: '{% trans_html_attr 'All languages' %}',
+                                 },
+                                 {% for lang in app.langs %}
+                                   {
+                                     id: '{{ lang }}',
+                                     text: '{{ lang }}',
+                                   },
+                                 {% endfor %}
+                               ],
+                             "></select-toggle>
             </p>
           {% endif %}
         </div>
-        <div data-bind="visible: !isInitialLoad() && !totals().length">
-          <div class="alert alert-info">
-            {% blocktrans %}This application references no multimedia.{% endblocktrans %}
-          </div>
-        </div>
+        <p class="help-block"  data-bind="visible: !isInitialLoad() && !totals().length">
+          {% blocktrans %}This application references no multimedia.{% endblocktrans %}
+        </p>
       </div>
       <div class="col-sm-5" data-bind="visible: totals().length">
         <div class="well">

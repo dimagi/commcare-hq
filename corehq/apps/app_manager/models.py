@@ -5662,7 +5662,7 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
     if source_domain == domain:
-        app.family_id = source_app.get_id
+        app.family_id = source_app.master_id
 
     report_map = get_static_report_mapping(source_domain, domain)
     if report_map:
