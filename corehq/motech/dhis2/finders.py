@@ -69,7 +69,7 @@ class TrackedEntityInstanceFinder:
         for property_weight in self.property_weights:
             case_property = property_weight['case_property']
             value = case_trigger_info.extra_fields[case_property]
-            if property_weight["match_type"] == MATCH_TYPE_EXACT and value:
+            if property_weight["match_type"] == MATCH_TYPE_EXACT and is_a_value(value):
                 attr_type_id = self.attr_type_id_value_source_by_case_property[case_property][0]
                 filters.append(f"{attr_type_id}:EQ:{value}")
         return filters
@@ -97,3 +97,18 @@ def get_tei_attr(instance, attr_type_id):
     for attr in instance["attributes"]:
         if attr["attribute"] == attr_type_id:
             return attr["value"]
+
+
+def is_a_value(value):
+    """
+    Returns True if `value` is truthy or 0
+
+    >>> is_a_value("yes")
+    True
+    >>> is_a_value(0)
+    True
+    >>> is_a_value("")
+    False
+
+    """
+    return bool(value or value == 0)
