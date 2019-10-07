@@ -6,7 +6,7 @@ DELETE FROM "icds_dashboard_ccs_record_thr_forms" WHERE month=%(month)s
           days_ration_given_mother
         ) (
           SELECT DISTINCT ON (ccs_record_case_id)
-            ucr.state_id AS state_id,
+            state_id,
             supervisor_id,
             %(month)s AS month,
             ccs_record_case_id as case_id,

@@ -5,7 +5,7 @@ DELETE FROM "icds_dashboard_child_health_thr_forms" WHERE month=%(month)s
           state_id, supervisor_id, month, case_id, latest_time_end_processed, days_ration_given_child
         ) (
           SELECT DISTINCT ON (child_health_case_id)
-            ucr.state_id AS state_id,
+            state_id AS state_id,
             LAST_VALUE(supervisor_id) over w AS supervisor_id,
             %(month)s AS month,
             child_health_case_id AS case_id,

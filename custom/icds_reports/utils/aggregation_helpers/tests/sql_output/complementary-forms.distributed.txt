@@ -7,7 +7,7 @@ DELETE FROM "icds_dashboard_comp_feed_form" WHERE month=%(month)s
           comp_feeding_latest, diet_diversity, diet_quantity, hand_wash
         ) (
           SELECT
-            ucr.state_id AS state_id,
+            COALESCE(ucr.state_id, prev_month.state_id) AS state_id,
             COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
@@ -30,8 +30,8 @@ DELETE FROM "icds_dashboard_comp_feed_form" WHERE month=%(month)s
             END AS hand_wash
           FROM (
         SELECT DISTINCT child_health_case_id AS case_id,
-        LAST_VALUE(state_id) AS state_id
-        %(current_month_start)s::date AS month,
+        state_id AS state_id,
+        %(current_month_start)s AS month,
         supervisor_id AS supervisor_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(play_comp_feeding_vid) OVER w AS play_comp_feeding_vid,
