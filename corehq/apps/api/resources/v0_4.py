@@ -316,7 +316,7 @@ class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMi
         return get_object_or_not_exist(Group, kwargs['pk'], kwargs['domain'])
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        if toggles.GROUP_API_USE_ES_BACKEND.enabled(domain):
+        if toggles.GROUP_API_USE_ES_BACKEND.enabled_for_request(bundle.request):
             return GroupQuerySetAdapterES(domain)
         else:
             return GroupQuerySetAdapterCouch(domain)

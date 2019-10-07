@@ -207,7 +207,6 @@ class TestCommCareCaseResource(APIResourceTest):
         new_user = WebUser.create(community_domain.name, 'test', 'testpass')
         new_user.save()
 
-        self.addCleanup(new_user.delete)
         self.addCleanup(community_domain.delete)
 
         response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')
@@ -222,7 +221,6 @@ class TestCommCareCaseResource(APIResourceTest):
         new_user = WebUser.create(community_domain.name, 'test', 'testpass', is_superuser=True)
         new_user.save()
 
-        self.addCleanup(new_user.delete)
         self.addCleanup(community_domain.delete)
 
         response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')

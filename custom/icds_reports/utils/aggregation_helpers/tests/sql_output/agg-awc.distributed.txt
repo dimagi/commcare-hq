@@ -333,12 +333,7 @@
                 ELSE NULL END AS infra_type_of_building,
                 CASE WHEN source_drinking_water IN (1, 2, 3) THEN 1 ELSE 0 END AS infra_clean_water,
                 toilet_facility,
-                CASE
-                  WHEN type_toilet = 1 THEN 'Pit type (Latrine)'
-                  WHEN type_toilet = 2 THEN 'Only urinal'
-                  WHEN type_toilet = 3 THEN 'Flush system'
-                  WHEN type_toilet = 4 THEN 'Other'
-                ELSE NULL END AS type_toilet,
+                type_toilet,
                 preschool_kit_available,
                 preschool_kit_usable,
                 toilet_functional AS infra_functional_toilet,

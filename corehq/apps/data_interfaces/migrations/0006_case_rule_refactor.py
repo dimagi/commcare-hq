@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
             name='ClosedParentDefinition',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('identifier', models.CharField(default=b'parent', max_length=126)),
+                ('identifier', models.CharField(default='parent', max_length=126)),
                 ('relationship_id', models.PositiveSmallIntegerField(default=1)),
             ],
             options={
