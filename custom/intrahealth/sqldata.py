@@ -3991,8 +3991,11 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
         group_by = [
             self.loc_id_to_get, self.loc_name_to_get,
             'real_date_precise', 'product_is_outstock',
-            'product_id', 'product_name', 'program_id'
+            'product_id', 'product_name', 'program_id',
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
 
         return group_by
 
@@ -4007,6 +4010,10 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
             DatabaseColumn('Product Name', SimpleColumn('product_name')),
             DatabaseColumn('Is product outstock', SimpleColumn('product_is_outstock')),
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -4149,26 +4156,26 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
 
             return stocks_list_to_return
 
+        fresh_records_dict = {}
         for row in rows:
-            if not rows_to_return:
-                rows_to_return.append(row)
+            pps_id = row['pps_id']
+            product_id = row['product_id']
+            if pps_id not in fresh_records_dict.keys():
+                fresh_records_dict[pps_id] = {
+                    product_id: row
+                }
             else:
-                length = len(rows_to_return)
-                for r in range(0, length):
-                    current_product = rows_to_return[r]
-                    current_location_id = current_product[self.loc_id_to_get] \
-                        if current_product[self.loc_id_to_get] is not None \
-                        else current_product[self.loc_name_to_get]
-                    current_product_id = current_product['product_id']
-                    _row_id = row[self.loc_id_to_get] \
-                        if row[self.loc_id_to_get] is not None else row[self.loc_name_to_get]
-                    if current_location_id == _row_id and current_product_id == row['product_id']:
-                        current_date = current_product['real_date_precise']
-                        new_date = row['real_date_precise']
-                        if new_date > current_date:
-                            rows_to_return[r] = row
-                    elif r == length - 1:
-                        rows_to_return.append(row)
+                if product_id not in fresh_records_dict[pps_id].keys():
+                    fresh_records_dict[pps_id][product_id] = row
+                else:
+                    date = fresh_records_dict[pps_id][product_id]['real_date_precise']
+                    new_date = row['real_date_precise']
+                    if new_date > date:
+                        fresh_records_dict[pps_id][product_id] = row
+
+        for pps_id, products in fresh_records_dict.items():
+            for product, product_data in products.items():
+                rows_to_return.append(product_data)
 
         clean_data = clean_rows(rows_to_return)
 
@@ -4213,6 +4220,9 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
             'real_date_precise', 'product_is_outstock',
             'product_id', 'product_name', 'program_id'
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
 
         return group_by
 
@@ -4227,6 +4237,10 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
             DatabaseColumn('Product Name', SimpleColumn('product_name')),
             DatabaseColumn('Is product outstock', SimpleColumn('product_is_outstock')),
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -4369,26 +4383,26 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
 
             return stocks_list_to_return
 
+        fresh_records_dict = {}
         for row in rows:
-            if not rows_to_return:
-                rows_to_return.append(row)
+            pps_id = row['pps_id']
+            product_id = row['product_id']
+            if pps_id not in fresh_records_dict.keys():
+                fresh_records_dict[pps_id] = {
+                    product_id: row
+                }
             else:
-                length = len(rows_to_return)
-                for r in range(0, length):
-                    current_product = rows_to_return[r]
-                    current_location_id = current_product[self.loc_id_to_get] \
-                        if current_product[self.loc_id_to_get] is not None \
-                        else current_product[self.loc_name_to_get]
-                    current_product_id = current_product['product_id']
-                    _row_id = row[self.loc_id_to_get] \
-                        if row[self.loc_id_to_get] is not None else row[self.loc_name_to_get]
-                    if current_location_id == _row_id and current_product_id == row['product_id']:
-                        current_date = current_product['real_date_precise']
-                        new_date = row['real_date_precise']
-                        if new_date > current_date:
-                            rows_to_return[r] = row
-                    elif r == length - 1:
-                        rows_to_return.append(row)
+                if product_id not in fresh_records_dict[pps_id].keys():
+                    fresh_records_dict[pps_id][product_id] = row
+                else:
+                    date = fresh_records_dict[pps_id][product_id]['real_date_precise']
+                    new_date = row['real_date_precise']
+                    if new_date > date:
+                        fresh_records_dict[pps_id][product_id] = row
+
+        for pps_id, products in fresh_records_dict.items():
+            for product, product_data in products.items():
+                rows_to_return.append(product_data)
 
         clean_data = clean_rows(rows_to_return)
 
@@ -4433,6 +4447,9 @@ class ConsommationPerProductData(SqlData, LocationLevelMixin):
             'real_date_precise', 'actual_consumption',
             'product_id', 'product_name', 'program_id'
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
 
         return group_by
 
@@ -4447,6 +4464,10 @@ class ConsommationPerProductData(SqlData, LocationLevelMixin):
             DatabaseColumn("Product name", SimpleColumn('product_name')),
             DatabaseColumn("Consumption", SimpleColumn('actual_consumption'))
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -4987,6 +5008,9 @@ class SatisfactionRateAfterDeliveryPerProductData(LocationLevelMixin, VisiteDeLO
             'product_id', 'product_name', 'ideal_topup',
             'amt_delivered_convenience'
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
 
         return group_by
 
@@ -5002,6 +5026,10 @@ class SatisfactionRateAfterDeliveryPerProductData(LocationLevelMixin, VisiteDeLO
             DatabaseColumn("Quantity of the product delivered", SumColumn('amt_delivered_convenience')),
             DatabaseColumn("Quantity of the product suggested", SumColumn('ideal_topup')),
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -5171,11 +5199,16 @@ class ValuationOfPNAStockPerProductV2Data(LocationLevelMixin, VisiteDeLOperateur
 
     @property
     def group_by(self):
-        return [
+        group_by = [
             'real_date_repeat', 'product_id', 'product_name', 'select_programs',
             self.loc_id_to_get, self.loc_name_to_get,
             'final_pna_stock_valuation'
         ]
+        if self.loc_id_to_get != 'pps_is':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
+
+        return group_by
 
     @property
     def columns(self):
@@ -5188,6 +5221,10 @@ class ValuationOfPNAStockPerProductV2Data(LocationLevelMixin, VisiteDeLOperateur
             DatabaseColumn("Programs", SimpleColumn('select_programs')),
             DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation')),
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
