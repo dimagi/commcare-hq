@@ -99,12 +99,13 @@ def get_patient_uuid(element):
 
 def get_encounter_uuid(element):
     """
-    Extracts the UUID of a patient from an entry's "content" node.
+    Extracts the UUID of an encounter from an entry's "content" node.
 
     >>> element = etree.XML('''<entry>
-    ...     <content type="application/vnd.atomfeed+xml">
-    ...         <![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true]]>
-    ...     </content>
+    ...   <title>Encounter</title>
+    ...   <content type="application/vnd.atomfeed+xml">
+    ...     <![CDATA[/openmrs/ws/rest/v1/bahmnicore/bahmniencounter/0f54fe40-89af-4412-8dd4-5eaebe8684dc?includeAll=true]]>
+    ...   </content>
     ... </entry>''')
     >>> get_encounter_uuid(element)
     '0f54fe40-89af-4412-8dd4-5eaebe8684dc'
@@ -117,7 +118,11 @@ def get_encounter_uuid(element):
         matches = pattern.search(cdata)
         if matches:
             return matches.group(1)
-    raise ValueError('Encounter UUID not found')
+        # Not everything in the Encounter atom feed is an Encounter. It
+        # also includes bed assignments.
+        if 'bedPatientAssignment' in cdata:
+            return None
+    raise ValueError('Unrecognised Encounter atom feed entry')
 
 
 def get_feed_updates(repeater, feed_name):
@@ -146,7 +151,9 @@ def get_feed_updates(repeater, feed_name):
             if has_new_entries_since(last_polled_at, feed_xml):
                 for entry in feed_xml.xpath('./atom:entry', namespaces={'atom': 'http://www.w3.org/2005/Atom'}):
                     if has_new_entries_since(last_polled_at, entry, './atom:published'):
-                        yield get_uuid(entry)
+                        entry_uuid = get_uuid(entry)
+                        if entry_uuid:
+                            yield entry_uuid
             next_page = feed_xml.xpath(
                 './atom:link[@rel="next-archive"]',
                 namespaces={'atom': 'http://www.w3.org/2005/Atom'}
