@@ -891,7 +891,6 @@ class ODataFeedListHelper(ExportListHelper):
     form_or_case = None
     is_deid = False
     include_saved_filters = True
-    beta_odata_feed_limit = 10
 
     @property
     def create_export_form(self):
@@ -905,6 +904,12 @@ class ODataFeedListHelper(ExportListHelper):
         return form
 
     @property
+    @memoized
+    def odata_feed_limit(self):
+        domain_object = Domain.get_by_name(self.domain)
+        return domain_object.odata_feed_limit or settings.DEFAULT_ODATA_FEED_LIMIT
+
+    @property
     def create_export_form_title(self):
         return _("Select Feed Type")
 
@@ -916,7 +921,7 @@ class ODataFeedListHelper(ExportListHelper):
         data.update({
             'isOData': True,
         })
-        if len(self.get_saved_exports()) >= self.beta_odata_feed_limit:
+        if len(self.get_saved_exports()) >= self.odata_feed_limit:
             data['editUrl'] = '#odataFeedLimitReachedModal'
         return data
 
@@ -964,9 +969,9 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
             "export_type_plural": _("OData feeds"),
             'my_export_type': _('My OData Feeds'),
             'shared_export_type': _('OData Feeds Shared with Me'),
-            'beta_odata_feed_limit': self.beta_odata_feed_limit,
+            'odata_feed_limit': self.odata_feed_limit,
         })
-        if len(self.get_saved_exports()) >= self.beta_odata_feed_limit:
+        if len(self.get_saved_exports()) >= self.odata_feed_limit:
             context['create_url'] = '#odataFeedLimitReachedModal'
             context['odata_feeds_over_limit'] = True
         return context
