@@ -26,9 +26,6 @@ odata_auth = method_decorator([
 class BaseODataView(View):
 
     def dispatch(self, request, *args, **kwargs):
-        # domain = kwargs.get('domain')
-        # print(domain)
-        # print(request)
         if not user_can_view_odata_feed(request.domain, request.couch_user):
             raise Http404()
         return super(BaseODataView, self).dispatch(request, *args, **kwargs)
