@@ -12,7 +12,7 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0135_add_vhnd_field'),
+        ('icds_reports', '0136_add_vhnd_field'),
     ]
 
     operations = [
@@ -20,4 +20,8 @@ class Migration(migrations.Migration):
         migrations.RunSQL("ALTER table daily_attendance ADD COLUMN open_hotcooked_count smallint "),
         migrations.RunSQL("ALTER table daily_attendance ADD COLUMN days_thr_provided_count smallint "),
         migrations.RunSQL("ALTER table daily_attendance ADD COLUMN open_pse_count smallint "),
+        migrations.RunSQL("ALTER table agg_awc ADD COLUMN open_bfast_count smallint "),
+        migrations.RunSQL("ALTER table agg_awc ADD COLUMN open_hotcooked_count smallint "),
+        migrations.RunSQL("ALTER table agg_awc ADD COLUMN days_thr_provided_count smallint "),
+        migrations.RunSQL("ALTER table agg_awc ADD COLUMN open_pse_count smallint "),
     ]

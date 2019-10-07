@@ -480,6 +480,10 @@ class AggAwc(models.Model, AggregateMixin):
     num_mother_thr_eligible = models.IntegerField(null=True)
     preschool_kit_available = models.IntegerField(blank=True, null=True)
     preschool_kit_usable = models.IntegerField(blank=True, null=True)
+    open_bfast_count = models.SmallIntegerField(blank=True, null=True)
+    open_hotcooked_count = models.SmallIntegerField(blank=True, null=True)
+    days_thr_provided_count = models.SmallIntegerField(blank=True, null=True)
+    open_pse_count = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
