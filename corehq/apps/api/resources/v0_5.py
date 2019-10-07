@@ -73,7 +73,6 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.util import raw_username
-from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.timer import TimingContext
@@ -936,7 +935,7 @@ class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
     table_id = None
 
     def dispatch(self, request_type, request, **kwargs):
-        if not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
+        if not domain_has_privilege(request.domain, privileges.ODATA_FEED):
             raise ImmediateHttpResponse(
                 response=HttpResponseNotFound('Feature flag not enabled.')
             )

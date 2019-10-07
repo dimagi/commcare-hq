@@ -16,6 +16,7 @@ from django.views.decorators.http import require_GET, require_POST
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from couchexport.models import Format
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
@@ -71,8 +72,7 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     has_permission_to_view_report,
 )
-from corehq.feature_previews import BI_INTEGRATION_PREVIEW
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
 
@@ -630,7 +630,7 @@ def commit_filters(request, domain):
         raise Http404
     if export.export_format == "html" and not domain_has_privilege(domain, EXCEL_DASHBOARD):
         raise Http404
-    if export.is_odata_config and not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
+    if export.is_odata_config and not domain_has_privilege(domain, ODATA_FEED):
         raise Http404
     if not export.filters.is_location_safe_for_user(request):
         return location_restricted_response(request)
@@ -939,7 +939,7 @@ class ODataFeedListHelper(ExportListHelper):
         return DownloadNewCaseExportView
 
 
-@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
+@method_decorator(requires_privilege_with_fallback(ODATA_FEED), name='dispatch')
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     is_odata = True
     urlname = 'list_odata_feeds'
