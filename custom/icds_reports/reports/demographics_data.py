@@ -4,6 +4,9 @@ from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES, CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES, \
+    PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES, \
+    ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES
 from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text, \
     percent_children_enrolled_help_text, percent_pregnant_women_enrolled_help_text, \
     percent_lactating_women_enrolled_help_text, percent_adolescent_girls_enrolled_help_text
@@ -82,7 +85,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'redirect': 'demographics/registered_household'
                 },
                 {
-                    'label': _('Percent Aadhaar-seeded Beneficiaries'),
+                    'label': _(AADHAR_SEEDED_BENEFICIARIES),
                     'help_text': percent_aadhaar_seeded_beneficiaries_help_text(),
                     'percent': percent_diff(
                         'person_aadhaar',
@@ -104,7 +107,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
             ],
             [
                 {
-                    'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
+                    'label': _(CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES),
                     'help_text': percent_children_enrolled_help_text(),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
                     'color': get_color_with_green_positive(percent_diff(
@@ -118,7 +121,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'redirect': 'demographics/enrolled_children'
                 },
                 {
-                    'label': _('Percent pregnant women enrolled for Anganwadi Services'),
+                    'label': _(PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES),
                     'help_text': percent_pregnant_women_enrolled_help_text(),
                     'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
                     'color': get_color_with_green_positive(percent_diff(
@@ -137,7 +140,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
             [
 
                 {
-                    'label': _('Percent lactating women enrolled for Anganwadi Services'),
+                    'label': _(LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES),
                     'help_text': percent_lactating_women_enrolled_help_text(),
                     'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
                     'color': get_color_with_green_positive(percent_diff(
@@ -153,7 +156,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'redirect': 'demographics/lactating_enrolled_women'
                 },
                 {
-                    'label': _('Percent adolescent girls (11-14 years) enrolled for Anganwadi Services'),
+                    'label': _(ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES),
                     'help_text': percent_adolescent_girls_enrolled_help_text(),
                     'percent': percent_diff(
                         'person_adolescent',
