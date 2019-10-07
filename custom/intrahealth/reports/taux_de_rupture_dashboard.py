@@ -119,7 +119,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
             for product in products:
                 headers.add_column(DataTablesColumn(product))
         else:
-            headers.add_column(DataTablesColumn('Produits disponibles'))
+            headers.add_column(DataTablesColumn('Produits en rupture de stock'))
 
         return headers
 
