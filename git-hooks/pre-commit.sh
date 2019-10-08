@@ -50,7 +50,7 @@ fi
 status=0
 git diff-index --check --cached $against --
 if [ $? != 0 ]; then status=1; fi
-git diff --cached | pep8 --diff --show-source --max-line-length=115
+git diff --cached | pycodestyle --diff --show-source --max-line-length=115
 if [ $? != 0 ]; then status=1; fi
 
 # connect stdin to keyboard so user can interact
