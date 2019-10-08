@@ -70,11 +70,7 @@ class OpenmrsImporter(Document):
     # cases to different owners, see `location_type` below.
     owner_id = StringProperty()
 
-    # If report_params includes "{{ location }}" then location_type_name is used to determine which locations to
-    # pull the report for. Those locations will need an "openmrs_uuid" param set. Imported cases will be owned by
-    # the first mobile worker assigned to that location. If this OpenmrsImporter.location_id is set, only
-    # sub-locations will be returned
-    location_type_name = StringProperty()
+    location_type_name = StringProperty()  # UNUSED
 
     # external_id should always be the OpenMRS UUID of the patient (and not, for example, a national ID number)
     # because it is immutable. external_id_column is the column that contains the UUID

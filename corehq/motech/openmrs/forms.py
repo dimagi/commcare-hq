@@ -68,7 +68,6 @@ class OpenmrsConfigForm(forms.Form):
 
 
 _owner_id_label = _('Owner ID')
-_location_type_name_label = _('Organization Level')
 
 
 class OpenmrsImporterForm(forms.Form):
@@ -89,11 +88,8 @@ class OpenmrsImporterForm(forms.Form):
                                   help_text=_('The OpenMRS UUID of the report of patients to be imported'))
     report_params = JsonField(label=_('Report Parameters'), required=False, expected_type=dict)
     case_type = forms.CharField(label=_('Case Type'), required=True)
-    owner_id = forms.CharField(label=_owner_id_label, required=False,
+    owner_id = forms.CharField(label=_owner_id_label, required=True,
                                help_text=_('The ID of the mobile worker or location who will own new cases'))
-    location_type_name = forms.CharField(label=_location_type_name_label, required=False,
-                                         help_text=_('The Organization Level whose mobile worker will own new '
-                                                     'cases'))
     external_id_column = forms.CharField(label=_('External ID Column'), required=True,
                                          help_text=_("The column that contains the OpenMRS UUID of the patient"))
     name_columns = forms.CharField(label=_('Name Columns'), required=True,
@@ -101,17 +97,6 @@ class OpenmrsImporterForm(forms.Form):
                                                'name (e.g. "givenName familyName")'))
     column_map = JsonField(label=_('Map columns to properties'), required=True, expected_type=list,
                            help_text=_('e.g. [{"column": "givenName", "property": "first_name"}, ...]'))
-
-    def clean(self):
-        cleaned_data = super(OpenmrsImporterForm, self).clean()
-        if bool(cleaned_data.get('owner_id')) == bool(cleaned_data.get('location_type_name')):
-            message = _(
-                'The owner of imported patient cases is determined using either "{owner_id}" or '
-                '"{location_type_name}". Please specify either one or the other.').format(
-                owner_id=_owner_id_label, location_type_name=_location_type_name_label)
-            self.add_error('owner_id', message)
-            self.add_error('location_type_name', message)
-        return self.cleaned_data
 
     def save(self, domain_name):
         try:
@@ -132,7 +117,6 @@ class OpenmrsImporterForm(forms.Form):
             importer.report_params = self.cleaned_data['report_params']
             importer.case_type = self.cleaned_data['case_type']
             importer.owner_id = self.cleaned_data['owner_id']
-            importer.location_type_name = self.cleaned_data['location_type_name']
             importer.external_id_column = self.cleaned_data['external_id_column']
             importer.name_columns = self.cleaned_data['name_columns']
             importer.column_map = list(map(ColumnMapping.wrap, self.cleaned_data['column_map']))
