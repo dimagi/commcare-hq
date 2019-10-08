@@ -46,20 +46,18 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
         self.addCleanup(export_config_in_other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self.client.get(
-                self._odata_feed_url_by_domain_and_config_id(self.domain.name, export_config_in_other_domain.get_id),
-                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-            )
+        response = self.client.get(
+            self._odata_feed_url_by_domain_and_config_id(self.domain.name, export_config_in_other_domain.get_id),
+            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
+        )
         self.assertEqual(response.status_code, 404)
 
     def test_missing_config_id(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self.client.get(
-                self._odata_feed_url_by_domain_and_config_id(self.domain.name, 'missing_config_id'),
-                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-            )
+        response = self.client.get(
+            self._odata_feed_url_by_domain_and_config_id(self.domain.name, 'missing_config_id'),
+            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
+        )
         self.assertEqual(response.status_code, 404)
 
     def test_request_succeeded(self):
@@ -73,8 +71,7 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
         self.addCleanup(export_config.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(correct_credentials)
+        response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/json; charset=utf-8')
         self.assertEqual(response['OData-Version'], '4.0')
@@ -133,21 +130,19 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
         self.addCleanup(export_config_in_other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self.client.get(
-                self._odata_feed_url_by_domain_and_config_id(
-                    self.domain.name, export_config_in_other_domain.get_id),
-                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-            )
+        response = self.client.get(
+            self._odata_feed_url_by_domain_and_config_id(
+                self.domain.name, export_config_in_other_domain.get_id),
+            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
+        )
         self.assertEqual(response.status_code, 404)
 
     def test_missing_config_id(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self.client.get(
-                self._odata_feed_url_by_domain_and_config_id(self.domain.name, 'missing_config_id'),
-                HTTP_AUTHORIZATION='Basic ' + correct_credentials,
-            )
+        response = self.client.get(
+            self._odata_feed_url_by_domain_and_config_id(self.domain.name, 'missing_config_id'),
+            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
+        )
         self.assertEqual(response.status_code, 404)
 
     def test_request_succeeded(self):
@@ -161,8 +156,7 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
         self.addCleanup(export_config.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(correct_credentials)
+        response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/json; charset=utf-8')
         self.assertEqual(response['OData-Version'], '4.0')
