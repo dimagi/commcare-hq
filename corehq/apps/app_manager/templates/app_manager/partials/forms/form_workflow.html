@@ -9,7 +9,7 @@
     ></span>
   </label>
   <div id="form-workflow" class="col-sm-4 commcare-feature" data-since-version="2.10">
-    <div class="form-group" data-bind="css: {'has-error': hasError}">
+    <div class="form-group" data-bind="css: {'has-error': hasError, 'has-warning': hasWarning}">
       <select name="post_form_workflow" class="form-control" data-bind="
                 optstr: workflowOptions(),
                 value: workflow
@@ -17,6 +17,14 @@
       <div data-bind="visible: hasError" class="help-block">
         {% trans "This is an unknown value, possibly a deleted form. Please change this value." %}
       </div>
+      <span class="help-block" data-bind="visible: hasWarning">
+        {% blocktrans %}
+          This form is being used as a Case List Registration Form.
+          Specifying End of Form Navigation here will override the Case List Registration workflow.
+          To avoid overriding the Case List Registration workflow set the End of Form Navigation
+          to the default option ('Home Screen').
+        {% endblocktrans %}
+      </span>
     </div>
 
     <div class="form-links-container" data-bind="
