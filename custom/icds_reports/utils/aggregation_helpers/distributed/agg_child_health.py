@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 
 from corehq.sql_db.routers import db_for_read_write
@@ -7,6 +9,8 @@ from custom.icds_reports.utils.aggregation_helpers import (
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
     BaseICDSAggregationDistributedHelper,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -31,15 +35,20 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
             CHECK (month = DATE '{self.month.strftime('%Y-%m-01')}')
         )
         """)
-        # initial inserts into staging table
+
+        logger.info('start agg_child_health data staging')
         for staging_query, params in staging_queries:
             cursor.execute(staging_query, params)
         # update staging table
         for query, params in update_queries:
             cursor.execute(query, params)
+        logger.info('start agg_child_health data rollup')
         for query in rollup_queries:
             cursor.execute(query)
+        logger.info('finish agg_child_health data rollup')
+        logger.info('finish agg_child_health data staging')
 
+        logger.info('start agg_child_health table swap')
         from custom.icds_reports.models import AggChildHealth
         db_alias = db_for_read_write(AggChildHealth)
         with transaction.atomic(using=db_alias):
@@ -55,12 +64,15 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
             """)
             # Attach the new table
             cursor.execute(f'ALTER TABLE IF EXISTS "{self.monthly_tablename}" INHERIT "{self.base_tablename}"')
+        logger.info('finish agg_child_health table swap')
 
         self.cleanup(cursor)
 
     def cleanup(self, cursor):
+        logger.info('start agg_child_health cleanup')
         cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
         cursor.execute(f"DROP TABLE IF EXISTS {self.temporary_table_to_be_deleted}")
+        logger.info('finish agg_child_health cleanup')
 
     def _tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"), agg_level)
