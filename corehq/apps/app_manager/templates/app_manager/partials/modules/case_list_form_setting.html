@@ -14,19 +14,25 @@
         ></span>
       </label>
       {% if not case_list_form_not_allowed_reasons %}
-        <div class="{% css_field_class %}" data-bind="css: {'has-error': formMissing()}">
+        <div class="{% css_field_class %}" data-bind="css: {'has-error': formMissing(), 'has-warning': formHasEOFNav()}">
           <select class="form-control" data-bind="value: caseListForm">
             {% if case_list_form_options.form.form_id and case_list_form_options.form.form_id not in case_list_form_options.options.keys %}
               <option value="{{ case_list_form_options.form.form_id }}" selected>{% trans "Unknown Form (missing)" %}</option>
             {% endif %}
             <option value="">{% trans "Don't Show" %}</option>
-            {% for id, name in case_list_form_options.options.items %}
-              <option value="{{ id }}">{{ name }}</option>
+            {% for id, data in case_list_form_options.options.items %}
+              <option value="{{ id }}">{{ data.name }}</option>
             {% endfor %}
           </select>
           <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
           <div data-bind="visible: formMissing()" class="help-block">
             {% trans "Error! The selected form does not exist." %}
+          </div>
+          <div data-bind="visible: formHasEOFNav()" class="help-block">
+            {% blocktrans %}
+              The selected form uses end of form navigation, which may interfere with the case list registration
+              workflow. To avoid this, set the form's end of form navigation to the default option ('Home Screen').
+            {% endblocktrans %}
           </div>
         </div>
       {% else %}
