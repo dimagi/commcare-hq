@@ -32,23 +32,13 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, pre_release_fe
         return queryset
 
     def get_data_for_daily_usage(date, filters):
-        if pre_release_features:
-            queryset = AggAwcDailyView.objects.filter(
-                date=date, **filters
-            ).values(
-                'aggregation_level'
-            ).annotate(
-                daily_attendance=Sum('daily_attendance_open')
-            )
-        else:
-            queryset = AggAwcDailyView.objects.filter(
-                date=date, **filters
-            ).values(
-                'aggregation_level'
-            ).annotate(
-                awcs=Sum('num_launched_awcs'),
-                daily_attendance=Sum('daily_attendance_open')
-            )
+        queryset = AggAwcDailyView.objects.filter(
+            date=date, **filters
+        ).values(
+            'aggregation_level'
+        ).annotate(
+            daily_attendance=Sum('daily_attendance_open')
+        )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
@@ -74,7 +64,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, pre_release_fe
             date -= relativedelta(days=1)
             daily_two_days_ago = get_data_for_daily_usage(date, config)
         daily_attendance_percent = percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago)
-        awcs = get_value(awc_this_month_data if pre_release_features else daily_yesterday, 'awcs')
+        awcs = get_value(awc_this_month_data, 'awcs')
         number_of_awc_open_yesterday = {
             'label': _('Number of AWCs Open yesterday'),
             'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
