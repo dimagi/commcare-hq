@@ -6,15 +6,23 @@ from contextlib import contextmanager
 import pytz
 from mock import patch
 
+from corehq.apps.groups.models import Group
+from corehq.apps.locations.tests.util import LocationHierarchyTestCase
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.motech.openmrs.const import IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.models import OpenmrsImporter
-from corehq.motech.openmrs.tasks import get_case_properties
+from corehq.motech.openmrs.tasks import (
+    get_case_properties,
+    import_patients_with_importer,
+)
+
+TEST_DOMAIN = 'test-domain'
 
 
 @contextmanager
 def get_importer():
     importer = OpenmrsImporter.wrap({
-        'domain': 'test-domain',
+        'domain': TEST_DOMAIN,
         'server_url': 'http://www.example.com/openmrs',
         'username': 'admin',
         'password': 'Admin123',
@@ -26,7 +34,6 @@ def get_importer():
         'report_params': {},
         'case_type': 'patient',
         'owner_id': '123456',
-        'location_type_name': '',
         'external_id_column': 'NID',
         'name_columns': 'nome_inicial apelido',
         'column_map': [
@@ -169,3 +176,113 @@ def test_get_importer_timezone(get_timezone_for_domain_mock):
         importer.timezone = "Africa/Maputo"
         timezone = importer.get_timezone()
         assert timezone == cat
+
+
+class OwnerTests(LocationHierarchyTestCase):
+
+    domain = TEST_DOMAIN
+    location_type_names = ['province', 'city', 'suburb']
+    location_structure = [
+        ('Western Cape', [('Cape Town', [('Gardens', [])])]),
+        ('Gauteng', [('Johannesburg', [])])
+    ]
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.web_user = WebUser.create(TEST_DOMAIN, 'user1', '***')
+        cls.mobile_worker = CommCareUser.create(TEST_DOMAIN, 'chw1', '***')
+        cls.group = Group.wrap({
+            'domain': TEST_DOMAIN,
+            'name': 'group',
+            'case_sharing': True
+        })
+        cls.group.save()
+        cls.bad_group = Group.wrap({
+            'domain': TEST_DOMAIN,
+            'name': 'bad_group',
+            'case_sharing': False
+        })
+        cls.bad_group.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.bad_group.delete()
+        cls.group.delete()
+        cls.mobile_worker.delete()
+        cls.web_user.delete()
+        super().tearDownClass()
+
+    def test_location_owner(self):
+        """
+        Setting owner_id to a location should not throw an error
+        """
+        with get_importer() as importer, \
+                patch('corehq.motech.openmrs.tasks.import_patients_of_owner') as import_mock, \
+                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+            importer.owner_id = self.locations['Gardens'].location_id
+            import_patients_with_importer(importer.to_json())
+            import_mock.assert_called()
+
+    def test_commcare_user_owner(self):
+        """
+        Setting owner_id to a mobile worker should not throw an error
+        """
+        with get_importer() as importer, \
+                patch('corehq.motech.openmrs.tasks.import_patients_of_owner') as import_mock, \
+                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+            importer.owner_id = self.mobile_worker.user_id
+            import_patients_with_importer(importer.to_json())
+            import_mock.assert_called()
+
+    def test_web_user_owner(self):
+        """
+        Setting owner_id to a web user should not throw an error
+        """
+        with get_importer() as importer, \
+                patch('corehq.motech.openmrs.tasks.import_patients_of_owner') as import_mock, \
+                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+            importer.owner_id = self.web_user.user_id
+            import_patients_with_importer(importer.to_json())
+            import_mock.assert_called()
+
+    def test_group_owner(self):
+        """
+        Setting owner_id to a case-sharing group should not throw an error
+        """
+        with get_importer() as importer, \
+                patch('corehq.motech.openmrs.tasks.import_patients_of_owner') as import_mock, \
+                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+            importer.owner_id = self.group._id
+            import_patients_with_importer(importer.to_json())
+            import_mock.assert_called()
+
+    def test_bad_owner(self):
+        """
+        An invalid owner_id should log an error
+        """
+        with get_importer() as importer, \
+                patch('corehq.motech.openmrs.tasks.logger') as logger_mock, \
+                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+            self.assertEqual(importer.owner_id, '123456')
+            import_patients_with_importer(importer.to_json())
+            logger_mock.error.assert_called_with(
+                'Error importing patients for project space "test-domain" from '
+                'OpenMRS Importer "http://www.example.com/openmrs": owner_id '
+                '"123456" is invalid.'
+            )
+
+    def test_bad_group(self):
+        """
+        Setting owner_id to a NON-case-sharing group should log an error
+        """
+        with get_importer() as importer, \
+                patch('corehq.motech.openmrs.tasks.logger') as logger_mock, \
+                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+            importer.owner_id = self.bad_group._id
+            import_patients_with_importer(importer.to_json())
+            logger_mock.error.assert_called_with(
+                'Error importing patients for project space "test-domain" from '
+                'OpenMRS Importer "http://www.example.com/openmrs": owner_id '
+                f'"{self.bad_group._id}" is invalid.'
+            )

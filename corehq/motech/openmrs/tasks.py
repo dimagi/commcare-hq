@@ -10,10 +10,11 @@ from functools import partial
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
-from couchdbkit import ResourceNotFound
 from jinja2 import Template
 
 from casexml.apps.case.mock import CaseBlock
+from corehq.apps.groups.models import Group
+from corehq.apps.users.cases import get_wrapped_owner
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
@@ -21,9 +22,6 @@ from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
-from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.users.models import CommCareUser
 from corehq.motech.openmrs.atom_feed import (
     get_feed_updates,
     import_encounter,
@@ -47,32 +45,28 @@ from corehq.motech.utils import b64_aes_decrypt
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 # REQUEST_TIMEOUT is 5 minutes, but reports can take up to an hour
 REPORT_REQUEST_TIMEOUT = 60 * 60
-# The location metadata key that maps to its corresponding OpenMRS location UUID
-LOCATION_OPENMRS = 'openmrs_uuid'
 
 
-def parse_params(params, location=None):
+def parse_params(params):
     """
-    Inserts date and OpenMRS location UUID into report params
+    Inserts date into report params
     """
     today = datetime.today().strftime('%Y-%m-%d')
-    location_uuid = location.metadata[LOCATION_OPENMRS] if location else None
-
     parsed = {}
     for key, value in params.items():
         if isinstance(value, str) and '{{' in value:
             template = Template(value)
-            value = template.render(today=today, location=location_uuid)
+            value = template.render(today=today)
         parsed[key] = value
     return parsed
 
 
-def get_openmrs_patients(requests, importer, location=None):
+def get_openmrs_patients(requests, importer):
     """
     Send request to OpenMRS Reporting API and return results
     """
     endpoint = f'/ws/rest/v1/reportingrest/reportdata/{importer.report_uuid}'
-    params = parse_params(importer.report_params, location)
+    params = parse_params(importer.report_params)
     response = requests.get(endpoint, params=params, raise_for_status=True,
                             timeout=REPORT_REQUEST_TIMEOUT)
     data = response.json()
@@ -108,7 +102,6 @@ def get_addpatient_caseblock(patient, importer, owner_id):
         create=True,
         case_id=case_id,
         owner_id=owner_id,
-        user_id=owner_id,
         case_type=importer.case_type,
         case_name=case_name,
         external_id=patient[importer.external_id_column],
@@ -129,8 +122,8 @@ def get_updatepatient_caseblock(case, patient, importer):
     )
 
 
-def import_patients_of_owner(requests, importer, domain_name, owner, location=None):
-    openmrs_patients = get_openmrs_patients(requests, importer, location)
+def import_patients_of_owner(requests, importer, domain_name, owner_id):
+    openmrs_patients = get_openmrs_patients(requests, importer)
     case_blocks = []
     for i, patient in enumerate(openmrs_patients):
         case, error = importer_util.lookup_case(
@@ -143,14 +136,13 @@ def import_patients_of_owner(requests, importer, domain_name, owner, location=No
             case_block = get_updatepatient_caseblock(case, patient, importer)
             case_blocks.append(RowAndCase(i, case_block))
         elif error == LookupErrors.NotFound:
-            case_block = get_addpatient_caseblock(patient, importer, owner.user_id)
+            case_block = get_addpatient_caseblock(patient, importer, owner_id)
             case_blocks.append(RowAndCase(i, case_block))
 
     submit_case_blocks(
         [cb.case.as_text() for cb in case_blocks],
         domain_name,
         device_id=f'{OPENMRS_IMPORTER_DEVICE_ID_PREFIX}{importer.get_id}',
-        user_id=owner.user_id,
         xmlns=XMLNS_OPENMRS,
     )
 
@@ -158,32 +150,6 @@ def import_patients_of_owner(requests, importer, domain_name, owner, location=No
 def import_patients_to_domain(domain_name, force=False):
     """
     Iterates OpenmrsImporters of a domain, and imports patients
-
-    Who owns the imported cases?
-
-    If `importer.owner_id` is set, then the server will be queried
-    once. All patients, regardless of their location, will be assigned
-    to the mobile worker whose ID is `importer.owner_id`.
-
-    If `importer.location_type_name` is set, then check whether the
-    OpenmrsImporter's location is set with `importer.location_id`.
-
-    If `importer.location_id` is given, then the server will be queried
-    for each location among its descendants whose type is
-    `importer.location_type_name`. The request's query parameters will
-    include that descendant location's OpenMRS UUID. Imported cases
-    will be owned by the first mobile worker in that location.
-
-    If `importer.location_id` is given, then the server will be queried
-    for each location in the project space whose type is
-    `importer.location_type_name`. As when `importer.location_id` is
-    specified, the request's query parameters will include that
-    location's OpenMRS UUID, and imported cases will be owned by the
-    first mobile worker in that location.
-
-    ..NOTE:: As you can see from the description above, if
-             `importer.owner_id` is set then `importer.location_id` is
-             not used.
 
     :param domain_name: The name of the domain
     :param force: Import regardless of the configured import frequency / today's date
@@ -198,47 +164,23 @@ def import_patients_with_importer(importer_json):
     importer = OpenmrsImporter.wrap(importer_json)
     password = b64_aes_decrypt(importer.password)
     requests = Requests(importer.domain, importer.server_url, importer.username, password)
-    if importer.location_type_name:
-        try:
-            location_type = LocationType.objects.get(domain=importer.domain, name=importer.location_type_name)
-        except LocationType.DoesNotExist:
-            logger.error(
-                f'No organization level named "{importer.location_type_name}" '
-                f'found in project space "{importer.domain}".'
-            )
-            return
-        if importer.location_id:
-            location = SQLLocation.objects.filter(domain=importer.domain).get(importer.location_id)
-            locations = location.get_descendants.filter(location_type=location_type)
-        else:
-            locations = SQLLocation.objects.filter(domain=importer.domain, location_type=location_type)
-        for location in locations:
-            # Assign cases to the first user in the location, not to the location itself
-            owner = get_one_commcare_user_at_location(importer.domain, location.location_id)
-            if not owner:
-                logger.error(
-                    f'Project space "{importer.domain}" at location '
-                    f'"{location.name}" has no user to own cases imported '
-                    f'from OpenMRS Importer "{importer}"'
-                )
-                continue
-            import_patients_of_owner(requests, importer, importer.domain, owner, location)
-    elif importer.owner_id:
-        try:
-            owner = CommCareUser.get(importer.owner_id)
-        except ResourceNotFound:
-            logger.error(
-                f'Project space "{importer.domain}" has no user to own cases '
-                f'imported from OpenMRS Importer "{importer}"'
-            )
-            return
-        import_patients_of_owner(requests, importer, importer.domain, owner)
-    else:
+    if not is_valid_owner(importer.owner_id):
         logger.error(
-            f'Error importing patients for project space "{importer.domain}" from '
-            f'OpenMRS Importer "{importer}": Unable to determine the owner of '
-            'imported cases without either owner_id or location_type_name'
+            f'Error importing patients for project space "{importer.domain}" '
+            f'from OpenMRS Importer "{importer}": owner_id "{importer.owner_id}" '
+            'is invalid.'
         )
+        return
+    import_patients_of_owner(requests, importer, importer.domain, importer.owner_id)
+
+
+def is_valid_owner(owner_id):
+    owner = get_wrapped_owner(owner_id)
+    if not owner:
+        return False
+    if isinstance(owner, Group) and not owner.case_sharing:
+        return False
+    return True
 
 
 @periodic_task(
