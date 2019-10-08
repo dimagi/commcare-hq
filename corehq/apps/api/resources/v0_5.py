@@ -940,16 +940,19 @@ class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
             raise ImmediateHttpResponse(
                 response=HttpResponseNotFound('Feature flag not enabled.')
             )
-        if not user_can_view_odata_feed(request.domain, request.couch_user):
-            raise ImmediateHttpResponse(
-                response=HttpResponseNotFound('No permission to view feed.')
-            )
         self.config_id = kwargs['config_id']
         self.table_id = int(kwargs.get('table_id', 0))
         with TimingContext() as timer:
             response = super(BaseODataResource, self).dispatch(
                 request_type, request, **kwargs
             )
+
+            # order REALLY matters for the following code. It should be called
+            # AFTER the super's dispatch or request.couch_user will not be present
+            if not user_can_view_odata_feed(request.domain, request.couch_user):
+                raise ImmediateHttpResponse(
+                    response=HttpResponseNotFound('No permission to view feed.')
+                )
         record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
         return response
 
