@@ -26,11 +26,7 @@ hqDefine('dhis2/js/dhis2_entity_config', [
 
         self.init = function () {
             if (caseConfigs.length > 0) {
-                for (var i = 0; i < caseConfigs.length; i++) {
-                    var data = caseConfigs[i],
-                        conf = caseConfig(data);
-                    self.oCaseConfigs.push(conf);
-                }
+                self.oCaseConfigs(_.map(caseConfigs, caseConfig));
             } else {
                 self.addCaseConfig();
             }
