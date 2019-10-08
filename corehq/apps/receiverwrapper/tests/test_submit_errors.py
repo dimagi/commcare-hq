@@ -1,4 +1,5 @@
 import contextlib
+import logging
 import os
 
 from django.db.utils import InternalError
@@ -28,7 +29,7 @@ from corehq.form_processor.tests.utils import (
     use_sql_backend,
 )
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.util.test_utils import TestFileMixin, flag_enabled
+from corehq.util.test_utils import TestFileMixin, flag_enabled, capture_log_output
 
 FORM_WITH_CASE_ID = 'ad38211be256653bceac8e2156475666'
 
@@ -128,14 +129,15 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         # make sure that a re-submission has the same response
         self._test_submission_error_post_save(OPENROSA_VERSION_3)
 
-    def testSubmitBadXML(self):
-        f, path = tmpfile()
+    def _test_submit_bad_data(self, bad_data):
+        f, path = tmpfile(mode='wb')
         with f:
-            f.write("this isn't even close to xml")
-        with open(path, encoding='utf-8') as f:
-            res = self.client.post(self.url, {
+            f.write(bad_data)
+        with open(path, 'rb') as f:
+            with capture_log_output('', logging.ERROR) as logs:
+                res = self.client.post(self.url, {
                     "xml_submission_file": f
-            })
+                })
             self.assertEqual(500, res.status_code)
             self.assertIn('Invalid XML', res.content.decode('utf-8'))
 
@@ -144,8 +146,19 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn('Invalid XML', log.problem)
-        self.assertEqual("this isn't even close to xml", log.get_xml().decode('utf-8'))
+        self.assertEqual(bad_data, log.get_xml())
         self.assertEqual(log.form_data, {})
+        return logs.get_output()
+
+    def test_submit_bad_xml(self):
+        log_output = self._test_submit_bad_data(b'\xad\xac\xab\xd36\xe1\xab\xd6\x9dR\x9b')
+        self.assertRegexpMatches(log_output, r"Problem receiving submission.*")
+
+    def test_submit_bad_device_log(self):
+        log_output = self._test_submit_bad_data(
+            "malformed xml dvice log</log></log_subreport></device_report>".encode('utf8')
+        )
+        self.assertRegexpMatches(log_output, r"Badly formed device log.*")
 
     def test_missing_xmlns(self):
         file, res = self._submit('missing_xmlns.xml')
