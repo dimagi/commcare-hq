@@ -199,9 +199,16 @@ class OwnerTests(LocationHierarchyTestCase):
             'case_sharing': True
         })
         cls.group.save()
+        cls.bad_group = Group.wrap({
+            'domain': TEST_DOMAIN,
+            'name': 'bad_group',
+            'case_sharing': False
+        })
+        cls.bad_group.save()
 
     @classmethod
     def tearDownClass(cls):
+        cls.bad_group.delete()
         cls.group.delete()
         cls.mobile_worker.delete()
         cls.web_user.delete()
@@ -264,4 +271,19 @@ class OwnerTests(LocationHierarchyTestCase):
                 'Error importing patients for project space "test-domain" from '
                 'OpenMRS Importer "http://www.example.com/openmrs": owner_id '
                 '"123456" is invalid.'
+            )
+
+    def test_bad_group(self):
+        """
+        Setting owner_id to a NON-case-sharing group should log an error
+        """
+        with get_importer() as importer, \
+                patch('corehq.motech.openmrs.tasks.logger') as logger_mock, \
+                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+            importer.owner_id = self.bad_group._id
+            import_patients_with_importer(importer.to_json())
+            logger_mock.error.assert_called_with(
+                'Error importing patients for project space "test-domain" from '
+                'OpenMRS Importer "http://www.example.com/openmrs": owner_id '
+                f'"{self.bad_group._id}" is invalid.'
             )

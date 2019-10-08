@@ -13,6 +13,7 @@ from celery.task import periodic_task, task
 from jinja2 import Template
 
 from casexml.apps.case.mock import CaseBlock
+from corehq.apps.groups.models import Group
 from corehq.apps.users.cases import get_wrapped_owner
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
@@ -226,7 +227,7 @@ def import_patients_with_importer(importer_json):
             # user each time.
             import_patients_of_owner(requests, importer, importer.domain, owner.user_id, location)
     elif importer.owner_id:
-        if not get_wrapped_owner(importer.owner_id):
+        if not is_valid_owner(importer.owner_id):
             logger.error(
                 f'Error importing patients for project space "{importer.domain}" '
                 f'from OpenMRS Importer "{importer}": owner_id "{importer.owner_id}" '
@@ -240,6 +241,15 @@ def import_patients_with_importer(importer_json):
             f'OpenMRS Importer "{importer}": Unable to determine the owner of '
             'imported cases without either owner_id or location_type_name'
         )
+
+
+def is_valid_owner(owner_id):
+    owner = get_wrapped_owner(owner_id)
+    if not owner:
+        return False
+    if isinstance(owner, Group) and not owner.case_sharing:
+        return False
+    return True
 
 
 @periodic_task(
