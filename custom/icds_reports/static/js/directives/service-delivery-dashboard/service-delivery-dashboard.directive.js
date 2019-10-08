@@ -179,7 +179,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                         case "thr": return renderPercentageAndPartials(full.thr, full.thr_given_21_days, full.total_thr_candidates, 'THR');
                         case "pse": return renderPercentageAndPartials(full.pse, full.pse_attended_21_days, full.children_3_6, 'beneficiaries');
                         case "supNutrition": return renderPercentageAndPartials(full.sn, full.lunch_count_21_days, full.children_3_6, 'beneficiaries');
-                        case "num_awcs_conducted_cbe": return renderPercentageAndPartials(full.num_awcs_conducted_cbe, full.num_launched_awcs, 'CBE');
+                    case "num_awcs_conducted_cbe": return renderPercentageAndPartials(full.cbe, full.num_awcs_conducted_cbe, full.num_launched_awcs, 'CBE');
 
                     }
                     break;
