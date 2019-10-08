@@ -1,6 +1,7 @@
 import contextlib
 import logging
 import os
+import tempfile
 
 from django.db.utils import InternalError
 from django.test import TestCase
@@ -14,7 +15,6 @@ from casexml.apps.case.exceptions import IllegalCaseId
 from couchforms.models import UnfinishedSubmissionStub
 from couchforms.openrosa_response import ResponseNature
 from couchforms.signals import successful_form_received
-from dimagi.utils.post import tmpfile
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -32,6 +32,11 @@ from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.test_utils import TestFileMixin, flag_enabled, capture_log_output
 
 FORM_WITH_CASE_ID = 'ad38211be256653bceac8e2156475666'
+
+
+def tmpfile(mode='w', *args, **kwargs):
+    fd, path = tempfile.mkstemp(*args, **kwargs)
+    return (os.fdopen(fd, mode), path)
 
 
 class SubmissionErrorTest(TestCase, TestFileMixin):
