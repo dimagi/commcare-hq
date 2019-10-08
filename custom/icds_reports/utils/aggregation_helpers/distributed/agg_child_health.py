@@ -12,6 +12,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
 class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     helper_key = 'agg-child-health'
     base_tablename = 'agg_child_health'
+    temporary_table_to_be_deleted = "agg_child_health_to_be_deleted"
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
@@ -21,9 +22,15 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
         update_queries = self.update_queries()
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
 
-        cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
+        self.cleanup(cursor)
         # create staging table
-        cursor.execute(f"CREATE UNLOGGED TABLE {self.staging_tablename} (LIKE {self.base_tablename})")
+        cursor.execute(f"""
+        CREATE TABLE {self.staging_tablename} (
+            LIKE {self.base_tablename}
+            INCLUDING INDEXES INCLUDING CONSTRAINTS INCLUDING DEFAULTS,
+            CHECK (month = DATE '{self.month.strftime('%Y-%m-01')}')
+        )
+        """)
         # initial inserts into staging table
         for staging_query, params in staging_queries:
             cursor.execute(staging_query, params)
@@ -33,34 +40,27 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
         for query in rollup_queries:
             cursor.execute(query)
 
-        # create new monthly table if it does not exist
-        cursor.execute(f"""
-        CREATE TABLE IF NOT EXISTS "{self.monthly_tablename}" (
-            CHECK (month = DATE '{self.month.strftime('%Y-%m-01')}')
-        )
-        INHERITS ({self.base_tablename})
-        """)
-        for index_query in self.indexes():
-            cursor.execute(index_query)
-
         from custom.icds_reports.models import AggChildHealth
         db_alias = db_for_read_write(AggChildHealth)
         with transaction.atomic(using=db_alias):
-            # drop old style tables if they exist
-            for i in range(1, 6):
-                cursor.execute(f'DROP TABLE IF EXISTS "{self._tablename_func(i)}"')
-            # delete data from monthly table
-            cursor.execute(f'DELETE FROM "{self.monthly_tablename}"')
-            # insert into monthly table from staging table
+            # Detach the previous table
+            cursor.execute(f'ALTER TABLE IF EXISTS "{self.monthly_tablename}" NO INHERIT "{self.base_tablename}"')
+            # Rename the previous table
             cursor.execute(f"""
-            INSERT INTO "{self.monthly_tablename}" (
-                SELECT * FROM "{self.staging_tablename}"
-                ORDER BY aggregation_level, state_id, district_id, block_id, supervisor_id, awc_id
-            )
+            ALTER TABLE IF EXISTS "{self.monthly_tablename}" RENAME TO "{self.temporary_table_to_be_deleted}"
             """)
+            # Rename the new table
+            cursor.execute(f"""
+            ALTER TABLE IF EXISTS "{self.staging_tablename}" RENAME TO "{self.monthly_tablename}"
+            """)
+            # Attach the new table
+            cursor.execute(f'ALTER TABLE IF EXISTS "{self.monthly_tablename}" INHERIT "{self.base_tablename}"')
 
-        # drop staging table
+        self.cleanup(cursor)
+
+    def cleanup(self, cursor):
         cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
+        cursor.execute(f"DROP TABLE IF EXISTS {self.temporary_table_to_be_deleted}")
 
     def _tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"), agg_level)
