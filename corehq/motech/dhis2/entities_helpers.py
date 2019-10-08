@@ -113,7 +113,7 @@ def find_tracked_entity_instances(requests, case_trigger_info, case_config):
     return finder.find_tracked_entity_instances(case_trigger_info)
 
 
-def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_info, case_config):
+def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_info, case_config, attempt=1):
     for attr_id, value_source in case_config.attributes.items():
         set_te_attr(tracked_entity, attr_id, value_source.get_value(case_trigger_info))
     enrollments = get_enrollments(case_trigger_info, case_config)
@@ -123,15 +123,16 @@ def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_
     endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances/{tei_id}"
     headers = {
         "Content-type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
+        "If-Match": etag,
     }
-    if not etag.startswith("W/"):  # weak ETags never match
-        headers['If-Match'] = etag
     response = requests.put(endpoint, json=tracked_entity, headers=headers)
-    if response.status_code == 412:  # Precondition failed
-        tei_id = tracked_entity["trackedEntityInstance"]
+    if response.status_code == 412 and attempt <= 3:
+        # Precondition failed: etag does not match. tracked_entity has
+        # been changed since we fetched their details. Try again.
         tracked_entity, etag = get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_info)
-        update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_info, case_config)
+        update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_info, case_config,
+                                       attempt=attempt + 1)
     else:
         response.raise_for_status()
 
