@@ -5,8 +5,9 @@ from unittest import skip
 
 from django.test import SimpleTestCase
 
-from jsonschema import validate, ValidationError
+from jsonschema import validate
 from mock import Mock, patch
+from nose.tools import assert_equal, assert_true
 
 from corehq.motech.requests import Requests
 
@@ -116,11 +117,8 @@ class Dhis2ApiTests(SimpleTestCase):
 
         _assert_status_2xx(response)
         instances = response.json()["trackedEntityInstances"]
-        assert len(instances) > 0
-        try:
-            all(validate(te, te_schema) for te in instances)
-        except ValidationError as err:
-            assert False, f"JSON schema validation failed: {err}"
+        assert_true(instances)
+        all(validate(te, te_schema) for te in instances)
 
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_query(self):
@@ -134,9 +132,11 @@ class Dhis2ApiTests(SimpleTestCase):
 
         _assert_status_2xx(response)
         instances = response.json()["trackedEntityInstances"]
-        assert len(instances) > 0
-        assert all(_is_attr_equal(te, last_name_attr_id, last_name)
-                   for te in instances)
+        assert_true(instances)
+        assert_true(
+            all(_is_attr_equal(te, last_name_attr_id, last_name) for te in instances),
+            "Query results do not match query filter."
+        )
 
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_grid_query(self):
@@ -152,10 +152,7 @@ class Dhis2ApiTests(SimpleTestCase):
 
         _assert_status_2xx(response)
         grid = response.json()
-        try:
-            validate(grid, grid_schema)
-        except ValidationError as err:
-            assert False, f"JSON schema validation failed: {err}"
+        validate(grid, grid_schema)
 
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_create(self):
@@ -175,11 +172,14 @@ class Dhis2ApiTests(SimpleTestCase):
 
         _assert_status_2xx(response)
         result = response.json()
-        assert result["response"]["imported"] == 1
+        assert_equal(result["response"]["imported"], 1)
         tei_id = result["response"]["importSummaries"][0]["reference"]
-        assert re.match(dhis2_id_pattern, tei_id), f'Instance ID "{tei_id}" does not look like a DHIS2 ID'
+        assert_true(
+            re.match(dhis2_id_pattern, tei_id),
+            f'Instance ID "{tei_id}" does not look like a DHIS2 ID',
+        )
         tei_url = result["response"]["importSummaries"][0]["href"]
-        assert tei_url.startswith(base_url)
+        assert_true(tei_url.startswith(base_url))
 
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_update(self):
@@ -214,7 +214,10 @@ def _update_attr(entity, attr_id, value):
 
 
 def _assert_status_2xx(response):
-    assert 200 <= response.status_code < 300, f"Service responded with status code {response.status_code}"
+    assert_true(
+        200 <= response.status_code < 300,
+        f"Service responded with status code {response.status_code}"
+    )
 
 
 @contextmanager
