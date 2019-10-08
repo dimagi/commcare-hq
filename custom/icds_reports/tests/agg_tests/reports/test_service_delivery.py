@@ -41,7 +41,8 @@ class TestServiceDelivery(TestCase):
                     'children_0_3': 143,
                     'gm_0_3': 83,
                     'district_name': 'Data Not Entered',
-                    'home_visits': '0.99 %'
+                    'home_visits': '0.99 %',
+                    'cbe': '0.00 %'
                 },
                 {
                     'state_name': 'st2',
@@ -60,7 +61,8 @@ class TestServiceDelivery(TestCase):
                     'children_0_3': 171,
                     'gm_0_3': 139,
                     'district_name': 'Data Not Entered',
-                    'home_visits': '0.00 %'
+                    'home_visits': '0.00 %',
+                    'cbe': '9.09 %'
                 },
                 {
                     'state_name': 'st7',
@@ -79,7 +81,8 @@ class TestServiceDelivery(TestCase):
                     'children_0_3': 0,
                     'gm_0_3': 0,
                     'district_name': 'Data Not Entered',
-                    'home_visits': '0.00 %'
+                    'home_visits': '0.00 %',
+                    'cbe': '0.00 %'
                 }
             ],
         }
@@ -122,7 +125,8 @@ class TestServiceDelivery(TestCase):
                     'children_0_3': 143,
                     'gm_0_3': 83,
                     'district_name': 'd1',
-                    'home_visits': '0.99 %'
+                    'home_visits': '0.99 %',
+                    'cbe': '0.00 %'
                 }
             ],
         }
