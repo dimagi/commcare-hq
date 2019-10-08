@@ -13,7 +13,6 @@ from casexml.apps.case.exceptions import IllegalCaseId
 from couchforms.models import UnfinishedSubmissionStub
 from couchforms.openrosa_response import ResponseNature
 from couchforms.signals import successful_form_received
-from dimagi.utils.post import tmpfile
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
