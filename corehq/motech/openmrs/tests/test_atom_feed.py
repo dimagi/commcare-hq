@@ -12,6 +12,7 @@ from mock import Mock, patch
 
 import corehq.motech.openmrs.atom_feed
 from corehq.motech.openmrs.atom_feed import (
+    get_encounter_uuid,
     get_patient_uuid,
     get_timestamp,
     import_encounter,
@@ -103,6 +104,29 @@ class GetPatientUuidTests(SimpleTestCase):
         self.assertEqual(patient_uuid, 'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4')
 
 
+class GetEncounterUuidTests(SimpleTestCase):
+
+    def test_bed_assignment(self):
+        element = etree.XML("""<entry>
+          <title>Bed-Assignment</title>
+          <content type="application/vnd.atomfeed+xml">
+            <![CDATA[/openmrs/ws/rest/v1/bedPatientAssignment/fed0d6f9-e76c-4a8e-a10d-c8e98c7d258f?v=custom:(uuid,startDatetime,endDatetime,bed,patient,encounter:(uuid,encounterDatetime,encounterType:(uuid,name),visit:(uuid,startDatetime,visitType)))]]>
+          </content>
+        </entry>""")
+        encounter_uuid = get_encounter_uuid(element)
+        self.assertIsNone(encounter_uuid)
+
+    def test_unknown_entry(self):
+        element = etree.XML("""<entry>
+          <title>UnExPeCtEd</title>
+          <content type="application/vnd.atomfeed+xml">
+            <![CDATA[/openmrs/ws/rest/v1/UNKNOWN/0f54fe40-89af-4412-8dd4-5eaebe8684dc]]>
+          </content>
+        </entry>""")
+        with self.assertRaises(ValueError):
+            get_encounter_uuid(element)
+
+
 class ImportEncounterTest(SimpleTestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
@@ -173,7 +197,6 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             self.assertEqual(kwargs['xmlns'], 'http://commcarehq.org/openmrs-integration')
 
 
-class DocTests(SimpleTestCase):
-    def test_doctests(self):
-        results = doctest.testmod(corehq.motech.openmrs.atom_feed)
-        self.assertEqual(results.failed, 0)
+def test_doctests():
+    results = doctest.testmod(corehq.motech.openmrs.atom_feed)
+    assert results.failed == 0

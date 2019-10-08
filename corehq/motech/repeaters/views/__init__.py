@@ -7,10 +7,13 @@ from .repeat_records import (
 )
 from .repeaters import (
     AddCaseRepeaterView,
+    AddDhis2RepeaterView,
     AddFormRepeaterView,
+    AddOpenmrsRepeaterView,
     AddRepeaterView,
     DomainForwardingOptionsView,
     EditCaseRepeaterView,
+    EditDhis2RepeaterView,
     EditFormRepeaterView,
     EditOpenmrsRepeaterView,
     EditRepeaterView,

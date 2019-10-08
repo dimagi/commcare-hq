@@ -12,7 +12,11 @@ from corehq.apps.tzmigration.timezonemigration import (
 
 from .diffrule import Ignore
 
-load_ignore_rules = memoized(lambda: add_duplicate_rules({
+load_ignore_rules = memoized(lambda: preload_ignore_rules)
+
+# preload_ignore_rules allows CouchSqlDomainMigrator to extend rules for
+# paths specific to a domain to be ignored before the rules are memoized
+preload_ignore_rules = lambda: add_duplicate_rules({
     'XFormInstance*': [
         Ignore(path='_rev', new=MISSING),
         Ignore(path='migrating_blobs_from_couch', new=MISSING),
@@ -117,6 +121,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
 
         Ignore(path=('actions', '[*]')),
 
+        Ignore('diff', 'name', check=is_truncated_255),
         Ignore('diff', check=has_date_values),
         ignore_renamed('hq_user_id', 'external_id'),
         Ignore(path=('xform_ids', '[*]'), check=xform_ids_order),
@@ -156,7 +161,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         ignore_renamed('attachment_size', 'content_length'),
         ignore_renamed('identifier', 'name'),
     ]
-}))
+})
 
 
 def filter_form_diffs(couch_form, sql_form, diffs):
@@ -399,3 +404,7 @@ def is_supply_point(old_obj, new_obj, rule, diff):
 def is_case_without_create_action(old_obj, new_obj, rule, diff):
     from casexml.apps.case.const import CASE_ACTION_CREATE as CREATE
     return all(a.get("action_type") != CREATE for a in old_obj.get("actions", []))
+
+
+def is_truncated_255(old_obj, new_obj, rule, diff):
+    return len(diff.old_value) > 255 and diff.old_value[:255] == diff.new_value

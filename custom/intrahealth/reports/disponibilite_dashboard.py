@@ -1,5 +1,6 @@
 import datetime
 
+from memoized import memoized
 from django.utils.functional import cached_property
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
@@ -16,7 +17,7 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     name = "Disponibilité par Produit"
-    slug = 'disponibilite_par_produit__report'
+    slug = 'disponibilite_par_produit_report'
     comment = 'Taux de disponibilité de la gamme'
     default_rows = 10
     exportable = True
@@ -144,6 +145,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         return context
 
     @property
+    @memoized
     def clean_rows(self):
         return VisiteDeLOperateurPerProductV2DataSource(config=self.config).rows
 
@@ -161,6 +163,15 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                 products = sorted(stock['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations:
                     length = len(locations_with_products[location_name])
+                    product_ids = [p['product_id'] for p in locations_with_products[location_name]]
+                    for product in products:
+                        if product['product_id'] not in product_ids:
+                            locations_with_products[location_name].append({
+                                'product_name': product['product_name'],
+                                'product_id': product['product_id'],
+                                'in_ppses': product['in_ppses'],
+                                'all_ppses': product['all_ppses'],
+                            })
                     for r in range(0, length):
                         product_for_location = locations_with_products[location_name][r]
                         for product in products:
@@ -289,7 +300,8 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
     @property
     def charts(self):
-        chart = PNAMultiBarChart(None, Axis('Product'), Axis('Percent', format='.2f'))
+        x_axis = 'Product' if self.selected_location_type != 'PPS' else 'Produits disponibles'
+        chart = PNAMultiBarChart(None, Axis(x_axis), Axis('Percent', format='.2f'))
         chart.height = 550
         chart.marginBottom = 150
         chart.forceY = [0, 100]
@@ -359,18 +371,20 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                         availability_for_ppses[location_id]['in_ppses'] += in_ppses
                         availability_for_ppses[location_id]['all_ppses'] += all_ppses
 
+                in_ppses = all_ppses = 0
                 for location_id, location_info in availability_for_ppses.items():
-                    location_name = location_info['location_name']
-                    in_ppses = location_info['in_ppses']
-                    all_ppses = location_info['all_ppses']
-                    percent = (in_ppses / float(all_ppses)) * 100 if all_ppses != 0 else 0
-                    stocks_to_return.append([
-                        location_name,
-                        {
-                            'html': '{}'.format(percent),
-                            'sort_key': percent
-                        }
-                    ])
+                    in_ppses += location_info['in_ppses']
+                    all_ppses += location_info['all_ppses']
+
+                location_name = 'Synthese'
+                percent = (in_ppses / float(all_ppses)) * 100 if all_ppses != 0 else 0
+                stocks_to_return.append([
+                    location_name,
+                    {
+                        'html': '{}'.format(percent),
+                        'sort_key': percent
+                    }
+                ])
 
             return stocks_to_return
 
@@ -407,5 +421,5 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         config['enddate'] = enddate
         config['product_program'] = self.request.GET.get('product_program')
         config['product_product'] = self.request.GET.get('product_product')
-        config['selected_location'] = self.request.GET.get('location_id')
+        config['location_id'] = self.request.GET.get('location_id')
         return config

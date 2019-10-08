@@ -26,6 +26,7 @@ hqDefine('openmrs/js/openmrs_importers', [
         self.location_id = ko.observable(properties["location_id"]);
         self.import_frequency = ko.observable(properties["import_frequency"]);
         self.log_level = ko.observable(properties["log_level"]);
+        self.timezone = ko.observable(properties["timezone"]);
         self.report_uuid = ko.observable(properties["report_uuid"]);
         self.report_params = ko.observable(properties["report_params"]);
         self.case_type = ko.observable(properties["case_type"]);
@@ -54,6 +55,7 @@ hqDefine('openmrs/js/openmrs_importers', [
                 "location_id": self.location_id(),
                 "import_frequency": self.import_frequency(),
                 "log_level": self.log_level(),
+                "timezone": self.timezone(),
                 "report_uuid": self.report_uuid(),
                 "report_params": self.report_params(),
                 "case_type": self.case_type(),

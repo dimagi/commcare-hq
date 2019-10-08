@@ -1,6 +1,7 @@
 import datetime
 
 from django.utils.functional import cached_property
+from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
@@ -120,6 +121,7 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         return headers
 
     @property
+    @memoized
     def clean_rows(self):
         return ConsommationPerProductData(config=self.config).rows
 
@@ -158,6 +160,14 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
                 products = sorted(consumption['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations:
                     length = len(locations_with_products[location_name])
+                    product_ids = [p['product_id'] for p in locations_with_products[location_name]]
+                    for product in products:
+                        if product['product_id'] not in product_ids:
+                            locations_with_products[location_name].append({
+                                'product_name': product['product_name'],
+                                'product_id': product['product_id'],
+                                'actual_consumption': product['actual_consumption'],
+                            })
                     for r in range(0, length):
                         product_for_location = locations_with_products[location_name][r]
                         for product in products:
@@ -295,7 +305,7 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
 
             return [
                 {
-                    "key": 'Taux de rupture par produit au niveau national',
+                    "key": 'Consommation par produit au niveau national',
                     'values': com
                 },
             ]
@@ -320,5 +330,5 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         config['enddate'] = enddate
         config['product_program'] = self.request.GET.get('product_program')
         config['product_product'] = self.request.GET.get('product_product')
-        config['selected_location'] = self.request.GET.get('location_id')
+        config['location_id'] = self.request.GET.get('location_id')
         return config

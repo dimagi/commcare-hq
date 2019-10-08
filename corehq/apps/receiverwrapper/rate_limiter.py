@@ -1,11 +1,14 @@
-from corehq.project_limits.rate_limiter import RateDefinition, RateLimiter, \
-    PerUserRateDefinition
+from django.conf import settings
 
+from corehq.project_limits.rate_limiter import (
+    PerUserRateDefinition,
+    RateDefinition,
+    RateLimiter,
+)
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
-from corehq.util.decorators import silence_and_report_error, enterprise_skip
+from corehq.util.decorators import run_only_when, silence_and_report_error
 from corehq.util.timer import TimingContext
-
 
 # Danny promised in an Aug 2019 email not to enforce limits that were lower than this.
 # If we as a team end up regretting this decision, we'll have to reset expectations
@@ -19,6 +22,7 @@ rates_promised_not_to_go_lower_than = RateDefinition(
 )
 
 floor_for_small_domain = RateDefinition(
+    per_week=100,
     per_day=50,
     per_hour=30,
     per_minute=10,
@@ -27,7 +31,7 @@ floor_for_small_domain = RateDefinition(
 
 test_rates = PerUserRateDefinition(
     per_user_rate_definition=rates_promised_not_to_go_lower_than.times(2.0),
-    min_rate_definition=floor_for_small_domain,
+    constant_rate_definition=floor_for_small_domain,
 )
 
 submission_rate_limiter = RateLimiter(
@@ -36,7 +40,10 @@ submission_rate_limiter = RateLimiter(
 )
 
 
-@enterprise_skip
+SHOULD_RATE_LIMIT_SUBMISSIONS = not settings.ENTERPRISE_MODE and not settings.UNIT_TESTING
+
+
+@run_only_when(SHOULD_RATE_LIMIT_SUBMISSIONS)
 @silence_and_report_error("Exception raised in the submission rate limiter",
                           'commcare.xform_submissions.rate_limiter_errors')
 def rate_limit_submission_by_delaying(domain, max_wait):

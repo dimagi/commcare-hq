@@ -1,8 +1,8 @@
+import csv
 import io
 import logging
 import os
 import re
-import pytz
 import tempfile
 import zipfile
 from collections import namedtuple
@@ -13,15 +13,14 @@ from django.conf import settings
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 
-import csv
+import pytz
 from celery import chain
 from celery.schedules import crontab
 from celery.task import periodic_task, task
-from dateutil.relativedelta import relativedelta
 from dateutil import parser as date_parser
+from dateutil.relativedelta import relativedelta
 from gevent.pool import Pool
 
-from corehq.util.celery_utils import periodic_task_on_envs
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.chunked import chunked
@@ -29,24 +28,19 @@ from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
-from corehq.apps.data_pipeline_audit.dbacessors import (
-    get_es_counts_by_doc_type,
-    get_primary_db_case_counts,
-    get_primary_db_form_counts,
-)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_id_username_pairs_by_domain,
 )
-from corehq.const import SERVER_DATE_FORMAT, ONE_DAY
+from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.sql_db.connections import get_icds_ucr_db_alias, get_icds_ucr_citus_db_alias, \
-    get_icds_ucr_db_alias_or_citus
-from corehq.sql_db.routers import db_for_read_write, force_citus_engine, forced_citus
-from corehq.util.datadog.utils import case_load_counter, create_datadog_event
+from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
+from corehq.sql_db.routers import db_for_read_write, force_citus_engine
+from corehq.util.celery_utils import periodic_task_on_envs
+from corehq.util.datadog.utils import case_load_counter
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -54,18 +48,17 @@ from corehq.util.view_utils import reverse
 from custom.icds_reports.const import (
     AWC_INFRASTRUCTURE_EXPORT,
     AWW_INCENTIVE_REPORT,
-    GROWTH_MONITORING_LIST_EXPORT,
     CHILDREN_EXPORT,
     DASHBOARD_DOMAIN,
     DEMOGRAPHICS_EXPORT,
+    GROWTH_MONITORING_LIST_EXPORT,
+    INDIA_TIMEZONE,
     LS_REPORT_EXPORT,
     PREGNANT_WOMEN_EXPORT,
     SYSTEM_USAGE_EXPORT,
+    THR_REPORT_EXPORT,
     THREE_MONTHS,
-    INDIA_TIMEZONE,
-    THR_REPORT_EXPORT
 )
-from custom.icds_reports.experiment import DashboardQueryExperiment
 from custom.icds_reports.models import (
     AggAwc,
     AggCcsRecord,
@@ -88,24 +81,25 @@ from custom.icds_reports.models import (
     CcsRecordMonthly,
     ChildHealthMonthly,
     ICDSAuditEntryRecord,
+    IcdsMonths,
     UcrTableNameMapping,
-    IcdsMonths)
+)
 from custom.icds_reports.models.aggregate import (
     AggAwcDaily,
     AggregateBeneficiaryForm,
     AggregateInactiveAWW,
     AggregateLsAWCVisitForm,
     AggregateLsVhndForm,
+    AggregateTHRForm,
     DailyAttendance,
-    AggregateTHRForm
 )
 from custom.icds_reports.models.helper import IcdsFile
-from custom.icds_reports.models.util import AggregationRecord
-from custom.icds_reports.reports.disha import build_dumps_for_month, DishaDump
+from custom.icds_reports.reports.disha import DishaDump, build_dumps_for_month
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.issnip_monthly_register import (
     ISSNIPMonthlyReport,
 )
+from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
 from custom.icds_reports.sqldata.exports.awc_infrastructure import (
     AWCInfrastructureExport,
 )
@@ -115,21 +109,18 @@ from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
 )
-from custom.icds_reports.reports.take_home_ration import (
-    TakeHomeRationExport
-)
 from custom.icds_reports.sqldata.exports.pregnant_women import (
     PregnantWomenExport,
 )
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.utils import (
     create_aww_performance_excel_file,
+    create_child_report_excel_file,
     create_excel_file,
     create_excel_file_in_openpyxl,
     create_lady_supervisor_excel_file,
-    create_thr_report_excel_file,
-    create_child_report_excel_file,
     create_pdf_file,
+    create_thr_report_excel_file,
     get_performance_report_blob_key,
     icds_pre_release_features,
     track_time,
@@ -187,22 +178,14 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
 
         start_time = datetime.now(pytz.utc)
         date = date or start_time.date()
-        monthly_dates = []
+        monthly_dates = _get_monthly_dates(date, intervals)
 
         # probably this should be run one time, for now I leave this in aggregations script (not a big cost)
         # but remove issues when someone add new table to mapping, also we don't need to add new rows manually
         # on production servers
         _update_ucr_table_mapping()
 
-        first_day_of_month = date.replace(day=1)
-        for interval in range(intervals - 1, 0, -1):
-            # calculate the last day of the previous months to send to the aggregation script
-            first_day_next_month = first_day_of_month - relativedelta(months=interval - 1)
-            monthly_dates.append(first_day_next_month - relativedelta(days=1))
-
-        monthly_dates.append(date)
-
-        db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
+        db_alias = get_icds_ucr_citus_db_alias()
         if db_alias:
             with connections[db_alias].cursor() as cursor:
                 _create_aggregate_functions(cursor)
@@ -223,8 +206,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                     for state_id in state_ids
                 ]
                 stage_1_tasks.extend([
-                    icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_df_forms', force_citus=force_citus)
-                    for state_id in state_ids
+                    icds_aggregation_task.si(
+                        date=calculation_date, func_name='_aggregate_df_forms', force_citus=force_citus
+                    )
                 ])
                 stage_1_tasks.extend([
                     icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_cf_forms', force_citus=force_citus)
@@ -319,15 +303,31 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 for state_id in state_ids:
                     create_mbt_for_month.delay(state_id, first_of_month_string, force_citus)
             chain(
-                icds_aggregation_task.si(date=(date-timedelta(days=2)).strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
-                                         force_citus=force_citus),
-                icds_aggregation_task.si(date=(date-timedelta(days=1)).strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
-                                         force_citus=force_citus),
                 icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily',
                                          force_citus=force_citus),
                 email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), aggregation_start_time=start_time,
                                        force_citus=force_citus)
             ).delay()
+
+
+def _get_monthly_dates(start_date, total_intervals):
+    """
+    Gets a list of dates for the aggregation. Which all take the form of the last of the month.
+    :param start_date: The date to start from
+    :param total_intervals: The number of intervals (including start_date).
+    :return: A list of dates containing the last day of the month before `start_date` and the specified
+    number of intervals (including `start_date`).
+    """
+    monthly_dates = []
+
+    first_day_of_month = start_date.replace(day=1)
+    for interval in range(total_intervals - 1, 0, -1):
+        # calculate the last day of the previous months to send to the aggregation script
+        first_day_next_month = first_day_of_month - relativedelta(months=interval - 1)
+        monthly_dates.append(first_day_next_month - relativedelta(days=1))
+
+    monthly_dates.append(start_date)
+    return monthly_dates
 
 
 def _create_aggregate_functions(cursor):
@@ -374,6 +374,7 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             '_agg_ls_table': _agg_ls_table,
             '_update_months_table': _update_months_table,
             '_daily_attendance_table': _daily_attendance_table,
+            '_aggregate_df_forms': _aggregate_df_forms,
             '_agg_child_health_table': _agg_child_health_table,
             '_ccs_record_monthly_table': _ccs_record_monthly_table,
             '_agg_ccs_record_table': _agg_ccs_record_table,
@@ -381,7 +382,7 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             'aggregate_awc_daily': aggregate_awc_daily,
         }[func_name]
 
-        db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
+        db_alias = get_icds_ucr_citus_db_alias()
         if not db_alias:
             return
 
@@ -409,7 +410,6 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
     with force_citus_engine(force_citus):
         func = {
             '_aggregate_gm_forms': _aggregate_gm_forms,
-            '_aggregate_df_forms': _aggregate_df_forms,
             '_aggregate_cf_forms': _aggregate_cf_forms,
             '_aggregate_ccs_cf_forms': _aggregate_ccs_cf_forms,
             '_aggregate_child_health_thr_forms': _aggregate_child_health_thr_forms,
@@ -426,7 +426,7 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
             '_agg_thr_table': _agg_thr_table
         }[func_name]
 
-        db_alias = get_icds_ucr_db_alias_or_citus(force_citus)
+        db_alias = get_icds_ucr_citus_db_alias()
         if not db_alias:
             return
 
@@ -467,8 +467,8 @@ def _aggregate_gm_forms(state_id, day):
 
 
 @track_time
-def _aggregate_df_forms(state_id, day):
-    AggregateChildHealthDailyFeedingForms.aggregate(state_id, day)
+def _aggregate_df_forms(day):
+    AggregateChildHealthDailyFeedingForms.aggregate(force_to_date(day))
 
 
 @track_time
@@ -525,8 +525,14 @@ def _run_custom_sql_script(commands, day=None, db_alias=None):
 
 @track_time
 def aggregate_awc_daily(day):
-    with transaction.atomic(using=db_for_read_write(AggAwcDaily)):
-        AggAwcDaily.aggregate(force_to_date(day))
+
+    agg_daily_dates = [force_to_date(day) - timedelta(days=2),
+                       force_to_date(day) - timedelta(days=1),
+                       force_to_date(day)]
+
+    for daily_date in agg_daily_dates:
+        with transaction.atomic(using=db_for_read_write(AggAwcDaily)):
+            AggAwcDaily.aggregate(daily_date)
 
 
 @track_time
@@ -542,7 +548,6 @@ def get_cursor(model, write=True):
 
 @track_time
 def _child_health_monthly_table(state_ids, day):
-    force_citus = forced_citus()
     helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
 
     celery_task_logger.info("Creating temporary table")
@@ -552,7 +557,7 @@ def _child_health_monthly_table(state_ids, day):
 
     # https://github.com/celery/celery/issues/4274
     sub_aggregations = [
-        _child_health_helper.delay(query=query, params=params, force_citus=force_citus)
+        _child_health_helper.delay(query=query, params=params, force_citus=True)
         for query, params in helper.pre_aggregation_queries()
     ]
     for sub_aggregation in sub_aggregations:
@@ -589,12 +594,7 @@ def _daily_attendance_table(day):
 
 @track_time
 def _agg_child_health_table(day):
-    db_alias = db_for_read_write(AggChildHealth)
-    with transaction.atomic(using=db_alias):
-        _run_custom_sql_script([
-            "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
-        ], day, db_alias=db_alias)
-        AggChildHealth.aggregate(force_to_date(day))
+    AggChildHealth.aggregate(force_to_date(day))
 
 
 @track_time
@@ -1235,6 +1235,12 @@ def build_incentive_files(location, month, file_format, aggregation_level, state
         create_excel_file(excel_data, data_type, file_format, blob_key, timeout=None)
 
 
+def create_all_mbt(month, state_ids):
+    first_of_month = month.strftime('%Y-%m-01')
+    for state_id in state_ids:
+        create_mbt_for_month.delay(state_id, first_of_month)
+
+
 @task(queue='icds_dashboard_reports_queue')
 def create_mbt_for_month(state_id, month, force_citus=False):
     with force_citus_engine(force_citus):
@@ -1253,30 +1259,6 @@ def create_mbt_for_month(state_id, month, force_citus=False):
                 icds_file.save()
 
 
-@task(queue='dashboard_comparison_queue')
-def run_citus_experiment_raw_sql(parameterized_sql, params, data_source="Unknown"):
-    experiment_context = {
-        "data_source": data_source,
-        "sql_query": parameterized_sql,
-        "params": params,
-    }
-    experiment = DashboardQueryExperiment(name="Dashboard Query Experiment", context=experiment_context)
-    with experiment.control() as control:
-        db_alias = get_icds_ucr_db_alias()
-        with connections[db_alias].cursor() as cursor:
-            cursor.execute(parameterized_sql, params)
-            control.record(_dictfetchall(cursor))
-
-    with experiment.candidate() as candidate:
-        db_alias = get_icds_ucr_citus_db_alias()
-        with connections[db_alias].cursor() as cursor:
-            cursor.execute(parameterized_sql, params)
-            candidate.record(_dictfetchall(cursor))
-
-    objects = experiment.run()
-    return objects
-
-
 def _dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     columns = [col[0] for col in cursor.description]
@@ -1289,7 +1271,7 @@ def _dictfetchall(cursor):
 def setup_aggregation(agg_date):
     _update_ucr_table_mapping()
 
-    db_alias = get_icds_ucr_db_alias_or_citus(False)
+    db_alias = get_icds_ucr_citus_db_alias()
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)

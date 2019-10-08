@@ -13,9 +13,12 @@ def download_multimedia_paths_rows(app, only_missing=False):
     for ref in app.all_media():
         paths[ref.path].append(ref)
 
+    module_index_by_unique_id = {m.unique_id: m.id for m in app.get_modules()}
+
     def _readable_ref(ref):
-        readable = _("Menu {index}: {name}").format(index=ref.module_id, name=ref.get_module_name())
-        if ref.form_id is not None:
+        module_index = module_index_by_unique_id[ref.module_unique_id]
+        readable = _("Menu {index}: {name}").format(index=module_index, name=ref.get_module_name())
+        if ref.form_unique_id is not None:
             readable += _(" > Form {index}: {name}").format(index=ref.form_order, name=ref.get_form_name())
         return readable
 

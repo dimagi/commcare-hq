@@ -1437,11 +1437,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def group_ids(self):
-        from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
-        groups = []
-        for g in self.request.GET.getlist('group'):
-            groups.extend(g.split(CHOICE_DELIMITER))
-        return [group_id for group_id in groups if group_id and group_id != '_all']
+        return [group_id for group_id in self.request.GET.getlist('group')
+                if group_id and group_id != '_all']
 
     @property
     @memoized

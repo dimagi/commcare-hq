@@ -137,3 +137,9 @@ REFERENCE_TABLES = [
     'awc_location',
     'icds_months'
 ]
+
+AADHAR_SEEDED_BENEFICIARIES = 'Aadhaar-seeded Beneficiaries'
+CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Children enrolled for Anganwadi Services'
+PREGNANT_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Pregnant women enrolled for Anganwadi Services'
+LACTATING_WOMEN_ENROLLED_FOR_ANGANWADI_SERVICES = 'Lactating women enrolled for Anganwadi Services'
+ADOLESCENT_GIRLS_ENROLLED_FOR_ANGANWADI_SERVICES = 'Adolescent girls enrolled for Anganwadi Services'

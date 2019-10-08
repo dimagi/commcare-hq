@@ -250,6 +250,8 @@ def configure_sentry(base_dir, server_env, dsn):
     ignore_logger('quickcache')
     ignore_logger('django.template')
     ignore_logger('pillowtop')
+    ignore_logger('restore')
+    ignore_logger('kafka.conn')
 
     sentry_sdk.init(
         dsn,

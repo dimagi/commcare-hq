@@ -70,9 +70,9 @@ class DetailContributor(SectionContributor):
                             expected = id_strings.detail(module, detail_type)
                             if not id_strings.is_custom_app_string(d.id) and d.id != expected:
                                 raise SuiteValidationError(
-                                    "Module {} uses custom case list xml, the "
+                                    "Menu {}, \"{}\", uses custom case list xml. The "
                                     "specified detail ID is '{}', expected '{}'"
-                                    .format(module.id, d.id, expected)
+                                    .format(module.id, module.default_name(), d.id, expected)
                                 )
                             r.append(d)
                         else:

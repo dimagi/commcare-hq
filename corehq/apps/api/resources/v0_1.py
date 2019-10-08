@@ -5,7 +5,7 @@ from tastypie.exceptions import BadRequest
 
 from dimagi.utils.parsing import string_to_boolean
 
-from corehq.apps.api.couch import UserQuerySetAdapter
+from corehq.apps.api.query_adapters import UserQuerySetAdapter
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,

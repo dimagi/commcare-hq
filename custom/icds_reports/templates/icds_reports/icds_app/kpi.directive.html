@@ -20,6 +20,10 @@
                             <div class="number white"><span class="white" ng-bind="(cell.value / (cell.all || 1) * 100) | number:2"></span>%</div>
                             <div class="second_number white">(<span class="white" ng-bind="cell.value | indiaNumbers"></span> / <span  class="white" ng-bind="cell.all | indiaNumbers"></span>)</div>
                         </div>
+                        <div class="kpi-numbers-format" ng-if="cell.format == 'number_and_percent'">
+                            <div class="number white"><span class="white" ng-bind="cell.value | indiaNumbers"></span></div>
+                            <div class="second_number white"><span class="white" ng-bind="(cell.value / (cell.all || 1) * 100) | number:2"></span>%</div>
+                        </div>
                     </div>
                     <div class="kpi-justify-center" ng-if="cell.show_percent === void(0)"
                          ng-class="{'kpi-percent': cell.redirect}">

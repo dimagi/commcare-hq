@@ -119,7 +119,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             submit_ip=couchforms.get_submit_ip(request),
             last_sync_token=couchforms.get_last_sync_token(request),
             openrosa_headers=couchforms.get_openrosa_headers(request),
-            force_logs=bool(request.POST.get('force_logs', False)),
+            force_logs=bool(request.GET.get('force_logs', False)),
         )
 
         try:
@@ -132,13 +132,6 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             )
 
     response = result.response
-
-    if response.status_code == 400:
-        logging.error(
-            'Status code 400 for a form submission. '
-            'Response is: \n{0}\n'
-        )
-
     _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
     return response

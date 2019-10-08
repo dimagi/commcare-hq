@@ -614,9 +614,7 @@ class CaseAlertScheduleInstance(CaseScheduleInstanceMixin, AbstractAlertSchedule
 
     class Meta(AbstractAlertScheduleInstance.Meta):
         db_table = 'scheduling_casealertscheduleinstance'
-        index_together = AbstractAlertScheduleInstance.Meta.index_together + (
-            ('case_id', 'alert_schedule_id'),
-        )
+        index_together = AbstractAlertScheduleInstance.Meta.index_together
         unique_together = (
             ('case_id', 'alert_schedule_id', 'recipient_type', 'recipient_id'),
         )
@@ -635,9 +633,7 @@ class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedSchedule
 
     class Meta(AbstractTimedScheduleInstance.Meta):
         db_table = 'scheduling_casetimedscheduleinstance'
-        index_together = AbstractTimedScheduleInstance.Meta.index_together + (
-            ('case_id', 'timed_schedule_id'),
-        )
+        index_together = AbstractTimedScheduleInstance.Meta.index_together
         unique_together = (
             ('case_id', 'timed_schedule_id', 'recipient_type', 'recipient_id'),
         )

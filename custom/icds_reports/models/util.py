@@ -41,13 +41,14 @@ class ICDSAuditEntryRecord(models.Model):
     get_data = JSONField(default=dict)
     session_key = models.CharField(max_length=32)
     time_of_use = models.DateTimeField(auto_now_add=True)
+    response_code = models.IntegerField(null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
         db_table = 'icds_audit_entry_record'
 
     @classmethod
-    def create_entry(cls, request, couch_user=None, is_login_page=False):
+    def create_entry(cls, request, response, couch_user=None, is_login_page=False):
         couch_user = request.couch_user if couch_user is None else couch_user
         record = cls(
             username=couch_user.username,
@@ -57,35 +58,10 @@ class ICDSAuditEntryRecord(models.Model):
             get_data=request.GET,
             post_data=request.POST if not is_login_page else {},
             session_key=request.session.session_key,
+            response_code=response.status_code if response else None
         )
         record.save()
         return record.id
-
-
-class CitusDashboardException(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
-    data_source = models.TextField()
-    context = JSONField()
-    exception = models.TextField()
-    notes = models.TextField(blank=True)
-
-
-class CitusDashboardDiff(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
-    data_source = models.TextField()
-    context = JSONField()
-    control = JSONField()
-    candidate = JSONField()
-    diff = JSONField()
-    notes = models.TextField(blank=True)
-
-
-class CitusDashboardTiming(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
-    data_source = models.TextField()
-    context = JSONField()
-    control_duration = models.DecimalField(max_digits=10, decimal_places=3)
-    candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)
 
 
 class AggregationRecord(models.Model):

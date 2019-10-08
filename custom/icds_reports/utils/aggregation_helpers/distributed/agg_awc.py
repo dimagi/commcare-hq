@@ -55,7 +55,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
             is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe,
-            thr_distribution_image_count
+            thr_distribution_image_count, num_launched_awcs, num_launched_supervisors, num_launched_blocks,
+            num_launched_districts, num_launched_states
         )
         (
             SELECT
@@ -72,9 +73,14 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
             CASE WHEN
-                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
+                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))> 1
                 THEN 1 ELSE 0 END,
-            thr_v2.thr_distribution_image_count
+            thr_v2.thr_distribution_image_count,
+            0,
+            0,
+            0,
+            0,
+            0
             FROM awc_location_local awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
@@ -121,7 +127,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
     def updates(self):
         yield """
-        CREATE TEMPORARY TABLE "{temp_table}" AS
+        DROP TABLE IF EXISTS "{temp_table}";
+        CREATE UNLOGGED TABLE "{temp_table}" AS
             SELECT
                 awc_id,
                 supervisor_id,
@@ -138,7 +145,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         FROM (
             SELECT * FROM "{temp_table}"
         ) ut
-        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and agg_awc.supervisor_id=ut.supervisor_id
+        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and agg_awc.supervisor_id=ut.supervisor_id;
+        DROP TABLE "{temp_table}";
         """.format(
             tablename=self.tablename,
             daily_attendance='daily_attendance',
@@ -177,7 +185,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_home_visit" AS SELECT
+        DROP TABLE IF EXISTS "tmp_home_visit";
+        CREATE UNLOGGED TABLE "tmp_home_visit" AS SELECT
             ucr.awc_id,
             %(start_date)s AS month,
             SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
@@ -236,14 +245,22 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_household" AS SELECT
+        DROP TABLE IF EXISTS "tmp_household";
+        CREATE UNLOGGED TABLE "tmp_household" AS SELECT
             owner_id,
-            sum(open_count) AS cases_household
+            sum(open_count) AS cases_household,
+            count(*) AS all_cases_household
         FROM "{household_cases}"
         WHERE opened_on<= %(end_date)s
         GROUP BY owner_id;
         UPDATE "{tablename}" agg_awc SET
-           cases_household = ut.cases_household
+           cases_household = ut.cases_household,
+           is_launched = CASE WHEN ut.all_cases_household>0 THEN 'yes' ELSE 'no' END,
+           num_launched_states = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_districts = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_blocks = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_supervisors = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_awcs = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END
         FROM "tmp_household" ut
         WHERE ut.owner_id = agg_awc.awc_id;
         DROP TABLE "tmp_household";
@@ -253,7 +270,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         ), {'end_date': self.month_end}
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_person" AS SELECT
+        DROP TABLE IF EXISTS "tmp_person";
+        CREATE UNLOGGED TABLE "tmp_person" AS SELECT
             awc_id,
             supervisor_id,
             sum({seeking_services}) AS cases_person,
@@ -310,7 +328,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_child" AS SELECT
+        DROP TABLE IF EXISTS "tmp_child";
+        CREATE UNLOGGED TABLE "tmp_child" AS SELECT
             awc_id,
             sum(has_aadhar_id) as child_has_aadhar,
             sum(immunization_in_month) AS num_children_immunized
@@ -331,7 +350,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_ccs" AS SELECT
+        DROP TABLE IF EXISTS "tmp_ccs";
+        CREATE UNLOGGED TABLE "tmp_ccs" AS SELECT
             awc_id,
             sum(anc_in_month) AS num_anc_visits,
             sum(has_aadhar_id) AS ccs_has_aadhar
@@ -352,15 +372,14 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_usage" AS SELECT
+        DROP TABLE IF EXISTS "tmp_usage";
+        CREATE UNLOGGED TABLE "tmp_usage" AS SELECT
             awc_id,
             month,
             sum(pse) AS usage_num_pse,
             sum(gmp) AS usage_num_gmp,
             sum(thr) AS usage_num_thr,
             sum(add_household) AS usage_num_hh_reg,
-            CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched,
-            CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs,
             sum(add_person) AS usage_num_add_person,
             sum(add_pregnancy) AS usage_num_add_pregnancy,
             sum(home_visit) AS usage_num_home_visit,
@@ -384,12 +403,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             usage_num_gmp = ut.usage_num_gmp,
             usage_num_thr = ut.usage_num_thr,
             usage_num_hh_reg = ut.usage_num_hh_reg,
-            is_launched = ut.is_launched,
-            num_launched_states = ut.num_launched_awcs,
-            num_launched_districts = ut.num_launched_awcs,
-            num_launched_blocks = ut.num_launched_awcs,
-            num_launched_supervisors = ut.num_launched_awcs,
-            num_launched_awcs = ut.num_launched_awcs,
             usage_num_add_person = ut.usage_num_add_person,
             usage_num_add_pregnancy = ut.usage_num_add_pregnancy,
             usage_num_home_visit = ut.usage_num_home_visit,
@@ -411,22 +424,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             usage_table=self._ucr_tablename('static-usage_forms'),
         ), {
             'start_date': self.month_start
-        }
-
-        yield """
-        UPDATE "{tablename}" agg_awc SET
-            is_launched = 'yes',
-            num_launched_awcs = 1
-        FROM (
-            SELECT DISTINCT(awc_id)
-            FROM agg_awc
-            WHERE month = %(prev_month)s AND num_launched_awcs > 0 AND aggregation_level=5
-        ) ut
-        WHERE ut.awc_id = agg_awc.awc_id;
-        """.format(
-            tablename=self.tablename
-        ), {
-            'prev_month': self.prev_month
         }
 
         yield """
@@ -490,7 +487,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_awc" AS SELECT
+        DROP TABLE IF EXISTS "tmp_awc";
+        CREATE UNLOGGED TABLE "tmp_awc" AS SELECT
             doc_id as awc_id,
             MAX(state_is_test) as state_is_test,
             MAX(district_is_test) as district_is_test,

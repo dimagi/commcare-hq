@@ -1,6 +1,5 @@
 {% load crispy_forms_tags %}
 
-
 <div id="create-schedule-form" class="col-sm-12">
   {% crispy schedule_form schedule_form.before_content %}
   {% crispy schedule_form.standalone_content_form %}
@@ -11,7 +10,7 @@
         <label class="control-label col-sm-2 col-md-2 col-lg-2"></label>
         <div class="controls col-sm-10 col-md-7 col-lg-5 controls-multiple">
           {% for error in schedule_form.custom_event_formset.non_form_errors %}
-            <div class="alert alert-block alert-danger">
+            <div class="alert alert-danger">
               <strong>{{ error }}</strong>
             </div>
           {% endfor %}

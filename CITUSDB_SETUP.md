@@ -93,7 +93,6 @@ And for ICDS dashboard development add the following:
 ICDS_USE_CITUS = True
 
 REPORTING_DATABASES.update({
-    'icds-ucr': 'icds-ucr',
     'icds-ucr-citus': 'icds-ucr',
 })
 ```
@@ -109,7 +108,7 @@ This ROLE is not set for Travis so that we can skip the expensive test setup.
 
 **CITUS_NODE_NAME**
 
-By defaul when Django creates the test database on the master
+By default when Django creates the test database on the master
 node it will add the worker nodes using the `HOST` and `PORT`.
 In some cases this doesn't work e.g. if you
 are running Django outside of Docker. In this case the
