@@ -9,6 +9,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter, DateRangeFilter
+from custom.intrahealth.reports.utils import change_id_keys_to_names
 from custom.intrahealth.sqldata import VisiteDeLOperateurPerProductV2DataSource
 from dimagi.utils.dates import force_to_date
 
@@ -148,19 +149,6 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
     @memoized
     def clean_rows(self):
         return VisiteDeLOperateurPerProductV2DataSource(config=self.config).rows
-
-    def change_id_keys_to_names(self, dict_with_id_keys):
-        dict_with_name_keys = {}
-        for id, data in dict_with_id_keys.items():
-            try:
-                name = SQLLocation.objects.get(domain=self.config['domain'],
-                                               location_id=id).name
-            except SQLLocation.DoesNotExist:
-                name = id
-
-            dict_with_name_keys[name] = data
-
-        return dict_with_name_keys
     
     def calculate_rows(self):
 
@@ -213,7 +201,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                     for product in products_to_add:
                         locations_with_products[location_id].append(product)
 
-            locations_with_products = self.change_id_keys_to_names(locations_with_products)
+            locations_with_products = change_id_keys_to_names(self.config['domain'], locations_with_products)
 
             for location, products in locations_with_products.items():
                 products_names = [x['product_name'] for x in products]
