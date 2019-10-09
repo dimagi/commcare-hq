@@ -163,7 +163,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             wer_eligible = ut.wer_eligible,
             wer_eligible_0_2 = ut.wer_eligible_0_2,
             wer_weighed_0_2 = ut.wer_weighed_0_2,
-            cases_person_beneficiary_v2 = ut.cases_child_health
+            cases_person_beneficiary_v2 = ut.cases_child_health,
+            thr_eligible_child = thr_eligible,
+            thr_rations_21_plus_distributed_child = rations_21_plus_distributed
         FROM (
             SELECT
                 awc_id,
@@ -173,7 +175,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(nutrition_status_weighed) AS wer_weighed,
                 sum(wer_eligible) AS wer_eligible,
                 sum(CASE WHEN age_tranche in ('0','6','12','24') THEN wer_eligible ELSE 0 END) AS wer_eligible_0_2,
-                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2
+                sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2,
+                sum(thr_eligible) as thr_eligible,
+                sum(rations_21_plus_distributed) as rations_21_plus_distributed
             FROM agg_child_health
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month
         ) ut
@@ -617,6 +621,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),
             ('thr_distribution_image_count',),
+            ('thr_eligible_child',),
+            ('thr_rations_21_plus_distributed_child',),
             ('electricity_awc', 'COALESCE(sum(electricity_awc), 0)'),
             ('infantometer', 'COALESCE(sum(infantometer), 0)'),
             ('stadiometer', 'COALESCE(sum(stadiometer), 0)'),
