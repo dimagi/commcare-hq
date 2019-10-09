@@ -36,10 +36,6 @@ class ValidatePHIDRepeater(BasePHIRepeater):
     payload_generator_classes = (ValidatePHIDPayloadGenerator,)
     friendly_name = _("Validate PHI ID")
 
-    @classmethod
-    def available_for_domain(cls, domain):
-        return toggles.PHI_CAS_INTEGRATION.enabled(domain)
-
     def allowed_to_forward(self, payload):
         return (
             super(ValidatePHIDRepeater, self).allowed_to_forward(payload)
