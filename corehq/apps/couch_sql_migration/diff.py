@@ -12,7 +12,7 @@ from corehq.apps.tzmigration.timezonemigration import (
 
 from .diffrule import Ignore
 
-load_ignore_rules = memoized(lambda: preload_ignore_rules)
+load_ignore_rules = memoized(lambda: preload_ignore_rules())
 
 # preload_ignore_rules allows CouchSqlDomainMigrator to extend rules for
 # paths specific to a domain to be ignored before the rules are memoized
