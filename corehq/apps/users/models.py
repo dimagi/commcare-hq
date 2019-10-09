@@ -6,6 +6,7 @@ from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import override as override_language
@@ -2772,3 +2773,44 @@ class AnonymousCouchUser(object):
 
     def can_view_roles(self):
         return False
+
+
+class AppStatusStaging(models.Model):
+    domain = models.TextField()
+    user_id = models.TextField()
+    app_id = models.TextField()
+    build_id = models.TextField()
+    xform_version = models.IntegerField(null=True)
+    form_meta = JSONField()
+    received_on = models.DateTimeField()
+    modified_on = models.DateTimeField(auto_now=True)
+
+    @classmethod
+    def add_submission(cls, domain, user_id, app_id, build_id, version, metadata, received_on):
+        obj, created = cls.objects.get_or_create(
+            domain=domain, user_id=user_id, app_id=app_id,
+            defaults={
+                'build_id': build_id,
+                'xform_version': version,
+                'form_meta': metadata,
+                'received_on': received_on,
+            }
+        )
+
+        if created:
+            return
+
+        save = False
+
+        if received_on - obj.received_on > settings.USER_REPORTING_METADATA_UPDATE_FREQUENCY:
+            obj.received_on = received_on
+            save = True
+        if build_id != obj.build_id:
+            obj.build_id = build_id
+            save = True
+
+        if save:
+            obj.save()
+
+    class Meta(object):
+        unique_together = ('domain', 'user_id', 'app_id')
