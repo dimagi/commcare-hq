@@ -1192,13 +1192,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
             ', '.join(self.dependent_case_ids_on_phone)))
         _get_logger().debug('index tree after update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree after update: {}'.format(self.extension_index_tree))
-        if made_changes or case_list:
+        if made_changes:
             try:
-                if made_changes:
-                    _get_logger().debug('made changes, saving.')
-                    self.last_submitted = datetime.utcnow()
-                    self.rev_before_last_submitted = self._rev
-                    self.save()
+                _get_logger().debug('made changes, saving.')
+                self.last_submitted = datetime.utcnow()
+                self.rev_before_last_submitted = self._rev
+                self.save()
             except ResourceConflict:
                 logging.exception('doc update conflict saving sync log {id}'.format(
                     id=self._id,
