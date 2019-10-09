@@ -9,6 +9,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter, DateRangeFilter
+from custom.intrahealth.reports.utils import change_id_keys_to_names
 from custom.intrahealth.sqldata import VisiteDeLOperateurPerProductV2DataSource
 from dimagi.utils.dates import force_to_date
 
