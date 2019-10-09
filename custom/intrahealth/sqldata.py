@@ -7,16 +7,14 @@ from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, Coun
     MonthColumn
 from collections import defaultdict
 
-from corehq.apps.export.models.new import DataFile
 from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.products.models import SQLProduct
-
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
     TableDataFormat, calculate_total_row
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-from corehq.blobs.models import BlobMeta
+
 from custom.intrahealth import PRODUCT_NAMES as INIT_PRODUCT_NAMES
 from custom.intrahealth import PRODUCT_MAPPING
 from custom.intrahealth.report_calcs import _locations_per_type

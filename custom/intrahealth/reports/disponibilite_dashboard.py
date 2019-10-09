@@ -149,7 +149,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
     @memoized
     def clean_rows(self):
         return VisiteDeLOperateurPerProductV2DataSource(config=self.config).rows
-    
+
     def calculate_rows(self):
 
         def data_to_rows(stocks_list):

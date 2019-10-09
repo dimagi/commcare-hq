@@ -3,14 +3,11 @@ import datetime
 from django.utils.functional import cached_property
 from memoized import memoized
 
-from corehq.apps import locations
-from corehq.apps.export.models.new import DataFile
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
-from corehq.blobs.models import BlobMeta
 from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter, DateRangeFilter
 from custom.intrahealth.reports.utils import change_id_keys_to_names
 from custom.intrahealth.sqldata import TauxDeRuptureRateData
@@ -165,7 +162,6 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                 location_id = stock['location_id']
                 products = sorted(stock['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations:
-                    
                     length = len(locations_with_products[location_id])
                     product_ids = [p['product_id'] for p in locations_with_products[location_id]]
                     for product in products:

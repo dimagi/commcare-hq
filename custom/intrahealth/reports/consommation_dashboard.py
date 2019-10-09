@@ -194,7 +194,7 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
                         locations_with_products[location_id].append(product)
 
             locations_with_products = change_id_keys_to_names(self.config['domain'], locations_with_products)
-            
+
             for location, products in locations_with_products.items():
                 products_names = [x['product_name'] for x in products]
                 for product_name in all_products:
