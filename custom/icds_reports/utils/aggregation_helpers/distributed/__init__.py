@@ -4,6 +4,7 @@ from .aww_incentive import AwwIncentiveAggregationDistributedHelper
 from .awc_location import LocationAggregationDistributedHelper
 from .agg_ccs_record import AggCcsRecordAggregationDistributedHelper
 from .agg_child_health import AggChildHealthAggregationDistributedHelper
+from .agg_ls_data import AggLsHelper
 from .birth_preparedness_forms import BirthPreparednessFormsAggregationDistributedHelper
 from .ccs_record_monthly import CcsRecordMonthlyAggregationDistributedHelper
 from .child_health_monthly import ChildHealthMonthlyAggregationDistributedHelper
@@ -29,6 +30,7 @@ __all__ = (
     'AggAwcDailyAggregationDistributedHelper',
     'AggChildHealthAggregationDistributedHelper',
     'AggCcsRecordAggregationDistributedHelper',
+    'AggLsHelper',
     'AwcMbtDistributedHelper',
     'AwwIncentiveAggregationDistributedHelper',
     'BirthPreparednessFormsAggregationDistributedHelper',

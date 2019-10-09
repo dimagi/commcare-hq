@@ -27,6 +27,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDistributedHelper,
     AggCcsRecordAggregationDistributedHelper,
     AggChildHealthAggregationDistributedHelper,
+    AggLsHelper,
     AwwIncentiveAggregationDistributedHelper,
     BirthPreparednessFormsAggregationDistributedHelper,
     CcsRecordMonthlyAggregationDistributedHelper,
@@ -49,7 +50,6 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     THRFormV2AggDistributedHelper,
 )
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
-    AggLsHelper,
     AwcInfrastructureAggregationHelper,
 )
 
