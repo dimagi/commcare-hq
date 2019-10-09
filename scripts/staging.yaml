@@ -56,7 +56,6 @@ branches:
   - jls/turn-off-cdn-for-requirejs # Jenny Sept 16
   - nh/dhis2/te  # Norman Oct 2
   - bmb/odata-permissions  # Biyeun Oct 4
-  - nh/omrs/drop_loc_type  # Norman Oct 9
   - MC/SL-229  # Norman Oct 9
   - bmb/odata-release  # Biyeun Oct 9
   - bmb/new-plans  # Biyeun Oct 9
