@@ -1,7 +1,7 @@
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from django.core.management import BaseCommand
 
-from casexml.apps.phone.models import SyncLogSQL, SimplifiedSyncLog, LOG_FORMAT_SIMPLIFY, \
+from casexml.apps.phone.models import SyncLogSQL, LOG_FORMAT_SIMPLIFIED, \
     properly_wrap_sync_log
 
 
@@ -20,9 +20,10 @@ class Command(BaseCommand):
         synclogs_sql = SyncLogSQL.objects.filter(
             user_id=user_id,
             date=date,
-            log_format=LOG_FORMAT_SIMPLIFY
+            log_format=LOG_FORMAT_SIMPLIFIED
         )
         for synclog in synclogs_sql:
             doc = properly_wrap_sync_log(synclog.doc)
             doc.case_ids_on_phone = {'broken to force 412'}
+            synclog.doc = doc.to_json()
         bulk_update_helper(synclogs_sql)
