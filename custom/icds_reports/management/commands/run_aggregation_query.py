@@ -47,6 +47,7 @@ NORMAL_TASKS = {
     'aggregate_child_health_thr_forms': _aggregate_child_health_thr_forms,
     'aggregate_ccs_record_thr_forms': _aggregate_ccs_record_thr_forms,
     'aggregate_cf_forms': _aggregate_cf_forms,
+    'aggregate_gm_forms': _aggregate_gm_forms,
 }
 
 
