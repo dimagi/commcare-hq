@@ -156,7 +156,6 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
         return {
             'create_form': self.create_form,
             'search_form': SearchManageReleasesByAppProfileForm(self.request, self.domain),
-            'manage_releases_by_app_profile_form': self.form,
             'app_releases_by_app_profile': app_releases_by_app_profile,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
             'initial_app_build_profile_details': self._get_initial_app_build_profile_details(
