@@ -196,7 +196,7 @@
       </p>
     </div>
   {% endif %}
-  {% if request|ui_notify_enabled:"BI_PREVIEW_UPDATE" and request|feature_preview_enabled:"BI_INTEGRATION_PREVIEW" %}
+  {% if request|ui_notify_enabled:"BI_PREVIEW_UPDATE" and user_can_view_odata_feed %}
     <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
          style="position: absolute; width: 200px;"
          data-target="#ProjectDataTab"

@@ -16,6 +16,7 @@ from django.views.decorators.http import require_GET, require_POST
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from couchexport.models import Format
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
@@ -71,8 +72,7 @@ from corehq.apps.users.permissions import (
     FORM_EXPORT_PERMISSION,
     has_permission_to_view_report,
 )
-from corehq.feature_previews import BI_INTEGRATION_PREVIEW
-from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
 
@@ -477,11 +477,12 @@ class BaseExportListView(BaseProjectDataView):
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
         for use in third-party data analysis tools.
     ''')
+    is_odata = False
 
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         self.permissions = ExportsPermissionsManager(self.form_or_case, request.domain, request.couch_user)
-        self.permissions.access_list_exports_or_404(is_deid=self.is_deid)
+        self.permissions.access_list_exports_or_404(is_deid=self.is_deid, is_odata=self.is_odata)
 
         return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 
@@ -494,6 +495,7 @@ class BaseExportListView(BaseProjectDataView):
             'allow_bulk_export': self.allow_bulk_export,
             'has_edit_permissions': self.permissions.has_edit_permissions,
             'is_deid': self.is_deid,
+            'is_odata': self.is_odata,
             "export_type_caps": _("Export"),
             "export_type": _("export"),
             "export_type_caps_plural": _("Exports"),
@@ -526,7 +528,10 @@ def _get_task_status_json(export_instance_id):
 @location_safe
 def get_exports_page(request, domain):
     permissions = ExportsPermissionsManager(request.GET.get('model_type'), domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=json.loads(request.GET.get('is_deid')))
+    permissions.access_list_exports_or_404(
+        is_deid=json.loads(request.GET.get('is_deid')),
+        is_odata=json.loads(request.GET.get('is_odata'))
+    )
 
     helper = ExportListHelper.from_request(request)
     page = int(request.GET.get('page', 1))
@@ -625,7 +630,7 @@ def commit_filters(request, domain):
         raise Http404
     if export.export_format == "html" and not domain_has_privilege(domain, EXCEL_DASHBOARD):
         raise Http404
-    if export.is_odata_config and not BI_INTEGRATION_PREVIEW.enabled_for_request(request):
+    if export.is_odata_config and not domain_has_privilege(domain, ODATA_FEED):
         raise Http404
     if not export.filters.is_location_safe_for_user(request):
         return location_restricted_response(request)
@@ -795,8 +800,9 @@ def get_app_data_drilldown_values(request, domain):
         raise Http404()
 
     model_type = request.GET.get('model_type')
+    is_odata = json.loads(request.GET.get('is_odata'))
     permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=False)
+    permissions.access_list_exports_or_404(is_deid=False, is_odata=is_odata)
 
     rmi_helper = ApplicationDataRMIHelper(domain, request.couch_user)
     if model_type == 'form':
@@ -817,8 +823,9 @@ def submit_app_data_drilldown_form(request, domain):
         raise Http404()
 
     model_type = request.POST.get('model_type')
+    is_odata = json.loads(request.POST.get('is_odata'))
     permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
-    permissions.access_list_exports_or_404(is_deid=False)
+    permissions.access_list_exports_or_404(is_deid=False, is_odata=is_odata)
 
     form_data = json.loads(request.POST.get('form_data'))
     is_daily_saved_export = json.loads(request.POST.get('is_daily_saved_export'))
@@ -826,8 +833,8 @@ def submit_app_data_drilldown_form(request, domain):
     is_odata = json.loads(request.POST.get('is_odata'))
 
     create_form = CreateExportTagForm(
-        permissions.has_form_export_permissions,
-        permissions.has_case_export_permissions,
+        is_odata or permissions.has_form_export_permissions,
+        is_odata or permissions.has_case_export_permissions,
         form_data
     )
     if not create_form.is_valid():
@@ -884,11 +891,10 @@ class ODataFeedListHelper(ExportListHelper):
     form_or_case = None
     is_deid = False
     include_saved_filters = True
-    beta_odata_feed_limit = 10
 
     @property
     def create_export_form(self):
-        form = super(ODataFeedListHelper, self).create_export_form
+        form = CreateExportTagForm(True, True)
         form.fields['model_type'].label = _("Feed Type")
         form.fields['model_type'].choices = [
             ('', _("Select field type")),
@@ -896,6 +902,12 @@ class ODataFeedListHelper(ExportListHelper):
             ('form', _('Form')),
         ]
         return form
+
+    @property
+    @memoized
+    def odata_feed_limit(self):
+        domain_object = Domain.get_by_name(self.domain)
+        return domain_object.odata_feed_limit or settings.DEFAULT_ODATA_FEED_LIMIT
 
     @property
     def create_export_form_title(self):
@@ -909,7 +921,7 @@ class ODataFeedListHelper(ExportListHelper):
         data.update({
             'isOData': True,
         })
-        if len(self.get_saved_exports()) >= self.beta_odata_feed_limit:
+        if len(self.get_saved_exports()) >= self.odata_feed_limit:
             data['editUrl'] = '#odataFeedLimitReachedModal'
         return data
 
@@ -927,39 +939,41 @@ class ODataFeedListHelper(ExportListHelper):
         return DownloadNewCaseExportView
 
 
-@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
+@method_decorator(requires_privilege_with_fallback(ODATA_FEED), name='dispatch')
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
+    is_odata = True
     urlname = 'list_odata_feeds'
-    page_title = ugettext_lazy("PowerBi/Tableau Integration (Preview)")
-    lead_text = ugettext_lazy('''
+    page_title = ugettext_lazy("PowerBi/Tableau Integration")
+
+    @property
+    def lead_text(self):
+        return _("""
         Use OData feeds to integrate your CommCare data with Power BI or Tableau.
         <a href="https://confluence.dimagi.com/display/commcarepublic/Integration+with+PowerBi+and+Tableau"
            id="js-odata-track-learn-more"
            target="_blank">
             Learn more.
         </a><br />
-        This is a Feature Preview.
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Feature+Previews"
-           id="js-odata-track-learn-more-preview"
-           target="_blank">
-            Learn more.
-        </a>
-    ''')
+        This feature allows {odata_feed_limit} feed configurations. Need more? 
+        Please write to us at <a href="mailto:{sales_email}">{sales_email}</a>.
+        """).format(
+            odata_feed_limit=self.odata_feed_limit,
+            sales_email=settings.SALES_EMAIL,
+        )
 
     @property
     def page_context(self):
         context = super(ODataFeedListView, self).page_context
         context.update({
-            'is_odata': True,
             "export_type_caps": _("OData Feed"),
             "export_type": _("OData feed"),
             "export_type_caps_plural": _("OData Feeds"),
             "export_type_plural": _("OData feeds"),
             'my_export_type': _('My OData Feeds'),
             'shared_export_type': _('OData Feeds Shared with Me'),
-            'beta_odata_feed_limit': self.beta_odata_feed_limit,
+            'odata_feed_limit': self.odata_feed_limit,
         })
-        if len(self.get_saved_exports()) >= self.beta_odata_feed_limit:
+        if len(self.get_saved_exports()) >= self.odata_feed_limit:
             context['create_url'] = '#odataFeedLimitReachedModal'
             context['odata_feeds_over_limit'] = True
         return context

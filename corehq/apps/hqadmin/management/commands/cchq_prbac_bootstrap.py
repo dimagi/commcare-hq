@@ -152,6 +152,9 @@ class Command(BaseCommand):
         Role(slug=privileges.CHILD_CASES,
              name='Child Cases',
              description='Allows for use of child cases / subcases in applications.'),
+        Role(slug=privileges.ODATA_FEED,
+             name='OData Feed - Tableau / BI Integration',
+             description='Allows usage of Tableau / BI Integration (OData Feeds)'),
         Role(slug=privileges.PROJECT_ACCESS,
              name='Project Access',
              description='Allows access to core project functionality.'),
@@ -225,6 +228,7 @@ class Command(BaseCommand):
         privileges.CUSTOM_INTENTS,
         privileges.ADVANCED_DOMAIN_SECURITY,
         privileges.BUILD_PROFILES,
+        privileges.ODATA_FEED,
     ]
 
     enterprise_plan_features = advanced_plan_features + []

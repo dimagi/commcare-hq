@@ -121,8 +121,13 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
                         'has_item_list': True,
                     })
                 tile_contexts.append(tile_context)
+
+        from corehq.apps.export.views.utils import user_can_view_odata_feed
         context = {
             'dashboard_tiles': tile_contexts,
+            'user_can_view_odata_feed': user_can_view_odata_feed(
+                self.domain, self.request.couch_user
+            ),
         }
         context.update(get_paused_plan_context(self.request, self.domain))
         return context

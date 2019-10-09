@@ -1094,6 +1094,20 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         min_value=1000,
     )
+    use_custom_odata_feed_limit = forms.ChoiceField(
+        label=ugettext_lazy("Set custom OData Feed Limit? Default is {}.").format(
+            settings.DEFAULT_ODATA_FEED_LIMIT),
+        required=True,
+        choices=(
+            ('N', ugettext_lazy("No")),
+            ('Y', ugettext_lazy("Yes")),
+        ),
+    )
+    odata_feed_limit = forms.IntegerField(
+        label=ugettext_lazy("Max allowed OData Feeds"),
+        required=False,
+        min_value=1,
+    )
     granted_messaging_access = forms.BooleanField(
         label="Enable Messaging",
         required=False,
@@ -1166,6 +1180,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     crispy.Field('auto_case_update_limit'),
                     data_bind="visible: use_custom_auto_case_update_limit() === 'Y'",
                 ),
+                crispy.Field(
+                    'use_custom_odata_feed_limit',
+                    data_bind="value: use_custom_odata_feed_limit",
+                ),
+                crispy.Div(
+                    crispy.Field('odata_feed_limit'),
+                    data_bind="visible: use_custom_odata_feed_limit() === 'Y'",
+                ),
                 'granted_messaging_access',
             ),
             crispy.Fieldset(
@@ -1186,6 +1208,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     def current_values(self):
         return {
             'use_custom_auto_case_update_limit': self['use_custom_auto_case_update_limit'].value(),
+            'use_custom_odata_feed_limit': self['use_custom_odata_feed_limit'].value()
         }
 
     def _get_user_or_fail(self, field):
@@ -1208,6 +1231,16 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         value = self.cleaned_data.get('auto_case_update_limit')
         if not value:
             raise forms.ValidationError(_("This field is required"))
+
+        return value
+
+    def clean_odata_feed_limit(self):
+        if self.cleaned_data.get('use_custom_odata_feed_limit') != 'Y':
+            return None
+
+        value = self.cleaned_data.get('odata_feed_limit')
+        if not value:
+            raise forms.ValidationError(_("Please specify a limit for OData feeds."))
 
         return value
 
@@ -1242,6 +1275,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         )
         domain.is_test = self.cleaned_data['is_test']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
+        domain.odata_feed_limit = self.cleaned_data['odata_feed_limit']
         domain.granted_messaging_access = self.cleaned_data['granted_messaging_access']
         domain.update_internal(
             sf_contract_id=self.cleaned_data['sf_contract_id'],
