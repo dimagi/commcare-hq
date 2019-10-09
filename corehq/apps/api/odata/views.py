@@ -1,4 +1,4 @@
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, Http404
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -9,6 +9,7 @@ from corehq.apps.api.odata.utils import (
 )
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
+from corehq.apps.export.views.utils import user_can_view_odata_feed
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.feature_previews import BI_INTEGRATION_PREVIEW
@@ -22,8 +23,16 @@ odata_auth = method_decorator([
 ], name='dispatch')
 
 
+class BaseODataView(View):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not user_can_view_odata_feed(request.domain, request.couch_user):
+            raise Http404()
+        return super(BaseODataView, self).dispatch(request, *args, **kwargs)
+
+
 @odata_auth
-class ODataCaseServiceView(View):
+class ODataCaseServiceView(BaseODataView):
 
     urlname = 'odata_case_service_from_export_instance'
     table_urlname = 'odata_case_service_from_export_instance_table'
@@ -47,7 +56,7 @@ class ODataCaseServiceView(View):
 
 
 @odata_auth
-class ODataCaseMetadataView(View):
+class ODataCaseMetadataView(BaseODataView):
 
     urlname = 'odata_case_metadata_from_export_instance'
     table_urlname = 'odata_case_metadata_from_export_instance_table'
@@ -63,7 +72,7 @@ class ODataCaseMetadataView(View):
 
 
 @odata_auth
-class ODataFormServiceView(View):
+class ODataFormServiceView(BaseODataView):
 
     urlname = 'odata_form_service_from_export_instance'
     table_urlname = 'odata_form_service_from_export_instance_table'
@@ -87,7 +96,7 @@ class ODataFormServiceView(View):
 
 
 @odata_auth
-class ODataFormMetadataView(View):
+class ODataFormMetadataView(BaseODataView):
 
     urlname = 'odata_form_metadata_from_export_instance'
     table_urlname = 'odata_form_metadata_from_export_instance_table'
