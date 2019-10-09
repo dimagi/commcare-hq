@@ -49,15 +49,3 @@ class SyncLogPruneTest(TestCase, DocTestMixin):
         result = SyncLogSQL.objects.filter(user_id=user_id).order_by('date').first()
         if result:
             return properly_wrap_sync_log(result.doc)
-
-
-class SyncLogQueryTest(TestCase):
-    def _count(self):
-        return SyncLogSQL.objects.count()
-
-    def test_default(self):
-        synclog = SyncLog(domain='test', user_id='user1', date=datetime.datetime(2015, 7, 1, 0, 0))
-        synclog.save()
-        self.assertEqual(self._count(), 1)
-        delete_synclog(synclog._id)
-        self.assertEqual(self._count(), 0)
