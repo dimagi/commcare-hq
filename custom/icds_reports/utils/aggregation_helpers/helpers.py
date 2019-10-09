@@ -161,19 +161,3 @@ HELPERS = [
         THRFormV2AggHelper, THRFormV2AggDistributedHelper
     )
 ]
-
-
-def all_helpers():
-    helpers = {}
-    for pair in HELPERS:
-        assert pair.validate(), pair
-        helpers[pair.monolith.helper_key] = pair
-    return helpers
-
-
-HELPERS_BY_KEY = all_helpers()
-
-
-def get_helper(key):
-    pair = HELPERS_BY_KEY[key]
-    return pair.distributed or pair.monolith
