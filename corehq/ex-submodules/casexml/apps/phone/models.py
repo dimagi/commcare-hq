@@ -320,18 +320,6 @@ class AbstractSyncLog(SafeSaveDocument):
         """
         raise NotImplementedError()
 
-    def get_previous_log(self):
-        """
-        Get the previous sync log, if there was one.  Otherwise returns nothing.
-        """
-        if not self.previous_log_id:
-            return
-
-        try:
-            return get_properly_wrapped_sync_log(self.previous_log_id)
-        except MissingSyncLog:
-            return None
-
     @classmethod
     def from_other_format(cls, other_sync_log):
         """
@@ -618,14 +606,7 @@ class SyncLog(AbstractSyncLog):
         if readded_any:
             self._dependent_case_state_map.reset_cache(self)
 
-        if case_list:
-            try:
-                self.save()
-            except ResourceConflict:
-                logging.exception('doc update conflict saving sync log {id}'.format(
-                    id=self._id,
-                ))
-                raise
+        return bool(case_list)
 
     def get_footprint_of_cases_on_phone(self):
         def children(case_state):
@@ -1181,16 +1162,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
         _get_logger().debug('index tree after update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree after update: {}'.format(self.extension_index_tree))
         if made_changes:
-            try:
-                _get_logger().debug('made changes, saving.')
-                self.last_submitted = datetime.utcnow()
-                self.rev_before_last_submitted = self._rev
-                self.save()
-            except ResourceConflict:
-                logging.exception('doc update conflict saving sync log {id}'.format(
-                    id=self._id,
-                ))
-                raise
+            _get_logger().debug('made changes')
+            self.last_submitted = datetime.utcnow()
+            self.rev_before_last_submitted = self._rev
+        return made_changes
 
     def purge_dependent_cases(self):
         """
