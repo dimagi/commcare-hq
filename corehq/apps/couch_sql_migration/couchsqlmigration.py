@@ -464,8 +464,8 @@ class CouchSqlDomainMigrator(object):
                 xmlns = couch_form.xmlns
                 user_id = couch_form.user_id
             if xmlns == SYSTEM_ACTION_XMLNS:
-                for form_id, case_ids in do_system_action(couch_form):
-                    self.case_diff_queue.update(case_ids, form_id)
+                for sa_form_id, case_ids in do_system_action(couch_form):
+                    self.case_diff_queue.update(case_ids, sa_form_id)
             sql_form = XFormInstanceSQL(
                 form_id=form_id,
                 domain=self.dst_domain,
