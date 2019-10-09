@@ -1,3 +1,4 @@
+import pickle
 from datetime import datetime, timedelta, date
 from six.moves.urllib.parse import urlencode
 import pytz
@@ -148,3 +149,17 @@ class DateSpanValidationTests(SimpleTestCase):
     def test_negative_max_days(self):
         with self.assertRaisesRegex(ValueError, 'max_days cannot be less than 0'):
             DateSpan(datetime(2015, 1, 1), datetime(2015, 4, 1), max_days=-1)
+
+
+class DateSpanPickleTest(SimpleTestCase):
+    def _assert_datespan_equal_pre_post_pickle(self, datespan):
+        datespan_post_pickle = pickle.loads(pickle.dumps(datespan))
+        self.assertEqual(datespan.startdate, datespan_post_pickle.startdate)
+        self.assertEqual(datespan.enddate, datespan_post_pickle.enddate)
+        self.assertEqual(datespan, datespan_post_pickle)
+
+    def test_case_1(self):
+        self._assert_datespan_equal_pre_post_pickle(DateSpan(date(2019, 10, 9), date(2019, 10, 9)))
+
+    def test_case_2(self):
+        self._assert_datespan_equal_pre_post_pickle(DateSpan(None, date(2019, 10, 9)))

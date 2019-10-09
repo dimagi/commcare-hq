@@ -128,8 +128,8 @@ class DateSpan(object):
             For pickling the DateSpan object.
         """
         return dict(
-            startdate=self.startdate.isoformat() if self.startdate else None,
-            enddate=self.enddate.isoformat() if self.enddate else None,
+            startdate=self.startdate,
+            enddate=self.enddate,
             format=self.format,
             inclusive=self.inclusive,
             is_default=self.is_default,
@@ -141,12 +141,9 @@ class DateSpan(object):
         """
             For un-pickling the DateSpan object.
         """
-        logging = get_task_logger(__name__) # logging is likely to happen within celery
-        try:
-            self.startdate = dateutil.parser.parse(state.get('startdate')) if state.get('startdate') else None
-            self.enddate = dateutil.parser.parse(state.get('enddate')) if state.get('enddate') else None
-        except Exception as e:
-            logging.error("Could not unpack start and end dates for DateSpan. Error: %s" % e)
+        logging = get_task_logger(__name__)  # logging is likely to happen within celery
+        self.startdate = state.get('startdate')
+        self.enddate = state.get('enddate')
         self.format = state.get('format', ISO_DATE_FORMAT)
         self.inclusive = state.get('inclusive', True)
         self.timezone = pytz.utc
@@ -156,6 +153,16 @@ class DateSpan(object):
             self.timezone = pytz.timezone(state.get('timezone'))
         except Exception as e:
             logging.error("Could not unpack timezone for DateSpan. Error: %s" % e)
+
+    def __eq__(self, other):
+        return (
+            self.startdate == other.startdate
+            and self.enddate == other.enddate
+            and self.format == other.format
+            and self.inclusive == other.inclusive
+            and self.timezone == other.timezone
+            and self.max_days == other.max_days
+        )
 
     @property
     def max_days(self):
