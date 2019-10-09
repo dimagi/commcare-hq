@@ -113,8 +113,9 @@ def get_case_xform_ids(case_id):
 def prune_previous_log(sync_log):
     if sync_log.previous_log_id:
         delete_synclog(sync_log.previous_log_id)
-        sync_log.previous_log_removed = True
+        sync_log.previous_log_id = None
         return True
+    return False
 
 
 def get_indexed_cases(domain, case_ids):
