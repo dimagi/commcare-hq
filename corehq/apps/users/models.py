@@ -2781,7 +2781,7 @@ class AppStatusStaging(models.Model):
     app_id = models.TextField()
     build_id = models.TextField()
     xform_version = models.IntegerField(null=True)
-    form_meta = JSONField()
+    form_meta = JSONField()  # This could be filtered to only the parts we need
     received_on = models.DateTimeField()
     modified_on = models.DateTimeField(auto_now=True)
 
@@ -2810,6 +2810,8 @@ class AppStatusStaging(models.Model):
             save = True
 
         if save:
+            obj.form_meta = metadata
+            obj.xform_version = version
             obj.save()
 
     class Meta(object):
