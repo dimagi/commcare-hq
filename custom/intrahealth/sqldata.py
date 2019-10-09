@@ -5234,7 +5234,7 @@ class ValuationOfPNAStockPerProductV2Data(LocationLevelMixin, VisiteDeLOperateur
             self.loc_id_to_get, self.loc_name_to_get,
             'final_pna_stock_valuation'
         ]
-        if self.loc_id_to_get != 'pps_is':
+        if self.loc_id_to_get != 'pps_id':
             group_by.append('pps_id')
             group_by.append('pps_name')
 
