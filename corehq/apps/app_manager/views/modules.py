@@ -21,10 +21,11 @@ from django.views.decorators.http import require_GET
 
 from lxml import etree
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request, json_response
 
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.case_properties import (
