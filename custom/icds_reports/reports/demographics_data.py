@@ -46,6 +46,12 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
         return queryset
 
     if beta:
+        config['month'] = current_month
+        data = get_data_for(AggAwcMonthly, config)
+        config['month'] = previous_month
+        prev_data = get_data_for(AggAwcMonthly, config)
+        frequency = 'month'
+    else:
         if current_month.month == now_date.month and current_month.year == now_date.year:
             config['date'] = now_date.date()
             data = None
@@ -64,12 +70,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
             config['month'] = previous_month
             prev_data = get_data_for(AggAwcMonthly, config)
             frequency = 'month'
-    else:
-        config['month'] = current_month
-        data = get_data_for(AggAwcMonthly, config)
-        config['month'] = previous_month
-        prev_data = get_data_for(AggAwcMonthly, config)
-        frequency = 'month'
+
 
     return {
         'records': [
