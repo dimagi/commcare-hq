@@ -1,6 +1,6 @@
 import datetime
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from mock import patch
 
@@ -58,3 +58,16 @@ class ImporterTests(SimpleTestCase):
                 import_frequency=IMPORT_FREQUENCY_MONTHLY,
             )
             self.assertFalse(importer.should_import_today())
+
+
+class LocationTypeNameTest(TestCase):
+
+    def test_wrapping_old_definition(self):
+        imp = OpenmrsImporter.wrap({
+            'domain': domain_name,
+            'location_type_name': ''
+        })
+        try:
+            imp.save()
+        finally:
+            imp.delete()

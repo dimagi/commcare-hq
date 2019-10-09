@@ -31,7 +31,6 @@ hqDefine('openmrs/js/openmrs_importers', [
         self.report_params = ko.observable(properties["report_params"]);
         self.case_type = ko.observable(properties["case_type"]);
         self.owner_id = ko.observable(properties["owner_id"]);
-        self.location_type_name = ko.observable(properties["location_type_name"]);
         self.external_id_column = ko.observable(properties["external_id_column"]);
         self.name_columns = ko.observable(properties["name_columns"]);
         self.column_map = ko.observable(properties["column_map"]);
@@ -60,7 +59,6 @@ hqDefine('openmrs/js/openmrs_importers', [
                 "report_params": self.report_params(),
                 "case_type": self.case_type(),
                 "owner_id": self.owner_id(),
-                "location_type_name": self.location_type_name(),
                 "external_id_column": self.external_id_column(),
                 "name_columns": self.name_columns(),
                 "column_map": self.column_map(),

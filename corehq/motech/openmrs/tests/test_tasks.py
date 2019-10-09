@@ -34,7 +34,6 @@ def get_importer():
         'report_params': {},
         'case_type': 'patient',
         'owner_id': '123456',
-        'location_type_name': '',
         'external_id_column': 'NID',
         'name_columns': 'nome_inicial apelido',
         'column_map': [
