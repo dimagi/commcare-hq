@@ -130,8 +130,7 @@
           },
           "location_type": "state",
           "location_property": "_id"
-        },
-        "create_index": true
+        }
       },
       {
         "display_name": "Supervisor ID",
@@ -308,9 +307,6 @@
       "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
     },
     "sql_column_indexes": [
-      {
-        "column_ids": ["state_id", "timeend"]
-      },
       {
         "column_ids": ["doc_id"]
       }
