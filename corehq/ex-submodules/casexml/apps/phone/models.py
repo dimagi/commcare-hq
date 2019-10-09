@@ -359,19 +359,7 @@ def save_synclog_to_sql(synclog_json_object):
 
 
 def delete_synclog(synclog_id):
-    """
-    Deletes synclog object both from Couch and SQL, if the doc
-        isn't found in either couch or SQL an exception is raised
-    """
-    try:
-        synclog = SyncLogSQL.objects.filter(synclog_id=synclog_id).first()
-        if synclog:
-            synclog.delete()
-            return
-    except ValidationError:
-        pass
-
-    raise MissingSyncLog("No synclog object with this synclog_id ({}) is  found".format(synclog_id))
+    SyncLogSQL.objects.filter(synclog_id=synclog_id).delete()
 
 
 def synclog_to_sql_object(synclog_json_object):

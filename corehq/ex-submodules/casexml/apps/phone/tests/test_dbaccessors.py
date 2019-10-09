@@ -7,7 +7,7 @@ from casexml.apps.phone.dbaccessors.sync_logs_by_user import (
     get_last_synclog_for_user, get_synclogs_for_user
 )
 from casexml.apps.phone.models import (
-    SyncLog, SyncLogSQL, SimplifiedSyncLog, delete_synclog, properly_wrap_sync_log
+    SyncLog, SyncLogSQL, SimplifiedSyncLog, properly_wrap_sync_log
 )
 from corehq.util.test_utils import DocTestMixin
 from casexml.apps.phone.tasks import prune_synclogs, SYNCLOG_RETENTION_DAYS
@@ -91,5 +91,5 @@ class SyncLogQueryTest(TestCase):
         synclog = SyncLog(domain='test', user_id='user1', date=datetime.datetime(2015, 7, 1, 0, 0))
         synclog.save()
         self.assertEqual(self._count(), 1)
-        delete_synclog(synclog._id)
+        synclog.delete()
         self.assertEqual(self._count(), 0)
