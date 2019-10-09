@@ -2,10 +2,10 @@ from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_INFRASTRUCTURE_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
+class AwcInfrastructureAggregationHelper(BaseICDSAggregationDistributedHelper):
     helper_key = 'awc-infrastructure'
     ucr_data_source_id = 'static-infrastructure_form_v2'
     aggregate_parent_table = AGG_INFRASTRUCTURE_TABLE

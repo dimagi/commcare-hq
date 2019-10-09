@@ -2,7 +2,6 @@ from .agg_awc import AggAwcHelper
 from .agg_awc_daily import AggAwcDailyAggregationHelper
 from .agg_ccs_record import AggCcsRecordAggregationHelper
 from .agg_child_health import AggChildHealthAggregationHelper
-from .awc_infrastructure import AwcInfrastructureAggregationHelper
 from .awc_location import LocationAggregationHelper
 from .aww_incentive import AwwIncentiveAggregationHelper
 from .birth_preparedness_forms import BirthPreparednessFormsAggregationHelper
@@ -30,7 +29,6 @@ __all__ = (
     'AggAwcDailyAggregationHelper',
     'AggCcsRecordAggregationHelper',
     'AggChildHealthAggregationHelper',
-    'AwcInfrastructureAggregationHelper',
     'AwcMbtHelper',
     'AwwIncentiveAggregationHelper',
     'BirthPreparednessFormsAggregationHelper',
