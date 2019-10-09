@@ -13,6 +13,8 @@ from custom.icds.integrations.exceptions.phi import (
 
 
 def send_request(request_type, data):
+    if isinstance(data, dict):
+        data = json.dumps(data)
     if request_type not in URLS:
         raise UnexpectedRequest("Unexpected request type %s" % request_type)
     password = settings.PHI_PASSWORD
@@ -21,9 +23,9 @@ def send_request(request_type, data):
         raise MissingCredentials("Please set api key and password for phi")
     response = requests.post(
         URLS[request_type],
-        data=json.dumps(data),
+        data=data,
         headers={
-            'Authorization': 'Basic {}' % password,
+            'Authorization': 'Basic %s' % password,
             'apikey': apikey,
             'content-type': 'application/json'
         }
