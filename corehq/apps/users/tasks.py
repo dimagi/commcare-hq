@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.db import transaction
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -303,3 +304,32 @@ def update_domain_date(user_id, domain):
             and today > domain_membership.last_accessed):
         domain_membership.last_accessed = today
         user.save()
+
+
+@periodic_task(
+    run_every=crontab(minute='*/5'),  # run once a day for ICDS
+    queue='background_queue',
+)
+def process_reporting_metadata_staging():
+    from corehq.apps.users.models import UserReportingMetadataStaging
+    from corehq.pillows.synclog import mark_last_synclog
+    from pillowtop.processors.form import mark_latest_submission
+
+    records = (
+        UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
+    )[:100]
+    with transaction.atomic():
+        for record in records:
+            if record.received_on:
+                mark_latest_submission(
+                    record.domain, record.user_id, record.app_id, record.build_id,
+                    record.xform_version, record.form_meta, record.received_on
+                )
+            if record.device_id or record.sync_date:
+                mark_last_synclog(
+                    record.domain, record.user_id, record.build_id, record.device_id, record.sync_date
+                )
+            record.delete()
+
+    if UserReportingMetadataStaging.objects.exists():
+        process_reporting_metadata_staging.delay()

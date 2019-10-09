@@ -16,6 +16,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DeviceAppMeta,
+    UserReportingMetadataStaging,
     WebUser,
 )
 from corehq.apps.users.util import (
@@ -72,8 +73,9 @@ class UserSyncHistoryProcessor(PillowProcessor):
 
         build_id = synclog.get('build_id')
         device_id = synclog.get('device_id')
+        app_id = synclog.get('app_id')
 
-        mark_last_synclog(domain, user_id, build_id, device_id, sync_date)
+        UserReportingMetadataStaging.add_sync(domain, user_id, app_id, build_id, sync_date, device_id)
 
 
 def mark_last_synclog(domain, user_id, build_id, device_id, sync_date):

@@ -9,6 +9,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
+from corehq.apps.users.tasks import process_reporting_metadata_staging
 
 
 class SyncLogPillowTest(TestCase):
@@ -51,7 +52,7 @@ class SyncLogPillowTest(TestCase):
 
         # do a sync
         synclog = SimplifiedSyncLog(domain=self.domain.name, user_id=self.ccuser._id,
-                          date=datetime.datetime(2015, 7, 1, 0, 0))
+                          date=datetime.datetime(2015, 7, 1, 0, 0), app_id='123')
         synclog.save()
 
         # make sure kafka change updates the user with latest sync info
@@ -64,6 +65,7 @@ class SyncLogPillowTest(TestCase):
         # make sure processor updates the user correctly
         pillow = get_user_sync_history_pillow()
         pillow.process_changes(since=kafka_seq, forever=False)
+        process_reporting_metadata_staging()
         ccuser = CommCareUser.get(self.ccuser._id)
         self.assertEqual(len(ccuser.reporting_metadata.last_syncs), 1)
         self.assertEqual(ccuser.reporting_metadata.last_syncs[0].sync_date, synclog.date)
