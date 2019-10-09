@@ -685,3 +685,111 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             group_by=", ".join(group_by),
             child_is_test=child_location
         )
+
+    def aggregate_launched_query(self):
+        return """
+        CREATE UNLOGGED TABLE "tmp_household" AS SELECT
+            owner_id,
+            sum(open_count) AS cases_household,
+            count(*) AS all_cases_household
+            FROM "ucr_icds-cas_static-household_cases_eadc276d"
+            WHERE opened_on <= %(end_date)s
+            group by owner_id;
+        UPDATE "{tablename_5}" agg_awc SET
+        cases_household = ut.cases_household,
+                   is_launched = CASE WHEN ut.all_cases_household>0 THEN 'yes' ELSE 'no' END,
+                   num_launched_states = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+                   num_launched_districts = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+                   num_launched_blocks = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+                   num_launched_supervisors = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+                   num_launched_awcs = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END
+        FROM
+        "tmp_household" ut
+        WHERE ut.owner_id = agg_awc.awc_id;
+        DROP TABLE "tmp_household";
+
+        UPDATE "{tablename_4}" agg_awc SET
+        cases_household = agg.cases_household,
+        num_launched_states = states_launched,
+        num_launched_districts = districts_launched,
+        num_launched_blocks = blocks_launched,
+        num_launched_supervisors = supervisors_launched,
+        num_launched_awcs = num_launched
+        FROM
+        (
+        SELECT state_id, district_id, block_id, supervisor_id,
+        sum(cases_household) as cases_household,
+        CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END as states_launched,
+        CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END as districts_launched,
+        CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END as blocks_launched,
+        CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END as supervisors_launched,
+        sum(num_launched_awcs) as num_launched
+        FROM "{tablename_5}" GROUP BY state_id, district_id, block_id, supervisor_id
+        ) agg 
+        where agg_awc.state_id = agg.state_id AND agg_awc.district_id = agg.district_id AND agg_awc.block_id = agg.block_id AND agg_awc.supervisor_id = agg.supervisor_id;
+
+        UPDATE "{tablename_3}" agg_awc SET
+        cases_household = agg.cases_household,
+        num_launched_states = states_launched,
+        num_launched_districts = districts_launched,
+        num_launched_blocks = blocks_launched,
+        num_launched_supervisors = supervisors_launched,
+        num_launched_awcs = num_launched
+        FROM
+        (
+        SELECT state_id, district_id, block_id,
+        sum(cases_household) as cases_household,
+        CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END as states_launched,
+        CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END as districts_launched,
+        CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END as blocks_launched,
+        sum(num_launched_supervisors) as supervisors_launched,
+        sum(num_launched_awcs) as num_launched
+        FROM "{tablename_4} GROUP BY state_id, district_id, block_id
+        ) agg 
+        where agg_awc.state_id = agg.state_id AND agg_awc.district_id = agg.district_id AND agg_awc.block_id = agg.block_id;
+
+        UPDATE "{tablename_2}" agg_awc SET
+        cases_household = agg.cases_household,
+        num_launched_states = states_launched,
+        num_launched_districts = districts_launched,
+        num_launched_blocks = blocks_launched,
+        num_launched_supervisors = supervisors_launched,
+        num_launched_awcs = num_launched
+        FROM
+        (
+        SELECT state_id, district_id,
+        sum(cases_household) as cases_household,
+        CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END as states_launched,
+        CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END as districts_launched,
+        sum(num_launched_blocks) as blocks_launched,
+        sum(num_launched_supervisors) as supervisors_launched,
+        sum(num_launched_awcs) as num_launched
+        FROM "{tablename_3}" GROUP BY state_id, district_id
+        ) agg 
+        where agg_awc.state_id = agg.state_id AND agg_awc.district_id = agg.district_id;
+
+        UPDATE "{tablename_1}" agg_awc SET
+        cases_household = agg.cases_household,
+        num_launched_states = states_launched,
+        num_launched_districts = districts_launched,
+        num_launched_blocks = blocks_launched,
+        num_launched_supervisors = supervisors_launched,
+        num_launched_awcs = num_launched
+        FROM
+        (
+        SELECT state_id,
+        sum(cases_household) as cases_household,
+        CASE WHEN (sum(num_launched_districts) > 0) THEN 1 ELSE 0 END as states_launched,
+        sum(num_launched_districts) as districts_launched,
+        sum(num_launched_blocks) as blocks_launched,
+        sum(num_launched_supervisors) as supervisors_launched,
+        sum(num_launched_awcs) as num_launched
+        FROM "{tablename_2}" GROUP BY state_id
+        ) agg 
+        where agg_awc.state_id = agg.state_id;
+        """.format(
+            **{'tablename_{}'.format(num): self._tablename_func(num) for num in range(1,6)}
+        ), {
+            'end_date': self.month_end
+        }
+

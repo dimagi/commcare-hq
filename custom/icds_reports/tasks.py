@@ -130,6 +130,9 @@ from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
     ChildHealthMonthlyAggregationHelper,
 )
+from custom.icds_reports.utils.aggregation_helpers.distributed import (
+    AggAwcDistributedHelper
+)
 from custom.icds_reports.utils.aggregation_helpers.monolith.mbt import (
     AwcMbtHelper,
     CcsMbtHelper,
@@ -1296,6 +1299,15 @@ def _child_health_monthly_aggregation(day, state_ids):
 
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
+
+
+def update_awc_launched(day):
+    helper = AggAwcDistributedHelper(force_to_date(day))
+    db_alias = db_for_read_write(AggAwc)
+    query, params = helper.aggregate_launched_query()
+    with transaction.atomic(using=db_alias):
+        with get_cursor(ChildHealthMonthly) as cursor:
+            cursor.execute(query, params)
 
 
 @task
