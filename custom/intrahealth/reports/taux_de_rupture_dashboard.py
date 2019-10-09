@@ -1,6 +1,7 @@
 import datetime
 
 from django.utils.functional import cached_property
+from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
@@ -118,7 +119,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
             for product in products:
                 headers.add_column(DataTablesColumn(product))
         else:
-            headers.add_column(DataTablesColumn('Produits disponibles'))
+            headers.add_column(DataTablesColumn('Produits en rupture de stock'))
 
         return headers
 
@@ -144,6 +145,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
         return context
 
     @property
+    @memoized
     def clean_rows(self):
         return TauxDeRuptureRateData(config=self.config).rows
 

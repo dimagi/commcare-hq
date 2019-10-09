@@ -1004,6 +1004,11 @@
           "district_id",
           "submitted_on"
         ]
+      },
+      {
+        "column_ids": [
+          "doc_id"
+        ]
       }
     ],
     "disable_destructive_rebuild": true,

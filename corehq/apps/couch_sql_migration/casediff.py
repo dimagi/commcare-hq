@@ -29,6 +29,7 @@ from .diff import filter_case_diffs, filter_ledger_diffs
 from .lrudict import LRUDict
 from .statedb import StateDB
 from .status import run_status_logger
+from .util import exit_on_error
 
 log = logging.getLogger(__name__)
 
@@ -397,7 +398,9 @@ class BatchProcessor(object):
         self.batches[key] = batch
         return self._process_batch(process, key)
 
+    @exit_on_error
     def _process_batch(self, process, key):
+        @exit_on_error
         def process_batch(key):
             log.debug("call %s key=%s", process.__name__, key)
             try:
@@ -433,13 +436,13 @@ class BatchProcessor(object):
 class CaseDiffProcess(object):
     """Run CaseDiffQueue in a separate process"""
 
-    def __init__(self, statedb, status_interval=STATUS_INTERVAL, queue_class=CaseDiffQueue):
+    def __init__(self, statedb, queue_class=CaseDiffQueue):
         if statedb.get(ProcessNotAllowed.__name__):
             raise ProcessNotAllowed(f"{statedb.db_filepath} was previously "
                 "used directly by CaseDiffQueue")
         self.statedb = statedb
         self.state_path = get_casediff_state_path(statedb.db_filepath)
-        self.status_interval = status_interval
+        self.status_interval = STATUS_INTERVAL
         self.queue_class = queue_class
 
     def __enter__(self):
@@ -479,6 +482,7 @@ class CaseDiffProcess(object):
         log.debug("reqeust status...")
         self.calls.put((STATUS,))
 
+    @exit_on_error
     def run_status_logger(self):
         """Request and log status from the case diff process
 
@@ -486,8 +490,8 @@ class CaseDiffProcess(object):
         process. A status update is requested when the remote process
         has not sent an update in `status_interval` seconds.
         """
-        requested = object()
-        result = None
+        self.request_status()
+        result = requested = object()
         action = STATUS
         while action != TERMINATE:
             with gevent.Timeout(self.status_interval, False) as timeout:

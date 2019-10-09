@@ -21,7 +21,7 @@
                 (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
             CASE WHEN
-                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
+                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))> 1
                 THEN 1 ELSE 0 END,
             thr_v2.thr_distribution_image_count,
             0,
@@ -46,6 +46,7 @@
         
 {"start_date": "2019-01-01T00:00:00"}
 
+        DROP TABLE IF EXISTS "temp_agg_awc_2019-01-01_5";
         CREATE UNLOGGED TABLE "temp_agg_awc_2019-01-01_5" AS
             SELECT
                 awc_id,
@@ -93,6 +94,7 @@
         
 {"start_date": "2019-01-01T00:00:00"}
 
+        DROP TABLE IF EXISTS "tmp_home_visit";
         CREATE UNLOGGED TABLE "tmp_home_visit" AS SELECT
             ucr.awc_id,
             %(start_date)s AS month,
@@ -146,6 +148,7 @@
         
 {"start_date": "2019-01-01T00:00:00"}
 
+        DROP TABLE IF EXISTS "tmp_household";
         CREATE UNLOGGED TABLE "tmp_household" AS SELECT
             owner_id,
             sum(open_count) AS cases_household,
@@ -167,6 +170,7 @@
         
 {"end_date": "2019-01-31T23:59:59"}
 
+        DROP TABLE IF EXISTS "tmp_person";
         CREATE UNLOGGED TABLE "tmp_person" AS SELECT
             awc_id,
             supervisor_id,
@@ -209,6 +213,7 @@
         
 {"end_date": "2019-01-31T23:59:59", "month_end_11yr": "2008-01-31T23:59:59", "month_end_15yr": "2004-01-31T23:59:59", "month_start_15yr": "2004-01-01T00:00:00", "month_start_18yr": "2001-01-01T00:00:00", "start_date": "2019-01-01T00:00:00"}
 
+        DROP TABLE IF EXISTS "tmp_child";
         CREATE UNLOGGED TABLE "tmp_child" AS SELECT
             awc_id,
             sum(has_aadhar_id) as child_has_aadhar,
@@ -225,6 +230,7 @@
         
 {"month": "2019-01-01T00:00:00"}
 
+        DROP TABLE IF EXISTS "tmp_ccs";
         CREATE UNLOGGED TABLE "tmp_ccs" AS SELECT
             awc_id,
             sum(anc_in_month) AS num_anc_visits,
@@ -241,6 +247,7 @@
         
 {"month": "2019-01-01T00:00:00"}
 
+        DROP TABLE IF EXISTS "tmp_usage";
         CREATE UNLOGGED TABLE "tmp_usage" AS SELECT
             awc_id,
             month,
@@ -342,6 +349,7 @@
         
 {"month_start_6m": "2018-07-01T00:00:00"}
 
+        DROP TABLE IF EXISTS "tmp_awc";
         CREATE UNLOGGED TABLE "tmp_awc" AS SELECT
             doc_id as awc_id,
             MAX(state_is_test) as state_is_test,

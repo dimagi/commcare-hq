@@ -86,6 +86,7 @@ from .casediff import CaseDiffProcess, CaseDiffQueue
 from .statedb import init_state_db
 from .staterebuilder import iter_unmigrated_docs
 from .system_action import do_system_action
+from .util import exit_on_error
 
 log = logging.getLogger(__name__)
 
@@ -138,8 +139,6 @@ class CouchSqlDomainMigrator(object):
             self.statedb.is_rebuild = True
         diff_queue = CaseDiffProcess if diff_process else CaseDiffQueue
         self.case_diff_queue = diff_queue(self.statedb)
-        # exit immediately on uncaught greenlet error
-        gevent.get_hub().SYSTEM_ERROR = BaseException
 
     def migrate(self):
         log.info('{live}migrating domain {domain} ({state})'.format(
@@ -147,9 +146,9 @@ class CouchSqlDomainMigrator(object):
             domain=self.domain,
             state=self.statedb.unique_id,
         ))
-
+        patch = patch_case_property_validators()
         timing = TimingContext("couch_sql_migration")
-        with timing as timing_context, self.case_diff_queue, self.stopper:
+        with timing as timing_context, patch, self.case_diff_queue, self.stopper:
             self.timing_context = timing_context
             with timing_context('main_forms'):
                 self._process_main_forms()
@@ -248,6 +247,7 @@ class CouchSqlDomainMigrator(object):
         return case_stock_result
 
     def _copy_unprocessed_forms(self):
+        @exit_on_error
         def copy_form(doc):
             self._migrate_unprocessed_form(doc)
             add_form(doc['doc_type'])
@@ -272,6 +272,7 @@ class CouchSqlDomainMigrator(object):
         self._migrate_form_and_associated_models(couch_form, form_is_processed=False)
 
     def _copy_unprocessed_cases(self):
+        @exit_on_error
         def copy_case(doc):
             self._copy_unprocessed_case(doc)
             add_case()
@@ -394,6 +395,25 @@ class CouchSqlDomainMigrator(object):
 
 TIMING_BUCKETS = (0.1, 1, 5, 10, 30, 60, 60 * 5, 60 * 10, 60 * 60, 60 * 60 * 12, 60 * 60 * 24)
 NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 30)
+
+
+@contextmanager
+def patch_case_property_validators():
+    def truncate_255(value):
+        return value[:255]
+
+    from corehq.form_processor.backends.sql.update_strategy import PROPERTY_TYPE_MAPPING
+    original = PROPERTY_TYPE_MAPPING.copy()
+    PROPERTY_TYPE_MAPPING.update(
+        name=truncate_255,
+        type=truncate_255,
+        owner_id=truncate_255,
+        external_id=truncate_255,
+    )
+    try:
+        yield
+    finally:
+        PROPERTY_TYPE_MAPPING.update(original)
 
 
 def _wrap_form(doc):

@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
@@ -50,6 +51,13 @@ PRODUCT_NAMES = {
 
 def _locations_filter(archived_locations, location_field_name='location_id'):
     return NOT(IN(location_field_name, get_INFilter_bindparams('archived_locations', archived_locations)))
+
+
+def normalize_decimal(element):
+    if isinstance(element, Decimal):
+        return round(float(element), 2) if element % 1 != 0 else int(element)
+    else:
+        return element
 
 
 class BaseSqlData(SqlData):
@@ -3983,8 +3991,11 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
         group_by = [
             self.loc_id_to_get, self.loc_name_to_get,
             'real_date_precise', 'product_is_outstock',
-            'product_id', 'product_name', 'program_id'
+            'product_id', 'product_name', 'program_id',
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
 
         return group_by
 
@@ -3999,6 +4010,10 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
             DatabaseColumn('Product Name', SimpleColumn('product_name')),
             DatabaseColumn('Is product outstock', SimpleColumn('product_is_outstock')),
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -4141,26 +4156,26 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
 
             return stocks_list_to_return
 
+        fresh_records_dict = {}
         for row in rows:
-            if not rows_to_return:
-                rows_to_return.append(row)
+            pps_id = row['pps_id']
+            product_id = row['product_id']
+            if pps_id not in fresh_records_dict.keys():
+                fresh_records_dict[pps_id] = {
+                    product_id: row
+                }
             else:
-                length = len(rows_to_return)
-                for r in range(0, length):
-                    current_product = rows_to_return[r]
-                    current_location_id = current_product[self.loc_id_to_get] \
-                        if current_product[self.loc_id_to_get] is not None \
-                        else current_product[self.loc_name_to_get]
-                    current_product_id = current_product['product_id']
-                    _row_id = row[self.loc_id_to_get] \
-                        if row[self.loc_id_to_get] is not None else row[self.loc_name_to_get]
-                    if current_location_id == _row_id and current_product_id == row['product_id']:
-                        current_date = current_product['real_date_precise']
-                        new_date = row['real_date_precise']
-                        if current_date > new_date:
-                            rows_to_return[r] = row
-                    elif r == length - 1:
-                        rows_to_return.append(row)
+                if product_id not in fresh_records_dict[pps_id].keys():
+                    fresh_records_dict[pps_id][product_id] = row
+                else:
+                    date = fresh_records_dict[pps_id][product_id]['real_date_precise']
+                    new_date = row['real_date_precise']
+                    if new_date > date:
+                        fresh_records_dict[pps_id][product_id] = row
+
+        for pps_id, products in fresh_records_dict.items():
+            for product, product_data in products.items():
+                rows_to_return.append(product_data)
 
         clean_data = clean_rows(rows_to_return)
 
@@ -4205,6 +4220,9 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
             'real_date_precise', 'product_is_outstock',
             'product_id', 'product_name', 'program_id'
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
 
         return group_by
 
@@ -4219,6 +4237,10 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
             DatabaseColumn('Product Name', SimpleColumn('product_name')),
             DatabaseColumn('Is product outstock', SimpleColumn('product_is_outstock')),
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -4361,26 +4383,26 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
 
             return stocks_list_to_return
 
+        fresh_records_dict = {}
         for row in rows:
-            if not rows_to_return:
-                rows_to_return.append(row)
+            pps_id = row['pps_id']
+            product_id = row['product_id']
+            if pps_id not in fresh_records_dict.keys():
+                fresh_records_dict[pps_id] = {
+                    product_id: row
+                }
             else:
-                length = len(rows_to_return)
-                for r in range(0, length):
-                    current_product = rows_to_return[r]
-                    current_location_id = current_product[self.loc_id_to_get] \
-                        if current_product[self.loc_id_to_get] is not None \
-                        else current_product[self.loc_name_to_get]
-                    current_product_id = current_product['product_id']
-                    _row_id = row[self.loc_id_to_get] \
-                        if row[self.loc_id_to_get] is not None else row[self.loc_name_to_get]
-                    if current_location_id == _row_id and current_product_id == row['product_id']:
-                        current_date = current_product['real_date_precise']
-                        new_date = row['real_date_precise']
-                        if current_date > new_date:
-                            rows_to_return[r] = row
-                    elif r == length - 1:
-                        rows_to_return.append(row)
+                if product_id not in fresh_records_dict[pps_id].keys():
+                    fresh_records_dict[pps_id][product_id] = row
+                else:
+                    date = fresh_records_dict[pps_id][product_id]['real_date_precise']
+                    new_date = row['real_date_precise']
+                    if new_date > date:
+                        fresh_records_dict[pps_id][product_id] = row
+
+        for pps_id, products in fresh_records_dict.items():
+            for product, product_data in products.items():
+                rows_to_return.append(product_data)
 
         clean_data = clean_rows(rows_to_return)
 
@@ -4425,6 +4447,9 @@ class ConsommationPerProductData(SqlData, LocationLevelMixin):
             'real_date_precise', 'actual_consumption',
             'product_id', 'product_name', 'program_id'
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
 
         return group_by
 
@@ -4439,6 +4464,10 @@ class ConsommationPerProductData(SqlData, LocationLevelMixin):
             DatabaseColumn("Product name", SimpleColumn('product_name')),
             DatabaseColumn("Consumption", SimpleColumn('actual_consumption'))
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -4979,6 +5008,9 @@ class SatisfactionRateAfterDeliveryPerProductData(LocationLevelMixin, VisiteDeLO
             'product_id', 'product_name', 'ideal_topup',
             'amt_delivered_convenience'
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
 
         return group_by
 
@@ -4994,6 +5026,10 @@ class SatisfactionRateAfterDeliveryPerProductData(LocationLevelMixin, VisiteDeLO
             DatabaseColumn("Quantity of the product delivered", SumColumn('amt_delivered_convenience')),
             DatabaseColumn("Quantity of the product suggested", SumColumn('ideal_topup')),
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -5163,11 +5199,16 @@ class ValuationOfPNAStockPerProductV2Data(LocationLevelMixin, VisiteDeLOperateur
 
     @property
     def group_by(self):
-        return [
+        group_by = [
             'real_date_repeat', 'product_id', 'product_name', 'select_programs',
             self.loc_id_to_get, self.loc_name_to_get,
             'final_pna_stock_valuation'
         ]
+        if self.loc_id_to_get != 'pps_is':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
+
+        return group_by
 
     @property
     def columns(self):
@@ -5180,6 +5221,10 @@ class ValuationOfPNAStockPerProductV2Data(LocationLevelMixin, VisiteDeLOperateur
             DatabaseColumn("Programs", SimpleColumn('select_programs')),
             DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation')),
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -5542,7 +5587,9 @@ class RecapPassageOneData(IntraHealthSqlData):
             data['Total Facture'] += self.get_value(row['amount_billed'])
             data['Net à Payer'] += self.get_value(row['amount_owed'])
 
-        data['Net à Payer'] = int(data['Total Facture'] * 1.075)
+        # data['Net à Payer'] = int(data['Total Facture'] * 1.075)
+        data['Total Facture'] = round(float(data['Total Facture']), 2)
+        data['Net à Payer'] = round(float(data['Net à Payer']), 2)
         rows = []
         headers = data.keys()
         for header in headers:
@@ -5752,12 +5799,12 @@ class RecapPassageTwoTables(RecapPassageTwoData):
             self.calculate_table_data()
 
         rows = {
-            'Total Versements PPS': dict(html=0.0),
-            'Frais Participation PPS': dict(html=0.0),
-            'Total Facturation District': dict(html=0.0),
-            'Frais Participation District': dict(html=0.0),
-            'Total Facturation PRA': dict(html=0.0),
-            'Total a Verser a La PRA': dict(html=0.0),
+            'Total Versements PPS': dict(html=Decimal(0.0)),
+            'Frais Participation PPS': dict(html=Decimal(0.0)),
+            'Total Facturation District': dict(html=Decimal(0.0)),
+            'Frais Participation District': dict(html=Decimal(0.0)),
+            'Total Facturation PRA': dict(html=Decimal(0.0)),
+            'Total a Verser a La PRA': dict(html=Decimal(0.0)),
         }
         data = self.recap_rows
 
@@ -5772,13 +5819,15 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                 delivery_total_margin = element.get('delivery_total_margin', None) or {'html': 0}
                 rows['Total Versements PPS']['html'] += delivery_amt_owed['html']
                 rows['Frais Participation PPS']['html'] += delivery_total_margin['html']
+                break
 
         rows['Total Facturation District']['html'] = \
             rows['Total Versements PPS']['html'] - rows['Frais Participation PPS']['html']
 
-        rows['Frais Participation District']['html'] = rows['Total Facturation District']['html'] * 0.15 * 0.25
+        rows['Frais Participation District']['html'] = \
+            rows['Total Facturation District']['html'] * Decimal(0.15 * 0.25)
 
-        rows['Total Facturation PRA']['html'] = rows['Total Facturation District']['html'] / 1.15
+        rows['Total Facturation PRA']['html'] = rows['Total Facturation District']['html'] / Decimal(1.15)
 
         rows['Total a Verser a La PRA']['html'] = rows['Total Facturation PRA']['html'] + \
             rows['Frais Participation District']['html'] + rows['Frais Participation PPS']['html']
@@ -5852,7 +5901,6 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                 product_value = pps_product_values.get(name, {'html': 0})
                 row.append(product_value)
 
-            rows.append(row)
             if add_amount_owed_column:
                 products_amount = self.get_row_product_values(pps_data, 'amount_owed')
                 amount_sum = {
@@ -5863,6 +5911,8 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                     amount_sum['html'] += product_value['html']
 
                 row.append(amount_sum)
+
+            rows.append(row)
 
         return rows
 
@@ -5982,11 +6032,25 @@ class IndicateursDeBaseData(SqlData, LocationLevelMixin):
 
         return max_date
 
+    def is_requested_location(self, location_name):
+        if self.config['location_id']:
+            location = SQLLocation.objects.filter(domain=self.config['domain'],
+                                                  location_id=self.config['location_id'])[0]
+
+            if location.location_type.name != 'District':
+                location = SQLLocation.objects.filter(domain=self.config['domain'],
+                                                      parent=location.id)
+                location = [l.name for l in location]
+            else:
+                location = [location.name]
+
+            return location_name in location
+        else:
+            return True
+
     @property
     def filters(self):
         filters = []
-        if self.config['location_id']:
-            filters.append(EQ(self.loc_id, 'location_id'))
 
         return filters
 
@@ -5998,8 +6062,17 @@ class IndicateursDeBaseData(SqlData, LocationLevelMixin):
         for row in rows:
             min_date = row['date_prevue_livraison_debut']
             max_date = row['date_prevue_livraison_fin']
-            if min_date >= self.min_date and max_date <= self.max_date:
+
+            location_name = row[self.loc_name_to_get]
+            if min_date >= self.min_date and max_date <= self.max_date \
+                    and self.is_requested_location(location_name):
                 rows_with_wanted_date.append(row)
+
+        for row in rows_with_wanted_date:
+            if row[self.loc_id_to_get] is None:
+                row[self.loc_id_to_get] = SQLLocation.objects.get(
+                    domain=self.config['domain'],
+                    name=row[self.loc_name_to_get]).location_id
 
         def clean_rows(data_to_clean):
             for data_row in data_to_clean:

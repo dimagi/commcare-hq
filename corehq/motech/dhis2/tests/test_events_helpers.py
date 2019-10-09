@@ -22,35 +22,38 @@ class TestDhis2EventsHelpers(TestCase):
     def setUpClass(cls):
         super().setUpClass()
 
-        domain = create_domain(DOMAIN)
+        cls.domain = create_domain(DOMAIN)
         location_type = LocationType.objects.create(
-            domain=domain.name,
+            domain=cls.domain.name,
             name='test_location_type',
         )
         cls.location = SQLLocation.objects.create(
-            domain=domain.name,
+            domain=cls.domain.name,
             name='test location',
             location_id='test_location',
             location_type=location_type,
             metadata={LOCATION_DHIS_ID: "dhis2_location_id"},
         )
 
-        cls.user = WebUser.create(domain.name, 'test', 'passwordtest')
-        cls.user.set_location(domain.name, cls.location)
+        cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest')
+        cls.user.set_location(cls.domain.name, cls.location)
 
     @classmethod
     def tearDownClass(cls):
         cls.location.delete()
         cls.user.delete()
+        cls.domain.delete()
         super().tearDownClass()
 
     def setUp(self):
+        super().setUp()
         self.db = Dhis2Repeater.get_db()
         self.fakedb = FakeCouchDb()
         Dhis2Repeater.set_db(self.fakedb)
 
     def tearDown(self):
         Dhis2Repeater.set_db(self.db)
+        super().tearDown()
 
     def test_form_processing(self):
         form = {
