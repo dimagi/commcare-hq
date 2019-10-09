@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import (
-    get_last_synclog_for_user, get_synclogs_for_user
+    get_synclogs_for_user
 )
 from casexml.apps.phone.models import (
     SyncLog, SyncLogSQL, SimplifiedSyncLog, delete_synclog, properly_wrap_sync_log
@@ -40,9 +40,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
 
     def test_get_sync_logs_for_user(self):
         self.assert_doc_sets_equal(get_synclogs_for_user(self.user_id, 4), self.sync_logs)
-
-    def test_get_last_synclog_for_user(self):
-        self.assert_docs_equal(get_last_synclog_for_user(self.user_id), self.sync_logs[0])
 
 
 class SyncLogPruneTest(TestCase, DocTestMixin):

@@ -467,12 +467,6 @@ class SyncLog(AbstractSyncLog):
             data['last_seq'] = six.text_type(data['last_seq'])
         return super(SyncLog, cls).wrap(data)
 
-    @classmethod
-    def last_for_user(cls, user_id):
-        from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
-
-        return get_last_synclog_for_user(user_id)
-
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
             _get_logger().warn("assertion failed: %s" % msg)
