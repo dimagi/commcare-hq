@@ -123,37 +123,6 @@ class DateSpan(object):
         self.timezone = timezone
         self.max_days = max_days
 
-    def __getstate__(self):
-        """
-            For pickling the DateSpan object.
-        """
-        return dict(
-            startdate=self.startdate,
-            enddate=self.enddate,
-            format=self.format,
-            inclusive=self.inclusive,
-            is_default=self.is_default,
-            timezone=self.timezone.zone,
-            max_days=self.max_days,
-        )
-
-    def __setstate__(self, state):
-        """
-            For un-pickling the DateSpan object.
-        """
-        logging = get_task_logger(__name__)  # logging is likely to happen within celery
-        self.startdate = state.get('startdate')
-        self.enddate = state.get('enddate')
-        self.format = state.get('format', ISO_DATE_FORMAT)
-        self.inclusive = state.get('inclusive', True)
-        self.timezone = pytz.utc
-        self.is_default = state.get('is_default', False)
-        self.max_days = state.get('max_days')
-        try:
-            self.timezone = pytz.timezone(state.get('timezone'))
-        except Exception as e:
-            logging.error("Could not unpack timezone for DateSpan. Error: %s" % e)
-
     def __eq__(self, other):
         return (
             self.startdate == other.startdate
