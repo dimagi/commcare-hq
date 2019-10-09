@@ -118,7 +118,8 @@ class Dhis2ApiTests(SimpleTestCase):
         _assert_status_2xx(response)
         instances = response.json()["trackedEntityInstances"]
         assert_true(instances)
-        all(validate(te, te_schema) for te in instances)
+        for te in instances:
+            validate(te, te_schema)
 
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_query(self):
