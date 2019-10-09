@@ -368,15 +368,19 @@ def synclog_to_sql_object(synclog_json_object):
             user_id=synclog_json_object.user_id,
             synclog_id=synclog_id,
             date=synclog_json_object.date,
-            previous_synclog_id=getattr(synclog_json_object, 'previous_log_id', None),
             log_format=synclog_json_object.log_format,
             build_id=synclog_json_object.build_id,
             duration=synclog_json_object.duration,
-            last_submitted=synclog_json_object.last_submitted,
             had_state_error=synclog_json_object.had_state_error,
             error_date=synclog_json_object.error_date,
             error_hash=synclog_json_object.error_hash,
         )
+    field_mapping = [
+        ('previous_log_id', 'previous_synclog_id'),
+        ('last_submitted', 'last_submitted'),
+    ]
+    for from_field, to_field in field_mapping:
+        setattr(synclog, to_field, getattr(synclog_json_object, from_field, None))
     synclog.doc = synclog_json_object.to_json()
     return synclog
 
