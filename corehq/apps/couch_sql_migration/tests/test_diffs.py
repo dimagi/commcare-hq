@@ -1,9 +1,12 @@
 from copy import deepcopy
+from tempfile import TemporaryDirectory
 
 from django.test import SimpleTestCase
 
 from attr import fields_dict
+from nose.tools import assert_in, assert_not_in
 
+from corehq.apps.couch_sql_migration.couchsqlmigration import CouchSqlDomainMigrator
 from corehq.apps.couch_sql_migration.diff import (
     filter_case_diffs,
     filter_form_diffs,
@@ -17,7 +20,7 @@ from corehq.apps.tzmigration.timezonemigration import (
 )
 from corehq.util.test_utils import softer_assert
 
-from ..diffrule import ANY
+from ..diffrule import ANY, Ignore
 
 DATE_DIFFS = [
     FormJsonDiff(
@@ -591,3 +594,27 @@ class DiffTestCases(SimpleTestCase):
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)
         self.assertEqual(filtered, [])
+
+
+def test_extend_ignore_rules():
+    import corehq.apps.couch_sql_migration.diff
+
+    with TemporaryDirectory() as tmp_dir:
+        src_domain = 'from-couch-domain'
+        dst_domain = 'to-sql-domain'
+        state_dir = tmp_dir
+
+        ignore_rules = corehq.apps.couch_sql_migration.diff.preload_ignore_rules()
+        ignore_domain_rule = Ignore('diff', 'domain', old=src_domain, new=dst_domain)
+        assert_not_in(ignore_domain_rule, ignore_rules['CommCareCase*'])
+
+        migrator = CouchSqlDomainMigrator(
+            src_domain,
+            state_dir,
+            dst_domain,
+        )
+        corehq.apps.couch_sql_migration.diff.preload_ignore_rules = migrator._extend_ignore_rules(
+            corehq.apps.couch_sql_migration.diff.preload_ignore_rules
+        )
+        ignore_rules = corehq.apps.couch_sql_migration.diff.preload_ignore_rules()
+        assert_in(ignore_domain_rule, ignore_rules['CommCareCase*'])
