@@ -110,8 +110,7 @@ def get_case_xform_ids(case_id):
     return list(set([row['key'][1] for row in results] + list(commtrack_forms)))
 
 
-def update_sync_log_with_checks(sync_log, xform, cases, case_db,
-                                case_id_blacklist=None):
+def update_sync_log_with_checks(sync_log, xform, cases, case_db):
     assert case_db is not None
     sync_log.update_phone_lists(xform, cases)
 

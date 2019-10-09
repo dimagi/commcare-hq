@@ -103,13 +103,12 @@ class CaseProcessingResult(object):
                     flag.save()
 
 
-def process_cases_with_casedb(xforms, case_db, config=None):
-    config = config or CaseProcessingConfig()
+def process_cases_with_casedb(xforms, case_db):
     case_processing_result = _get_or_update_cases(xforms, case_db)
     cases = case_processing_result.cases
     xform = xforms[0]
 
-    _update_sync_logs(xform, case_db, config, cases)
+    _update_sync_logs(xform, case_db, cases)
 
     try:
         cases_received.send(sender=None, xform=xform, cases=cases)
@@ -129,27 +128,11 @@ def process_cases_with_casedb(xforms, case_db, config=None):
     return case_processing_result
 
 
-def _update_sync_logs(xform, case_db, config, cases):
+def _update_sync_logs(xform, case_db, cases):
     # handle updating the sync records for apps that use sync mode
     relevant_log = xform.get_sync_token()
     if relevant_log:
-        # in reconciliation mode, things can be unexpected
-        relevant_log.strict = config.strict_asserts
-        update_sync_log_with_checks(relevant_log, xform, cases, case_db,
-                                    case_id_blacklist=config.case_id_blacklist)
-
-
-class CaseProcessingConfig(object):
-
-    def __init__(self, strict_asserts=True, case_id_blacklist=None):
-        self.strict_asserts = strict_asserts
-        self.case_id_blacklist = case_id_blacklist if case_id_blacklist is not None else []
-
-    def __repr__(self):
-        return 'strict: {strict}, ids: {ids}'.format(
-            strict=self.strict_asserts,
-            ids=", ".join(self.case_id_blacklist)
-        )
+        update_sync_log_with_checks(relevant_log, xform, cases, case_db)
 
 
 def _get_or_update_cases(xforms, case_db):
