@@ -82,7 +82,7 @@ hqDefine("app_manager/js/widgets", [
             $select.append(option).trigger('change');
             $select.trigger({type: 'select2:select', params: {data: options.initialValue}});
         }
-        var $appBuildProfileIdSelect = $select.parents('form').find('.app-build-profile-id-select')
+        var $appBuildProfileIdSelect = $select.parents('form').find('.app-build-profile-id-select');
         if ($appBuildProfileIdSelect.length) {
             var appBuildProfileInitialValues = initialPageData.get('appBuildProfileInitialValues');
             if (!_.isEmpty(appBuildProfileInitialValues)) {
