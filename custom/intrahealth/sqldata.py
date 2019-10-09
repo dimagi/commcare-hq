@@ -6066,7 +6066,7 @@ class IndicateursDeBaseData(SqlData, LocationLevelMixin):
         if self.config['location_id']:
             try:
                 location = SQLLocation.objects.get(domain=self.config['domain'],
-                                                  location_id=self.config['location_id'])
+                                                   location_id=self.config['location_id'])
             except SQLLocation.DoesNotExist:
                 return False
             if location.location_type.name != 'District':

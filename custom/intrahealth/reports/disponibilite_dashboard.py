@@ -149,6 +149,19 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
     def clean_rows(self):
         return VisiteDeLOperateurPerProductV2DataSource(config=self.config).rows
 
+    def change_id_keys_to_names(self, dict_with_id_keys):
+        dict_with_name_keys = {}
+        for id, data in dict_with_id_keys.items():
+            try:
+                name = SQLLocation.objects.get(domain=self.config['domain'],
+                                               location_id=id).name
+            except SQLLocation.DoesNotExist:
+                name = id
+
+            dict_with_name_keys[name] = data
+
+        return dict_with_name_keys
+    
     def calculate_rows(self):
 
         def data_to_rows(stocks_list):
@@ -162,27 +175,27 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                 location_name = stock['location_name']
                 products = sorted(stock['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations:
-                    length = len(locations_with_products[location_name])
-                    product_ids = [p['product_id'] for p in locations_with_products[location_name]]
+                    length = len(locations_with_products[location_id])
+                    product_ids = [p['product_id'] for p in locations_with_products[location_id]]
                     for product in products:
                         if product['product_id'] not in product_ids:
-                            locations_with_products[location_name].append({
+                            locations_with_products[location_id].append({
                                 'product_name': product['product_name'],
                                 'product_id': product['product_id'],
                                 'in_ppses': product['in_ppses'],
                                 'all_ppses': product['all_ppses'],
                             })
                     for r in range(0, length):
-                        product_for_location = locations_with_products[location_name][r]
+                        product_for_location = locations_with_products[location_id][r]
                         for product in products:
                             if product_for_location['product_id'] == product['product_id']:
                                 in_ppses = product['in_ppses']
                                 all_ppses = product['all_ppses']
-                                locations_with_products[location_name][r]['in_ppses'] += in_ppses
-                                locations_with_products[location_name][r]['all_ppses'] += all_ppses
+                                locations_with_products[location_id][r]['in_ppses'] += in_ppses
+                                locations_with_products[location_id][r]['all_ppses'] += all_ppses
                 else:
                     added_locations.append(location_id)
-                    locations_with_products[location_name] = []
+                    locations_with_products[location_id] = []
                     unique_products_for_location = []
                     products_to_add = []
                     for product in products:
@@ -198,7 +211,9 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                             products_to_add[index]['all_ppses'] += all_ppses
 
                     for product in products_to_add:
-                        locations_with_products[location_name].append(product)
+                        locations_with_products[location_id].append(product)
+
+            locations_with_products = self.change_id_keys_to_names(locations_with_products)
 
             for location, products in locations_with_products.items():
                 products_names = [x['product_name'] for x in products]
