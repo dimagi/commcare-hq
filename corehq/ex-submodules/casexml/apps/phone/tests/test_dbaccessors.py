@@ -3,43 +3,14 @@ import datetime
 from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_sync_logs
-from casexml.apps.phone.dbaccessors.sync_logs_by_user import (
-    get_synclogs_for_user
-)
 from casexml.apps.phone.models import (
-    SyncLog, SyncLogSQL, SimplifiedSyncLog, delete_synclog, properly_wrap_sync_log
+    SyncLog,
+    SyncLogSQL,
+    properly_wrap_sync_log,
 )
+from casexml.apps.phone.tasks import SYNCLOG_RETENTION_DAYS, prune_synclogs
+
 from corehq.util.test_utils import DocTestMixin
-from casexml.apps.phone.tasks import prune_synclogs, SYNCLOG_RETENTION_DAYS
-
-
-class DBAccessorsTest(TestCase, DocTestMixin):
-    maxDiff = None
-
-    @classmethod
-    def setUpClass(cls):
-        domain = "synclog_test"
-        super(DBAccessorsTest, cls).setUpClass()
-        delete_all_sync_logs()
-        cls.user_id = 'lkasdhfadsloi'
-        cls.sync_logs = [
-            SyncLog(domain=domain, user_id=cls.user_id, date=datetime.datetime(2015, 7, 1, 0, 0)),
-            SimplifiedSyncLog(domain=domain, user_id=cls.user_id, date=datetime.datetime(2015, 3, 1, 0, 0)),
-            SyncLog(domain=domain, user_id=cls.user_id, date=datetime.datetime(2015, 1, 1, 0, 0))
-        ]
-        sync_logs_other = [SyncLog(domain=domain, user_id='other')]
-        cls.docs = cls.sync_logs + sync_logs_other
-        for doc in cls.docs:
-            doc.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        for doc in cls.docs:
-            doc.delete()
-        super(DBAccessorsTest, cls).tearDownClass()
-
-    def test_get_sync_logs_for_user(self):
-        self.assert_doc_sets_equal(get_synclogs_for_user(self.user_id, 4), self.sync_logs)
 
 
 class SyncLogPruneTest(TestCase, DocTestMixin):
