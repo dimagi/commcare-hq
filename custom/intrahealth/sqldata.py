@@ -6,6 +6,8 @@ from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn, \
     MonthColumn
 from collections import defaultdict
+
+from corehq.apps.export.models.new import DataFile
 from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.products.models import SQLProduct
 
@@ -14,6 +16,7 @@ from corehq.apps.reports.sqlreport import DataFormatter, \
     TableDataFormat, calculate_total_row
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
+from corehq.blobs.models import BlobMeta
 from custom.intrahealth import PRODUCT_NAMES as INIT_PRODUCT_NAMES
 from custom.intrahealth import PRODUCT_MAPPING
 from custom.intrahealth.report_calcs import _locations_per_type
@@ -4768,10 +4771,37 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
 
         return loc_names, data
 
+    def flatten_records_by_date(self, records):
+        flatten_records = {}
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date_repeat']) \
+                    or record['product_id'] not in self.products:
+                continue
+
+            if record[self.loc_id]:
+                location = (record[self.loc_id]) + record['product_id']
+            else:
+                continue
+            final_stock = record['final_pna_stock']
+            loss_amt = record['loss_amt']
+            if not flatten_records.get(location):
+                flatten_records[location] = record
+                if not loss_amt:
+                    flatten_records[location]['loss_amt'] = {'html': 0}
+                if not final_stock:
+                    flatten_records[location]['final_pna_stock'] = {'html': 0}
+            else:
+                if final_stock:
+                    flatten_records[location]['final_pna_stock']['html'] += final_stock['html']
+                if loss_amt:
+                    flatten_records[location]['loss_amt']['html'] += loss_amt['html']
+
+        return flatten_records.values()
+
     @property
     def rows(self):
         records = self.get_data()
-
+        records = self.flatten_records_by_date(records)
         loc_names, data = self.get_loss_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_loss_rate_to_rows(loc_names, data)
@@ -6034,9 +6064,11 @@ class IndicateursDeBaseData(SqlData, LocationLevelMixin):
 
     def is_requested_location(self, location_name):
         if self.config['location_id']:
-            location = SQLLocation.objects.filter(domain=self.config['domain'],
-                                                  location_id=self.config['location_id'])[0]
-
+            try:
+                location = SQLLocation.objects.get(domain=self.config['domain'],
+                                                  location_id=self.config['location_id'])
+            except SQLLocation.DoesNotExist:
+                return False
             if location.location_type.name != 'District':
                 location = SQLLocation.objects.filter(domain=self.config['domain'],
                                                       parent=location.id)
