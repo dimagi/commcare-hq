@@ -33,7 +33,7 @@ def _ensure_new_software_plans(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0043_grandfather_case_privs'),
+        ('accounting', '0044_grandfather_odata_privs'),
     ]
 
     operations = [
