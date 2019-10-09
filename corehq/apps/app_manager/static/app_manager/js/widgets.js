@@ -82,11 +82,11 @@ hqDefine("app_manager/js/widgets", [
             $select.append(option).trigger('change');
             $select.trigger({type: 'select2:select', params: {data: options.initialValue}});
         }
-        var appProfileInitialValues = initialPageData.get('appProfileInitialValues');
-        if (!_.isEmpty(appProfileInitialValues)) {
-            var $appProfileIdSelect = $('#search-manage-app-releases .app-profile-id-select');
-            $appProfileIdSelect.append(new Option(gettext('Select Profile'), '', false, false));
-            $appProfileIdSelect.select2({data: appProfileInitialValues});
+        var appBuildProfileInitialValues = initialPageData.get('appBuildProfileInitialValues');
+        if (!_.isEmpty(appBuildProfileInitialValues)) {
+            var $appBuildProfileIdSelect = $('#search-manage-app-releases .app-build-profile-id-select');
+            $appBuildProfileIdSelect.append(new Option(gettext('Select Profile'), '', false, false));
+            $appBuildProfileIdSelect.select2({data: appBuildProfileInitialValues});
         }
     };
 

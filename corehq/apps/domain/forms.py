@@ -2533,8 +2533,8 @@ class BaseManageReleasesByAppProfileForm(forms.Form):
 
 
 class SearchManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
-    app_profile_id = forms.ChoiceField(label=ugettext_lazy("Application Profile"), choices=(),
-                                       required=False)
+    app_build_profile_id = forms.ChoiceField(label=ugettext_lazy("Build Profile"), choices=(),
+                                             required=False)
     status = forms.ChoiceField(label=ugettext_lazy("Status"),
                                choices=(
                                    ('', ugettext_lazy('Select Status')),
@@ -2552,7 +2552,7 @@ class SearchManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
     def form_fields(self):
         form_fields = super(SearchManageReleasesByAppProfileForm, self).form_fields()
         form_fields.extend([
-            crispy.Field('app_profile_id', css_class="hqwebapp-select2 app-profile-id-select"),
+            crispy.Field('app_build_profile_id', css_class="hqwebapp-select2 app-build-profile-id-select"),
             crispy.Field('status', id='status-input')
         ])
         return form_fields

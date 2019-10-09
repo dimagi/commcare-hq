@@ -117,23 +117,23 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
         )
 
     @staticmethod
-    def _get_initial_app_profile_details(apps_profiles, app_id, app_profile_id):
+    def _get_initial_app_build_profile_details(build_profiles_per_app, app_id, app_build_profile_id):
         # only need to set when performing search to populate with initial values in view
-        if apps_profiles and app_id and app_id in apps_profiles:
-            app_profiles = apps_profiles[app_id]
+        if build_profiles_per_app and app_id and app_id in build_profiles_per_app:
+            app_build_profiles = build_profiles_per_app[app_id]
             return [{
                 'id': _id,
                 'text': details['name'],
-                'selected': app_profile_id == _id
-            } for _id, details in app_profiles.items()]
+                'selected': app_build_profile_id == _id
+            } for _id, details in app_build_profiles.items()]
 
     @property
     def page_context(self):
         apps_names = {}
-        apps_profiles = {}
+        build_profiles_per_app = {}
         for app in get_brief_apps_in_domain(self.domain, include_remote=True):
             apps_names[app.id] = app.name
-            apps_profiles[app.id] = app.build_profiles
+            build_profiles_per_app[app.id] = app.build_profiles
         query = LatestEnabledBuildProfiles.objects
         app_id = self.request.GET.get('app_id')
         if app_id:
@@ -143,9 +143,9 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
         version = self.request.GET.get('version')
         if version:
             query = query.filter(version=version)
-        app_profile_id = self.request.GET.get('app_profile_id')
-        if app_profile_id:
-            query = query.filter(build_profile_id=app_profile_id)
+        app_build_profile_id = self.request.GET.get('app_build_profile_id')
+        if app_build_profile_id:
+            query = query.filter(build_profile_id=app_build_profile_id)
         status = self.request.GET.get('status')
         if status:
             if status == 'active':
@@ -159,9 +159,9 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
             'manage_releases_by_app_profile_form': self.form,
             'app_releases_by_app_profile': app_releases_by_app_profile,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
-            'initial_app_profile_details': self._get_initial_app_profile_details(apps_profiles, app_id,
-                                                                                 app_profile_id),
-            'apps_profiles': apps_profiles,
+            'initial_app_build_profile_details': self._get_initial_app_build_profile_details(
+                build_profiles_per_app, app_id, app_build_profile_id),
+            'build_profiles_per_app': build_profiles_per_app,
         }
 
     def post(self, request, *args, **kwargs):

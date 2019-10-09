@@ -30,22 +30,22 @@ hqDefine("translations/js/app_translations", [
             var $form = $(this).closest("form");
             $form.find("[name='version']").val('').trigger('change');
             // update app profile options if present
-            var $appProfileIdSelect = $form.find('.app-profile-id-select');
-            if ($appProfileIdSelect.length) {
-                $appProfileIdSelect.html('');
-                var appsProfiles = initialPageData.get('appsProfiles');
-                if (appsProfiles) {
+            var $appBuildProfileIdSelect = $form.find('.app-build-profile-id-select');
+            if ($appBuildProfileIdSelect.length) {
+                $appBuildProfileIdSelect.html('');
+                var buildProfilesPerApp = initialPageData.get('buildProfilesPerApp');
+                if (buildProfilesPerApp) {
                     var selectedAppId = $(this).val();
                     if (selectedAppId) {
-                        $appProfileIdSelect.append(new Option(gettext('Select Profile'), '', true, true));
-                        _.each(appsProfiles[selectedAppId], function (profileDetails, profileId) {
-                            $appProfileIdSelect.append(
+                        $appBuildProfileIdSelect.append(new Option(gettext('Select Profile'), '', true, true));
+                        _.each(buildProfilesPerApp[selectedAppId], function (profileDetails, profileId) {
+                            $appBuildProfileIdSelect.append(
                                 new Option(profileDetails.name, profileId, false, false)
                             );
                         });
                     }
                 }
-                $appProfileIdSelect.trigger('change');
+                $appBuildProfileIdSelect.trigger('change');
             }
         });
     });
