@@ -126,14 +126,13 @@ from custom.icds_reports.utils import (
     track_time,
     zip_folder,
 )
-from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
-from custom.icds_reports.utils.aggregation_helpers.monolith import (
-    ChildHealthMonthlyAggregationHelper,
+from custom.icds_reports.utils.aggregation_helpers.distributed import (
+    ChildHealthMonthlyAggregationDistributedHelper,
 )
-from custom.icds_reports.utils.aggregation_helpers.monolith.mbt import (
-    AwcMbtHelper,
-    CcsMbtHelper,
-    ChildHealthMbtHelper,
+from custom.icds_reports.utils.aggregation_helpers.distributed.mbt import (
+    AwcMbtDistributedHelper,
+    CcsMbtDistributedHelper,
+    ChildHealthMbtDistributedHelper,
 )
 
 celery_task_logger = logging.getLogger('celery.task')
@@ -549,7 +548,7 @@ def get_cursor(model, write=True):
 
 @track_time
 def _child_health_monthly_table(state_ids, day):
-    helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
+    helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
 
     celery_task_logger.info("Creating temporary table")
     with get_cursor(ChildHealthMonthly) as cursor:
@@ -1245,9 +1244,9 @@ def create_all_mbt(month, state_ids):
 @task(queue='icds_dashboard_reports_queue')
 def create_mbt_for_month(state_id, month, force_citus=False):
     with force_citus_engine(force_citus):
-        helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
+        helpers = (CcsMbtDistributedHelper, ChildHealthMbtDistributedHelper, AwcMbtDistributedHelper)
         for helper_class in helpers:
-            helper = get_helper(helper_class.helper_key)(state_id, month)
+            helper = helper_class(state_id, month)
             # run on primary DB to avoid "conflict with recovery" errors
             with get_cursor(helper.base_class, write=True) as cursor, tempfile.TemporaryFile() as f:
                 cursor.copy_expert(helper.query(), f)
@@ -1281,7 +1280,7 @@ def setup_aggregation(agg_date):
 
 
 def _child_health_monthly_aggregation(day, state_ids):
-    helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
+    helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
 
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())
