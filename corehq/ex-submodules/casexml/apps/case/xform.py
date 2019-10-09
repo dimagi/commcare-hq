@@ -5,7 +5,7 @@ import itertools
 from django.db.models import Q
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.signals import cases_received
-from casexml.apps.case.util import validate_phone_datetime, update_sync_log_with_checks, prune_previous_log
+from casexml.apps.case.util import validate_phone_datetime, prune_previous_log
 from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
@@ -108,7 +108,7 @@ def process_cases_with_casedb(xforms, case_db):
     cases = case_processing_result.cases
     xform = xforms[0]
 
-    _update_sync_logs(xform, case_db, cases)
+    _update_sync_logs(xform, cases)
 
     try:
         cases_received.send(sender=None, xform=xform, cases=cases)
@@ -128,11 +128,11 @@ def process_cases_with_casedb(xforms, case_db):
     return case_processing_result
 
 
-def _update_sync_logs(xform, case_db, cases):
+def _update_sync_logs(xform, cases):
     # handle updating the sync records for apps that use sync mode
     relevant_log = xform.get_sync_token()
     if relevant_log:
-        changed = update_sync_log_with_checks(relevant_log, xform, cases, case_db)
+        changed = relevant_log.update_phone_lists(xform, cases)
         changed |= prune_previous_log(relevant_log)
         if changed:
             relevant_log.save()

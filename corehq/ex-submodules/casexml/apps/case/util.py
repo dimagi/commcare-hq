@@ -110,11 +110,6 @@ def get_case_xform_ids(case_id):
     return list(set([row['key'][1] for row in results] + list(commtrack_forms)))
 
 
-def update_sync_log_with_checks(sync_log, xform, cases, case_db):
-    assert case_db is not None
-    return sync_log.update_phone_lists(xform, cases)
-
-
 def prune_previous_log(sync_log):
     if sync_log.previous_log_id:
         delete_synclog(sync_log.previous_log_id)
