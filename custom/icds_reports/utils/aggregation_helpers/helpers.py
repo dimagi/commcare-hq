@@ -1,11 +1,10 @@
 import attr
 
-
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
-    AggAwcDistributedHelper,
     AggAwcDailyAggregationDistributedHelper,
-    AggChildHealthAggregationDistributedHelper,
+    AggAwcDistributedHelper,
     AggCcsRecordAggregationDistributedHelper,
+    AggChildHealthAggregationDistributedHelper,
     AwcMbtDistributedHelper,
     AwwIncentiveAggregationDistributedHelper,
     BirthPreparednessFormsAggregationDistributedHelper,
@@ -28,11 +27,11 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     PostnatalCareFormsChildHealthAggregationDistributedHelper,
     THRFormsCcsRecordAggregationDistributedHelper,
     THRFormsChildHealthAggregationDistributedHelper,
-    THRFormV2AggDistributedHelper
+    THRFormV2AggDistributedHelper,
 )
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
-    AggAwcHelper,
     AggAwcDailyAggregationHelper,
+    AggAwcHelper,
     AggCcsRecordAggregationHelper,
     AggChildHealthAggregationHelper,
     AggLsHelper,
@@ -59,7 +58,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith import (
     PostnatalCareFormsChildHealthAggregationHelper,
     THRFormsCcsRecordAggregationHelper,
     THRFormsChildHealthAggregationHelper,
-    THRFormV2AggHelper
+    THRFormV2AggHelper,
 )
 
 

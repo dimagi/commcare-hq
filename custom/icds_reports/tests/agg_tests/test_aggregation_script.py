@@ -8,10 +8,13 @@ from django.test.testcases import TestCase, override_settings
 import sqlalchemy
 from freezegun import freeze_time
 
-from custom.icds_reports.exceptions import LocationRemovedException
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tests.util import setup_locations_and_types
-from corehq.sql_db.connections import connection_manager, ICDS_UCR_CITUS_ENGINE_ID
+from corehq.sql_db.connections import (
+    ICDS_UCR_CITUS_ENGINE_ID,
+    connection_manager,
+)
+from custom.icds_reports.exceptions import LocationRemovedException
 from custom.icds_reports.models.aggregate import (
     AggregateInactiveAWW,
     AwcLocation,

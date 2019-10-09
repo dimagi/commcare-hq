@@ -1,42 +1,51 @@
 from contextlib import contextmanager
 from datetime import date
 
-from corehq.form_processor.utils.sql import fetchall_as_namedtuple
-from corehq.sql_db.routers import db_for_read_write
-from custom.icds_reports.const import (AGG_CCS_RECORD_BP_TABLE,
-    AGG_CCS_RECORD_CF_TABLE, AGG_CCS_RECORD_DELIVERY_TABLE,
-    AGG_CCS_RECORD_PNC_TABLE, AGG_CCS_RECORD_THR_TABLE,
-    AGG_CHILD_HEALTH_PNC_TABLE, AGG_CHILD_HEALTH_THR_TABLE,
-    AGG_COMP_FEEDING_TABLE, AGG_DAILY_FEEDING_TABLE,
-    AGG_GROWTH_MONITORING_TABLE, AGG_INFRASTRUCTURE_TABLE, AWW_INCENTIVE_TABLE,
-                                       AGG_LS_AWC_VISIT_TABLE, AGG_LS_VHND_TABLE,
-                                       AGG_LS_BENEFICIARY_TABLE, AGG_THR_V2_TABLE)
 from django.db import connections, models, transaction
 
+from corehq.sql_db.routers import db_for_read_write
+from custom.icds_reports.const import (
+    AGG_CCS_RECORD_BP_TABLE,
+    AGG_CCS_RECORD_CF_TABLE,
+    AGG_CCS_RECORD_DELIVERY_TABLE,
+    AGG_CCS_RECORD_PNC_TABLE,
+    AGG_CCS_RECORD_THR_TABLE,
+    AGG_CHILD_HEALTH_PNC_TABLE,
+    AGG_CHILD_HEALTH_THR_TABLE,
+    AGG_COMP_FEEDING_TABLE,
+    AGG_DAILY_FEEDING_TABLE,
+    AGG_GROWTH_MONITORING_TABLE,
+    AGG_INFRASTRUCTURE_TABLE,
+    AGG_LS_AWC_VISIT_TABLE,
+    AGG_LS_BENEFICIARY_TABLE,
+    AGG_LS_VHND_TABLE,
+    AGG_THR_V2_TABLE,
+    AWW_INCENTIVE_TABLE,
+)
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
+    AggAwcDailyAggregationDistributedHelper,
+    AggAwcDistributedHelper,
     AggCcsRecordAggregationDistributedHelper,
     AggChildHealthAggregationDistributedHelper,
     AwwIncentiveAggregationDistributedHelper,
-    LSAwcMgtFormAggDistributedHelper,
-    LSBeneficiaryFormAggDistributedHelper,
-    LSVhndFormAggDistributedHelper,
     BirthPreparednessFormsAggregationDistributedHelper,
     CcsRecordMonthlyAggregationDistributedHelper,
     ChildHealthMonthlyAggregationDistributedHelper,
     ComplementaryFormsAggregationDistributedHelper,
     ComplementaryFormsCcsRecordAggregationDistributedHelper,
+    DailyAttendanceAggregationDistributedHelper,
     DailyFeedingFormsChildHealthAggregationDistributedHelper,
     DeliveryFormsAggregationDistributedHelper,
     GrowthMonitoringFormsAggregationDistributedHelper,
     InactiveAwwsAggregationDistributedHelper,
+    LocationAggregationDistributedHelper,
+    LSAwcMgtFormAggDistributedHelper,
+    LSBeneficiaryFormAggDistributedHelper,
+    LSVhndFormAggDistributedHelper,
     PostnatalCareFormsCcsRecordAggregationDistributedHelper,
     PostnatalCareFormsChildHealthAggregationDistributedHelper,
-    THRFormsChildHealthAggregationDistributedHelper,
     THRFormsCcsRecordAggregationDistributedHelper,
-    AggAwcDistributedHelper,
-    AggAwcDailyAggregationDistributedHelper,
-    LocationAggregationDistributedHelper,
-    DailyAttendanceAggregationDistributedHelper,
+    THRFormsChildHealthAggregationDistributedHelper,
     THRFormV2AggDistributedHelper,
 )
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
