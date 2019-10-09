@@ -44,9 +44,12 @@ class SearchByParamsPayloadGenerator(BasePayloadGenerator):
     def _setup_names(self, case):
         data = {}
         self._setup_name(case.name, 'beneficaryname', 'namelocal', data)
-        self._setup_name(case.get_case_property('mothers_name'), 'mothername', 'mothernamelocal', data)
-        self._setup_name(case.get_case_property('fathers_name'), 'fathername', 'fathernamelocal', data)
-        self._setup_name(case.get_case_property('husbands_name'), 'husbandname', 'husbandnamelocal', data)
+        for case_property, key_name, key_name_local in [
+            ("mothers_name", "mothername", "mothernamelocal"),
+            ("fathers_name", "fathername", "fathernamelocal"),
+            ("husbands_name", "husbandname", "husbandnamelocal"),
+        ]:
+            self._setup_name(case.get_case_property(case_property), key_name, key_name_local, data)
         return data
 
     def _setup_name(self, name, key_name, key_name_local, data):
