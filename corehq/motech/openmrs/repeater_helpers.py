@@ -6,7 +6,6 @@ from requests import RequestException
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xform import extract_case_blocks
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -28,7 +27,6 @@ from corehq.motech.openmrs.exceptions import (
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.requests import Requests
 from corehq.motech.value_source import (
-    CaseTriggerInfo,
     get_ancestor_location_metadata_value,
     get_case_location,
 )
@@ -370,34 +368,6 @@ def get_patient(requests, domain, info, openmrs_config):
             patient = find_or_create_patient(requests, domain, info, openmrs_config)
 
     return patient
-
-
-def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields,
-                                             form_question_values=None):
-    result = []
-    case_blocks = extract_case_blocks(form_json)
-    cases = CaseAccessors(domain).get_cases(
-        [case_block['@case_id'] for case_block in case_blocks], ordered=True)
-    for case, case_block in zip(cases, case_blocks):
-        assert case_block['@case_id'] == case.case_id
-        if not case_types or case.type in case_types:
-            result.append(CaseTriggerInfo(
-                domain=domain,
-                case_id=case_block['@case_id'],
-                type=case.type,
-                name=case.name,
-                owner_id=case.owner_id,
-                modified_by=case.modified_by,
-                updates=dict(
-                    list(case_block.get('create', {}).items()) +
-                    list(case_block.get('update', {}).items())
-                ),
-                created='create' in case_block,
-                closed='close' in case_block,
-                extra_fields={field: case.get_case_property(field) for field in extra_fields},
-                form_question_values=form_question_values or {},
-            ))
-    return result
 
 
 @quickcache(['requests.base_url'])
