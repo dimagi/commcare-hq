@@ -113,40 +113,7 @@ def get_case_xform_ids(case_id):
 def update_sync_log_with_checks(sync_log, xform, cases, case_db,
                                 case_id_blacklist=None):
     assert case_db is not None
-    from casexml.apps.case.xform import CaseProcessingConfig
-
-    case_id_blacklist = case_id_blacklist or []
-    try:
-        sync_log.update_phone_lists(xform, cases)
-    except SyncLogAssertionError as e:
-        soft_assert('@'.join(['skelly', 'dimagi.com']))(
-            False,
-            'SyncLogAssertionError raised while updating phone lists',
-            {
-                'form_id': xform.form_id,
-                'cases': [case.case_id for case in cases]
-            }
-        )
-        if e.case_id and e.case_id not in case_id_blacklist:
-            form_ids = get_case_xform_ids(e.case_id)
-            case_id_blacklist.append(e.case_id)
-            for form_id in form_ids:
-                if form_id != xform._id:
-                    form = XFormInstance.get(form_id)
-                    if form.doc_type == 'XFormInstance':
-                        from casexml.apps.case.xform import process_cases_with_casedb
-                        process_cases_with_casedb(
-                            [form],
-                            case_db,
-                            CaseProcessingConfig(
-                                strict_asserts=True,
-                                case_id_blacklist=case_id_blacklist
-                            )
-                        )
-            updated_log = get_properly_wrapped_sync_log(sync_log._id)
-
-            update_sync_log_with_checks(updated_log, xform, cases, case_db,
-                                        case_id_blacklist=case_id_blacklist)
+    sync_log.update_phone_lists(xform, cases)
 
 
 def get_indexed_cases(domain, case_ids):
