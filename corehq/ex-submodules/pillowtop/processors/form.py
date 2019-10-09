@@ -3,14 +3,18 @@ from datetime import timedelta
 from django.conf import settings
 from django.http import Http404
 
-from corehq.apps.users.util import update_device_meta, update_latest_builds, filter_by_app
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.users.models import CouchUser, LastSubmission, DeviceAppMeta
+from corehq.apps.receiverwrapper.util import get_app_version_info
+from corehq.apps.users.models import CouchUser, DeviceAppMeta, LastSubmission
+from corehq.apps.users.util import (
+    filter_by_app,
+    update_device_meta,
+    update_latest_builds,
+)
 from corehq.pillows.utils import format_form_meta_for_es
 from corehq.util.quickcache import quickcache
-from corehq.apps.receiverwrapper.util import get_app_version_info
 
 from .interface import PillowProcessor
 
