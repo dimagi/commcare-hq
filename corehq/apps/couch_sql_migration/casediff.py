@@ -436,13 +436,13 @@ class BatchProcessor(object):
 class CaseDiffProcess(object):
     """Run CaseDiffQueue in a separate process"""
 
-    def __init__(self, statedb, status_interval=STATUS_INTERVAL, queue_class=CaseDiffQueue):
+    def __init__(self, statedb, queue_class=CaseDiffQueue):
         if statedb.get(ProcessNotAllowed.__name__):
             raise ProcessNotAllowed(f"{statedb.db_filepath} was previously "
                 "used directly by CaseDiffQueue")
         self.statedb = statedb
         self.state_path = get_casediff_state_path(statedb.db_filepath)
-        self.status_interval = status_interval
+        self.status_interval = STATUS_INTERVAL
         self.queue_class = queue_class
 
     def __enter__(self):
@@ -490,8 +490,8 @@ class CaseDiffProcess(object):
         process. A status update is requested when the remote process
         has not sent an update in `status_interval` seconds.
         """
-        requested = object()
-        result = None
+        self.request_status()
+        result = requested = object()
         action = STATUS
         while action != TERMINATE:
             with gevent.Timeout(self.status_interval, False) as timeout:

@@ -225,7 +225,22 @@ class SubmissionPost(object):
 
         if submitted_form.is_submission_error_log:
             self.formdb.save_new_form(submitted_form)
-            response = self.get_exception_response_and_log(submitted_form, self.path)
+
+            response = None
+            try:
+                xml = self.instance.decode()
+            except UnicodeDecodeError:
+                pass
+            else:
+                if 'log_subreport' in xml:
+                    response = self.get_exception_response_and_log(
+                        'Badly formed device log', submitted_form, self.path
+                    )
+
+            if not response:
+                response = self.get_exception_response_and_log(
+                    'Problem receiving submission', submitted_form, self.path
+                )
             return FormProcessingResult(response, None, [], [], 'submission_error_log')
 
         if submitted_form.xmlns == SYSTEM_ACTION_XMLNS:
@@ -468,9 +483,9 @@ class SubmissionPost(object):
         ).response()
 
     @staticmethod
-    def get_exception_response_and_log(error_instance, path):
-        logging.exception(
-            "Problem receiving submission",
+    def get_exception_response_and_log(msg, error_instance, path):
+        logging.error(
+            msg,
             extra={
                 'submission_path': path,
                 'form_id': error_instance.form_id,
