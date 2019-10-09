@@ -303,3 +303,19 @@ def update_domain_date(user_id, domain):
             and today > domain_membership.last_accessed):
         domain_membership.last_accessed = today
         user.save()
+
+
+@periodic_task(
+    run_every=crontab(minute='*/5'),  # run once a day for ICDS
+    queue='background_queue',
+)
+def apply_app_status_staging():
+    from corehq.apps.users.models import AppStatusStaging
+    from corehq.pillows.processors.form import mark_latest_submission
+
+    # This should be paginated and only go through recent records
+    for record in AppStatusStaging.objects.all():
+        mark_latest_submission(
+            record.domain, record.user_id, record.app_id, record.build_id,
+            record.xform_version, record.metadata, record.received_on
+        )
