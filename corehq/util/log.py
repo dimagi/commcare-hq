@@ -266,7 +266,7 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
     start = datetime.now()
 
     def draw(position, done=False):
-        percent = float(position) / length if length > 0 else 1
+        percent = position / length if length > 0 else 1
         dots = int(round(min(percent, 1) * granularity))
         spaces = granularity - dots
         elapsed = (datetime.now() - start).total_seconds()
