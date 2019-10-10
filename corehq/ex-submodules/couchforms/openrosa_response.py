@@ -17,10 +17,6 @@ class ResponseNature(object):
     PROCESSING_FAILURE = 'processing_failure'
     POST_PROCESSING_FAILURE = 'post_processing_failure'
 
-    # users app
-    SUBMIT_USER_REGISTERED = 'submit_user_registered'
-    SUBMIT_USER_UPDATED = 'submit_user_updated'
-
     OTA_RESTORE_SUCCESS = 'ota_restore_success'
     OTA_RESTORE_PENDING = 'ota_restore_pending'
     OTA_RESTORE_ERROR = 'ota_restore_error'
