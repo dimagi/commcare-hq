@@ -202,9 +202,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 res_daily.get(disable_sync_subtasks=False)
 
                 stage_1_tasks = [
-                    icds_aggregation_task.si(
-                        date=calculation_date, func_name='_aggregate_gm_forms', force_citus=force_citus
-                    )
+                    icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_gm_forms', force_citus=force_citus)
+                    for state_id in state_ids
                 ]
                 stage_1_tasks.extend([
                     icds_aggregation_task.si(
@@ -376,7 +375,6 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             '_update_months_table': _update_months_table,
             '_daily_attendance_table': _daily_attendance_table,
             '_aggregate_df_forms': _aggregate_df_forms,
-            '_aggregate_gm_forms': _aggregate_gm_forms,
             '_agg_child_health_table': _agg_child_health_table,
             '_ccs_record_monthly_table': _ccs_record_monthly_table,
             '_agg_ccs_record_table': _agg_ccs_record_table,
@@ -411,6 +409,7 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
 def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=False):
     with force_citus_engine(force_citus):
         func = {
+            '_aggregate_gm_forms': _aggregate_gm_forms,
             '_aggregate_cf_forms': _aggregate_cf_forms,
             '_aggregate_ccs_cf_forms': _aggregate_ccs_cf_forms,
             '_aggregate_child_health_thr_forms': _aggregate_child_health_thr_forms,
@@ -463,8 +462,8 @@ def _aggregate_ccs_cf_forms(state_id, day):
 
 
 @track_time
-def _aggregate_gm_forms(day):
-    AggregateGrowthMonitoringForms.aggregate(force_to_date(day))
+def _aggregate_gm_forms(state_id, day):
+    AggregateGrowthMonitoringForms.aggregate(state_id, day)
 
 
 @track_time
