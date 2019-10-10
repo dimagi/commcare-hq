@@ -1,4 +1,6 @@
-DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month=%(month)s
+DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month < %(month)s
+{"month": "2018-10-01"}
+DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month = %(month)s
 {"month": "2019-01-01"}
 
         INSERT INTO "icds_dashboard_growth_monitoring_forms" (

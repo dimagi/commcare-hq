@@ -22,7 +22,11 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
         agg_query, agg_params = self.aggregation_query()
 
         cursor.execute(
-            f'DELETE FROM "{self.tablename}" WHERE month=%(month)s',
+            f'DELETE FROM "{self.tablename}" WHERE month < %(month)s',
+            {'month': month_formatter(self.month - relativedelta(months=3))}
+        )
+        cursor.execute(
+            f'DELETE FROM "{self.tablename}" WHERE month = %(month)s',
             {'month': month_formatter(self.month)}
         )
 
