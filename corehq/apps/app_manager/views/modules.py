@@ -363,7 +363,10 @@ def _case_list_form_options(app, module, case_type_, lang=None):
         for form in mod.get_forms() if form.is_registration_form(case_type_)
     ]
     langs = None if lang is None else [lang]
-    options.update({f.unique_id: trans(f.name, langs) for f in forms})
+    options.update({f.unique_id: {
+        'name': trans(f.name, langs),
+        'post_form_workflow': f.post_form_workflow,
+    } for f in forms})
 
     return {
         'options': options,
@@ -976,13 +979,11 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
     lang, langs = get_langs(request, app)
 
     response_html = render_to_string("app_manager/partials/build_errors.html", {
-        'request': request,
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,
         'domain': domain,
         'langs': langs,
-        'lang': lang,
     })
     if ajax:
         return json_response({'error_html': response_html})

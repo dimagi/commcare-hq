@@ -1,5 +1,5 @@
-DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month=%(month)s AND state_id = %(state)s
-{"month": "2019-01-01", "state": "st1"}
+DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month=%(month)s
+{"month": "2019-01-01"}
 
         INSERT INTO "icds_dashboard_growth_monitoring_forms" (
             state_id, supervisor_id, month, case_id, latest_time_end_processed,
@@ -11,7 +11,7 @@ DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month=%(month)s AND s
             muac_grading, muac_grading_last_recorded
         ) (
           SELECT
-            %(state_id)s AS state_id,
+            COALESCE(ucr.state_id, prev_month.state_id) AS state_id,
             COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
@@ -46,6 +46,7 @@ DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month=%(month)s AND s
           FROM (
             SELECT
                 DISTINCT child_health_case_id AS case_id,
+                state_id AS state_id,
                 supervisor_id AS supervisor_id,
                 %(current_month_start)s AS month,
                 LAST_VALUE(weight_child) OVER weight_child AS weight_child,
@@ -92,7 +93,7 @@ DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month=%(month)s AND s
                 END AS muac_grading_last_recorded
             FROM "ucr_icds-cas_static-dashboard_growth_moni_4ebf0625"
             WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s
-                AND state_id = %(state_id)s AND child_health_case_id IS NOT NULL
+                AND child_health_case_id IS NOT NULL
             WINDOW
                 weight_child AS (
                     PARTITION BY supervisor_id, child_health_case_id
@@ -131,12 +132,8 @@ DELETE FROM "icds_dashboard_growth_monitoring_forms" WHERE month=%(month)s AND s
                         timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                 )
         ) ucr
-          FULL OUTER JOIN "icds_dashboard_growth_monitoring_forms" prev_month
+          FULL OUTER JOIN (SELECT * FROM "icds_dashboard_growth_monitoring_forms" WHERE month = %(previous_month)s) prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
-            AND ucr.month::DATE=prev_month.month + INTERVAL '1 month'
-          WHERE coalesce(ucr.month, %(month)s) = %(month)s
-            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
-            AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
         )
         
-{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "previous_month": "2018-12-01", "state_id": "st1"}
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "previous_month": "2018-12-01"}
