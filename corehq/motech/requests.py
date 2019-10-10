@@ -110,6 +110,14 @@ class Requests(object):
                                  data=data, json=json,
                                  auth=(self.username, self.password), **kwargs)
 
+    def put(self, uri, data=None, json=None, *args, **kwargs):
+        kwargs.setdefault('headers', {
+            'Content-type': 'application/json',
+            'Accept': 'application/json'
+        })
+        return self.send_request('PUT', self.get_url(uri), *args,
+                                 data=data, json=json,
+                                 auth=(self.username, self.password), **kwargs)
 
 def parse_request_exception(err):
     """
