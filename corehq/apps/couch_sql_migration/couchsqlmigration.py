@@ -582,7 +582,7 @@ class CouchSqlDomainMigrator(object):
 
         Leaves app IDs and build IDs unchanged.
         """
-        if self.same_domain():
+        if self.same_domain() or couch_form.doc_type == 'SubmissionErrorLog':
             return couch_form, None
 
         form_json = couch_form.form
