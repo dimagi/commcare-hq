@@ -479,7 +479,6 @@ class SubmissionPost(object):
         """Returns a 422(Unprocessable Entity) response
         - if nature == 'processing_failure' the mobile device will quarantine this form and not retry it
         - any other value of `nature` will result in the form being marked as a failure and retrying
-        https://confluence.dimagi.com/display/commcarepublic/Submission+API
         """
         return OpenRosaResponse(
             message=message, nature=nature, status=422,
