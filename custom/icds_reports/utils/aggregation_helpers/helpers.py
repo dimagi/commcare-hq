@@ -1,13 +1,14 @@
 import attr
 
-
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
-    AggAwcDistributedHelper,
     AggAwcDailyAggregationDistributedHelper,
-    AggChildHealthAggregationDistributedHelper,
+    AggAwcDistributedHelper,
     AggCcsRecordAggregationDistributedHelper,
+    AggChildHealthAggregationDistributedHelper,
+    AggLsHelper,
     AwcMbtDistributedHelper,
     AwwIncentiveAggregationDistributedHelper,
+    AwcInfrastructureAggregationHelper,
     BirthPreparednessFormsAggregationDistributedHelper,
     CcsMbtDistributedHelper,
     CcsRecordMonthlyAggregationDistributedHelper,
@@ -28,15 +29,13 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     PostnatalCareFormsChildHealthAggregationDistributedHelper,
     THRFormsCcsRecordAggregationDistributedHelper,
     THRFormsChildHealthAggregationDistributedHelper,
-    THRFormV2AggDistributedHelper
+    THRFormV2AggDistributedHelper,
 )
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
-    AggAwcHelper,
     AggAwcDailyAggregationHelper,
+    AggAwcHelper,
     AggCcsRecordAggregationHelper,
     AggChildHealthAggregationHelper,
-    AggLsHelper,
-    AwcInfrastructureAggregationHelper,
     AwcMbtHelper,
     AwwIncentiveAggregationHelper,
     BirthPreparednessFormsAggregationHelper,
@@ -59,7 +58,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith import (
     PostnatalCareFormsChildHealthAggregationHelper,
     THRFormsCcsRecordAggregationHelper,
     THRFormsChildHealthAggregationHelper,
-    THRFormV2AggHelper
+    THRFormV2AggHelper,
 )
 
 
@@ -161,19 +160,3 @@ HELPERS = [
         THRFormV2AggHelper, THRFormV2AggDistributedHelper
     )
 ]
-
-
-def all_helpers():
-    helpers = {}
-    for pair in HELPERS:
-        assert pair.validate(), pair
-        helpers[pair.monolith.helper_key] = pair
-    return helpers
-
-
-HELPERS_BY_KEY = all_helpers()
-
-
-def get_helper(key):
-    pair = HELPERS_BY_KEY[key]
-    return pair.distributed or pair.monolith

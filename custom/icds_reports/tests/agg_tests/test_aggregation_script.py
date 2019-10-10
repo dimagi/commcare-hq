@@ -8,10 +8,13 @@ from django.test.testcases import TestCase, override_settings
 import sqlalchemy
 from freezegun import freeze_time
 
-from custom.icds_reports.exceptions import LocationRemovedException
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tests.util import setup_locations_and_types
-from corehq.sql_db.connections import connection_manager, ICDS_UCR_CITUS_ENGINE_ID
+from corehq.sql_db.connections import (
+    ICDS_UCR_CITUS_ENGINE_ID,
+    connection_manager,
+)
+from custom.icds_reports.exceptions import LocationRemovedException
 from custom.icds_reports.models.aggregate import (
     AggregateInactiveAWW,
     AwcLocation,
@@ -19,12 +22,9 @@ from custom.icds_reports.models.aggregate import (
     maybe_atomic,
 )
 from custom.icds_reports.tests.agg_tests import OUTPUT_PATH, CSVTestCase
-from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
+    InactiveAwwsAggregationDistributedHelper,
     LocationAggregationDistributedHelper,
-)
-from custom.icds_reports.utils.aggregation_helpers.monolith import (
-    InactiveAwwsAggregationHelper,
 )
 
 
@@ -413,8 +413,7 @@ class InactiveAWWsTest(TestCase):
         super(InactiveAWWsTest, cls).setUpClass()
         last_sync = date(2017, 4, 1)
         cls.agg_time = datetime(2017, 7, 31, 18)
-        helper_class = get_helper(InactiveAwwsAggregationHelper.helper_key)
-        cls.helper = helper_class(last_sync)
+        cls.helper = InactiveAwwsAggregationDistributedHelper(last_sync)
 
     def tearDown(self):
         AggregateInactiveAWW.objects.all().delete()
