@@ -1,5 +1,7 @@
 from datetime import datetime
 from django.test.testcases import TestCase
+
+from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES
 from custom.icds_reports.views import FactSheetsReport
 from custom.icds_reports.utils import get_location_level
 
@@ -1043,14 +1045,14 @@ class TestFactSheetReportDemographics(TestCase):
                     'sort_key': 21.490683229813666
                 },
                 'data': [
-                    {'html': 'Percent Aadhaar-seeded beneficiaries'},
+                    {'html': AADHAR_SEEDED_BENEFICIARIES},
                     {'html': 19.528178243774573, 'sort_key': 19.528178243774573},
                     {'html': 21.490683229813666, 'sort_key': 21.490683229813666},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
                 'format': 'percent',
-                'header': 'Percent Aadhaar-seeded beneficiaries',
+                'header': AADHAR_SEEDED_BENEFICIARIES,
                 'slug': 'aadhar',
             }
         )

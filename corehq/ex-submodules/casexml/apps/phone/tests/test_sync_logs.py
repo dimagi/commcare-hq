@@ -1,7 +1,7 @@
 import uuid
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.xml import V1
-from casexml.apps.phone.models import SyncLog, CaseState
+from casexml.apps.phone.models import SyncLog, CaseState, SyncLogSQL
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.restore import RestoreParams, RestoreConfig
 from casexml.apps.phone.tests.utils import create_restore_user
@@ -110,7 +110,9 @@ class SyncLogModelTest(TestCase):
             ),
         )
         config.get_payload()  # this generates the sync log
-        sync_log = SyncLog.last_for_user(self.restore_user.user_id)
+        sync_log = SyncLogSQL.objects.filter(
+            user_id=self.restore_user.user_id
+        ).order_by('date').last()
         self.assertEqual(self.restore_user.user_id, sync_log.user_id)
         self.assertEqual(self.restore_user.domain, sync_log.domain)
         self.assertEqual(app._id, sync_log.build_id)

@@ -205,11 +205,17 @@
             </legend>
             <div class="panel-body">
               <p>
-                {% blocktrans with upstream_name=upstream_brief.name upstream_version=app.upstream_version %}
-                  Your app was last pulled from
-                  <a href='{{ upstream_url }}'>{{ upstream_name }}</a>,
-                  version {{ upstream_version }}.
-                {% endblocktrans %}
+                {% if upstream_url %}
+                  {% blocktrans with upstream_name=upstream_brief.name upstream_version=app.upstream_version %}
+                    Your app was last pulled from
+                    <a href='{{ upstream_url }}'>{{ upstream_name }}</a>,
+                    version {{ upstream_version }}.
+                  {% endblocktrans %}
+                {% else %}
+                  {% blocktrans with upstream_name=upstream_brief.name upstream_version=app.upstream_version %}
+                    Your app was last pulled from {{ upstream_name }}, version {{ upstream_version }}.
+                  {% endblocktrans %}
+                {% endif %}
               </p>
               <div class="form-horizontal">
                 {% if multiple_masters %}

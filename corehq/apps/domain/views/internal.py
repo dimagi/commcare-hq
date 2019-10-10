@@ -223,7 +223,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
 
         def _sort_key(toggle):
             return (not (toggle['domain_enabled'] or toggle['user_enabled']),
-                    [t.name for t in toggles.ALL_TAGS].index(toggle['tag']),
+                    toggle['tag_index'],
                     toggle['label'])
 
         unsorted_toggles = [{
@@ -232,6 +232,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
             'description': toggle.description,
             'help_link': toggle.help_link,
             'tag': toggle.tag.name,
+            'tag_index': toggle.tag.index,
             'tag_description': toggle.tag.description,
             'tag_css_class': toggle.tag.css_class,
             'has_domain_namespace': toggles.NAMESPACE_DOMAIN in toggle.namespaces,

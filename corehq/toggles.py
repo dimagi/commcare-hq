@@ -1,21 +1,34 @@
-import inspect
-from collections import namedtuple
-from functools import wraps
 import hashlib
+import inspect
 import math
+from functools import wraps
 
-from django.contrib import messages
 from django.conf import settings
+from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
-from corehq.util.quickcache import quickcache
-from toggle.models import Toggle
-from toggle.shortcuts import toggle_enabled, set_toggle
 
-Tag = namedtuple('Tag', 'name css_class description')
+from toggle.models import Toggle
+from toggle.shortcuts import set_toggle, toggle_enabled
+
+from corehq.util.quickcache import quickcache
+
+
+@attrs(frozen=True)
+class Tag:
+    name = attrib(type=str)
+    css_class = attrib(type=str)
+    description = attrib(type=str)
+
+    @property
+    def index(self):
+        return ALL_TAGS.index(self)
+
+
 TAG_CUSTOM = Tag(
     name='One-Off / Custom',
     css_class='warning',
@@ -65,7 +78,7 @@ TAG_SOLUTIONS_LIMITED = Tag(
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
     "pricing when the project is transitioned to a subscription. Limited Use Solutions Feature Flags cannot be "
-    "enabled by GS before emailing solutions@dimagi.com and requesting the feature."
+    "enabled by GS before emailing solutions-tech@dimagi.com and requesting the feature."
 )
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
@@ -1803,4 +1816,12 @@ GROUP_API_USE_ES_BACKEND = StaticToggle(
     'Use ES backend for Group API',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+
+PHI_CAS_INTEGRATION = StaticToggle(
+    'phi_cas_integration',
+    'Integrate with PHI Api to search and validate beneficiaries',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
 )

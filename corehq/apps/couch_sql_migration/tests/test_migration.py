@@ -1272,6 +1272,11 @@ class MigrationTestCase(BaseMigrationTestCase):
             ('XFormInstance', Diff('missing', ['xmlns'], new=MISSING)),
         ])
 
+    def test_case_with_very_long_name(self):
+        self.submit_form(make_test_form("naaaame", case_name="ha" * 128))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([])
+
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):
@@ -1377,13 +1382,15 @@ def create_form_with_missing_xml(domain_name):
 
 
 @nottest
-def make_test_form(form_id, age=27, case_id="test-case"):
+def make_test_form(form_id, age=27, case_id="test-case", case_name="Xeenax"):
     form = TEST_FORM
     assert form.count(">test-form<") == 1
     assert form.count(">27<") == 2
     assert form.count('"test-case"') == 1
+    assert form.count('>Xeenax<') == 2
     form = form.replace(">27<", f">{age}<")
     form = form.replace('"test-case"', f'"{case_id}"')
+    form = form.replace('>Xeenax<', f'>{case_name}<')
     return form.replace(">test-form<", f">{form_id}<")
 
 
