@@ -298,6 +298,7 @@ class AttachmentMixin(SaveStateMixin):
 
         if self.is_saved():
             return self._get_attachment_from_db(attachment_name)
+        raise AttachmentNotFound(self.get_id, attachment_name)
 
     def _get_attachment_from_db(self, attachment_name):
         raise NotImplementedError
