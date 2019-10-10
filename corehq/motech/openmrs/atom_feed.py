@@ -41,11 +41,17 @@ def get_feed_xml(requests, feed_name, page):
     assert feed_name in ATOM_FEED_NAMES
     feed_url = '/'.join(('/ws/atomfeed', feed_name, page))
     resp = requests.get(feed_url)
-    if resp.status_code == 500 and 'AtomFeedRuntimeException: feed does not exist' in resp.content:
+    if (
+        resp.status_code == 500
+        and 'AtomFeedRuntimeException: feed does not exist' in resp.content
+    ):
         # This can happen if a Repeater IP address is changed to point
         # to a different server, or if a server has been rebuilt.
-        _assert(False, 'Domain "{}": Page does not exist in Atom feed "{}". '
-                       'Resetting Atom feed status.'.format(requests.domain_name, resp.url))
+        _assert(
+            False,
+            f'Domain "{requests.domain_name}": Page does not exist in '
+            f'atom feed "{resp.url}". Resetting Atom feed status.'
+        )
         raise OpenmrsFeedDoesNotExist()
     root = etree.fromstring(resp.content)
     return root
@@ -64,9 +70,9 @@ def get_timestamp(element, xpath='./atom:updated'):
     """
     timestamp_elems = element.xpath(xpath, namespaces={'atom': 'http://www.w3.org/2005/Atom'})
     if not timestamp_elems:
-        raise ValueError('XPath "{}" not found'.format(xpath))
+        raise ValueError(f'XPath "{xpath}" not found')
     if len(timestamp_elems) != 1:
-        raise ValueError('XPath "{}" matched multiple nodes'.format(xpath))
+        raise ValueError(f'XPath "{xpath}" matched multiple nodes')
     tzinfos = {'UTC': tzutc()}
     return dateutil_parser.parse(timestamp_elems[0].text, tzinfos=tzinfos)
 
