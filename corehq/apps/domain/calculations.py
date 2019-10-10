@@ -173,7 +173,7 @@ def _sms_helper(domain, direction=None, days=None):
         query = query.outgoing_messages()
 
     if days:
-        query = query.received(date.today() - relativedelta(days=30))
+        query = query.received(date.today() - relativedelta(days=days))
 
     return query.run().total
 
