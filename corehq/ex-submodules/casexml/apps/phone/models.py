@@ -289,10 +289,11 @@ class AbstractSyncLog(SafeSaveDocument):
         return ret
 
     def save(self):
-        save_synclog_to_sql(self)
+        self._synclog_sql = save_synclog_to_sql(self)
 
     def delete(self):
-        delete_synclog(self._id)
+        if getattr(self, '_synclog_sql', None):
+            self._synclog_sql.delete()
 
     def case_count(self):
         """
@@ -344,6 +345,7 @@ class AbstractSyncLog(SafeSaveDocument):
 def save_synclog_to_sql(synclog_json_object):
     synclog = synclog_to_sql_object(synclog_json_object)
     synclog.save()
+    return synclog
 
 
 def delete_synclog(synclog_id):
@@ -354,8 +356,8 @@ def synclog_to_sql_object(synclog_json_object):
     # Returns a SyncLogSQL object, a saved instance from DB or
     #   instantiated SQL object to be saved
     # synclog_json_object should be a SyncLog instance
-    synclog = None
-    if synclog_json_object._id:
+    synclog = getattr(synclog_json_object, '_synclog_sql', None)
+    if not synclog and synclog_json_object._id:
         synclog = SyncLogSQL.objects.filter(synclog_id=synclog_json_object._id).first()
 
     is_new_synclog_sql = not synclog_json_object._id or not synclog
@@ -446,12 +448,6 @@ class SyncLog(AbstractSyncLog):
         if isinstance(data.get('last_seq'), six.integer_types):
             data['last_seq'] = six.text_type(data['last_seq'])
         return super(SyncLog, cls).wrap(data)
-
-    @classmethod
-    def last_for_user(cls, user_id):
-        from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
-
-        return get_last_synclog_for_user(user_id)
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
@@ -1260,7 +1256,7 @@ def get_properly_wrapped_sync_log(doc_id):
     try:
         synclog = SyncLogSQL.objects.filter(synclog_id=doc_id).first()
         if synclog:
-            return properly_wrap_sync_log(synclog.doc)
+            return properly_wrap_sync_log(synclog.doc, synclog)
     except ValidationError:
         # this occurs if doc_id is not a valid UUID
         pass
@@ -1268,8 +1264,11 @@ def get_properly_wrapped_sync_log(doc_id):
         doc_id))
 
 
-def properly_wrap_sync_log(doc):
-    return get_sync_log_class_by_format(doc.get('log_format')).wrap(doc)
+def properly_wrap_sync_log(doc, synclog_sql=None):
+    synclog = get_sync_log_class_by_format(doc.get('log_format')).wrap(doc)
+    if synclog_sql:
+        synclog._synclog_sql = synclog_sql
+    return synclog
 
 
 def get_sync_log_class_by_format(format):
