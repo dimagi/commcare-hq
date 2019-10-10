@@ -127,7 +127,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 8, name: 'AWW Performance Report'},
         {id: 9, name: 'LS Performance Report'},
         {id: 10, name: 'Take Home Ration (THR)'},
-        {id: 11, name: 'Dashboard usage'}
+        {id: 11, name: 'Dashboard usage'},
     ];
 
 

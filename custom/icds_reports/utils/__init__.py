@@ -1527,7 +1527,7 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
         cell.border = thin_border_no_bottom
         if primary_header == 'Tabular Report Download Frequency':
             worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
-                                                   get_column_letter(current_column_location+10)))
+                                                   get_column_letter(current_column_location + 10)))
             cell.border = thin_border_no_top
         current_column_location += 1
 
@@ -1547,9 +1547,9 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
         cell.border = thin_border_no_top
 
     # Fill data
-    for row_index,row in enumerate(excel_data[0][1][1:]):
+    for row_index, row in enumerate(excel_data[0][1][1:]):
         for col_index, col_value in enumerate(row):
-            row_num = row_index+3
+            row_num = row_index + 3
             column_name = get_column_letter(col_index + 1)
             cell = worksheet['{}{}'.format(column_name, row_num)]
             cell.value = col_value

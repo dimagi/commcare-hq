@@ -50,8 +50,9 @@ class DashBoardUsage:
         excel_rows = []
         headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level', 'Last Login ',
                    'Logged in the last week?', 'Total', 'Child', 'Pregnant Women', 'Demographics',
-                   'System Usage', 'AWC infrastructure', 'Child Growth Monitoring List', 'ICDS - CAS Monthly Register',
-                   'AWW Performance Report', 'LS Performance Report', 'Take Home Ration']
+                   'System Usage', 'AWC infrastructure', 'Child Growth Monitoring List',
+                   'ICDS - CAS Monthly Register', 'AWW Performance Report', 'LS Performance Report',
+                   'Take Home Ration']
         excel_rows.append(headers)
         serial_count = 0
         for user_location in self.user.get_sql_locations():
@@ -80,7 +81,8 @@ class DashBoardUsage:
                     .values('location_id', 'location_type__name')
                 for user_sql_location in user_sql_locations:
                     # getting the location type to look up in matrix
-                    location_type = self.get_location_type_from_user_location(user_sql_location['location_type__name'])
+                    location_type = self.get_location_type_from_user_location(
+                        user_sql_location['location_type__name'])
                     column_index = floor(self.location_types.index(location_type) / 2)
                     user_location_row = None
                     # iterating and getting the db row
@@ -97,12 +99,12 @@ class DashBoardUsage:
                     excel_rows.append(excel)
                     filters = [['Generated at', india_now()]]
         return [
-                    [
-                        self.title,
-                        excel_rows
-                    ],
-                    [
-                        'Export Info',
-                        filters
-                    ]
-                ]
+            [
+                self.title,
+                excel_rows
+            ],
+            [
+                'Export Info',
+                filters
+            ]
+        ]
