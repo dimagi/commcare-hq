@@ -38,6 +38,8 @@ urlpatterns = [
         {'repeater_type': 'Dhis2Repeater'}, name=AddDhis2RepeaterView.urlname),
     url(r'^forwarding/new/Dhis2EntityRepeater/$', AddDhis2EntityRepeaterView.as_view(),
         {'repeater_type': 'Dhis2EntityRepeater'}, name=AddDhis2EntityRepeaterView.urlname),
+    url(r'^forwarding/new/SearchByParamsRepeater/$', AddCaseRepeaterView.as_view(),
+        {'repeater_type': 'SearchByParamsRepeater'}, name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
 
     url(r'^forwarding/edit/CaseRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),

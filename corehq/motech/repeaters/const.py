@@ -25,4 +25,6 @@ REPEATER_CLASSES = (
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
+    'custom.icds.repeaters.phi.SearchByParamsRepeater',
+    'custom.icds.repeaters.phi.ValidatePHIDRepeater',
 )

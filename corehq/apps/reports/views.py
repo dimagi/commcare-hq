@@ -593,7 +593,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
     @property
     def is_new(self):
-        return self.report_notification.new_document
+        """True if before this request the ReportNotification object did not exist"""
+        return bool(not self.scheduled_report_id)
 
     @property
     def page_name(self):
