@@ -209,9 +209,7 @@ class Command(BaseCommand):
     ]
 
     pro_plan_features = standard_plan_features + [
-        privileges.CLOUDCARE,
         privileges.CUSTOM_REPORTS,
-        privileges.INBOUND_SMS,
         privileges.HIPAA_COMPLIANCE_ASSURANCE,
         privileges.DEIDENTIFIED_DATA,
         privileges.REPORT_BUILDER,
@@ -222,6 +220,8 @@ class Command(BaseCommand):
     ]
 
     advanced_plan_features = pro_plan_features + [
+        privileges.INBOUND_SMS,
+        privileges.CLOUDCARE,
         privileges.CUSTOM_BRANDING,
         privileges.ACTIVE_DATA_MANAGEMENT,
         privileges.COMMCARE_LOGO_UPLOADER,
