@@ -245,13 +245,13 @@ def update_patient(repeater, patient_uuid):
     .. NOTE:: OpenMRS UUID must be saved to "external_id" case property
 
     """
-    _assert(
-        len(repeater.white_listed_case_types) == 1,
-        'Unable to update patients from OpenMRS unless a single case type is '
-        'specified. domain: "{}". repeater: "{}".'.format(
-            repeater.domain, repeater.get_id
+    if len(repeater.white_listed_case_types) != 1:
+        _assert(
+            False,
+            f'Unable to update patients from OpenMRS unless a single case type '
+            f'is specified. domain: "{repeater.domain}". repeater: "{repeater}".'
         )
-    )
+        return
     case_type = repeater.white_listed_case_types[0]
     patient = get_patient_by_uuid(repeater.requests, patient_uuid)
     case, error = importer_util.lookup_case(
@@ -262,31 +262,33 @@ def update_patient(repeater, patient_uuid):
     )
     if error == LookupErrors.NotFound:
         owner = get_one_commcare_user_at_location(repeater.domain, repeater.location_id)
-        _assert(
-            owner,
-            'No users found at location "{}" to own patients added from '
-            'OpenMRS atom feed. domain: "{}". repeater: "{}".'.format(
-                repeater.location_id, repeater.domain, repeater.get_id
+        if owner:
+            case_block = get_addpatient_caseblock(case_type, owner, patient, repeater)
+        else:
+            _assert(
+                False,
+                f'No users found at location "{repeater.location_id}" '
+                f'to own patients added from OpenMRS atom feed. '
+                f'domain: "{repeater.domain}". repeater: "{repeater}".'
             )
+            return
+    elif error == LookupErrors.MultipleResults:
+        # Multiple cases have been matched to the same patient.
+        # Could be caused by:
+        # * The cases were given the same identifier value. It could
+        #   be user error, or case config assumed identifier was
+        #   unique but it wasn't.
+        # * PatientFinder matched badly.
+        # * Race condition where a patient was previously added to
+        #   both CommCare and OpenMRS.
+        _assert(
+            False,
+            f'More than one case found matching unique OpenMRS UUID. domain: '
+            f'"{repeater.domain}". case external_id: "{patient_uuid}". '
+            f'repeater: "{repeater}".'
         )
-        case_block = get_addpatient_caseblock(case_type, owner, patient, repeater)
-
+        return
     else:
-        _assert(
-            error != LookupErrors.MultipleResults,
-            # Multiple cases matched to the same patient.
-            # Could be caused by:
-            # * The cases were given the same identifier value. It could
-            #   be user error, or case config assumed identifier was
-            #   unique but it wasn't.
-            # * PatientFinder matched badly.
-            # * Race condition where a patient was previously added to
-            #   both CommCare and OpenMRS.
-            'More than one case found matching unique OpenMRS UUID. '
-            'domain: "{}". case external_id: "{}". repeater: "{}".'.format(
-                repeater.domain, patient_uuid, repeater.get_id
-            )
-        )
         case_block = get_updatepatient_caseblock(case, patient, repeater)
 
     if case_block:
@@ -347,13 +349,12 @@ def import_encounter(repeater, encounter_uuid):
             case_blocks.append(case_block)
             case_id = case_block.case_id
 
-        else:
+        elif error == LookupErrors.MultipleResults:
             _assert(
-                error != LookupErrors.MultipleResults,
-                'More than one case found matching unique OpenMRS UUID. '
-                'domain: "{}". case external_id: "{}". repeater: "{}".'.format(
-                    repeater.domain, patient_uuid, repeater.get_id
-                )
+                False,
+                f'More than one case found matching unique OpenMRS UUID. '
+                f'domain: "{repeater.domain}". case external_id: '
+                f'"{patient_uuid}". repeater: "{repeater}".'
             )
             return
 
