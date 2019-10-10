@@ -10,7 +10,6 @@ class DomainGenerationCache(GenerationCache):
         "domain/not_snapshots",
         "domain/copied_from_snapshot",
         "domain/domains",
-        "domain/fields_by_prefix",
     ]
 
 

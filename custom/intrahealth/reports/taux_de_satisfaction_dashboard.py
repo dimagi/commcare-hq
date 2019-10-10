@@ -1,6 +1,7 @@
 import datetime
 
 from django.utils.functional import cached_property
+from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
@@ -143,6 +144,7 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
         return context
 
     @property
+    @memoized
     def clean_rows(self):
         return SatisfactionRateAfterDeliveryPerProductData(config=self.config).rows
 
@@ -160,14 +162,23 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                 products = sorted(quantity['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations:
                     length = len(locations_with_products[location_name])
+                    product_ids = [p['product_id'] for p in locations_with_products[location_name]]
+                    for product in products:
+                        if product['product_id'] not in product_ids:
+                            locations_with_products[location_name].append({
+                                'product_name': product['product_name'],
+                                'product_id': product['product_id'],
+                                'amt_delivered_convenience': product['amt_delivered_convenience'],
+                                'ideal_topup': product['ideal_topup'],
+                            })
                     for r in range(0, length):
                         product_for_location = locations_with_products[location_name][r]
                         for product in products:
                             if product_for_location['product_id'] == product['product_id']:
                                 amt_delivered_convenience = product['amt_delivered_convenience']
                                 ideal_topup = product['ideal_topup']
-                                locations_with_products[location_name][r][
-                                    'amt_delivered_convenience'] += amt_delivered_convenience
+                                locations_with_products[location_name][r]['amt_delivered_convenience'] += \
+                                    amt_delivered_convenience
                                 locations_with_products[location_name][r]['ideal_topup'] += ideal_topup
                 else:
                     added_locations.append(location_id)

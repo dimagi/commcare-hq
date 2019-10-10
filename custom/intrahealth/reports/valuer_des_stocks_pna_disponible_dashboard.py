@@ -1,6 +1,7 @@
 import datetime
 
 from django.utils.functional import cached_property
+from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
@@ -122,6 +123,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
         return headers
 
     @property
+    @memoized
     def clean_rows(self):
         return ValuationOfPNAStockPerProductV2Data(config=self.config).rows
 
@@ -160,6 +162,14 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
                 products = sorted(pna['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations and locations_with_products.get(location_name) is not None:
                     length = len(locations_with_products[location_name])
+                    product_ids = [p['product_id'] for p in locations_with_products[location_name]]
+                    for product in products:
+                        if product['product_id'] not in product_ids:
+                            locations_with_products[location_name].append({
+                                'product_name': product['product_name'],
+                                'product_id': product['product_id'],
+                                'final_pna_stock_valuation': product['final_pna_stock_valuation'],
+                            })
                     for r in range(0, length):
                         product_for_location = locations_with_products[location_name][r]
                         for product in products:

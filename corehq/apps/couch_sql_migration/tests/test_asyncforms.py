@@ -1,9 +1,14 @@
+from contextlib import contextmanager
+
 from django.test import SimpleTestCase
 
 import attr
+import gevent
+from mock import patch
 
 from .. import asyncforms as mod
 from ..statedb import StateDB
+from ..util import UnhandledError
 
 
 class TestAsyncFormProcessor(SimpleTestCase):
@@ -29,8 +34,76 @@ class TestAsyncFormProcessor(SimpleTestCase):
             # pool.spawn(...) will block in _finish_processing_queues
 
         self.assertEqual(migrated, forms)
-        unprocessed = statedb.pop_resume_state(type(queue).__name__, None)
-        self.assertEqual(unprocessed, [])
+        with statedb.pop_resume_state(type(queue).__name__, None) as unprocessed:
+            self.assertEqual(unprocessed, [])
+
+    def test_retry_form(self):
+        def get_case_ids(form):
+            if retrying:
+                raise Exception("network didn't work")
+            return form.case_ids
+
+        def spawn_later(delay, func, *args):
+            retries.append(delay)
+            return gevent.spawn(func, *args)
+
+        def migrate_form(form, case_ids):
+            migrated.append(form)
+
+        form = Form(1)
+        retries = []
+        migrated = []
+        statedb = StateDB.init(":memory:")
+        with self.mock_forms(form), \
+                patch.object(mod, "get_case_ids", get_case_ids), \
+                patch.object(mod.gevent, "spawn_later", spawn_later):
+            retrying = True
+            with mod.AsyncFormProcessor(statedb, migrate_form) as queue:
+                queue._try_to_process_form(form)
+            self.assertEqual(retries, [1, 8, 27])
+            self.assertEqual(migrated, [])
+
+            retrying = False
+            with mod.AsyncFormProcessor(statedb, migrate_form) as queue:
+                pass
+            self.assertEqual(migrated, [form])
+
+    def test_unhandled_error_on_migrate_form(self):
+        def migrate_form(form, case_ids):
+            if throw:
+                raise Exception("boom!")
+            migrated.append(form)
+
+        form = Form(1)
+        migrated = []
+        statedb = StateDB.init(":memory:")
+        with self.mock_forms(form):
+            throw = True
+            with self.assertRaises(UnhandledError), \
+                    mod.AsyncFormProcessor(statedb, migrate_form) as queue:
+                queue._try_to_process_form(form)
+                gevent.sleep()
+            self.assertEqual(migrated, [])
+
+            throw = False
+            with mod.AsyncFormProcessor(statedb, migrate_form) as queue:
+                pass
+            self.assertEqual(migrated, [form])
+
+    @contextmanager
+    def mock_forms(self, forms):
+        def get_case_ids(form):
+            return form.case_ids
+
+        def get_forms(ids):
+            return [forms[id] for id in ids]
+
+        if isinstance(forms, Form):
+            forms = [forms]
+        forms = {form.form_id: form for form in forms}
+        with patch.object(mod, "get_case_ids", get_case_ids), \
+                patch.object(mod.FormAccessorCouch, "get_forms", get_forms):
+            yield
 
 
 class TestLockingQueues(SimpleTestCase):

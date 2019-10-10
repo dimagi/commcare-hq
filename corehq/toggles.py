@@ -1467,13 +1467,6 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
-ICDS_COMPARE_QUERIES_AGAINST_CITUS = DynamicallyPredictablyRandomToggle(
-    'icds_compare_queries_against_citus',
-    'ICDS: Compare quereies against citus',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_OTHER],
-)
-
 COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     'compare_ucr_reports',
     'Compare UCR reports against other reports or against other databases. '
@@ -1501,6 +1494,13 @@ LINKED_DOMAINS = StaticToggle(
     ),
     help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Project+Spaces',
     notification_emails=['aking'],
+)
+
+MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
+    'multi_master_linked_domains',
+    "Allow linked apps to pull from multiple master apps in the upstream domain",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
 )
 
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
@@ -1671,9 +1671,9 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
 MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'manage_releases_per_location',
     'Manage releases per location',
-    TAG_CUSTOM,
+    TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
+    always_disabled={'icds-cas'},
 )
 
 
@@ -1745,12 +1745,6 @@ MANAGE_CCZ_HOSTING = StaticToggle(
     [NAMESPACE_USER]
 )
 
-LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
-    'load_dashboard_from_citus',
-    'Use CitusDB for loading ICDS Dashboard',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
 
 PARALLEL_AGGREGATION = StaticToggle(
     'parallel_agg',
@@ -1808,5 +1802,5 @@ GROUP_API_USE_ES_BACKEND = StaticToggle(
     'group_api_use_es_backend',
     'Use ES backend for Group API',
     TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )

@@ -12,7 +12,7 @@ from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_DATE,
     OPENMRS_DATA_TYPE_DATETIME,
 )
-from corehq.motech.serializers import serializers
+from corehq.motech.serializers import serializers, to_date_str
 
 
 def to_omrs_date(value):
@@ -108,7 +108,7 @@ def openmrs_timestamp_to_isoformat(value, tz=None):
 
 serializers.update({
     # (from_data_type, to_data_type): function
-    (None, OPENMRS_DATA_TYPE_DATE): to_omrs_date,
+    (None, OPENMRS_DATA_TYPE_DATE): to_date_str,
     (None, OPENMRS_DATA_TYPE_DATETIME): to_omrs_datetime,
     (None, OPENMRS_DATA_TYPE_BOOLEAN): to_omrs_boolean,
     (OPENMRS_DATA_TYPE_DATETIME, COMMCARE_DATA_TYPE_DATE): omrs_datetime_to_date,

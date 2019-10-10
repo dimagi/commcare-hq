@@ -25,16 +25,6 @@
     "india",
     "icds"
   ],
-  "mirrored_engine_ids": [
-    {
-      "server_environment": "icds",
-      "engine_ids": ["icds-ucr"]
-    },
-    {
-      "server_environment": "india",
-      "engine_ids": ["icds-ucr"]
-    }
-  ],
   "config": {
     "table_id": "static-daily_feeding_forms",
     "display_name": "Forms - Daily Feeding (Static)",
@@ -1013,6 +1003,11 @@
         "column_ids": [
           "district_id",
           "submitted_on"
+        ]
+      },
+      {
+        "column_ids": [
+          "doc_id"
         ]
       }
     ],

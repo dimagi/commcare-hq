@@ -23,16 +23,6 @@
     "india",
     "icds"
   ],
-  "mirrored_engine_ids": [
-    {
-      "server_environment": "icds",
-      "engine_ids": ["icds-ucr"]
-    },
-    {
-      "server_environment": "india",
-      "engine_ids": ["icds-ucr"]
-    }
-  ],
   "config": {
     "table_id": "static-thr_forms_v2",
     "display_name": "Forms - Take Home Ration (Partitioned by month) (Static)",
@@ -186,6 +176,11 @@
       },
       "primary_key": ["supervisor_id","doc_id"]
     },
+    "sql_column_indexes": [
+      {
+        "column_ids": ["doc_id"]
+      }
+    ],
     "disable_destructive_rebuild": true
   }
 }

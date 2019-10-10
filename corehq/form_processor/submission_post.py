@@ -25,7 +25,7 @@ from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import has_permission_to_view_report
-from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
+from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
@@ -517,16 +517,17 @@ def _transform_instance_to_error(interface, exception, instance):
 def handle_unexpected_error(interface, instance, exception):
     instance = _transform_instance_to_error(interface, exception, instance)
 
-    # get this here in case we hit the integrity error below and lose the exception context
-    exec_info = sys.exc_info()
+    notify_submission_error(instance, instance.problem, sys.exc_info())
 
     try:
         FormAccessors(interface.domain).save_new_form(instance)
     except IntegrityError:
+        # handle edge case where saving duplicate form fails
         instance = interface.xformerror_from_xform_instance(instance, instance.problem, with_new_id=True)
         FormAccessors(interface.domain).save_new_form(instance)
-
-    notify_submission_error(instance, instance.problem, exec_info)
+    except XFormSaveError:
+        # try a simple save
+        instance.save()
 
 
 def notify_submission_error(instance, message, exec_info=None):

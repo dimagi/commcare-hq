@@ -58,7 +58,7 @@ class FormProcessingResult(object):
 
 
 @tracer.wrap(name='submission.process_form_xml')
-def process_xform_xml(domain, instance, attachments=None, auth_context=None):
+def process_xform_xml(domain, instance_xml, attachments=None, auth_context=None):
     """
     Create a new xform to ready to be saved to a database in a thread-safe manner
 
@@ -72,9 +72,9 @@ def process_xform_xml(domain, instance, attachments=None, auth_context=None):
     attachments = attachments or {}
 
     try:
-        return _create_new_xform(domain, instance, attachments=attachments, auth_context=auth_context)
+        return _create_new_xform(domain, instance_xml, attachments=attachments, auth_context=auth_context)
     except (MissingXMLNSError, XMLSyntaxError) as e:
-        return _get_submission_error(domain, instance, e)
+        return _get_submission_error(domain, instance_xml, e, auth_context)
 
 
 def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None):
@@ -115,7 +115,7 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None)
     return FormProcessingResult(xform)
 
 
-def _get_submission_error(domain, instance, error):
+def _get_submission_error(domain, instance_xml, error, auth_context):
     """
     Handle's a hard failure from posting a form to couch.
     :returns: xform error instance with raw xml as attachment
@@ -125,7 +125,8 @@ def _get_submission_error(domain, instance, error):
     except UnicodeDecodeError:
         message = str(str(error), encoding='utf-8')
 
-    xform = FormProcessorInterface(domain).submission_error_form_instance(instance, message)
+    xform = FormProcessorInterface(domain).submission_error_form_instance(instance_xml, message)
+    xform.auth_context = auth_context
     return FormProcessingResult(xform)
 
 

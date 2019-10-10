@@ -1,15 +1,17 @@
 import inspect
-from contextlib import contextmanager, ContextDecorator
-
-from celery.task import task
-from functools import wraps
 import logging
+from contextlib import ContextDecorator, contextmanager
+from functools import wraps
+
+from django.conf import settings
+
 import requests
+from celery.task import task
+
+from dimagi.utils.logging import notify_exception
 
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.global_request import get_request
-from dimagi.utils.logging import notify_exception
-from django.conf import settings
 
 
 def handle_uncaught_exceptions(mail_admins=True):
@@ -49,12 +51,17 @@ def silence_and_report_error(message, datadog_metric):
             raise
 
 
-def enterprise_skip(fn):
-    @wraps(fn)
-    def inner(*args, **kwargs):
-        if not settings.ENTERPRISE_MODE:
-            fn(*args, **kwargs)
-    return inner
+def run_only_when(condition):
+    def outer(fn):
+        @wraps(fn)
+        def inner(*args, **kwargs):
+            if condition:
+                return fn(*args, **kwargs)
+        return inner
+    return outer
+
+
+enterprise_skip = run_only_when(not settings.ENTERPRISE_MODE)
 
 
 class change_log_level(ContextDecorator):
