@@ -1825,3 +1825,10 @@ PHI_CAS_INTEGRATION = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
+
+PRUNE_PREVIOUS_SYNCLOGS = DynamicallyPredictablyRandomToggle(
+    'prune_previous_synclogs',
+    'Delete old synclogs during form submission',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
