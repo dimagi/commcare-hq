@@ -172,7 +172,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
         }
-        self.assertEquals(location_data, {k: str(v) for k, v in location.metadata.items()})
+        self.assertEqual(location_data, {k: str(v) for k, v in location.metadata.items()})
 
     def test_simple_location_fixture(self):
         self.user._couch_user.set_location(self.locations['Suffolk'])
@@ -707,20 +707,20 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
         restore_state = MockRestoreState(self.user, RestoreParams())
 
         self.assertFalse(should_sync_locations(sync_log, locations_queryset, restore_state))
-        self.assertEquals(
+        self.assertEqual(
             len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 0)
 
         LocationRelation.objects.create(location_a=self.locations["Revere"], location_b=self.locations["Boston"])
         self.assertTrue(should_sync_locations(SyncLog(date=last_sync_time), locations_queryset, restore_state))
 
         # length 2 for index definition + data
-        self.assertEquals(
+        self.assertEqual(
             len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 2)
 
     def test_force_empty_when_user_has_no_locations(self, *args):
         sync_log = SyncLog(date=datetime.utcnow())
         # no relations have been touched since this synclog, but it still pushes down the empty list
-        self.assertEquals(
+        self.assertEqual(
             len(call_fixture_generator(related_locations_fixture_generator, self.user, last_sync=sync_log)), 2)
 
 

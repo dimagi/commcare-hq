@@ -626,7 +626,7 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(case_ids, [case2.case_id])
 
         deleted = CaseAccessorSQL.get_deleted_case_ids_in_domain(DOMAIN)
-        self.assertEquals(deleted, [case1.case_id])
+        self.assertEqual(deleted, [case1.case_id])
 
     def test_get_deleted_case_ids_by_owner(self):
         user_id = uuid.uuid4().hex

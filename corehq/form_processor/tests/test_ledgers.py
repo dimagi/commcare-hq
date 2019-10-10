@@ -277,12 +277,12 @@ class TestLedgerDocumentStore(TestCase):
 
         from corehq.apps.commtrack.models import StockState
         stock_states = StockState.include_archived.all()
-        self.assertEquals(1, len(stock_states))
+        self.assertEqual(1, len(stock_states))
         state = stock_states[0]
         store = LedgerV1DocumentStore(DOMAIN)
         doc = store.get_document(state.id)
-        self.assertEquals(int(doc['_id']), state.id)
-        self.assertEquals(doc['case_id'], state.case_id)
+        self.assertEqual(int(doc['_id']), state.id)
+        self.assertEqual(doc['case_id'], state.case_id)
 
     def test_get_document_archived(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
@@ -293,7 +293,7 @@ class TestLedgerDocumentStore(TestCase):
         submit_case_blocks(block, DOMAIN)
 
         stock_states = StockState.include_archived.all()
-        self.assertEquals(1, len(stock_states))
+        self.assertEqual(1, len(stock_states))
 
         def toggle_product_archive():
             sql_product = SQLProduct.objects.get(code=self.product_a.code)
@@ -308,6 +308,6 @@ class TestLedgerDocumentStore(TestCase):
         state = stock_states[0]
         store = LedgerV1DocumentStore(DOMAIN)
         doc = store.get_document(state.id)
-        self.assertEquals(int(doc['_id']), state.id)
-        self.assertEquals(doc['case_id'], state.case_id)
+        self.assertEqual(int(doc['_id']), state.id)
+        self.assertEqual(doc['case_id'], state.case_id)
 
