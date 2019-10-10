@@ -454,7 +454,7 @@ class SubmissionPost(object):
                 response = openrosa_response.get_openarosa_success_response(message=success_message)
             else:
                 error_message = error_message or instance.problem
-                response = self.get_retry_response(error_message, error_nature)
+                response = self.get_v3_error_response(error_message, error_nature)
         else:
             if instance.is_normal:
                 response = openrosa_response.get_openarosa_success_response()
@@ -475,8 +475,11 @@ class SubmissionPost(object):
         ).response()
 
     @staticmethod
-    def get_retry_response(message, nature):
-        """Returns a 422(Unprocessable Entity) response, mobile will retry this submission
+    def get_v3_error_response(message, nature):
+        """Returns a 422(Unprocessable Entity) response
+        - if nature == 'processing_failure' the mobile device will quarantine this form and not retry it
+        - any other value of `nature` will result in the form being marked as a failure and retrying
+        https://confluence.dimagi.com/display/commcarepublic/Submission+API
         """
         return OpenRosaResponse(
             message=message, nature=nature, status=422,
