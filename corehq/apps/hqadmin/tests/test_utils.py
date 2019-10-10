@@ -35,14 +35,14 @@ class TestPillowCheckpointSeqStore(TestCase):
         self.pillow.set_checkpoint({'seq': seq})
         HistoricalPillowCheckpoint.create_checkpoint_snapshot(self.pillow.checkpoint)
         store = HistoricalPillowCheckpoint.get_latest(self.pillow.checkpoint.checkpoint_id)
-        self.assertEquals(store.seq, seq)
+        self.assertEqual(store.seq, seq)
 
     def test_basic_couchdb_seq(self):
         seq = 100
         self.pillow.set_checkpoint({'seq': seq})
         HistoricalPillowCheckpoint.create_checkpoint_snapshot(self.pillow.checkpoint)
         store = HistoricalPillowCheckpoint.get_latest(self.pillow.checkpoint.checkpoint_id)
-        self.assertEquals(store.seq, str(seq))
+        self.assertEqual(store.seq, str(seq))
 
     def test_small_rewind(self):
         """
