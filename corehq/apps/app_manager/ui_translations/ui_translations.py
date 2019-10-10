@@ -82,7 +82,7 @@ def process_ui_translation_upload(app, trans_file):
                             Could not understand '{param}' in {lang} value of {prop}.
                         """).format(param=param, lang=lang, prop=row["property"]))
                 if params_text != default_params_text:
-                    error_properties.append(_("""
+                    warnings.append(_("""
                         Property {prop} should contain {expected} but {lang} value contains {actual}.
                     """).format(prop=row["property"],
                                 expected=default_params_text,
