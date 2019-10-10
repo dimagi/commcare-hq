@@ -495,10 +495,13 @@ class SubmissionPost(object):
                 'error_message': error_instance.problem
             }
         )
+        # This are generally badly formed XML resulting from file corruption, encryption errors
+        # or other errors on the device which can not be recovered from.
+        # To prevent retries of these errors we submit a 422 response with `processing_failure` nature.
         return OpenRosaResponse(
             message="There was an error processing the form: %s" % error_instance.problem,
-            nature=ResponseNature.SUBMIT_ERROR,
-            status=500,
+            nature=ResponseNature.PROCESSING_FAILURE,
+            status=422,
         ).response()
 
     @tracer.wrap(name='submission.handle_system_action')
