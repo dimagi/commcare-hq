@@ -26,6 +26,7 @@ from lxml import etree
 from unidecode import unidecode
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 

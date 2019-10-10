@@ -612,7 +612,6 @@ def find_by_id(request, domain):
     })
 
 
-
 class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'

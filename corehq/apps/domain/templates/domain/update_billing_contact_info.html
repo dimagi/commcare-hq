@@ -15,7 +15,7 @@
   <div id="billing-info">
     {% crispy billing_account_info_form %}
   </div>
-  <div id="card-manager">
+  <div id="card-manager" style="margin-top:20px;">
     {% include 'domain/stripe_cards.html' %}
   </div>
 {% endblock %}
