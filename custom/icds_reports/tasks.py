@@ -63,7 +63,8 @@ from custom.icds_reports.const import (
     SYSTEM_USAGE_EXPORT,
     THREE_MONTHS,
     INDIA_TIMEZONE,
-    THR_REPORT_EXPORT
+    THR_REPORT_EXPORT,
+    DASHBOARD_USAGE_EXPORT
 )
 from custom.icds_reports.experiment import DashboardQueryExperiment
 from custom.icds_reports.models import (
@@ -111,6 +112,7 @@ from custom.icds_reports.sqldata.exports.awc_infrastructure import (
 )
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
+from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
@@ -134,6 +136,7 @@ from custom.icds_reports.utils import (
     icds_pre_release_features,
     track_time,
     zip_folder,
+    get_dashboard_usage_excel_file,
 )
 from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.monolith import (
@@ -852,8 +855,24 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 )
             else:
                 cache_key = create_excel_file(excel_data, data_type, file_format)
+        elif indicator == DASHBOARD_USAGE_EXPORT:
+            excel_data = DashBoardUsage(
+                user=config['user']
+            ).get_excel_data()
+            export_info = excel_data[1][1]
+            generated_timestamp = date_parser.parse(export_info[0][1])
+            formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+            data_type = 'Dashboard usage Report__{}'.format(formatted_timestamp)
+            if file_format == 'xlsx':
+                cache_key = get_dashboard_usage_excel_file(
+                    excel_data,
+                    data_type
+                )
+            else:
+                cache_key = create_excel_file(excel_data, data_type, file_format)
 
-        if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT):
+        if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
+                             DASHBOARD_USAGE_EXPORT):
             if file_format == 'xlsx' and beta:
                 cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
             else:

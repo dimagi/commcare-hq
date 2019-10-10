@@ -126,7 +126,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 7, name: 'ICDS-CAS Monthly Register'},
         {id: 8, name: 'AWW Performance Report'},
         {id: 9, name: 'LS Performance Report'},
-        {id: 10, name: 'Take Home Ration (THR)'}
+        {id: 10, name: 'Take Home Ration (THR)'},
+        {id: 11, name: 'Dashboard usage'}
     ];
 
 
@@ -567,6 +568,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.selectedIndicator === 10;
     };
 
+    vm.isDashboardUsageSelected = function () {
+        return vm.selectedIndicator === 11;
+    };
+
     vm.isSupervisorOrBelowSelected = function () {
         return vm.selectedLocations[3] && vm.selectedLocations[3] !== ALL_OPTION.location_id;
     };
@@ -581,8 +586,22 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.showViewBy = function () {
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
-            vm.isLadySupervisorSelected());
+            vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected());
     };
+
+
+    vm.showLocationFilter = function () {
+        return !vm.isDashboardUsageSelected();
+    };
+
+    vm.showMonthFilter = function () {
+        return !vm.isDashboardUsageSelected();
+    };
+
+    vm.showYearFilter = function () {
+        return !vm.isDashboardUsageSelected();
+    };
+
 
     vm.isDistrictOrBelowSelected = function() {
         return vm.selectedLocations[1] && vm.selectedLocations[1] !== ALL_OPTION.location_id;
