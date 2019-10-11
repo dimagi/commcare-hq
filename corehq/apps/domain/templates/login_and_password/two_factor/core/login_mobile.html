@@ -85,8 +85,17 @@
       {% include "two_factor/wizard_actions_mobile.html" %}
     </div>
   </form>
+  <div class="login-footer">
+    <div class="login-footer-header">
+      Government of India <br>
+      Ministry of Women and Child Development
+    </div>
+    <div class="login-footer-desc">
+      Content Managed by Ministry of Women and Child Development, GOI
+    </div>
+  </div>
   {% for global_error in form.non_field_errors %}
-      <div class="alert alert-danger">
+      <div class="error-alert">
         {{ global_error }}
       </div>
     {% endfor %}

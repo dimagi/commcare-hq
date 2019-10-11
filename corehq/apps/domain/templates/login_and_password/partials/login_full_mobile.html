@@ -1,11 +1,16 @@
 {% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
 <div class="container-fluid">
   <div class="row">
     <div class="col-xs-12">
-      <div class="reg-form-container sign-in-container">
-        <img src=" ">
+      <div class="reg-form-container sign-in-container" style="padding-bottom: 80px">
+        <div class="dimagi-mobile-logo"></div>
         <div class="form-bubble form-bubble-lg bg-white">
           {% include "login_and_password/two_factor/core/login_mobile.html" %}
+        </div>
+        <div class="poshan-logo">
+          <div class="poshan-logo-icon"></div>
         </div>
       </div>
     </div>

@@ -58,9 +58,9 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         return cleaned_data
 
 class EmailAuthenticationFormForMobile(NoAutocompleteMixin, AuthenticationForm):
-    username = forms.EmailField(label=_("E-mail"), max_length=75,
-                                widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}))
-    password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'}))
+    username = forms.EmailField(label=_(""), max_length=75,
+                                widget=forms.TextInput(attrs={'class': 'form-control mobile-form', 'placeholder': 'Username'}))
+    password = forms.CharField(label=_(""), widget=forms.PasswordInput(attrs={'class': 'form-control mobile-form', 'placeholder': 'Password'}))
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').lower()

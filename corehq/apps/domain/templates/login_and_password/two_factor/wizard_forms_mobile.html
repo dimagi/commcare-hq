@@ -10,7 +10,7 @@
       {% endfor %}
       {% if field.name == "password" %}
         <p class="forgot-pass">
-          <a class="login-desc" href="{% url "password_reset_email" %}">{% trans "Forgot your password?" %}</a>
+          <a class="grey-link" href="{% url "password_reset_email" %}">{% trans "Forgot your password?" %}</a>
         </p>
       {% endif %}
     </div>
