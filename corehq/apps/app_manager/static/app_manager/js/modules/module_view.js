@@ -168,6 +168,17 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     return self.caseListForm() && !formOptions[self.caseListForm()];
                 });
 
+                self.formHasEOFNav = ko.computed(function () {
+                    if (!self.caseListForm()) {
+                        return false;
+                    }
+                    var formData = formOptions[self.caseListForm()];
+                    if (formData) {
+                        return formData.post_form_workflow !== 'default';
+                    }
+                    return false;
+                });
+
                 var showMedia = function (formId) {
                     if (formId) {
                         $("#case_list_media").show();

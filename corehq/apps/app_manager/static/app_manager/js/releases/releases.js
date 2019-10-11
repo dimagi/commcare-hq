@@ -55,7 +55,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             if (self.doc_type() !== "LinkedApplication") {
                 return "";
             }
-            if (self.upstream_app_id()) {
+            if (releasesMain.upstreamUrl && self.upstream_app_id()) {
                 return releasesMain.upstreamUrl.replace('---', self.upstream_app_id());
             }
             return '';

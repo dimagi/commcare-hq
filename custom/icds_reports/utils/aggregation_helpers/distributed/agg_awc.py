@@ -73,7 +73,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 (count(*) filter (WHERE vhsnd_date_past_month is not null))>0
                 THEN 1 ELSE 0 END,
             CASE WHEN
-                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
+                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))> 1
                 THEN 1 ELSE 0 END,
             thr_v2.thr_distribution_image_count,
             0,
@@ -139,6 +139,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
     def updates(self):
         yield """
+        DROP TABLE IF EXISTS "{temp_table}";
         CREATE UNLOGGED TABLE "{temp_table}" AS
             SELECT
                 awc_id,
@@ -202,6 +203,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        DROP TABLE IF EXISTS "tmp_home_visit";
         CREATE UNLOGGED TABLE "tmp_home_visit" AS SELECT
             ucr.awc_id,
             %(start_date)s AS month,
@@ -261,6 +263,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        DROP TABLE IF EXISTS "tmp_household";
         CREATE UNLOGGED TABLE "tmp_household" AS SELECT
             owner_id,
             sum(open_count) AS cases_household,
@@ -285,6 +288,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         ), {'end_date': self.month_end}
 
         yield """
+        DROP TABLE IF EXISTS "tmp_person";
         CREATE UNLOGGED TABLE "tmp_person" AS SELECT
             awc_id,
             supervisor_id,
@@ -342,6 +346,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        DROP TABLE IF EXISTS "tmp_child";
         CREATE UNLOGGED TABLE "tmp_child" AS SELECT
             awc_id,
             sum(has_aadhar_id) as child_has_aadhar,
@@ -363,6 +368,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        DROP TABLE IF EXISTS "tmp_ccs";
         CREATE UNLOGGED TABLE "tmp_ccs" AS SELECT
             awc_id,
             sum(anc_in_month) AS num_anc_visits,
@@ -384,6 +390,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        DROP TABLE IF EXISTS "tmp_usage";
         CREATE UNLOGGED TABLE "tmp_usage" AS SELECT
             awc_id,
             month,
@@ -506,6 +513,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        DROP TABLE IF EXISTS "tmp_awc";
         CREATE UNLOGGED TABLE "tmp_awc" AS SELECT
             doc_id as awc_id,
             MAX(state_is_test) as state_is_test,

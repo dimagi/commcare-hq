@@ -9,6 +9,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import YeksiNaaLocationFilter, ProgramsAndProductsFilter, DateRangeFilter
+from custom.intrahealth.reports.utils import change_id_keys_to_names
 from custom.intrahealth.sqldata import TauxDeRuptureRateData
 from dimagi.utils.dates import force_to_date
 
@@ -119,7 +120,7 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
             for product in products:
                 headers.add_column(DataTablesColumn(product))
         else:
-            headers.add_column(DataTablesColumn('Produits disponibles'))
+            headers.add_column(DataTablesColumn('Produits en rupture de stock'))
 
         return headers
 
@@ -159,30 +160,29 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
             for stock in stocks_list:
                 location_id = stock['location_id']
-                location_name = stock['location_name']
                 products = sorted(stock['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations:
-                    length = len(locations_with_products[location_name])
-                    product_ids = [p['product_id'] for p in locations_with_products[location_name]]
+                    length = len(locations_with_products[location_id])
+                    product_ids = [p['product_id'] for p in locations_with_products[location_id]]
                     for product in products:
                         if product['product_id'] not in product_ids:
-                            locations_with_products[location_name].append({
+                            locations_with_products[location_id].append({
                                 'product_name': product['product_name'],
                                 'product_id': product['product_id'],
                                 'out_in_ppses': product['out_in_ppses'],
                                 'all_ppses': product['all_ppses'],
                             })
                     for r in range(0, length):
-                        product_for_location = locations_with_products[location_name][r]
+                        product_for_location = locations_with_products[location_id][r]
                         for product in products:
                             if product_for_location['product_id'] == product['product_id']:
                                 out_in_ppses = product['out_in_ppses']
                                 all_ppses = product['all_ppses']
-                                locations_with_products[location_name][r]['out_in_ppses'] += out_in_ppses
-                                locations_with_products[location_name][r]['all_ppses'] += all_ppses
+                                locations_with_products[location_id][r]['out_in_ppses'] += out_in_ppses
+                                locations_with_products[location_id][r]['all_ppses'] += all_ppses
                 else:
                     added_locations.append(location_id)
-                    locations_with_products[location_name] = []
+                    locations_with_products[location_id] = []
                     unique_products_for_location = []
                     products_to_add = []
                     for product in products:
@@ -198,7 +198,9 @@ class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParam
                             products_to_add[index]['all_ppses'] += all_ppses
 
                     for product in products_to_add:
-                        locations_with_products[location_name].append(product)
+                        locations_with_products[location_id].append(product)
+
+            locations_with_products = change_id_keys_to_names(self.config['domain'], locations_with_products)
 
             for location, products in locations_with_products.items():
                 products_names = [x['product_name'] for x in products]
