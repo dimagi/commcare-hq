@@ -95,9 +95,9 @@ class ReportModuleSuiteHelper(object):
 
 def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
     if new_mobile_ucr_restore:
-        datum_string = "instance('commcare-reports:{}')/rows"
+        nodeset = "instance('commcare-reports:{}')/rows".format(config.instance_id)
     else:
-        datum_string = "instance('reports')/reports/report[@id='{}']"
+        nodeset = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
 
     return Entry(
         command=Command(
@@ -119,7 +119,7 @@ def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
                 detail_confirm=_get_summary_detail_id(config),
                 detail_select=_get_select_detail_id(config),
                 id='report_id_{}'.format(config.uuid),
-                nodeset=datum_string.format(config.instance_id),
+                nodeset=nodeset,
                 value='./@id',
                 autoselect="true"
             ),
