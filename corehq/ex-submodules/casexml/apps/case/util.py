@@ -14,7 +14,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.phone.models import delete_synclog
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
-from corehq.toggles import PRUNE_PREVIOUS_SYNCLOGS
+from corehq.toggles import PRUNE_PREVIOUS_SYNCLOGS, NAMESPACE_USER
 from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils import should_use_sql_backend
@@ -112,7 +112,7 @@ def get_case_xform_ids(case_id):
 
 
 def prune_previous_log(sync_log):
-    if not PRUNE_PREVIOUS_SYNCLOGS.enabled(sync_log.user_id):
+    if not PRUNE_PREVIOUS_SYNCLOGS.enabled(sync_log.user_id, NAMESPACE_USER):
         return False
     if sync_log.previous_log_id:
         delete_synclog(sync_log.previous_log_id)
