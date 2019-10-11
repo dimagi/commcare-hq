@@ -325,6 +325,7 @@ HQ_APPS = (
     'corehq.preindex',
     'corehq.tabs',
     'custom.openclinica',
+    'custom.rec',
     'fluff',
     'fluff.fluff_filter',
     'soil',
