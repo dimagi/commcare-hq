@@ -298,6 +298,7 @@ class CaseDiffQueue(object):
     def get_status(self):
         cache_hits, self.cache_hits = self.cache_hits, [0, 0]
         return {
+            "workers": len(self.pool or []) + len(self.diff_pool or []),
             "pending": (
                 len(self.pending_cases)
                 + len(self.pending_loads)
@@ -320,7 +321,7 @@ class CaseDiffQueue(object):
 
 def log_status(status):
     log.info("cases pending=%(pending)s cached=%(cached)s "
-             "loaded=%(loaded)s diffed=%(diffed)s", status)
+             "loaded=%(loaded)s workers=%(workers)s diffed=%(diffed)s", status)
 
 
 def task_switch():
