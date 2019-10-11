@@ -160,12 +160,12 @@ def _get_select_details(config):
 
 def get_data_path(config, domain, new_mobile_ucr_restore=False):
     if new_mobile_ucr_restore:
-        data_path_string = "instance('commcare-reports:{}')/rows/row[@is_total_row='False']{}"
+        report_path = "instance('commcare-reports:{}')".format(config.instance_id)
     else:
-        data_path_string = "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
+        report_path = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
 
-    return data_path_string.format(
-        config.instance_id,
+    return "{}/rows/row[@is_total_row='False']{}".format(
+        report_path,
         MobileSelectFilterHelpers.get_data_filter_xpath(config, domain, new_mobile_ucr_restore)
     )
 
@@ -411,12 +411,12 @@ class MobileSelectFilterHelpers(object):
     @staticmethod
     def get_options_nodeset(config, filter_slug, new_mobile_ucr_restore=False):
         if new_mobile_ucr_restore:
-            instance = "instance('commcare-reports-filters:{report_id}')"
+            instance = "instance('commcare-reports-filters:{}')".format(config.instance_id)
         else:
-            instance = "instance('reports')/reports/report[@id='{report_id}']"
+            instance = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
 
         nodeset = instance + "/filters/filter[@field='{filter_slug}']/option"
-        return nodeset.format(report_id=config.instance_id, filter_slug=filter_slug)
+        return nodeset.format(filter_slug=filter_slug)
 
     @staticmethod
     def get_filters(config, domain):
