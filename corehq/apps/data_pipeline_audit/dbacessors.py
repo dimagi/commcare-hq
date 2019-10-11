@@ -19,7 +19,7 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
 def get_es_counts_by_doc_type(domain, es_indices=None, extra_filters=None):
-    es_indices = es_indices or (es.CaseES, es.FormES, es.UserES, es.AppES, es.LedgerES, es.GroupES)
+    es_indices = es_indices or (es.CaseES, es.FormES, es.UserES, es.AppES, es.GroupES)
     counter = Counter()
     for es_query in es_indices:
         counter += get_index_counts_by_domain_doc_type(es_query, domain, extra_filters)

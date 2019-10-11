@@ -221,5 +221,6 @@ def _distribute_tables_for_citus(engine):
 def aggregate_state_form_data():
     for state_id in ('st1', 'st2'):
         _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
-        _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
         _aggregate_bp_forms(state_id, datetime(2017, 3, 31))
+
+    _aggregate_gm_forms(datetime(2017, 3, 31))

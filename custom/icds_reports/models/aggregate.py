@@ -1113,7 +1113,7 @@ class AggregateGrowthMonitoringForms(models.Model, AggregateMixin):
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
     supervisor_id = models.TextField(null=True)
-    month = models.DateField(help_text="Will always be YYYY-MM-01")
+    month = models.DateField(db_index=True, help_text="Will always be YYYY-MM-01")
 
     # not the real pkey - see unique_together
     case_id = models.CharField(max_length=40, primary_key=True)

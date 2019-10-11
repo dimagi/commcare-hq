@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime
 
 from memoized import memoized
 
@@ -66,6 +67,7 @@ def _process_couch_change(pillow, error):
 
 def _process_kafka_change(producer, error):
     change_metadata = error.change_object.metadata
+    change_metadata.publish_timestamp = datetime.utcnow()
     producer.send_change(
         get_topic_for_doc_type(
             change_metadata.document_type,
