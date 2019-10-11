@@ -56,7 +56,7 @@ def update_calculated_properties():
         _update_calculated_properties()
     except Exception:
         _calc_props_soft_assert(
-            True,
+            False,
             "Calculated properties report task was unsuccessful",
             msg="Sentry will have relevant exception in case of failure",
         )
@@ -65,7 +65,7 @@ def update_calculated_properties():
             message="update_calculated_properties task has errored",
         )
     else:
-        _calc_props_soft_assert(True, "Calculated properties report task was successful")
+        _calc_props_soft_assert(False, "Calculated properties report task was successful")
 
 
 def _update_calculated_properties():
