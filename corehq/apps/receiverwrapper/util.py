@@ -1,6 +1,7 @@
 import re
 from collections import namedtuple
 
+from django.conf import settings
 from django.http import Http404
 
 from couchdbkit import ResourceNotFound
@@ -11,6 +12,7 @@ from couchforms.models import DefaultAuthContext
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
@@ -209,7 +211,7 @@ def get_app_and_build_ids(domain, build_or_app_id):
     return build_or_app_id, None
 
 
-def from_demo_user(form_json):
+def from_demo_user(form_json, domain):
     """
     Whether the form is submitted by demo_user
     """
@@ -222,6 +224,10 @@ def from_demo_user(form_json):
         # require new-style meta/userID (reject Meta/chw_id)
         if user_id == DEMO_USER_ID:
             return True
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+            user = CommCareUser.get_by_user_id(user_id, domain)
+            if user and user.is_demo_user:
+                return True
 
 # Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
 DEMO_SUBMIT_MODE = 'demo'
@@ -238,4 +244,4 @@ def should_ignore_submission(request):
     instance, _ = couchforms.get_instance_and_attachment(request)
     form_json = convert_xform_to_json(instance)
 
-    return False if from_demo_user(form_json) else True
+    return False if from_demo_user(form_json, request.domain) else True
