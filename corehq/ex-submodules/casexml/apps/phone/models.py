@@ -1161,7 +1161,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             ', '.join(self.dependent_case_ids_on_phone)))
         _get_logger().debug('index tree after update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree after update: {}'.format(self.extension_index_tree))
-        if made_changes:
+        if made_changes or not self.last_submitted:
             _get_logger().debug('made changes')
             self.last_submitted = datetime.utcnow()
             self.rev_before_last_submitted = self._rev
