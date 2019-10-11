@@ -578,6 +578,7 @@ def _child_health_helper(query, params, force_citus=False):
         celery_task_logger.info("Running child_health_helper with %s", params)
         with get_cursor(ChildHealthMonthly) as cursor:
             cursor.execute(query, params)
+    celery_task_logger.info("Completed child_health_helper with %s", params)
 
 
 @track_time
