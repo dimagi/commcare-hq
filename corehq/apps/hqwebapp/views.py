@@ -378,7 +378,10 @@ def _login(req, domain_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    template_name = 'login_and_password/login.html'
+    if "mobile" in req.build_absolute_uri():
+        template_name = 'login_and_password/login_mobile.html'
+    else:
+        template_name = 'login_and_password/login.html'
     custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
     if custom_landing_page:
         if isinstance(custom_landing_page, str):

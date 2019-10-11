@@ -57,6 +57,45 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
             raise ValidationError(lockout_message)
         return cleaned_data
 
+class EmailAuthenticationFormForMobile(NoAutocompleteMixin, AuthenticationForm):
+    username = forms.EmailField(label=_("E-mail"), max_length=75,
+                                widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}))
+    password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'}))
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '').lower()
+        return username
+
+    def clean_password(self):
+        from corehq.apps.hqwebapp.utils import decode_password
+        # decode password submitted from HQ login
+        # also pass in username to track replay attack
+        return decode_password(self.cleaned_data['password'], self.clean_username())
+
+    def clean(self):
+        lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password or contact the domain administrator.'))
+
+        username = self.cleaned_data.get('username')
+        if username is None:
+            raise ValidationError(_('Please enter a valid email address.'))
+
+        password = self.cleaned_data.get('password')
+        if not password:
+            raise ValidationError(_("Please enter a password."))
+
+        try:
+            cleaned_data = super(EmailAuthenticationForm, self).clean()
+        except ValidationError:
+            user = CouchUser.get_by_username(username)
+            if user and user.is_locked_out() and user.supports_lockout():
+                raise ValidationError(lockout_message)
+            else:
+                raise
+        user = CouchUser.get_by_username(username)
+        if user and user.is_locked_out() and user.supports_lockout():
+            raise ValidationError(lockout_message)
+        return cleaned_data
+
 
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
     username = forms.CharField(label=_("Username"), max_length=75,

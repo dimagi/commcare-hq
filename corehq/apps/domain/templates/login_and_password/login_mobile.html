@@ -1,0 +1,37 @@
+{% extends "hqwebapp/base_page.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% requirejs_main 'registration/js/login' %}
+
+{% block title %}{% trans "Log In :: CommCare HQ" %}{% endblock title %}
+
+{% block stylesheets %}
+  <link type="text/css"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
+
+  {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'registration/less/registration.debug.less' %}" />
+  {% else %}
+    {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'registration/less/registration.less' %}" />
+    {% endcompress %}
+  {% endif %}
+{% endblock stylesheets %}
+
+{% block content %}
+  {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
+  {% initial_page_data "hide_password_feedback" hide_password_feedback %}
+  {% block login-content %}
+    {% include "login_and_password/partials/login_full_mobile.html" %}
+  {% endblock %}
+{% endblock content %}
