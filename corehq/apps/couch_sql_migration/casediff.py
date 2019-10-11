@@ -445,6 +445,7 @@ class CaseDiffProcess(object):
         self.state_path = get_casediff_state_path(statedb.db_filepath)
         self.status_interval = STATUS_INTERVAL
         self.queue_class = queue_class
+        self.num_cases_sent = 0
 
     def __enter__(self):
         log.debug("starting case diff process")
@@ -474,14 +475,22 @@ class CaseDiffProcess(object):
         self.calls_pipe.__exit__(*exc_info)
 
     def update(self, case_ids, form_id):
+        self.num_cases_sent += len(case_ids)
         self.calls.put(("update", case_ids, form_id))
 
     def enqueue(self, case_id):
+        self.num_cases_sent += 1
         self.calls.put(("enqueue", case_id))
 
     def request_status(self):
         log.debug("reqeust status...")
         self.calls.put((STATUS,))
+
+    def log_status(self, status):
+        sending = self.num_cases_sent - status.pop("received")
+        if sending:
+            status["pending"] = f"{sending}+{status['pending']}"
+        log_status(status)
 
     @exit_on_error
     def run_status_logger(self):
@@ -502,7 +511,7 @@ class CaseDiffProcess(object):
                 result = requested
             elif result is not requested:
                 action, status = result
-                log_status(status)
+                self.log_status(status)
                 result = None
 
 
@@ -547,6 +556,7 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug
     with calls, stats:
         try:
             with queue_class(statedb, status_interval=0) as queue:
+                queue = CasesReceivedCounter(queue)
                 try:
                     while True:
                         call = calls.get()
@@ -583,6 +593,26 @@ class ParentError(Exception):
 
 class ProcessNotAllowed(Exception):
     pass
+
+
+class CasesReceivedCounter:
+
+    def __init__(self, queue):
+        self.queue = queue
+        self.num_cases_received = 0
+
+    def update(self, case_ids, form_id):
+        self.num_cases_received += len(case_ids)
+        self.queue.update(case_ids, form_id)
+
+    def enqueue(self, case_id):
+        self.num_cases_received += 1
+        self.queue.enqueue(case_id)
+
+    def get_status(self):
+        status = self.queue.get_status()
+        status["received"] = self.num_cases_received
+        return status
 
 
 def diff_cases(couch_cases, statedb):
