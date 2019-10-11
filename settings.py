@@ -313,6 +313,7 @@ HQ_APPS = (
     'corehq.tabs',
     'custom.apps.wisepill',
     'custom.openclinica',
+    'custom.rec',
     'fluff',
     'fluff.fluff_filter',
     'soil',
