@@ -70,7 +70,7 @@ def process_ui_translation_upload(app, trans_file):
     for row in translations:
         if row["property"] not in commcare_ui_strings:
             # Add a warning for  unknown properties, but still add them to the translation dict
-            warnings.append("Property " + row["property"] + " is not a known CommCare UI string, "
+            warnings.append("Property '" + row["property"] + "' is not a known CommCare UI string, "
                             "but we added it anyway.")
         default = default_trans.get(row["property"])
         default_params_text = _get_params_text(_get_params(default)) if default else None
@@ -81,11 +81,11 @@ def process_ui_translation_upload(app, trans_file):
                 for param in params:
                     if not re.match(r"\$\{[0-9]+}", param):
                         error_properties.append(_("""
-                            Could not understand '{param}' in {lang} value of {prop}.
+                            Could not understand '{param}' in {lang} value of '{prop}'.
                         """).format(param=param, lang=lang, prop=row["property"]))
                 if default_params_text and params_text != default_params_text:
                     warnings.append(_("""
-                        Property {prop} should contain {expected} but {lang} value contains {actual}.
+                        Property '{prop}' should contain {expected} but {lang} value contains {actual}.
                     """).format(prop=row["property"],
                                 expected=default_params_text,
                                 lang=lang,

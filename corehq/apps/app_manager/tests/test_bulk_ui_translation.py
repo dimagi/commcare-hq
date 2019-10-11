@@ -82,14 +82,14 @@ class BulkUiTranslation(SimpleTestCase):
         )
         self.assertEqual(len(error_properties), 2)
         self.assertEqual([e.strip() for e in error_properties], [
-            "Could not understand '${x0}' in fra value of sync.progress.",
-            "Could not understand '$ {1}' in fra value of sync.progress.",
+            "Could not understand '${x0}' in fra value of 'sync.progress'.",
+            "Could not understand '$ {1}' in fra value of 'sync.progress'.",
         ])
         self.assertEqual(len(warnings), 3)
         self.assertEqual([e.strip() for e in warnings], [
-            "Property unknown_string is not a known CommCare UI string, but we added it anyway.",
-            "Property updates.found should contain ${0}, ${1} but en value contains no parameters.",
-            "Property updates.found should contain ${0}, ${1} but fra value contains ${0}, ${1}, ${2}.",
+            "Property 'unknown_string' is not a known CommCare UI string, but we added it anyway.",
+            "Property 'updates.found' should contain ${0}, ${1} but en value contains no parameters.",
+            "Property 'updates.found' should contain ${0}, ${1} but fra value contains ${0}, ${1}, ${2}.",
         ])
 
         # test existing translations get updated correctly
