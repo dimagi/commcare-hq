@@ -1064,13 +1064,6 @@ def collect_inactive_awws(force_citus=False):
 
 @periodic_task(run_every=crontab(day_of_week='monday', hour=0, minute=0),
                acks_late=True, queue='background_queue')
-def collect_inactive_dashboard_users_task():
-    collect_inactive_dashboard_users.delay()
-    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
-        collect_inactive_dashboard_users.delay(force_citus=True)
-
-
-@task(queue='background_queue')
 def collect_inactive_dashboard_users(force_citus=False):
     with force_citus_engine(force_citus):
         celery_task_logger.info("Started updating the Inactive Dashboard users")
