@@ -85,6 +85,7 @@ from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
+    EmailAuthenticationFormForMobile
 )
 from corehq.apps.hqwebapp.utils import (
     get_environment_friendly_name,
@@ -408,7 +409,10 @@ def _login(req, domain_name):
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView
     else:
-        auth_view = HQLoginView if not domain_name else CloudCareLoginView
+        if "mobile" in req.build_absolute_uri():
+            auth_view = HQLoginViewMobile if not domain_name else CloudCareLoginView
+        else :
+            auth_view = HQLoginView if not domain_name else CloudCareLoginView
 
     demo_workflow_ab_v2 = ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW_V2, req)
 
@@ -461,6 +465,21 @@ class HQLoginView(LoginView):
 
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
+        context.update(self.extra_context)
+        context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
+        return context
+
+
+class HQLoginViewMobile(LoginView):
+    form_list = [
+        ('auth', EmailAuthenticationFormForMobile),
+        ('token', AuthenticationTokenForm),
+        ('backup', BackupTokenForm),
+    ]
+    extra_context = {}
+
+    def get_context_data(self, **kwargs):
+        context = super(HQLoginViewMobile, self).get_context_data(**kwargs)
         context.update(self.extra_context)
         context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
         return context
