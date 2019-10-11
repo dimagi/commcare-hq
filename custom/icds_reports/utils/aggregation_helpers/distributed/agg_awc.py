@@ -149,8 +149,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(pse_conducted) as awc_days_pse_conducted,
                 sum(open_bfast_count) as open_bfast_count,
                 sum(open_hotcooked_count) as open_hotcooked_count,
-                sum(days_thr_provided_count) as days_thr_provided_count,
-                sum(open_pse_count) as open_pse_count
+                sum(days_thr_provided_count) as days_thr_provided_count
             FROM "{daily_attendance}"
             WHERE month = %(start_date)s GROUP BY awc_id, month, supervisor_id;
         UPDATE "{tablename}" agg_awc SET
@@ -159,8 +158,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             awc_days_pse_conducted = ut.awc_days_pse_conducted,
             open_bfast_count = ut.open_bfast_count,
             open_hotcooked_count = ut.open_hotcooked_count,
-            days_thr_provided_count = ut.days_thr_provided_count,
-            open_pse_count = ut.open_pse_count
+            days_thr_provided_count = ut.days_thr_provided_count
         FROM (
             SELECT * FROM "{temp_table}"
         ) ut
@@ -643,7 +641,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('open_bfast_count', 'NULL'),
             ('open_hotcooked_count', 'NULL'),
             ('days_thr_provided_count', 'NULL'),
-            ('open_pse_count', 'NULL'),
             ('num_awc_infra_last_update',),
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),

@@ -19,9 +19,7 @@ class Migration(migrations.Migration):
         migrations.RunSQL("ALTER table daily_attendance ADD COLUMN open_bfast_count smallint "),
         migrations.RunSQL("ALTER table daily_attendance ADD COLUMN open_hotcooked_count smallint "),
         migrations.RunSQL("ALTER table daily_attendance ADD COLUMN days_thr_provided_count smallint "),
-        migrations.RunSQL("ALTER table daily_attendance ADD COLUMN open_pse_count smallint "),
         migrations.RunSQL("ALTER table agg_awc ADD COLUMN open_bfast_count smallint "),
         migrations.RunSQL("ALTER table agg_awc ADD COLUMN open_hotcooked_count smallint "),
-        migrations.RunSQL("ALTER table agg_awc ADD COLUMN days_thr_provided_count smallint "),
-        migrations.RunSQL("ALTER table agg_awc ADD COLUMN open_pse_count smallint "),
+        migrations.RunSQL("ALTER table agg_awc ADD COLUMN days_thr_provided_count smallint ")
     ]
