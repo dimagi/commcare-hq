@@ -136,7 +136,7 @@ class TestPrevalenceOfSevere(TestCase):
             loc_level='state'
         )
         expected = wasting_help_text("0 - 5 years")
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_prevalence_of_severe_data_map(
@@ -832,7 +832,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             icds_feature_flag=True
         )
         expected = wasting_help_text("0 - 5 years")
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average_icds_feature_flag_enabled(self):
         data = get_prevalence_of_severe_data_map(
@@ -845,7 +845,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             show_test=False,
             icds_feature_flag=True
         )
-        self.assertEquals(data['rightLegend']['average'], "29.63")
+        self.assertEqual(data['rightLegend']['average'], "29.63")
 
     def test_map_data_right_legend_extended_info_icds_feature_flag_enabled(self):
         data = get_prevalence_of_severe_data_map(
@@ -882,7 +882,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             show_test=False,
             icds_feature_flag=True
         )
-        self.assertEquals(data['label'], 'Percent of Children Wasted (0 - 5 years)')
+        self.assertEqual(data['label'], 'Percent of Children Wasted (0 - 5 years)')
 
     def test_map_name_two_locations_represent_by_one_topojson_icds_feature_flag_enabled(self):
         data = get_prevalence_of_severe_data_map(
@@ -926,7 +926,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             show_test=False,
             icds_feature_flag=True
         )
-        self.assertEquals(data['rightLegend']['average'], "57.14")
+        self.assertEqual(data['rightLegend']['average'], "57.14")
 
     def test_chart_data_bottom_fiveicds_feature_flag_enabled(self):
         data = get_prevalence_of_severe_data_chart(

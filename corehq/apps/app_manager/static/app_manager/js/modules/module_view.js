@@ -158,6 +158,9 @@ hqDefine("app_manager/js/modules/module_view", function () {
                 var self = {};
 
                 self.caseListForm = ko.observable(originalFormId);
+                self.caseListFormSettingsUrl = ko.computed(function () {
+                    return hqImport("hqwebapp/js/initial_page_data").reverse("view_form", self.caseListForm());
+                });
                 self.postFormWorkflow = ko.observable(postFormWorkflow);
                 self.endOfRegistrationOptions = [
                     {id: 'case_list', text: gettext('Go back to case list')},

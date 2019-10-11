@@ -67,7 +67,7 @@ class DecryptTests(SimpleTestCase):
         password = 'a' + 15 * '\x00'
         assert len(password.encode('utf-8')) == AES_BLOCK_SIZE
         ciphertext = self._encrypt_with_simple_padding(password)
-        with self.assertRaisesRegexp(ValueError, 'Padding is incorrect.'):
+        with self.assertRaisesRegex(ValueError, 'Padding is incorrect.'):
             b64_aes_decrypt(ciphertext)
 
     def test_known_bad_0x80_0x00(self):

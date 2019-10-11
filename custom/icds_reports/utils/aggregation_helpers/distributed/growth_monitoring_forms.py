@@ -1,13 +1,8 @@
 from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_GROWTH_MONITORING_TABLE
-from custom.icds_reports.utils.aggregation_helpers import (
-    month_formatter,
-    transform_day_to_month,
-)
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
-    BaseICDSAggregationDistributedHelper,
-)
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
 class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -15,21 +10,18 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
     ucr_data_source_id = 'static-dashboard_growth_monitoring_forms'
     tablename = AGG_GROWTH_MONITORING_TABLE
 
-    def __init__(self, month):
-        self.month = transform_day_to_month(month)
-
     def aggregate(self, cursor):
+        drop_query, drop_params = self.drop_table_query()
         agg_query, agg_params = self.aggregation_query()
 
-        cursor.execute(
-            f'DELETE FROM "{self.tablename}" WHERE month=%(month)s',
-            {'month': month_formatter(self.month)}
-        )
-
+        cursor.execute(drop_query, drop_params)
         cursor.execute(agg_query, agg_params)
 
     def drop_table_query(self):
-        raise NotImplementedError
+        return (
+            'DELETE FROM "{}" WHERE month=%(month)s AND state_id = %(state)s'.format(self.tablename),
+            {'month': month_formatter(self.month), 'state': self.state_id}
+        )
 
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
@@ -42,7 +34,6 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
         return """
             SELECT
                 DISTINCT child_health_case_id AS case_id,
-                state_id AS state_id,
                 supervisor_id AS supervisor_id,
                 %(current_month_start)s AS month,
                 LAST_VALUE(weight_child) OVER weight_child AS weight_child,
@@ -89,7 +80,7 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
                 END AS muac_grading_last_recorded
             FROM "{ucr_tablename}"
             WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s
-                AND child_health_case_id IS NOT NULL
+                AND state_id = %(state_id)s AND child_health_case_id IS NOT NULL
             WINDOW
                 weight_child AS (
                     PARTITION BY supervisor_id, child_health_case_id
@@ -130,6 +121,7 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
         """.format(ucr_tablename=self.ucr_tablename), {
             "current_month_start": current_month_start,
             "next_month_start": next_month_start,
+            "state_id": self.state_id
         }
 
     def aggregation_query(self):
@@ -139,6 +131,7 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
         query_params = {
             "month": month_formatter(month),
             "previous_month": month_formatter(month - relativedelta(months=1)),
+            "state_id": self.state_id
         }
         query_params.update(ucr_query_params)
 
@@ -155,7 +148,7 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
             muac_grading, muac_grading_last_recorded
         ) (
           SELECT
-            COALESCE(ucr.state_id, prev_month.state_id) AS state_id,
+            %(state_id)s AS state_id,
             COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
@@ -188,8 +181,12 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
             GREATEST(ucr.muac_grading_last_recorded, prev_month.muac_grading_last_recorded)
                 AS muac_grading_last_recorded
           FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN (SELECT * FROM "{tablename}" WHERE month = %(previous_month)s) prev_month
+          FULL OUTER JOIN "{tablename}" prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
+            AND ucr.month::DATE=prev_month.month + INTERVAL '1 month'
+          WHERE coalesce(ucr.month, %(month)s) = %(month)s
+            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
+            AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
         )
         """.format(
             ucr_table_query=ucr_query,

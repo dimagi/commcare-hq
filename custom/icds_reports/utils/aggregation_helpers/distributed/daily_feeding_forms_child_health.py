@@ -21,10 +21,7 @@ class DailyFeedingFormsChildHealthAggregationDistributedHelper(BaseICDSAggregati
     def aggregate(self, cursor):
         agg_query, agg_params = self.aggregation_query()
 
-        cursor.execute(
-            f'DELETE FROM "{self.tablename}" WHERE month=%(month)s',
-            {'month': month_formatter(self.month)}
-        )
+        cursor.execute(f'TRUNCATE "{self.tablename}"')
         cursor.execute(agg_query, agg_params)
 
     def drop_table_query(self):

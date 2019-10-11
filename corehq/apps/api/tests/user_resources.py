@@ -424,12 +424,12 @@ class TestBulkUserAPI(APIResourceTest):
         result = self.query(limit=limit)
         self.assertEqual(result.status_code, 200)
         users = json.loads(result.content)['objects']
-        self.assertEquals(len(users), limit)
+        self.assertEqual(len(users), limit)
 
         result = self.query(start_at=limit, limit=limit)
         self.assertEqual(result.status_code, 200)
         users = json.loads(result.content)['objects']
-        self.assertEquals(len(users), limit)
+        self.assertEqual(len(users), limit)
 
     def test_basic(self):
         response = self.query()
