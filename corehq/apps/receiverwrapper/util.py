@@ -215,11 +215,13 @@ def from_demo_user(form_json):
     """
     from corehq.apps.users.util import DEMO_USER_ID
     try:
-        # require new-style meta/userID (reject Meta/chw_id)
-        if form_json['meta']['userID'] == DEMO_USER_ID:
-            return True
+        user_id = form_json['meta']['userID']
     except (KeyError, ValueError):
         return False
+    else:
+        # require new-style meta/userID (reject Meta/chw_id)
+        if user_id == DEMO_USER_ID:
+            return True
 
 # Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
 DEMO_SUBMIT_MODE = 'demo'
