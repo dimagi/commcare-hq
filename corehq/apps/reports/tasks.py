@@ -47,7 +47,7 @@ from .analytics.esaccessors import (
 logging = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
 
-_calc_props_soft_assert = soft_assert(to='{}@{}'.format('dmore', 'dimagi.com'))
+_calc_props_soft_assert = soft_assert(to='{}@{}'.format('dmore', 'dimagi.com'), exponential_backoff=False)
 
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
