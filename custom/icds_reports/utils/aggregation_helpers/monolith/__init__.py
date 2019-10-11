@@ -21,7 +21,7 @@ from .mbt import CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper
 from .postnatal_care_forms_ccs_record import PostnatalCareFormsCcsRecordAggregationHelper
 from .postnatal_care_forms_child_health import PostnatalCareFormsChildHealthAggregationHelper
 from .thr_forms_child_health import THRFormsChildHealthAggregationHelper
-from .thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
+from .thr_forms_ccs_record import THRFormsCcsRecordAggregationHelper
 from .thr_form_v2 import  THRFormV2AggHelper
 
 __all__ = (

@@ -23,7 +23,7 @@ from .mbt import CcsMbtDistributedHelper, ChildHealthMbtDistributedHelper, AwcMb
 from .postnatal_care_forms_ccs_record import PostnatalCareFormsCcsRecordAggregationDistributedHelper
 from .postnatal_care_forms_child_health import PostnatalCareFormsChildHealthAggregationDistributedHelper
 from .thr_forms_child_health import THRFormsChildHealthAggregationDistributedHelper
-from .thr_froms_ccs_record import THRFormsCcsRecordAggregationDistributedHelper
+from .thr_forms_ccs_record import THRFormsCcsRecordAggregationDistributedHelper
 from .thr_form_v2 import THRFormV2AggDistributedHelper
 
 __all__ = (
