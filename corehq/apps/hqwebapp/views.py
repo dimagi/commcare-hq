@@ -379,7 +379,7 @@ def _login(req, domain_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    if "mobile" in req.build_absolute_uri():
+    if is_mobile_url(req):
         template_name = 'login_and_password/login_mobile.html'
     else:
         template_name = 'login_and_password/login.html'
@@ -409,7 +409,7 @@ def _login(req, domain_name):
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         auth_view = CloudCareLoginView
     else:
-        if "mobile" in req.build_absolute_uri():
+        if is_mobile_url(req):
             auth_view = HQLoginViewMobile if not domain_name else CloudCareLoginView
         else :
             auth_view = HQLoginView if not domain_name else CloudCareLoginView
@@ -1254,3 +1254,8 @@ def temporary_google_verify(request):
     # will remove once google search console verify process completes
     # BMB 4/20/18
     return render(request, "google9633af922b8b0064.html")
+
+def is_mobile_url(req):
+    if "mobile" in req.build_absolute_uri():
+        return True
+    return False
