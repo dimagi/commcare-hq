@@ -84,7 +84,7 @@ class EmailAuthenticationFormForMobile(NoAutocompleteMixin, AuthenticationForm):
             raise ValidationError(_("Please enter a password."))
 
         try:
-            cleaned_data = super(EmailAuthenticationForm, self).clean()
+            cleaned_data = super(EmailAuthenticationFormForMobile, self).clean()
         except ValidationError:
             user = CouchUser.get_by_username(username)
             if user and user.is_locked_out() and user.supports_lockout():
