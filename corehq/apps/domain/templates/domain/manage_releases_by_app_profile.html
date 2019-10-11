@@ -15,7 +15,7 @@
   {% registerurl "paginate_releases" domain '---' %}
     <ul class="nav nav-tabs sticky-tabs">
       <li><a data-toggle="tab" href="#search-form" id="search-tab">{% trans "Search" %}</a></li>
-      <li><a data-toggle="tab" href="#create-form" id="create-tab">{% trans "Add" %}</a></li>
+      <li><a data-toggle="tab" href="#creation-form" id="create-tab">{% trans "Add" %}</a></li>
     </ul>
     <div class="spacer"></div>
     <div class="tab-content">
@@ -24,9 +24,9 @@
           {% crispy search_form %}
         </form>
       </div>
-      <div id="create-form" class="tab-pane">
+      <div id="creation-form" class="tab-pane">
         <form class="form form-horizontal disable-on-submit" method="post" id="create-manage-app-releases">
-          {% crispy create_form %}
+          {% crispy creation_form %}
         </form>
       </div>
     </div>

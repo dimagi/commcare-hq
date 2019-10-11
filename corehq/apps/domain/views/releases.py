@@ -109,7 +109,7 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
     page_title = ugettext_lazy("Manage Releases By App Profile")
 
     @cached_property
-    def create_form(self):
+    def creation_form(self):
         return CreateManageReleasesByAppProfileForm(
             self.request,
             self.domain,
@@ -154,7 +154,7 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
                 query = query.filter(active=False)
         app_releases_by_app_profile = [release.to_json(apps_names) for release in query.order_by('-version')]
         return {
-            'create_form': self.create_form,
+            'creation_form': self.creation_form,
             'search_form': SearchManageReleasesByAppProfileForm(self.request, self.domain),
             'app_releases_by_app_profile': app_releases_by_app_profile,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
@@ -164,8 +164,8 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
         }
 
     def post(self, request, *args, **kwargs):
-        if self.create_form.is_valid():
-            success, error_message = self.create_form.save()
+        if self.creation_form.is_valid():
+            success, error_message = self.creation_form.save()
             if success:
                 return redirect(self.urlname, self.domain)
             else:
