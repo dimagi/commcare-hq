@@ -87,7 +87,7 @@ class BulkUiTranslation(SimpleTestCase):
         ])
         self.assertEqual(len(warnings), 3)
         self.assertEqual([e.strip() for e in warnings], [
-            "unknown_string is not a known CommCare UI string, but we added it anyway",
+            "Property unknown_string is not a known CommCare UI string, but we added it anyway.",
             "Property updates.found should contain ${0}, ${1} but en value contains no parameters.",
             "Property updates.found should contain ${0}, ${1} but fra value contains ${0}, ${1}, ${2}.",
         ])
