@@ -203,7 +203,6 @@ def get_addpatient_caseblock(case_type, owner, patient, repeater):
             create=True,
             case_id=case_id,
             owner_id=owner.user_id,
-            user_id=owner.user_id,
             case_type=case_type,
             case_name=case_name,
             external_id=patient['uuid'],
