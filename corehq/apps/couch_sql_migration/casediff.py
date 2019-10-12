@@ -87,6 +87,7 @@ class CaseDiffQueue(object):
         self.cases = LRUDict(self.MAX_MEMORIZED_CASES)
         self.num_diffed_cases = 0
         self.cache_hits = [0, 0]
+        self.clean_break = False
         self._is_flushing = False
 
     def __enter__(self):
@@ -219,7 +220,7 @@ class CaseDiffQueue(object):
 
     def process_remaining_diffs(self):
         log.debug("process remaining diffs")
-        self.flush()
+        self.flush(complete=not self.clean_break)
         for batcher, action in [
             (self.case_batcher, "loaded"),
             (self.diff_spawner, "spawned to diff"),
@@ -540,13 +541,11 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug
             getattr(queue, action)(*args)
 
     def on_break(signum, frame):
-        nonlocal clean_break
-        if clean_break:
+        if queue.clean_break:
             raise KeyboardInterrupt
         log.info("clean break... (Ctrl+C to abort)")
-        clean_break = True
+        queue.clean_break = True
 
-    clean_break = False
     signal.signal(signal.SIGINT, on_break)
     process_actions = {STATUS: status, TERMINATE: terminate}
     statedb = StateDB.init(state_path)
@@ -613,6 +612,14 @@ class CasesReceivedCounter:
         status = self.queue.get_status()
         status["received"] = self.num_cases_received
         return status
+
+    @property
+    def clean_break(self):
+        return self.queue.clean_break
+
+    @clean_break.setter
+    def clean_break(self, value):
+        self.queue.clean_break = value
 
 
 def diff_cases(couch_cases, statedb):
