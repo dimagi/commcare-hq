@@ -195,18 +195,7 @@ def get_feed_updates(repeater, feed_name):
 
 
 def get_addpatient_caseblock(case_type, owner, patient, repeater):
-    property_map = get_property_map(repeater.openmrs_config.case_config)
-
-    fields_to_update = {}
-    for prop, (jsonpath, value_source) in property_map.items():
-        if not value_source.check_direction(DIRECTION_IMPORT):
-            continue
-        matches = jsonpath.find(patient)
-        if matches:
-            patient_value = matches[0].value
-            new_value = value_source.deserialize(patient_value)
-            fields_to_update[prop] = new_value
-
+    fields_to_update = get_fields_to_update(patient, repeater)
     if fields_to_update:
         case_id = uuid.uuid4().hex
         case_name = patient['person']['display']
@@ -223,20 +212,7 @@ def get_addpatient_caseblock(case_type, owner, patient, repeater):
 
 
 def get_updatepatient_caseblock(case, patient, repeater):
-    property_map = get_property_map(repeater.openmrs_config.case_config)
-
-    fields_to_update = {}
-    for prop, (jsonpath, value_source) in property_map.items():
-        if not value_source.check_direction(DIRECTION_IMPORT):
-            continue
-        matches = jsonpath.find(patient)
-        if matches:
-            patient_value = matches[0].value
-            case_value = case.get_case_property(prop)
-            new_value = value_source.deserialize(patient_value)
-            if case_value != new_value:
-                fields_to_update[prop] = new_value
-
+    fields_to_update = get_fields_to_update(patient, repeater, case)
     if fields_to_update:
         case_name = patient['person']['display']
         return CaseBlock(
@@ -245,6 +221,25 @@ def get_updatepatient_caseblock(case, patient, repeater):
             case_name=case_name,
             update=fields_to_update,
         )
+
+
+def get_fields_to_update(patient, repeater, case=None):
+    property_map = get_property_map(repeater.openmrs_config.case_config)
+    fields_to_update = {}
+    for prop, (jsonpath, value_source) in property_map.items():
+        if not value_source.check_direction(DIRECTION_IMPORT):
+            continue
+        matches = jsonpath.find(patient)
+        if matches:
+            patient_value = matches[0].value
+            new_value = value_source.deserialize(patient_value)
+            if case:
+                case_value = case.get_case_property(prop)
+                if case_value != new_value:
+                    fields_to_update[prop] = new_value
+            else:
+                fields_to_update[prop] = new_value
+    return fields_to_update
 
 
 def update_patient(repeater, patient_uuid):
