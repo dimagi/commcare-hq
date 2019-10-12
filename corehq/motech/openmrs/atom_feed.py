@@ -195,36 +195,34 @@ def get_feed_updates(repeater, feed_name):
 
 
 def get_addpatient_caseblock(case_type, owner, patient, repeater):
-    fields_to_update = get_fields_to_update(patient, repeater)
-    if fields_to_update:
-        case_id = uuid.uuid4().hex
-        case_name = patient['person']['display']
-        return CaseBlock(
-            create=True,
-            case_id=case_id,
-            owner_id=owner.user_id,
-            case_type=case_type,
-            case_name=case_name,
-            external_id=patient['uuid'],
-            update=fields_to_update,
-        )
+    case_block_kwargs = get_case_block_kwargs(patient, repeater)
+    case_block_kwargs.setdefault("owner_id", owner.user_id)
+    case_id = uuid.uuid4().hex
+    return CaseBlock(
+        create=True,
+        case_id=case_id,
+        case_type=case_type,
+        external_id=patient['uuid'],
+        **case_block_kwargs
+    )
 
 
 def get_updatepatient_caseblock(case, patient, repeater):
-    fields_to_update = get_fields_to_update(patient, repeater, case)
-    if fields_to_update:
-        case_name = patient['person']['display']
-        return CaseBlock(
-            create=False,
-            case_id=case.get_id,
-            case_name=case_name,
-            update=fields_to_update,
-        )
+    case_block_kwargs = get_case_block_kwargs(patient, repeater, case)
+    return CaseBlock(
+        create=False,
+        case_id=case.get_id,
+        **case_block_kwargs
+    )
 
 
-def get_fields_to_update(patient, repeater, case=None):
+def get_case_block_kwargs(patient, repeater, case=None):
+    case_block_args = ("case_name", "owner_id")
     property_map = get_property_map(repeater.openmrs_config.case_config)
-    fields_to_update = {}
+    case_block_kwargs = {
+        "case_name": patient['person']['display'],
+        "update": {}
+    }
     for prop, (jsonpath, value_source) in property_map.items():
         if not value_source.check_direction(DIRECTION_IMPORT):
             continue
@@ -233,12 +231,20 @@ def get_fields_to_update(patient, repeater, case=None):
             patient_value = matches[0].value
             new_value = value_source.deserialize(patient_value)
             if case:
-                case_value = case.get_case_property(prop)
-                if case_value != new_value:
-                    fields_to_update[prop] = new_value
+                if prop in case_block_args:
+                    case_value = case.name if prop == "case_name" else getattr(case, prop)
+                    if case_value != new_value:
+                        case_block_kwargs[prop] = new_value
+                else:
+                    case_value = case.get_case_property(prop)
+                    if case_value != new_value:
+                        case_block_kwargs["update"][prop] = new_value
             else:
-                fields_to_update[prop] = new_value
-    return fields_to_update
+                if prop in case_block_args:
+                    case_block_kwargs[prop] = new_value
+                else:
+                    case_block_kwargs["update"][prop] = new_value
+    return case_block_kwargs
 
 
 def update_patient(repeater, patient_uuid):
