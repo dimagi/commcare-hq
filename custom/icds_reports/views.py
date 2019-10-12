@@ -104,6 +104,7 @@ from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_datatables_ordering_info
 from custom.icds_reports.utils.data_accessor import get_program_summary_data,\
     get_program_summary_data_with_retrying, get_awc_covered_data_with_retrying
+from custom.icds_reports.utils.topojson_util.topojson_util import getTopoJsonForDistrict
 from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
@@ -313,6 +314,16 @@ class ProgramSummaryView(BaseReportView):
         data = get_program_summary_data_with_retrying(
             step, domain, config, now, include_test, pre_release_features
         )
+        return JsonResponse(data=data)
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class TopoJsonView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        district = request.GET.get('district')
+        topojson = getTopoJsonForDistrict(district)
+        data = {'topojson': topojson}
         return JsonResponse(data=data)
 
 

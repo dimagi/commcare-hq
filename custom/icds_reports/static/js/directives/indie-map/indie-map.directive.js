@@ -1,6 +1,6 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService, haveAccessToFeatures) {
+function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService, topojsonService, haveAccessToFeatures) {
     var vm = this;
 
     $scope.$watch(function () {
@@ -45,7 +45,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     vm.type = '';
     vm.mapHeight = 0;
 
-    vm.initTopoJson = function (location_level, location) {
+    vm.initTopoJson = function (location_level, location, topojson) {
         if (location_level === void (0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
@@ -58,7 +58,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
             if (haveAccessToFeatures) {
-                Datamap.prototype[vm.type] = getTopoJsonForDistrict(location.map_location_name);
+                Datamap.prototype[vm.type] = topojson;
             } else {
                 Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
             }
@@ -72,18 +72,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         }
     };
 
-    var getTopoJsonForDistrict = function (district) {
-        var topoJson;
-        $.each(STATE_DISTRICT_MAP, function(key,val){
-            if (val['districts'].indexOf(district) > -1) {
-                topoJson = val.data;
-                return false;
-            }
-        });
-        return topoJson;
-    };
-
-    var mapConfiguration = function (location) {
+    var mapConfiguration = function (location, topojson) {
 
         var location_level = -1;
 
@@ -92,7 +81,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         else if (location.location_type === 'block') location_level = 2;
         else location_level = -1;
 
-        vm.initTopoJson(location_level, location);
+        vm.initTopoJson(location_level, location, topojson);
 
         vm.map = {
             scope: vm.scope,
@@ -209,7 +198,13 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     locationsService.getLocation(location_id).then(function (location) {
-        mapConfiguration(location);
+        if (location.location_type === 'district') {
+                topojsonService.getTopoJsonForDistrict(location.map_location_name).then(function (resp) {
+                    mapConfiguration(location, resp.topojson);
+                });
+        } else {
+            mapConfiguration(location);
+        }
     });
 
     vm.indicator = vm.data && vm.data !== void (0) ? vm.data.slug : null;
@@ -283,7 +278,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
 }
 
-IndieMapController.$inject = ['$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'haveAccessToFeatures'];
+IndieMapController.$inject = ['$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService', 'topojsonService', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('indieMap', function () {
     return {
