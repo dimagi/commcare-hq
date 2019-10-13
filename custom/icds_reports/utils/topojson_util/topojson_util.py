@@ -1,6 +1,7 @@
 import json
 import os
 
+
 def getTopoJsonForDistrict(district):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
