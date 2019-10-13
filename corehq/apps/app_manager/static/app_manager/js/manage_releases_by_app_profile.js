@@ -73,12 +73,13 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
         function manageReleaseSearchViewModel() {
             var self = {};
             self.search = function () {
-                var appId = $("#app-id-search-select").val();
-                var profileId = $("#app-profile-id-input").val() || '';
-                var version = $("#version-input").val() || '';
+                var appId = $("#search-manage-app-releases .app-id-search-select").val();
+                var appBuildProfileId = (
+                    $("#search-manage-app-releases .app-build-profile-id-select").val() || '');
+                var version = $("#search-manage-app-releases .version-input").val() || '';
                 var status = $("#status-input").val() || '';
-                window.location.search = ("build_profile_id=" + profileId + "&app_id=" + appId + "&version=" +
-                    version + "&status=" + status);
+                window.location.search = ("app_build_profile_id=" + appBuildProfileId + "&app_id=" +
+                    appId + "&version=" + version + "&status=" + status);
             };
             self.clear = function () {
                 window.location.search = "";
@@ -93,6 +94,6 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
             });
         }
         var searchViewModel = manageReleaseSearchViewModel();
-        $("#manage-app-releases").koApplyBindings(searchViewModel);
+        $("#search-manage-app-releases").koApplyBindings(searchViewModel);
     });
 });
