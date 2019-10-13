@@ -165,14 +165,14 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.creation_form.is_valid():
-            success, error_message = self.creation_form.save()
-            if success:
-                return redirect(self.urlname, self.domain)
-            else:
+            error_messages, success_messages = self.creation_form.save()
+            for success_message in success_messages:
+                messages.success(request, success_message)
+            for error_message in error_messages:
                 messages.error(request, error_message)
-                return self.get(request, *args, **kwargs)
-        else:
-            return self.get(request, *args, **kwargs)
+            if not error_messages:
+                return redirect(self.urlname, self.domain)
+        return self.get(request, *args, **kwargs)
 
 
 @require_can_edit_apps
