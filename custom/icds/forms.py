@@ -44,7 +44,7 @@ class HostedCCZLinkForm(forms.ModelForm):
 
 
 class HostedCCZForm(forms.Form):
-    link_id = forms.ChoiceField(label=ugettext_lazy("Link"), choices=(), required=True)
+    link_id = forms.ChoiceField(label=ugettext_lazy("Link"), choices=(), required=False)
     app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
     version = forms.IntegerField(label=ugettext_lazy('Version'), required=True, widget=Select(choices=[]))
     profile_id = forms.CharField(label=ugettext_lazy('Application Profile'),
@@ -90,6 +90,11 @@ class HostedCCZForm(forms.Form):
                 )
             )
         )
+
+    def clean_link_id(self):
+        if not self.cleaned_data.get('link_id'):
+            self.add_error('link_id', _("Please select link"))
+        return self.cleaned_data.get('link_id')
 
     def app_id_choices(self):
         choices = [(None, _('Select Application'))]
