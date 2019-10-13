@@ -19,7 +19,6 @@ from django.views.decorators.http import require_POST
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
-    get_build_doc_by_version,
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.models import (
