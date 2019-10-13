@@ -7,6 +7,7 @@ from memoized import memoized
 
 from casexml.apps.phone.restore import stream_response
 
+from corehq.apps.users.util import raw_username
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.util.quickcache import quickcache
@@ -197,7 +198,7 @@ class DeviceLogRequest(models.Model):
     A pending request that a particular device submit their logs
     """
     domain = models.CharField(max_length=255)
-    username = models.CharField(max_length=255)
+    username = models.CharField(max_length=255, help_text="raw_username, no @domain.commcarehq.org")
     device_id = models.CharField(max_length=255)
     created_on = models.DateTimeField(auto_now_add=True)
 
@@ -215,7 +216,7 @@ class DeviceLogRequest(models.Model):
     @classmethod
     def is_pending(cls, domain, username, device_id):
         """Is there a pending device log request matching these params?"""
-        return (domain, username, device_id) in _all_device_log_requests()
+        return (domain, raw_username(username), device_id) in _all_device_log_requests()
 
 
 @memoized

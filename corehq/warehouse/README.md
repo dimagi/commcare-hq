@@ -9,43 +9,66 @@ All the data required to filter and render a particular report is captured in th
 CommCareHQ's raw data models are processed to extract report 'facts'.
 This process can be thought of as an ETL.
 The warehousing app consists of various data models, the ETL processing code and some additional
-utilities such as Airflow to administer the ETL process.
+utilities such as [Airflow](https://github.com/dimagi/pipes/) to administer the ETL process.
 
 Below describes data warehouse models and the process to load and clear the data for these models.
 
-There are three kinds of warehouse data models. Fact, Dimension and Staging models.
-Generally, fact models represent final report data, dimension models represent the 'dimensions' under which report
-data can be filtered and staging models represent raw data read from CommCareHQ's raw data models before they are
-inserted into a dimension or fact table.
-See `facts.py`, `dimensions.py` and `staging.py` for examples.
+There are three kinds of warehouse data models:
+* Fact
+  * represent final report data
+* Dimension
+  * categorizes the fact data and allows filtering for reports
+* Staging
+  * temporary data read from CommCareHQ data models and used to derive the fact and dimension data
 
-Each data model has a `dependencies` attribute that specifies what other data model data it depends on.
+See [facts.py](models/facts.py), [dimensions.py](models/dimensions.py) and [staging.py](models/staging.py) for
+the actual model classes.
 
-ETL involves running commands to:
+## ETL
+The process of filling the tables in the warehouse generally involves two steps:
+* Extract data from CommCareHQ models into staging tables in the warehouse
+* Run SQL queries in the warehouse DB to copy data from staging tables to the dimension and fact tables
+  * restructure the data where necessary
+  * link data to dimensions
 
-- initialize a 'batch' to indicate date range for the data
-- for the batch date range, load raw data into staging tables, and then 
-- process staging tables to insert data into dimension and fact tables. 
+This process is triggered and managed by [Airflow](https://github.com/dimagi/pipes/) which executes CommCareHQ
+management commands for the various steps. The general workflow is as follows:
 
-Most of ETL business logic lives in raw SQL queries. See `corehq.warehouse.transforms.sql`.
+* initialize a 'batch' to indicate date range for the data
+* for the batch date range, load raw data into staging tables
+* process staging tables to insert data into dimension and fact tables
+* update the batch to indicate completion
 
-## Commands
-
-Use `create_batch` to create a batch. This just creates a new batch record.
+Example workflow:
 
 ```
-./manage.py create_batch 222617b9-8cf0-40a2-8462-7f872e1f1344 -s 2012-05-05 -e 2018-06-05
+# create a new batch with end date = '2018-06-05'. Start date will be taken from the previous batch
+# or default to a minimum date.
+# The command will output the ID of the batch created.
+$ ./manage.py create_batch slug 2018-06-05
+73
+
+# Run the ETL for the application tables
+$ ./manage.py commit_table application_staging 73
+$ ./manage.py commit_table application_dim 73
+$ ./manage.py mark_batch_complete 73
 ```
 
-Use `commit_table <data_model_slug> <batch_id>` to load the data of data_model for the duration specified by the batch_id.
+The full workflow can be seen in the Airflow UI or the [Airflow dag graphs](https://github.com/dimagi/pipes/blob/master/docs/warehouse/warehouse.md).
 
-E.g.
+### Table loaders
+The ETL for each 'table' is handled by a specific 'loader' class. These classes contain the logic necessary
+to fill the warehouse table they are responsible for. There are two categories of loaders:
 
-```
-./manage.py commit_table user_staging 222617b9-8cf0-40a2-8462-7f872e1f1344
-```
+* staging loader
+* fact / dimension loader
 
-Note that you may have to run this for given data model's dependencies first to load data.
+The only difference between the two is that the staging loader will clear any previous data as the first
+step whereas the other one will not.
 
-To flush staging data of a particular batch use `./manage.py clear_staging_records`.
-During the development, you could use `TRUNCATE TABLE` (or `./manage.py migrate warehouse zero`) sql commands to clear fact/dimension data.
+There are also 2 different loading strategies:
+
+* loading data from CommCareHQ models into warehouse tables
+  * this strategy is only used for staging tables
+* executing SQL scripts to move data between tables in the warehouse
+  * these loaders run [SQL scripts](transforms/sql) based on the loaders `slug`

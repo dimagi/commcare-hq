@@ -1,29 +1,23 @@
 import attr
-import datetime
-from dateutil.relativedelta import relativedelta
 from gevent.pool import Pool
 
-from django.core.cache import cache
-from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 
-from corehq.sql_db.routers import use_citus_for_request
 from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.tasks import (
     _aggregate_gm_forms, _aggregate_df_forms, _aggregate_cf_forms, _aggregate_ccs_cf_forms,
     _aggregate_child_health_thr_forms, _aggregate_ccs_record_thr_forms, _aggregate_child_health_pnc_forms,
     _aggregate_ccs_record_pnc_forms, _aggregate_delivery_forms, _aggregate_bp_forms,
-    _aggregate_awc_infra_forms, _child_health_monthly_table, _agg_ls_awc_mgt_form, _agg_ls_vhnd_form,
-    _agg_beneficiary_form, create_mbt_for_month, setup_aggregation, _agg_ls_table,
+    _aggregate_awc_infra_forms, _agg_ls_awc_mgt_form, _agg_ls_vhnd_form,
+    _agg_beneficiary_form, create_all_mbt, setup_aggregation, _agg_ls_table,
     _update_months_table, _daily_attendance_table, _agg_child_health_table,
     _ccs_record_monthly_table, _agg_ccs_record_table, _agg_awc_table,
-    aggregate_awc_daily, email_dashboad_team, _child_health_monthly_aggregation
+    aggregate_awc_daily, _child_health_monthly_aggregation
 )
 
 
 STATE_TASKS = {
     'aggregate_gm_forms': _aggregate_gm_forms,
-    'aggregate_df_forms': _aggregate_df_forms,
     'aggregate_cf_forms': _aggregate_cf_forms,
     'aggregate_ccs_cf_forms': _aggregate_ccs_cf_forms,
     'aggregate_child_health_thr_forms': _aggregate_child_health_thr_forms,
@@ -36,11 +30,11 @@ STATE_TASKS = {
     'agg_ls_awc_mgt_form': _agg_ls_awc_mgt_form,
     'agg_ls_vhnd_form': _agg_ls_vhnd_form,
     'agg_beneficiary_form': _agg_beneficiary_form,
-    'create_mbt_for_month': create_mbt_for_month
 }
 
 ALL_STATES_TASKS = {
     'child_health_monthly': _child_health_monthly_aggregation,
+    'create_mbt_for_month': create_all_mbt,
 }
 
 NORMAL_TASKS = {
@@ -53,6 +47,7 @@ NORMAL_TASKS = {
     'agg_ccs_record': _agg_ccs_record_table,
     'agg_awc_table': _agg_awc_table,
     'aggregate_awc_daily': aggregate_awc_daily,
+    'aggregate_df_forms': _aggregate_df_forms,
 }
 
 
@@ -75,7 +70,6 @@ class Command(BaseCommand):
         parser.add_argument('agg_uuid')
 
     def handle(self, query_name, agg_uuid, **options):
-        use_citus_for_request()
         self.function_map = {}
         self.setup_tasks()
         agg_record = AggregationRecord.objects.get(agg_uuid=agg_uuid)
@@ -86,7 +80,7 @@ class Command(BaseCommand):
             pool = Pool(10)
             for state in state_ids:
                 pool.spawn(query.func, state, agg_date)
-            pool.join()
+            pool.join(raise_error=True)
         elif query.by_state == NO_STATES:
             query.func(agg_date)
         else:

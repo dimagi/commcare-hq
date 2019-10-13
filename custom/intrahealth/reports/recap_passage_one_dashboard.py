@@ -7,6 +7,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import DateRangeFilter, RecapPassageOneProgramFilter, \
     YeksiRecapPassageNaaLocationFilter
+from custom.intrahealth.sqldata import normalize_decimal
 from custom.intrahealth.sqldata import RecapPassageOneData
 from dimagi.utils.dates import force_to_date
 
@@ -138,7 +139,15 @@ class RecapPassageOneReport(CustomProjectReport, DatespanMixin, ProjectReportPar
         return rows
 
     def calculate_table(self):
-        return RecapPassageOneData(config=self.config).rows_and_headers
+        visits = RecapPassageOneData(config=self.config).rows_and_headers
+
+        for visit in visits.values():
+            normalized_rows = []
+            for row in visit['rows']:
+                normalized_rows.append(list(map(normalize_decimal, row)))
+            visit['rows'] = normalized_rows
+
+        return visits
 
     def calculate_aggregated_table(self):
         return RecapPassageOneData(config=self.config).aggregated_data

@@ -25,22 +25,22 @@ class TestCchqPrbacBootstrap(TestCase):
         """
         When --dry-run is passed, no models should be created
         """
-        self.assertEquals(Role.objects.count(), 0)
-        self.assertEquals(Grant.objects.count(), 0)
+        self.assertEqual(Role.objects.count(), 0)
+        self.assertEqual(Grant.objects.count(), 0)
 
         command = cchq_prbac_bootstrap.Command()
         command.handle(dry_run=True)
 
-        self.assertEquals(Role.objects.count(), 0)
-        self.assertEquals(Grant.objects.count(), 0)
+        self.assertEqual(Role.objects.count(), 0)
+        self.assertEqual(Grant.objects.count(), 0)
 
     def test_non_dry_run(self):
         """
         When there is no --dry-run passed, it defaults to false, and
         things happen. Furthermore, the thing should be idempotent
         """
-        self.assertEquals(Role.objects.count(), 0)
-        self.assertEquals(Grant.objects.count(), 0)
+        self.assertEqual(Role.objects.count(), 0)
+        self.assertEqual(Grant.objects.count(), 0)
 
         command = cchq_prbac_bootstrap.Command()
         command.handle(dry_run=False)
@@ -54,5 +54,5 @@ class TestCchqPrbacBootstrap(TestCase):
 
         command.handle(dry_run=False)
 
-        self.assertEquals(Role.objects.count(), role_count)
-        self.assertEquals(Grant.objects.count(), grant_count)
+        self.assertEqual(Role.objects.count(), role_count)
+        self.assertEqual(Grant.objects.count(), grant_count)

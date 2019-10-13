@@ -4,6 +4,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
 from glob import glob
+from inspect import signature
 
 from django.test import SimpleTestCase
 
@@ -18,15 +19,7 @@ from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 from .. import casediff as mod
-from ..statedb import StateDB, delete_state_db, init_state_db
-
-try:
-    from inspect import signature
-except ImportError:
-    from funcsigs import signature  # TODO remove after Python 3 upgrade
-
-
-
+from ..statedb import StateDB, init_state_db
 
 log = logging.getLogger(__name__)
 
@@ -142,7 +135,7 @@ class TestCaseDiffQueue(SimpleTestCase):
         with self.assertRaises(Error), self.queue() as queue:
             # HACK mutate queue internal state
             # currently there is no easier way to stop non-empty cases_to_diff
-            queue.cases_to_diff["a"] = self.get_cases("a")[0]
+            queue.cases_to_diff.append("a")
             raise Error("do not process_remaining_diffs")
         self.assertTrue(queue.cases_to_diff)
         with self.queue() as queue:
@@ -298,12 +291,10 @@ class TestCaseDiffQueue(SimpleTestCase):
 
     def test_status_logger(self):
         event = Event()
-        queue = mod.CaseDiffQueue(None, status_interval=0.00001)
-        with patch.object(queue, "log_status") as log_status:
+        with patch.object(mod, "log_status") as log_status:
             log_status.side_effect = lambda x: event.set()
-            stop = queue.run_status_logger()
-            self.assertTrue(event.wait(timeout=5), "queue.log_status() not called")
-            stop()
+            with mod.CaseDiffQueue(self.statedb, status_interval=0.00001):
+                self.assertTrue(event.wait(timeout=5), "queue.log_status() not called")
         self.assertGreater(log_status.call_count, 0)
 
     @contextmanager
@@ -412,20 +403,20 @@ class TestCaseDiffProcess(SimpleTestCase):
 
     def test_process(self):
         with self.process() as proc:
-            self.assertEqual(self.get_status(proc), [0, 0, 0])
+            self.assertEqual(proc.get_status(), [0, 0, 0])
             proc.update({"case1", "case2"}, "form")
-            proc.enqueue({"case": "data"})
-            self.assertEqual(self.get_status(proc), [2, 1, 0])
+            proc.enqueue("case")
+            self.assertEqual(proc.get_status(), [2, 1, 0])
 
     def test_process_statedb(self):
         with self.process() as proc1:
-            self.assertEqual(self.get_status(proc1), [0, 0, 0])
-            proc1.enqueue({"case": "data"})
-            self.assertEqual(self.get_status(proc1), [0, 1, 0])
+            self.assertEqual(proc1.get_status(), [0, 0, 0])
+            proc1.enqueue("case")
+            self.assertEqual(proc1.get_status(), [0, 1, 0])
         with self.process() as proc2:
-            self.assertEqual(self.get_status(proc2), [0, 1, 0])
-            proc2.enqueue({"case": "data"})
-            self.assertEqual(self.get_status(proc2), [0, 2, 0])
+            self.assertEqual(proc2.get_status(), [0, 1, 0])
+            proc2.enqueue("case")
+            self.assertEqual(proc2.get_status(), [0, 2, 0])
 
     def test_process_not_allowed(self):
         with init_state_db("test", self.state_dir) as statedb:
@@ -448,12 +439,26 @@ class TestCaseDiffProcess(SimpleTestCase):
 
     @contextmanager
     def process(self):
+        def log_status(status):
+            log.info("status: %s", status)
+            cached = status.pop("cached")
+            assert cached == "0/0", cached
+            keys = ["pending", "loaded", "diffed"]
+            assert set(keys) == set(status), status
+            status_queue.put([status[k] for k in keys])
+
+        def get_status():
+            proc.request_status()
+            return status_queue.get(timeout=5)
+
+        status_queue = Queue()
         try:
-            with init_state_db("test", self.state_dir) as statedb, mod.CaseDiffProcess(
-                statedb,
-                status_interval=1,
-                queue_class=FakeCaseDiffQueue,
-            ) as proc:
+            with init_state_db("test", self.state_dir) as statedb, \
+                    patch.object(mod, "log_status", log_status), \
+                    mod.CaseDiffProcess(statedb, FakeCaseDiffQueue) as proc:
+                status_queue.get(timeout=5)
+                assert not hasattr(proc, "get_status"), proc
+                proc.get_status = get_status
                 yield proc
         finally:
             print(f"{' diff process logs ':-^40}")
@@ -466,41 +471,27 @@ class TestCaseDiffProcess(SimpleTestCase):
     def get_log_files(self):
         return glob(os.path.join(self.state_dir, "*-casediff.log"))
 
-    @staticmethod
-    def get_status(proc):
-        def log_status(status):
-            log.info("status: %s", status)
-            keys = ["pending_cases", "pending_diffs", "diffed_cases"]
-            assert set(keys) == set(status), status
-            queue.put([status[k] for k in keys])
-
-        queue = Queue()
-        with patch.object(mod.CaseDiffQueue, "log_status") as mock:
-            mock.side_effect = log_status
-            proc.request_status()
-            return queue.get(timeout=5)
-
 
 class FakeCaseDiffQueue(object):
 
     def __init__(self, statedb, status_interval=None):
         self.statedb = statedb
-        self.stats = {"pending_cases": 0, "pending_diffs": 0, "diffed_cases": 0}
+        self.stats = {"pending": 0, "cached": "0/0", "loaded": 0, "diffed": 0}
 
     def __enter__(self):
-        state = self.statedb.pop_resume_state(type(self).__name__, {})
-        if "stats" in state:
-            self.stats = state["stats"]
+        with self.statedb.pop_resume_state(type(self).__name__, {}) as state:
+            if "stats" in state:
+                self.stats = state["stats"]
         return self
 
     def __exit__(self, *exc_info):
         self.statedb.set_resume_state(type(self).__name__, {"stats": self.stats})
 
     def update(self, case_ids, form_id):
-        self.stats["pending_cases"] += len(case_ids)
+        self.stats["pending"] += len(case_ids)
 
-    def enqueue(self, case_doc):
-        self.stats["pending_diffs"] += 1
+    def enqueue(self, case_id):
+        self.stats["loaded"] += 1
 
     def get_status(self):
         return self.stats

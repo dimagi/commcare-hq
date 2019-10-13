@@ -1,14 +1,23 @@
 import random
 import uuid
+from collections import OrderedDict
 from datetime import datetime, timedelta
-from django.test import TestCase
 
 from django.conf import settings
 from django.core.management import call_command
+from django.test import TestCase
 
 from corehq.form_processor.tests.utils import partitioned
-from corehq.warehouse.models import (ApplicationStagingTable, Batch,
-    GroupStagingTable, LocationStagingTable, UserStagingTable)
+from corehq.warehouse.const import ALL_TABLES
+from corehq.warehouse.loaders import get_loader_by_slug
+from corehq.warehouse.models import (
+    ApplicationStagingTable,
+    Batch,
+    CommitRecord,
+    GroupStagingTable,
+    LocationStagingTable,
+    UserStagingTable,
+)
 
 
 def create_batch(slug):
@@ -172,3 +181,32 @@ class BaseWarehouseTestCase(TestCase):
     def setUpClass(cls):
         super(BaseWarehouseTestCase, cls).setUpClass()
         cls.using = settings.WAREHOUSE_DATABASE_ALIAS if settings.USE_PARTITIONED_DATABASE else 'default'
+
+
+def get_slugs_in_reverse_dependency_order():
+    downstream_slugs = {slug: set() for slug in ALL_TABLES}
+    for slug in ALL_TABLES:
+        loader_cls = get_loader_by_slug(slug)
+        dep_slugs = loader_cls().dependant_slugs()
+        for dep_slug in dep_slugs:
+            downstream_slugs[dep_slug].add(slug)
+
+    seen = OrderedDict()
+    while seen.keys() < set(ALL_TABLES):
+        start_size = len(seen)
+        for slug, downstream in downstream_slugs.items():
+            if slug not in seen and not downstream - seen.keys():
+                seen[slug] = 1
+        if len(seen) == start_size:
+            remaining = {slug: downstream for slug, downstream in downstream_slugs if slug not in seen}
+            raise Exception('Deadlock detected', remaining)
+    return list(seen)
+
+
+def reset_warehouse_db():
+    for slug in get_slugs_in_reverse_dependency_order():
+        loader_cls = get_loader_by_slug(slug)
+        loader_cls().clear_records()
+
+    CommitRecord.objects.all().delete()
+    Batch.objects.all().delete()

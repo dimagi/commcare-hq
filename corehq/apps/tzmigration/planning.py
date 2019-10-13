@@ -89,9 +89,14 @@ class BaseDB(object):
         def connect():
             return sqlite3.connect(f"file:{db_filepath}{mode}", uri=True)
         mode = "?mode=ro" if readonly else ""
+        self.readonly = readonly
         self.db_filepath = db_filepath
         self.engine = create_engine("sqlite://", creator=connect)
         self.Session = sessionmaker(bind=self.engine)
+
+    def __repr__(self):
+        readonly = ", readonly=True" if self.readonly else ""
+        return f"{type(self).__name__}({self.db_filepath!r}{readonly})"
 
     def __getstate__(self):
         return self.db_filepath

@@ -8,6 +8,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 class SyncWebUserTestCase(TestCase):
 
     def setUp(self):
+        super().setUp()
         domain = 'test'
         username = "mr-danny@dimagi.com"
         password = "s3cr3t"
@@ -43,6 +44,7 @@ class SyncWebUserTestCase(TestCase):
     def tearDown(self):
         WebUser.get_by_user_id(self.web_user.user_id).delete()
         self.domain_obj.delete()
+        super().tearDown()
 
 
 class SyncCommCareUserTestCase(TestCase):

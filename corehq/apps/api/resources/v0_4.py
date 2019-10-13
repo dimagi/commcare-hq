@@ -11,7 +11,8 @@ from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.xform import get_case_updates
-from corehq.apps.api.couch import GroupQuerySetAdapter
+from corehq import toggles
+from corehq.apps.api.query_adapters import GroupQuerySetAdapterCouch, GroupQuerySetAdapterES
 from couchforms.models import doc_types
 
 from corehq.apps.api.es import ElasticAPIQuerySet, XFormES, es_search
@@ -315,7 +316,10 @@ class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMi
         return get_object_or_not_exist(Group, kwargs['pk'], kwargs['domain'])
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        return GroupQuerySetAdapter(domain)
+        if toggles.GROUP_API_USE_ES_BACKEND.enabled_for_request(bundle.request):
+            return GroupQuerySetAdapterES(domain)
+        else:
+            return GroupQuerySetAdapterCouch(domain)
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)

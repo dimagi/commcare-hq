@@ -25,7 +25,7 @@ function (
         var alert_obj = {
             "message": ko.observable(message),
             "alert_class": ko.observable(
-                "alert fade in alert-block alert-full page-level-alert message-alert"
+                "alert fade in message-alert"
             ),
         };
         if (tags) {
@@ -46,6 +46,9 @@ function (
                 alert.alert_class(alert.alert_class() + ' ' + tags);
             }
         }
+
+        // Scroll to top of page to see alert
+        document.body.scrollTop = document.documentElement.scrollTop = 0;
     };
 
     $(function () {

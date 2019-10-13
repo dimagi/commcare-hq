@@ -1,7 +1,6 @@
 import logging
 import os
 
-from django.conf import settings
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -36,7 +35,7 @@ from corehq.apps.receiverwrapper.auth import (
     WaivedAuthContext,
     domain_requires_auth,
 )
-from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission_by_delaying
 from corehq.apps.receiverwrapper.util import (
     DEMO_SUBMIT_MODE,
     from_demo_user,
@@ -66,23 +65,8 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @profile_prod('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
-    if not settings.ENTERPRISE_MODE:
-        try:
-            if not submission_rate_limiter.allow_usage(domain):
-                datadog_counter('commcare.xform_submissions.rate_limited.test', tags=[
-                    'domain:{}'.format(domain),
-                ])
-            submission_rate_limiter.report_usage(domain)
-        except Exception:
-            # Prevent rate limiting logic from ever blocking as submission if it errors
-            # until it is proven to be a stable and essential part of our system.
-            # Instead, report the issue to sentry and track the overall count on datadog
-            notify_exception(request, "Exception raised in the rate limiter")
-            datadog_counter('commcare.xform_submissions.rate_limiter_errors', tags=[
-                'domain:{}'.format(domain),
-            ])
-            if settings.UNIT_TESTING:
-                raise
+
+    rate_limit_submission_by_delaying(domain, max_wait=15)
 
     metric_tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
@@ -135,7 +119,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             submit_ip=couchforms.get_submit_ip(request),
             last_sync_token=couchforms.get_last_sync_token(request),
             openrosa_headers=couchforms.get_openrosa_headers(request),
-            force_logs=bool(request.POST.get('force_logs', False)),
+            force_logs=bool(request.GET.get('force_logs', False)),
         )
 
         try:
@@ -148,13 +132,6 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             )
 
     response = result.response
-
-    if response.status_code == 400:
-        logging.error(
-            'Status code 400 for a form submission. '
-            'Response is: \n{0}\n'
-        )
-
     _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
     return response

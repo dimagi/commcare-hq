@@ -31,7 +31,7 @@ class PhoneUsersTestCase(TestCase):
     def testPhoneUsersViewNoNumberSet(self):
         phone_users_count = CouchUser.view("users/phone_users_by_domain", 
                                            key=self.domain).count()
-        self.assertEquals(phone_users_count, 0)
+        self.assertEqual(phone_users_count, 0)
 
 #    def testPhoneUsersViewLastNumberAdded(self):
 #        self.couch_user.add_phone_number(123)
@@ -52,46 +52,46 @@ class PhoneUsersTestCase(TestCase):
         self.couch_user.save()
         phone_user = CouchUser.phone_users_by_domain(self.domain).one()
 
-        self.assertEquals(phone_user.username, self.username)
-        self.assertEquals(phone_user.default_phone_number, '101')
+        self.assertEqual(phone_user.username, self.username)
+        self.assertEqual(phone_user.default_phone_number, '101')
 
     def testPhoneUsersChangeDefaultNumber(self):
         self.couch_user.add_phone_number(789)
         self.couch_user.add_phone_number(101, default=True)
         self.couch_user.save()
-        self.assertEquals(self.couch_user.default_phone_number, '101')
+        self.assertEqual(self.couch_user.default_phone_number, '101')
 
         self.couch_user.set_default_phone_number(789)
         self.couch_user.save()
-        self.assertEquals(self.couch_user.default_phone_number, '789')
+        self.assertEqual(self.couch_user.default_phone_number, '789')
 
     def testPhoneUsersViewLastCommCareUsername(self):
         self.couch_user.delete()
         phone_user_count = CouchUser.phone_users_by_domain(self.domain).count()
-        self.assertEquals(phone_user_count, 0)
+        self.assertEqual(phone_user_count, 0)
 
         couch_user = WebUser.create(self.domain, 'commcare_username_2', 'password')
         couch_user.add_phone_number(123)
         couch_user.save()
 
         phone_user_count = CouchUser.phone_users_by_domain(self.domain).count()
-        self.assertEquals(phone_user_count, 1)
+        self.assertEqual(phone_user_count, 1)
         phone_user = CouchUser.phone_users_by_domain(self.domain).one()
-        self.assertEquals(phone_user.username, 'commcare_username_2')
+        self.assertEqual(phone_user.username, 'commcare_username_2')
 
     def testWebUserImplementsMobileMixIn(self):
         time_zone = self.couch_user.get_time_zone()
-        self.assertEquals(time_zone, 'UTC')
+        self.assertEqual(time_zone, 'UTC')
 
         lang_code = self.couch_user.get_language_code()
-        self.assertEquals(lang_code, 'en')
+        self.assertEqual(lang_code, 'en')
 
     def testDeletePhoneNumber(self):
         self.couch_user.add_phone_number('+11231231234')
         self.couch_user.save()
-        self.assertEquals(len(self.couch_user.phone_numbers), 1)
+        self.assertEqual(len(self.couch_user.phone_numbers), 1)
         self.couch_user.delete_phone_number('+11231231234')
-        self.assertEquals(len(self.couch_user.phone_numbers), 0)
+        self.assertEqual(len(self.couch_user.phone_numbers), 0)
 
     def test_get_cached_full_name(self):
         testuser = CommCareUser.create('test-domain', 'testuser', 'test-pass')

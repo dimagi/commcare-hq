@@ -1,8 +1,16 @@
+import random
+import time
+
 import attr
 
 from corehq.apps.users.models import CommCareUser
-from corehq.project_limits.rate_counter.presets import week_rate_counter, \
-    day_rate_counter, hour_rate_counter, minute_rate_counter, second_rate_counter
+from corehq.project_limits.rate_counter.presets import (
+    day_rate_counter,
+    hour_rate_counter,
+    minute_rate_counter,
+    second_rate_counter,
+    week_rate_counter,
+)
 from corehq.util.quickcache import quickcache
 
 
@@ -37,9 +45,43 @@ class RateLimiter(object):
             rate_counter.increment((self.feature_key,) + scope, delta=delta)
 
     def allow_usage(self, scope):
+        return all(current_rate < limit
+                   for rate_counter_key, current_rate, limit in self.iter_rates(scope))
+
+    def iter_rates(self, scope):
+        """
+        Get generator of (key, current rate, rate limit) as applies to scope
+
+        e.g.
+            ('week', 92359, 115000)
+            ('day', ...)
+            ...
+
+        """
         scope = self.get_normalized_scope(scope)
-        return all(rate_counter.get((self.feature_key,) + scope) < limit
-                   for rate_counter, limit in self.get_rate_limits(*scope))
+        return (
+            (rate_counter.key, rate_counter.get((self.feature_key,) + scope), limit)
+            for rate_counter, limit in self.get_rate_limits(*scope)
+        )
+
+    def wait(self, scope, timeout):
+        start = time.time()
+        target_end = start + timeout
+        delay = 0
+        while True:
+            if self.allow_usage(scope):
+                return True
+            # add a random amount between 100ms and 500ms to the last delay
+            # so that the delays get a bit longer each time
+            # and different requests don't have exactly the same schedule
+            delay += random.uniform(0.1, 0.5)
+            # if the delay would bring us past the timeout
+            # rescheduled for right at the timeout instead
+            delay = min(delay, target_end - time.time())
+            if delay < 0.01:
+                return False
+            else:
+                time.sleep(delay)
 
 
 @quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
@@ -48,13 +90,17 @@ def get_user_count(domain):
 
 
 class PerUserRateDefinition(object):
-    def __init__(self, per_user_rate_definition, min_rate_definition=None):
+    def __init__(self, per_user_rate_definition, constant_rate_definition=None):
         self.per_user_rate_definition = per_user_rate_definition
-        self.min_rate_definition = min_rate_definition or RateDefinition()
+        self.constant_rate_definition = constant_rate_definition or RateDefinition()
 
     def get_rate_limits(self, domain):
         n_users = get_user_count(domain)
-        return self.per_user_rate_definition.times(n_users).with_minimum(self.min_rate_definition).rate_limits
+        return (
+            self.per_user_rate_definition
+            .times(n_users)
+            .plus(self.constant_rate_definition)
+        ).rate_limits
 
 
 @attr.s
@@ -68,9 +114,9 @@ class RateDefinition(object):
     def times(self, multiplier):
         return self.map(lambda value: value * multiplier if value is not None else value)
 
-    def with_minimum(self, other):
+    def plus(self, other):
         return self.map(lambda value, other_value:
-                        None if value is None else max(value, other_value or 0), other)
+                        None if value is None else value + (other_value or 0), other)
 
     def map(self, math_func, other=None):
         """

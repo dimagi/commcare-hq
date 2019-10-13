@@ -11,10 +11,10 @@ class Batch(models.Model):
 
 
 class CommitRecord(models.Model):
-    '''
+    """
     A CommitRecord records meta data about a certain warehouse table's
     batch.
-    '''
+    """
     batch = models.ForeignKey('Batch', on_delete=models.PROTECT)
 
     slug = models.CharField(max_length=100)

@@ -324,7 +324,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(completion_time=datetime(2013, 7, 2))
 
         results = get_completed_counts_by_user(self.domain, DateSpan(start, end))
-        self.assertEquals(results['cruella_deville'], 1)
+        self.assertEqual(results['cruella_deville'], 1)
 
     @run_with_all_backends
     def test_completed_out_of_range_by_user(self):
@@ -335,7 +335,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(completion_time=datetime(2013, 7, 2))
 
         results = get_completed_counts_by_user(self.domain, DateSpan(start, end))
-        self.assertEquals(results['cruella_deville'], 1)
+        self.assertEqual(results['cruella_deville'], 1)
 
     def test_completed_different_domain_by_user(self):
         start = datetime(2013, 7, 1)
@@ -345,7 +345,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(completion_time=datetime(2013, 7, 2))
 
         results = get_completed_counts_by_user(self.domain, DateSpan(start, end))
-        self.assertEquals(results['cruella_deville'], 1)
+        self.assertEqual(results['cruella_deville'], 1)
 
     @run_with_all_backends
     def test_basic_submission_by_user(self):
@@ -356,7 +356,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(received_on=received_on)
 
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
-        self.assertEquals(results['cruella_deville'], 1)
+        self.assertEqual(results['cruella_deville'], 1)
 
     @run_with_all_backends
     def test_get_last_form_submission_by_xmlns(self):
@@ -405,7 +405,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(received_on=datetime(2013, 7, 15))
 
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
-        self.assertEquals(results['cruella_deville'], 1)
+        self.assertEqual(results['cruella_deville'], 1)
 
     @run_with_all_backends
     def test_submission_different_domain_by_user(self):
@@ -417,7 +417,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(received_on=received_on, domain='not-in-my-backyard')
 
         results = get_submission_counts_by_user(self.domain, DateSpan(start, end))
-        self.assertEquals(results['cruella_deville'], 1)
+        self.assertEqual(results['cruella_deville'], 1)
 
     @run_with_all_backends
     def test_basic_submission_by_date(self):
@@ -434,7 +434,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             DateSpan(start, end),
             pytz.utc
         )
-        self.assertEquals(results['2013-07-15'], 1)
+        self.assertEqual(results['2013-07-15'], 1)
 
     @run_with_all_backends
     def test_get_paged_forms_by_type(self):
@@ -464,7 +464,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
             DateSpan(start, end),
             timezone
         )
-        self.assertEquals(results['2013-07-14'], 1)
+        self.assertEqual(results['2013-07-14'], 1)
 
     @run_with_all_backends
     def test_get_last_form_submission_for_user_for_app(self):
@@ -886,8 +886,8 @@ class TestUserESAccessors(SimpleTestCase):
         self._send_user_to_es('123')
         results = get_user_stubs(['123'])
 
-        self.assertEquals(len(results), 1)
-        self.assertEquals(results[0], {
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], {
             '_id': '123',
             'username': self.username,
             'is_active': True,
@@ -901,8 +901,8 @@ class TestUserESAccessors(SimpleTestCase):
         self._send_user_to_es('123', is_active=False)
         results = get_user_stubs(['123'])
 
-        self.assertEquals(len(results), 1)
-        self.assertEquals(results[0], {
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], {
             '_id': '123',
             'username': self.username,
             'is_active': False,
@@ -938,8 +938,8 @@ class TestGroupESAccessors(SimpleTestCase):
         self._send_group_to_es('123')
         results = get_group_stubs(['123'])
 
-        self.assertEquals(len(results), 1)
-        self.assertEquals(results[0], {
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], {
             '_id': '123',
             'name': self.group_name,
             'case_sharing': self.case_sharing,
