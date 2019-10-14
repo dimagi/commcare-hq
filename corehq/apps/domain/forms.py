@@ -1340,8 +1340,8 @@ class HQPasswordResetFormForMobile(NoAutocompleteMixin, forms.Form):
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
-        'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
-                                 "registered?"),
+        'unknown': ugettext_lazy("That email address doesn't have an associated user account. "
+                                 "Are you sure you've registered?"),
         'unusable': ugettext_lazy("The user account associated with this email address cannot reset the "
                                   "password."),
     }
@@ -1359,8 +1359,8 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
-        'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
-                                 "registered?"),
+        'unknown': ugettext_lazy("That email address doesn't have an associated user account. "
+                                 "Are you sure you've registered?"),
         'unusable': ugettext_lazy("The user account associated with this email address cannot reset the "
                                   "password."),
     }
