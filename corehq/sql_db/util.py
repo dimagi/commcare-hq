@@ -323,6 +323,9 @@ def select_db_for_read(weighted_dbs):
             ]
 
     """
+    if not weighted_dbs:
+        return
+
     # convert to a db to weight dictionary
     weights_by_db = {_db: weight for _db, weight in weighted_dbs}
 
