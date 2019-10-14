@@ -1,5 +1,4 @@
 import datetime
-from math import floor
 
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db.models import Count
@@ -70,7 +69,7 @@ class DashBoardUsage:
         for result in results_queryset:
             location_matrix.append(result)
         # adding only descendants to the main location
-        sub_location_types = self.location_types[self.location_types.index(main_location_type)+1:]
+        sub_location_types = self.location_types[self.location_types.index(main_location_type) + 1:]
         for sub_location in sub_location_types:
             if result[self.get_location_id_string_from_location_type(sub_location)] not in location_ids:
                 location_ids.append(result[self.get_location_id_string_from_location_type(sub_location)])
@@ -89,7 +88,7 @@ class DashBoardUsage:
         return (d - now).days < 7
 
     def is_launched_from_location_id(self, location_type, location_id):
-        filter_dict = {location_type+'_id': location_id, 'is_launched': 'yes'}
+        filter_dict = {location_type + '_id': location_id, 'is_launched': 'yes'}
         return AggAwc.objects.filter(**filter_dict).exists()
 
     def get_excel_data(self):
@@ -110,7 +109,7 @@ class DashBoardUsage:
             # converting the result set to matrix to fetch ancestors for a given location
             location_matrix, location_ids = self.convert_rs_to_matrix(all_awc_locations, self
                                                                       .get_location_id_string_from_location_type(
-                                                                        user_location.location_type__name))
+                                                                       user_location.location_type__name))
             users = self.get_users_by_location(location_ids)
             records = list(ICDSAuditEntryRecord.objects.filter(url='/a/icds-dashboard-qa/cas_export')
                            .annotate(indicator=KeyTextTransform('indicator', 'post_data')).values('indicator',
@@ -143,7 +142,7 @@ class DashBoardUsage:
                     excel = [serial_count, user_location_row[1], user_location_row[3],
                              user_location_row[5], user.username, user_sql_location['location_type__name'],
                              self.get_role_from_username(user.username), self.is_launched_from_location_id(
-                            user_sql_location['location_type__name'], user_sql_location['location_id']),
+                             user_sql_location['location_type__name'], user_sql_location['location_id']),
                              user.last_logged_in, self.check_if_date_in_last_week(user.last_logged_in),
                              total_indicators]
                     excel.extend(indicator_count)

@@ -1554,6 +1554,7 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
             cell = worksheet['{}{}'.format(column_name, row_num)]
             cell.value = col_value
             cell.border = thin_border
+            cell.font = bold_font_black
 
     # Export info
     worksheet2 = workbook.create_sheet("Export Info")
