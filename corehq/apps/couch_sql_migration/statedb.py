@@ -1,5 +1,6 @@
 import errno
 import json
+import logging
 import os
 import os.path
 from collections import namedtuple
@@ -23,6 +24,8 @@ from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import json_diff
 
 from .diff import filter_form_diffs
+
+log = logging.getLogger(__name__)
 
 
 def init_state_db(domain, state_dir):
@@ -335,6 +338,7 @@ class StateDB(DiffDB):
             return column.key == "id" and isinstance(column.type, Integer)
 
         def copy(model, session, where_expr=None):
+            log.info("copying casediff data: %s", model.__name__)
             where = f"WHERE {where_expr}" if where_expr else ""
             fields = ", ".join(c.key for c in model.__table__.columns if not is_id(c))
             session.execute(f"DELETE FROM main.{model.__tablename__} {where}")
@@ -343,6 +347,7 @@ class StateDB(DiffDB):
                 SELECT {fields} FROM cddb.{model.__tablename__} {where}
             """)
 
+        log.info("checking casediff data preconditions...")
         casediff_db = type(self).open(casediff_state_path)
         with casediff_db.session() as cddb:
             expect_casediff_kinds = {

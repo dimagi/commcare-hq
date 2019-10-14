@@ -472,6 +472,7 @@ class CaseDiffProcess(object):
         self.status_logger.join(timeout=30)
         self.process.join(timeout=30)
         self.statedb.clone_casediff_data_from(self.state_path)
+        log.info("casediff state copied to %s", self.statedb)
         self.stats_pipe.__exit__(*exc_info)
         self.calls_pipe.__exit__(*exc_info)
 
@@ -514,6 +515,7 @@ class CaseDiffProcess(object):
                 action, status = result
                 self.log_status(status)
                 result = None
+        log.info("casediff process status logger terminated")
 
 
 STATUS = "status"
