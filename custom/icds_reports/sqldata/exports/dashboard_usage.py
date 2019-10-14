@@ -93,9 +93,9 @@ class DashBoardUsage:
 
     def get_excel_data(self):
         excel_rows = []
-        headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level', 'Role', 'Launched?',
-                   'Last Login', 'Logged in the last week?', 'Total', 'Child', 'Pregnant Women', 'Demographics',
-                   'System Usage', 'AWC infrastructure', 'Child Growth Monitoring List',
+        headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level', 'Role',
+                   'Launched?', 'Last Login', 'Logged in the last week?', 'Total', 'Child', 'Pregnant Women',
+                   'Demographics', 'System Usage', 'AWC infrastructure', 'Child Growth Monitoring List',
                    'ICDS - CAS Monthly Register', 'AWW Performance Report', 'LS Performance Report',
                    'Take Home Ration']
         excel_rows.append(headers)
@@ -141,8 +141,9 @@ class DashBoardUsage:
                     serial_count += 1
                     excel = [serial_count, user_location_row[1], user_location_row[3],
                              user_location_row[5], user.username, user_sql_location['location_type__name'],
-                             self.get_role_from_username(user.username), self.is_launched_from_location_id(
-                             user_sql_location['location_type__name'], user_sql_location['location_id']),
+                             self.get_role_from_username(user.username),
+                             self.is_launched_from_location_id(user_sql_location['location_type__name'],
+                                                               user_sql_location['location_id']),
                              user.last_logged_in, self.check_if_date_in_last_week(user.last_logged_in),
                              total_indicators]
                     excel.extend(indicator_count)
