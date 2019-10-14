@@ -16,7 +16,7 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
         self.last_sync = last_sync
 
     def aggregate(self, cursor):
-        delete_extra_record_query = self.drop_table_query()
+        delete_extra_record_query = self.delete_extra_record_query()
         missing_location_query = self.missing_location_query()
         aggregation_query, agg_params = self.aggregate_query()
 
