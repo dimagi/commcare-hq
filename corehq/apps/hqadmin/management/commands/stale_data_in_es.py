@@ -18,7 +18,6 @@ from corehq.util.dates import iso_string_to_datetime
 from corehq.util.couch_helpers import paginate_view
 
 
-
 RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date', 'case_type'])
 
 
