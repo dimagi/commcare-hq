@@ -24,7 +24,7 @@ RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date', 'case_t
 
 class Command(BaseCommand):
     """
-    Returns list of (doc_id, doc_type, doc_subtype, es_server_modified_on, couch_server_modified_on)
+    Returns list of (doc_id, doc_type, doc_subtype, es_server_modified_on, primary_modified_on)
     tuples that are not updated in ES. Works for cases and forms.
 
     Can be used in conjunction with republish_doc_changes
