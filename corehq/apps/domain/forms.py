@@ -1335,7 +1335,8 @@ class HQPasswordResetFormForMobile(NoAutocompleteMixin, forms.Form):
     This small change is why we can't use the default PasswordReset form.
     """
     email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
-                             widget=forms.TextInput(attrs={'class': 'form-control mobile-form', 'placeholder': 'E-Mail'}))
+                             widget=forms.TextInput(attrs={'class': 'form-control mobile-form',
+                                                           'placeholder': 'E-Mail'}))
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
     error_messages = {
