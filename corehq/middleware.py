@@ -218,10 +218,6 @@ class SentryContextMiddleware(MiddlewareMixin):
 
 
 session_logger = logging.getLogger('session_access_log')
-log_file = os.path.join(settings.SHARED_DRIVE_ROOT, "session_access_log.txt")
-hadler = logging.FileHandler(log_file)
-session_logger.addHandler(hadler)
-session_logger.setLevel(logging.INFO)
 
 
 def log_call(func):
@@ -266,4 +262,4 @@ class LoggingSessionMiddleware(SessionMiddleware):
                     str(e), request.path)
             )
             pass
-        super(LoggingSessionMiddleware, self).process_request(request)
+        super().process_request(request)

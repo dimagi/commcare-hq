@@ -111,6 +111,7 @@ FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
+SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -1115,6 +1116,14 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'simple',
             'filename': MAIN_COUCH_SQL_DATAMIGRATION,
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 20
+        },
+        'session_access_log': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': SESSION_ACCESS_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 20
         },
