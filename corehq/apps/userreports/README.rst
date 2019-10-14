@@ -2065,32 +2065,23 @@ Getting Started
 
 The easiest way to get started is to start with sample data and reports.
 
-First copy the dimagi domain to your developer machine. You only really
-need forms, users, and cases:
+Create a simple app and submit a few forms. You can then use report builder to create a report.
+Start at ``a/DOMAIN/reports/builder/select_source/`` and create a report based on your form, either a form list or
+form summary.
 
-::
+When your report is created, clicking "Edit" will bring you to the report builder editor.
+An individual report can be viewed in the UCR editor by changing the report builder URL,
+``/a/DOMAIN/reports/builder/edit/REPORT_ID/`` to the UCR URL, ``/a/DOMAIN/configurable_reports/reports/edit/REPORT_ID/``.
+In this view, you can examine the columns, filters, and aggregation columns that report builder created.
 
-   ./manage.py copy_domain https://<your_username>:<your_password>@commcarehq.cloudant.com/commcarehq dimagi --include=CommCareCase,XFormInstance,CommCareUser
+The UCR config UI also includes pages to add new data sources, imports reports, etc.,
+all based at ``/a/DOMAIN/configurable_reports/``.  If you add a new report via the UCR UI and copy in the
+columns, filters, etc. from a report builder report, that new report will then automatically open in the UCR UI when you edit it.
 
-Then load and rebuild the data table:
+Two example UCRs, a case-based UCR for the ``dimagi`` domain and a form-based UCR for the ``gsid`` domain,
+are checked into source code. Their data source specs and report specs are in ``corehq/apps/userreports/examples/``.
 
-::
-
-   ./manage.py load_spec corehq/apps/userreports/examples/dimagi/dimagi-case-data-source.json --rebuild
-
-Then load the report:
-
-::
-
-   ./manage.py load_spec corehq/apps/userreports/examples/dimagi/dimagi-chart-report.json
-
-Fire up a browser and you should see the new report in your domain. You
-should also be able to navigate to the edit UI, or look at and edit the
-example JSON files. There is a second example based off the "gsid"
-domain as well using forms.
-
-The tests are also a good source of documentation for the various filter
-and indicator formats that are supported.
+The tests are also a good source of documentation for the various filter and indicator formats that are supported.
 
 Static data sources
 -------------------
