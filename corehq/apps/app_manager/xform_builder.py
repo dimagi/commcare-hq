@@ -119,7 +119,8 @@ class XFormBuilder(object):
         question to a group before you add the group.
 
         :param name: Question name
-        :param label: Question label
+        :param label: Question label (can also be a dict: {'en': 'label', 'it': 'cartellino'})
+            Note - ensure all langs passed in are in app.langs, lest they be removed during render_xform
         :param data_type: The type of the question, or None for hidden values
         :param group: The name of the question's group, or an iterable of names if nesting is deeper than one
         :param choices: A dictionary of {name: label} pairs
@@ -225,7 +226,9 @@ class XFormBuilder(object):
             node = self._data
         node.append(etree.Element(name))
 
-    def _append_to_translation(self, name, label, group=None, choices=None, label_safe=False, **params):
+    def _append_to_translation(self, name, labels, group=None, choices=None, label_safe=False, **params):
+        if not isinstance(labels, dict):
+            labels = {'en': labels}
 
         def get_text_node(label, choice_name=None, is_hint=False):
             if label_safe:
@@ -249,8 +252,17 @@ class XFormBuilder(object):
                     translation.append(get_text_node(choice_label, choice_name=choice_name))
 
         itext_node = self._etree.xpath('./h:head/x:model/x:itext', namespaces=self.ns)[0]
-        translation = itext_node.xpath('./x:translation', namespaces=self.ns)[0]
-        add_label_to_translation(label, translation)
+        translations_by_lang = {
+            translation.get('lang'): translation for translation in
+            itext_node.xpath('./x:translation', namespaces=self.ns)
+        }
+        for lang, label in labels.items():
+            if lang in translations_by_lang:
+                add_label_to_translation(label, translations_by_lang[lang])
+            else:
+                translation = E.translation({'lang': lang})
+                add_label_to_translation(label, translation)
+                itext_node.append(translation)
 
     def _append_to_model(self, name, data_type, group=None, **params):
         if data_type is None or data_type in XSD_TYPES:
