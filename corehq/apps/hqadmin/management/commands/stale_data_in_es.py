@@ -42,7 +42,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('data_models', nargs='+',
-                            help='A list of data models to check. Valid options are "case"')
+                            help='A list of data models to check. Valid options are "case" and "form".')
         parser.add_argument(
             '--start',
             action='store',
