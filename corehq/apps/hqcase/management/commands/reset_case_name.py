@@ -1,3 +1,6 @@
+import csv
+from datetime import datetime
+
 from django.core.management import BaseCommand
 
 from corehq.apps.es.cases import CaseES
@@ -21,6 +24,7 @@ class Command(BaseCommand):
         parser.add_argument('case_type')
 
     def handle(self, domain, case_type, *args, **options):
+        perform_update = True
         query = (
             CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
@@ -30,26 +34,33 @@ class Command(BaseCommand):
         )
         cases_count = query.count()
         print("Number of cases to be updated approximately: %s" % cases_count)
-        if not input("Do you wish to proceed (y/n)") == 'y':
-            print("Aborting")
-            return
+        if not input("Do you wish to update cases (y/n)") == 'y':
+            perform_update = False
+            if not input("Do you wish to just log updates (y/n)") == 'y':
+                exit(0)
         case_ids = query.get_ids()
-        print("Being update for %s cases" % len(case_ids))
+        print("Begin iterating %s cases" % len(case_ids))
         case_accessor = CaseAccessors(domain)
         case_updates = []
-        for case_id in with_progress_bar(case_ids):
-            case = case_accessor.get_case(case_id)
-            if case.name:
-                continue
-            update_to_name = get_last_non_blank_value(case, 'name')
-            if update_to_name:
-                case_updates.append((case_id, {'name': update_to_name}, False))
-            # update batch when we have the threshold
-            if len(case_updates) == CASE_UPDATE_BATCH:
+        filename = "case_updates_%s_%s_%s.csv" % (domain, case_type, datetime.utcnow())
+        with open(filename, 'w') as f:
+            writer = csv.DictWriter(f, ['case_id', 'new_value'])
+            writer.writeheader()
+            for case_id in with_progress_bar(case_ids):
+                case = case_accessor.get_case(case_id)
+                if case.name:
+                    continue
+                update_to_name = get_last_non_blank_value(case, 'name')
+                if update_to_name:
+                    writer.writerow({'case_id': case_id, 'new_value': update_to_name})
+                    if perform_update:
+                        case_updates.append((case_id, {'name': update_to_name}, False))
+                # update batch when we have the threshold
+                if len(case_updates) == CASE_UPDATE_BATCH:
+                    bulk_update_cases(domain, case_updates, DEVICE_ID)
+                    case_updates = []
+            # submit left over case updates
+            if case_updates:
+                print("Performing last batch of updates")
                 bulk_update_cases(domain, case_updates, DEVICE_ID)
-                case_updates = []
-        print("Performing last batch of updates")
-        # submit left over case updates
-        if case_updates:
-            bulk_update_cases(domain, case_updates, DEVICE_ID)
-        print("Updates finished.")
+            print("Finished. Update details in %s" % filename)
