@@ -225,7 +225,6 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.data_pipeline_audit',
     'corehq.apps.domain',
-    'corehq.apps.domainsync',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
