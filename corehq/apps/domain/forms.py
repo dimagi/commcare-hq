@@ -1327,6 +1327,25 @@ class NoAutocompleteMixin(object):
                 field.widget.attrs.update({'autocomplete': 'off'})
 
 
+class HQPasswordResetFormForMobile(NoAutocompleteMixin, forms.Form):
+    """
+    Only finds users and emails forms where the USERNAME is equal to the
+    email specified (preventing Mobile Workers from using this form to submit).
+
+    This small change is why we can't use the default PasswordReset form.
+    """
+    email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
+                             widget=forms.TextInput(attrs={'class': 'form-control mobile-form', 'placeholder': 'E-Mail'}))
+    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+        captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
+    error_messages = {
+        'unknown': ugettext_lazy("That email address doesn't have an associated user account. Are you sure you've "
+                                 "registered?"),
+        'unusable': ugettext_lazy("The user account associated with this email address cannot reset the "
+                                  "password."),
+    }
+
+
 class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
     """
     Only finds users and emails forms where the USERNAME is equal to the
@@ -1444,6 +1463,16 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             # we can pretend all is well since the save() method is safe for missing users.
             return self.cleaned_data['email']
 
+
+class ConfidentialPasswordResetFormForMobile(HQPasswordResetFormForMobile):
+
+    def clean_email(self):
+        try:
+            return super(ConfidentialPasswordResetFormForMobile, self).clean_email()
+        except forms.ValidationError:
+            # The base class throws various emails that give away information about the user;
+            # we can pretend all is well since the save() method is safe for missing users.
+            return self.cleaned_data['email']
 
 class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
     new_password1 = forms.CharField(label=ugettext_lazy("New password"),

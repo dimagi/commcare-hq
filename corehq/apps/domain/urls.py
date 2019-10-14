@@ -13,6 +13,7 @@ from django.views.generic import RedirectView
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.forms import (
     ConfidentialPasswordResetForm,
+    ConfidentialPasswordResetFormForMobile,
     HQSetPasswordForm,
 )
 from corehq.apps.domain.views.accounting import (
@@ -104,6 +105,11 @@ urlpatterns = [
     url(r'^accounts/password_reset_email/$', password_reset,
         {'template_name': 'login_and_password/password_reset_form.html',
          'password_reset_form': ConfidentialPasswordResetForm, 'from_email': settings.DEFAULT_FROM_EMAIL,
+         'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
+        name='password_reset_email'),
+    url(r'^accounts/password_reset_email/mobile/$', password_reset,
+        {'template_name': 'login_and_password/password_reset_form_mobile.html',
+         'password_reset_form': ConfidentialPasswordResetFormForMobile, 'from_email': settings.DEFAULT_FROM_EMAIL,
          'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
         name='password_reset_email'),
     url(r'^accounts/password_reset_email/done/$', password_reset_done,

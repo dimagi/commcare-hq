@@ -1,0 +1,22 @@
+{% extends "login_and_password/login_mobile.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block head %}{{ block.super }}
+  {% include 'analytics/fullstory.html' %}
+{% endblock %}
+
+{% block login-content %}
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="mobile-form-container">
+          <div class="form-bubble form-bubble-lg bg-white">
+            {% block registration-content %}{% endblock %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -411,7 +411,7 @@ def _login(req, domain_name):
     else:
         if is_mobile_url(req):
             auth_view = HQLoginViewMobile if not domain_name else CloudCareLoginView
-        else :
+        else:
             auth_view = HQLoginView if not domain_name else CloudCareLoginView
 
     demo_workflow_ab_v2 = ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW_V2, req)
@@ -1254,6 +1254,7 @@ def temporary_google_verify(request):
     # will remove once google search console verify process completes
     # BMB 4/20/18
     return render(request, "google9633af922b8b0064.html")
+
 
 def is_mobile_url(req):
     if "mobile" in req.build_absolute_uri():

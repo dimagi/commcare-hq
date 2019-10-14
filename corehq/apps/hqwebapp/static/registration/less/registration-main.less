@@ -26,6 +26,21 @@
   }
 }
 
+.mobile-form-container {
+  width: 100%;
+  max-width: @reg-form-width;
+  margin: 0 auto;
+  transition: margin-top .5s ease-in-out;
+
+  a.btn-primary {
+    color: white;
+  }
+}
+
+.bottom-spacing {
+  margin-bottom: 24px !important;
+}
+
 @media (min-width: @screen-md-min) {
   .reg-form-container {
     width: @reg-form-width;
@@ -135,10 +150,24 @@ ul.form-step-progress li {
   position: absolute;
   bottom: 20px;
   width: 100%;
+  max-width: 480px;
 }
+
+
 
 .grey-link {
   color: #95989a !important;
+}
+
+.back-arrow-icon {
+  width: 15px;
+  height: 30px;
+  background-image: url(/static/hqstyle/images/back-arrow@3x.png);
+  background-size: cover;
+  background-repeat: no-repeat;
+  position: absolute;
+  top: 60px;
+  left: calc (50% - 180px);
 }
 
 .poshan-logo-icon {
