@@ -107,9 +107,9 @@ class DashBoardUsage:
                     user_location.get_id}
             all_awc_locations = AwcLocation.objects.filter(**location_type_filter).values(*self.required_fields)
             # converting the result set to matrix to fetch ancestors for a given location
-            location_matrix, location_ids = self.convert_rs_to_matrix(all_awc_locations, self
-                                                                      .get_location_id_string_from_location_type(
-                user_location.location_type__name))
+            location_matrix, location_ids =\
+                self.convert_rs_to_matrix(all_awc_locations, self.get_location_id_string_from_location_type(
+                    user_location.location_type__name))
             users = self.get_users_by_location(location_ids)
             records = list(ICDSAuditEntryRecord.objects.filter(url='/a/icds-dashboard-qa/cas_export')
                            .annotate(indicator=KeyTextTransform('indicator', 'post_data')).values('indicator',
