@@ -57,6 +57,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         });
     });
 
+
     if (vm.selectedYear === new Date().getFullYear()) {
         vm.months = _.filter(vm.monthsCopy, function (month) {
             return month.id <= new Date().getMonth() + 1;
@@ -75,6 +76,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             id: year,
         });
     }
+
     vm.years = vm.yearsCopy;
     vm.queuedTask = false;
     vm.selectedIndicator = 1;
@@ -345,9 +347,35 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.onSelectYear = function (year) {
         var date = new Date();
         var latest = date;
+        vm.years = vm.yearsCopy;
+        vm.months = vm.monthsCopy;
+
         if (vm.isIncentiveReportSelected()) {
-            var offset = date.getDate() < 15 ? 2 : 1;
-            latest.setMonth(date.getMonth() - offset);
+            vm.years = _.filter(vm.yearsCopy, function (y) {
+                return y.id >= 2018;
+            });
+
+            if (vm.selectedYear === latest.getFullYear()) {
+                var offset = date.getDate() < 15 ? 1 : 0;
+
+                vm.months = _.filter(vm.monthsCopy, function (month) {
+                    return month.id <= (latest.getMonth() + 1) - offset;
+                });
+
+                if (vm.months.length > 9) {
+                    vm.months = vm.months.slice(9);
+                    vm.selectedMonth = 10;
+                } else {
+                    vm.months = [];
+                    vm.selectedMonth = undefined;
+                }
+            } else {
+                vm.months = vm.months.slice(-3);
+                if (vm.selectedMonth === undefined || vm.selectedMonth < 10) {
+                    vm.selectedMonth = 10;
+                }
+            }
+            return;
         }
 
         if (year.id > latest.getFullYear()) {
@@ -404,6 +432,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         if (vm.isChildBeneficiaryListSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
+        } else if (vm.isIncentiveReportSelected()) {
+            if (vm.selectedYear < 2018) {
+                vm.selectedYear = new Date().getFullYear();
+            }
+            vm.onSelectYear({'id': vm.selectedYear});
         } else {
             if (vm.isTakeHomeRationReportSelected()) {
                 var currentYear  = new Date().getFullYear();
