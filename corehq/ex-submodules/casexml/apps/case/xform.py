@@ -285,6 +285,8 @@ def _is_change_of_ownership(previous_owner_id, next_owner_id):
 
 
 def get_all_extensions_to_close(domain, case_updates):
+    if not EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
+        return set()
     extensions_to_close = set()
     for case_update_meta in case_updates:
         extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
@@ -292,7 +294,7 @@ def get_all_extensions_to_close(domain, case_updates):
 
 
 def get_extensions_to_close(case, domain):
-    if case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
+    if case.closed:
         return CaseAccessors(domain).get_extension_chain([case.case_id], include_closed=False)
     else:
         return set()
