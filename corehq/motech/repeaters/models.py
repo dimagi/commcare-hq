@@ -118,6 +118,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     _has_config = False
 
+    def __str__(self):
+        url = "@".join((self.username, self.url)) if self.username else self.url
+        return f"<{self.__class__.__name__} {self._id} {url}>"
+
     @classmethod
     def available_for_domain(cls, domain):
         """Returns whether this repeater can be used by a particular domain

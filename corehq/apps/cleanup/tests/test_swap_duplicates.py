@@ -44,13 +44,13 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
             bad_form = XFormInstance.get(bad_form_id)
             self.assertEqual(bad_form.doc_type, "XFormDuplicate")
-            self.assertRegexpMatches(
+            self.assertRegex(
                 bad_form.problem, BAD_FORM_PROBLEM_TEMPLATE.format(good_dup_id, "")
             )
 
             good_dup_form = XFormInstance.get(good_dup_id)
             self.assertEqual(good_dup_form.doc_type, "XFormInstance")
-            self.assertRegexpMatches(
+            self.assertRegex(
                 good_dup_form.problem, FIXED_FORM_PROBLEM_TEMPLATE.format(
                     id_=bad_form_id, datetime_=""
                 )

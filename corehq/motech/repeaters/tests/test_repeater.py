@@ -592,7 +592,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
                 repeat_record.fire()
 
-        self.assertEquals(repeat_record.failure_reason, 'Boom!')
+        self.assertEqual(repeat_record.failure_reason, 'Boom!')
         self.assertFalse(repeat_record.succeeded)
 
     @run_with_all_backends
@@ -601,7 +601,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
             repeat_record.fire()
 
-        self.assertEquals(repeat_record.failure_reason, 'Boom!')
+        self.assertEqual(repeat_record.failure_reason, 'Boom!')
         self.assertFalse(repeat_record.succeeded)
 
         # Should be marked as successful after a successful run

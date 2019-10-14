@@ -1759,13 +1759,6 @@ MANAGE_CCZ_HOSTING = StaticToggle(
 )
 
 
-PARALLEL_AGGREGATION = StaticToggle(
-    'parallel_agg',
-    'This makes the icds dashboard aggregation run on both distributed and monolith backends',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
     'skip_orm_fixture_upload',
     'Exposes an option in fixture api upload to skip saving through couchdbkit',

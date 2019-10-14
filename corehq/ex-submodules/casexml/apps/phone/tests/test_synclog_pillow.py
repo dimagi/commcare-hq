@@ -3,7 +3,7 @@ import datetime
 from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_sync_logs
-from casexml.apps.phone.models import SyncLog, SyncLogSQL, properly_wrap_sync_log
+from casexml.apps.phone.models import SimplifiedSyncLog, SyncLogSQL, properly_wrap_sync_log
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.change_feed import topics
@@ -50,7 +50,7 @@ class SyncLogPillowTest(TestCase):
         self.assertEqual(self.ccuser.reporting_metadata.last_syncs, [])
 
         # do a sync
-        synclog = SyncLog(domain=self.domain.name, user_id=self.ccuser._id,
+        synclog = SimplifiedSyncLog(domain=self.domain.name, user_id=self.ccuser._id,
                           date=datetime.datetime(2015, 7, 1, 0, 0))
         synclog.save()
 

@@ -18,7 +18,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -33,7 +33,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -124,7 +124,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             loc_level='state'
         )
         expected = underweight_children_help_text(age_label="0 - 5 years", html=True)
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_prevalence_of_undernutrition_data_map(
@@ -134,7 +134,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], '21.55')
+        self.assertEqual(data['rightLegend']['average'], '21.55')
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_undernutrition_data_map(
@@ -181,7 +181,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'moderately_underweight')
+        self.assertEqual(data['slug'], 'moderately_underweight')
 
     def test_map_data_label(self):
         data = get_prevalence_of_undernutrition_data_map(
@@ -191,7 +191,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent of Children Underweight (0 - 5 years)')
+        self.assertEqual(data['label'], 'Percent of Children Underweight (0 - 5 years)')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_prevalence_of_undernutrition_data_map(
@@ -230,7 +230,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], '22.71')
+        self.assertEqual(data['rightLegend']['average'], '22.71')
 
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_undernutrition_data_chart(
@@ -240,7 +240,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
 
     def test_chart_data_location_type(self):
         data = get_prevalence_of_undernutrition_data_chart(
@@ -250,7 +250,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['location_type'], 'State')
+        self.assertEqual(data['location_type'], 'State')
 
     def test_chart_data_bottom_five(self):
         data = get_prevalence_of_undernutrition_data_chart(
@@ -298,7 +298,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data['chart_data']), 3)
+        self.assertEqual(len(data['chart_data']), 3)
 
     def test_chart_data_pink(self):
         data = get_prevalence_of_undernutrition_data_chart(
@@ -465,7 +465,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
 
     def test_sector_data_info(self):
         data = get_prevalence_of_undernutrition_sector_data(
@@ -479,7 +479,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
             underweight_children_help_text(age_label="0-5 years", html=True)
         )

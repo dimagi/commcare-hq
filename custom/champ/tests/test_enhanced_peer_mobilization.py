@@ -53,31 +53,31 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         organization = self.get_expression('organization', 'string')
         want_hiv_test = self.get_expression('want_hiv_test', 'string')
 
-        self.assertEquals(
+        self.assertEqual(
             xmlns(form, EvaluationContext(form, 0)), PREVENTION_XMLNS
         )
-        self.assertEquals(
+        self.assertEqual(
             uic(form, EvaluationContext(form, 0)), 'test uic'
         )
-        self.assertEquals(
+        self.assertEqual(
             age(form, EvaluationContext(form, 0)), 12
         )
-        self.assertEquals(
+        self.assertEqual(
             district(form, EvaluationContext(form, 0)), 'test district'
         )
-        self.assertEquals(
+        self.assertEqual(
             user_id(form, EvaluationContext(form, 0)), 'user_id'
         )
-        self.assertEquals(
+        self.assertEqual(
             kp_prev_month(form, EvaluationContext(form, 0)), date(2017, 1, 1)
         )
-        self.assertEquals(
+        self.assertEqual(
             organization(form, EvaluationContext(form, 0)), 'test_location_id'
         )
-        self.assertEquals(
+        self.assertEqual(
             want_hiv_test(form, EvaluationContext(form, 0)), 'yes'
         )
-        self.assertEquals(
+        self.assertEqual(
             client_type(form, EvaluationContext(form, 0)), 'test client'
         )
 
@@ -115,36 +115,36 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         target_tx_new = self.get_expression('target_tx_new', 'integer')
         target_tx_undetect = self.get_expression('target_tx_undetect', 'integer')
 
-        self.assertEquals(
+        self.assertEqual(
             district(form, EvaluationContext(form, 0)), 'test district'
         )
-        self.assertEquals(
+        self.assertEqual(
             cbo(form, EvaluationContext(form, 0)), 'test cbo'
         )
-        self.assertEquals(
+        self.assertEqual(
             clienttype(form, EvaluationContext(form, 0)), 'fsw'
         )
-        self.assertEquals(
+        self.assertEqual(
             userpl(form, EvaluationContext(form, 0)), 'test userpl'
         )
-        self.assertEquals(
+        self.assertEqual(
             fiscal_year(form, EvaluationContext(form, 0)), '2017'
         )
-        self.assertEquals(
+        self.assertEqual(
             target_kp_prev(form, EvaluationContext(form, 0)), 15
         )
-        self.assertEquals(
+        self.assertEqual(
             target_htc_tst(form, EvaluationContext(form, 0)), 54
         )
-        self.assertEquals(
+        self.assertEqual(
             target_htc_pos(form, EvaluationContext(form, 0)), 35
         )
-        self.assertEquals(
+        self.assertEqual(
             target_care_new(form, EvaluationContext(form, 0)), 16
         )
-        self.assertEquals(
+        self.assertEqual(
             target_tx_new(form, EvaluationContext(form, 0)), 11
         )
-        self.assertEquals(
+        self.assertEqual(
             target_tx_undetect(form, EvaluationContext(form, 0)), 20
         )
