@@ -9,6 +9,8 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import extract_case_blocks
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.case_importer import util as importer_util
+from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.const import DIRECTION_EXPORT
@@ -21,6 +23,7 @@ from corehq.motech.openmrs.const import (
     XMLNS_OPENMRS,
 )
 from corehq.motech.openmrs.exceptions import (
+    DuplicateCaseMatch,
     OpenmrsConfigurationError,
     OpenmrsException,
     OpenmrsHtmlUiChanged,
@@ -33,6 +36,9 @@ from corehq.motech.value_source import (
     get_case_location,
 )
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
+
+_assert = soft_assert(['@'.join(('nhooper', 'dimagi.com'))])
 
 
 def get_case_location_ancestor_repeaters(case):
@@ -128,6 +134,9 @@ def save_match_ids(case, case_config, patient):
     """
     If we are confident of the patient matched to a case, save
     the patient's identifiers to the case.
+
+    Raises DuplicateCaseMatch if external_id is about to be saved with a
+        non-unique value.
     """
     def get_patient_id_type_uuids_values(patient_):
         yield PERSON_UUID_IDENTIFIER_TYPE_ID, patient_['uuid']
@@ -141,6 +150,7 @@ def save_match_ids(case, case_config, patient):
         if id_type_uuid in case_config_ids:
             case_property = case_config_ids[id_type_uuid]['case_property']
             if case_property == 'external_id':
+                check_duplicate_case_match(case.domain, case.type, value)
                 kwargs['external_id'] = value
             else:
                 case_update[case_property] = value
@@ -151,6 +161,29 @@ def save_match_ids(case, case_config, patient):
         **kwargs
     )
     submit_case_blocks([case_block.as_text()], case.domain, xmlns=XMLNS_OPENMRS)
+
+
+def check_duplicate_case_match(domain, case_type, external_id):
+    case, error = importer_util.lookup_case(
+        importer_util.EXTERNAL_ID,
+        external_id,
+        domain,
+        case_type=case_type,
+    )
+    if case:
+        case_str = (f'<Case case_id="{case.case_id}", domain="{domain}", '
+                    f'type="{case_type}" name="{case.name}">')
+        message = f'{case_str} already exists with external_id="{external_id}".'
+    elif error == LookupErrors.MultipleResults:
+        message = (f'Multiple cases already exist in domain "{domain}" with '
+                   f'external_id="{external_id}" and case type="{case_type}".')
+    else: # error == LookupErrors.NotFound:
+        return
+    _assert(False, message +
+            " Either the same person has more than one CommCare case, or "
+            "OpenMRS repeater configuration needs to be modified to match "
+            "cases with patients more accurately.")
+    raise DuplicateCaseMatch(message)
 
 
 def create_patient(requests, info, case_config):
@@ -342,16 +375,18 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
     patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
     if len(patients) == 1:
         patient, = patients
-        save_match_ids(case, openmrs_config.case_config, patient)
-        return patient
-    if not patients and patient_finder.create_missing.get_value(info):
+    elif not patients and patient_finder.create_missing.get_value(info):
         patient = create_patient(requests, info, openmrs_config.case_config)
-        if patient:
-            save_match_ids(case, openmrs_config.case_config, patient)
-            return patient
-    # If PatientFinder can't narrow down the number of candidate
-    # patients, don't guess. Just admit that we don't know.
-    return None
+    else:
+        # If PatientFinder can't narrow down the number of candidate
+        # patients, don't guess. Just admit that we don't know.
+        return None
+    try:
+        save_match_ids(case, openmrs_config.case_config, patient)
+    except DuplicateCaseMatch:
+        return None
+    else:
+        return patient
 
 
 def get_patient(requests, domain, info, openmrs_config):
