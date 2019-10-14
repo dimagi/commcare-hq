@@ -1,6 +1,7 @@
 import datetime
 
 from django.utils.functional import cached_property
+from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
@@ -8,6 +9,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter
+from custom.intrahealth.reports.utils import change_id_keys_to_names
 from custom.intrahealth.sqldata import ValuationOfPNAStockPerProductV2Data
 from dimagi.utils.dates import force_to_date
 
@@ -122,6 +124,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
         return headers
 
     @property
+    @memoized
     def clean_rows(self):
         return ValuationOfPNAStockPerProductV2Data(config=self.config).rows
 
@@ -159,17 +162,25 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
                 location_name = pna['location_name']
                 products = sorted(pna['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations and locations_with_products.get(location_name) is not None:
-                    length = len(locations_with_products[location_name])
+                    length = len(locations_with_products[location_id])
+                    product_ids = [p['product_id'] for p in locations_with_products[location_id]]
+                    for product in products:
+                        if product['product_id'] not in product_ids:
+                            locations_with_products[location_id].append({
+                                'product_name': product['product_name'],
+                                'product_id': product['product_id'],
+                                'final_pna_stock_valuation': product['final_pna_stock_valuation'],
+                            })
                     for r in range(0, length):
-                        product_for_location = locations_with_products[location_name][r]
+                        product_for_location = locations_with_products[location_id][r]
                         for product in products:
                             if product_for_location['product_id'] == product['product_id']:
                                 final_pna_stock_valuation = product['final_pna_stock_valuation']
-                                locations_with_products[location_name][r]['final_pna_stock_valuation'] += \
+                                locations_with_products[location_id][r]['final_pna_stock_valuation'] += \
                                     final_pna_stock_valuation
                 else:
                     added_locations.append(location_id)
-                    locations_with_products[location_name] = []
+                    locations_with_products[location_id] = []
                     unique_products_for_location = []
                     products_to_add = []
                     for product in products:
@@ -183,7 +194,9 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
                             products_to_add[index]['final_pna_stock_valuation'] += final_pna_stock_valuation
 
                     for product in products_to_add:
-                        locations_with_products[location_name].append(product)
+                        locations_with_products[location_id].append(product)
+
+            locations_with_products = change_id_keys_to_names(self.config['domain'], locations_with_products)
 
             for location, products in locations_with_products.items():
                 products_names = [x['product_name'] for x in products]

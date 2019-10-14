@@ -403,20 +403,20 @@ class TestCaseDiffProcess(SimpleTestCase):
 
     def test_process(self):
         with self.process() as proc:
-            self.assertEqual(self.get_status(proc), [0, 0, 0])
+            self.assertEqual(proc.get_status(), [0, 0, 0])
             proc.update({"case1", "case2"}, "form")
             proc.enqueue("case")
-            self.assertEqual(self.get_status(proc), [2, 1, 0])
+            self.assertEqual(proc.get_status(), [2, 1, 0])
 
     def test_process_statedb(self):
         with self.process() as proc1:
-            self.assertEqual(self.get_status(proc1), [0, 0, 0])
+            self.assertEqual(proc1.get_status(), [0, 0, 0])
             proc1.enqueue("case")
-            self.assertEqual(self.get_status(proc1), [0, 1, 0])
+            self.assertEqual(proc1.get_status(), [0, 1, 0])
         with self.process() as proc2:
-            self.assertEqual(self.get_status(proc2), [0, 1, 0])
+            self.assertEqual(proc2.get_status(), [0, 1, 0])
             proc2.enqueue("case")
-            self.assertEqual(self.get_status(proc2), [0, 2, 0])
+            self.assertEqual(proc2.get_status(), [0, 2, 0])
 
     def test_process_not_allowed(self):
         with init_state_db("test", self.state_dir) as statedb:
@@ -439,12 +439,26 @@ class TestCaseDiffProcess(SimpleTestCase):
 
     @contextmanager
     def process(self):
+        def log_status(status):
+            log.info("status: %s", status)
+            cached = status.pop("cached")
+            assert cached == "0/0", cached
+            keys = ["pending", "loaded", "diffed"]
+            assert set(keys) == set(status), status
+            status_queue.put([status[k] for k in keys])
+
+        def get_status():
+            proc.request_status()
+            return status_queue.get(timeout=5)
+
+        status_queue = Queue()
         try:
-            with init_state_db("test", self.state_dir) as statedb, mod.CaseDiffProcess(
-                statedb,
-                status_interval=1,
-                queue_class=FakeCaseDiffQueue,
-            ) as proc:
+            with init_state_db("test", self.state_dir) as statedb, \
+                    patch.object(mod, "log_status", log_status), \
+                    mod.CaseDiffProcess(statedb, FakeCaseDiffQueue) as proc:
+                status_queue.get(timeout=5)
+                assert not hasattr(proc, "get_status"), proc
+                proc.get_status = get_status
                 yield proc
         finally:
             print(f"{' diff process logs ':-^40}")
@@ -457,22 +471,6 @@ class TestCaseDiffProcess(SimpleTestCase):
     def get_log_files(self):
         return glob(os.path.join(self.state_dir, "*-casediff.log"))
 
-    @staticmethod
-    def get_status(proc):
-        def log_status(status):
-            log.info("status: %s", status)
-            cached = status.pop("cached")
-            assert cached == "0/0", cached
-            keys = ["pending", "loaded", "diffed"]
-            assert set(keys) == set(status), status
-            queue.put([status[k] for k in keys])
-
-        queue = Queue()
-        with patch.object(mod, "log_status") as mock:
-            mock.side_effect = log_status
-            proc.request_status()
-            return queue.get(timeout=5)
-
 
 class FakeCaseDiffQueue(object):
 
@@ -481,9 +479,9 @@ class FakeCaseDiffQueue(object):
         self.stats = {"pending": 0, "cached": "0/0", "loaded": 0, "diffed": 0}
 
     def __enter__(self):
-        state = self.statedb.pop_resume_state(type(self).__name__, {})
-        if "stats" in state:
-            self.stats = state["stats"]
+        with self.statedb.pop_resume_state(type(self).__name__, {}) as state:
+            if "stats" in state:
+                self.stats = state["stats"]
         return self
 
     def __exit__(self, *exc_info):

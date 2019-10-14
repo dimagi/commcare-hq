@@ -19,16 +19,14 @@ class ODataBaseSerializer(Serializer):
     metadata_url = None
     table_metadata_url = None
     offset = 0
-    limit = 2000
 
     def get_config(self, config_id):
         raise NotImplementedError("implement get_config")
 
     def to_json(self, data, options=None):
 
-        # get current pagination offset and limit for use in row number
+        # get current object offset for use in row number
         self.offset = data.get('meta', {}).get('offset', 0)
-        self.limit = data.get('meta', {}).get('limit', 2000)
 
         # Convert bundled objects to JSON
         data['objects'] = [
@@ -71,10 +69,8 @@ class ODataBaseSerializer(Serializer):
         if next_page:
             return '{}{}{}'.format(get_url_base(), api_path, next_page)
 
-    def get_full_row_number(self, row_number):
-        return row_number + (self.offset * self.limit)
-
-    def serialize_documents_using_config(self, documents, config, table_id):
+    @staticmethod
+    def serialize_documents_using_config(documents, config, table_id):
         if table_id + 1 > len(config.tables):
             return []
 
@@ -86,7 +82,7 @@ class ODataBaseSerializer(Serializer):
         for row_number, document in enumerate(documents):
             rows = table.get_rows(
                 document,
-                self.get_full_row_number(row_number),
+                document.get('_id'),  # needed because of pagination
                 split_columns=config.split_multiselects,
                 transform_dates=config.transform_dates,
                 as_json=True,

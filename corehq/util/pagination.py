@@ -336,6 +336,10 @@ class ResumableFunctionIterator(object):
     def _save_state(self):
         self.state.timestamp = datetime.utcnow()
         state_json = self.state.to_json()
+        self._save_state_json(state_json)
+        self._state = ResumableIteratorState(state_json)
+
+    def _save_state_json(self, state_json):
         for x in range(5):
             try:
                 self.couch_db.save_doc(state_json)
@@ -345,7 +349,6 @@ class ResumableFunctionIterator(object):
                     continue
                 raise
             break
-        self._state = ResumableIteratorState(state_json)
 
     def discard_state(self):
         try:

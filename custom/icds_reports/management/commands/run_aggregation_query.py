@@ -3,7 +3,6 @@ from gevent.pool import Pool
 
 from django.core.management.base import BaseCommand
 
-from corehq.sql_db.routers import use_citus_for_request
 from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.tasks import (
     _aggregate_gm_forms, _aggregate_df_forms, _aggregate_cf_forms, _aggregate_ccs_cf_forms,
@@ -19,7 +18,6 @@ from custom.icds_reports.tasks import (
 
 STATE_TASKS = {
     'aggregate_gm_forms': _aggregate_gm_forms,
-    'aggregate_df_forms': _aggregate_df_forms,
     'aggregate_cf_forms': _aggregate_cf_forms,
     'aggregate_ccs_cf_forms': _aggregate_ccs_cf_forms,
     'aggregate_child_health_thr_forms': _aggregate_child_health_thr_forms,
@@ -49,6 +47,7 @@ NORMAL_TASKS = {
     'agg_ccs_record': _agg_ccs_record_table,
     'agg_awc_table': _agg_awc_table,
     'aggregate_awc_daily': aggregate_awc_daily,
+    'aggregate_df_forms': _aggregate_df_forms,
 }
 
 
@@ -71,7 +70,6 @@ class Command(BaseCommand):
         parser.add_argument('agg_uuid')
 
     def handle(self, query_name, agg_uuid, **options):
-        use_citus_for_request()
         self.function_map = {}
         self.setup_tasks()
         agg_record = AggregationRecord.objects.get(agg_uuid=agg_uuid)

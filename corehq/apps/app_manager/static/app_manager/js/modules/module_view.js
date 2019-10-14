@@ -158,6 +158,9 @@ hqDefine("app_manager/js/modules/module_view", function () {
                 var self = {};
 
                 self.caseListForm = ko.observable(originalFormId);
+                self.caseListFormSettingsUrl = ko.computed(function () {
+                    return hqImport("hqwebapp/js/initial_page_data").reverse("view_form", self.caseListForm());
+                });
                 self.postFormWorkflow = ko.observable(postFormWorkflow);
                 self.endOfRegistrationOptions = [
                     {id: 'case_list', text: gettext('Go back to case list')},
@@ -166,6 +169,17 @@ hqDefine("app_manager/js/modules/module_view", function () {
 
                 self.formMissing = ko.computed(function () {
                     return self.caseListForm() && !formOptions[self.caseListForm()];
+                });
+
+                self.formHasEOFNav = ko.computed(function () {
+                    if (!self.caseListForm()) {
+                        return false;
+                    }
+                    var formData = formOptions[self.caseListForm()];
+                    if (formData) {
+                        return formData.post_form_workflow !== 'default';
+                    }
+                    return false;
                 });
 
                 var showMedia = function (formId) {

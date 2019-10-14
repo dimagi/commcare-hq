@@ -21,15 +21,7 @@ from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns imp
     parse_log_message,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.es import (
-    AppES,
-    CaseES,
-    CaseSearchES,
-    FormES,
-    GroupES,
-    LedgerES,
-    UserES,
-)
+from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, UserES
 from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.backends.sql.dbaccessors import (
@@ -222,7 +214,7 @@ def check_for_elasticsearch_data_without_existing_domain():
     issue_found = False
     deleted_domain_names = set(_get_all_domains_that_have_ever_had_subscriptions()) - set(Domain.get_all_names())
     for domain_name in deleted_domain_names:
-        for hqESQuery in [AppES, CaseES, CaseSearchES, FormES, GroupES, LedgerES, UserES]:
+        for hqESQuery in [AppES, CaseES, CaseSearchES, FormES, GroupES, UserES]:
             query = hqESQuery().domain(domain_name)
             count = query.count()
             if query.count() != 0:

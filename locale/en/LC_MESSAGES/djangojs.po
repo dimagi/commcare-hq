@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-09-24 19:10+0000\n"
+"POT-Creation-Date: 2019-10-01 19:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -629,7 +629,7 @@ msgstr ""
 msgid "[unknown]"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js:5
+#: corehq/apps/app_manager/static/app_manager/js/releases/app_view_release_manager.js:4
 msgid "Releases"
 msgstr ""
 
@@ -653,20 +653,24 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:219
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:51
+msgid "Unknown App"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:237
 msgid ""
 "An error occurred. Reload the page and click Make New Version to try again."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:395
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:415
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:429
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:449
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:434
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:454
 msgid "No new changes!"
 msgstr ""
 
@@ -2925,14 +2929,6 @@ msgstr ""
 msgid "Please wait and do not navigate away..."
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:25
-msgid "Show All References"
-msgstr ""
-
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:25
-msgid "Show Only Missing References"
-msgstr ""
-
 #: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:7
 msgid ""
 "There was an error processing your file. Please try again or report an issue "
@@ -2943,10 +2939,18 @@ msgstr ""
 msgid "No items were found to update."
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:23
+#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:14
+msgid "Show All References"
+msgstr ""
+
+#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:14
+msgid "Show Only Missing References"
+msgstr ""
+
+#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:59
 msgid ""
-"Error loading, please refresh the page. If this persists, please report an "
-"issue."
+"Error fetching multimedia, please try again or report an issue if the "
+"problem persists."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/500.js:7

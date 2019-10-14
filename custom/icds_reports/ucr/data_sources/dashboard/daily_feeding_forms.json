@@ -68,6 +68,35 @@
           },
           "property_value": "awc"
         }
+      },
+      {
+        "name": "child_health_changes",
+        "error_message": "Form did not change any child_health cases",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "gt",
+          "expression": {
+            "type": "reduce_items",
+            "items_expression": {
+                "type": "filter_items",
+                "items_expression": {
+                  "type": "property_path",
+                  "property_path": ["form", "child_health_cases", "item"]
+                },
+                "filter_expression": {
+                  "type": "boolean_expression",
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "eligible"
+                  },
+                  "property_value": "yes"
+                }
+            },
+            "aggregation_fn": "count"
+          },
+          "property_value": 0
+        }
       }
     ],
     "configured_indicators": [
@@ -278,6 +307,14 @@
       },
       "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
     },
+    "sql_column_indexes": [
+      {
+        "column_ids": ["state_id", "timeend"]
+      },
+      {
+        "column_ids": ["doc_id"]
+      }
+    ],
     "disable_destructive_rebuild": true
   }
 }

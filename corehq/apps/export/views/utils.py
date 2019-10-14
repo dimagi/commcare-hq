@@ -385,4 +385,8 @@ def can_view_case_exports(couch_user, domain):
 def clean_odata_columns(export_instance):
     for table in export_instance.tables:
         for column in table.columns:
-            column.label = column.label.replace('@', '').replace('.', ' ')
+            column.label = column.label.replace('@', '').replace(
+                '.', ' ').replace('\n', '').replace('\t', ' ').replace('#', '')
+            # truncate labels for PowerBI and Tableau limits
+            if len(column.label) >= 255:
+                column.label = column.label[:255]

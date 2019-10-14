@@ -900,6 +900,8 @@ CUSTOM_LANDING_TEMPLATE = {
 }
 
 ES_SETTINGS = None
+PHI_API_KEY = None
+PHI_PASSWORD = None
 
 try:
     # try to see if there's an environmental variable set for local_settings

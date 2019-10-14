@@ -1,5 +1,12 @@
-from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from django.db import transaction
+
+from corehq.sql_db.routers import db_for_read_write
+from custom.icds_reports.utils.aggregation_helpers import (
+    transform_day_to_month,
+)
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
+    BaseICDSAggregationDistributedHelper,
+)
 
 
 class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -10,37 +17,75 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
-        agg_query, agg_params = self.aggregation_query()
+        staging_queries = self.staging_queries()
         update_queries = self.update_queries()
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
-        index_queries = [self.indexes(i) for i in range(5, 0, -1)]
-        index_queries = [query for index_list in index_queries for query in index_list]
 
-        cursor.execute(self.drop_table_query())
-        cursor.execute(agg_query, agg_params)
+        cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
+        # create staging table
+        cursor.execute(f"CREATE UNLOGGED TABLE {self.staging_tablename} (LIKE {self.base_tablename})")
+        # initial inserts into staging table
+        for staging_query, params in staging_queries:
+            cursor.execute(staging_query, params)
+        # update staging table
         for query, params in update_queries:
             cursor.execute(query, params)
         for query in rollup_queries:
             cursor.execute(query)
-        for query in index_queries:
-            cursor.execute(query)
+
+        # create new monthly table if it does not exist
+        cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS "{self.monthly_tablename}" (
+            CHECK (month = DATE '{self.month.strftime('%Y-%m-01')}')
+        )
+        INHERITS ({self.base_tablename})
+        """)
+        for index_query in self.indexes():
+            cursor.execute(index_query)
+
+        from custom.icds_reports.models import AggChildHealth
+        db_alias = db_for_read_write(AggChildHealth)
+        with transaction.atomic(using=db_alias):
+            # drop old style tables if they exist
+            for i in range(1, 6):
+                cursor.execute(f'DROP TABLE IF EXISTS "{self._tablename_func(i)}"')
+            # delete data from monthly table
+            cursor.execute(f'DELETE FROM "{self.monthly_tablename}"')
+            # insert into monthly table from staging table
+            cursor.execute(f"""
+            INSERT INTO "{self.monthly_tablename}" (
+                SELECT * FROM "{self.staging_tablename}"
+                ORDER BY aggregation_level, state_id, district_id, block_id, supervisor_id, awc_id
+            )
+            """)
+
+        # drop staging table
+        cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
 
     def _tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"), agg_level)
 
     @property
+    def staging_tablename(self):
+        return f"staging_{self.base_tablename}"
+
+    @property
     def tablename(self):
         return self._tablename_func(5)
+
+    @property
+    def monthly_tablename(self):
+        return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     def drop_table_query(self):
         return 'DELETE FROM "{}"'.format(self.tablename)
 
-    def aggregation_query(self):
+    def staging_queries(self):
         columns = (
             ('state_id', 'awc_loc.state_id'),
             ('district_id', 'awc_loc.district_id'),
             ('block_id', 'awc_loc.block_id'),
-            ('supervisor_id', 'awc_loc.supervisor_id'),
+            ('supervisor_id', 'chm.supervisor_id'),
             ('awc_id', 'chm.awc_id'),
             ('month', 'chm.month'),
             ('gender', 'chm.sex'),
@@ -149,47 +194,78 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
             else:
                 name = c[0]
             query_cols.append((name, c[1]))
-        return """
-        CREATE UNLOGGED TABLE "{tmp_tablename}" AS SELECT
-            {query_cols}
-            FROM "{child_health_monthly_table}" chm
-            LEFT OUTER JOIN "awc_location" awc_loc ON awc_loc.doc_id = chm.awc_id
-            WHERE chm.month = %(start_date)s AND awc_loc.state_id != '' AND awc_loc.state_id IS NOT NULL
-            GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id,
-                     chm.month, chm.sex, chm.age_tranche, chm.caste,
-                     coalesce_disabled, coalesce_minority, coalesce_resident
-            ORDER BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id;
-        INSERT INTO "{tablename}" ({final_columns}) SELECT * from "{tmp_tablename}";
-        DROP TABLE "{tmp_tablename}";
-        """.format(
-            tablename=self.tablename,
-            final_columns=", ".join([col[0] for col in columns]),
-            query_cols=", ".join(['{} as {}'.format(q, name) for name, q in query_cols]),
-            child_health_monthly_table='child_health_monthly',
-            tmp_tablename='tmp_{}'.format(self.tablename)
-        ), {
-            "start_date": self.month
-        }
+
+        query_cols = ", ".join([f'{q} as {name}' for name, q in query_cols])
+        child_health_monthly_table = 'child_health_monthly'
+        tmp_tablename = 'blah_blah_blah'
+        final_columns = ", ".join([col[0] for col in columns])
+        supervisor_id_ranges = [
+            ('0', '1'),
+            ('1', '2'),
+            ('2', '3'),
+            ('3', '4'),
+            ('4', '5'),
+            ('5', '6'),
+            ('6', '7'),
+            ('7', '8'),
+            ('8', '9'),
+            ('9', 'A'),
+            ('A', 'B'),
+            ('B', 'C'),
+            ('C', 'D'),
+            ('D', 'E'),
+            ('E', 'F'),
+            ('F', 'a'),
+            ('a', 'b'),
+            ('b', 'c'),
+            ('c', 'd'),
+            ('d', 'e'),
+            ('e', 'f'),
+            ('f', 'zzzzzzzzzz'),
+        ]
+
+        return [
+            (f"""
+            CREATE UNLOGGED TABLE "{tmp_tablename}" AS SELECT
+                {query_cols}
+                FROM "{child_health_monthly_table}" chm
+                LEFT OUTER JOIN "awc_location" awc_loc ON (
+                    awc_loc.supervisor_id = chm.supervisor_id AND awc_loc.doc_id = chm.awc_id
+                )
+                WHERE chm.month = %(start_date)s
+                      AND awc_loc.state_id != ''
+                      AND awc_loc.state_id IS NOT NULL
+                      AND chm.supervisor_id >= '{sup_id_begin}'
+                      AND chm.supervisor_id < '{sup_id_end}'
+                GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, chm.supervisor_id, chm.awc_id,
+                         chm.month, chm.sex, chm.age_tranche, chm.caste,
+                         coalesce_disabled, coalesce_minority, coalesce_resident;
+            INSERT INTO "{self.staging_tablename}" ({final_columns}) SELECT * from "{tmp_tablename}";
+            DROP TABLE "{tmp_tablename}";
+            """, {
+                "start_date": self.month
+            })
+            for sup_id_begin, sup_id_end in supervisor_id_ranges
+        ]
 
     def update_queries(self):
-        yield """
-        CREATE UNLOGGED TABLE "{tmp_tablename}" AS SELECT
-            doc_id as awc_id,
-            MAX(state_is_test) as state_is_test,
-            MAX(district_is_test) as district_is_test,
-            MAX(block_is_test) as block_is_test,
-            MAX(supervisor_is_test) as supervisor_is_test,
-            MAX(awc_is_test) as awc_is_test
-            FROM "{awc_location_tablename}"
-            GROUP BY awc_id;
-        UPDATE "{tablename}" agg SET
+        yield f"""
+        UPDATE "{self.staging_tablename}" agg SET
               state_is_test = ut.state_is_test,
               district_is_test = ut.district_is_test,
               block_is_test = ut.block_is_test,
               supervisor_is_test = ut.supervisor_is_test,
               awc_is_test = ut.awc_is_test
             FROM (
-              SELECT * FROM "{tmp_tablename}"
+                SELECT
+                    doc_id as awc_id,
+                    MAX(state_is_test) as state_is_test,
+                    MAX(district_is_test) as district_is_test,
+                    MAX(block_is_test) as block_is_test,
+                    MAX(supervisor_is_test) as supervisor_is_test,
+                    MAX(awc_is_test) as awc_is_test
+                FROM "awc_location_local"
+                GROUP BY awc_id
             ) ut
             WHERE ut.awc_id = agg.awc_id AND (
                 (
@@ -206,12 +282,7 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
                   ut.awc_is_test != agg.awc_is_test
                 )
             );
-        DROP TABLE "{tmp_tablename}";
-        """.format(
-            tablename=self.tablename,
-            tmp_tablename='tmp_{}'.format(self.tablename),
-            awc_location_tablename='awc_location',
-        ), {
+        """, {
         }
 
     def rollup_query(self, aggregation_level):
@@ -335,38 +406,29 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
             child_location = 'awc_is_test'
 
         group_by.extend(["month", "gender", "age_tranche"])
+        group_by = ", ".join(group_by)
+        column_names = ", ".join([col[0] for col in columns])
+        calculations = ", ".join([col[1] for col in columns])
 
-        return """
-        INSERT INTO "{to_tablename}" (
-            {columns}
+        return f"""
+        INSERT INTO "{self.staging_tablename}" (
+            {column_names}
         ) (
             SELECT {calculations}
-            FROM "{from_tablename}"
-            WHERE {child_is_test} = 0
+            FROM "{self.staging_tablename}"
+            WHERE {child_location} = 0 AND aggregation_level = {aggregation_level + 1}
             GROUP BY {group_by}
             ORDER BY {group_by}
         )
-        """.format(
-            to_tablename=self._tablename_func(aggregation_level),
-            from_tablename=self._tablename_func(aggregation_level + 1),
-            columns=", ".join([col[0] for col in columns]),
-            calculations=", ".join([col[1] for col in columns]),
-            group_by=", ".join(group_by),
-            child_is_test=child_location
-        )
+        """
 
-    def indexes(self, aggregation_level):
-        tablename = self._tablename_func(aggregation_level)
-        indexes = [
-            'CREATE INDEX ON "{}" (state_id)'.format(tablename),
-            'CREATE INDEX ON "{}" (gender)'.format(tablename),
-            'CREATE INDEX ON "{}" (age_tranche)'.format(tablename),
+    def indexes(self):
+        tablename = self.monthly_tablename
+        return [
+            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_1" ON "{tablename}" (aggregation_level, state_id)',
+            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_2" ON "{tablename}" (aggregation_level, gender)',
+            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_3" ON "{tablename}" (aggregation_level, age_tranche)',
+            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_4" ON "{tablename}" (aggregation_level, district_id) WHERE aggregation_level > 1',
+            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_5" ON "{tablename}" (aggregation_level, block_id) WHERE aggregation_level > 2',
+            f'CREATE INDEX IF NOT EXISTS "{tablename}_idx_6" ON "{tablename}" (aggregation_level, supervisor_id) WHERE aggregation_level > 3',
         ]
-        if aggregation_level > 1:
-            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(tablename))
-        if aggregation_level > 2:
-            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(tablename))
-        if aggregation_level > 3:
-            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(tablename))
-
-        return indexes

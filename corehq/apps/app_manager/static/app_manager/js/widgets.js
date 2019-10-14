@@ -56,24 +56,23 @@ hqDefine("app_manager/js/widgets", [
             width: options.width || '200px',
         });
 
-        if ($('#app-profile-id-input').length) {
+        if ($('#build-profile-id-input').length) {
             $select.on('select2:select', function (e) {
                 var buildProfiles = _.map(e.params.data.buildProfiles, function (details, profileId) {
                     return { id: profileId, text: details.name };
                 });
-                $('#app-profile-id-input').select2({
-                    placeholder: gettext("Select profile"),
-                    allowClear: true,
-                    data: buildProfiles,
-                });
+                if (buildProfiles.length) {
+                    $('#build-profile-id-input').append(new Option(gettext('Select Profile'), '', true, true));
+                    $('#build-profile-id-input').select2({
+                        data: buildProfiles,
+                    });
+                }
             });
             $select.on('change.select2', function () {
                 // https://stackoverflow.com/a/32115793
                 // clear all options manually since it's not getting deleted in this version of select2
-                $('#app-profile-id-input').html('').select2({
-                    placeholder: gettext("Select profile"),
-                });
-                $('#app-profile-id-input').val(null).trigger('change');
+                $('#build-profile-id-input').html('');
+                $('#build-profile-id-input').val(null).trigger('change');
             });
         }
 
@@ -83,9 +82,13 @@ hqDefine("app_manager/js/widgets", [
             $select.append(option).trigger('change');
             $select.trigger({type: 'select2:select', params: {data: options.initialValue}});
         }
-        var appProfileInitialValues = initialPageData.get('appProfileInitialValues');
-        if (!_.isEmpty(appProfileInitialValues)) {
-            $('#app-profile-id-input').select2({data: appProfileInitialValues});
+        var $appBuildProfileIdSelect = $select.parents('form').find('.app-build-profile-id-select');
+        if ($appBuildProfileIdSelect.length) {
+            var appBuildProfileInitialValues = initialPageData.get('appBuildProfileInitialValues');
+            if (!_.isEmpty(appBuildProfileInitialValues)) {
+                $appBuildProfileIdSelect.append(new Option(gettext('Select Profile'), '', false, false));
+                $appBuildProfileIdSelect.select2({data: appBuildProfileInitialValues});
+            }
         }
     };
 

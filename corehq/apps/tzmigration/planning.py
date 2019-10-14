@@ -89,6 +89,7 @@ class BaseDB(object):
         def connect():
             return sqlite3.connect(f"file:{db_filepath}{mode}", uri=True)
         mode = "?mode=ro" if readonly else ""
+        self.readonly = readonly
         self.db_filepath = db_filepath
         self.engine = create_engine("sqlite://", creator=connect)
         self.Session = sessionmaker(bind=self.engine)
