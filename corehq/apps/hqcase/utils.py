@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.util import property_changed_in_action
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -233,3 +234,16 @@ def resave_case(domain, case, send_post_save_signal=True):
             case.save()
         else:
             CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+
+
+def get_last_non_blank_value(case, case_property):
+    case_transactions = sorted(case.actions, key=lambda t: t.server_date, reverse=True)
+    for case_transaction in case_transactions:
+        property_changed_info = property_changed_in_action(
+            case.domain,
+            case_transaction,
+            case.case_id,
+            case_property
+        )
+        if property_changed_info and property_changed_info.new_value:
+            return property_changed_info.new_value
