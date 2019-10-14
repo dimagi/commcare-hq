@@ -417,6 +417,8 @@ class AggAwc(models.Model, AggregateMixin):
     infra_type_of_building_kuccha = models.IntegerField(null=True)
     infra_type_of_building_partial_covered_space = models.IntegerField(null=True)
     infra_clean_water = models.IntegerField(null=True)
+    toilet_facility = models.IntegerField(null=True)
+    type_toilet = models.SmallIntegerField(null=True)
     infra_functional_toilet = models.IntegerField(null=True)
     infra_baby_weighing_scale = models.IntegerField(null=True)
     infra_flat_weighing_scale = models.IntegerField(null=True)
@@ -476,6 +478,8 @@ class AggAwc(models.Model, AggregateMixin):
     thr_distribution_image_count = models.IntegerField(null=True)
     num_mother_thr_21_days = models.IntegerField(null=True)
     num_mother_thr_eligible = models.IntegerField(null=True)
+    preschool_kit_available = models.IntegerField(blank=True, null=True)
+    preschool_kit_usable = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1406,6 +1410,8 @@ class AggregateAwcInfrastructureForms(models.Model, AggregateMixin):
 
     awc_building = models.PositiveSmallIntegerField(null=True)
     source_drinking_water = models.PositiveSmallIntegerField(null=True)
+    toilet_facility = models.PositiveSmallIntegerField(null=True)
+    type_toilet = models.PositiveSmallIntegerField(null=True)
     toilet_functional = models.PositiveSmallIntegerField(null=True)
     electricity_awc = models.PositiveSmallIntegerField(null=True)
     adequate_space_pse = models.PositiveSmallIntegerField(null=True)
@@ -1420,6 +1426,8 @@ class AggregateAwcInfrastructureForms(models.Model, AggregateMixin):
     infantometer_usable = models.PositiveSmallIntegerField(null=True)
     medicine_kits_usable = models.PositiveSmallIntegerField(null=True)
     stadiometer_usable = models.PositiveSmallIntegerField(null=True)
+    preschool_kit_usable = models.PositiveSmallIntegerField(null=True)
+    preschool_kit_available = models.PositiveSmallIntegerField(null=True)
 
     class Meta(object):
         db_table = AGG_INFRASTRUCTURE_TABLE
