@@ -4,10 +4,10 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AGG_LS_VHND_TABLE, AGG_LS_AWC_VISIT_TABLE, AGG_LS_BENEFICIARY_TABLE
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
-from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class AggLsHelper(BaseICDSAggregationHelper):
+class AggLsHelper(BaseICDSAggregationDistributedHelper):
     helper_key = 'agg-ls'
     base_tablename = 'agg_ls'
 

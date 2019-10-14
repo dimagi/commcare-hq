@@ -1,20 +1,33 @@
-from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
-from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
-from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, DeviceAppMeta
-from corehq.apps.users.util import update_latest_builds, update_last_sync, update_device_meta
-from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
-from corehq.util.doc_processor.couch import CouchDocumentProvider
-
+from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.parsing import string_to_utc_datetime
-
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.interface import PillowProcessor
-from pillowtop.feed.interface import Change
-from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
+from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    DeviceAppMeta,
+    WebUser,
+)
+from corehq.apps.users.util import (
+    update_device_meta,
+    update_last_sync,
+    update_latest_builds,
+)
+from corehq.util.doc_processor.couch import CouchDocumentProvider
+from corehq.util.doc_processor.interface import (
+    BaseDocProcessor,
+    DocumentProcessorController,
+)
 
 SYNCLOG_SQL_USER_SYNC_GROUP_ID = "synclog_sql_user_sync"
 
@@ -99,11 +112,11 @@ class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
         # of the given user, for the synclog pillow to process.
         # this means we wont have to iterate through all synclogs
         # when reindexing.
-        synclogs = get_synclogs_for_user(doc['_id'], limit=10)
+        synclogs = SyncLogSQL.objects.filter(user_id=doc['_id']).order_by('date')[:10]
         changes = [Change(
-            id=res['doc']['_id'],
+            id=res.doc['_id'],
             sequence_id=None,
-            document=res['doc']
+            document=res.doc
         ) for res in synclogs]
         return changes
 

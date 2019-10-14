@@ -8,10 +8,13 @@ from django.test.testcases import TestCase, override_settings
 import sqlalchemy
 from freezegun import freeze_time
 
-from custom.icds_reports.exceptions import LocationRemovedException
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tests.util import setup_locations_and_types
-from corehq.sql_db.connections import connection_manager, ICDS_UCR_CITUS_ENGINE_ID
+from corehq.sql_db.connections import (
+    ICDS_UCR_CITUS_ENGINE_ID,
+    connection_manager,
+)
+from custom.icds_reports.exceptions import LocationRemovedException
 from custom.icds_reports.models.aggregate import (
     AggregateInactiveAWW,
     AwcLocation,
@@ -19,12 +22,9 @@ from custom.icds_reports.models.aggregate import (
     maybe_atomic,
 )
 from custom.icds_reports.tests.agg_tests import OUTPUT_PATH, CSVTestCase
-from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
+    InactiveAwwsAggregationDistributedHelper,
     LocationAggregationDistributedHelper,
-)
-from custom.icds_reports.utils.aggregation_helpers.monolith import (
-    InactiveAwwsAggregationHelper,
 )
 
 
@@ -413,8 +413,7 @@ class InactiveAWWsTest(TestCase):
         super(InactiveAWWsTest, cls).setUpClass()
         last_sync = date(2017, 4, 1)
         cls.agg_time = datetime(2017, 7, 31, 18)
-        helper_class = get_helper(InactiveAwwsAggregationHelper.helper_key)
-        cls.helper = helper_class(last_sync)
+        cls.helper = InactiveAwwsAggregationDistributedHelper(last_sync)
 
     def tearDown(self):
         AggregateInactiveAWW.objects.all().delete()
@@ -425,7 +424,7 @@ class InactiveAWWsTest(TestCase):
         with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
-        self.assertEquals(records.count(), 0)
+        self.assertEqual(records.count(), 0)
 
     def test_aggregate_query(self):
         with freeze_time(self.agg_time):
@@ -435,7 +434,7 @@ class InactiveAWWsTest(TestCase):
             cursor.execute(missing_location_query)
             cursor.execute(aggregation_query, agg_params)
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
-        self.assertEquals(records.count(), 46)
+        self.assertEqual(records.count(), 46)
 
     def test_submission_dates(self):
         with freeze_time(self.agg_time):
@@ -445,8 +444,8 @@ class InactiveAWWsTest(TestCase):
             cursor.execute(missing_location_query)
             cursor.execute(aggregation_query, agg_params)
         record = AggregateInactiveAWW.objects.filter(awc_id='a10').first()
-        self.assertEquals(date(2017, 4, 5), record.first_submission)
-        self.assertEquals(date(2017, 5, 5), record.last_submission)
+        self.assertEqual(date(2017, 4, 5), record.first_submission)
+        self.assertEqual(date(2017, 5, 5), record.last_submission)
 
 
 @override_settings(SERVER_ENVIRONMENT='icds')

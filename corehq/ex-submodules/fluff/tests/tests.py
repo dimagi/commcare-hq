@@ -154,8 +154,8 @@ class FluffTest(TestCase):
         ]))
 
     def test_indicator_classes(self):
-        self.assertEquals(list(Indicators1._calculators), ['base0'])
-        self.assertEquals(list(Indicators2._calculators), ['base1', 'base2'])
+        self.assertEqual(list(Indicators1._calculators), ['base0'])
+        self.assertEqual(list(Indicators2._calculators), ['base1', 'base2'])
 
     def test_indicator_calculation(self):
         actions = [dict(date="2012-09-23", x=2), dict(date="2012-09-24", x=3)]
@@ -196,19 +196,19 @@ class FluffTest(TestCase):
         calc.fluff = MockIndicators
         values = calc.calculate(MockDoc.wrap(dict(actions=[dict(date="2012-09-23", x=2),
                                                            dict(date="2012-09-24", x=3)])))
-        self.assertEquals(len(list(values)), 8)
-        self.assertEquals(values['null_value'], [dict(date=None, value=2, group_by=None)])
-        self.assertEquals(values['date_value'], [
+        self.assertEqual(len(list(values)), 8)
+        self.assertEqual(values['null_value'], [dict(date=None, value=2, group_by=None)])
+        self.assertEqual(values['date_value'], [
             dict(date=date(2012, 9, 23), value=2, group_by=None),
             dict(date=date(2012, 9, 24), value=3, group_by=None)])
-        self.assertEquals(values['date'], [
+        self.assertEqual(values['date'], [
             dict(date=date(2012, 9, 23), value=1, group_by=None),
             dict(date=date(2012, 9, 24), value=1, group_by=None)])
-        self.assertEquals(values['null'], [dict(date=None, value=1, group_by=None)])
-        self.assertEquals(values['group_list'], [dict(date=date(2013, 1, 1), group_by=['abc', 'xyz'], value=3)])
-        self.assertEquals(values['group_val'], [dict(date=date(2013, 1, 1), group_by=['abc', '123'], value=2)])
-        self.assertEquals(values['group_no_val'], [dict(date=date(2013, 1, 1), group_by=['abc', '123'], value=1)])
-        self.assertEquals(values['group_null'], [dict(date=None, group_by=['abc', 'xyz'], value=1)])
+        self.assertEqual(values['null'], [dict(date=None, value=1, group_by=None)])
+        self.assertEqual(values['group_list'], [dict(date=date(2013, 1, 1), group_by=['abc', 'xyz'], value=3)])
+        self.assertEqual(values['group_val'], [dict(date=date(2013, 1, 1), group_by=['abc', '123'], value=2)])
+        self.assertEqual(values['group_no_val'], [dict(date=date(2013, 1, 1), group_by=['abc', '123'], value=1)])
+        self.assertEqual(values['group_null'], [dict(date=None, group_by=['abc', 'xyz'], value=1)])
 
     def test_calculator_get_result(self):
         key = ['a', 'b']
@@ -438,10 +438,10 @@ class FluffTest(TestCase):
 
     def test_flat_field_types(self):
         str_field = fluff.FlatField(lambda case: "hello")
-        self.assertEquals(str_field.calculate('bar'), "hello")
+        self.assertEqual(str_field.calculate('bar'), "hello")
 
         unicode_field = fluff.FlatField(lambda case: "unicode!!")
-        self.assertEquals(unicode_field.calculate('bar'), "unicode!!")
+        self.assertEqual(unicode_field.calculate('bar'), "unicode!!")
 
         num_field = fluff.FlatField(lambda case: 432123141)
         self.assertRaises(AssertionError, num_field.calculate, 'bar')

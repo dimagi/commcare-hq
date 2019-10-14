@@ -1,3 +1,4 @@
+import pickle
 from datetime import datetime, timedelta, date
 from six.moves.urllib.parse import urlencode
 import pytz
@@ -5,6 +6,7 @@ from dimagi.utils.dates import DateSpan, add_months_to_date
 from django.test import SimpleTestCase
 from django.http import HttpRequest, QueryDict
 from dimagi.utils.decorators.datespan import datespan_in_request
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
 
 class DateSpanSinceTest(SimpleTestCase):
@@ -148,3 +150,32 @@ class DateSpanValidationTests(SimpleTestCase):
     def test_negative_max_days(self):
         with self.assertRaisesRegex(ValueError, 'max_days cannot be less than 0'):
             DateSpan(datetime(2015, 1, 1), datetime(2015, 4, 1), max_days=-1)
+
+
+class DateSpanPickleTest(SimpleTestCase):
+    def _assert_datespan_equal_pre_post_pickle(self, datespan):
+        datespan_post_pickle = pickle.loads(pickle.dumps(datespan))
+        self.assertEqual(datespan.startdate, datespan_post_pickle.startdate)
+        self.assertEqual(datespan.enddate, datespan_post_pickle.enddate)
+        self.assertEqual(datespan, datespan_post_pickle)
+
+    def test_date(self):
+        self._assert_datespan_equal_pre_post_pickle(DateSpan(date(2019, 10, 9), date(2019, 10, 9)))
+
+    def test_datetime(self):
+        self._assert_datespan_equal_pre_post_pickle(DateSpan(datetime(2019, 10, 9), datetime(2019, 10, 9)))
+
+    def test_none(self):
+        self._assert_datespan_equal_pre_post_pickle(DateSpan(None, date(2019, 10, 9)))
+        self._assert_datespan_equal_pre_post_pickle(DateSpan(date(2019, 10, 9), None))
+        self._assert_datespan_equal_pre_post_pickle(DateSpan(None, None))
+
+    def test_other_args(self):
+        self._assert_datespan_equal_pre_post_pickle(
+            DateSpan(
+                date(2019, 10, 7), date(2019, 10, 9),
+                format=ISO_DATETIME_FORMAT, inclusive=False, timezone=pytz.timezone('EST'),
+                max_days=6
+            ),
+
+        )

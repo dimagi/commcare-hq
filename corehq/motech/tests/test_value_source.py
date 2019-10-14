@@ -3,8 +3,10 @@ import warnings
 
 from django.test import SimpleTestCase
 
+from couchdbkit import BadValueError
+
 import corehq.motech.value_source
-from corehq.motech.value_source import get_form_question_values
+from corehq.motech.value_source import CaseProperty, get_form_question_values
 
 
 class DocTests(SimpleTestCase):
@@ -65,3 +67,23 @@ class GetFormQuestionValuesTests(SimpleTestCase):
             '/metadata/spam': 'ham',
             '/metadata/received_on': '2018-11-06T18:30:00.000000Z',
         })
+
+
+class CasePropertyValidationTests(SimpleTestCase):
+
+    def test_valid_case_property(self):
+        CaseProperty.wrap({"case_property": "foo"})
+
+    def test_blank_case_property(self):
+        with self.assertRaisesRegexp(BadValueError, "Value cannot be blank."):
+            CaseProperty.wrap({"case_property": ""})
+
+    def test_missing_case_property(self):
+        case_property = CaseProperty.wrap({})
+        with self.assertRaisesRegexp(BadValueError, "Property case_property is required."):
+            case_property.validate()
+
+    def test_null_case_property(self):
+        case_property = CaseProperty.wrap({"case_property": None})
+        with self.assertRaisesRegexp(BadValueError, "Property case_property is required."):
+            case_property.validate()
