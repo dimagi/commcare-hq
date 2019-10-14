@@ -115,7 +115,7 @@ def _get_data_for_couch_backend(run_config):
 
 def _get_data_for_sql_backend(run_config):
     for db in get_db_aliases_for_partitioned_query():
-        matching_records_for_db = _get_sql_case_data_for_db(db, run_config)
+        matching_records_for_db = get_sql_case_data_for_db(db, run_config)
         chunk_size = 1000
         for chunk in chunked(matching_records_for_db, chunk_size):
             case_ids = [val[0] for val in chunk]
@@ -127,7 +127,7 @@ def _get_data_for_sql_backend(run_config):
                     yield (case_id, case_type, es_modified_on, sql_modified_on_str)
 
 
-def _get_sql_case_data_for_db(db, run_config):
+def get_sql_case_data_for_db(db, run_config):
     matching_cases = CommCareCaseSQL.objects.using(db).filter(
         domain=run_config.domain,
         server_modified_on__gte=run_config.start_date,
