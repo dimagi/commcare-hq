@@ -1514,7 +1514,7 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
 
     # Primary Header
     main_header = worksheet.row_dimensions[1]
-    main_header.height = 40
+    main_header.height = 20
     current_column_location = 1
     for index, primary_header in enumerate(primary_headers):
         cell_name = get_column_letter(current_column_location)
@@ -1533,7 +1533,7 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
 
     # Secondary Header
     secondary_header = worksheet.row_dimensions[2]
-    secondary_header.height = 80
+    secondary_header.height = 20
     headers = excel_data[0][1][0]
     bold_font_black = Font(size=14)
     for index, header in enumerate(headers):
@@ -1543,7 +1543,7 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
         worksheet.column_dimensions[location_column].width = 30
         cell.value = header
         cell.fill = cell_pattern_blue
-        cell.font = bold_font_black
+        cell.font = bold_font
         cell.border = thin_border_no_top
 
     # Fill data

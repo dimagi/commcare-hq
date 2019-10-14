@@ -843,7 +843,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 cache_key = create_excel_file(excel_data, data_type, file_format)
         elif indicator == DASHBOARD_USAGE_EXPORT:
             excel_data = DashBoardUsage(
-                user=config['user']
+                couch_user=config['couch_user'],
+                domain=config['domain']
             ).get_excel_data()
             export_info = excel_data[1][1]
             generated_timestamp = date_parser.parse(export_info[0][1])
