@@ -19,7 +19,7 @@ from corehq.util.couch_helpers import paginate_view
 
 
 
-RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date'])
+RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date', 'case_type'])
 
 
 class Command(BaseCommand):
@@ -53,13 +53,19 @@ class Command(BaseCommand):
             action='store',
             help='Only include data modified before this date',
         )
+        parser.add_argument(
+            '--case_type',
+            action='store',
+            help='Only run for the specified case type',
+        )
 
     def handle(self, domain, data_models, **options):
         data_models = set(data_models)
 
         start = dateutil.parser.parse(options['start']) if options['start'] else datetime(2010, 1, 1)
         end = dateutil.parser.parse(options['end']) if options['end'] else datetime.utcnow()
-        run_config = RunConfig(domain, start, end)
+        case_type = options['case_type']
+        run_config = RunConfig(domain, start, end, case_type)
 
         for data_model in data_models:
             if data_model.lower() == 'case':
@@ -80,6 +86,8 @@ def get_server_modified_on_for_domain(run_config):
 
 
 def _get_data_for_couch_backend(run_config):
+    if run_config.case_type:
+        raise CommandError('Case type argument is not supported for couch domains!')
     domain = run_config.domain
     start_time = datetime.utcnow()
     chunk_size = 1000
@@ -120,11 +128,16 @@ def _get_data_for_sql_backend(run_config):
 
 
 def _get_sql_case_data_for_db(db, run_config):
-    return CommCareCaseSQL.objects.using(db).filter(
+    matching_cases = CommCareCaseSQL.objects.using(db).filter(
         domain=run_config.domain,
         server_modified_on__gte=run_config.start_date,
         server_modified_on__lte=run_config.end_date,
-    ).values_list('case_id', 'type', 'server_modified_on')
+    )
+    if run_config.case_type:
+        matching_cases = matching_cases.filter(
+            type=run_config.case_type
+        )
+    return matching_cases.values_list('case_id', 'type', 'server_modified_on')
 
 
 def _get_es_modified_dates(domain, case_ids):
