@@ -141,7 +141,10 @@ class ProjectReportsTab(UITab):
             'icon': 'icon-tasks fa fa-tasks',
             'show_in_dropdown': True,
         }]
-        if toggles.USER_CONFIGURABLE_REPORTS.enabled_for_request(self._request):
+        if toggles.USER_CONFIGURABLE_REPORTS.enabled(self.couch_user.username):
+            # Only show for **users** with the flag. This flag is also available for domains
+            # but should not be granted by domain, as the feature is too advanced to turn
+            # on for all of a domain's users.
             from corehq.apps.userreports.views import UserConfigReportsHomeView
             tools.append({
                 'title': _(UserConfigReportsHomeView.section_name),
