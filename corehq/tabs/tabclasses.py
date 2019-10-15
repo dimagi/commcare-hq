@@ -135,12 +135,20 @@ class ProjectReportsTab(UITab):
         from corehq.apps.reports.views import MySavedReportsView
         if isinstance(self.couch_user, AnonymousCouchUser) and PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
             return []
-        return [(_("Tools"), [
-            {'title': _(MySavedReportsView.page_title),
-             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
-             'icon': 'icon-tasks fa fa-tasks',
-             'show_in_dropdown': True}
-        ])]
+        tools = [{
+            'title': _(MySavedReportsView.page_title),
+            'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
+            'icon': 'icon-tasks fa fa-tasks',
+            'show_in_dropdown': True,
+        }]
+        if toggles.USER_CONFIGURABLE_REPORTS.enabled_for_request(self._request):
+            from corehq.apps.userreports.views import UserConfigReportsHomeView
+            tools.append({
+                'title': _(UserConfigReportsHomeView.section_name),
+                'url': reverse(UserConfigReportsHomeView.urlname, args=[self.domain]),
+                'icon': 'icon-tasks fa fa-wrench',
+            })
+        return [(_("Tools"), tools)]
 
     def _get_report_builder_items(self):
         user_reports = []
