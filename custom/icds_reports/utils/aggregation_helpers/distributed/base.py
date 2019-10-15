@@ -17,18 +17,13 @@ class BaseICDSAggregationDistributedHelper(AggregationHelper):
     Attributes:
         ucr_data_source_id - The UCR data source that contains the raw data to aggregate
         aggregate_parent_table - The parent table defined in models.py that will contain aggregate data
-        aggregate_child_table_prefix - The prefix for tables that inherit from the parent table
     """
     ucr_data_source_id = None
     aggregate_parent_table = None
-    aggregate_child_table_prefix = None
 
     def __init__(self, state_id, month):
         self.state_id = state_id
         self.month = transform_day_to_month(month)
-
-    def aggregate(self, cursor):
-        raise NotImplementedError
 
     @property
     def domain(self):
@@ -41,33 +36,11 @@ class BaseICDSAggregationDistributedHelper(AggregationHelper):
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 
-    def generate_child_tablename(self, month=None):
-        month = month or self.month
-        month_string = month_formatter(month)
-        hash_for_table = hashlib.md5((self.state_id + month_string).encode('utf-8')).hexdigest()[8:]
-        return self.aggregate_child_table_prefix + hash_for_table
-
-    def create_table_query(self, month=None):
-        month = month or self.month
-        month_string = month_formatter(month)
-        tablename = self.generate_child_tablename(month)
-
-        return """
-        CREATE TABLE IF NOT EXISTS "{child_tablename}" (
-            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
-            LIKE "{parent_tablename}" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
-        ) INHERITS ("{parent_tablename}")
-        """.format(
-            parent_tablename=self.aggregate_parent_table,
-            child_tablename=tablename,
-        ), {
-            "month_string": month_string,
-            "state_id": self.state_id
-        }
+    def aggregate(self, cursor):
+        raise NotImplementedError
 
     def drop_table_query(self):
-        tablename = self.generate_child_tablename(self.month)
-        return 'DROP TABLE IF EXISTS "{tablename}"'.format(tablename=tablename)
+        raise NotImplementedError
 
     def data_from_ucr_query(self):
         """Returns (SQL query, query parameters) from the UCR data table that
@@ -99,7 +72,11 @@ class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
 
 class StateBasedAggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
     """Helper for tables that reside on Citus master and are partitioned into one tables per month and state
+
+    Attributes:
+        aggregate_child_table_prefix - The prefix for tables that inherit from the parent table
     """
+    aggregate_child_table_prefix = None
 
     def aggregate(self, cursor):
         drop_query = self.drop_table_query()
@@ -109,3 +86,31 @@ class StateBasedAggregationPartitionedHelper(BaseICDSAggregationDistributedHelpe
         cursor.execute(drop_query)
         cursor.execute(curr_month_query, curr_month_params)
         cursor.execute(agg_query, agg_param)
+
+    def generate_child_tablename(self, month=None):
+        month = month or self.month
+        month_string = month_formatter(month)
+        hash_for_table = hashlib.md5((self.state_id + month_string).encode('utf-8')).hexdigest()[8:]
+        return self.aggregate_child_table_prefix + hash_for_table
+
+    def drop_table_query(self):
+        tablename = self.generate_child_tablename(self.month)
+        return 'DROP TABLE IF EXISTS "{tablename}"'.format(tablename=tablename)
+
+    def create_table_query(self, month=None):
+        month = month or self.month
+        month_string = month_formatter(month)
+        tablename = self.generate_child_tablename(month)
+
+        return """
+        CREATE TABLE IF NOT EXISTS "{child_tablename}" (
+            CHECK (month = %(month_string)s AND state_id = %(state_id)s),
+            LIKE "{parent_tablename}" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES
+        ) INHERITS ("{parent_tablename}")
+        """.format(
+            parent_tablename=self.aggregate_parent_table,
+            child_tablename=tablename,
+        ), {
+            "month_string": month_string,
+            "state_id": self.state_id
+        }
