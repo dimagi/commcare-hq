@@ -68,7 +68,7 @@ class BaseICDSAggregationDistributedHelper(AggregationHelper):
 
 class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     def aggregate(self, cursor):
-        delete_query, delete_params = self.delete_old_data_query()
+        delete_query, delete_params = self.delete_previous_run_query()
         agg_query, agg_params = self.aggregation_query()
 
         logger.info(f'Deleting {self.helper_key} for {self.month} and state {self.state_id}')
@@ -77,7 +77,7 @@ class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
         cursor.execute(agg_query, agg_params)
         logger.info(f'Finished aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
 
-    def delete_old_data_query(self):
+    def delete_previous_run_query(self):
         return (
             f'DELETE FROM "{self.aggregate_parent_table}" WHERE month=%(month)s AND state_id = %(state)s',
             {'month': month_formatter(self.month), 'state': self.state_id}
