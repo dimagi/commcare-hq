@@ -1,7 +1,6 @@
+import csv
 import io
 import json
-
-import csv
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import (
@@ -9,9 +8,10 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
 )
 from corehq.apps.userreports.util import get_table_name
-from custom.icds_reports.const import AWC_LOCATION_TABLE_ID, AWW_USER_TABLE_ID
-from custom.icds_reports.exceptions import LocationRemovedException
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from custom.icds_reports.const import AWW_USER_TABLE_ID
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
+    BaseICDSAggregationDistributedHelper,
+)
 
 
 class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -96,8 +96,6 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         for rollup_query in rollup_queries:
             cursor.execute(rollup_query)
 
-        self.assert_no_awc_missing_from_new_table(cursor)
-
         cursor.execute(self.delete_old_locations())
         cursor.execute(self.move_data_to_local_table())
         cursor.execute(self.create_distributed_table())
@@ -129,25 +127,6 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             local_tablename=self.local_tablename,
             temporary_tablename=self.temporary_tablename,
         )
-
-    def assert_no_awc_missing_from_new_table(self, cursor):
-        cursor.execute(
-            """
-            SELECT count(*)
-            FROM "{local_tablename}"
-            WHERE aggregation_level = 5 AND doc_id NOT IN (
-                SELECT doc_id
-                FROM "{temporary_tablename}"
-                WHERE aggregation_level = 5
-            )
-            """.format(
-                local_tablename=self.local_tablename,
-                temporary_tablename=self.temporary_tablename,
-            )
-        )
-        num_locations_missing = cursor.fetchone()[0]
-        if num_locations_missing:
-            raise LocationRemovedException(str(num_locations_missing))
 
     def move_data_to_local_table(self):
         columns = (
