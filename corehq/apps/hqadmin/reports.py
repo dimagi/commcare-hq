@@ -12,6 +12,7 @@ from memoized import memoized
 
 from auditcare.models import NavigationEventAudit
 from auditcare.utils.export import navigation_event_ids_by_user
+from dateutil.parser import parse
 from dimagi.utils.couch.database import iter_docs
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import BaseDeviceLogReport
@@ -50,6 +51,7 @@ from corehq.apps.reports.standard.sms import PhoneNumberReport
 from corehq.apps.sms.filters import RequiredPhoneNumberFilter
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import PhoneNumber
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.elastic import (
     es_query,
     fill_mapping_with_facets,
@@ -1366,8 +1368,8 @@ class UserListReport(GetParamsMixin, AdminReport):
             yield [
                 self._user_link(user['username']),
                 self._get_domains(user),
-                user['date_joined'],
-                user['last_login'],
+                self._format_date(user['date_joined']),
+                self._format_date(user['last_login']),
                 user['doc_type'],
                 user['is_superuser'],
             ]
@@ -1404,3 +1406,9 @@ class UserListReport(GetParamsMixin, AdminReport):
         if user['doc_type'] == "WebUser":
             return ", ".join(dm['domain'] for dm in user['domain_memberships'])
         return user['domain_membership']['domain']
+
+    @staticmethod
+    def _format_date(date):
+        if date:
+            return parse(date).strftime(SERVER_DATETIME_FORMAT)
+        return "---"
