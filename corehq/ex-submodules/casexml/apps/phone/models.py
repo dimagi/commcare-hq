@@ -321,18 +321,6 @@ class AbstractSyncLog(SafeSaveDocument):
         """
         raise NotImplementedError()
 
-    def get_previous_log(self):
-        """
-        Get the previous sync log, if there was one.  Otherwise returns nothing.
-        """
-        if not self.previous_log_id:
-            return
-
-        try:
-            return get_properly_wrapped_sync_log(self.previous_log_id)
-        except MissingSyncLog:
-            return None
-
     @classmethod
     def from_other_format(cls, other_sync_log):
         """
@@ -361,19 +349,7 @@ def save_synclog_to_sql(synclog_json_object):
 
 
 def delete_synclog(synclog_id):
-    """
-    Deletes synclog object both from Couch and SQL, if the doc
-        isn't found in either couch or SQL an exception is raised
-    """
-    try:
-        synclog = SyncLogSQL.objects.filter(synclog_id=synclog_id).first()
-        if synclog:
-            synclog.delete()
-            return
-    except ValidationError:
-        pass
-
-    raise MissingSyncLog("No synclog object with this synclog_id ({}) is  found".format(synclog_id))
+    SyncLogSQL.objects.filter(synclog_id=synclog_id).delete()
 
 
 def synclog_to_sql_object(synclog_json_object):
@@ -394,15 +370,19 @@ def synclog_to_sql_object(synclog_json_object):
             user_id=synclog_json_object.user_id,
             synclog_id=synclog_id,
             date=synclog_json_object.date,
-            previous_synclog_id=getattr(synclog_json_object, 'previous_log_id', None),
             log_format=synclog_json_object.log_format,
             build_id=synclog_json_object.build_id,
             duration=synclog_json_object.duration,
-            last_submitted=synclog_json_object.last_submitted,
             had_state_error=synclog_json_object.had_state_error,
             error_date=synclog_json_object.error_date,
             error_hash=synclog_json_object.error_hash,
         )
+    field_mapping = [
+        ('previous_log_id', 'previous_synclog_id'),
+        ('last_submitted', 'last_submitted'),
+    ]
+    for from_field, to_field in field_mapping:
+        setattr(synclog, to_field, getattr(synclog_json_object, from_field, None))
     synclog.doc = synclog_json_object.to_json()
     return synclog
 
@@ -954,18 +934,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
             ', '.join(self.dependent_case_ids_on_phone)))
         _get_logger().debug('index tree after update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree after update: {}'.format(self.extension_index_tree))
-        if made_changes or case_list:
-            try:
-                if made_changes:
-                    _get_logger().debug('made changes, saving.')
-                    self.last_submitted = datetime.utcnow()
-                    self.rev_before_last_submitted = self._rev
-                    self.save()
-            except ResourceConflict:
-                logging.exception('doc update conflict saving sync log {id}'.format(
-                    id=self._id,
-                ))
-                raise
+        if made_changes or not self.last_submitted:
+            _get_logger().debug('made changes')
+            self.last_submitted = datetime.utcnow()
+            self.rev_before_last_submitted = self._rev
+        return made_changes
 
     def purge_dependent_cases(self):
         """
