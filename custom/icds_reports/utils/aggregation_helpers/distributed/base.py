@@ -84,13 +84,13 @@ class BaseICDSAggregationDistributedHelper(AggregationHelper):
 
 class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
+        drop_query, drop_params = self.delete_old_data_query()
         agg_query, agg_params = self.aggregation_query()
 
         cursor.execute(drop_query, drop_params)
         cursor.execute(agg_query, agg_params)
 
-    def drop_table_query(self):
+    def delete_old_data_query(self):
         return (
             f'DELETE FROM "{self.aggregate_parent_table}" WHERE month=%(month)s AND state_id = %(state)s',
             {'month': month_formatter(self.month), 'state': self.state_id}
