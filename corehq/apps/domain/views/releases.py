@@ -152,7 +152,6 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
             elif status == 'inactive':
                 query = query.filter(active=False)
         app_releases_by_app_profile = [release.to_json(apps_names) for release in query.order_by('-version')]
-        show_hosted_cczs_link = toggles.MANAGE_CCZ_HOSTING.enabled(self.request.user.username)
         return {
             'creation_form': self.creation_form,
             'search_form': SearchManageReleasesByAppProfileForm(self.request, self.domain),
@@ -161,7 +160,6 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
             'initial_app_build_profile_details': self._get_initial_app_build_profile_details(
                 build_profiles_per_app, app_id, app_build_profile_id),
             'build_profiles_per_app': build_profiles_per_app,
-            'show_hosted_cczs_link': show_hosted_cczs_link,
         }
 
     def post(self, request, *args, **kwargs):

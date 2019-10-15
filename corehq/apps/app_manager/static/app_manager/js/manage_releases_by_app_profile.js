@@ -26,7 +26,7 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
             self.appName = details.app_name;
             self.version = details.version;
             self.profileName = details.profile_name;
-            var showHostedCCZLink = initialPageData.get("show_hosted_cczs_link");
+            var showHostedCCZLink = hqImport('hqwebapp/js/toggles').toggleEnabled('MANAGE_CCZ_HOSTING');
             if (showHostedCCZLink) {
                 self.hostedCCZLink = (
                     initialPageData.reverse('manage_hosted_ccz') +
