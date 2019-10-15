@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -21,7 +22,7 @@ from corehq.apps.app_manager.commcare_settings import (
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.builds.utils import get_all_versions
-from corehq.apps.es import FormES, UserES, filters
+from corehq.apps.es import FormES, filters, users as user_es
 from corehq.apps.es.aggregations import (
     AggregationTerm,
     NestedTermAggregationsHelper,
@@ -915,7 +916,7 @@ class AdminUserReport(AdminFacetedReport):
 
     @property
     def export_rows(self):
-        query = UserES().remove_default_filters()
+        query = user_es.UserES().remove_default_filters()
         for u in query.scroll():
             yield self._format_row(u)
 
@@ -1357,4 +1358,31 @@ class UserListReport(AdminReport):
 
     @property
     def rows(self):
-        return []
+        for user in self._get_users():
+            yield [
+                self._user_link(user['username']),
+                self._get_domains(user),
+                user['date_joined'],
+                user['last_login'],
+                user['doc_type'],
+                user['is_superuser'],
+            ]
+
+    def _get_users(self):
+        return (user_es.UserES()
+                .remove_default_filters()
+                .OR(user_es.web_users(), user_es.mobile_users())
+                .run()
+                .hits)
+
+    def _user_link(self, username):
+        return f'<a href="{self._user_lookup_url}?q={username}">{username}</a>'
+
+    @cached_property
+    def _user_lookup_url(self):
+        return reverse('web_user_lookup')
+
+    def _get_domains(self, user):
+        if user['doc_type'] == "WebUser":
+            return ", ".join(dm['domain'] for dm in user['domain_memberships'])
+        return user['domain_membership']['domain']
