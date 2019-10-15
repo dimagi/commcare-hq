@@ -8,7 +8,7 @@ from casexml.apps.case.signals import cases_received
 from casexml.apps.case.util import validate_phone_datetime, update_sync_log_with_checks
 from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -66,7 +66,7 @@ class CaseProcessingResult(object):
         """
         Updates any dirtiness flags in the database.
         """
-        if self.domain:
+        if self.domain and not LIVEQUERY_SYNC.enabled(self.domain):
             flags_to_save = self.get_flags_to_save()
             if should_create_flags_on_submission(self.domain):
                 assert settings.UNIT_TESTING  # this is currently only true when unit testing
@@ -161,7 +161,7 @@ def _get_or_update_cases(xforms, case_db):
     domain = getattr(case_db, 'domain', None)
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
     _validate_indices(case_db, [case_update_meta.case for case_update_meta in touched_cases.values()])
-    dirtiness_flags = _get_all_dirtiness_flags_from_cases(case_db, touched_cases)
+    dirtiness_flags = _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases)
     extensions_to_close = get_all_extensions_to_close(domain, list(touched_cases.values()))
     return CaseProcessingResult(
         domain,
@@ -171,8 +171,11 @@ def _get_or_update_cases(xforms, case_db):
     )
 
 
-def _get_all_dirtiness_flags_from_cases(case_db, touched_cases):
+def _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases):
     # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
+    if LIVEQUERY_SYNC.enabled(domain):
+        return []
+
     dirtiness_flags = list(_get_dirtiness_flags_for_reassigned_case(list(touched_cases.values())))
     for case_update_meta in touched_cases.values():
         dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case_db, case_update_meta.case))
@@ -282,6 +285,8 @@ def _is_change_of_ownership(previous_owner_id, next_owner_id):
 
 
 def get_all_extensions_to_close(domain, case_updates):
+    if not EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
+        return set()
     extensions_to_close = set()
     for case_update_meta in case_updates:
         extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
@@ -289,7 +294,7 @@ def get_all_extensions_to_close(domain, case_updates):
 
 
 def get_extensions_to_close(case, domain):
-    if case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
+    if case.closed:
         return CaseAccessors(domain).get_extension_chain([case.case_id], include_closed=False)
     else:
         return set()
