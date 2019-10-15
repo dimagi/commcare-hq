@@ -25,8 +25,7 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
         cursor.execute(aggregation_query, agg_params)
 
     def delete_extra_record_query(self):
-        return
-            """
+        return """
             DELETE FROM icds_reports_aggregateinactiveaww
                 WHERE awc_id IN (
                     SELECT awc_id from icds_reports_aggregateinactiveaww inactive
