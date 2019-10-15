@@ -59,4 +59,5 @@ branches:
   - MC/SL-229  # Norman Oct 9
   - bmb/odata-release  # Biyeun Oct 9
   - bmb/new-plans  # Biyeun Oct 9
+  - sr-session-audit  # Sravan Oct 15
 submodules: {}
