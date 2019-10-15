@@ -1,6 +1,8 @@
 import re
 from collections import defaultdict
 
+from django.utils.translation import ugettext as _
+
 from lxml import html
 from requests import RequestException
 from urllib3.exceptions import HTTPError
@@ -35,9 +37,6 @@ from corehq.motech.value_source import (
     get_case_location,
 )
 from corehq.util.quickcache import quickcache
-from corehq.util.soft_assert import soft_assert
-
-_assert = soft_assert(['@'.join(('nhooper', 'dimagi.com'))])
 
 
 def get_case_location_ancestor_repeaters(case):
@@ -178,10 +177,6 @@ def check_duplicate_case_match(domain, case_type, external_id):
                    f'external_id="{external_id}" and case type="{case_type}".')
     else: # error == LookupErrors.NotFound:
         return
-    _assert(False, message +
-            " Either the same person has more than one CommCare case, or "
-            "OpenMRS repeater configuration needs to be modified to match "
-            "cases with patients more accurately.")
     raise DuplicateCaseMatch(message)
 
 
@@ -380,7 +375,12 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
         return None
     try:
         save_match_ids(case, openmrs_config.case_config, patient)
-    except DuplicateCaseMatch:
+    except DuplicateCaseMatch as err:
+        requests.notify_error(str(err), _(
+            "Either the same person has more than one CommCare case, or "
+            "OpenMRS repeater configuration needs to be modified to match "
+            "cases with patients more accurately."
+        ))
         return None
     else:
         return patient

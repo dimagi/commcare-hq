@@ -584,20 +584,18 @@ class SaveMatchIdsTests(SimpleTestCase):
             update={}
         )
 
-    @mock.patch('corehq.motech.openmrs.repeater_helpers._assert')
     @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
     @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
-    def test_save_duplicate_external_id(self, importer_util_mock, _, __):
+    def test_save_duplicate_external_id(self, importer_util_mock, _):
         another_case = mock.Mock()
         importer_util_mock.lookup_case.return_value = (another_case, None)
         self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
         with self.assertRaises(DuplicateCaseMatch):
             save_match_ids(self.case, self.case_config, self.patient)
 
-    @mock.patch('corehq.motech.openmrs.repeater_helpers._assert')
     @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
     @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
-    def test_save_multiple_external_id(self, importer_util_mock, _, __):
+    def test_save_multiple_external_id(self, importer_util_mock, _):
         importer_util_mock.lookup_case.return_value = (None, LookupErrors.MultipleResults)
         self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
         with self.assertRaises(DuplicateCaseMatch):
