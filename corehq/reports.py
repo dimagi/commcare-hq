@@ -7,7 +7,9 @@ from corehq.apps.hqadmin.reports import (
     AdminPhoneNumberReport,
     AdminUserReport,
     DeviceLogSoftAssertReport,
-    UserAuditReport)
+    UserAuditReport,
+    UserListReport,
+)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
@@ -338,6 +340,7 @@ BASIC_REPORTS = (
 
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
+        UserListReport,
         AdminUserReport,
         PillowErrorsReport,
         DeviceLogSoftAssertReport,

@@ -35,6 +35,7 @@ from corehq.apps.domain.views.releases import (
 from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
+    UserListReport,
 )
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
@@ -2099,7 +2100,7 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [DeviceLogSoftAssertReport, UserAuditReport]
+            } for report in [DeviceLogSoftAssertReport, UserAuditReport, UserListReport]
         ]))
         return sections
 
