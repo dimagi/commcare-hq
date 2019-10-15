@@ -80,3 +80,18 @@ class BaseICDSAggregationDistributedHelper(AggregationHelper):
         source to an aggregate table.
         """
         raise NotImplementedError
+
+
+class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    def aggregate(self, cursor):
+        drop_query, drop_params = self.drop_table_query()
+        agg_query, agg_params = self.aggregation_query()
+
+        cursor.execute(drop_query, drop_params)
+        cursor.execute(agg_query, agg_params)
+
+    def drop_table_query(self):
+        return (
+            f'DELETE FROM "{self.aggregate_parent_table}" WHERE month=%(month)s AND state_id = %(state)s',
+            {'month': month_formatter(self.month), 'state': self.state_id}
+        )
