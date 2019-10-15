@@ -1331,3 +1331,30 @@ class UserAuditReport(AdminReport, DatespanMixin):
                     event.event_date, event.user, event.domain or '', event.ip_address, event.request_path
                 ])
         return rows
+
+
+class UserListReport(AdminReport):
+    base_template = 'reports/base_template.html'
+
+    slug = 'user_list_report'
+    name = ugettext_lazy("User List")
+
+    fields = []
+    emailable = False
+    exportable = False
+    default_rows = 10
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_("Username")),
+            DataTablesColumn(_("Project Spaces")),
+            DataTablesColumn(_("Date Joined")),
+            DataTablesColumn(_("Last Login")),
+            DataTablesColumn(_("Type")),
+            DataTablesColumn(_("SuperUser?")),
+        )
+
+    @property
+    def rows(self):
+        return []
