@@ -39,6 +39,7 @@ from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import (
     ElasticTabularReport,
     GenericTabularReport,
+    GetParamsMixin,
 )
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.apps.reports.standard.domains import (
@@ -1334,13 +1335,15 @@ class UserAuditReport(AdminReport, DatespanMixin):
         return rows
 
 
-class UserListReport(AdminReport):
+class UserListReport(GetParamsMixin, AdminReport):
     base_template = 'reports/base_template.html'
 
     slug = 'user_list_report'
     name = ugettext_lazy("User List")
 
-    fields = []
+    fields = [
+        'corehq.apps.reports.filters.simple.SimpleSearch',
+    ]
     emailable = False
     exportable = False
     ajax_pagination = True
@@ -1370,9 +1373,15 @@ class UserListReport(AdminReport):
             ]
 
     def _users_query(self):
-        return (user_es.UserES()
-                .remove_default_filters()
-                .OR(user_es.web_users(), user_es.mobile_users()))
+        query = (user_es.UserES()
+                 .remove_default_filters()
+                 .OR(user_es.web_users(), user_es.mobile_users()))
+        if 'search_string' in self.request.GET:
+            search_string = self.request.GET['search_string']
+            fields = ['username', 'first_name', 'last_name', 'phone_numbers',
+                      'domain_membership.domain', 'domain_memberships.domain']
+            query = query.search_string_query(search_string, fields)
+        return query
 
     def _get_page(self, query):
         return (query
