@@ -6,9 +6,11 @@ from itertools import groupby, zip_longest
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
+from django.db.models.functions import Greatest
 
 from sqlalchemy.exc import OperationalError
 
+from casexml.apps.case.xform import get_case_updates
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.chunked import chunked
@@ -401,16 +403,19 @@ def _commit_src_domain(domain):
     set_couch_sql_migration_not_started(domain)
 
 
-def _commit_dst_domain(domain):
+def _commit_dst_domain(domain, since_datetime=None):
     """
     Send forms and cases to ElasticSearch
     """
     # We will be migrating to this domain several times:
     set_couch_sql_migration_not_started(domain)
-    for form in _iter_sql_forms(domain):
-        publish_form_saved(form)
-    for case in _iter_sql_cases(domain):
-        publish_case_saved(case, send_post_save_signal=True)
+    if since_datetime:
+        publish_forms_and_cases(domain, since_datetime)
+    else:
+        for form in _iter_sql_forms(domain):
+            publish_form_saved(form)
+        for case in _iter_sql_cases(domain):
+            publish_case_saved(case, send_post_save_signal=True)
 
 
 def _iter_couch_form_ids(domain):
@@ -438,6 +443,31 @@ def _iter_sql_cases(domain):
         for case_ids_chunk in chunked(case_ids, 500):
             for case in CaseAccessorSQL.get_cases(list(case_ids_chunk)):
                 yield case
+
+
+def publish_forms_and_cases(domain, since_datetime):
+    case_ids = set()
+    for form in iter_sql_forms_modified_since(domain, since_datetime):
+        publish_form_saved(form)
+        form_case_ids = {case_update.id for case_update in get_case_updates(form)}
+        case_ids |= form_case_ids
+
+    for case_ids_chunk in chunked(case_ids, 500):
+        for case in CaseAccessorSQL.get_cases(list(case_ids_chunk)):
+            publish_case_saved(case, send_post_save_signal=True)
+
+
+def iter_sql_forms_modified_since(domain, since_datetime):
+    # cf. FormAccessorSQL.iter_forms_by_last_modified
+    annotate = {
+        'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
+    }
+    return paginate_query_across_partitioned_databases(
+        XFormInstanceSQL,
+        Q(domain=domain, last_modified__gt=since_datetime),
+        annotate=annotate,
+        load_source='forms_by_last_modified'
+    )
 
 
 def iter_chunks(model_class, field, domain, chunk_size=5000):
