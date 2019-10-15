@@ -95,3 +95,17 @@ class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
             f'DELETE FROM "{self.aggregate_parent_table}" WHERE month=%(month)s AND state_id = %(state)s',
             {'month': month_formatter(self.month), 'state': self.state_id}
         )
+
+
+class StateBasedAggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
+    """Helper for tables that reside on Citus master and are partitioned into one tables per month and state
+    """
+
+    def aggregate(self, cursor):
+        drop_query = self.drop_table_query()
+        curr_month_query, curr_month_params = self.create_table_query()
+        agg_query, agg_param = self.aggregate_query()
+
+        cursor.execute(drop_query)
+        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(agg_query, agg_param)
