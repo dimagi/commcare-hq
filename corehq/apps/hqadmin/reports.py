@@ -1343,6 +1343,7 @@ class UserListReport(AdminReport):
     fields = []
     emailable = False
     exportable = False
+    ajax_pagination = True
     default_rows = 10
 
     @property
@@ -1358,7 +1359,7 @@ class UserListReport(AdminReport):
 
     @property
     def rows(self):
-        for user in self._get_users():
+        for user in self._get_page(self._users_query()):
             yield [
                 self._user_link(user['username']),
                 self._get_domains(user),
@@ -1368,12 +1369,20 @@ class UserListReport(AdminReport):
                 user['is_superuser'],
             ]
 
-    def _get_users(self):
+    def _users_query(self):
         return (user_es.UserES()
                 .remove_default_filters()
-                .OR(user_es.web_users(), user_es.mobile_users())
-                .run()
-                .hits)
+                .OR(user_es.web_users(), user_es.mobile_users()))
+
+    def _get_page(self, query):
+        return (query
+                .start(self.pagination.start)
+                .size(self.pagination.count)
+                .run().hits)
+
+    @property
+    def total_records(self):
+        return self._users_query().count()
 
     def _user_link(self, username):
         return f'<a href="{self._user_lookup_url}?q={username}">{username}</a>'
