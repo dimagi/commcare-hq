@@ -1004,10 +1004,6 @@ class AggregateCcsRecordPostnatalCareForms(models.Model, AggregateMixin):
         db_table = AGG_CCS_RECORD_PNC_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def compare_with_old_data(cls, state_id, month):
-        pass
-
     _agg_helper_cls = PostnatalCareFormsCcsRecordAggregationDistributedHelper
     _agg_atomic = False
 

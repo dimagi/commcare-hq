@@ -1,9 +1,10 @@
 from dateutil.relativedelta import relativedelta
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.util import get_table_name
+
 from custom.icds_reports.const import AGG_CCS_RECORD_PNC_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
+    BaseICDSAggregationDistributedHelper,
+)
 
 
 class PostnatalCareFormsCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -23,12 +24,6 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(BaseICDSAggregatio
             'DELETE FROM "{}" WHERE month=%(month)s AND state_id = %(state)s'.format(self.tablename),
             {'month': month_formatter(self.month), 'state': self.state_id}
         )
-
-    @property
-    def _old_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
 
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
@@ -112,30 +107,3 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(BaseICDSAggregatio
             ucr_table_query=ucr_query,
             tablename=self.tablename
         ), query_params
-
-    def compare_with_old_data_query(self):
-        """Compares data from the complementary feeding forms aggregate table
-        to the the old child health monthly UCR table that current aggregate
-        script uses
-        """
-        month = self.month.replace(day=1)
-        return """
-        SELECT agg.case_id
-        FROM "{ccs_record_monthly_ucr}" crm_ucr
-        FULL OUTER JOIN "{new_agg_table}" agg
-        ON crm_ucr.doc_id = agg.case_id AND crm_ucr.month = agg.month AND agg.state_id = crm_ucr.state_id
-        WHERE crm_ucr.month = %(month)s and agg.state_id = %(state_id)s AND (
-              (crm_ucr.lactating = 1 OR crm_ucr.pregnant = 1) AND (
-                crm_ucr.counsel_fp_methods != COALESCE(agg.counsel_methods, 0) OR
-                (crm_ucr.pnc_visited_in_month = 1 AND
-                 agg.latest_time_end_processed NOT BETWEEN %(month)s AND %(next_month)s)
-              )
-        )
-        """.format(
-            ccs_record_monthly_ucr=self._old_ucr_tablename,
-            new_agg_table=self.aggregate_parent_table,
-        ), {
-            "month": month.strftime('%Y-%m-%d'),
-            "next_month": (month + relativedelta(month=1)).strftime('%Y-%m-%d'),
-            "state_id": self.state_id
-        }

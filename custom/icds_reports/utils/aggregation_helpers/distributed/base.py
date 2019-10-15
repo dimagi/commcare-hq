@@ -80,10 +80,3 @@ class BaseICDSAggregationDistributedHelper(AggregationHelper):
         source to an aggregate table.
         """
         raise NotImplementedError
-
-    def compare_with_old_data_query(self):
-        """Used for backend migrations from one data source to another. Returns
-        (SQL query, query parameters) that will return any rows that are
-        inconsistent from the old data to the new.
-        """
-        raise NotImplementedError
