@@ -3,6 +3,12 @@ User Configurable Reporting
 
 An overview of the design, API and data structures used here.
 
+The docs on
+`reporting <https://commcare-hq.readthedocs.io/reporting.html>`_,
+`pillows <https://commcare-hq.readthedocs.io/pillows.html>`_,
+and `change feeds <https://commcare-hq.readthedocs.io/change_feeds.html>`_,
+are useful background.
+
 .. contents::
    :local:
 
@@ -19,6 +25,11 @@ live in the database. The data source config determines how raw data
 (forms and cases) gets mapped to rows in an intermediary table, while
 the report config(s) determine how that report table gets turned into an
 interactive report in the UI.
+
+A UCR table is created when a new data source is created.
+The table's structure is updated whenever the UCR is "rebuilt", which happens when the data source config is edited.
+Rebuilds can also be kicked off manually via either script or the UI.
+Rebuilding happens asynchronously. Data in the table is refreshed continuously by pillows.
 
 Data Sources
 ============
