@@ -23,8 +23,8 @@ CHANGED = 'changed'
 DIFF_STATES = (REMOVED, ADDED, CHANGED)
 
 QUESTION_ATTRIBUTES = (
-    'label', 'type', 'value', 'options', 'calculate', 'relevant',
-    'required', 'comment', 'setvalue', 'constraint',
+    'label', 'translations', 'type', 'value', 'options', 'calculate',
+    'relevant', 'required', 'comment', 'setvalue', 'constraint',
     'load_properties', 'save_properties'
 )
 
@@ -51,6 +51,7 @@ class _TranslationChange(_Change):
 class _QuestionDiff(JsonObject):
     question = ObjectProperty(_Change)
     label = ObjectProperty(_Change)
+    translations = ObjectProperty(_Change)
     type = ObjectProperty(_Change)
     value = ObjectProperty(_Change)
     calculate = ObjectProperty(_Change)
@@ -305,8 +306,10 @@ class _AppDiffGenerator(object):
                 self._mark_item_added(second_module, 'module')
 
     def _mark_attribute(self, first_item, second_item, attribute):
-        translation_changed = (self._is_translatable_property(first_item[attribute], second_item[attribute])
-                               and set(second_item[attribute].items()) - set(first_item[attribute].items()))
+        translation_changed = (self._is_translatable_property(first_item[attribute],
+                                                              second_item[attribute])
+                               and (set(second_item[attribute].items())
+                                    - set(first_item[attribute].items())))
         attribute_changed = first_item[attribute] != second_item[attribute]
         attribute_added = second_item[attribute] and not first_item[attribute]
         attribute_removed = first_item[attribute] and not second_item[attribute]
