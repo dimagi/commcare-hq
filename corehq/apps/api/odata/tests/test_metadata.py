@@ -28,16 +28,17 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
     def setUpClass(cls):
         super(TestCaseMetadataDocument, cls).setUpClass()
         cls._set_up_class()
+        cls._setup_accounting()
 
     @classmethod
     def tearDownClass(cls):
         cls._teardownclass()
+        cls._teardown_accounting()
         super(TestCaseMetadataDocument, cls).tearDownClass()
 
     def test_missing_feed(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(correct_credentials)
+        response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
     def test_populated_metadata_document(self):
@@ -73,8 +74,7 @@ class TestCaseMetadataDocument(TestCase, CaseOdataTestMixin, TestXmlMixin):
         self.addCleanup(config_in_other_domain.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(correct_credentials)
+        response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/xml')
         self.assertEqual(response['OData-Version'], '4.0')
@@ -95,16 +95,17 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
     def setUpClass(cls):
         super(TestFormMetadataDocument, cls).setUpClass()
         cls._set_up_class()
+        cls._setup_accounting()
 
     @classmethod
     def tearDownClass(cls):
         cls._teardownclass()
+        cls._teardown_accounting()
         super(TestFormMetadataDocument, cls).tearDownClass()
 
     def test_missing_feed(self):
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(correct_credentials)
+        response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
     def test_populated_metadata_document(self):
@@ -136,8 +137,7 @@ class TestFormMetadataDocument(TestCase, FormOdataTestMixin, TestXmlMixin):
         self.addCleanup(odata_config.delete)
 
         correct_credentials = self._get_correct_credentials()
-        with flag_enabled('BI_INTEGRATION_PREVIEW', is_preview=True):
-            response = self._execute_query(correct_credentials)
+        response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/xml')
         self.assertEqual(response['OData-Version'], '4.0')
