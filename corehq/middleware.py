@@ -3,13 +3,18 @@ import logging
 import mimetypes
 import os
 import datetime
+import re
+import traceback
 from django.conf import settings
+from django.contrib.sessions.backends.cache import SessionStore
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import MiddlewareNotUsed
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.views import logout as django_logout
 from django.utils.deprecation import MiddlewareMixin
 
+from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.const import OPENROSA_DEFAULT_VERSION
 from dimagi.utils.logging import notify_exception
@@ -210,3 +215,55 @@ class SentryContextMiddleware(MiddlewareMixin):
 
             if getattr(request, 'domain', None):
                 scope.set_tag('domain', request.domain)
+
+
+session_logger = logging.getLogger('session_access_log')
+
+
+def log_call(func):
+    def with_logging(*args, **kwargs):
+        session_logger.info("\n\n\n")
+        session_logger.info(func.__name__ + " was called")
+        session_logger.info("\n\n\n")
+        for line in traceback.format_stack():
+            white_list = ['corehq/', 'custom/', func.__name__]
+            if any([c in line for c in white_list]):
+                session_logger.info(line.strip())
+        return func(*args, **kwargs)
+    return with_logging
+
+
+def decorate_all_methods(decorator):
+    def decorate(cls):
+        for attr in dir(cls):
+            if "__" not in attr and callable(getattr(cls, attr)):
+                setattr(cls, attr, decorator(getattr(cls, attr)))
+        return cls
+    return decorate
+
+
+@decorate_all_methods(log_call)
+class LoggingSessionStore(SessionStore):
+    pass
+
+
+class LoggingSessionMiddleware(SessionMiddleware):
+
+    def process_request(self, request):
+        try:
+            match = re.search(r'/a/[0-9a-z-]+', request.path)
+            if match:
+                domain = match.group(0).split('/')[-1]
+                if toggles.SESSION_MIDDLEWARE_LOGGING.enabled(domain):
+                    session_logger.info(
+                        "Logging session access for URL {}".format(request.path))
+                    self.SessionStore = LoggingSessionStore
+                else:
+                    self.SessionStore = SessionStore
+        except Exception as e:
+            session_logger.error(
+                "Exception {} in LoggingSessionMiddleware for url {}".format(
+                    str(e), request.path)
+            )
+            pass
+        super().process_request(request)
