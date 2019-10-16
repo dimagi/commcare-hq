@@ -332,11 +332,9 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON
               child_health.doc_id = child_tasks.child_health_case_id
               AND child_health.state_id = child_tasks.state_id
-              AND lower(substring(child_tasks.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
               AND child_health.supervisor_id = child_tasks.supervisor_id
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
               AND child_health.state_id = person_cases.state_id
-              AND lower(substring(person_cases.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
               AND child_health.supervisor_id = person_cases.supervisor_id
             LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
               AND child_health.state_id = cf.state_id
@@ -379,7 +377,6 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             "start_date": self.month,
             "next_month": month_formatter(self.month + relativedelta(months=1)),
             "state_id": state_id,
-            "state_id_last_3": state_id[-3:],
         }
 
     def pre_aggregation_queries(self):
