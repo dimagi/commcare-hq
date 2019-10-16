@@ -77,7 +77,7 @@ class Command(BaseCommand):
         state_ids = agg_record.state_ids
         query = self.function_map[query_name]
         if query.by_state == SINGLE_STATE:
-            pool = Pool(10)
+            pool = Pool(5)
             for state in state_ids:
                 pool.spawn(query.func, state, agg_date)
             pool.join(raise_error=True)
