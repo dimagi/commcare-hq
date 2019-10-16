@@ -7,10 +7,11 @@ from django.db import migrations
 from custom.icds_reports import const
 
 CREATE_INDEX_SQL = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {index} ON {table} ({columns})"
-DROP_INDEX_SQL = "DROP INDEX CONCURRENTLY {index}"
+DROP_INDEX_SQL = "DROP INDEX CONCURRENTLY IF EXISTS {index}"
 
 
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('icds_reports', '0136_add_infra_field'),
