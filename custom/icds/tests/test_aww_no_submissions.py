@@ -41,47 +41,47 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
     def now(self):
         return datetime.utcnow()
 
-    def test_form_sent_today(self, patch):
+    def test_form_sent_today(self):
         self.agg_inactive_aww.last_submission = self.now
         self.agg_inactive_aww.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
         self.assertEqual(len(messages), 0)
 
-    def test_form_sent_just_under_seven_days_ago(self, patch):
+    def test_form_sent_just_under_seven_days_ago(self):
         self.agg_inactive_aww.last_submission = self.now - timedelta(days=6, hours=23)
         self.agg_inactive_aww.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
         self.assertEqual(len(messages), 0)
 
-    def test_form_sent_eight_days_ago(self, patch):
+    def test_form_sent_eight_days_ago(self):
         self.agg_inactive_aww.last_submission = self.now - timedelta(days=8)
         self.agg_inactive_aww.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertIn('one week', messages[0])
 
-    def test_form_sent_thirty_days_ago(self, patch):
+    def test_form_sent_thirty_days_ago(self):
         self.agg_inactive_aww.last_submission = self.now - timedelta(days=29, hours=23)
         self.agg_inactive_aww.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertIn('one week', messages[0])
 
-    def test_form_sent_thirty_one_days_ago(self, patch):
+    def test_form_sent_thirty_one_days_ago(self):
         self.agg_inactive_aww.last_submission = self.now - timedelta(days=31)
         self.agg_inactive_aww.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertIn('one month', messages[0])
 
-    def test_no_last_form_submission(self, patch):
+    def test_no_last_form_submission(self):
         self.agg_inactive_aww.last_submission = None
         self.agg_inactive_aww.save()
         messages = run_indicator_for_user(self.user, AWWSubmissionPerformanceIndicator, language_code='en')
         self.assertEqual(len(messages), 1)
         self.assertIn('one month', messages[0])
 
-    def test_no_app_status_fact(self, patch):
+    def test_no_app_status_fact(self):
         messages = run_indicator_for_user(
             self.user_sans_aggregation,
             AWWSubmissionPerformanceIndicator,
