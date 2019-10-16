@@ -3,7 +3,6 @@ import doctest
 import json
 import os
 import uuid
-import warnings
 
 from django.test import SimpleTestCase, TestCase
 
@@ -12,6 +11,7 @@ import mock
 from casexml.apps.case.models import CommCareCase
 
 import corehq.motech.openmrs.repeater_helpers
+from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
@@ -23,6 +23,7 @@ from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_BOOLEAN,
     XMLNS_OPENMRS,
 )
+from corehq.motech.openmrs.exceptions import DuplicateCaseMatch
 from corehq.motech.openmrs.openmrs_config import (
     OpenmrsCaseConfig,
     OpenmrsConfig,
@@ -31,7 +32,6 @@ from corehq.motech.openmrs.repeater_helpers import (
     create_patient,
     find_or_create_patient,
     get_ancestor_location_openmrs_uuid,
-    get_case_location,
     get_case_location_ancestor_repeaters,
     get_patient_by_identifier,
     get_patient_by_uuid,
@@ -39,10 +39,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     save_match_ids,
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.value_source import (
-    CaseTriggerInfo,
-    get_form_question_values,
-)
+from corehq.motech.value_source import CaseTriggerInfo, get_case_location
 from corehq.util.test_utils import TestFileMixin, _create_case
 
 DOMAIN = 'openmrs-repeater-tests'
@@ -164,18 +161,23 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
             ),
             [
                 CaseTriggerInfo(
+                    domain='openmrs-repeater-test',
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+                    type='paciente',
+                    name='Elsa',
+                    owner_id=None,
+                    modified_by=None,
                     updates={
                         'case_name': 'Elsa',
                         'case_type': 'paciente',
-                        'estado_tarv': '1',
                         'owner_id': '9393007a6921eecd4a9f20eefb5c7a8e',
-                        'tb': '0',
+                        'estado_tarv': '1',
+                        'tb': '0'
                     },
                     created=True,
                     closed=False,
                     extra_fields={},
-                    form_question_values={},
+                    form_question_values={}
                 )
             ]
         )
@@ -194,10 +196,15 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
             ),
             [
                 CaseTriggerInfo(
+                    domain='openmrs-repeater-test',
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
+                    type='paciente',
+                    name='Elsa',
+                    owner_id=None,
+                    modified_by=None,
                     updates={
                         'estado_tarv': '1',
-                        'tb': '1',
+                        'tb': '1'
                     },
                     created=False,
                     closed=False,
@@ -205,9 +212,9 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                         'name': 'Elsa',
                         'estado_tarv': '1',
                         'tb': '0',
-                        'bandersnatch': None,
+                        'bandersnatch': None
                     },
-                    form_question_values={},
+                    form_question_values={}
                 )
             ]
         )
@@ -243,58 +250,6 @@ class GetPatientByUuidTests(SimpleTestCase):
     def test_valid_uuid(self):
         patient = get_patient_by_uuid(self.requests, uuid='c83d9989-585f-4db3-bf55-ca1d0ee7c0af')
         self.assertEqual(patient, self.patient)
-
-
-class GetFormQuestionValuesTests(SimpleTestCase):
-
-    def test_unicode_answer(self):
-        value = get_form_question_values({'form': {'foo': {'bar': 'b\u0105z'}}})
-        self.assertEqual(value, {'/data/foo/bar': 'b\u0105z'})
-
-    def test_utf8_answer(self):
-        value = get_form_question_values({'form': {'foo': {'bar': b'b\xc4\x85z'}}})
-        self.assertEqual(value, {'/data/foo/bar': b'b\xc4\x85z'})
-
-    def test_unicode_question(self):
-        value = get_form_question_values({'form': {'foo': {'b\u0105r': 'baz'}}})
-        self.assertEqual(value, {'/data/foo/b\u0105r': 'baz'})
-
-    def test_utf8_question(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UnicodeWarning)
-            value = get_form_question_values({'form': {'foo': {b'b\xc4\x85r': 'baz'}}})
-        self.assertEqual(value, {'/data/foo/b\u0105r': 'baz'})
-
-    def test_received_on(self):
-        value = get_form_question_values({
-            'form': {
-                'foo': {'bar': 'baz'},
-            },
-            'received_on': '2018-11-06T18:30:00.000000Z',
-        })
-        self.assertDictEqual(value, {
-            '/data/foo/bar': 'baz',
-            '/metadata/received_on': '2018-11-06T18:30:00.000000Z',
-        })
-
-    def test_metadata(self):
-        value = get_form_question_values({
-            'form': {
-                'foo': {'bar': 'baz'},
-                'meta': {
-                    'timeStart': '2018-11-06T18:00:00.000000Z',
-                    'timeEnd': '2018-11-06T18:15:00.000000Z',
-                    'spam': 'ham',
-                },
-            },
-            'received_on': '2018-11-06T18:30:00.000000Z',
-        })
-        self.assertDictEqual(value, {
-            '/data/foo/bar': 'baz',
-            '/metadata/timeStart': '2018-11-06T18:00:00.000000Z',
-            '/metadata/timeEnd': '2018-11-06T18:15:00.000000Z',
-            '/metadata/received_on': '2018-11-06T18:30:00.000000Z',
-        })
 
 
 class ExportOnlyTests(SimpleTestCase):
@@ -454,7 +409,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=cape_town.location_id)
 
         self.assertEqual(
-            get_ancestor_location_openmrs_uuid(self.domain, case_id),
+            get_ancestor_location_openmrs_uuid(case),
             self.openmrs_capetown_uuid
         )
 
@@ -470,7 +425,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=gardens.location_id)
 
         self.assertEqual(
-            get_ancestor_location_openmrs_uuid(self.domain, case_id),
+            get_ancestor_location_openmrs_uuid(case),
             self.openmrs_capetown_uuid
         )
 
@@ -486,7 +441,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         case_id = uuid.uuid4().hex
         form, (case, ) = _create_case(domain=self.domain, case_id=case_id, owner_id=joburg.location_id)
 
-        self.assertIsNone(get_ancestor_location_openmrs_uuid(self.domain, case_id))
+        self.assertIsNone(get_ancestor_location_openmrs_uuid(case))
 
     def test_get_case_location_ancestor_repeaters_same(self):
         """
@@ -581,7 +536,8 @@ class FindPatientTest(SimpleTestCase):
         })
 
         with mock.patch('corehq.motech.openmrs.repeater_helpers.CaseAccessors') as CaseAccessorsPatch, \
-                mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch:
+                mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch, \
+                mock.patch('corehq.motech.openmrs.repeater_helpers.save_match_ids') as save_match_ids_patch:
             requests = mock.Mock()
             info = mock.Mock(case_id='123')
             CaseAccessorsPatch.return_value = mock.Mock(get_case=mock.Mock())
@@ -598,6 +554,8 @@ class SaveMatchIdsTests(SimpleTestCase):
         self.case = mock.Mock()
         self.case.domain = DOMAIN
         self.case.get_id = 'deadbeef'
+        self.case.case_id = 'deadbeef'
+        self.case.name = ''
         self.case_config = copy.deepcopy(CASE_CONFIG)
         self.patient = PATIENT_SEARCH_RESPONSE['results'][0]
 
@@ -614,7 +572,9 @@ class SaveMatchIdsTests(SimpleTestCase):
 
     @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
     @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock')
-    def test_save_external_id(self, case_block_mock, _):
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
+    def test_save_external_id(self, importer_util_mock, case_block_mock, _):
+        importer_util_mock.lookup_case.return_value = (None, LookupErrors.NotFound)
         self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
         save_match_ids(self.case, self.case_config, self.patient)
         case_block_mock.assert_called_with(
@@ -623,6 +583,25 @@ class SaveMatchIdsTests(SimpleTestCase):
             external_id='672c4a51-abad-4b5e-950c-10bc262c9c1a',
             update={}
         )
+
+    @mock.patch('corehq.motech.openmrs.repeater_helpers._assert')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
+    def test_save_duplicate_external_id(self, importer_util_mock, _, __):
+        another_case = mock.Mock()
+        importer_util_mock.lookup_case.return_value = (another_case, None)
+        self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
+        with self.assertRaises(DuplicateCaseMatch):
+            save_match_ids(self.case, self.case_config, self.patient)
+
+    @mock.patch('corehq.motech.openmrs.repeater_helpers._assert')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
+    def test_save_multiple_external_id(self, importer_util_mock, _, __):
+        importer_util_mock.lookup_case.return_value = (None, LookupErrors.MultipleResults)
+        self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
+        with self.assertRaises(DuplicateCaseMatch):
+            save_match_ids(self.case, self.case_config, self.patient)
 
 
 class DocTests(SimpleTestCase):

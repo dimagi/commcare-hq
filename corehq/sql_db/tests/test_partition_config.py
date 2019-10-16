@@ -71,7 +71,7 @@ class TestPartitionConfig(SimpleTestCase):
     def test_shard_mapping(self):
         config = PartitionConfig()
         shards = config.get_shards()
-        self.assertEquals(shards, [
+        self.assertEqual(shards, [
             ShardMeta(id=0, dbname='db1', host='hqdb1', port=5432),
             ShardMeta(id=1, dbname='db1', host='hqdb1', port=5432),
             ShardMeta(id=2, dbname='db2', host='hqdb2', port=5432),
@@ -92,7 +92,7 @@ class TestPartitionConfig(SimpleTestCase):
     def test_host_map(self):
         config = PartitionConfig()
         shards = config.get_shards()
-        self.assertEquals(shards, [
+        self.assertEqual(shards, [
             ShardMeta(id=0, dbname='db1', host='localhost', port=5432),
             ShardMeta(id=1, dbname='db2', host='hqdb2', port=5432),
         ])

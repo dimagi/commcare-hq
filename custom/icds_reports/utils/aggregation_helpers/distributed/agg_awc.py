@@ -73,7 +73,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
                 THEN 1 ELSE 0 END,
             CASE WHEN
-                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
+                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))> 1
                 THEN 1 ELSE 0 END,
             thr_v2.thr_distribution_image_count,
             0,
@@ -127,6 +127,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
     def updates(self):
         yield """
+        DROP TABLE IF EXISTS "{temp_table}";
         CREATE UNLOGGED TABLE "{temp_table}" AS
             SELECT
                 awc_id,
@@ -184,6 +185,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        DROP TABLE IF EXISTS "tmp_home_visit";
         CREATE UNLOGGED TABLE "tmp_home_visit" AS SELECT
             ucr.awc_id,
             %(start_date)s AS month,
@@ -243,6 +245,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        DROP TABLE IF EXISTS "tmp_household";
         CREATE UNLOGGED TABLE "tmp_household" AS SELECT
             owner_id,
             sum(open_count) AS cases_household,
@@ -267,6 +270,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         ), {'end_date': self.month_end}
 
         yield """
+        DROP TABLE IF EXISTS "tmp_person";
         CREATE UNLOGGED TABLE "tmp_person" AS SELECT
             awc_id,
             supervisor_id,
@@ -324,6 +328,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        DROP TABLE IF EXISTS "tmp_child";
         CREATE UNLOGGED TABLE "tmp_child" AS SELECT
             awc_id,
             sum(has_aadhar_id) as child_has_aadhar,
@@ -345,6 +350,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        DROP TABLE IF EXISTS "tmp_ccs";
         CREATE UNLOGGED TABLE "tmp_ccs" AS SELECT
             awc_id,
             sum(anc_in_month) AS num_anc_visits,
@@ -366,6 +372,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        DROP TABLE IF EXISTS "tmp_usage";
         CREATE UNLOGGED TABLE "tmp_usage" AS SELECT
             awc_id,
             month,
@@ -424,6 +431,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             infra_last_update_date = ut.infra_last_update_date,
             infra_type_of_building = ut.infra_type_of_building,
             infra_clean_water = ut.infra_clean_water,
+            toilet_facility = ut.toilet_facility,
+            type_toilet = ut.type_toilet,
+            preschool_kit_available = ut.preschool_kit_available,
+            preschool_kit_usable = ut.preschool_kit_usable,
             infra_functional_toilet = ut.infra_functional_toilet,
             infra_baby_weighing_scale = ut.infra_baby_weighing_scale,
             infra_adult_weighing_scale = ut.infra_adult_weighing_scale,
@@ -446,6 +457,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                   WHEN awc_building = 4 THEN 'partial_covered_space'
                 ELSE NULL END AS infra_type_of_building,
                 CASE WHEN source_drinking_water IN (1, 2, 3) THEN 1 ELSE 0 END AS infra_clean_water,
+                toilet_facility,
+                type_toilet,
+                preschool_kit_available,
+                preschool_kit_usable,
                 toilet_functional AS infra_functional_toilet,
                 baby_scale_usable AS infra_baby_weighing_scale,
                 GREATEST(adult_scale_available, adult_scale_usable, 0) AS infra_adult_weighing_scale,
@@ -480,6 +495,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
+        DROP TABLE IF EXISTS "tmp_awc";
         CREATE UNLOGGED TABLE "tmp_awc" AS SELECT
             doc_id as awc_id,
             MAX(state_is_test) as state_is_test,
@@ -571,6 +587,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('usage_awc_num_active',),
             ('infra_last_update_date', 'NULL'),
             ('infra_type_of_building', 'NULL'),
+            ('toilet_facility', 'NULL'),
+            ('type_toilet', 'NULL'),
+            ('preschool_kit_available',),
+            ('preschool_kit_usable',),
             ('infra_clean_water',),
             ('infra_functional_toilet',),
             ('infra_baby_weighing_scale',),

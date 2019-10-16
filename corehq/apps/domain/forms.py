@@ -2424,7 +2424,7 @@ class ManageReleasesByLocationForm(forms.Form):
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
-            crispy.Field('app_id', id='app-id-search-select', css_class="ko-select2"),
+            crispy.Field('app_id', id='app-id-search-select', css_class="hqwebapp-select2"),
             crispy.Field('location_id', id='location_search_select'),
             crispy.Field('version', id='version-input'),
             crispy.Field('status', id='status-input'),
@@ -2491,41 +2491,26 @@ class ManageReleasesByLocationForm(forms.Form):
         return True, None
 
 
-class ManageReleasesByAppProfileForm(forms.Form):
+class BaseManageReleasesByAppProfileForm(forms.Form):
     app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
     version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
-    build_profile_id = forms.CharField(label=ugettext_lazy('Application Profile'),
-                                       required=False, widget=Select(choices=[]))
-    status = forms.ChoiceField(label=ugettext_lazy("Status"),
-                               choices=(
-                                   ('', ugettext_lazy('Select Status')),
-                                   ('active', ugettext_lazy('Active')),
-                                   ('inactive', ugettext_lazy('Inactive'))),
-                               required=False,
-                               help_text=ugettext_lazy("Applicable for search only"))
 
     def __init__(self, request, domain, *args, **kwargs):
         self.request = request
         self.domain = domain
-        super(ManageReleasesByAppProfileForm, self).__init__(*args, **kwargs)
+        super(BaseManageReleasesByAppProfileForm, self).__init__(*args, **kwargs)
         self.fields['app_id'].choices = self.app_id_choices()
-        if request.GET.get('app_id'):
-            self.fields['app_id'].initial = request.GET.get('app_id')
-        if request.GET.get('status'):
-            self.fields['status'].initial = request.GET.get('status')
         self.helper = HQFormHelper()
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
-            crispy.Field('app_id', id='app-id-search-select', css_class="ko-select2"),
-            crispy.Field('version', id='version-input'),
-            crispy.Field('build_profile_id', id='app-profile-id-input'),
-            crispy.Field('status', id='status-input'),
+            crispy.Fieldset(
+                "",
+                *self.form_fields()
+            ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
-                    crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
-                    Submit('submit', ugettext_lazy("Add New Restriction"))
+                    *self._buttons()
                 )
             )
         )
@@ -2535,6 +2520,55 @@ class ManageReleasesByAppProfileForm(forms.Form):
         for app in get_brief_apps_in_domain(self.domain):
             choices.append((app.id, app.name))
         return choices
+
+    def form_fields(self):
+        return [
+            crispy.Field('app_id', css_class="hqwebapp-select2 app-id-search-select"),
+            crispy.Field('version', css_class='version-input'),
+        ]
+
+    @staticmethod
+    def _buttons():
+        raise NotImplementedError
+
+
+class SearchManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
+    app_build_profile_id = forms.ChoiceField(label=ugettext_lazy("Build Profile"), choices=(),
+                                             required=False)
+    status = forms.ChoiceField(label=ugettext_lazy("Status"),
+                               choices=(
+                                   ('', ugettext_lazy('Select Status')),
+                                   ('active', ugettext_lazy('Active')),
+                                   ('inactive', ugettext_lazy('Inactive'))),
+                               required=False)
+
+    def __init__(self, request, domain, *args, **kwargs):
+        super(SearchManageReleasesByAppProfileForm, self).__init__(request, domain, *args, **kwargs)
+        if request.GET.get('app_id'):
+            self.fields['app_id'].initial = request.GET.get('app_id')
+        if request.GET.get('status'):
+            self.fields['status'].initial = request.GET.get('status')
+
+    def form_fields(self):
+        form_fields = super(SearchManageReleasesByAppProfileForm, self).form_fields()
+        form_fields.extend([
+            crispy.Field('app_build_profile_id', css_class="hqwebapp-select2 app-build-profile-id-select"),
+            crispy.Field('status', id='status-input')
+        ])
+        return form_fields
+
+    @staticmethod
+    def _buttons():
+        return [
+            crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search",
+                          css_class='btn-primary'),
+            crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
+        ]
+
+
+class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
+    build_profile_id = forms.CharField(label=ugettext_lazy('Build Profile'),
+                                       required=False, widget=Select(choices=[]))
 
     def save(self):
         try:
@@ -2553,6 +2587,17 @@ class ManageReleasesByAppProfileForm(forms.Form):
         app_id = self.cleaned_data['app_id']
         version = self.cleaned_data['version']
         return get_version_build_id(self.domain, app_id, version)
+
+    def form_fields(self):
+        form_fields = super(CreateManageReleasesByAppProfileForm, self).form_fields()
+        form_fields.extend([
+            crispy.Field('build_profile_id', id='build-profile-id-input')
+        ])
+        return form_fields
+
+    @staticmethod
+    def _buttons():
+        return [Submit('submit', ugettext_lazy("Add New Restriction"), css_class='btn-primary')]
 
     def clean(self):
         if self.cleaned_data.get('version'):

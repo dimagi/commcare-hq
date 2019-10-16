@@ -4,7 +4,7 @@ import doctest
 from django.test import SimpleTestCase
 
 import corehq.motech.openmrs.serializers
-from corehq.motech.openmrs.serializers import to_omrs_date, to_omrs_datetime
+from corehq.motech.openmrs.serializers import to_omrs_datetime
 
 
 class SerializerTests(SimpleTestCase):
@@ -48,19 +48,7 @@ class SerializerTests(SimpleTestCase):
         openmrs_timestamp = to_omrs_datetime(day_int)
         self.assertIsNone(openmrs_timestamp)
 
-    def test_to_date_datetime_str(self):
-        datetime_str = '2017-06-27T09:36:47.396000Z'
-        openmrs_date = to_omrs_date(datetime_str)
-        self.assertEqual(openmrs_date, '2017-06-27')
 
-    def test_to_date_int(self):
-        day_int = 1
-        openmrs_date = to_omrs_date(day_int)
-        self.assertIsNone(openmrs_date)
-
-
-class DocTests(SimpleTestCase):
-
-    def test_doctests(self):
-        results = doctest.testmod(corehq.motech.openmrs.serializers)
-        self.assertEqual(results.failed, 0)
+def test_doctests():
+    results = doctest.testmod(corehq.motech.openmrs.serializers)
+    assert results.failed == 0

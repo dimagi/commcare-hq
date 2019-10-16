@@ -65,9 +65,8 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
                 loc.state_id as state_id,
                 loc.state_name as state_name
             FROM "{awc_location_table_name}" loc
-            WHERE loc.doc_id not in (
-              SELECT aww.awc_id FROM "{table_name}" aww
-            ) and loc.doc_id != 'All'
+            LEFT OUTER JOIN "{table_name}" aww ON loc.doc_id = aww.awc_id
+            WHERE aww.awc_id IS NULL AND loc.doc_id != 'All'
         )
         """.format(
             table_name=self.aggregate_parent_table,
