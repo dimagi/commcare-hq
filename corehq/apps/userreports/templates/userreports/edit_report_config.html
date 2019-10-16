@@ -1,24 +1,33 @@
 {% extends "userreports/userreports_base.html" %}
 {% load crispy_forms_tags %}
 {% load i18n %}
+
 {% block page_content %}
-  {% crispy form %}
-  {% if report.get_id %}
-    <hr />
-    {% if not report.is_static%}
-      {% if referring_apps %}
-        <a href="#confirm_delete" class="btn btn-danger pull-right" data-toggle="modal">
-          {% trans 'Delete Report' %}
-        </a>
-      {% else %}
-        <form method='post' action="{% url 'delete_configurable_report' domain report.get_id %}" >
-          {% csrf_token %}
-          <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit pull-right">
-        </form>
+  <div class="pull-right page-actions-toolbar">
+    <div class="btn-toolbar">
+      {% if report.get_id %}
+        <div class="btn-group">
+          <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-default">{% trans 'View Report' %}</a>
+        </div>
+        {% if not report.is_static%}
+          <div class="btn-group">
+            {% if referring_apps %}
+              <a href="#confirm_delete" class="btn btn-danger pull-right" data-toggle="modal">
+                {% trans 'Delete Report' %}
+              </a>
+            {% else %}
+              <form method='post' action="{% url 'delete_configurable_report' domain report.get_id %}" >
+                {% csrf_token %}
+                <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit pull-right">
+              </form>
+            {% endif %}
+          </div>
+        {% endif %}
       {% endif %}
-    {% endif %}
-    <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-default">{% trans 'View report' %}</a>
-  {% endif %}
+    </div>
+  </div>
+  <div class="clearfix"></div>
+  {% crispy form %}
   <br/>
   {% if not referring_apps  %}
     <label class="label label-danger">This report is not referred by any apps in this domain. Please note, a static report might be referred by apps in other domains.</label>
