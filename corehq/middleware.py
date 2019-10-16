@@ -16,6 +16,7 @@ from django.utils.deprecation import MiddlewareMixin
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
 from dimagi.utils.logging import notify_exception
 
@@ -249,17 +250,28 @@ class LoggingSessionStore(SessionStore):
 
 class LoggingSessionMiddleware(SessionMiddleware):
 
+    def __init__(self, get_response=None):
+        super().__init__(get_response)
+        regexes = getattr(settings, 'SESSION_BYPASS_URLS', [])
+        self.bypass_re = [
+            re.compile(regex.format(domain=legacy_domain_re)) for regex in regexes
+        ]
+
+    def _bypass_sessions(self, request, domain):
+        return (toggles.BYPASS_SESSIONS.enabled(domain) and
+            any(rx.match(request.path_info) for rx in self.bypass_re))
+
     def process_request(self, request):
         try:
             match = re.search(r'/a/[0-9a-z-]+', request.path)
             if match:
                 domain = match.group(0).split('/')[-1]
-                if toggles.SESSION_MIDDLEWARE_LOGGING.enabled(domain):
+                if self._bypass_sessions(request, domain):
+                    request.session.save = lambda: None
+                elif toggles.SESSION_MIDDLEWARE_LOGGING.enabled(domain):
                     session_logger.info(
                         "Logging session access for URL {}".format(request.path))
                     self.SessionStore = LoggingSessionStore
-                else:
-                    self.SessionStore = SessionStore
         except Exception as e:
             session_logger.error(
                 "Exception {} in LoggingSessionMiddleware for url {}".format(

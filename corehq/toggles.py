@@ -1837,3 +1837,10 @@ PRUNE_PREVIOUS_SYNCLOGS = DynamicallyPredictablyRandomToggle(
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
+
+BYPASS_SESSIONS = StaticToggle(
+    'bypass_sessions',
+    'Bypass sessions for select mobile URLS',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
