@@ -69,7 +69,6 @@ from corehq.apps.users.permissions import (
     can_view_sms_exports,
 )
 from corehq.feature_previews import (
-    BI_INTEGRATION_PREVIEW,
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
 )
