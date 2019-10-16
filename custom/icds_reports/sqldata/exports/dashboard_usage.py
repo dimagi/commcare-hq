@@ -109,7 +109,6 @@ class DashBoardUsage:
                    'Take Home Ration']
         excel_rows.append(headers)
         serial_count = 0
-        from custom.icds_reports.tests.test1 import get_awc_locations
         for user_location in self.user.get_sql_locations(self.domain):
             # getting the location types to retrieve for this user location
             location_type_filter = {
