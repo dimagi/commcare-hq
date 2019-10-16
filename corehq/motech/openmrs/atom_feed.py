@@ -53,7 +53,7 @@ def get_feed_xml(requests, feed_name, page):
             _("This can happen if the IP address of a Repeater is changed to "
               "point to a different server, or if a server has been rebuilt. "
               "It can signal more severe consequences, like attempts to "
-              "synchromise CommCare cases with OpenMRS patients that can no "
+              "synchronize CommCare cases with OpenMRS patients that can no "
               "longer be found.")
         )
         raise exception
