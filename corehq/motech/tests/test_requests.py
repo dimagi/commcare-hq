@@ -1,10 +1,10 @@
 import json
 
+from django.conf import settings
 from django.test import SimpleTestCase
 
-from mock import Mock, patch
-
 import requests
+from mock import Mock, patch
 
 from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.requests import Requests
@@ -143,6 +143,6 @@ class RequestsTests(SimpleTestCase):
                     'Remote API base URL: http://localhost:9080/api/\r\n'
                     'Remote API username: admin'
                 ),
-                from_email='no-reply@commcarehq.org',
+                from_email=settings.DEFAULT_FROM_ADDRESS,
                 recipient_list=['foo@example.com', 'bar@example.com']
             )

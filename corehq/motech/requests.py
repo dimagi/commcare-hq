@@ -1,5 +1,7 @@
 import logging
 
+from django.conf import settings
+
 import requests
 
 from dimagi.utils.logging import notify_exception
@@ -146,7 +148,7 @@ class Requests(object):
         send_mail_async.delay(
             'MOTECH Error',
             message_body,
-            from_email='no-reply@commcarehq.org',
+            from_email=settings.DEFAULT_FROM_ADDRESS,
             recipient_list=self.notify_addresses,
         )
 
