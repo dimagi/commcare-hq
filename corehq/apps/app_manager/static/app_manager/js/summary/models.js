@@ -114,6 +114,7 @@ hqDefine('app_manager/js/summary/models',[
                     'question': gettext("Question"),
                     'name': gettext("Name"),
                     'label': gettext("Label"),
+                    'translations': gettext("Label"),
                     'type': gettext("Question Type"),
                     'value': gettext("Question Value"),
                     'options': gettext("Option"),
