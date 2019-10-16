@@ -10,40 +10,6 @@
         <a href="#confirm_delete" class="btn btn-danger pull-right" data-toggle="modal">
           {% trans 'Delete Report'%}
         </a>
-        <div id="confirm_delete" class="modal fade" tabindex="-1" role="dialog">
-          <div class="modal-dialog" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">{% trans 'Are you sure you want to delete this report'%}</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <fieldset>
-                  <legend>{% trans 'Deleting this will break below apps that refer the report. In addition there may be older app versions that depend on these reports, they are not displayed here. Please delete with caution.' %}</legend>
-                  <ul>
-                    {% for app in referring_apps %}
-                      <li>
-                        <a href="{{ app.module_url }}">{{ app.module_name}}</a> module in
-                        <a href="{{ app.app_url }}">{{app.app_name}}</a> app
-                      </li>
-                    {% endfor %}
-                  </ul>
-                </fieldset>
-              </div>
-              <form method='post' action="{% url 'delete_configurable_report' domain report.get_id %}" >
-                {% csrf_token %}
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">
-                    {% trans "Cancel" %}
-                  </button>
-                  <button type="submit" value="{% trans 'Delete Report'%}" class="disable-on-submit btn btn-danger btn-secondary">{% trans 'Delete Report'%}</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
       {% else %}
         <form method='post' action="{% url 'delete_configurable_report' domain report.get_id %}" >
           {% csrf_token %}
@@ -69,4 +35,41 @@
       </ul>
     </fieldset>
   {% endif %}
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+  <div id="confirm_delete" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{% trans 'Are you sure you want to delete this report'%}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <fieldset>
+            <legend>{% trans 'Deleting this will break below apps that refer the report. In addition there may be older app versions that depend on these reports, they are not displayed here. Please delete with caution.' %}</legend>
+            <ul>
+              {% for app in referring_apps %}
+                <li>
+                  <a href="{{ app.module_url }}">{{ app.module_name}}</a> module in
+                  <a href="{{ app.app_url }}">{{app.app_name}}</a> app
+                </li>
+              {% endfor %}
+            </ul>
+          </fieldset>
+        </div>
+        <form method='post' action="{% url 'delete_configurable_report' domain report.get_id %}" >
+          {% csrf_token %}
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">
+              {% trans "Cancel" %}
+            </button>
+            <button type="submit" value="{% trans 'Delete Report'%}" class="disable-on-submit btn btn-danger btn-secondary">{% trans 'Delete Report'%}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 {% endblock %}
