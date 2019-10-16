@@ -148,7 +148,7 @@ class Requests(object):
         send_mail_async.delay(
             'MOTECH Error',
             message_body,
-            from_email=settings.DEFAULT_FROM_ADDRESS,
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=self.notify_addresses,
         )
 

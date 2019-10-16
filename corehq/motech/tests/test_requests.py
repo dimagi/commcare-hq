@@ -143,6 +143,6 @@ class RequestsTests(SimpleTestCase):
                     'Remote API base URL: http://localhost:9080/api/\r\n'
                     'Remote API username: admin'
                 ),
-                from_email=settings.DEFAULT_FROM_ADDRESS,
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=['foo@example.com', 'bar@example.com']
             )
