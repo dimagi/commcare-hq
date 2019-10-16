@@ -63,9 +63,10 @@ class ComplementaryFormsCcsRecordAggregationDistributedHelper(StateBasedAggregat
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
           COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN "{tablename}" prev_month
+          FULL OUTER JOIN (
+             SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
+          ) prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
-            AND prev_month.month = %(previous_month)s AND prev_month.state_id = %(state_id)s
           WHERE coalesce(ucr.month, %(month)s) = %(month)s
             AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
             AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
