@@ -226,7 +226,9 @@ def log_call(func):
         session_logger.info(func.__name__ + " was called")
         session_logger.info("\n\n\n")
         for line in traceback.format_stack():
-            session_logger.info(line.strip())
+            white_list = ['corehq/', 'custom/', func.__name__]
+            if any([c in line for c in white_list]):
+                session_logger.info(line.strip())
         return func(*args, **kwargs)
     return with_logging
 

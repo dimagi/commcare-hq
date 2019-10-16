@@ -1223,7 +1223,12 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
-        }
+        },
+        'session_access_log': {
+            'handlers': ['session_access_log'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     }
 }
 
