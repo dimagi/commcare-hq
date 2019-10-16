@@ -2088,6 +2088,8 @@ In this view, you can examine the columns, filters, and aggregation columns that
 The UCR config UI also includes pages to add new data sources, imports reports, etc.,
 all based at ``/a/DOMAIN/configurable_reports/``.  If you add a new report via the UCR UI and copy in the
 columns, filters, etc. from a report builder report, that new report will then automatically open in the UCR UI when you edit it.
+You can also take an existing report builder report and set ``my_report.report_meta.created_by_builder`` to false
+to force it to open in the UCR UI in the future.
 
 Two example UCRs, a case-based UCR for the ``dimagi`` domain and a form-based UCR for the ``gsid`` domain,
 are checked into source code. Their data source specs and report specs are in ``corehq/apps/userreports/examples/``.
