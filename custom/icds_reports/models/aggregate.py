@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 from datetime import date
-
 from django.db import connections, models, transaction
 
 from corehq.sql_db.routers import db_for_read_write
@@ -845,6 +844,9 @@ class AggregateComplementaryFeedingForms(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_COMP_FEEDING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
+        index_together = [
+            ['state_id', 'month'],
+        ]
 
     _agg_helper_cls = ComplementaryFormsAggregationDistributedHelper
     _agg_atomic = False
@@ -879,6 +881,9 @@ class AggregateCcsRecordComplementaryFeedingForms(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_CCS_RECORD_CF_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
+        index_together = [
+            ['state_id', 'month'],
+        ]
 
     _agg_helper_cls = ComplementaryFormsCcsRecordAggregationDistributedHelper
     _agg_atomic = False
@@ -960,6 +965,9 @@ class AggregateChildHealthPostnatalCareForms(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_CHILD_HEALTH_PNC_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
+        index_together = [
+            ['state_id', 'month'],
+        ]
 
     _agg_helper_cls = PostnatalCareFormsChildHealthAggregationDistributedHelper
     _agg_atomic = False
@@ -1003,6 +1011,9 @@ class AggregateCcsRecordPostnatalCareForms(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_CCS_RECORD_PNC_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
+        index_together = [
+            ['state_id', 'month'],
+        ]
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1041,6 +1052,9 @@ class AggregateChildHealthTHRForms(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_CHILD_HEALTH_THR_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
+        index_together = [
+            ['state_id', 'month'],
+        ]
 
     _agg_helper_cls = THRFormsChildHealthAggregationDistributedHelper
     _agg_atomic = False
@@ -1075,6 +1089,9 @@ class AggregateCcsRecordTHRForms(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_CCS_RECORD_THR_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
+        index_together = [
+            ['state_id', 'month'],
+        ]
 
     _agg_helper_cls = THRFormsCcsRecordAggregationDistributedHelper
     _agg_atomic = False
@@ -1265,6 +1282,9 @@ class AggregateBirthPreparednesForms(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_CCS_RECORD_BP_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
+        index_together = [
+            ['state_id', 'month'],
+        ]
 
     _agg_helper_cls = BirthPreparednessFormsAggregationDistributedHelper
     _agg_atomic = False
@@ -1308,6 +1328,9 @@ class AggregateCcsRecordDeliveryForms(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_CCS_RECORD_DELIVERY_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
+        index_together = [
+            ['state_id', 'month'],
+        ]
 
     _agg_helper_cls = DeliveryFormsAggregationDistributedHelper
     _agg_atomic = False
