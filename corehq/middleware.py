@@ -255,6 +255,8 @@ class LoggingSessionMiddleware(SessionMiddleware):
             if match:
                 domain = match.group(0).split('/')[-1]
                 if toggles.SESSION_MIDDLEWARE_LOGGING.enabled(domain):
+                    session_logger.info(
+                        "Logging session access for URL {}".format(request.path))
                     self.SessionStore = LoggingSessionStore
                 else:
                     self.SessionStore = SessionStore
