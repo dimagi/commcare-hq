@@ -1171,7 +1171,7 @@ class MaintenanceAlertsView(BasePageView):
                 'html': alert.html,
                 'id': alert.id,
                 'domains': ", ".join(alert.domains) if alert.domains else "All domains",
-            } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
+            } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:20]]
         }
 
     @property

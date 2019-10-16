@@ -49,7 +49,6 @@
 trunk: master
 name: autostaging
 branches:
-  - vellum-staging
   #- fr/case-templates      # FR May 15
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
   - bmb/case-sharing  #Biyeun Aug 22
@@ -59,4 +58,5 @@ branches:
   - MC/SL-229  # Norman Oct 9
   - bmb/odata-release  # Biyeun Oct 9
   - bmb/new-plans  # Biyeun Oct 9
+  - sr-session-audit  # Sravan Oct 15
 submodules: {}

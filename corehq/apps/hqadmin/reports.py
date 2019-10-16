@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -11,6 +12,7 @@ from memoized import memoized
 
 from auditcare.models import NavigationEventAudit
 from auditcare.utils.export import navigation_event_ids_by_user
+from dateutil.parser import parse
 from dimagi.utils.couch.database import iter_docs
 from phonelog.models import DeviceReportEntry
 from phonelog.reports import BaseDeviceLogReport
@@ -21,7 +23,7 @@ from corehq.apps.app_manager.commcare_settings import (
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.builds.utils import get_all_versions
-from corehq.apps.es import FormES, UserES, filters
+from corehq.apps.es import FormES, filters, users as user_es
 from corehq.apps.es.aggregations import (
     AggregationTerm,
     NestedTermAggregationsHelper,
@@ -38,6 +40,7 @@ from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import (
     ElasticTabularReport,
     GenericTabularReport,
+    GetParamsMixin,
 )
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.apps.reports.standard.domains import (
@@ -48,6 +51,7 @@ from corehq.apps.reports.standard.sms import PhoneNumberReport
 from corehq.apps.sms.filters import RequiredPhoneNumberFilter
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import PhoneNumber
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.elastic import (
     es_query,
     fill_mapping_with_facets,
@@ -915,7 +919,7 @@ class AdminUserReport(AdminFacetedReport):
 
     @property
     def export_rows(self):
-        query = UserES().remove_default_filters()
+        query = user_es.UserES().remove_default_filters()
         for u in query.scroll():
             yield self._format_row(u)
 
@@ -1331,3 +1335,80 @@ class UserAuditReport(AdminReport, DatespanMixin):
                     event.event_date, event.user, event.domain or '', event.ip_address, event.request_path
                 ])
         return rows
+
+
+class UserListReport(GetParamsMixin, AdminReport):
+    base_template = 'reports/base_template.html'
+
+    slug = 'user_list_report'
+    name = ugettext_lazy("User List")
+
+    fields = [
+        'corehq.apps.reports.filters.simple.SimpleSearch',
+    ]
+    emailable = False
+    exportable = False
+    ajax_pagination = True
+    default_rows = 10
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_("Username")),
+            DataTablesColumn(_("Project Spaces")),
+            DataTablesColumn(_("Date Joined")),
+            DataTablesColumn(_("Last Login")),
+            DataTablesColumn(_("Type")),
+            DataTablesColumn(_("SuperUser?")),
+        )
+
+    @property
+    def rows(self):
+        for user in self._get_page(self._users_query()):
+            yield [
+                self._user_link(user['username']),
+                self._get_domains(user),
+                self._format_date(user['date_joined']),
+                self._format_date(user['last_login']),
+                user['doc_type'],
+                user['is_superuser'],
+            ]
+
+    def _users_query(self):
+        query = (user_es.UserES()
+                 .remove_default_filters()
+                 .OR(user_es.web_users(), user_es.mobile_users()))
+        if 'search_string' in self.request.GET:
+            search_string = self.request.GET['search_string']
+            fields = ['username', 'first_name', 'last_name', 'phone_numbers',
+                      'domain_membership.domain', 'domain_memberships.domain']
+            query = query.search_string_query(search_string, fields)
+        return query
+
+    def _get_page(self, query):
+        return (query
+                .start(self.pagination.start)
+                .size(self.pagination.count)
+                .run().hits)
+
+    @property
+    def total_records(self):
+        return self._users_query().count()
+
+    def _user_link(self, username):
+        return f'<a href="{self._user_lookup_url}?q={username}">{username}</a>'
+
+    @cached_property
+    def _user_lookup_url(self):
+        return reverse('web_user_lookup')
+
+    def _get_domains(self, user):
+        if user['doc_type'] == "WebUser":
+            return ", ".join(dm['domain'] for dm in user['domain_memberships'])
+        return user['domain_membership']['domain']
+
+    @staticmethod
+    def _format_date(date):
+        if date:
+            return parse(date).strftime(SERVER_DATETIME_FORMAT)
+        return "---"

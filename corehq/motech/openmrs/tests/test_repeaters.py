@@ -11,6 +11,7 @@ import mock
 from casexml.apps.case.models import CommCareCase
 
 import corehq.motech.openmrs.repeater_helpers
+from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
@@ -22,6 +23,7 @@ from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_BOOLEAN,
     XMLNS_OPENMRS,
 )
+from corehq.motech.openmrs.exceptions import DuplicateCaseMatch
 from corehq.motech.openmrs.openmrs_config import (
     OpenmrsCaseConfig,
     OpenmrsConfig,
@@ -37,10 +39,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     save_match_ids,
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.value_source import (
-    CaseTriggerInfo,
-    get_case_location,
-)
+from corehq.motech.value_source import CaseTriggerInfo, get_case_location
 from corehq.util.test_utils import TestFileMixin, _create_case
 
 DOMAIN = 'openmrs-repeater-tests'
@@ -537,7 +536,8 @@ class FindPatientTest(SimpleTestCase):
         })
 
         with mock.patch('corehq.motech.openmrs.repeater_helpers.CaseAccessors') as CaseAccessorsPatch, \
-                mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch:
+                mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch, \
+                mock.patch('corehq.motech.openmrs.repeater_helpers.save_match_ids') as save_match_ids_patch:
             requests = mock.Mock()
             info = mock.Mock(case_id='123')
             CaseAccessorsPatch.return_value = mock.Mock(get_case=mock.Mock())
@@ -554,6 +554,8 @@ class SaveMatchIdsTests(SimpleTestCase):
         self.case = mock.Mock()
         self.case.domain = DOMAIN
         self.case.get_id = 'deadbeef'
+        self.case.case_id = 'deadbeef'
+        self.case.name = ''
         self.case_config = copy.deepcopy(CASE_CONFIG)
         self.patient = PATIENT_SEARCH_RESPONSE['results'][0]
 
@@ -570,7 +572,9 @@ class SaveMatchIdsTests(SimpleTestCase):
 
     @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
     @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock')
-    def test_save_external_id(self, case_block_mock, _):
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
+    def test_save_external_id(self, importer_util_mock, case_block_mock, _):
+        importer_util_mock.lookup_case.return_value = (None, LookupErrors.NotFound)
         self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
         save_match_ids(self.case, self.case_config, self.patient)
         case_block_mock.assert_called_with(
@@ -579,6 +583,25 @@ class SaveMatchIdsTests(SimpleTestCase):
             external_id='672c4a51-abad-4b5e-950c-10bc262c9c1a',
             update={}
         )
+
+    @mock.patch('corehq.motech.openmrs.repeater_helpers._assert')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
+    def test_save_duplicate_external_id(self, importer_util_mock, _, __):
+        another_case = mock.Mock()
+        importer_util_mock.lookup_case.return_value = (another_case, None)
+        self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
+        with self.assertRaises(DuplicateCaseMatch):
+            save_match_ids(self.case, self.case_config, self.patient)
+
+    @mock.patch('corehq.motech.openmrs.repeater_helpers._assert')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
+    def test_save_multiple_external_id(self, importer_util_mock, _, __):
+        importer_util_mock.lookup_case.return_value = (None, LookupErrors.MultipleResults)
+        self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
+        with self.assertRaises(DuplicateCaseMatch):
+            save_match_ids(self.case, self.case_config, self.patient)
 
 
 class DocTests(SimpleTestCase):
