@@ -6,10 +6,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.users.models import CommCareUser
 from custom.icds.messaging.custom_content import run_indicator_for_user
-from custom.icds.messaging.indicators import (
-    AWWSubmissionPerformanceIndicator,
-    is_aggregate_inactive_aww_data_fresh
-)
+from custom.icds.messaging.indicators import AWWSubmissionPerformanceIndicator
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 
 
