@@ -71,11 +71,11 @@ class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
         delete_query, delete_params = self.delete_old_data_query()
         agg_query, agg_params = self.aggregation_query()
 
-        logging.info(f'Deleting {self.helper_key} for {self.month} and state {self.state_id}')
+        logger.info(f'Deleting {self.helper_key} for {self.month} and state {self.state_id}')
         cursor.execute(delete_query, delete_params)
-        logging.info(f'Starting aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
+        logger.info(f'Starting aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
         cursor.execute(agg_query, agg_params)
-        logging.info(f'Finished aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
+        logger.info(f'Finished aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
 
     def delete_old_data_query(self):
         return (
@@ -97,13 +97,13 @@ class StateBasedAggregationPartitionedHelper(BaseICDSAggregationDistributedHelpe
         curr_month_query, curr_month_params = self.create_table_query()
         agg_query, agg_param = self.aggregate_query()
 
-        logging.info(f'Deleting {self.helper_key} for {self.month} and state {self.state_id}')
+        logger.info(f'Deleting {self.helper_key} for {self.month} and state {self.state_id}')
         cursor.execute(drop_query)
-        logging.info(f'Creating table for {self.helper_key} month {self.month} and state {self.state_id}')
+        logger.info(f'Creating table for {self.helper_key} month {self.month} and state {self.state_id}')
         cursor.execute(curr_month_query, curr_month_params)
-        logging.info(f'Starting aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
+        logger.info(f'Starting aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
         cursor.execute(agg_query, agg_param)
-        logging.info(f'Finished aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
+        logger.info(f'Finished aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
 
     def generate_child_tablename(self, month=None):
         month = month or self.month
