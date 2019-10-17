@@ -1,6 +1,7 @@
 {% extends "userreports/userreports_base.html" %}
-{% load i18n %}
 {% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
 
 {% block page_content %}
   {% if read_only %}
@@ -10,11 +11,6 @@
   {% endif %}
   {% crispy form %}
   {% if data_source.get_id %}
-    {% if data_source.disable_destructive_rebuild %}
-      <div class="alert alert-info">
-        {% trans "Fully rebuilding has been disabled for this data source, please use the in place rebuild if necessary" %}</p>
-      </div>
-    {% endif %}
     <hr />
     {% if not read_only %}
       {% if not used_by_reports %}
@@ -30,11 +26,17 @@
     {% endif %}
     <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
       {% csrf_token %}
-      {% if not data_source.disable_destructive_rebuild %}
-        <button type="submit" class="btn btn-default disable-on-submit pull-right">
+      <div class="pull-right" style="margin-right: 15px;">
+        <button type="submit" class="btn btn-default disable-on-submit" {% if data_source.disable_destructive_rebuild %}disabled{% endif %}>
           {% trans 'Rebuild Data Source'%}
         </button>
-      {% endif %}
+        {% if not data_source.disable_destructive_rebuild %}
+        <span class="hq-help-template"
+          data-title="{% trans_html_attr "Rebuild Unavailable" %}"
+          data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
+          data-placement="left"></span>
+        {% endif %}
+      </div>
       <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>
       <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
       <a href="{% url 'configurable_data_source_json' domain data_source.get_id %}"
