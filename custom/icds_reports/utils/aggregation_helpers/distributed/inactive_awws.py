@@ -33,7 +33,7 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
                 FIRST_VALUE(form_date) OVER forms as first_submission,
                 LAST_VALUE(form_date) OVER forms as last_submission
             FROM "{ucr_tablename}"
-            WHERE inserted_at >= %(last_sync)s AND month > %(six_months_ago)s AND form_date <= %(now)s
+            WHERE inserted_at >= %(last_sync)s AND month > %(one_month_ago)s AND form_date <= %(now)s
             WINDOW forms AS (
               PARTITION BY supervisor_id, awc_id
               ORDER BY form_date ASC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
@@ -43,7 +43,7 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
         ), {
             "last_sync": self.last_sync,
             "now": datetime.datetime.utcnow(),
-            "six_months_ago": datetime.datetime.utcnow() - relativedelta(months=6),
+            "one_month_ago": datetime.datetime.utcnow() - relativedelta(months=1),
         }
 
     def missing_location_query(self):
