@@ -61,8 +61,8 @@ class TestESQuerySet(TestCase):
             self.example_response,
             HQESQuery('forms').fields(fields)
         )
-        self.assertEquals(response.total, 5247)
-        self.assertEquals(response.hits, hits)
+        self.assertEqual(response.total, 5247)
+        self.assertEqual(response.hits, hits)
 
     def test_error(self):
         with self.assertRaises(ESError):
@@ -97,7 +97,7 @@ class TestESQuerySet(TestCase):
             example_response,
             HQESQuery('forms').fields(fields)
         )
-        self.assertEquals(response.hits, hits)
+        self.assertEqual(response.hits, hits)
 
     def test_exclude_source(self):
         hits = ['8063dff5-460b-46f2-b4d0-5871abfd97d4', 'dc1376cd-0869-4c13-a267-365dfc2fa754']
@@ -105,4 +105,4 @@ class TestESQuerySet(TestCase):
             self.example_response,
             HQESQuery('forms').exclude_source()
         )
-        self.assertEquals(response.hits, hits)
+        self.assertEqual(response.hits, hits)

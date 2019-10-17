@@ -78,7 +78,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
         self.helper.field_class = 'col-sm-9 col-md-9'
 
         fields = [
-            'config_id',
+            crispy.Field('config_id', css_class="hqwebapp-select2"),
             'title',
             'visible',
             'description',

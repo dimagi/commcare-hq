@@ -1,4 +1,5 @@
 import attr
+from couchdbkit import BadValueError
 
 from couchforms.const import TAG_FORM, TAG_META
 from dimagi.ext.couchdbkit import DictProperty, DocumentSchema, StringProperty
@@ -38,6 +39,11 @@ class CaseTriggerInfo:
         if self.name:
             return f'<CaseTriggerInfo {self.case_id} {self.name!r}>'
         return f"<CaseTriggerInfo {self.case_id}>"
+
+
+def not_blank(value):
+    if not str(value):
+        raise BadValueError("Value cannot be blank.")
 
 
 def recurse_subclasses(cls):
@@ -144,7 +150,7 @@ class CaseProperty(ValueSource):
     #       }
     #     }
     #
-    case_property = StringProperty()
+    case_property = StringProperty(required=True, validators=not_blank)
 
     def _get_commcare_value(self, case_trigger_info):
         """

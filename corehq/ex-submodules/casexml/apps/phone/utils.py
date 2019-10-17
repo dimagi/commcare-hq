@@ -306,7 +306,7 @@ class SyncResult(object):
         a sync log returned by this method and the one returned by the
         `log` property may reference different cases. See
         `casexml.apps.case.xform.process_cases_with_casedb` and
-        `casexml.apps.case.util.update_sync_log_with_checks`.
+        `casexml.apps.case.xform._update_sync_logs`.
         """
         return get_properly_wrapped_sync_log(self.restore_id)
 

@@ -20,7 +20,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -36,7 +36,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -75,7 +75,7 @@ class TestNewBornWithLowWeight(TestCase):
         expected = (
             new_born_with_low_weight_help_text(html=True)
         )
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_newborn_with_low_birth_weight_map(
@@ -86,7 +86,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 33.333333333333336)
+        self.assertEqual(data['rightLegend']['average'], 33.333333333333336)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_newborn_with_low_birth_weight_map(
@@ -137,7 +137,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'low_birth')
+        self.assertEqual(data['slug'], 'low_birth')
 
     def test_map_data_label(self):
         data = get_newborn_with_low_birth_weight_map(
@@ -148,7 +148,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent Newborns with Low Birth Weight')
+        self.assertEqual(data['label'], 'Percent Newborns with Low Birth Weight')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_newborn_with_low_birth_weight_map(
@@ -185,7 +185,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 50.0)
+        self.assertEqual(data['rightLegend']['average'], 50.0)
 
     def test_chart_data_keys_length(self):
         data = get_newborn_with_low_birth_weight_chart(
@@ -196,7 +196,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
 
     def test_chart_data_location_type(self):
         data = get_newborn_with_low_birth_weight_chart(
@@ -207,7 +207,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['location_type'], 'State')
+        self.assertEqual(data['location_type'], 'State')
 
     def test_chart_data_bottom_five(self):
         data = get_newborn_with_low_birth_weight_chart(
@@ -258,7 +258,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data['chart_data']), 1)
+        self.assertEqual(len(data['chart_data']), 1)
 
     def test_chart_data(self):
         data = get_newborn_with_low_birth_weight_chart(
@@ -341,7 +341,7 @@ class TestNewBornWithLowWeight(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
 
     def test_sector_data_info(self):
         data = get_newborn_with_low_birth_weight_data(
@@ -356,7 +356,7 @@ class TestNewBornWithLowWeight(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
             new_born_with_low_weight_help_text(html=True)
         )

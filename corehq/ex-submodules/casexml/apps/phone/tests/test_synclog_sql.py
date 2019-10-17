@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.test import TestCase
 
-from casexml.apps.phone.models import SyncLogSQL, SyncLog
+from casexml.apps.phone.models import SyncLogSQL, SimplifiedSyncLog
 
 
 class SyncLogQueryTest(TestCase):
@@ -15,14 +15,14 @@ class SyncLogQueryTest(TestCase):
         return SyncLogSQL.objects.count()
 
     def test_simple(self):
-        synclog = SyncLog(domain='test', user_id='user1', date=datetime(2015, 7, 1, 0, 0))
+        synclog = SimplifiedSyncLog(domain='test', user_id='user1', date=datetime(2015, 7, 1, 0, 0))
         synclog.save()
         self.assertEqual(self._count(), 1)
         synclog.delete()
         self.assertEqual(self._count(), 0)
 
     def test_update(self):
-        synclog = SyncLog(domain='test', user_id='user1', date=datetime(2015, 7, 1, 0, 0))
+        synclog = SimplifiedSyncLog(domain='test', user_id='user1', date=datetime(2015, 7, 1, 0, 0))
         synclog.save()
 
         with self.assertNumQueries(1):

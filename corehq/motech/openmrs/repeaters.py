@@ -113,7 +113,8 @@ class OpenmrsRepeater(CaseRepeater):
             self.url,
             self.username,
             self.plaintext_password,
-            verify=self.verify
+            verify=self.verify,
+            notify_addresses=self.notify_addresses,
         )
 
     @cached_property

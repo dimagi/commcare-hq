@@ -267,7 +267,7 @@ class TestValidationComprehensiveness(SimpleTestCase):
         to_test = set(FAILURE_MESSAGES.keys())
         tested = set([validation for validation, _, _ in validation_test_cases])
         untested = to_test - tested
-        self.assert_(
+        self.assertTrue(
             not untested,
             "Some fixture upload errors are still untested.\n\n"
             "You have to write a test for the following fixture upload errors:\n{}"
