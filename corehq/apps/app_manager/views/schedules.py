@@ -2,6 +2,8 @@ import json
 
 from django.http import HttpResponseBadRequest
 
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.dbaccessors import get_app

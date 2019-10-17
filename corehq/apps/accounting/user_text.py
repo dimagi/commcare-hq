@@ -30,6 +30,10 @@ DESC_BY_EDITION = {
                          "the full CommCare feature set. Your organization will receive discounted "
                          "pricing and dedicated enterprise-level support from Dimagi.")
     },
+    SoftwarePlanEdition.PAUSED: {
+        'name': _("Paused"),
+        'description': _("Paused"),
+    },
     SoftwarePlanEdition.RESELLER: {
         'name': _("Reseller"),
         'description': _("Reseller")
