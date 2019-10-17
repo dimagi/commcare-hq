@@ -1817,10 +1817,14 @@ class APWebservice(View):
 
 
 @location_safe
-@method_decorator([login_and_domain_required], name='dispatch')
+@method_decorator([login_and_domain_required, toggles.DAILY_INDICATORS.required_decorator()], name='dispatch')
 class DailyIndicators(View):
     def get(self, request, *args, **kwargs):
-        filename, export_file = get_daily_indicators(request.domain)
+
+        try:
+            filename, export_file = get_daily_indicators(request.domain)
+        except AssertionError:
+            return JsonResponse({'message': 'No data for Yesterday'}, status=500)
         response = HttpResponse(export_file.read(), content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
         return response

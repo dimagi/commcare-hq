@@ -22,11 +22,12 @@ def get_daily_indicators(domain):
         'aggregation_level': 1,
         'date': today_date
     }
-    daily_yesterday = None
-    while daily_yesterday is None or (not daily_yesterday and date.day != 1):
-        filename = 'CAS_Daily_Status_{}.csv'.format(filters['date'].strftime('%Y%m%d'))
-        filters['date'] -= relativedelta(days=1)
-        daily_yesterday = _get_data_for_daily_indicators(filters, domain)
+
+    filename = 'CAS_Daily_Status_{}.csv'.format(filters['date'].strftime('%Y%m%d'))
+    filters['date'] -= relativedelta(days=1)
+    daily_yesterday = _get_data_for_daily_indicators(filters, domain)
+
+    assert daily_yesterday
 
     columns = ['State', 'Total Anganwadis having ICDS CAS', 'Number of  anganwadis open',
                'Percentage of anganwadis open',
