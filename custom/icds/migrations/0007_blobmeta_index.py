@@ -10,6 +10,7 @@ DROP_INDEX_SQL = "DROP INDEX CONCURRENTLY IF EXISTS {}".format(INDEX_NAME)
 
 
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('icds', '0006_hostedccz_status'),
