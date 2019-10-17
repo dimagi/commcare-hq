@@ -238,9 +238,11 @@ class _AppDiffGenerator(object):
         self.first = get_app_summary_formdata(app1.domain, app1)[0]
         self.second = get_app_summary_formdata(app2.domain, app2)[0]
 
-        self._first_by_id = {}
+        self._first_modules_by_id = {}
+        self._first_forms_by_id = {}
         self._first_questions_by_form_id = defaultdict(dict)
-        self._second_by_id = {}
+        self._second_modules_by_id = {}
+        self._second_forms_by_id = {}
         self._second_questions_by_form_id = defaultdict(dict)
         self._populate_id_caches()
 
@@ -254,17 +256,17 @@ class _AppDiffGenerator(object):
             id_cache[form_id][question_path] = question
 
         for module in self.first:
-            self._first_by_id[module['unique_id']] = module
+            self._first_modules_by_id[module['unique_id']] = module
             for form in module['forms']:
-                self._first_by_id[form['unique_id']] = form
+                self._first_forms_by_id[form['unique_id']] = form
                 for question in form['questions']:
                     add_question_to_id_cache(self._first_questions_by_form_id,
                                              form['unique_id'], question['value'], question)
 
         for module in self.second:
-            self._second_by_id[module['unique_id']] = module
+            self._second_modules_by_id[module['unique_id']] = module
             for form in module['forms']:
-                self._second_by_id[form['unique_id']] = form
+                self._second_forms_by_id[form['unique_id']] = form
                 for question in form['questions']:
                     add_question_to_id_cache(self._second_questions_by_form_id,
                                              form['unique_id'], question['value'], question)
@@ -273,12 +275,12 @@ class _AppDiffGenerator(object):
         """Finds all removed modules, forms, and questions from the second app
         """
         for module in self.first:
-            if module['unique_id'] not in self._second_by_id:
+            if module['unique_id'] not in self._second_modules_by_id:
                 self._mark_item_removed(module, 'module')
                 continue
 
             for form in module['forms']:
-                if form['unique_id'] not in self._second_by_id:
+                if form['unique_id'] not in self._second_forms_by_id:
                     self._mark_item_removed(form, 'form')
                     continue
 
@@ -297,7 +299,7 @@ class _AppDiffGenerator(object):
         """
         for second_module in self.second:
             try:
-                first_module = self._first_by_id[second_module['unique_id']]
+                first_module = self._first_modules_by_id[second_module['unique_id']]
                 for attribute in MODULE_ATTRIBUTES:
                     self._mark_attribute(first_module, second_module, attribute)
                 self._mark_forms(second_module['forms'])
@@ -324,7 +326,7 @@ class _AppDiffGenerator(object):
     def _mark_forms(self, second_forms):
         for second_form in second_forms:
             try:
-                first_form = self._first_by_id[second_form['unique_id']]
+                first_form = self._first_forms_by_id[second_form['unique_id']]
                 for attribute in FORM_ATTRIBUTES:
                     self._mark_attribute(first_form, second_form, attribute)
                 self._mark_questions(second_form['unique_id'], second_form['questions'])
@@ -450,7 +452,7 @@ class _AppDiffGenerator(object):
 
         """
         ancestors = []
-        for tree in [self._first_by_id, self._second_by_id]:
+        for tree in [self._first_forms_by_id, self._second_forms_by_id]:
             try:
                 form_id = question['form_id']
                 ancestors.append(tree[form_id])
