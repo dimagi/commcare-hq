@@ -1817,7 +1817,7 @@ class APWebservice(View):
 
 
 @location_safe
-@method_decorator([api_auth], name='dispatch')
+@method_decorator([login_and_domain_required], name='dispatch')
 class DailyIndicators(View):
     def get(self, request, *args, **kwargs):
         filename, export_file = get_daily_indicators(request.domain)
