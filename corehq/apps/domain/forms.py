@@ -789,9 +789,16 @@ class PrivacySecurityForm(forms.Form):
     restrict_superusers = BooleanField(
         label=ugettext_lazy("Restrict Dimagi Staff Access"),
         required=False,
-        help_text=ugettext_lazy("Dimagi staff sometimes require access to projects to provide support. Checking "
-                                "this box may restrict your ability to receive this support in the event you "
-                                "report an issue. You may also miss out on important communications and updates.")
+        help_text=ugettext_lazy(
+            "Dimagi staff sometimes require access to projects to provide support. Checking "
+            "this box may restrict your ability to receive this support in the event you "
+            "report an issue. You may also miss out on important communications and updates. "
+            "Regardless of whether this option is checked, "
+            "Dimagi staff will have access your billing information "
+            "and limited project metadata; "
+            "Dimagi system administrators will have access to data "
+            "strictly for the purposes of system and database administration."
+        )
     )
     secure_submissions = BooleanField(
         label=ugettext_lazy("Secure submissions"),
