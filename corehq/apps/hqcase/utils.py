@@ -221,7 +221,7 @@ def bulk_update_cases(domain, case_changes, device_id):
         # Ensure the XML is formatted properly
         # An exception is raised if not
         case_block = ElementTree.tostring(case_block.as_xml())
-        case_blocks.append(case_block)
+        case_blocks.append(case_block.as_text())
     return submit_case_blocks(case_blocks, domain, device_id=device_id)
 
 
