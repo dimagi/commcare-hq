@@ -74,7 +74,17 @@ def _last_submission_needs_update(last_submission, received_on_datetime, build_v
     # If debounce is false it updates if the submission is newer at all
     if not (last_submission and last_submission.submission_date):
         return True
+
     time_difference = received_on_datetime - last_submission.submission_date
+    if time_difference < timedelta(seconds=0):
+        return False
+
+    # Ignore debounce if the user has updated since the last submission
+    if build_version != last_submission.build_version:
+        return True
+    if cc_version != last_submission.commcare_version:
+        return True
+
     debounce_delay = settings.USER_REPORTING_METADATA_UPDATE_FREQUENCY
     update_frequency = timedelta(minutes=debounce_delay) if debounce else timedelta(seconds=0)
     return time_difference > update_frequency
