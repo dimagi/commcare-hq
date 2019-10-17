@@ -104,6 +104,8 @@ class ToggleEditView(BasePageView):
 
     @property
     def page_title(self):
+        if not self.static_toggle:
+            raise Http404()
         return self.static_toggle.label
 
     @property
