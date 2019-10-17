@@ -295,10 +295,12 @@ class XformsResponse(object):
 
 def formplayer_post_data_helper(d, content_type, url):
     data = json.dumps(d).encode('utf-8')
+    session_id = data['session-id']
     headers = {}
     headers["Content-Type"] = content_type
     headers["content-length"] = str(len(data))
     headers["X-MAC-DIGEST"] = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data)
+    headers["X-FORMPLAYER-SESSION"] = session_id
     response = requests.post(
         url,
         data=data,
