@@ -11,6 +11,7 @@ class DeliveryFormsAggregationDistributedHelper(StateBasedAggregationDistributed
     helper_key = 'delivery-forms'
     ucr_data_source_id = 'static-dashboard_delivery_forms'
     aggregate_parent_table = AGG_CCS_RECORD_DELIVERY_TABLE
+    months_required = 0
 
     def aggregation_query(self):
         month = self.month.replace(day=1)

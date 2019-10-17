@@ -11,6 +11,7 @@ class THRFormsCcsRecordAggregationDistributedHelper(StateBasedAggregationDistrib
     helper_key = 'thr-forms-ccs-record'
     ucr_data_source_id = 'static-dashboard_thr_forms'
     aggregate_parent_table = AGG_CCS_RECORD_THR_TABLE
+    months_required = 0
 
     def aggregation_query(self):
         month = self.month.replace(day=1)

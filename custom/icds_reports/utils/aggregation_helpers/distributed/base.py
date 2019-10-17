@@ -3,6 +3,8 @@ import logging
 
 from django.db import transaction
 
+from dateutil.relativedelta import relativedelta
+
 from corehq.apps.userreports.models import (
     StaticDataSourceConfiguration,
     get_datasource_config,
@@ -67,11 +69,20 @@ class BaseICDSAggregationDistributedHelper(AggregationHelper):
 
 
 class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    """Helper for tables distributed across Citus with no partitioning
+
+    Attributes:
+        months_required - The number of months that the table should keep in the table.
+    """
+    months_required = None
+
     def aggregate(self, cursor):
         delete_query, delete_params = self.delete_previous_run_query()
         agg_query, agg_params = self.aggregation_query()
 
-        logger.info(f'Deleting {self.helper_key} for {self.month} and state {self.state_id}')
+        logger.info(f'Deleting old data for {self.helper_key} month {self.month} and state {self.state_id}')
+        cursor.execute(*self.delete_old_data_query())
+        logger.info(f'Deleting for {self.helper_key} month {self.month} and state {self.state_id}')
         cursor.execute(delete_query, delete_params)
         logger.info(f'Starting aggregation for {self.helper_key} month {self.month} and state {self.state_id}')
         cursor.execute(agg_query, agg_params)
@@ -81,6 +92,16 @@ class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
         return (
             f'DELETE FROM "{self.aggregate_parent_table}" WHERE month=%(month)s AND state_id = %(state)s',
             {'month': month_formatter(self.month), 'state': self.state_id}
+        )
+
+    def delete_old_data_query(self):
+        if self.months_required is None:
+            return
+
+        month = self.month - relativedelta(months=self.months_required)
+        return (
+            f'DELETE FROM "{self.aggregate_parent_table}" WHERE month <= %(month)s AND state_id = %(state)s',
+            {'month': month_formatter(month), 'state': self.state_id}
         )
 
 
