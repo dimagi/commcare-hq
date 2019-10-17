@@ -794,7 +794,7 @@ class PrivacySecurityForm(forms.Form):
             "this box may restrict your ability to receive this support in the event you "
             "report an issue. You may also miss out on important communications and updates. "
             "Regardless of whether this option is checked, "
-            "Dimagi staff will have access your billing information "
+            "Dimagi staff will have access to your billing information "
             "and limited project metadata; "
             "Dimagi system administrators will have access to data "
             "strictly for the purposes of system and database administration."
