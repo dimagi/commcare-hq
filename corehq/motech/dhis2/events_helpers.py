@@ -10,23 +10,17 @@ def send_dhis2_event(request, form_config, payload):
     return request.post('/api/%s/events' % DHIS2_API_VERSION, json=event)
 
 
-def get_event(domain, config, form_json):
-    info = CaseTriggerInfo(
-        domain=domain,
-        case_id=None,
-        type=None,
-        name=None,
-        owner_id=None,
-        modified_by=None,
-        updates=None,
-        created=None,
-        closed=None,
-        extra_fields=None,
-        form_question_values=get_form_question_values(form_json),
-    )
+def get_event(domain, config, form_json=None, info=None):
+    if info is None:
+        info = CaseTriggerInfo(
+            domain=domain,
+            case_id=None,
+            form_question_values=get_form_question_values(form_json),
+        )
     event = {}
     event_property_functions = [
         _get_program,
+        _get_program_stage,
         _get_org_unit,
         _get_event_date,
         _get_event_status,
@@ -40,6 +34,15 @@ def get_event(domain, config, form_json):
 
 def _get_program(config, case_trigger_info):
     return {'program': config.program_id}
+
+
+def _get_program_stage(config, case_trigger_info):
+    program_stage_id = None
+    if config.program_stage_id:
+        program_stage_id = config.program_stage_id.get_value(case_trigger_info)
+    if program_stage_id:
+        return {'programStage': program_stage_id}
+    return {}
 
 
 def _get_org_unit(config, case_trigger_info):
