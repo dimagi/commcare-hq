@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             sql=CREATE_INDEX_SQL.format(
                 index='icds_dashboard_ccs_record_cf_forms_state_id_month_4691a220_idx',
-                table=const.AGG_COMP_FEEDING_TABLE,
+                table=const.AGG_CCS_RECORD_CF_TABLE,
                 columns=','.join(('state_id', 'month'))
             ),
             reverse_sql=DROP_INDEX_SQL.format(index=''),
@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             sql=CREATE_INDEX_SQL.format(
                 index='icds_dashboard_ccs_recor_state_id_month_9d9fb48f_idx',
-                table=const.AGG_CCS_RECORD_BP_TABLE,
+                table=const.AGG_CCS_RECORD_DELIVERY_TABLE,
                 columns=','.join(('state_id', 'month'))
             ),
             reverse_sql=DROP_INDEX_SQL.format(index=''),
