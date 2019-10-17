@@ -364,7 +364,7 @@ class SumWhenColumn(_CaseExpressionColumn):
         # so this column type is only available for static reports.  To release this,
         # we should require that conditions be expressed using a PreFilterValue type
         # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
-        return False
+        return True
 
 
 

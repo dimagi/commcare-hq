@@ -126,10 +126,11 @@
         "display": "Age Group",
         "column_id": "age_group",
         "type": "conditional_aggregation",
-        "whens": {
-            "age_in_months BETWEEN 0 AND 11": "0_to_11",
-            "age_in_months BETWEEN 12 AND 35": "12_to_35",
-            "age_in_months BETWEEN 36 AND 60": "36_to_60"
+        "field": "age_in_months",
+        "ranges": {
+            "0_to_11": [0, 11],
+            "12_to_35": [12, 35],
+            "36_to_60": [36, 60]
         }
       },
       {
