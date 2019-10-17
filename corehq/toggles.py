@@ -1759,13 +1759,6 @@ MANAGE_CCZ_HOSTING = StaticToggle(
 )
 
 
-PARALLEL_AGGREGATION = StaticToggle(
-    'parallel_agg',
-    'This makes the icds dashboard aggregation run on both distributed and monolith backends',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
     'skip_orm_fixture_upload',
     'Exposes an option in fixture api upload to skip saving through couchdbkit',
@@ -1811,9 +1804,12 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
 )
 
 
-GROUP_API_USE_ES_BACKEND = StaticToggle(
-    'group_api_use_es_backend',
-    'Use ES backend for Group API',
+# todo: remove after Nov 15, 2019 if no one is using
+GROUP_API_USE_COUCH_BACKEND = StaticToggle(
+    'group_api_use_couch_backend',
+    'Use Old Couch backend for Group API. '
+    'This is an escape hatch for support '
+    'to immediately revert a domain to old behavior.',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
@@ -1824,4 +1820,11 @@ PHI_CAS_INTEGRATION = StaticToggle(
     'Integrate with PHI Api to search and validate beneficiaries',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+)
+
+PRUNE_PREVIOUS_SYNCLOGS = DynamicallyPredictablyRandomToggle(
+    'prune_previous_synclogs',
+    'Delete old synclogs during form submission',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
 )

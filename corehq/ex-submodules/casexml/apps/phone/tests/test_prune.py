@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.phone.models import (
-    SyncLog,
+    SimplifiedSyncLog,
     SyncLogSQL,
     properly_wrap_sync_log,
 )
@@ -33,9 +33,9 @@ class SyncLogPruneTest(TestCase, DocTestMixin):
     def test_count_delete_queries(self):
         today = datetime.datetime.today()
         self.docs = [
-            SyncLog(date=today - datetime.timedelta(days=SYNCLOG_RETENTION_DAYS + 7)),
-            SyncLog(date=today - datetime.timedelta(days=SYNCLOG_RETENTION_DAYS + 1)),
-            SyncLog(date=today - datetime.timedelta(days=SYNCLOG_RETENTION_DAYS - 7)),
+            SimplifiedSyncLog(date=today - datetime.timedelta(days=SYNCLOG_RETENTION_DAYS + 7)),
+            SimplifiedSyncLog(date=today - datetime.timedelta(days=SYNCLOG_RETENTION_DAYS + 1)),
+            SimplifiedSyncLog(date=today - datetime.timedelta(days=SYNCLOG_RETENTION_DAYS - 7)),
         ]
         for doc in self.docs:
             doc.domain = self.domain

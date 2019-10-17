@@ -143,7 +143,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
                 res = self.client.post(self.url, {
                     "xml_submission_file": f
                 })
-            self.assertEqual(500, res.status_code)
+            self.assertEqual(422, res.status_code)
             self.assertIn('Invalid XML', res.content.decode('utf-8'))
 
         # make sure we logged it
@@ -167,7 +167,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
     def test_missing_xmlns(self):
         file, res = self._submit('missing_xmlns.xml')
-        self.assertEqual(500, res.status_code)
+        self.assertEqual(422, res.status_code)
         message = "Form is missing a required field: XMLNS"
         self.assertIn(message, res.content.decode('utf-8'))
 

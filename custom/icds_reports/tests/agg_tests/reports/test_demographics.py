@@ -21,11 +21,11 @@ class TestDemographics(TestCase):
                 'aggregation_level': 1
             }
         )
-        self.assertEquals(1, len(data))
-        self.assertEquals(3, len(data['records']))
-        self.assertEquals(2, len(data['records'][0]))
-        self.assertEquals(2, len(data['records'][1]))
-        self.assertEquals(2, len(data['records'][2]))
+        self.assertEqual(1, len(data))
+        self.assertEqual(3, len(data['records']))
+        self.assertEqual(2, len(data['records'][0]))
+        self.assertEqual(2, len(data['records'][1]))
+        self.assertEqual(2, len(data['records'][2]))
 
     def test_data_monthly_registered_household(self):
         data = get_demographics_data(
@@ -176,11 +176,11 @@ class TestDemographics(TestCase):
                 'aggregation_level': 1
             }
         )
-        self.assertEquals(1, len(data))
-        self.assertEquals(3, len(data['records']))
-        self.assertEquals(2, len(data['records'][0]))
-        self.assertEquals(2, len(data['records'][1]))
-        self.assertEquals(2, len(data['records'][2]))
+        self.assertEqual(1, len(data))
+        self.assertEqual(3, len(data['records']))
+        self.assertEqual(2, len(data['records'][0]))
+        self.assertEqual(2, len(data['records'][1]))
+        self.assertEqual(2, len(data['records'][2]))
 
     def test_data_daily_registered_household(self):
         data = get_demographics_data(
@@ -333,11 +333,11 @@ class TestDemographics(TestCase):
                 'aggregation_level': 1
             }
         )
-        self.assertEquals(1, len(data))
-        self.assertEquals(3, len(data['records']))
-        self.assertEquals(2, len(data['records'][0]))
-        self.assertEquals(2, len(data['records'][1]))
-        self.assertEquals(2, len(data['records'][2]))
+        self.assertEqual(1, len(data))
+        self.assertEqual(3, len(data['records']))
+        self.assertEqual(2, len(data['records'][0]))
+        self.assertEqual(2, len(data['records'][1]))
+        self.assertEqual(2, len(data['records'][2]))
 
     def test_data_daily_if_aggregation_script_fail_registered_household(self):
         data = get_demographics_data(

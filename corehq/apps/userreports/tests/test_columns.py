@@ -64,7 +64,7 @@ class TestFieldColumn(SimpleTestCase):
             'default',
             'percent_of_total',
         ]:
-            self.assertEquals(FieldColumn, type(
+            self.assertEqual(FieldColumn, type(
                 ReportColumnFactory.from_spec({
                     "aggregation": "simple",
                     "field": "doc_id",
