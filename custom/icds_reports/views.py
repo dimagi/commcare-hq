@@ -110,7 +110,7 @@ from couchexport.shortcuts import export_response
 from couchexport.export import Format
 from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.models.views import NICIndicatorsView
+from custom.icds_reports.models.views import NICIndicatorsView, AggAwcDailyView
 from custom.icds_reports.reports.daily_indicators import get_daily_indicators
 from django.views.decorators.csrf import csrf_exempt
 
@@ -1822,7 +1822,7 @@ class DailyIndicators(View):
 
         try:
             filename, export_file = get_daily_indicators(request.domain)
-        except AssertionError:
+        except AggAwcDailyView.DoesNotExist:
             return JsonResponse({'message': 'No data for Yesterday'}, status=500)
         response = HttpResponse(export_file.read(), content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)

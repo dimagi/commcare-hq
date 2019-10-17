@@ -27,7 +27,8 @@ def get_daily_indicators(domain):
     filters['date'] -= relativedelta(days=1)
     daily_yesterday = _get_data_for_daily_indicators(filters, domain)
 
-    assert daily_yesterday
+    if not daily_yesterday:
+        raise AggAwcDailyView.DoesNotExist()
 
     columns = ['State', 'Total Anganwadis having ICDS CAS', 'Number of  anganwadis open',
                'Percentage of anganwadis open',
