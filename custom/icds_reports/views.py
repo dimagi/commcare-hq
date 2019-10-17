@@ -1809,7 +1809,6 @@ class NICIndicatorAPIView(View):
         return {state[0]: state[1] for state in states}
 
 
-@location_safe
 @method_decorator([api_auth, toggles.AP_WEBSERVICE.required_decorator()], name='dispatch')
 class APWebservice(View):
     def get(self, request, *args, **kwargs):
