@@ -1,4 +1,4 @@
-DELETE FROM "icds_dashboard_thr_v2" WHERE month <= %(month)s AND state_id = %(state)s
+DELETE FROM "icds_dashboard_thr_v2" WHERE month < %(month)s AND state_id = %(state)s
 {"month": "2019-01-01", "state": "st1"}
 DELETE FROM "icds_dashboard_thr_v2" WHERE month=%(month)s AND state_id = %(state)s
 {"month": "2019-01-01", "state": "st1"}

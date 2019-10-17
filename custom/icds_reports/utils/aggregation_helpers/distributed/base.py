@@ -100,7 +100,7 @@ class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
 
         month = self.month - relativedelta(months=self.months_required)
         return (
-            f'DELETE FROM "{self.aggregate_parent_table}" WHERE month <= %(month)s AND state_id = %(state)s',
+            f'DELETE FROM "{self.aggregate_parent_table}" WHERE month < %(month)s AND state_id = %(state)s',
             {'month': month_formatter(month), 'state': self.state_id}
         )
 

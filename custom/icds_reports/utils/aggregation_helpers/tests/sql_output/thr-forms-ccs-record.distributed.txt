@@ -1,4 +1,4 @@
-DELETE FROM "icds_dashboard_ccs_record_thr_forms" WHERE month <= %(month)s AND state_id = %(state)s
+DELETE FROM "icds_dashboard_ccs_record_thr_forms" WHERE month < %(month)s AND state_id = %(state)s
 {"month": "2019-01-01", "state": "st1"}
 DELETE FROM "icds_dashboard_ccs_record_thr_forms" WHERE month=%(month)s AND state_id = %(state)s
 {"month": "2019-01-01", "state": "st1"}
