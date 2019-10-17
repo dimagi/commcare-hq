@@ -1828,3 +1828,10 @@ PRUNE_PREVIOUS_SYNCLOGS = DynamicallyPredictablyRandomToggle(
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
+
+DAILY_INDICATORS = StaticToggle(
+    'daily_indicators',
+    'Enable daily indicators api',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
