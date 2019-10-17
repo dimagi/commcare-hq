@@ -1801,9 +1801,25 @@ PHI_CAS_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+
+SESSION_MIDDLEWARE_LOGGING = StaticToggle(
+    'session_middleware_logging',
+    'Log all session object method calls on this domain',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
 PRUNE_PREVIOUS_SYNCLOGS = DynamicallyPredictablyRandomToggle(
     'prune_previous_synclogs',
     'Delete old synclogs during form submission',
     TAG_CUSTOM,
     [NAMESPACE_USER]
+)
+
+BYPASS_SESSIONS = StaticToggle(
+    'bypass_sessions',
+    'Bypass sessions for select mobile URLS',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )
