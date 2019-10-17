@@ -1809,13 +1809,13 @@ class NICIndicatorAPIView(View):
         return {state[0]: state[1] for state in states}
 
 
+@location_safe
 @method_decorator([api_auth, toggles.AP_WEBSERVICE.required_decorator()], name='dispatch')
 class APWebservice(View):
     def get(self, request, *args, **kwargs):
         return JsonResponse({'message': 'Connection Successful'})
 
 
-@location_safe
 @method_decorator([login_and_domain_required, toggles.DAILY_INDICATORS.required_decorator()], name='dispatch')
 class DailyIndicators(View):
     def get(self, request, *args, **kwargs):
