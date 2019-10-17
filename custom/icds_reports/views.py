@@ -111,6 +111,7 @@ from couchexport.export import Format
 from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
 from custom.icds_reports.models.views import NICIndicatorsView
+from custom.icds_reports.reports.daily_indicators import get_daily_indicators
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -1813,6 +1814,17 @@ class NICIndicatorAPIView(View):
 class APWebservice(View):
     def get(self, request, *args, **kwargs):
         return JsonResponse({'message': 'Connection Successful'})
+
+
+
+@location_safe
+@method_decorator([api_auth], name='dispatch')
+class DailyIndicators(View):
+    def get(self, request, *args, **kwargs):
+        filename, export_file = get_daily_indicators(request.domain)
+        response = HttpResponse(export_file.read(), content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+        return response
 
 
 @location_safe
