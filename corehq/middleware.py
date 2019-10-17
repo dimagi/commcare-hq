@@ -267,7 +267,10 @@ class LoggingSessionMiddleware(SessionMiddleware):
             if match:
                 domain = match.group(0).split('/')[-1]
                 if self._bypass_sessions(request, domain):
-                    request.session.save = lambda: None
+                    session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
+                    request.session = self.SessionStore(session_key)
+                    request.session.save = lambda *x: None
+                    return
                 elif toggles.SESSION_MIDDLEWARE_LOGGING.enabled(domain):
                     session_logger.info(
                         "Logging session access for URL {}".format(request.path))
