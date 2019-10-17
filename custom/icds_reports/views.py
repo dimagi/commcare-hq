@@ -1816,7 +1816,6 @@ class APWebservice(View):
         return JsonResponse({'message': 'Connection Successful'})
 
 
-
 @location_safe
 @method_decorator([api_auth], name='dispatch')
 class DailyIndicators(View):

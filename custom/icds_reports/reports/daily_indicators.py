@@ -77,8 +77,8 @@ def get_daily_indicators(domain):
     ])
 
     export_file = StringIO()
-
     writer = csv.writer(export_file)
     writer.writerows(rows)
     export_file.seek(0)
+
     return filename, export_file
