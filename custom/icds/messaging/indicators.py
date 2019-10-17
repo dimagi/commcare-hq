@@ -230,7 +230,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
 
 # All process_sms tasks should hopefully be finished in 4 hours
 @quickcache([], timeout=60 * 60 * 4)
-def is_aggregate_inactive_aww_data_fresh():
+def is_aggregate_inactive_aww_data_fresh(send_email=False):
     # Heuristic to check if collect_inactive_awws task ran succesfully today or yesterday
     #   This would return False if both today and yesterday's task failed
     #   or if the last-submission is older than a day due to pillow lag.
@@ -239,6 +239,8 @@ def is_aggregate_inactive_aww_data_fresh():
     ).order_by('-last_submission')[0].last_submission
     is_fresh = last_submission >= datetime.today() - timedelta(days=1)
     SMS_TEAM = ['{}@{}'.format('icds-sms-rule', 'dimagi.com')]
+    if not send_email:
+        return is_fresh
     _soft_assert = soft_assert(to=SMS_TEAM, send_to_ops=False)
     if is_fresh:
         _soft_assert(False, "The weekly inactive SMS rule is successfully triggered for this week")
@@ -263,7 +265,7 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
         ).last_submission
 
     def get_messages(self, language_code=None):
-        if not is_aggregate_inactive_aww_data_fresh():
+        if not is_aggregate_inactive_aww_data_fresh(send_email=True):
             return []
 
         more_than_one_week = False
