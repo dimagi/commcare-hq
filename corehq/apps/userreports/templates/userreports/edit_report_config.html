@@ -9,6 +9,13 @@
         <div class="btn-group">
           <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-default">{% trans 'View Report' %}</a>
         </div>
+        <div class="btn-group">
+          <a href="{% url 'configurable_report_json' domain report.get_id %}"
+             class="btn btn-default track-usage-link"
+             data-category="UCR"
+             data-action="View Source"
+             data-label="Report Config">{% trans 'Report Source' %}</a>
+        </div>
         {% if not report.is_static%}
           <div class="btn-group">
             {% if referring_apps %}
