@@ -225,12 +225,12 @@ class CaseIndex(object):
     A class that holds an index to a case.
     """
 
-    def __init__(self, identifier, referenced_type, referenced_id, relationship='child'):
+    def __init__(self, identifier, referenced_type, referenced_id, relationship):
         self.identifier = identifier
         self.referenced_type = referenced_type
         self.referenced_id = referenced_id
-        self.relationship = relationship
-    
+        self.relationship = relationship or "child"
+
 
 class CaseIndexAction(CaseActionBase):
     """

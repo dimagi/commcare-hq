@@ -165,6 +165,25 @@ class IndexTest(TestCase):
         post_case_blocks([create_index], domain=self.project.name)
         deprecated_check_user_has_case(self, self.user, create_index)
 
+    def test_default_relationship(self):
+        parent_case_id = uuid.uuid4().hex
+        post_case_blocks(
+            [CaseBlock(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
+            domain=self.project.name
+        )
+        create_index = CaseBlock(
+            create=True,
+            case_id=self.CASE_ID,
+            user_id=self.user.user_id,
+            owner_id=self.user.user_id,
+        )
+        # set outside constructor to skip validation
+        create_index.index = {
+            'parent': IndexAttrs(case_type='parent', case_id=parent_case_id, relationship='')
+        }
+        form, cases = post_case_blocks([create_index.as_xml()], domain=self.project.name)
+        self.assertEqual(cases[0].indices[0].relationship, 'child')
+
 
 @use_sql_backend
 class IndexTestSQL(IndexTest):
