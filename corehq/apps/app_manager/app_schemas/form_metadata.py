@@ -440,25 +440,14 @@ class _AppDiffGenerator(object):
         This is used for the "View Changed Items" filter in the UI
         """
         try:
-            for form in self._get_form_ancestors(item):
-                form.changes.contains_changes = True
             item.changes.contains_changes = True
+            if isinstance(item, _FormMetadataQuestion):
+                for form in [self._first_forms_by_id.get(item['form_id']),
+                             self._second_forms_by_id.get(item['form_id'])]:
+                    if form:
+                        form.changes.contains_changes = True
         except AttributeError:
             pass
-
-    def _get_form_ancestors(self, question):
-        """Returns forms from both apps with the same form_id.
-        If something other than a question is passed in, it will be ignored
-
-        """
-        ancestors = []
-        for tree in [self._first_forms_by_id, self._second_forms_by_id]:
-            try:
-                form_id = question['form_id']
-                ancestors.append(tree[form_id])
-            except KeyError:
-                continue
-        return ancestors
 
 
 def get_app_diff(app1, app2):
