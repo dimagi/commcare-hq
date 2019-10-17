@@ -353,16 +353,6 @@ def get_response(data, auth=None):
         raise e
 
 
-def sync_db(username, domain, auth):
-    data = {
-        "action":"sync-db",
-        "username": username,
-        "domain": domain
-    }
-
-    return post_data(json.dumps(data), auth)
-
-
 def get_raw_instance(session_id, domain=None, auth=None):
     """
     Gets the raw xml instance of the current session regardless of the state that we're in (used for logging partially complete
