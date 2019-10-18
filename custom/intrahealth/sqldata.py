@@ -5474,7 +5474,7 @@ class RecapPassageOneData(IntraHealthSqlData):
             DatabaseColumn(_("Facturable"), SumColumn('billed_consumption')),
             DatabaseColumn("Pertes et Adjustement", SumColumn('loss_amt')),
             DatabaseColumn("Amount billed", SumColumn('amount_billed')),
-            DatabaseColumn("Amount owed", SumColumn('amount_owed')),
+            DatabaseColumn("Delivery amt", SumColumn('delivery_amt_owed')),
             DatabaseColumn("Amt delivered", SumColumn('amt_delivered_convenience')),
             DatabaseColumn("Total loss amt", SumColumn('total_loss_amt')),
             DatabaseColumn("Expired pna", SumColumn('expired_pna')),
@@ -5536,7 +5536,6 @@ class RecapPassageOneData(IntraHealthSqlData):
         rows_by_visit = self.sort_rows_by_visit(rows)
         valid_products = self.program_products
         pps_visits = {}
-
         for doc_id, rows in rows_by_visit.items():
             data = {}
             product_names = set()
@@ -5547,8 +5546,7 @@ class RecapPassageOneData(IntraHealthSqlData):
             for row in rows:
                 product_name = row['product_name']
                 product_id = row['product_id']
-                if valid_products and \
-                   product_id not in valid_products:
+                if valid_products and product_id not in valid_products:
                     continue
                 product_names.add(product_name)
                 if not data.get(product_name):
@@ -5581,23 +5579,25 @@ class RecapPassageOneData(IntraHealthSqlData):
             self.product_names = product_names
 
             rows = []
-            for key in data[product_names[0]]:
-                next_row = [key]
-                for product in product_names:
-                    next_row.append(data[product][key])
+            if product_names:
+                for key in data[product_names[0]]:
+                    next_row = [key]
+                    for product in product_names:
+                        next_row.append(data[product][key])
 
-                rows.append(next_row)
+                    rows.append(next_row)
 
-            facturation_fill = len(rows[0]) - 2
-            facturation_group = ['Facturation Groupe', amount_billed_sum]
-            facturation_group.extend([' ' for _ in range(facturation_fill)])
-            rows.append(facturation_group)
-            pps_visits[doc_id] = {
-                'rows': rows,
-                'title': location,
-                'headers': self.get_headers(),
-                'comment': date,
-            }
+                facturation_fill = len(rows[0]) - 2
+                facturation_group = ['Facturation Groupe', amount_billed_sum]
+                facturation_group.extend([' ' for _ in range(facturation_fill)])
+                rows.append(facturation_group)
+
+                pps_visits[doc_id] = {
+                    'rows': rows,
+                    'title': location,
+                    'headers': self.get_headers(),
+                    'comment': date,
+                }
 
         return pps_visits
 
@@ -5609,17 +5609,28 @@ class RecapPassageOneData(IntraHealthSqlData):
             'Net à Payer': 0,
         }
         valid_products = self.program_products
+        delivery_amt_owed_dict = {}
         for row in rows:
+            pps_name = row['pps_name']
             if valid_products and \
                row['product_id'] not in valid_products:
                 continue
 
             data['Total Facture'] += self.get_value(row['amount_billed'])
-            data['Net à Payer'] += self.get_value(row['amount_owed'])
+            delivery_amt_owed = self.get_value(row['delivery_amt_owed'])
+            if delivery_amt_owed_dict.get(pps_name, None):
+                delivery_amt_owed_dict[pps_name].add(delivery_amt_owed)
+            else:
+                delivery_amt_owed_dict[pps_name] = set()
+                delivery_amt_owed_dict[pps_name].add(delivery_amt_owed)
 
         # data['Net à Payer'] = int(data['Total Facture'] * 1.075)
         data['Total Facture'] = round(float(data['Total Facture']), 2)
-        data['Net à Payer'] = round(float(data['Net à Payer']), 2)
+        net_a_payer = 0
+        for pps_values in delivery_amt_owed_dict.values():
+            for value in pps_values:
+                net_a_payer += value
+        data['Net à Payer'] = round(float(net_a_payer), 2)
         rows = []
         headers = data.keys()
         for header in headers:
@@ -5692,7 +5703,7 @@ class RecapPassageTwoData(RecapPassageOneData):
             ])
         columns.extend([
             DatabaseColumn(_('Doc_id'), SimpleColumn('doc_id')),
-            DatabaseColumn(_('Delivery Amt'), SumColumn('delivery_amt_owed')),
+            DatabaseColumn(_('Amount Owed'), SumColumn('amount_owed')),
             DatabaseColumn(_('Delivery Margin'), SumColumn('delivery_total_margin')),
         ])
         return columns
