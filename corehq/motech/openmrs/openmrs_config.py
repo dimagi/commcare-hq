@@ -15,7 +15,7 @@ from dimagi.ext.couchdbkit import (
 from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
-from corehq.motech.value_source import ValueSource
+from corehq.motech.value_source import CaseProperty, ValueSource
 
 
 class OpenmrsCaseConfig(DocumentSchema):
@@ -156,6 +156,16 @@ class OpenmrsCaseConfig(DocumentSchema):
         return super(OpenmrsCaseConfig, cls).wrap(data)
 
 
+class ExtensionCaseMapping(DocumentSchema):
+    case_type = StringProperty(required=True)
+
+    # Map Observation or BahmniDiagnosis attributes to CaseProperty
+    # ValueSource. Attributes are specified using jsonpath. CaseProperty
+    # is used for specifying the case property to set on the extension
+    # case, and also to map values or change data types.
+    jsonpath_to_case_property = SchemaDictProperty(CaseProperty, required=True)
+
+
 class ObservationMapping(DocumentSchema):
     concept = StringProperty()
     value = SchemaProperty(ValueSource)
@@ -164,6 +174,11 @@ class ObservationMapping(DocumentSchema):
     # OpenmrsRepeater.white_listed_case_types[0]; Atom feed integration
     # requires len(OpenmrsRepeater.white_listed_case_types) == 1.)
     case_property = StringProperty(required=False)
+
+    # Use extension_case to create an extension case instead of set a
+    # case property. Used for referrals or diagnoses.
+    extension_case = SchemaProperty(ExtensionCaseMapping,
+                                    required=False, exclude_if_none=True)
 
 
 class OpenmrsFormConfig(DocumentSchema):
