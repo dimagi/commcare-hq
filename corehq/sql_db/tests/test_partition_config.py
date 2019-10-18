@@ -1,5 +1,8 @@
+import re
+
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from testil import assert_raises
 
 from corehq.sql_db.config import parse_existing_shard, ShardMeta, get_shards_to_update
 from ..config import PartitionConfig
@@ -115,30 +118,26 @@ class TestPartitionConfig(SimpleTestCase):
             ShardMeta(id=1, dbname='db2', host='hqdb2', port=5432),
         ])
 
-    @override_settings(PARTITION_DATABASE_CONFIG=INVALID_SHARD_RANGE_START)
-    def test_invalid_shard_range_start(self):
-        with self.assertRaises(NotZeroStartError):
+
+def test_partition_config_validation():
+    def _run_test(config, exception, message):
+        settings = {
+            'USE_PARTITIONED_DATABASE': True,
+            'DATABASES': TEST_DATABASES,
+            'PARTITION_DATABASE_CONFIG': config
+        }
+        with override_settings(**settings), assert_raises(exception, msg=message):
             PartitionConfig()
 
-    @override_settings(PARTITION_DATABASE_CONFIG=INVALID_SHARD_RANGE_CONTINUOUS)
-    def test_invalid_shard_range_continuous(self):
-        with self.assertRaises(NonContinuousShardsError):
-            PartitionConfig()
-
-    @override_settings(PARTITION_DATABASE_CONFIG=INVALID_SHARD_RANGE_POWER_2)
-    def test_invalid_shard_range_power_2(self):
-        with self.assertRaises(NotPowerOf2Error):
-            PartitionConfig()
-
-    @override_settings(PARTITION_DATABASE_CONFIG=INVALID_STANDBY_MAPPING)
-    def test_invalid_standby_mapping(self):
-        with self.assertRaisesRegex(PartitionValidationError, 'unknown primary DB'):
-            PartitionConfig()
-
-    @override_settings(PARTITION_DATABASE_CONFIG=MISSING_STANDBY_DB)
-    def test_missing_standby(self):
-        with self.assertRaisesRegex(PartitionValidationError, 'db1s not in found in DATABASES'):
-            PartitionConfig()
+    cases = [
+        (INVALID_SHARD_RANGE_START, NotZeroStartError, None),
+        (INVALID_SHARD_RANGE_CONTINUOUS, NonContinuousShardsError, None),
+        (INVALID_SHARD_RANGE_POWER_2, NotPowerOf2Error, None),
+        (INVALID_STANDBY_MAPPING, PartitionValidationError, re.compile('.*unknown primary DB: db1s -> dbX')),
+        (MISSING_STANDBY_DB, PartitionValidationError, 'db1s not in found in DATABASES'),
+    ]
+    for config, exception, message in cases:
+        yield _run_test, config, exception, message
 
 
 @override_settings(DATABASES=TEST_DATABASES)
