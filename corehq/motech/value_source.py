@@ -181,7 +181,7 @@ class MapMixin(ValueSource):
         return reverse_map.get(external_value)
 
 
-class CaseProperty(ValueSource):
+class CaseProperty(ValueSource, MapMixin):
     """
     A reference to a case property
     """
@@ -223,7 +223,7 @@ class CaseProperty(ValueSource):
         return case_trigger_info.extra_fields.get(self.case_property)
 
 
-class FormQuestion(ValueSource):
+class FormQuestion(ValueSource, MapMixin):
     """
     A reference to a form question
     """
