@@ -38,6 +38,8 @@ class AggAwcDailyView(models.Model):
     cases_ccs_lactating_all = models.IntegerField(blank=True, null=True)
     cases_child_health_all = models.IntegerField(blank=True, null=True)
     daily_attendance_open = models.IntegerField(blank=True, null=True)
+    total_eligible_pse = models.IntegerField(null=True)
+    total_attended_pse = models.IntegerField(null=True)
     num_awcs = models.IntegerField(blank=True, null=True)
     num_launched_states = models.IntegerField(blank=True, null=True)
     num_launched_districts = models.IntegerField(blank=True, null=True)

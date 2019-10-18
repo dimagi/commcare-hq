@@ -28,7 +28,7 @@ interactive report in the UI.
 
 A UCR table is created when a new data source is created.
 The table's structure is updated whenever the UCR is "rebuilt", which happens when the data source config is edited.
-Rebuilds can also be kicked off manually via either script or the UI.
+Rebuilds can also be kicked off manually via either ``rebuild_indicator_table`` or the UI.
 Rebuilding happens asynchronously. Data in the table is refreshed continuously by pillows.
 
 Data Sources
@@ -2088,11 +2088,15 @@ In this view, you can examine the columns, filters, and aggregation columns that
 The UCR config UI also includes pages to add new data sources, imports reports, etc.,
 all based at ``/a/DOMAIN/configurable_reports/``.  If you add a new report via the UCR UI and copy in the
 columns, filters, etc. from a report builder report, that new report will then automatically open in the UCR UI when you edit it.
+You can also take an existing report builder report and set ``my_report.report_meta.created_by_builder`` to false
+to force it to open in the UCR UI in the future.
 
 Two example UCRs, a case-based UCR for the ``dimagi`` domain and a form-based UCR for the ``gsid`` domain,
 are checked into source code. Their data source specs and report specs are in ``corehq/apps/userreports/examples/``.
 
 The tests are also a good source of documentation for the various filter and indicator formats that are supported.
+
+When editing data sources, you can check the progress of rebuilding using ``my_datasource.meta.build.finished``
 
 Static data sources
 -------------------

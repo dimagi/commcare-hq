@@ -1804,9 +1804,12 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
 )
 
 
-GROUP_API_USE_ES_BACKEND = StaticToggle(
-    'group_api_use_es_backend',
-    'Use ES backend for Group API',
+# todo: remove after Nov 15, 2019 if no one is using
+GROUP_API_USE_COUCH_BACKEND = StaticToggle(
+    'group_api_use_couch_backend',
+    'Use Old Couch backend for Group API. '
+    'This is an escape hatch for support '
+    'to immediately revert a domain to old behavior.',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
@@ -1824,4 +1827,11 @@ PRUNE_PREVIOUS_SYNCLOGS = DynamicallyPredictablyRandomToggle(
     'Delete old synclogs during form submission',
     TAG_CUSTOM,
     [NAMESPACE_USER]
+)
+
+DAILY_INDICATORS = StaticToggle(
+    'daily_indicators',
+    'Enable daily indicators api',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
 )
