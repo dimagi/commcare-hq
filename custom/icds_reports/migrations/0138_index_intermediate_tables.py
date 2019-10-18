@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ('icds_reports', '0136_add_infra_field'),
+        ('icds_reports', '0137_pse_columns_awc_daily'),
     ]
 
     operations = [
