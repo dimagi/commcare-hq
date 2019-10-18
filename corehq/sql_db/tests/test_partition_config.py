@@ -3,12 +3,14 @@ from django.test.utils import override_settings
 
 from corehq.sql_db.config import parse_existing_shard, ShardMeta, get_shards_to_update
 from ..config import PartitionConfig
-from ..exceptions import NotPowerOf2Error, NotZeroStartError, NonContinuousShardsError, NoSuchShardDatabaseError
+from ..exceptions import NotPowerOf2Error, NotZeroStartError, NonContinuousShardsError, NoSuchShardDatabaseError, \
+    PartitionValidationError
 
 
-def _get_partition_config(shard_config):
+def _get_partition_config(shard_config, standbys=None):
     return {
         'shards': shard_config,
+        'standbys': standbys or {},
         'groups': {
             'main': ['default'],
             'proxy': ['proxy'],
@@ -43,6 +45,22 @@ INVALID_SHARD_RANGE_POWER_2 = _get_partition_config({
     'db1': [0, 4],
     'db2': [5, 9],
 })
+
+INVALID_STANDBY_MAPPING = _get_partition_config(
+    {
+        'db1': [0, 1],
+        'db2': [2, 3],
+    },
+    {'db1s': 'dbX'}
+)
+
+MISSING_STANDBY_DB = _get_partition_config(
+    {
+        'db1': [0, 1],
+        'db2': [2, 3],
+    },
+    {'db1s': 'db1'}
+)
 
 db_dict = {'NAME': 'commcarehq', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
 TEST_DATABASES = {
@@ -110,6 +128,16 @@ class TestPartitionConfig(SimpleTestCase):
     @override_settings(PARTITION_DATABASE_CONFIG=INVALID_SHARD_RANGE_POWER_2)
     def test_invalid_shard_range_power_2(self):
         with self.assertRaises(NotPowerOf2Error):
+            PartitionConfig()
+
+    @override_settings(PARTITION_DATABASE_CONFIG=INVALID_STANDBY_MAPPING)
+    def test_invalid_standby_mapping(self):
+        with self.assertRaisesRegex(PartitionValidationError, 'unknown primary DB'):
+            PartitionConfig()
+
+    @override_settings(PARTITION_DATABASE_CONFIG=MISSING_STANDBY_DB)
+    def test_missing_standby(self):
+        with self.assertRaisesRegex(PartitionValidationError, 'db1s not in found in DATABASES'):
             PartitionConfig()
 
 

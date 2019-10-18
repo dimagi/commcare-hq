@@ -4,7 +4,7 @@ from django.conf import settings
 from jsonobject.api import JsonObject
 from jsonobject.properties import IntegerProperty, StringProperty
 
-from memoized import memoized
+from memoized import memoized, memoized_property
 from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError, \
     NoSuchShardDatabaseError
 
@@ -59,10 +59,12 @@ class PartitionConfig(object):
         self._validate()
 
     def _validate(self):
+        all_dbs = set()
         for group, dbs in self.partition_config['groups'].items():
             for db in dbs:
                 if db not in self.database_config:
                     raise PartitionValidationError('{} not in found in DATABASES'.format(db))
+            all_dbs.update(dbs)
 
         shards_seen = set()
         previous_range = None
@@ -85,15 +87,26 @@ class PartitionConfig(object):
         if not _is_power_of_2(num_shards):
             raise NotPowerOf2Error('Total number of shards must be a power of 2: {}'.format(num_shards))
 
+        for standby_db, primary_db in self.partition_config['standbys'].items():
+            if primary_db not in all_dbs:
+                raise PartitionValidationError(
+                    f'Standby DB mapped to unknown primary DB: {standby_db} -> {primary_db}'
+                )
+            if standby_db not in self.database_config:
+                raise PartitionValidationError('{} not in found in DATABASES'.format(standby_db))
+
         self._num_shards = num_shards
 
     @property
     def num_shards(self):
         return self._num_shards
 
-    @property
+    @memoized_property
     def partition_config(self):
-        return settings.PARTITION_DATABASE_CONFIG
+        config = settings.PARTITION_DATABASE_CONFIG
+        if 'standbys' not in config:
+            config['standbys'] = {}
+        return config
 
     @property
     def database_config(self):
@@ -172,6 +185,7 @@ def get_shards_to_update(existing_shards, new_shards):
     return shards_to_update
 
 
+@memoized
 def _get_config():
     if settings.USE_PARTITIONED_DATABASE:
         return PartitionConfig()
