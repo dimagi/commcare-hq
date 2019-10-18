@@ -55,7 +55,7 @@ class SearchByParamsPayloadGenerator(BasePayloadGenerator):
     def _setup_name(self, name, key_name, key_name_local, data):
         data[key_name] = ""
         data[key_name_local] = ""
-        if self._has_special_chars(name):
+        if name and self._has_special_chars(name):
             data[key_name_local] = name
         else:
             data[key_name] = name
