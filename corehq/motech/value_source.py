@@ -141,6 +141,46 @@ class ValueSource(DocumentSchema):
         return not self.direction or direction == self.direction
 
 
+class MapMixin(ValueSource):
+    """
+    Maps CommCare values to OpenMRS values or concept UUIDs
+
+    Example "person_attribute" value::
+
+        {
+          "00000000-771d-0000-0000-000000000000": {
+            "doc_type": "CasePropertyMap",
+            "case_property": "pill"
+            "value_map": {
+              "red": "00ff0000-771d-0000-0000-000000000000",
+              "blue": "000000ff-771d-0000-0000-000000000000",
+            }
+          }
+        }
+
+    """
+    value_map = DictProperty(required=True)
+
+    def serialize(self, value):
+        """
+        Uses self.value_map to serialize instead of converting data
+        types as ``ValueSource`` does.
+        """
+        if self.value_map is None:
+            return super().serialize(value)
+        # Use `.get()` because it's OK if some CommCare answers are
+        # not mapped to OpenMRS concepts, e.g. when only the "yes" value
+        # of a yes-no question in CommCare is mapped to a concept in
+        # OpenMRS.
+        return self.value_map.get(value)
+
+    def deserialize(self, external_value):
+        if self.value_map is None:
+            return super().deserialize(external_value)
+        reverse_map = {v: k for k, v in self.value_map.items()}
+        return reverse_map.get(external_value)
+
+
 class CaseProperty(ValueSource):
     """
     A reference to a case property
@@ -232,51 +272,18 @@ class ConstantString(ValueSource):
         return self.value
 
 
-class CasePropertyMap(CaseProperty):
+class CasePropertyMap(CaseProperty, MapMixin):
     """
     Maps case property values to OpenMRS values or concept UUIDs
     """
-    # Example "person_attribute" value::
-    #
-    #     {
-    #       "00000000-771d-0000-0000-000000000000": {
-    #         "doc_type": "CasePropertyMap",
-    #         "case_property": "pill"
-    #         "value_map": {
-    #           "red": "00ff0000-771d-0000-0000-000000000000",
-    #           "blue": "000000ff-771d-0000-0000-000000000000",
-    #         }
-    #       }
-    #     }
-    #
-    value_map = DictProperty(required=True)
-
-    def serialize(self, value):
-        # Don't bother serializing. self.value_map does that already.
-        #
-        # Using `.get()` because it's OK if some CommCare answers are
-        # not mapped to OpenMRS concepts, e.g. when only the "yes" value
-        # of a yes-no question in CommCare is mapped to a concept in
-        # OpenMRS.
-        return self.value_map.get(value)
-
-    def deserialize(self, external_value):
-        reverse_map = {v: k for k, v in self.value_map.items()}
-        return reverse_map.get(external_value)
+    pass
 
 
-class FormQuestionMap(FormQuestion):
+class FormQuestionMap(FormQuestion, MapMixin):
     """
     Maps form question values to OpenMRS values or concept UUIDs
     """
-    value_map = DictProperty(required=True)
-
-    def serialize(self, value):
-        return self.value_map.get(value)
-
-    def deserialize(self, external_value):
-        reverse_map = {v: k for k, v in self.value_map.items()}
-        return reverse_map.get(external_value)
+    pass
 
 
 class CaseOwnerAncestorLocationField(ValueSource):
