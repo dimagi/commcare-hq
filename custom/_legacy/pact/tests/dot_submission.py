@@ -115,8 +115,8 @@ class dotsSubmissionTests(TestCase):
             endkey=['submission xmlns', self.domain.name, XMLNS_PATIENT_UPDATE_DOT, {}],
         ).all()[0]['value']
 
-        self.assertEquals(dot_count, update_count)
-        self.assertEquals(start_dot+start_update + 2, dot_count + update_count)
+        self.assertEqual(dot_count, update_count)
+        self.assertEqual(start_dot+start_update + 2, dot_count + update_count)
 
         casedoc = CommCareCase.get(CASE_ID)
         self.assertEqual(casedoc.xform_ids[-2], PILLBOX_ID)
@@ -145,23 +145,23 @@ class dotsSubmissionTests(TestCase):
         art_nonart = set()
         for obs in observations:
             observed_dates.add(obs.observed_date)
-            self.assertEquals(obs.day_note, "No check, from form") #magic string from the view to indicate a generated DOT observation from form data.
+            self.assertEqual(obs.day_note, "No check, from form") #magic string from the view to indicate a generated DOT observation from form data.
             art_nonart.add(obs.is_art)
-            self.assertEquals(obs.doc_id, bundle['xform_id'])
+            self.assertEqual(obs.doc_id, bundle['xform_id'])
 
         art = [x for x in observations if x.is_art]
-        self.assertEquals(2, len(art))
+        self.assertEqual(2, len(art))
         art_answered = [x for x in art if x.adherence != "unchecked"]
-        self.assertEquals(1, len(art_answered))
+        self.assertEqual(1, len(art_answered))
 
         nonart = [x for x in observations if not x.is_art]
-        self.assertEquals(3, len(nonart))
+        self.assertEqual(3, len(nonart))
         nonart_answered = [x for x in nonart if x.adherence != "unchecked"]
-        self.assertEquals(1, len(nonart_answered))
+        self.assertEqual(1, len(nonart_answered))
 
         #this only does SINGLE observations for art and non art
-        self.assertEquals(len(observed_dates), 1)
-        self.assertEquals(len(art_nonart), 2)
+        self.assertEqual(len(observed_dates), 1)
+        self.assertEqual(len(art_nonart), 2)
         # inspect the regenerated submission and ensure the built xml block is correctly filled.
 
         case_json = get_dots_case_json(PactPatientCase.get(CASE_ID), anchor_date=bundle['anchor_date'])
@@ -173,8 +173,8 @@ class dotsSubmissionTests(TestCase):
             nonart_day_data = day_arr[0]
             art_day_data = day_arr[1]
 
-            self.assertEquals(len(nonart_day_data), 3)
-            self.assertEquals(len(art_day_data), 2)
+            self.assertEqual(len(nonart_day_data), 3)
+            self.assertEqual(len(art_day_data), 2)
 
     def testDOTFormatConversion(self):
         """
@@ -210,9 +210,9 @@ class dotsSubmissionTests(TestCase):
 
         for k in orig_data.keys():
             if k != 'days':
-                self.assertEquals(orig_data[k], computed_json[k])
+                self.assertEqual(orig_data[k], computed_json[k])
 
-        self.assertEquals(json.dumps(orig_data), json.dumps(computed_json))
+        self.assertEqual(json.dumps(orig_data), json.dumps(computed_json))
 
     def testPillboxCheck(self):
         """
@@ -245,9 +245,9 @@ class dotsSubmissionTests(TestCase):
                         obs_datetime = ServerTime(obs_datetime).user_time(PACT_TIMEZONE).done()
                     obs_date = obs_datetime.date()
                     val_date = val_datetime.date()
-                    self.assertEquals(obs_date, val_date)
+                    self.assertEqual(obs_date, val_date)
                 else:
-                    self.assertEquals(getattr(obs, k), v,
+                    self.assertEqual(getattr(obs, k), v,
                                       msg="Error, observation %s\n\t%s didn't match: %s != %s" % (
                                       json.dumps(obs.to_json(), indent=4), k, getattr(obs, k),
                                       v))
@@ -333,7 +333,7 @@ class dotsSubmissionTests(TestCase):
                 check_obs_props(non_art_first_2, non_art_first_2_props)
 
             if this_day.date() == (ANCHOR_DATE - timedelta(days=1)).date():
-                self.assertEquals(len(list(day_data.art.dose_dict.keys())),
+                self.assertEqual(len(list(day_data.art.dose_dict.keys())),
                                   2) # two doses, one for the answered, another for unchecked
                 art_slast = day_data.art.dose_dict[0][0]
                 art_slast_props = {

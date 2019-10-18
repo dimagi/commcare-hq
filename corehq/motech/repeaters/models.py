@@ -1,3 +1,4 @@
+import re
 import warnings
 from datetime import datetime, timedelta
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -111,12 +112,18 @@ class Repeater(QuickCachedDocumentMixin, Document):
     username = StringProperty()
     password = StringProperty()
     skip_cert_verify = BooleanProperty(default=False)
+    notify_addresses_str = StringProperty()
+
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)
 
     payload_generator_classes = ()
 
     _has_config = False
+
+    def __str__(self):
+        url = "@".join((self.username, self.url)) if self.username else self.url
+        return f"<{self.__class__.__name__} {self._id} {url}>"
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -293,6 +300,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
     @property
     def verify(self):
         return not self.skip_cert_verify
+
+    @property
+    def notify_addresses(self):
+        return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
     def send_request(self, repeat_record, payload):
         headers = self.get_headers(repeat_record)

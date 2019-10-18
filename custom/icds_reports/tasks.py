@@ -126,14 +126,13 @@ from custom.icds_reports.utils import (
     track_time,
     zip_folder,
 )
-from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
-from custom.icds_reports.utils.aggregation_helpers.monolith import (
-    ChildHealthMonthlyAggregationHelper,
+from custom.icds_reports.utils.aggregation_helpers.distributed import (
+    ChildHealthMonthlyAggregationDistributedHelper,
 )
-from custom.icds_reports.utils.aggregation_helpers.monolith.mbt import (
-    AwcMbtHelper,
-    CcsMbtHelper,
-    ChildHealthMbtHelper,
+from custom.icds_reports.utils.aggregation_helpers.distributed.mbt import (
+    AwcMbtDistributedHelper,
+    CcsMbtDistributedHelper,
+    ChildHealthMbtDistributedHelper,
 )
 
 celery_task_logger = logging.getLogger('celery.task')
@@ -202,9 +201,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                 res_daily.get(disable_sync_subtasks=False)
 
                 stage_1_tasks = [
-                    icds_aggregation_task.si(
-                        date=calculation_date, func_name='_aggregate_gm_forms', force_citus=force_citus
-                    )
+                    icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_gm_forms', force_citus=force_citus)
+                    for state_id in state_ids
                 ]
                 stage_1_tasks.extend([
                     icds_aggregation_task.si(
@@ -376,7 +374,6 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             '_update_months_table': _update_months_table,
             '_daily_attendance_table': _daily_attendance_table,
             '_aggregate_df_forms': _aggregate_df_forms,
-            '_aggregate_gm_forms': _aggregate_gm_forms,
             '_agg_child_health_table': _agg_child_health_table,
             '_ccs_record_monthly_table': _ccs_record_monthly_table,
             '_agg_ccs_record_table': _agg_ccs_record_table,
@@ -411,6 +408,7 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
 def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=False):
     with force_citus_engine(force_citus):
         func = {
+            '_aggregate_gm_forms': _aggregate_gm_forms,
             '_aggregate_cf_forms': _aggregate_cf_forms,
             '_aggregate_ccs_cf_forms': _aggregate_ccs_cf_forms,
             '_aggregate_child_health_thr_forms': _aggregate_child_health_thr_forms,
@@ -463,8 +461,8 @@ def _aggregate_ccs_cf_forms(state_id, day):
 
 
 @track_time
-def _aggregate_gm_forms(day):
-    AggregateGrowthMonitoringForms.aggregate(force_to_date(day))
+def _aggregate_gm_forms(state_id, day):
+    AggregateGrowthMonitoringForms.aggregate(state_id, day)
 
 
 @track_time
@@ -549,7 +547,7 @@ def get_cursor(model, write=True):
 
 @track_time
 def _child_health_monthly_table(state_ids, day):
-    helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
+    helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
 
     celery_task_logger.info("Creating temporary table")
     with get_cursor(ChildHealthMonthly) as cursor:
@@ -580,6 +578,7 @@ def _child_health_helper(query, params, force_citus=False):
         celery_task_logger.info("Running child_health_helper with %s", params)
         with get_cursor(ChildHealthMonthly) as cursor:
             cursor.execute(query, params)
+    celery_task_logger.info("Completed child_health_helper with %s", params)
 
 
 @track_time
@@ -1023,13 +1022,6 @@ def _get_value(data, field):
     acks_late=True,
     queue='icds_aggregation_queue'
 )
-def collect_inactive_awws_task():
-    collect_inactive_awws.delay()
-    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
-        collect_inactive_awws.delay(force_citus=True)
-
-
-@task(queue='icds_aggregation_queue')
 def collect_inactive_awws(force_citus=False):
     with force_citus_engine(force_citus):
         celery_task_logger.info("Started updating the Inactive AWW")
@@ -1071,13 +1063,6 @@ def collect_inactive_awws(force_citus=False):
 
 @periodic_task(run_every=crontab(day_of_week='monday', hour=0, minute=0),
                acks_late=True, queue='background_queue')
-def collect_inactive_dashboard_users_task():
-    collect_inactive_dashboard_users.delay()
-    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
-        collect_inactive_dashboard_users.delay(force_citus=True)
-
-
-@task(queue='background_queue')
 def collect_inactive_dashboard_users(force_citus=False):
     with force_citus_engine(force_citus):
         celery_task_logger.info("Started updating the Inactive Dashboard users")
@@ -1245,9 +1230,9 @@ def create_all_mbt(month, state_ids):
 @task(queue='icds_dashboard_reports_queue')
 def create_mbt_for_month(state_id, month, force_citus=False):
     with force_citus_engine(force_citus):
-        helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
+        helpers = (CcsMbtDistributedHelper, ChildHealthMbtDistributedHelper, AwcMbtDistributedHelper)
         for helper_class in helpers:
-            helper = get_helper(helper_class.helper_key)(state_id, month)
+            helper = helper_class(state_id, month)
             # run on primary DB to avoid "conflict with recovery" errors
             with get_cursor(helper.base_class, write=True) as cursor, tempfile.TemporaryFile() as f:
                 cursor.copy_expert(helper.query(), f)
@@ -1281,7 +1266,7 @@ def setup_aggregation(agg_date):
 
 
 def _child_health_monthly_aggregation(day, state_ids):
-    helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
+    helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
 
     with get_cursor(ChildHealthMonthly) as cursor:
         cursor.execute(helper.drop_temporary_table())

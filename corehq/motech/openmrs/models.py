@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from memoized import memoized
@@ -8,6 +9,7 @@ from dimagi.ext.couchdbkit import (
     DocumentSchema,
     IntegerProperty,
     ListProperty,
+    StringListProperty,
     StringProperty,
 )
 
@@ -44,6 +46,8 @@ class OpenmrsImporter(Document):
     server_url = StringProperty()  # e.g. "http://www.example.com/openmrs"
     username = StringProperty()
     password = StringProperty()
+
+    notify_addresses_str = StringProperty()
 
     # If a domain has multiple OpenmrsImporter instances, for which CommCare location is this one authoritative?
     location_id = StringProperty()
@@ -87,6 +91,10 @@ class OpenmrsImporter(Document):
 
     def __str__(self):
         return self.server_url
+
+    @property
+    def notify_addresses(self):
+        return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
     @memoized
     def get_timezone(self):

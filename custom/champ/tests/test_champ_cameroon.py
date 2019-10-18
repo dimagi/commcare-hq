@@ -84,58 +84,58 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         care_new_month = self.get_expression('care_new_month', 'date')
         organization = self.get_expression('organization', 'string')
 
-        self.assertEquals(
+        self.assertEqual(
             xmlns(form, EvaluationContext(form, 0)), POST_TEST_XMLNS
         )
-        self.assertEquals(
+        self.assertEqual(
             district(form, EvaluationContext(case, 0)), 'test district'
         )
-        self.assertEquals(
+        self.assertEqual(
             uic(form, EvaluationContext(form, 0)), 'test uic'
         )
-        self.assertEquals(
+        self.assertEqual(
             age_range(form, EvaluationContext(form, 0)), '10-15 yrs'
         )
-        self.assertEquals(
+        self.assertEqual(
             date_handshake(form, EvaluationContext(form, 0)), '2017-05-03'
         )
-        self.assertEquals(
+        self.assertEqual(
             first_art_date(form, EvaluationContext(form, 0)), '2017-02-03'
         )
-        self.assertEquals(
+        self.assertEqual(
             date_last_vl_test(form, EvaluationContext(form, 0)), '2017-01-29'
         )
-        self.assertEquals(
+        self.assertEqual(
             client_type(form, EvaluationContext(case, 0)), 'test client'
         )
-        self.assertEquals(
+        self.assertEqual(
             posttest_date(form, EvaluationContext(form, 0)), '2017-02-20'
         )
-        self.assertEquals(
+        self.assertEqual(
             hiv_status(form, EvaluationContext(form, 0)), 'positive'
         )
-        self.assertEquals(
+        self.assertEqual(
             handshake_status(form, EvaluationContext(form, 0)), 'status'
         )
-        self.assertEquals(
+        self.assertEqual(
             undetect_vl(form, EvaluationContext(form, 0)), 'yes'
         )
-        self.assertEquals(
+        self.assertEqual(
             form_completion(form, EvaluationContext(form, 0)), '2017-01-31 20:00'
         )
-        self.assertEquals(
+        self.assertEqual(
             user_id(form, EvaluationContext(form, 0)), 'user_id'
         )
-        self.assertEquals(
+        self.assertEqual(
             htc_month(form, EvaluationContext(form, 0)), date(2017, 2, 1)
         )
-        self.assertEquals(
+        self.assertEqual(
             care_new_month(form, EvaluationContext(form, 0)), date(2017, 5, 1)
         )
-        self.assertEquals(
+        self.assertEqual(
             organization(form, EvaluationContext(form, 0)), 'test_location_id'
         )
-        self.assertEquals(
+        self.assertEqual(
             hiv_test_date(form, EvaluationContext(case, 0)), '2017-03-15'
         )
 
@@ -207,58 +207,58 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         care_new_month = self.get_expression('care_new_month', 'date')
         organization = self.get_expression('organization', 'string')
 
-        self.assertEquals(
+        self.assertEqual(
             xmlns(form, EvaluationContext(form, 0)), ACCOMPAGNEMENT_XMLNS
         )
-        self.assertEquals(
+        self.assertEqual(
             district(form, EvaluationContext(case, 0)), 'test district'
         )
-        self.assertEquals(
+        self.assertEqual(
             uic(form, EvaluationContext(case, 0)), 'test uic'
         )
-        self.assertEquals(
+        self.assertEqual(
             age_range(form, EvaluationContext(case, 0)), '10-15 yrs'
         )
-        self.assertEquals(
+        self.assertEqual(
             date_handshake(form, EvaluationContext(form, 0)), '2017-05-03'
         )
-        self.assertEquals(
+        self.assertEqual(
             first_art_date(form, EvaluationContext(form, 0)), '2017-02-03'
         )
-        self.assertEquals(
+        self.assertEqual(
             date_last_vl_test(form, EvaluationContext(form, 0)), '2017-01-29'
         )
-        self.assertEquals(
+        self.assertEqual(
             client_type(form, EvaluationContext(case, 0)), 'test client'
         )
-        self.assertEquals(
+        self.assertEqual(
             posttest_date(form, EvaluationContext(form, 0)), '2017-02-20'
         )
-        self.assertEquals(
+        self.assertEqual(
             hiv_status(form, EvaluationContext(case, 0)), 'positive'
         )
-        self.assertEquals(
+        self.assertEqual(
             handshake_status(form, EvaluationContext(form, 0)), 'status'
         )
-        self.assertEquals(
+        self.assertEqual(
             undetect_vl(form, EvaluationContext(form, 0)), 'yes'
         )
-        self.assertEquals(
+        self.assertEqual(
             form_completion(form, EvaluationContext(form, 0)), '2017-01-31 20:00'
         )
-        self.assertEquals(
+        self.assertEqual(
             user_id(form, EvaluationContext(form, 0)), 'user_id'
         )
-        self.assertEquals(
+        self.assertEqual(
             htc_month(form, EvaluationContext(form, 0)), date(2017, 2, 1)
         )
-        self.assertEquals(
+        self.assertEqual(
             care_new_month(form, EvaluationContext(form, 0)), date(2017, 5, 1)
         )
-        self.assertEquals(
+        self.assertEqual(
             organization(form, EvaluationContext(form, 0)), 'test_location_id'
         )
-        self.assertEquals(
+        self.assertEqual(
             hiv_test_date(form, EvaluationContext(case, 0)), '2017-03-15'
         )
 
@@ -332,57 +332,57 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         care_new_month = self.get_expression('care_new_month', 'date')
         organization = self.get_expression('organization', 'string')
 
-        self.assertEquals(
+        self.assertEqual(
             xmlns(form, EvaluationContext(form, 0)), SUIVI_MEDICAL_XMLNS
         )
-        self.assertEquals(
+        self.assertEqual(
             district(form, EvaluationContext(case, 0)), 'test district'
         )
-        self.assertEquals(
+        self.assertEqual(
             uic(form, EvaluationContext(case, 0)), 'test uic'
         )
-        self.assertEquals(
+        self.assertEqual(
             age_range(form, EvaluationContext(form, 0)), '10-15 yrs'
         )
-        self.assertEquals(
+        self.assertEqual(
             date_handshake(form, EvaluationContext(form, 0)), '2017-05-03'
         )
-        self.assertEquals(
+        self.assertEqual(
             first_art_date(form, EvaluationContext(form, 0)), '2017-02-03'
         )
-        self.assertEquals(
+        self.assertEqual(
             date_last_vl_test(form, EvaluationContext(form, 0)), '2017-01-29'
         )
-        self.assertEquals(
+        self.assertEqual(
             client_type(form, EvaluationContext(case, 0)), 'test client'
         )
-        self.assertEquals(
+        self.assertEqual(
             posttest_date(form, EvaluationContext(form, 0)), '2017-02-20'
         )
-        self.assertEquals(
+        self.assertEqual(
             hiv_status(form, EvaluationContext(case, 0)), 'positive'
         )
-        self.assertEquals(
+        self.assertEqual(
             handshake_status(form, EvaluationContext(form, 0)), 'status'
         )
-        self.assertEquals(
+        self.assertEqual(
             undetect_vl(form, EvaluationContext(form, 0)), 'yes'
         )
-        self.assertEquals(
+        self.assertEqual(
             form_completion(form, EvaluationContext(form, 0)), '2017-01-31 20:00'
         )
-        self.assertEquals(
+        self.assertEqual(
             user_id(form, EvaluationContext(form, 0)), 'user_id'
         )
-        self.assertEquals(
+        self.assertEqual(
             htc_month(form, EvaluationContext(form, 0)), date(2017, 2, 1)
         )
-        self.assertEquals(
+        self.assertEqual(
             care_new_month(form, EvaluationContext(form, 0)), date(2017, 5, 1)
         )
-        self.assertEquals(
+        self.assertEqual(
             organization(form, EvaluationContext(form, 0)), 'test_location_id'
         )
-        self.assertEquals(
+        self.assertEqual(
             hiv_test_date(form, EvaluationContext(case, 0)), '2017-03-15'
         )

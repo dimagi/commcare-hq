@@ -19,7 +19,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -35,7 +35,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -72,7 +72,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             loc_level='state'
         )
         expected = early_initiation_breastfeeding_help_text(html=True)
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_early_initiation_breastfeeding_map(
@@ -83,7 +83,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 40.0)
+        self.assertEqual(data['rightLegend']['average'], 40.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_early_initiation_breastfeeding_map(
@@ -139,7 +139,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'early_initiation')
+        self.assertEqual(data['slug'], 'early_initiation')
 
     def test_map_data_label(self):
         data = get_early_initiation_breastfeeding_map(
@@ -150,7 +150,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent Early Initiation of Breastfeeding')
+        self.assertEqual(data['label'], 'Percent Early Initiation of Breastfeeding')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_early_initiation_breastfeeding_map(
@@ -179,7 +179,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 50.0)
+        self.assertEqual(data['rightLegend']['average'], 50.0)
 
     def test_chart_data(self):
         self.assertDictEqual(

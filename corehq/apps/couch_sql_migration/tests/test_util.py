@@ -1,5 +1,6 @@
 import gevent
 from gevent.pool import Pool
+from greenlet import GreenletExit
 from testil import assert_raises, eq
 
 from .. import util as mod
@@ -13,6 +14,16 @@ def test_exit_on_error():
     with assert_raises(mod.UnhandledError, msg="stop!"):
         job = gevent.spawn(fail)
         gevent.wait([job])
+
+
+def test_exit_on_error_greenlet_exit():
+    @mod.exit_on_error
+    def stop():
+        raise GreenletExit
+
+    # should not raise GreenletExit
+    job = gevent.spawn(stop)
+    gevent.wait([job])
 
 
 def test_wait_for_one_task_to_complete():

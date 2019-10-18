@@ -191,7 +191,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                 </case>"""
             case_block_re = ''.join((l.strip() for l in case_block_re.split('\n'))).replace('»', '')
             ([case_block], domain), kwargs = submit_case_blocks_patch.call_args
-            self.assertRegexpMatches(case_block, case_block_re)
+            self.assertRegex(case_block, case_block_re)
             self.assertEqual(domain, 'test_domain')
             self.assertEqual(kwargs['device_id'], 'openmrs-atomfeed-123456')
             self.assertEqual(kwargs['xmlns'], 'http://commcarehq.org/openmrs-integration')

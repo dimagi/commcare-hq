@@ -18,7 +18,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -34,7 +34,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -76,7 +76,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             "<br/><br/>"
             "Delivery in medical instituitions is associated with a decrease in maternal mortality rate"
         )
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_institutional_deliveries_data_map(
@@ -87,7 +87,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 100.0)
+        self.assertEqual(data['rightLegend']['average'], 100.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_institutional_deliveries_data_map(
@@ -150,7 +150,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'institutional_deliveries')
+        self.assertEqual(data['slug'], 'institutional_deliveries')
 
     def test_map_data_label(self):
         data = get_institutional_deliveries_data_map(
@@ -161,7 +161,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent Instituitional Deliveries')
+        self.assertEqual(data['label'], 'Percent Instituitional Deliveries')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_institutional_deliveries_data_map(
@@ -197,7 +197,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 100)
+        self.assertEqual(data['rightLegend']['average'], 100)
 
     def test_chart_data(self):
         self.assertDictEqual(
