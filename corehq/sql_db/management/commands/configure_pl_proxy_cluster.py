@@ -50,14 +50,15 @@ class Command(BaseCommand):
             print("System not configured to use a partitioned database")
 
         verbose = options['verbose']
-        existing_config = _get_existing_cluster_config(settings.PL_PROXY_CLUSTER_NAME)
+        cluster_name = settings.PL_PROXY_CLUSTER_NAME
+        existing_config = _get_existing_cluster_config(cluster_name)
         if existing_config:
             if options['create_only']:
                 return
             if _confirm("Cluster configuration already exists. Are you sure you want to change it?"):
-                _update_pl_proxy_cluster(existing_config, verbose)
+                _update_pl_proxy_cluster(cluster_name, existing_config, verbose)
         else:
-            create_pl_proxy_cluster(verbose)
+            create_pl_proxy_cluster(cluster_name, verbose)
 
 
 def _get_current_shards(existing_config):
@@ -72,7 +73,7 @@ def _is_shard_option(option):
     return SHARD_OPTION_RX.match(option)
 
 
-def _update_pl_proxy_cluster(existing_config, verbose):
+def _update_pl_proxy_cluster(cluster_name, existing_config, verbose):
     existing_shards = _get_current_shards(existing_config)
     new_shard_configs = partition_config.get_shards()
 
@@ -94,7 +95,7 @@ def _update_pl_proxy_cluster(existing_config, verbose):
                 new.get_server_option_string()
             ))
         if _confirm("Update these shards?"):
-            alter_sql = _get_alter_server_sql(shards_to_update)
+            alter_sql = _get_alter_server_sql(shards_to_update, cluster_name)
             if verbose:
                 print(alter_sql)
 
@@ -104,27 +105,27 @@ def _update_pl_proxy_cluster(existing_config, verbose):
             print('Abort')
 
 
-def _get_alter_server_sql(shards_to_update):
+def _get_alter_server_sql(shards_to_update, cluster_name):
     shard_option_template = "SET {}"
     shards_sql = []
     for shard in shards_to_update:
         shards_sql.append(shard_option_template.format(shard.get_server_option_string()))
 
     return ALTER_SERVER_TEMPLATE.format(
-        server_name=settings.PL_PROXY_CLUSTER_NAME,
+        server_name=cluster_name,
         options=',\n'.join(shards_sql)
     )
 
 
-def create_pl_proxy_cluster(verbose=False, drop_existing=False):
+def create_pl_proxy_cluster(cluster_name, verbose=False, drop_existing=False):
     proxy_db = partition_config.get_proxy_db()
 
     if drop_existing:
         with connections[proxy_db].cursor() as cursor:
-            cursor.execute(get_drop_server_sql())
+            cursor.execute(get_drop_server_sql(cluster_name))
 
-    config_sql = get_pl_proxy_server_config_sql(partition_config.get_shards())
-    user_mapping_sql = get_user_mapping_sql()
+    config_sql = get_pl_proxy_server_config_sql(partition_config.get_shards(), cluster_name)
+    user_mapping_sql = get_user_mapping_sql(cluster_name)
 
     if verbose:
         print('Running SQL')
@@ -136,8 +137,8 @@ def create_pl_proxy_cluster(verbose=False, drop_existing=False):
         cursor.execute(user_mapping_sql)
 
 
-def get_drop_server_sql():
-    return 'DROP SERVER IF EXISTS {} CASCADE;'.format(settings.PL_PROXY_CLUSTER_NAME)
+def get_drop_server_sql(cluster_name):
+    return 'DROP SERVER IF EXISTS {} CASCADE;'.format(cluster_name)
 
 
 def _get_existing_cluster_config(cluster_name):
@@ -149,21 +150,21 @@ def _get_existing_cluster_config(cluster_name):
             return results[0]
 
 
-def get_pl_proxy_server_config_sql(shards):
+def get_pl_proxy_server_config_sql(shards, cluster_name):
     shard_configs_strings = [shard.get_server_option_string() for shard in shards]
 
     server_sql = SERVER_TEMPLATE.format(
-        server_name=settings.PL_PROXY_CLUSTER_NAME,
+        server_name=cluster_name,
         partitions=',\n'.join(shard_configs_strings)
     )
 
     return server_sql
 
 
-def get_user_mapping_sql():
+def get_user_mapping_sql(cluster_name):
     proxy_db = partition_config.get_proxy_db()
     proxy_db_config = settings.DATABASES[proxy_db].copy()
-    proxy_db_config['server_name'] = settings.PL_PROXY_CLUSTER_NAME
+    proxy_db_config['server_name'] = cluster_name
     return USER_MAPPING_TEMPLATE.format(**proxy_db_config)
 
 
