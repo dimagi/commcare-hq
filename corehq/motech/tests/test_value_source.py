@@ -4,6 +4,7 @@ import warnings
 from django.test import SimpleTestCase
 
 from couchdbkit import BadValueError
+from testil import assert_raises
 
 import corehq.motech.value_source
 from corehq.motech.const import COMMCARE_DATA_TYPE_DECIMAL
@@ -196,3 +197,11 @@ class WrapTests(SimpleTestCase):
 def test_doctests():
     results = doctest.testmod(corehq.motech.value_source)
     assert results.failed == 0
+
+
+def test_dyn_properties():
+    with assert_raises(AttributeError):
+        ValueSource.wrap({
+            "doc_type": "FormQuestion",
+            "case_property": "foo",
+        })
