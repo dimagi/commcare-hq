@@ -790,14 +790,18 @@ class PrivacySecurityForm(forms.Form):
         label=ugettext_lazy("Restrict Dimagi Staff Access"),
         required=False,
         help_text=ugettext_lazy(
-            "Dimagi staff sometimes require access to projects to provide support. Checking "
-            "this box may restrict your ability to receive this support in the event you "
-            "report an issue. You may also miss out on important communications and updates. "
+            "CommCare support staff sometimes require access "
+            "to your project space to provide rapid, in-depth support. "
+            "Checking this box will restrict the degree of support they "
+            "will be able to provide in the event that you report an issue. "
+            "You may also miss out on important communications and updates. "
             "Regardless of whether this option is checked, "
-            "Dimagi staff will have access to your billing information "
-            "and limited project metadata; "
-            "Dimagi system administrators will have access to data "
-            "strictly for the purposes of system and database administration."
+            "Commcare support staff will have access "
+            "to your billing information and project metadata; "
+            "and CommCare system administrators will also have direct access "
+            "to data infrastructure strictly for the purposes of system administration "
+            "as outlined in our "
+            '<a href="https://www.dimagi.com/terms/latest/privacy/">Privacy Policy</a>.'
         )
     )
     secure_submissions = BooleanField(
