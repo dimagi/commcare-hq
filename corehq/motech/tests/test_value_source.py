@@ -121,6 +121,85 @@ class CasePropertyValidationTests(SimpleTestCase):
             case_property.validate()
 
 
+class MapTests(SimpleTestCase):
+
+    def test_no_map(self):
+        form_question_map = ValueSource.wrap({
+            "doc_type": "FormQuestionMap",
+            "form_question": "/data/foo/bar",
+        })
+        with self.assertRaisesRegex(BadValueError, "Property value_map is required."):
+            form_question_map.validate()
+
+    def test_empty_map(self):
+        form_question_map = ValueSource.wrap({
+            "doc_type": "FormQuestionMap",
+            "form_question": "/data/foo/bar",
+            "value_map": {},
+        })
+        info = CaseTriggerInfo(
+            domain="test-domain",
+            case_id=None,
+            form_question_values={'/data/foo/bar': 'baz'},
+        )
+        value = form_question_map.get_value(info)
+        self.assertIsNone(value)
+
+    def test_map(self):
+        form_question_map = ValueSource.wrap({
+            "doc_type": "FormQuestionMap",
+            "form_question": "/data/foo/bar",
+            "value_map": {
+                "baz": 42,
+            },
+        })
+        info = CaseTriggerInfo(
+            domain="test-domain",
+            case_id=None,
+            form_question_values={'/data/foo/bar': 'baz'},
+        )
+        value = form_question_map.get_value(info)
+        self.assertEqual(value, 42)
+
+    def test_map_missing_value(self):
+        form_question_map = ValueSource.wrap({
+            "doc_type": "FormQuestionMap",
+            "form_question": "/data/foo/bar",
+            "value_map": {
+                "baz": 42,
+            },
+        })
+        info = CaseTriggerInfo(
+            domain="test-domain",
+            case_id=None,
+            form_question_values={'/data/foo/bar': 'qux'},
+        )
+        value = form_question_map.get_value(info)
+        self.assertIsNone(value)
+
+    def test_deserialize_map(self):
+        form_question_map = ValueSource.wrap({
+            "doc_type": "FormQuestionMap",
+            "form_question": "/data/foo/bar",
+            "value_map": {
+                "baz": 42,
+            },
+        })
+        value = form_question_map.deserialize(42)
+        self.assertEqual(value, "baz")
+
+    def test_deserialize_map_missing_value(self):
+        form_question_map = ValueSource.wrap({
+            "doc_type": "FormQuestionMap",
+            "form_question": "/data/foo/bar",
+            "value_map": {
+                "baz": 42,
+            },
+        })
+        value = form_question_map.deserialize(13)
+        self.assertIsNone(value)
+
+
 def test_dyn_properties():
     with assert_raises(AttributeError):
         ValueSource.wrap({
