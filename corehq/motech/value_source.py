@@ -183,7 +183,7 @@ class MapMixin(DocumentSchema):
         return reverse_map.get(external_value)
 
 
-class CaseProperty(ValueSource):
+class CaseProperty(MapMixin, ValueSource):
     """
     A reference to a case property
     """
@@ -225,7 +225,7 @@ class CaseProperty(ValueSource):
         return case_trigger_info.extra_fields.get(self.case_property)
 
 
-class FormQuestion(ValueSource):
+class FormQuestion(MapMixin, ValueSource):
     """
     A reference to a form question
     """
@@ -341,14 +341,14 @@ class ConstantValue(ConstantString):
         return self.deserialize(external_value)
 
 
-class CasePropertyMap(MapMixin, CaseProperty):
+class CasePropertyMap(CaseProperty):
     """
     Maps case property values to OpenMRS values or concept UUIDs
     """
     value_map = DictProperty(required=True)
 
 
-class FormQuestionMap(MapMixin, FormQuestion):
+class FormQuestionMap(FormQuestion):
     """
     Maps form question values to OpenMRS values or concept UUIDs
     """
