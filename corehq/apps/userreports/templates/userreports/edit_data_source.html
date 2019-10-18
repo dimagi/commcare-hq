@@ -30,11 +30,11 @@
         <button type="submit" class="btn btn-default disable-on-submit" {% if data_source.disable_destructive_rebuild %}disabled{% endif %}>
           {% trans 'Rebuild Data Source'%}
         </button>
-        {% if not data_source.disable_destructive_rebuild %}
-        <span class="hq-help-template"
-          data-title="{% trans_html_attr "Rebuild Unavailable" %}"
-          data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
-          data-placement="left"></span>
+        {% if data_source.disable_destructive_rebuild %}
+          <span class="hq-help-template"
+            data-title="{% trans_html_attr "Rebuild Unavailable" %}"
+            data-content="{% trans_html_attr "Fully rebuilding has been disabled for this data source. Please use the in place rebuild if necessary." %}"
+            data-placement="left"></span>
         {% endif %}
       </div>
       <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>
