@@ -12,7 +12,7 @@
   {% initial_page_data "data_source_id" request.GET.data_source %}
   <h1>{% trans "UCR Expression Debugger" %}</h1>
   <p>{% trans "Paste an expression and document information below to see the result of that expression evaluated on the document." %}</p>
-  <form id="expression-debugger" class="form-horizontal" data-bind="submit: evaluateExpression">
+  <form id="expression-debugger" class="form-horizontal ko-template" data-bind="submit: evaluateExpression">
     <div class="form-group">
       <label for="doc_type" class="col-sm-2 control-label">{% trans "Document Type" %}</label>
       <div class="col-sm-3">
