@@ -2,10 +2,13 @@ import re
 import uuid
 from datetime import datetime
 
+from django.utils.translation import ugettext as _
+
 import pytz
 from dateutil import parser as dateutil_parser
 from dateutil.tz import tzutc
 from lxml import etree
+from requests import RequestException
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
@@ -26,10 +29,6 @@ from corehq.motech.openmrs.exceptions import OpenmrsFeedDoesNotExist
 from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.motech.openmrs.repeaters import AtomFeedStatus
-from corehq.util.soft_assert import soft_assert
-from requests import RequestException
-
-_assert = soft_assert(['@'.join(('nhooper', 'dimagi.com'))])
 
 
 def get_feed_xml(requests, feed_name, page):
@@ -45,14 +44,19 @@ def get_feed_xml(requests, feed_name, page):
         resp.status_code == 500
         and 'AtomFeedRuntimeException: feed does not exist' in resp.content
     ):
-        # This can happen if a Repeater IP address is changed to point
-        # to a different server, or if a server has been rebuilt.
-        _assert(
-            False,
-            f'Domain "{requests.domain_name}": Page does not exist in '
-            f'atom feed "{resp.url}". Resetting Atom feed status.'
+        exception = OpenmrsFeedDoesNotExist(
+            f'Domain "{requests.domain_name}": Page does not exist in atom '
+            f'feed "{resp.url}". Resetting atom feed status.'
         )
-        raise OpenmrsFeedDoesNotExist()
+        requests.notify_exception(
+            str(exception),
+            _("This can happen if the IP address of a Repeater is changed to "
+              "point to a different server, or if a server has been rebuilt. "
+              "It can signal more severe consequences, like attempts to "
+              "synchronize CommCare cases with OpenMRS patients that can no "
+              "longer be found.")
+        )
+        raise exception
     root = etree.fromstring(resp.content)
     return root
 
@@ -252,11 +256,10 @@ def update_patient(repeater, patient_uuid):
 
     """
     if len(repeater.white_listed_case_types) != 1:
-        _assert(
-            False,
-            f'Unable to update patients from OpenMRS unless a single case type '
-            f'is specified. domain: "{repeater.domain}". repeater: "{repeater}".'
-        )
+        repeater.requests.notify_error(_(
+            f"{repeater}: Error in settings: Unable to update patients from "
+            "OpenMRS unless only one case type is specified."
+        ))
         return
     case_type = repeater.white_listed_case_types[0]
     patient = get_patient_by_uuid(repeater.requests, patient_uuid)
@@ -271,12 +274,10 @@ def update_patient(repeater, patient_uuid):
         if owner:
             case_block = get_addpatient_caseblock(case_type, owner, patient, repeater)
         else:
-            _assert(
-                False,
-                f'No users found at location "{repeater.location_id}" '
-                f'to own patients added from OpenMRS atom feed. '
-                f'domain: "{repeater.domain}". repeater: "{repeater}".'
-            )
+            repeater.requests.notify_error(_(
+                f'{repeater}: No users found at location "{repeater.location_id}" '
+                "to own patients added from OpenMRS atom feed."
+            ))
             return
     elif error == LookupErrors.MultipleResults:
         # Multiple cases have been matched to the same patient.
@@ -287,12 +288,10 @@ def update_patient(repeater, patient_uuid):
         # * PatientFinder matched badly.
         # * Race condition where a patient was previously added to
         #   both CommCare and OpenMRS.
-        _assert(
-            False,
-            f'More than one case found matching unique OpenMRS UUID. domain: '
-            f'"{repeater.domain}". case external_id: "{patient_uuid}". '
-            f'repeater: "{repeater}".'
-        )
+        repeater.requests.notify_error(_(
+            f'{repeater}: More than one case found matching unique OpenMRS UUID. '
+            f'case external_id: "{patient_uuid}". '
+        ))
         return
     else:
         case_block = get_updatepatient_caseblock(case, patient, repeater)
@@ -355,13 +354,11 @@ def import_encounter(repeater, encounter_uuid):
             case_blocks.append(case_block)
             case_id = case_block.case_id
 
-        elif error == LookupErrors.MultipleResults:
-            _assert(
-                False,
-                f'More than one case found matching unique OpenMRS UUID. '
-                f'domain: "{repeater.domain}". case external_id: '
-                f'"{patient_uuid}". repeater: "{repeater}".'
-            )
+        else:  # error == LookupErrors.MultipleResults:
+            repeater.requests.notify_error(_(
+                f'{repeater}: More than one case found matching unique OpenMRS '
+                f'UUID. case external_id: "{patient_uuid}". '
+            ))
             return
 
         case_blocks.append(CaseBlock(

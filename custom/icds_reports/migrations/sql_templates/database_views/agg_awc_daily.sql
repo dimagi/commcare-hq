@@ -40,6 +40,8 @@ CREATE VIEW agg_awc_daily_view AS
         COALESCE("agg_awc"."cases_ccs_lactating_all", 0) AS "cases_ccs_lactating_all",
         COALESCE("agg_awc"."cases_child_health_all", 0) AS "cases_child_health_all",
         COALESCE("agg_awc"."daily_attendance_open", 0) AS "daily_attendance_open",
+        COALESCE("agg_awc"."total_eligible_pse", 0) AS "total_eligible_pse",
+        COALESCE("agg_awc"."total_attended_pse", 0) AS "total_attended_pse",
         COALESCE("agg_awc"."cases_person_has_aadhaar_v2", 0) AS "cases_person_has_aadhaar_v2",
         COALESCE("agg_awc"."cases_person_beneficiary_v2", 0) AS "cases_person_beneficiary_v2",
         "agg_awc"."num_awcs" AS "num_awcs",
