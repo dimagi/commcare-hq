@@ -4,11 +4,13 @@ import warnings
 from django.test import SimpleTestCase
 
 from couchdbkit import BadValueError
+from testil import assert_raises
 
 import corehq.motech.value_source
 from corehq.motech.value_source import (
     CaseProperty,
     CaseTriggerInfo,
+    ValueSource,
     get_form_question_values,
 )
 
@@ -114,3 +116,11 @@ class CasePropertyValidationTests(SimpleTestCase):
         case_property = CaseProperty.wrap({"case_property": None})
         with self.assertRaisesRegexp(BadValueError, "Property case_property is required."):
             case_property.validate()
+
+
+def test_dyn_properties():
+    with assert_raises(AttributeError):
+        ValueSource.wrap({
+            "doc_type": "FormQuestion",
+            "case_property": "foo",
+        })
