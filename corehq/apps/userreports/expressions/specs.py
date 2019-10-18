@@ -26,7 +26,7 @@ from corehq.apps.userreports.expressions.getters import (
 )
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import EvaluationContext, TypeProperty
-from corehq.apps.userreports.util import add_tabbed_text
+from corehq.apps.userreports.util import add_tabbed_text, truncate_value
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -87,7 +87,9 @@ class ConstantGetterSpec(JsonObject):
     @classmethod
     def wrap(self, obj):
         if 'constant' not in obj:
-            raise BadSpecError('"constant" property is required!')
+            raise BadSpecError('"constant" property is required in object beginning with <pre>{}</pre>'.format(
+                truncate_value(str(obj), from_left=False, suffix="...")
+            ))
         return super(ConstantGetterSpec, self).wrap(obj)
 
     def __call__(self, item, context=None):

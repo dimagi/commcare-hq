@@ -172,7 +172,7 @@ def is_ucr_table(table_name):
     return table_name.startswith(UCR_TABLE_PREFIX)
 
 
-def truncate_value(value, max_length=63, from_left=True):
+def truncate_value(value, max_length=63, from_left=True, suffix=None):
     """
     Truncate a value (typically a column name) to a certain number of characters,
     using a hash to ensure uniqueness.
@@ -186,8 +186,9 @@ def truncate_value(value, max_length=63, from_left=True):
         truncated_value = value[:truncated_length]
 
     if len(value) > max_length:
-        short_hash = hashlib.sha1(value).hexdigest()[:hash_length]
-        return '{}_{}'.format(truncated_value.decode('utf-8'), short_hash)
+        if not suffix:
+            suffix = hashlib.sha1(value).hexdigest()[:hash_length]
+        return '{}_{}'.format(truncated_value.decode('utf-8'), suffix)
     return value.decode('utf-8')
 
 
