@@ -58,7 +58,7 @@ class BeneficiaryExport(ExportableMixin, IcdsSqlData):
     def filters(self):
         filters = [LTE('age_in_months', '5_years'), EQ('valid_in_month', 'true')]
         for key, value in self.config.items():
-            if key == 'domain' or key == '5_years':
+            if key in ['domain', '5_years', 'true']:
                 continue
             elif key == 'filters':
                 filters.append(self._build_additional_filters(value))
