@@ -16,10 +16,22 @@
     <div class="form-group">
       <label for="doc_type" class="col-sm-2 control-label">{% trans "Document Type" %}</label>
       <div class="col-sm-3">
-        <select id="doc_type" name="doc_type" class="form-control " data-bind="value: documentType">
-          <option value="case">{% trans "Case" %}</option>
-          <option value="form">{% trans "Form" %}</option>
-        </select>
+        <select-toggle data-apply-bindings="false"
+                       params="
+                         options: [
+                           {
+                             'id': 'case',
+                             'text': '{% trans_html_attr "Case" %}',
+                           },
+                           {
+                             'id': 'form',
+                             'text': '{% trans_html_attr "Form" %}',
+                           },
+                         ],
+                         name: 'doc_type',
+                         id: 'doc_type',
+                         value: documentType,
+                       "></select-toggle>
       </div>
     </div>
     <div class="form-group">
