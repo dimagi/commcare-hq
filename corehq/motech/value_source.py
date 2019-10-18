@@ -194,7 +194,7 @@ class FormQuestion(ValueSource):
     """
     A reference to a form question
     """
-    form_question = StringProperty()  # e.g. "/data/foo/bar"
+    form_question = StringProperty(required=True, validators=not_blank)  # e.g. "/data/foo/bar"
 
     def _get_commcare_value(self, case_trigger_info):
         return case_trigger_info.form_question_values.get(self.form_question)
@@ -216,7 +216,7 @@ class ConstantString(ValueSource):
     #       }
     #     }
     #
-    value = StringProperty()
+    value = StringProperty(required=True)
 
     def __eq__(self, other):
         return (
@@ -249,7 +249,7 @@ class CasePropertyMap(CaseProperty):
     #       }
     #     }
     #
-    value_map = DictProperty()
+    value_map = DictProperty(required=True)
 
     def serialize(self, value):
         # Don't bother serializing. self.value_map does that already.
@@ -269,7 +269,7 @@ class FormQuestionMap(FormQuestion):
     """
     Maps form question values to OpenMRS values or concept UUIDs
     """
-    value_map = DictProperty()
+    value_map = DictProperty(required=True)
 
     def serialize(self, value):
         return self.value_map.get(value)
@@ -285,7 +285,7 @@ class CaseOwnerAncestorLocationField(ValueSource):
     case owner, the case owner's location, or the first ancestor
     location of the case owner where the metadata value is set.
     """
-    location_field = StringProperty()
+    location_field = StringProperty(required=True, validators=not_blank)
 
     def _get_commcare_value(self, case_trigger_info):
         location = get_case_location(case_trigger_info)
@@ -299,7 +299,7 @@ class FormUserAncestorLocationField(ValueSource):
     user's location, or the first ancestor location of the form user
     where the metadata value is set.
     """
-    location_field = StringProperty()
+    location_field = StringProperty(required=True, validators=not_blank)
 
     def _get_commcare_value(self, case_trigger_info):
         user_id = case_trigger_info.form_question_values.get('/metadata/userID')
