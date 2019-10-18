@@ -15,13 +15,6 @@ from corehq.motech.value_source import (
 )
 
 
-class DocTests(SimpleTestCase):
-
-    def test_doctests(self):
-        results = doctest.testmod(corehq.motech.value_source)
-        self.assertEqual(results.failed, 0)
-
-
 class GetFormQuestionValuesTests(SimpleTestCase):
 
     def test_unicode_answer(self):
@@ -124,3 +117,8 @@ def test_dyn_properties():
             "doc_type": "FormQuestion",
             "case_property": "foo",
         })
+
+
+def test_doctests():
+    results = doctest.testmod(corehq.motech.value_source)
+    assert results.failed == 0
