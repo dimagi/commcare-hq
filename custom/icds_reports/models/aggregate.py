@@ -1108,7 +1108,7 @@ class AggregateGrowthMonitoringForms(models.Model, AggregateMixin):
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
     supervisor_id = models.TextField(null=True)
-    month = models.DateField(db_index=True, help_text="Will always be YYYY-MM-01")
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # not the real pkey - see unique_together
     case_id = models.CharField(max_length=40, primary_key=True)
@@ -1163,6 +1163,9 @@ class AggregateGrowthMonitoringForms(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_GROWTH_MONITORING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
+        index_together = [
+            ['state_id', 'month'],
+        ]
 
     _agg_helper_cls = GrowthMonitoringFormsAggregationDistributedHelper
     _agg_atomic = False
@@ -1403,6 +1406,9 @@ class AggregateChildHealthDailyFeedingForms(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_DAILY_FEEDING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
+        index_together = [
+            ['state_id', 'month'],
+        ]
 
     _agg_helper_cls = DailyFeedingFormsChildHealthAggregationDistributedHelper
     _agg_atomic = False
