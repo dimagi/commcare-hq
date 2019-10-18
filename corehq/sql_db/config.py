@@ -122,6 +122,9 @@ class PartitionConfig(object):
     @memoized
     def get_shards(self):
         """Returns a list of ShardMeta objects sorted by shard ID"""
+
+        # 'host_map' is use to support Docker where external connections are via the docker name
+        # but internal connections are to 'localhost'. See docker/localsettings.py
         host_map = self.partition_config.get('host_map', {})
         db_shards = self._get_django_shards()
         return [shard.to_shard_meta(host_map) for shard in db_shards]
