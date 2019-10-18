@@ -10,7 +10,6 @@ from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuou
 
 FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'
-MAIN_GROUP = 'main'
 
 SHARD_OPTION_TEMPLATE = "p{id:04d} 'dbname={dbname} host={host} port={port}'"
 
@@ -101,9 +100,6 @@ class PartitionConfig(object):
 
     def get_proxy_db(self):
         return self._dbs_by_group(PROXY_GROUP, 1)[0]
-
-    def get_main_db(self):
-        return self._dbs_by_group(MAIN_GROUP, 1)[0]
 
     def get_form_processing_dbs(self):
         return self._dbs_by_group(FORM_PROCESSING_GROUP)
