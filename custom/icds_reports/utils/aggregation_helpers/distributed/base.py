@@ -141,6 +141,7 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
     base_tablename = None
     monthly_tablename = None
     model = None
+    temporary_table_to_be_deleted = None
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
@@ -151,8 +152,14 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
 
         logger.info(f"Creating staging table for {self.helper_key}")
-        cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
-        cursor.execute(f"CREATE UNLOGGED TABLE {self.staging_tablename} (LIKE {self.base_tablename})")
+        self.cleanup(cursor)
+        cursor.execute(f"""
+        CREATE TABLE {self.staging_tablename} (
+            LIKE {self.base_tablename}
+            INCLUDING INDEXES INCLUDING CONSTRAINTS INCLUDING DEFAULTS,
+            CHECK (month = DATE '{self.month.strftime('%Y-%m-01')}')
+        )
+        """)
 
         logger.info(f"Inserting inital data into staging table for {self.helper_key}")
         for staging_query, params in staging_queries:
@@ -184,20 +191,26 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
             for i in range(1, 6):
                 cursor.execute(f'DROP TABLE IF EXISTS "{self._legacy_tablename_func(i)}"')
 
-            logger.info(f"Removing current data for {self.helper_key} {self.month}")
-            cursor.execute(f'DELETE FROM "{self.monthly_tablename}"')
-
-            logger.info(f"Inserting new data for {self.helper_key} {self.month}")
+            logger.info(f"Detaching previous table for {self.helper_key} {self.month}")
+            cursor.execute(f'ALTER TABLE IF EXISTS "{self.monthly_tablename}" NO INHERIT "{self.base_tablename}"')
+            logger.info(f"Renaming previous table for {self.helper_key} {self.month}")
             cursor.execute(f"""
-            INSERT INTO "{self.monthly_tablename}" (
-                SELECT * FROM "{self.staging_tablename}"
-                ORDER BY aggregation_level, state_id, district_id, block_id, supervisor_id, awc_id
-            )
+            ALTER TABLE IF EXISTS "{self.monthly_tablename}" RENAME TO "{self.temporary_table_to_be_deleted}"
             """)
+            logger.info(f"Renaming new table for {self.helper_key} {self.month}")
+            cursor.execute(f"""
+            ALTER TABLE IF EXISTS "{self.staging_tablename}" RENAME TO "{self.monthly_tablename}"
+            """)
+            logger.info(f"Attaching new table for {self.helper_key} {self.month}")
+            cursor.execute(f'ALTER TABLE IF EXISTS "{self.monthly_tablename}" INHERIT "{self.base_tablename}"')
 
-        logger.info(f"Dropping staging table for {self.helper_key} {self.month}")
+        self.cleanup(cursor)
+
+    def cleanup(self, cursor):
+        logger.info(f'Start {self.helper_key} cleanup')
         cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
-        logger.info(f"Finished aggregation for {self.helper_key} {self.month}")
+        cursor.execute(f"DROP TABLE IF EXISTS {self.temporary_table_to_be_deleted}")
+        logger.info(f'Finish {self.helper_key}cleanup')
 
     def _legacy_tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"), agg_level)
