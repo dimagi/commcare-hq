@@ -35,6 +35,7 @@ from corehq.apps.domain.views.releases import (
 from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
+    UserListReport,
 )
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
@@ -135,12 +136,23 @@ class ProjectReportsTab(UITab):
         from corehq.apps.reports.views import MySavedReportsView
         if isinstance(self.couch_user, AnonymousCouchUser) and PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
             return []
-        return [(_("Tools"), [
-            {'title': _(MySavedReportsView.page_title),
-             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
-             'icon': 'icon-tasks fa fa-tasks',
-             'show_in_dropdown': True}
-        ])]
+        tools = [{
+            'title': _(MySavedReportsView.page_title),
+            'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
+            'icon': 'icon-tasks fa fa-tasks',
+            'show_in_dropdown': True,
+        }]
+        if toggles.USER_CONFIGURABLE_REPORTS.enabled(self.couch_user.username):
+            # Only show for **users** with the flag. This flag is also available for domains
+            # but should not be granted by domain, as the feature is too advanced to turn
+            # on for all of a domain's users.
+            from corehq.apps.userreports.views import UserConfigReportsHomeView
+            tools.append({
+                'title': _(UserConfigReportsHomeView.section_name),
+                'url': reverse(UserConfigReportsHomeView.urlname, args=[self.domain]),
+                'icon': 'icon-tasks fa fa-wrench',
+            })
+        return [(_("Tools"), tools)]
 
     def _get_report_builder_items(self):
         user_reports = []
@@ -2099,7 +2111,7 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [DeviceLogSoftAssertReport, UserAuditReport]
+            } for report in [DeviceLogSoftAssertReport, UserAuditReport, UserListReport]
         ]))
         return sections
 
