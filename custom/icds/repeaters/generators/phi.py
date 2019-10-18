@@ -83,7 +83,7 @@ class ValidatePHIDPayloadGenerator(BasePayloadGenerator):
 
     def handle_success(self, response, case, repeat_record):
         case_update = {'phid_validated': 'yes'}
-        if response.json()['result'] == 'true':
+        if response.json()['result'] in ['true', 'True']:
             case_update['phid_valid'] = 'yes'
         else:
             case_update['phid_valid'] = 'no'
