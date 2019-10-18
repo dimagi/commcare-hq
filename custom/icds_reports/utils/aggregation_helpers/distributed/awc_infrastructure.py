@@ -2,10 +2,12 @@ from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_INFRASTRUCTURE_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
+    StateBasedAggregationPartitionedHelper,
+)
 
 
-class AwcInfrastructureAggregationHelper(BaseICDSAggregationDistributedHelper):
+class AwcInfrastructureAggregationHelper(StateBasedAggregationPartitionedHelper):
     helper_key = 'awc-infrastructure'
     ucr_data_source_id = 'static-infrastructure_form_v2'
     aggregate_parent_table = AGG_INFRASTRUCTURE_TABLE
@@ -20,14 +22,6 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationDistributedHelper):
         'infantometer_usable', 'medicine_kits_usable', 'stadiometer_usable',
         'preschool_kit_available', 'preschool_kit_usable'
     )
-
-    def aggregate(self, cursor):
-        curr_month_query, curr_month_params = self.create_table_query()
-        agg_query, agg_params = self.aggregation_query()
-
-        cursor.execute(self.drop_table_query())
-        cursor.execute(curr_month_query, curr_month_params)
-        cursor.execute(agg_query, agg_params)
 
     def _window_helper(self, column_name):
         return (
@@ -72,7 +66,7 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationDistributedHelper):
             "state_id": self.state_id,
         }
 
-    def aggregation_query(self):
+    def aggregate_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
 
