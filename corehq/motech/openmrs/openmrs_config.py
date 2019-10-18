@@ -4,10 +4,15 @@ from operator import eq
 from jsonpath_rw import Child, Fields, Slice, Union, Where
 from jsonpath_rw import parse as parse_jsonpath
 
+from casexml.apps.case.models import (
+    INDEX_RELATIONSHIP_CHILD,
+    INDEX_RELATIONSHIP_EXTENSION,
+)
 from dimagi.ext.couchdbkit import (
     DocumentSchema,
     ListProperty,
     SchemaDictProperty,
+    SchemaListProperty,
     SchemaProperty,
     StringProperty,
 )
@@ -17,6 +22,10 @@ from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
 from corehq.motech.value_source import ValueSource
 
+INDEX_RELATIONSHIPS = (
+    INDEX_RELATIONSHIP_CHILD,
+    INDEX_RELATIONSHIP_EXTENSION,
+)
 
 class OpenmrsCaseConfig(DocumentSchema):
 
@@ -156,6 +165,15 @@ class OpenmrsCaseConfig(DocumentSchema):
         return super(OpenmrsCaseConfig, cls).wrap(data)
 
 
+class IndexedCaseMapping(DocumentSchema):
+    case_type = StringProperty(required=True)
+    relationship = StringProperty(required=True, choices=INDEX_RELATIONSHIPS,
+                                  default=INDEX_RELATIONSHIP_EXTENSION)
+
+    # Sets case property values of a new extension case or child case.
+    case_properties = SchemaListProperty(ValueSource, required=True)
+
+
 class ObservationMapping(DocumentSchema):
     concept = StringProperty()
     value = SchemaProperty(ValueSource)
@@ -164,6 +182,12 @@ class ObservationMapping(DocumentSchema):
     # OpenmrsRepeater.white_listed_case_types[0]; Atom feed integration
     # requires len(OpenmrsRepeater.white_listed_case_types) == 1.)
     case_property = StringProperty(required=False)
+
+    # Use indexed_case_mapping to create an extension case or a child
+    # case instead of setting a case property. Used for referrals.
+    indexed_case_mapping = SchemaProperty(
+        IndexedCaseMapping, required=False, default=None, exclude_if_none=True
+    )
 
     def __eq__(self, other):
         return (
