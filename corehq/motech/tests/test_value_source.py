@@ -8,7 +8,6 @@ from testil import assert_raises
 
 import corehq.motech.value_source
 from corehq.motech.value_source import (
-    CaseProperty,
     CaseTriggerInfo,
     ValueSource,
     get_form_question_values,
@@ -94,19 +93,30 @@ class CaseTriggerInfoTests(SimpleTestCase):
 class CasePropertyValidationTests(SimpleTestCase):
 
     def test_valid_case_property(self):
-        CaseProperty.wrap({"case_property": "foo"})
+        ValueSource.wrap({
+            "doc_type": "CaseProperty",
+            "case_property": "foo",
+        })
 
     def test_blank_case_property(self):
         with self.assertRaisesRegexp(BadValueError, "Value cannot be blank."):
-            CaseProperty.wrap({"case_property": ""})
+            ValueSource.wrap({
+                "doc_type": "CaseProperty",
+                "case_property": "",
+            })
 
     def test_missing_case_property(self):
-        case_property = CaseProperty.wrap({})
+        case_property = ValueSource.wrap({
+            "doc_type": "CaseProperty",
+        })
         with self.assertRaisesRegexp(BadValueError, "Property case_property is required."):
             case_property.validate()
 
     def test_null_case_property(self):
-        case_property = CaseProperty.wrap({"case_property": None})
+        case_property = ValueSource.wrap({
+            "doc_type": "CaseProperty",
+            "case_property": None,
+        })
         with self.assertRaisesRegexp(BadValueError, "Property case_property is required."):
             case_property.validate()
 
