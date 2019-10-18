@@ -6,7 +6,11 @@ from django.test import SimpleTestCase
 from couchdbkit import BadValueError
 
 import corehq.motech.value_source
-from corehq.motech.value_source import CaseProperty, get_form_question_values
+from corehq.motech.value_source import (
+    CaseProperty,
+    CaseTriggerInfo,
+    get_form_question_values,
+)
 
 
 class DocTests(SimpleTestCase):
@@ -67,6 +71,29 @@ class GetFormQuestionValuesTests(SimpleTestCase):
             '/metadata/spam': 'ham',
             '/metadata/received_on': '2018-11-06T18:30:00.000000Z',
         })
+
+
+class CaseTriggerInfoTests(SimpleTestCase):
+
+    def test_default_attr(self):
+        info = CaseTriggerInfo(
+            domain="test-domain",
+            case_id='c0ffee',
+        )
+        self.assertIsNone(info.name)
+
+    def test_factory_attr(self):
+        info = CaseTriggerInfo(
+            domain="test-domain",
+            case_id='c0ffee',
+        )
+        self.assertEqual(info.form_question_values, {})
+
+    def test_required_attr(self):
+        with self.assertRaises(TypeError):
+            CaseTriggerInfo(
+                domain="test-domain",
+            )
 
 
 class CasePropertyValidationTests(SimpleTestCase):
