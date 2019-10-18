@@ -161,7 +161,7 @@ class MapMixin(DocumentSchema):
         }
 
     """
-    value_map = DictProperty(required=True)
+    value_map = DictProperty(required=False, default=None, exclude_if_none=True)
 
     def serialize(self, value):
         """
@@ -345,14 +345,14 @@ class CasePropertyMap(MapMixin, CaseProperty):
     """
     Maps case property values to OpenMRS values or concept UUIDs
     """
-    pass
+    value_map = DictProperty(required=True)
 
 
 class FormQuestionMap(MapMixin, FormQuestion):
     """
     Maps form question values to OpenMRS values or concept UUIDs
     """
-    pass
+    value_map = DictProperty(required=True)
 
 
 class CaseOwnerAncestorLocationField(ValueSource):
