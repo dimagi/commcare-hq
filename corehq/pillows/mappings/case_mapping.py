@@ -14,6 +14,9 @@ CASE_MAPPING = {
         'comment': '',
         'created': '2013-09-19 @dmyung'
     },
+    "_all": {
+        "enabled": False
+    },
     'properties': {
         'actions': {'dynamic': False,
                     'properties': {

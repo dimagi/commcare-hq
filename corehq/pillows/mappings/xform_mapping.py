@@ -12,6 +12,9 @@ XFORM_MAPPING = {
     "_meta": {
         "created": '2013-08-13',
     },
+    "_all": {
+        "enabled": False
+    },
     "properties": {
         'doc_type': {'type': 'string'},
         'inserted_at': {"type": "date", "format": DATE_FORMATS_STRING},
