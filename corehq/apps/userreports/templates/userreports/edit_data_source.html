@@ -37,29 +37,42 @@
             data-placement="left"></span>
         {% endif %}
       </div>
-      <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>
-      <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
-      <a href="{% url 'configurable_data_source_json' domain data_source.get_id %}"
-         class="btn btn-default track-usage-link"
-         data-category="UCR"
-         data-action="View Source"
-         data-label="Data Source">{% trans 'Data Source Source (Advanced)' %}</a>
     </form>
-    {% if not data_source.is_deactivated %}
-      <hr />
-      <form method='post' action="{% url 'resume_build' domain data_source.get_id %}">
+    <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>
+    <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
+    <div class="btn-group">
+      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        {% trans "Advanced" %} <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu">
+        <li>
+          <a href="{% url 'configurable_data_source_json' domain data_source.get_id %}"
+             class="track-usage-link"
+             data-category="UCR"
+             data-action="View Source"
+             data-label="Data Source">{% trans "Data Source Source" %}</a>
+        </li>
+        {% if not data_source.is_deactivated %}
+          <li>
+            <a class="submit-dropdown-form"
+               href=""
+               data-action="{% url 'resume_build' domain data_source.get_id %}">
+              {% trans 'Resume Build' %}
+            </a>
+          </li>
+          <li>
+            <a class="submit-dropdown-form"
+               href=""
+               data-action="{% url 'build_in_place' domain data_source.get_id %}">
+              {% trans 'Rebuild Tables in Place' %}
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+      <form method="post" class="hide" id="dropdown-form">
         {% csrf_token %}
-        <button type="submit" class="btn btn-default disable-on-submit">
-          {% trans 'Resume Build (Advanced)' %}
-        </button>
       </form>
-      <form method='post' action="{% url 'build_in_place' domain data_source.get_id %}">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-default disable-on-submit">
-          {% trans 'Rebuild Tables In Place (Advanced)' %}
-        </button>
-      </form>
-    {% endif %}
+    </div>
   {% endif %}
 
   {% if not used_by_reports  %}
