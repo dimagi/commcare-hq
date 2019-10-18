@@ -11,6 +11,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
         self.expressionText = ko.observable(editor.getSession().getValue());
         self.error = ko.observable();
         self.result = ko.observable();
+        self.isEvaluating = ko.observable(false);
 
         self.getExpressionJSON = function () {
             try {
@@ -54,6 +55,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
                 self.error("Please enter a document ID.");
             }
             else {
+                self.isEvaluating(true);
                 $.post({
                     url: self.submitUrl,
                     data: {
@@ -65,9 +67,11 @@ hqDefine('userreports/js/expression_evaluator', function () {
                     success: function (data) {
                         self.result(JSON.stringify(data.result));
                         self.updateUrl();
+                        self.isEvaluating(false);
                     },
                     error: function (data) {
                         self.error(data.responseJSON ? data.responseJSON.error : gettext("Unknown error"));
+                        self.isEvaluating(false);
                     },
                 });
             }
