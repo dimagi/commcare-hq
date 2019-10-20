@@ -282,7 +282,9 @@ class _AppDiffGenerator(object):
                 continue
 
             for form in module['forms']:
-                if form['unique_id'] not in self._second_forms_by_id:
+                second_form = self._second_forms_by_id.get(form['unique_id'])
+                if not second_form or form.module_uid != second_form.module_uid:
+                    # Also show moved form as deleted and re-added.
                     self._mark_item_removed(form, 'form')
                     continue
 
@@ -327,13 +329,15 @@ class _AppDiffGenerator(object):
 
     def _mark_forms(self, second_forms):
         for second_form in second_forms:
-            try:
+            first_form = self._first_forms_by_id.get(second_form['unique_id'])
+            if not first_form or first_form.module_uid != second_form.module_uid:
+                # Also show moved form as deleted and re-added.
+                self._mark_item_added(second_form, 'form')
+            else:
                 first_form = self._first_forms_by_id[second_form['unique_id']]
                 for attribute in FORM_ATTRIBUTES:
                     self._mark_attribute(first_form, second_form, attribute)
                 self._mark_questions(second_form['unique_id'], second_form['questions'])
-            except KeyError:
-                self._mark_item_added(second_form, 'form')
 
     def _mark_questions(self, form_id, second_questions):
         for second_question in second_questions:

@@ -103,6 +103,24 @@ class TestAppDiffs(_BaseTestAppDiffs, SimpleTestCase):
         first, second = get_app_diff(self.app1, self.app2)
         self.assertEqual(first[0]['forms'][1]['changes']['form']['type'], REMOVED)
 
+    def test_move_form(self):
+        # A moved form should show up as deleted and re-added
+        self.factory1.new_form(self.app1.modules[0])
+        self.factory1.new_basic_module('module_2', 'case')
+        self.factory2.new_form(self.app2.modules[0])
+        self.factory2.new_basic_module('module_2', 'case')
+
+        self.app2.rearrange_forms(
+            from_module_uid=self.app2.modules[0].unique_id,
+            to_module_uid=self.app2.modules[1].unique_id,
+            from_index=1,
+            to_index=1,
+        )
+
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(first[0]['forms'][1]['changes']['form']['type'], REMOVED)
+        self.assertEqual(second[1]['forms'][1]['changes']['form']['type'], ADDED)
+
     def test_add_question(self):
         self._add_question(self.app2.modules[0].forms[0])
         first, second = get_app_diff(self.app1, self.app2)
