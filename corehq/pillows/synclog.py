@@ -59,32 +59,42 @@ class UserSyncHistoryProcessor(PillowProcessor):
         if not synclog:
             return
 
-        version = None
-        app_id = None
+        user_id = synclog.get('user_id')
+        domain = synclog.get('domain')
+
+        if not user_id or not domain:
+            return
+
         try:
             sync_date = string_to_utc_datetime(synclog.get('date'))
         except (ValueError, AttributeError):
             return
+
         build_id = synclog.get('build_id')
-        if build_id:
-            version, app_id = get_version_and_app_from_build_id(synclog.get('domain'), build_id)
-        user_id = synclog.get('user_id')
+        device_id = synclog.get('device_id')
 
-        if user_id:
-            user = CouchUser.get_by_user_id(user_id)
-            save = update_last_sync(user, app_id, sync_date, version)
-            if version:
-                save |= update_latest_builds(user, app_id, sync_date, version)
+        mark_last_synclog(domain, user_id, build_id, device_id, sync_date)
 
-            app_meta = None
-            device_id = synclog.get('device_id')
-            if device_id:
-                if app_id:
-                    app_meta = DeviceAppMeta(app_id=app_id, build_id=build_id, last_sync=sync_date)
-                save |= update_device_meta(user, device_id, device_app_meta=app_meta, save=False)
 
-            if save:
-                user.save(fire_signals=False)
+def mark_last_synclog(domain, user_id, build_id, device_id, sync_date):
+    version, app_id = None, None
+    if build_id:
+        version, app_id = get_version_and_app_from_build_id(domain, build_id)
+
+    user = CouchUser.get_by_user_id(user_id)
+    save = update_last_sync(user, app_id, sync_date, version)
+    if version:
+        save |= update_latest_builds(user, app_id, sync_date, version)
+
+    app_meta = None
+    device_id = device_id
+    if device_id:
+        if app_id:
+            app_meta = DeviceAppMeta(app_id=app_id, build_id=build_id, last_sync=sync_date)
+        save |= update_device_meta(user, device_id, device_app_meta=app_meta, save=False)
+
+    if save:
+        user.save(fire_signals=False)
 
 
 class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
