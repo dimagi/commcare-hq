@@ -273,8 +273,8 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
 
         more_than_one_week = False
         more_than_one_month = False
-        one_month_ago = datetime.utcnow() - timedelta(days=30)
-        one_week_ago = datetime.utcnow() - timedelta(days=7)
+        one_month_ago = (datetime.utcnow() - timedelta(days=30)).date()
+        one_week_ago = (datetime.utcnow() - timedelta(days=7)).date()
 
         if not self.last_submission_date or self.last_submission_date < one_month_ago:
             more_than_one_month = True
