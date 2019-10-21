@@ -1406,13 +1406,13 @@ Keep in mind that the only variables available for formatting are
 ConditionalAggregationRangesColumn
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**NOTE** This feature is only available to static UCR reports maintained
-by Dimagi developers.
+Conditional aggregation columns allow you to define a series of ranges
+with corresponding names, then group together rows where a specific field's
+value falls within those ranges.
 
-Conditional aggregation columns allow you to define a series of
-conditional expressions with corresponding names, then group together
-rows which which meet the same conditions. They have a type of
-``"conditional_aggregation"``.
+There are two types: ``conditional_aggregation`` for most values, and
+``conditional_aggregation_age_in_months``, where the given field must be a date
+and the buckets are based on the number of moonths since that date.
 
 Here's an example that groups children based on their age at the time of
 registration:
@@ -1423,33 +1423,33 @@ registration:
        "display": "age_range",
        "column_id": "age_range",
        "type": "conditional_aggregation",
-       "whens": {
-           "0 <= age_at_registration AND age_at_registration < 12": "infant",
-           "12 <= age_at_registration AND age_at_registration < 36": "toddler",
-           "36 <= age_at_registration AND age_at_registration < 60": "preschooler"
+       "field": "age_at_registration",
+       "ranges": {
+            "infant": [0, 12],
+            "toddler": [12, 36],
+            "preschooler": [36, 60]
        },
        "else_": "older"
    }
 
-The ``"whens"`` attribute maps conditional expressions to labels. If
-none of the conditions are met, the row will receive the ``"else_"``
-value, if provided.
+The ``"ranges"`` attribute maps conditional expressions to labels. If the field's value
+does not fall into any of these ranges, the row will receive the ``"else_"`` value, if provided.
 
-Here's a more complex example which uses SQL functions to dynamically
-calculate ranges based on a date property:
+Here's an example using ``conditional_aggregation_age_in_months``:
 
 .. code:: json
 
    {
        "display": "Age Group",
        "column_id": "age_group",
-       "type": "conditional_aggregation",
+       "type": "conditional_aggregation_age_in_months",
+       "field": "dob",
        "whens": {
-           "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 0 and 5": "0_to_5",
-           "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 6 and 11": "6_to_11",
-           "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 12 and 35": "12_to_35",
-           "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 36 and 59": "36_to_59",
-           "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 60 and 71": "60_to_71"
+            "0_to_5": [0, 5],
+            "6_to_11": [6, 11],
+            "12_to_35": [12, 35],
+            "36_to_59": [36, 59],
+            "60_to_71": [60, 71],
        }
    }
 
