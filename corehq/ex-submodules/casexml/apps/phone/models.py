@@ -1,29 +1,48 @@
+import json
+import logging
+import uuid
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
-import architect
-import uuid
-import json
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from casexml.apps.phone.exceptions import IncompatibleSyncLogType, MissingSyncLog
-from corehq.toggles import LEGACY_SYNC_SUPPORT
-from corehq.util.global_request import get_request_domain
-from corehq.util.soft_assert import soft_assert
-from corehq.toggles import ENABLE_LOADTEST_USERS
-from corehq.apps.domain.models import Domain
-from dimagi.ext.couchdbkit import *
-from django.db import models
+
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
+from django.db import models
+
+import architect
+import six
 from memoized import memoized
-from dimagi.utils.couch import LooselyEqualDocumentSchema
-from dimagi.utils.logging import notify_exception
+
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
-from casexml.apps.phone.checksum import Checksum, CaseStateHash
 from casexml.apps.phone.change_publishers import publish_synclog_saved
-import logging
-import six
+from casexml.apps.phone.checksum import CaseStateHash, Checksum
+from casexml.apps.phone.exceptions import (
+    IncompatibleSyncLogType,
+    MissingSyncLog,
+)
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SafeSaveDocument,
+    SchemaDictProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    SetProperty,
+    StringListProperty,
+    StringProperty,
+)
+from dimagi.utils.couch import LooselyEqualDocumentSchema
+from dimagi.utils.logging import notify_exception
+
+from corehq.apps.domain.models import Domain
+from corehq.toggles import ENABLE_LOADTEST_USERS, LEGACY_SYNC_SUPPORT
+from corehq.util.global_request import get_request_domain
+from corehq.util.soft_assert import soft_assert
 
 
 def _get_logger():
