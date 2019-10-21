@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from copy import deepcopy
 from datetime import datetime
 import sys
@@ -319,3 +319,38 @@ def ensure_document_exists(change):
     change.get_document()
     if change.error_raised is not None and isinstance(change.error_raised, DocumentMissingError):
         raise change.error_raised
+
+
+def bulk_fetch_changes_docs(changes, domain):
+    # break up by doctype
+    changes_by_doctype = defaultdict(list)
+    for change in changes:
+        assert change.metadata.domain == domain
+        changes_by_doctype[change.metadata.data_source_name].append(change)
+
+    # query
+    docs = []
+    for _, _changes in changes_by_doctype.items():
+        doc_store = _changes[0].document_store
+        doc_ids_to_query = [change.id for change in _changes if change.should_fetch_document()]
+        new_docs = list(doc_store.iter_documents(doc_ids_to_query))
+        docs_queried_prior = [change.document for change in _changes if not change.should_fetch_document()]
+        docs.extend(new_docs + docs_queried_prior)
+
+    # catch missing docs
+    retry_changes = set()
+    docs_by_id = {doc['_id']: doc for doc in docs}
+    for change in changes:
+        if change.id not in docs_by_id:
+            # we need to capture DocumentMissingError which is not possible in bulk
+            #   so let pillow fall back to serial mode to capture the error for missing docs
+            retry_changes.add(change)
+            continue
+        else:
+            # set this, so that subsequent doc lookups are avoided
+            change.set_document(docs_by_id[change.id])
+        try:
+            ensure_matched_revisions(change, docs_by_id.get(change.id))
+        except DocumentMismatchError:
+            retry_changes.add(change)
+    return retry_changes, docs

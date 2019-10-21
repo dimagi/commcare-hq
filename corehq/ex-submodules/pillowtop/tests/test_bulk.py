@@ -1,12 +1,19 @@
 import json
+import uuid
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
-from corehq.util.test_utils import generate_cases
+from six.moves import range
+
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import PillowBase
-from pillowtop.utils import prepare_bulk_payloads
-from six.moves import range
+from pillowtop.utils import bulk_fetch_changes_docs, prepare_bulk_payloads
+
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    create_form_for_test,
+)
+from corehq.util.test_utils import generate_cases
 
 
 class BulkTest(SimpleTestCase):
@@ -53,3 +60,27 @@ def test_prepare_bulk_payloads2(self, max_size, chunk_size, expected_payloads):
     json_docs = b''.join(payloads).strip().split(b'\n')
     reformed_changes = [json.loads(doc) for doc in json_docs]
     self.assertEqual(bulk_changes, reformed_changes)
+
+
+class TestBulkFetchChanges(TestCase):
+
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        super().tearDownClass()
+
+    def test_get_docs(self):
+        case_ids = [
+            uuid.uuid4() for i in range(4)
+        ]
+        for case_id in case_ids:
+            create_form_for_test('domain', case_id)
+
+        changes = [
+            Change(id=case_id, sequence_id=None) for case_id in case_ids
+        ]
+        bad_changes, result_docs = bulk_fetch_changes_docs(changes, 'domain')
+        self.assertEqual(
+            set(case_ids),
+            set([doc['_id'] for doc in result_docs])
+        )
