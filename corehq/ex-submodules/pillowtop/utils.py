@@ -321,11 +321,12 @@ def ensure_document_exists(change):
         raise change.error_raised
 
 
-def bulk_fetch_changes_docs(changes, domain):
+def bulk_fetch_changes_docs(changes, domain=None):
     # break up by doctype
     changes_by_doctype = defaultdict(list)
     for change in changes:
-        assert change.metadata.domain == domain
+        if domain and change.metadata.domain == domain:
+            raise ValueError("Domain does not match change")
         changes_by_doctype[change.metadata.data_source_name].append(change)
 
     # query
