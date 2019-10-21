@@ -2,7 +2,7 @@ from django.http import HttpRequest
 from django.test import TestCase
 from datetime import datetime
 
-from corehq.apps.userreports.exceptions import UserReportsError
+from corehq.apps.userreports.exceptions import BadSpecError, UserReportsError
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
@@ -925,6 +925,69 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
             ['TN', '13+', 1],
         ]:
             self.assertIn(table_row, table)
+
+    def test_bad_conditional_aggregation_specs(self):
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+                'age_range',
+            ],
+            columns=[
+                {
+                    'type': 'field',
+                    'display': 'state',
+                    'field': 'indicator_col_id_state',
+                    'column_id': 'state',
+                    'aggregation': 'simple'
+                },
+                {
+                    'type': 'conditional_aggregation',
+                    'display': 'age_range',
+                    'column_id': 'age_range',
+                    'field': 'age_at_registration',
+                    'ranges': {
+                        '0-6': [0],         # badly-formed range
+                        '7-12': [7, 12],
+                    },
+                    'else_': '13+'
+                }
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        with self.assertRaises(BadSpecError):
+            view.export_table
+
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+                'age_range',
+            ],
+            columns=[
+                {
+                    'type': 'field',
+                    'display': 'state',
+                    'field': 'indicator_col_id_state',
+                    'column_id': 'state',
+                    'aggregation': 'simple'
+                },
+                {
+                    'type': 'conditional_aggregation',
+                    'display': 'age_range',
+                    'column_id': 'age_range',
+                    'field': 'age_at_registration',
+                    'ranges': {
+                        '0-6': [0, '6; select'],    # not a number
+                        '7-12': [7, 12],
+                    },
+                    'else_': '13+'
+                }
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        with self.assertRaises(BadSpecError):
+            view.export_table
 
     def test_conditional_aggregation_age_in_months(self):
         report_config = self._create_report(
