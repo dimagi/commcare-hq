@@ -904,6 +904,17 @@ ES_SETTINGS = None
 PHI_API_KEY = None
 PHI_PASSWORD = None
 
+SESSION_BYPASS_URLS = [
+    r'^/a/{domain}/receiver/',
+    r'^/a/{domain}/phone/restore/',
+    r'^/a/{domain}/phone/search/',
+    r'^/a/{domain}/phone/claim-case/',
+    r'^/a/{domain}/phone/heartbeat/',
+    r'^/a/{domain}/phone/keys/',
+    r'^/a/{domain}/phone/admin_keys/',
+    r'^/a/{domain}/apps/download/',
+]
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -2133,13 +2144,3 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
-
-SESSION_BYPASS_URLS = [
-    r'^/a/{domain}/receiver/',
-    r'^/a/{domain}/phone/restore/',
-    r'^/a/{domain}/phone/search/',
-    r'^/a/{domain}/phone/claim-case/',
-    r'^/a/{domain}/phone/heartbeat/',
-    r'^/a/{domain}/phone/keys/',
-    r'^/a/{domain}/phone/admin_keys/',
-]
