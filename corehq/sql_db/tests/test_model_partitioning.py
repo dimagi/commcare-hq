@@ -49,21 +49,20 @@ class TestPartitionedModelsWithMultipleDBs(PartitionedModelsTestMixin, TestCase)
     ('form_processor', True),
 ], TestPartitionedModelsWithMultipleDBs)
 def test_models_are_located_in_correct_dbs(self, app_label, is_partitioned):
-    main_db = partition_config.get_main_db()
     proxy_db = partition_config.get_proxy_db()
     partitioned_dbs = partition_config.get_form_processing_dbs()
 
     for model_class in self.get_models(app_label):
         if is_partitioned:
             # models do not exist in main db
-            self.assertModelDoesNotExist(model_class, main_db)
+            self.assertModelDoesNotExist(model_class, 'default')
 
             # models exist in paritioned dbs
             for db in ([proxy_db] + partitioned_dbs):
                 self.assertModelExists(model_class, db)
         else:
             # models exist in main db
-            self.assertModelExists(model_class, main_db)
+            self.assertModelExists(model_class, 'default')
 
             # models do not exist in partitioned dbs
             for db in ([proxy_db] + partitioned_dbs):
