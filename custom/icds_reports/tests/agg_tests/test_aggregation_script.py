@@ -411,7 +411,7 @@ class InactiveAWWsTest(TestCase):
     def setUpClass(cls):
         super(InactiveAWWsTest, cls).setUpClass()
         last_sync = date(2017, 4, 1)
-        cls.agg_time = datetime(2017, 4, 30, 18)
+        cls.agg_time = datetime(2017, 5, 30, 18)
         cls.helper = InactiveAwwsAggregationDistributedHelper(last_sync)
 
     def tearDown(self):
