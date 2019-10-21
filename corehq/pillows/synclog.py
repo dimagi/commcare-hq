@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
@@ -75,10 +77,13 @@ class UserSyncHistoryProcessor(PillowProcessor):
         device_id = synclog.get('device_id')
         app_id = synclog.get('app_id')
 
-        UserReportingMetadataStaging.add_sync(domain, user_id, app_id, build_id, sync_date, device_id)
+        if settings.USER_REPORTING_METADATA_BATCH_ENABLED:
+            UserReportingMetadataStaging.add_sync(domain, user_id, app_id, build_id, sync_date, device_id)
+        else:
+            mark_last_synclog(domain, user_id, app_id, build_id, sync_date, device_id)
 
 
-def mark_last_synclog(domain, user_id, build_id, device_id, sync_date):
+def mark_last_synclog(domain, user_id, build_id, sync_date, device_id):
     user = CouchUser.get_by_user_id(user_id)
     if not user:
         return

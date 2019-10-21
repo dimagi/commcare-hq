@@ -1,6 +1,6 @@
 import datetime
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.phone.models import SimplifiedSyncLog, SyncLogSQL, properly_wrap_sync_log
@@ -40,6 +40,7 @@ class SyncLogPillowTest(TestCase):
     def _get_latest_synclog(self):
         return properly_wrap_sync_log(SyncLogSQL.objects.order_by('date').last().doc)
 
+    @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=True)
     def test_pillow(self):
         from corehq.apps.change_feed.topics import get_topic_offset
         from corehq.pillows.synclog import get_user_sync_history_pillow

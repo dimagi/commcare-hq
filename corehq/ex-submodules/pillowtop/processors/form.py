@@ -63,7 +63,14 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
             metadata = None
 
         if user_id and domain and received_on:
-            UserReportingMetadataStaging.add_submission(domain, user_id, app_id, build_id, version, metadata, received_on)
+            if settings.USER_REPORTING_METADATA_BATCH_ENABLED:
+                UserReportingMetadataStaging.add_submission(
+                    domain, user_id, app_id, build_id, version, metadata, received_on
+                )
+            else:
+                mark_latest_submission(
+                    domain, user_id, app_id, build_id, version, metadata, received_on
+                )
 
 
 @quickcache(['domain', 'build_id'], timeout=60 * 60)

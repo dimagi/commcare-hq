@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.test import override_settings
 from django.test.testcases import SimpleTestCase, TestCase
 
 from elasticsearch.exceptions import ConnectionError
@@ -96,6 +97,7 @@ class XFormPillowTest(TestCase):
         self.assertEqual(0, results.total)
 
     @run_with_all_backends
+    @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=True)
     def test_app_metadata_tracker(self):
         form, metadata = self._create_form_and_sync_to_es()
         self.assertEqual(UserReportingMetadataStaging.objects.count(), 1)
