@@ -260,9 +260,12 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
     def __init__(self, domain, user):
         super(AWWSubmissionPerformanceIndicator, self).__init__(domain, user)
 
-        self.last_submission_date = AggregateInactiveAWW.objects.filter(
-            awc_site_code=user.raw_username
-        ).last_submission
+        result = AggregateInactiveAWW.objects.filter(
+            awc_site_code=user.raw_username,
+            last_submission__isnull=False
+        )
+        if result:
+            self.last_submission_date = result[0].last_submission
 
     def get_messages(self, language_code=None):
         if not is_aggregate_inactive_aww_data_fresh(send_email=True):
