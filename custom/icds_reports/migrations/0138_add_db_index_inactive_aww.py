@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0136_add_infra_field'),
+        ('icds_reports', '0137_pse_columns_awc_daily'),
     ]
 
     operations = [
