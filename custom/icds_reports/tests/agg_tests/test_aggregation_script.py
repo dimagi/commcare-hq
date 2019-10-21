@@ -411,7 +411,7 @@ class InactiveAWWsTest(TestCase):
     def setUpClass(cls):
         super(InactiveAWWsTest, cls).setUpClass()
         last_sync = date(2017, 4, 1)
-        cls.agg_time = datetime(2017, 5, 30, 18)
+        cls.agg_time = datetime(2017, 7, 31, 18)
         cls.helper = InactiveAwwsAggregationDistributedHelper(last_sync)
 
     def tearDown(self):
@@ -433,7 +433,7 @@ class InactiveAWWsTest(TestCase):
             cursor.execute(missing_location_query)
             cursor.execute(aggregation_query, agg_params)
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
-        self.assertEqual(records.count(), 28)
+        self.assertEqual(records.count(), 46)
 
     def test_submission_dates(self):
         with freeze_time(self.agg_time):
