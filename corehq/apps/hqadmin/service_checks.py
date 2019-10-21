@@ -4,6 +4,7 @@ A collection of functions which test the most basic operations of various servic
 
 import datetime
 import logging
+import re
 import time
 import uuid
 from io import BytesIO
@@ -61,23 +62,42 @@ def check_redis():
         return ServiceStatus(False, "Redis is not configured on this system!")
 
 
-def check_rabbitmq():
-    if settings.BROKER_URL.startswith('amqp'):
-        amqp_parts = settings.BROKER_URL.replace('amqp://', '').split('/')
+def check_all_rabbitmq():
+    unwell_rabbits = []
+    ip_regex = re.compile(r'[0-9]+.[0-9]+.[0-9]+.[0-9]+')
+
+    for broker_url in settings.BROKER_URL.split(';'):
+        check_status, failure = check_rabbitmq(broker_url)
+        if not check_status:
+            failed_rabbit_ip = ip_regex.search(broker_url).group()
+            unwell_rabbits.append((failed_rabbit_ip, failure))
+
+    if not unwell_rabbits:
+        ServiceStatus(True, 'RabbitMQ OK')
+
+    else:
+        ServiceStatus(False, '; '.join(['{}:{}'.format(rabbit[0], rabbit[1])
+                                        for rabbit in unwell_rabbits])
+                      )
+
+
+def check_rabbitmq(broker_url):
+    if broker_url.startswith('amqp'):
+        amqp_parts = broker_url.replace('amqp://', '').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '15672')
         vhost = amqp_parts[1]
         try:
             vhost_dict = requests.get('http://%s/api/vhosts' % mq_management_url, timeout=2).json()
             for d in vhost_dict:
                 if d['name'] == vhost:
-                    return ServiceStatus(True, 'RabbitMQ OK')
-            return ServiceStatus(False, 'RabbitMQ Offline')
+                    return True, 'RabbitMQ OK'
+            return False, 'RabbitMQ Offline'
         except Exception as e:
-            return ServiceStatus(False, "RabbitMQ Error: %s" % e)
+            return False, "RabbitMQ Error: %s" % e
     elif settings.BROKER_URL.startswith('redis'):
-        return ServiceStatus(True, "RabbitMQ Not configured, but not needed")
+        return True, "RabbitMQ Not configured, but not needed"
     else:
-        return ServiceStatus(False, "RabbitMQ Not configured")
+        return False, "RabbitMQ Not configured"
 
 
 @change_log_level('kafka.client', logging.WARNING)
@@ -272,6 +292,6 @@ CHECKS = {
     },
     'rabbitmq': {
         "always_check": True,
-        "check_func": check_rabbitmq,
+        "check_func": check_all_rabbitmq,
     },
 }
