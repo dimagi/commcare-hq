@@ -333,7 +333,7 @@ class _CaseExpressionColumn(ReportColumn):
         return [self.column_id]
 
 
-class ConditionalAggregationColumn(_CaseExpressionColumn):
+class ConditionalAggregationRangesColumn(_CaseExpressionColumn):
     """Used for grouping by SQL conditionals"""
     type = TypeProperty('conditional_aggregation')
     _agg_column_type = ConditionalAggregation
@@ -356,7 +356,7 @@ class ConditionalAggregationColumn(_CaseExpressionColumn):
         return "{} between {} and {}".format(self.field, bounds[0], bounds[1])
 
 
-class ConditionalAggregationAgeInMonthsRangesColumn(ConditionalAggregationColumn):
+class ConditionalAggregationAgeInMonthsRangesColumn(ConditionalAggregationRangesColumn):
     type = TypeProperty('conditional_aggregation_age_in_months')
 
     def _base_expression(self, bounds):

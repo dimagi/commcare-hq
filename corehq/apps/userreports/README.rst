@@ -1403,8 +1403,8 @@ Keep in mind that the only variables available for formatting are
 | "%b (%y)" | "Sep (08)"        |
 +-----------+-------------------+
 
-ConditionalAggregationColumn
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ConditionalAggregationRangesColumn
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **NOTE** This feature is only available to static UCR reports maintained
 by Dimagi developers.
