@@ -228,48 +228,27 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
     for change in changes:
         if change.deleted and change.id:
             payload.append({
-                "delete": {
-                    "_index": index_info.index,
-                    "_type": index_info.type,
-                    "_id": change.id
-                }
+                "_op_type": "delete",
+                "_index": index_info.index,
+                "_type": index_info.type,
+                "_id": change.id
             })
         elif not change.deleted:
             try:
                 doc = change.get_document()
                 doc = doc_transform(doc)
                 payload.append({
-                    "index": {
-                        "_index": index_info.index,
-                        "_type": index_info.type,
-                        "_id": doc['_id']
-                    }
+                    "_op_type": "index",
+                    "_index": index_info.index,
+                    "_type": index_info.type,
+                    "_id": doc['_id'],
+                    "_source": doc
                 })
-                payload.append(doc)
             except Exception as e:
                 if not error_collector:
                     raise
                 error_collector.add_error(ChangeError(change, e))
     return payload
-
-
-def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
-    payloads = [b'']
-    for bulk_chunk in chunked(bulk_changes, chunk_size):
-        current_payload = payloads[-1]
-        json_bulk_chunks = [
-            json.dumps(obj, cls=CommCareJSONEncoder).encode('utf-8')
-            for obj in bulk_chunk
-        ]
-        payload_chunk = b'\n'.join(json_bulk_chunks) + b'\n'
-        appended_payload = current_payload + payload_chunk
-        new_payload_size = sys.getsizeof(appended_payload)
-        if new_payload_size > max_size:
-            payloads.append(payload_chunk)
-        else:
-            payloads[-1] = appended_payload
-
-    return [_f for _f in payloads if _f]
 
 
 def ensure_matched_revisions(change, fetched_document):
