@@ -3,10 +3,6 @@ import logging
 
 from django.db import transaction
 
-from corehq.apps.userreports.models import (
-    StaticDataSourceConfiguration,
-    get_datasource_config,
-)
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import DASHBOARD_DOMAIN
@@ -43,9 +39,7 @@ class BaseICDSAggregationDistributedHelper(AggregationHelper):
 
     @property
     def ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ucr_data_source_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, self.ucr_data_source_id)
 
     def aggregate(self, cursor):
         raise NotImplementedError
