@@ -1,20 +1,22 @@
-from collections import namedtuple, defaultdict
+import json
+from collections import defaultdict, namedtuple
 from copy import deepcopy
 from datetime import datetime
-import sys
+from operator import methodcaller
 
-import json
 from django.conf import settings
+
 from kafka import KafkaConsumer
 
-from corehq.util.io import ClosingContextProxy
-from corehq.util.json import CommCareJSONEncoder
-from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
-
+from pillowtop.dao.exceptions import (
+    DocumentMismatchError,
+    DocumentMissingError,
+)
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
-from pillowtop.dao.exceptions import DocumentMismatchError, DocumentMissingError
+
+from corehq.util.io import ClosingContextProxy
 
 
 def _get_pillow_instance(full_class_str):
@@ -211,6 +213,7 @@ def get_pillow_json(pillow_config, consumer=None):
         'hours_since_last': hours_since_last
     }
 
+
 ChangeError = namedtuple('ChangeError', 'change exception')
 
 
@@ -337,3 +340,15 @@ def bulk_fetch_changes_docs(changes, domain=None):
         except DocumentMismatchError:
             bad_changes.add(change)
     return bad_changes, docs
+
+
+def get_errors_with_ids(es_action_errors):
+    return [
+        (item['_id'], item['error'])
+        for op_type, item in _changes_to_list(es_action_errors)
+    ]
+
+
+def _changes_to_list(change_items):
+    """Concert list of dict(key: value) in to a list of tuple(key, value)"""
+    return list(map(methodcaller("popitem"), change_items))

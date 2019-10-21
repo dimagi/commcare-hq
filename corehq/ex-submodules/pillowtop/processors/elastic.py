@@ -1,14 +1,28 @@
 import math
 import time
 
-from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
+from elasticsearch.exceptions import (
+    ConflictError,
+    ConnectionError,
+    NotFoundError,
+    RequestError,
+)
+from elasticsearch.helpers import bulk
 
-from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
-from pillowtop.exceptions import PillowtopIndexingError
+from pillowtop.exceptions import BulkDocExeption, PillowtopIndexingError
 from pillowtop.logger import pillow_logging
-from .interface import PillowProcessor
+from pillowtop.utils import (
+    ErrorCollector,
+    build_bulk_payload,
+    bulk_fetch_changes_docs,
+    ensure_document_exists,
+    ensure_matched_revisions,
+    get_errors_with_ids,
+)
 
 from corehq.util.datadog.gauges import datadog_bucket_timer
+
+from .interface import BulkPillowProcessor, PillowProcessor
 
 
 def identity(x):
@@ -76,6 +90,33 @@ class ElasticProcessor(PillowProcessor):
             'action:{}'.format(step),
             'index:{}'.format(self.index_info.alias),
         ], timing_buckets=(.03, .1, .3, 1, 3, 10))
+
+
+class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
+    def process_changes_chunk(self, changes_chunk):
+        bad_changes, docs = bulk_fetch_changes_docs(changes_chunk)
+        changes_to_process = {
+            change.id: change for change in changes_chunk if change.document
+        }
+        retry_changes = list(bad_changes)
+
+        error_collector = ErrorCollector()
+        es_actions = build_bulk_payload(
+            self.index_info, list(changes_to_process.values()), self.doc_transform_fn, error_collector
+        )
+        error_changes = error_collector.errors
+
+        try:
+            _, errors = bulk(self.elasticsearch, es_actions, raise_on_error=False, raise_on_exception=False)
+        except Exception as e:
+            pillow_logging.exception("[%s] ES bulk load error")
+            error_changes.extend([
+                (change, e) for change in changes_to_process.values()
+            ])
+        else:
+            for change_id, error_msg in get_errors_with_ids(errors):
+                error_changes.append((changes_to_process[change_id], BulkDocExeption(error_msg)))
+        return retry_changes, error_changes
 
 
 def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,
