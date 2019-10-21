@@ -1822,9 +1822,9 @@ PHI_CAS_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-PRUNE_PREVIOUS_SYNCLOGS = DynamicallyPredictablyRandomToggle(
-    'prune_previous_synclogs',
-    'Delete old synclogs during form submission',
+DAILY_INDICATORS = StaticToggle(
+    'daily_indicators',
+    'Enable daily indicators api',
     TAG_CUSTOM,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER],
 )
