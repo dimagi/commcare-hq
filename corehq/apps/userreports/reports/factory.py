@@ -9,6 +9,7 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.specs import (
     AggregateDateColumn,
     ConditionalAggregationColumn,
+    ConditionalAggregationAgeInMonthsRangesColumn,
     ExpandedColumn,
     ExpressionColumn,
     FieldColumn,
@@ -26,6 +27,7 @@ class ReportColumnFactory(object):
     class_map = {
         'aggregate_date': AggregateDateColumn,
         'conditional_aggregation': ConditionalAggregationColumn,
+        'conditional_aggregation_age_in_months': ConditionalAggregationAgeInMonthsRangesColumn,
         'sum_when': SumWhenColumn,
         'expanded': ExpandedColumn,
         'field': FieldColumn,

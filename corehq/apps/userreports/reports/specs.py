@@ -349,8 +349,19 @@ class ConditionalAggregationColumn(_CaseExpressionColumn):
                 bounds = [float(b) for b in bounds]
             except ValueError:
                 raise BadSpecError('Invalid range: [{}, {}]'.format(bounds[0], bounds[1]))
-            whens.update({"{} between {} and {}".format(self.field, bounds[0], bounds[1]): bindparam(None, value)})
+            whens.update({self._base_expression(bounds): bindparam(None, value)})
         return whens
+
+    def _base_expression(self, bounds):
+        return "{} between {} and {}".format(self.field, bounds[0], bounds[1])
+
+
+class ConditionalAggregationAgeInMonthsRangesColumn(ConditionalAggregationColumn):
+    type = TypeProperty('conditional_aggregation_age_in_months')
+
+    def _base_expression(self, bounds):
+        return "extract(year from age({}))*12 + extract(month from age({})) BETWEEN {} and {}".format(
+            self.field, self.field, bounds[0], bounds[1])
 
 
 class SumWhenColumn(_CaseExpressionColumn):
