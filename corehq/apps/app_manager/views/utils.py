@@ -8,7 +8,8 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_apps_in_domain,
