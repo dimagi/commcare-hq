@@ -127,6 +127,15 @@ class TestAppDiffs(_BaseTestAppDiffs, SimpleTestCase):
         self.assertEqual(first[0]['forms'][0]['questions'][0]['changes']['label']['type'], CHANGED)
         self.assertEqual(second[0]['forms'][0]['questions'][0]['changes']['label']['type'], CHANGED)
 
+    def test_add_question_translation(self):
+        self.app1.langs = ['en', 'it']
+        self.app2.langs = ['en', 'it']
+        self._add_question(self.app1.modules[0].forms[0], {'label': {'en': 'food'}})
+        self._add_question(self.app2.modules[0].forms[0], {'label': {'en': 'food', 'it': 'cibo'}})
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(first[0]['forms'][0]['questions'][0]['changes']['translations']['type'], CHANGED)
+        self.assertEqual(second[0]['forms'][0]['questions'][0]['changes']['translations']['type'], CHANGED)
+
     def test_add_question_constraint(self):
         self._add_question(self.app1.modules[0].forms[0], {'constraint': ''})
         self._add_question(self.app2.modules[0].forms[0], {'constraint': 'foo = bar'})

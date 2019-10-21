@@ -11,6 +11,11 @@
       <itext>
         <translation lang="en" default="">
           <text id="name-label">
+            <value>What is your name?</value>
+          </text>
+        </translation>
+        <translation lang="bur">
+          <text id="name-label">
             <value>သင့်နာမည်ဘယ်လိုခေါ်လဲ?</value>
           </text>
         </translation>
