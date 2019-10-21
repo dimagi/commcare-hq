@@ -73,10 +73,10 @@ def check_all_rabbitmq():
             unwell_rabbits.append((failed_rabbit_ip, failure))
 
     if not unwell_rabbits:
-        ServiceStatus(True, 'RabbitMQ OK')
+        return ServiceStatus(True, 'RabbitMQ OK')
 
     else:
-        ServiceStatus(False, '; '.join(['{}:{}'.format(rabbit[0], rabbit[1])
+        return ServiceStatus(False, '; '.join(['{}:{}'.format(rabbit[0], rabbit[1])
                                         for rabbit in unwell_rabbits])
                       )
 
