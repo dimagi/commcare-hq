@@ -30,7 +30,6 @@ class TestSyncPurge(TestCase):
         cls.project.delete()
         super(TestSyncPurge, cls).tearDownClass()
 
-    @flag_enabled('PRUNE_PREVIOUS_SYNCLOGS')
     def test_previous_log_purged(self):
         device = MockDevice(self.project, self.restore_user)
         initial_sync = device.sync(items=True, version=V1)

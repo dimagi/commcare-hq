@@ -1,13 +1,14 @@
 import re
 from collections import defaultdict
 
+from django.utils.translation import ugettext as _
+
 from lxml import html
 from requests import RequestException
 from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import extract_case_blocks
-from dimagi.utils.logging import notify_exception
 
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
@@ -36,9 +37,6 @@ from corehq.motech.value_source import (
     get_case_location,
 )
 from corehq.util.quickcache import quickcache
-from corehq.util.soft_assert import soft_assert
-
-_assert = soft_assert(['@'.join(('nhooper', 'dimagi.com'))])
 
 
 def get_case_location_ancestor_repeaters(case):
@@ -179,10 +177,6 @@ def check_duplicate_case_match(domain, case_type, external_id):
                    f'external_id="{external_id}" and case type="{case_type}".')
     else: # error == LookupErrors.NotFound:
         return
-    _assert(False, message +
-            " Either the same person has more than one CommCare case, or "
-            "OpenMRS repeater configuration needs to be modified to match "
-            "cases with patients more accurately.")
     raise DuplicateCaseMatch(message)
 
 
@@ -341,11 +335,7 @@ def generate_identifier(requests, identifier_type):
         try:
             source_id = get_identifier_source_id(requests_session, identifier_type)
         except OpenmrsHtmlUiChanged as err:
-            notify_exception(
-                request=None,
-                message='Unexpected OpenMRS HTML UI',
-                details=str(err),
-            )
+            requests.notify_exception('Unexpected OpenMRS HTML UI', details=str(err))
         if source_id:
             # Example request: http://www.example.com/openmrs/module/idgen/generateIdentifier.form?source=1
             response = requests_session.get('/module/idgen/generateIdentifier.form', params={'source': source_id})
@@ -358,11 +348,13 @@ def generate_identifier(requests, identifier_type):
                 except (ValueError, IndexError, KeyError):
                     raise OpenmrsException()
             except OpenmrsException:
-                notify_exception(
-                    request=None,
-                    message='OpenMRS idgen module returned an unexpected response',
-                    details='OpenMRS idgen module at "{}" returned an unexpected response {}: "{}"'.format(
-                        response.url, response.status_code, response.content)
+                requests.notify_exception(
+                    'OpenMRS idgen module returned an unexpected response',
+                    details=(
+                        f'OpenMRS idgen module at "{response.url}" '
+                        f'returned an unexpected response {response.status_code}: \r\n'
+                        f'{response.content}'
+                    )
                 )
     return identifier
 
@@ -383,7 +375,12 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
         return None
     try:
         save_match_ids(case, openmrs_config.case_config, patient)
-    except DuplicateCaseMatch:
+    except DuplicateCaseMatch as err:
+        requests.notify_error(str(err), _(
+            "Either the same person has more than one CommCare case, or "
+            "OpenMRS repeater configuration needs to be modified to match "
+            "cases with patients more accurately."
+        ))
         return None
     else:
         return patient
