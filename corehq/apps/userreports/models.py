@@ -809,16 +809,16 @@ class StaticDataSourceConfiguration(JsonObject):
 
     @classmethod
     @memoized
-    def by_id_mapping(cls):
+    def by_id_mapping(cls, include_providers=True):
         """Memoized method that maps domains to static data source config"""
         return {
             cls.get_doc_id(domain, wrapped.config['table_id']): (domain, wrapped)
-            for wrapped in cls._all()
+            for wrapped in cls._all(include_providers=include_providers)
             for domain in wrapped.domains
         }
 
     @classmethod
-    def _all(cls):
+    def _all(cls, include_providers=True):
         """
         :return: Generator of all wrapped configs read from disk
         """
@@ -831,10 +831,11 @@ class StaticDataSourceConfiguration(JsonObject):
                     for path in files:
                         yield _get_wrapped_object_from_file(path, cls)
 
-            for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
-                provider_fn = to_function(provider_path, failhard=True)
-                for wrapped, path in provider_fn():
-                    yield wrapped
+            if include_providers:
+                for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
+                    provider_fn = to_function(provider_path, failhard=True)
+                    for wrapped, path in provider_fn():
+                        yield wrapped
 
         return __get_all() if settings.UNIT_TESTING else _filter_by_server_env(__get_all())
 
@@ -846,10 +847,10 @@ class StaticDataSourceConfiguration(JsonObject):
                 yield cls._get_datasource_config(wrapped, domain)
 
     @classmethod
-    def by_domain(cls, domain):
+    def by_domain(cls, domain, include_providers=True):
         return [
             cls._get_datasource_config(wrapped, dom)
-            for dom, wrapped in cls.by_id_mapping().values()
+            for dom, wrapped in cls.by_id_mapping(include_providers=include_providers).values()
             if domain == dom
         ]
 

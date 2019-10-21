@@ -29,11 +29,6 @@ def setUpModule():
         print('============= WARNING: not running test setup because settings.USE_PARTITIONED_DATABASE is True.')
         return
 
-    _call_center_domain_mock = mock.patch(
-        'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-    )
-    _call_center_domain_mock.start()
-
     domain = create_domain('icds-cas')
     setup_location_hierarchy(domain.name)
 
@@ -48,8 +43,6 @@ def setUpModule():
             print(e)
             tearDownModule()
             raise
-        finally:
-            _call_center_domain_mock.stop()
 
 
 def tearDownModule():
@@ -61,7 +54,7 @@ def tearDownModule():
     )
     _call_center_domain_mock.start()
     with override_settings(SERVER_ENVIRONMENT='icds'):
-        configs = StaticDataSourceConfiguration.by_domain('icds-cas')
+        configs = StaticDataSourceConfiguration.by_domain('icds-cas', include_providers=False)
         adapters = [get_indicator_adapter(config) for config in configs]
         for adapter in adapters:
             if adapter.config.table_id == 'static-child_health_cases':
