@@ -367,8 +367,16 @@ def save_synclog_to_sql(synclog_json_object):
     return synclog
 
 
-def delete_synclog(synclog_id):
-    SyncLogSQL.objects.filter(synclog_id=synclog_id).delete()
+def delete_synclogs(current_synclog):
+    if current_synclog.user_id and current_synclog.device_id and current_synclog.app_id:
+        SyncLogSQL.objects.filter(
+            user_id=current_synclog.user_id,
+            device_id=current_synclog.device_id,
+            app_id=current_synclog.app_id,
+            date__lt=current_synclog.date
+        ).delete()
+    elif current_synclog.previous_synclog_id:
+        SyncLogSQL.objects.filter(synclog_id=current_synclog.previous_synclog_id).delete()
 
 
 def synclog_to_sql_object(synclog_json_object):

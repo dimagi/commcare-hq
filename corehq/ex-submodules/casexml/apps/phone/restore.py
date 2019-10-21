@@ -459,7 +459,6 @@ class RestoreState(object):
             _id=uuid.uuid1().hex.lower(),
             domain=self.restore_user.domain,
             build_id=self.params.app_id,
-            app_id=self.params.app.copy_of or self.params.app_id,
             user_id=self.restore_user.user_id,
             owner_ids_on_phone=set(self.owner_ids),
             date=datetime.utcnow(),
@@ -467,6 +466,8 @@ class RestoreState(object):
             extensions_checked=True,
             device_id=self.params.device_id,
         )
+        if self.params.app:
+            new_synclog.app_id = self.params.app.copy_of or self.params.app_id
         if self.is_livequery:
             new_synclog.log_format = LOG_FORMAT_LIVEQUERY
         return new_synclog
