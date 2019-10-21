@@ -33,8 +33,4 @@ class Migration(migrations.Migration):
             name='device_id',
             field=models.CharField(null=True, max_length=255),
         ),
-        migrations.AlterIndexTogether(
-            name='synclogsql',
-            index_together=set([('user_id', 'device_id', 'app_id')]),
-        ),
     ]
