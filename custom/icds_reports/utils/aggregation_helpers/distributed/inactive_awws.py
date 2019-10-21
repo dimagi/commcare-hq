@@ -16,11 +16,23 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
         self.last_sync = last_sync
 
     def aggregate(self, cursor):
+        delete_extra_record_query = self.delete_extra_record_query()
         missing_location_query = self.missing_location_query()
         aggregation_query, agg_params = self.aggregate_query()
 
+        cursor.execute(delete_extra_record_query)
         cursor.execute(missing_location_query)
         cursor.execute(aggregation_query, agg_params)
+
+    def delete_extra_record_query(self):
+        return """
+            DELETE FROM icds_reports_aggregateinactiveaww
+                WHERE awc_id IN (
+                    SELECT awc_id from icds_reports_aggregateinactiveaww inactive
+                                        left join awc_location_local awc on inactive.awc_id=awc.doc_id
+                                        where awc.doc_id is null
+                                );
+            """
 
     @cached_property
     def aggregate_parent_table(self):

@@ -49,6 +49,7 @@
 trunk: master
 name: autostaging
 branches:
+  - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
   #- fr/case-templates      # FR May 15
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
   - bmb/case-sharing  #Biyeun Aug 22
