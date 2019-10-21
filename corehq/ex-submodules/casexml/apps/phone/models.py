@@ -408,6 +408,7 @@ class SyncLogSQL(models.Model):
         ]
     )
     build_id = models.CharField(max_length=255, null=True, blank=True)
+    app_id = models.CharField(max_length=255, default=None)
     device_id = models.CharField(max_length=255, default=None)
     duration = models.PositiveIntegerField(null=True, blank=True)
     last_submitted = models.DateTimeField(db_index=True, null=True, blank=True)
@@ -425,6 +426,11 @@ class SyncLogSQL(models.Model):
                 message='Could not publish change for SyncLog',
                 details={'pk': self.pk}
             )
+
+    class Meta:
+        index_together = (
+            ('user_id', 'device_id', 'app_id')
+        )
 
 
 class IndexTree(DocumentSchema):
