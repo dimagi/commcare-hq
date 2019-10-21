@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 
 import mock
-import sqlalchemy
 import csv
 
 from django.conf import settings
@@ -14,13 +13,13 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.sql_db.connections import connection_manager, ICDS_UCR_CITUS_ENGINE_ID
 
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
     build_incentive_report,
 )
-from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggregate_state_form_data
+from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggregate_state_form_data, \
+    cleanup_misc_agg_tables
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
