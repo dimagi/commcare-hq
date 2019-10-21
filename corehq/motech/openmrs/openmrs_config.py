@@ -198,8 +198,8 @@ class OpenmrsFormConfig(DocumentSchema):
 
 class OpenmrsConfig(DocumentSchema):
     openmrs_provider = StringProperty(required=False)
-    case_config = SchemaProperty(OpenmrsCaseConfig)
-    form_configs = ListProperty(OpenmrsFormConfig)
+    case_config = SchemaProperty(OpenmrsCaseConfig)  # TODO: OpenmrsPatientConfig
+    form_configs = ListProperty(OpenmrsFormConfig)  # TODO: OpenmrsEncounterConfig
 
 
 def get_property_map(case_config):

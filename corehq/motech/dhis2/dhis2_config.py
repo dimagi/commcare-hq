@@ -54,4 +54,4 @@ class Dhis2FormConfig(DocumentSchema):
 
 
 class Dhis2Config(DocumentSchema):
-    form_configs = ListProperty(Dhis2FormConfig)
+    form_configs = ListProperty(Dhis2FormConfig)  # TODO: Dhis2EventConfig
