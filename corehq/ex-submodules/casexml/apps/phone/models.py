@@ -419,7 +419,6 @@ class SyncLogSQL(models.Model):
     doc = JSONField()
     log_format = models.CharField(
         max_length=10,
-        default=LOG_FORMAT_SIMPLIFIED,
         choices=[
             (format, format)
             for format in [LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LIVEQUERY]
