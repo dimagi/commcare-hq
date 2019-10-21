@@ -258,7 +258,6 @@ class SyncLogAssertionError(AssertionError):
         super(SyncLogAssertionError, self).__init__(*args, **kwargs)
 
 
-LOG_FORMAT_LEGACY = 'legacy'
 LOG_FORMAT_SIMPLIFIED = 'simplified'
 LOG_FORMAT_LIVEQUERY = 'livequery'
 
@@ -420,10 +419,10 @@ class SyncLogSQL(models.Model):
     doc = JSONField()
     log_format = models.CharField(
         max_length=10,
-        default=LOG_FORMAT_LEGACY,
+        default=LOG_FORMAT_SIMPLIFIED,
         choices=[
             (format, format)
-            for format in [LOG_FORMAT_LEGACY, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LIVEQUERY]
+            for format in [LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LIVEQUERY]
         ]
     )
     build_id = models.CharField(max_length=255, null=True, blank=True)
@@ -1027,8 +1026,8 @@ def properly_wrap_sync_log(doc, synclog_sql=None):
 
 
 def get_sync_log_class_by_format(format):
-    if format == LOG_FORMAT_LEGACY:
-        raise SyncLogAssertionError('Legacy type not supported')
+    if format not in (LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LIVEQUERY):
+        raise SyncLogAssertionError('Unrecognized synclog format')
     return SimplifiedSyncLog
 
 
