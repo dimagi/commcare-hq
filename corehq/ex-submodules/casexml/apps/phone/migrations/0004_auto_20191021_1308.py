@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='synclogsql',
             name='log_format',
-            field=models.CharField(choices=[('legacy', 'legacy'), ('simplified', 'simplified'), ('livequery', 'livequery')], default='legacy', max_length=10),
+            field=models.CharField(choices=[('simplified', 'simplified'), ('livequery', 'livequery')], default='simplified', max_length=10),
         ),
         migrations.AlterField(
             model_name='synclogsql',
