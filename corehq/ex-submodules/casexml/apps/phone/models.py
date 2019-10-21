@@ -251,9 +251,10 @@ class UCRSyncLog(Document):
 
 class AbstractSyncLog(SafeSaveDocument):
     date = DateTimeProperty()
-    domain = StringProperty()  # this is only added as of 11/2016 - not guaranteed to be set
+    domain = StringProperty()
     user_id = StringProperty()
-    build_id = StringProperty()  # this is only added as of 11/2016 and only works with app-aware sync
+    build_id = StringProperty()  # only works with app-aware sync
+    app_id = StringProperty()  # only works with app-aware sync
 
     previous_log_id = StringProperty()  # previous sync log, forming a chain
     duration = IntegerProperty()  # in seconds
@@ -372,6 +373,8 @@ def synclog_to_sql_object(synclog_json_object):
             date=synclog_json_object.date,
             log_format=synclog_json_object.log_format,
             build_id=synclog_json_object.build_id,
+            app_id=synclog_json_object.app_id,
+            device_id=synclog_json_object.device_id,
             duration=synclog_json_object.duration,
             had_state_error=synclog_json_object.had_state_error,
             error_date=synclog_json_object.error_date,
@@ -392,7 +395,7 @@ class SyncLogSQL(models.Model):
 
     synclog_id = models.UUIDField(unique=True, primary_key=True, default=uuid.uuid1)
     domain = models.CharField(max_length=255, null=True, blank=True, default=None, db_index=True)
-    user_id = models.CharField(max_length=255, default=None, db_index=True)
+    user_id = models.CharField(max_length=255, default=None)
     date = models.DateTimeField(db_index=True, null=True, blank=True)
     previous_synclog_id = models.UUIDField(max_length=255, default=None, null=True, blank=True)
     doc = JSONField()
@@ -405,10 +408,11 @@ class SyncLogSQL(models.Model):
         ]
     )
     build_id = models.CharField(max_length=255, null=True, blank=True)
+    device_id = models.CharField(max_length=255, default=None)
     duration = models.PositiveIntegerField(null=True, blank=True)
     last_submitted = models.DateTimeField(db_index=True, null=True, blank=True)
     had_state_error = models.BooleanField(default=False)
-    error_date = models.DateTimeField(db_index=True, null=True, blank=True)
+    error_date = models.DateTimeField(null=True, blank=True)
     error_hash = models.CharField(max_length=255, null=True, blank=True)
 
     def save(self, *args, **kwargs):
