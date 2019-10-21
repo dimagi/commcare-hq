@@ -425,8 +425,8 @@ class SyncLogSQL(models.Model):
         ]
     )
     build_id = models.CharField(max_length=255, null=True, blank=True)
-    app_id = models.CharField(max_length=255, default=None)
-    device_id = models.CharField(max_length=255, default=None)
+    app_id = models.CharField(max_length=255, null=True)
+    device_id = models.CharField(max_length=255, null=True)
     duration = models.PositiveIntegerField(null=True, blank=True)
     last_submitted = models.DateTimeField(db_index=True, null=True, blank=True)
     had_state_error = models.BooleanField(default=False)

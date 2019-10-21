@@ -26,12 +26,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='synclogsql',
             name='app_id',
-            field=models.CharField(default=None, max_length=255),
+            field=models.CharField(null=True, max_length=255),
         ),
         migrations.AddField(
             model_name='synclogsql',
             name='device_id',
-            field=models.CharField(default=None, max_length=255),
+            field=models.CharField(null=True, max_length=255),
         ),
         migrations.AlterIndexTogether(
             name='synclogsql',
