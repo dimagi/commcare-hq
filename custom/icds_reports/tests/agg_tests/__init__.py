@@ -71,14 +71,8 @@ def tearDownModule():
                 continue
             adapter.drop_table()
 
-        engine = connection_manager.get_engine(ICDS_UCR_CITUS_ENGINE_ID)
-        with engine.begin() as connection:
-            metadata = sqlalchemy.MetaData(bind=engine)
-            metadata.reflect(bind=engine, extend_existing=True)
-            for name in ('ucr_table_name_mapping', 'awc_location', 'awc_location_local'):
-                table = metadata.tables[name]
-                delete = table.delete()
-                connection.execute(delete)
+        cleanup_misc_agg_tables()
+
     LocationType.objects.filter(domain='icds-cas').delete()
     SQLLocation.objects.filter(domain='icds-cas').delete()
 
