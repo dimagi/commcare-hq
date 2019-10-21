@@ -322,6 +322,9 @@ def ensure_document_exists(change):
 
 
 def bulk_fetch_changes_docs(changes, domain=None):
+    """Take a set of changes and populate them with the documents if necessary.
+    :returns: tuple(<changes with missing or out of date documents>, <document list>)
+    """
     # break up by doctype
     changes_by_doctype = defaultdict(list)
     for change in changes:
@@ -339,13 +342,13 @@ def bulk_fetch_changes_docs(changes, domain=None):
         docs.extend(new_docs + docs_queried_prior)
 
     # catch missing docs
-    retry_changes = set()
+    bad_changes = set()
     docs_by_id = {doc['_id']: doc for doc in docs}
     for change in changes:
         if change.id not in docs_by_id:
             # we need to capture DocumentMissingError which is not possible in bulk
             #   so let pillow fall back to serial mode to capture the error for missing docs
-            retry_changes.add(change)
+            bad_changes.add(change)
             continue
         else:
             # set this, so that subsequent doc lookups are avoided
@@ -353,5 +356,5 @@ def bulk_fetch_changes_docs(changes, domain=None):
         try:
             ensure_matched_revisions(change, docs_by_id.get(change.id))
         except DocumentMismatchError:
-            retry_changes.add(change)
-    return retry_changes, docs
+            bad_changes.add(change)
+    return bad_changes, docs
