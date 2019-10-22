@@ -35,7 +35,7 @@
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/commtrack/static/ @esoergel @orangejenny
 /corehq/apps/commtrack/templates/ @esoergel @orangejenny
-/corehq/apps/couch_sql_migration/ @snopoke @emord @millerdev
+/corehq/apps/couch_sql_migration/ @snopoke @millerdev
 /corehq/apps/es/ @esoergel @proteusvacuum
 /corehq/apps/hqwebapp/ @orangejenny
 /corehq/apps/locations/ @esoergel
