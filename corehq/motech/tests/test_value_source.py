@@ -15,13 +15,6 @@ from corehq.motech.value_source import (
 )
 
 
-class DocTests(SimpleTestCase):
-
-    def test_doctests(self):
-        results = doctest.testmod(corehq.motech.value_source)
-        self.assertEqual(results.failed, 0)
-
-
 class GetFormQuestionValuesTests(SimpleTestCase):
 
     def test_unicode_answer(self):
@@ -146,3 +139,8 @@ class ConstantStringTests(SimpleTestCase):
         external_value = "bar"
         value = constant.deserialize(external_value)
         self.assertIsNone(value)
+
+
+def test_doctests():
+    results = doctest.testmod(corehq.motech.value_source)
+    assert results.failed == 0
