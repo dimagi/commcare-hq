@@ -218,7 +218,7 @@ We run many tasks in parallel and therefore there may be too many tasks running 
 You can look at the "Postgres - Overview" DataDog dashboard to see if IO wait or disk queue size is very high during the task
 
 Note that while its largely the same, there are differences in tuning Citus queries vs postgres queries.
-[http://docs.citusdata.com/en/v8.3/performance/performance_tuning.html](Citus docs) provide an overview of tuning both.
+[Citus docs](http://docs.citusdata.com/en/v8.3/performance/performance_tuning.html) provide an overview of tuning both.
 
 ## Locking queries
 
