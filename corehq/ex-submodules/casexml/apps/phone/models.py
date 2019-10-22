@@ -375,8 +375,8 @@ def delete_synclogs(current_synclog):
             app_id=current_synclog.app_id,
             date__lt=current_synclog.date
         ).delete()
-    elif current_synclog.previous_synclog_id:
-        SyncLogSQL.objects.filter(synclog_id=current_synclog.previous_synclog_id).delete()
+    elif current_synclog.previous_log_id:
+        SyncLogSQL.objects.filter(synclog_id=current_synclog.previous_log_id).delete()
 
 
 def synclog_to_sql_object(synclog_json_object):
