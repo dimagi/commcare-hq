@@ -1841,7 +1841,7 @@ class CasDataExport(View):
 
         sync, _ = get_cas_data_blob_file(data_type, state_id, selected_date)
         if not sync:
-            return JsonResponse({"message": "Export not exists."})
+            return JsonResponse({"message": "Sorry, the export you requested does not exist."})
         else:
             params = dict(
                 indicator=data_type,
