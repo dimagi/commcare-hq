@@ -1833,7 +1833,7 @@ class DailyIndicators(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class CasDataExport(View):
     def post(self, request, *args, **kwargs):
-        data_type = int(request.POST.get('indicator', None))
+        data_type = request.POST.get('indicator', None)
         state_id = request.POST.get('location', None)
         month = int(request.POST.get('month', None))
         year = int(request.POST.get('year', None))
@@ -1861,7 +1861,7 @@ class CasDataExport(View):
             )
 
     def get(self, request, *args, **kwargs):
-        data_type = int(request.GET.get('indicator', None))
+        data_type = request.GET.get('indicator', None)
         state_id = request.GET.get('location', None)
         month = int(request.GET.get('month', None))
         year = int(request.GET.get('year', None))
@@ -1942,8 +1942,8 @@ class CasDataExportAPIView(View):
 
     def get_type_code(self, data_type):
         type_map = {
-            "child": 1,
-            "woman": 2,
-            "awc": 3
+            "child": 'child_health_monthly',
+            "woman": 'ccs_record_monthly',
+            "awc": 'agg_awc',
         }
         return type_map[data_type]
