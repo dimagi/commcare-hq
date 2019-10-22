@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 
 from couchdbkit.exceptions import (
     BulkSaveError,
@@ -114,6 +115,7 @@ class GroupMemoizer(object):
         self.groups_by_id = {}
         self.groups = set()
         self.domain = domain
+        self.groups_by_user_id = defaultdict(set)
 
     def load_all(self):
         for group in Group.by_domain(self.domain):
@@ -127,6 +129,8 @@ class GroupMemoizer(object):
         assert new_group.name
         if new_group.get_id:
             self.groups_by_id[new_group.get_id] = new_group
+            for user_id in new_group.users:
+                self.groups_by_user_id[user_id].add(new_group.get_id)
         self.groups_by_name[new_group.name] = new_group
         self.groups.add(new_group)
 
@@ -138,6 +142,14 @@ class GroupMemoizer(object):
                 return None
             self.add_group(group)
         return self.groups_by_name[group_name]
+
+    def by_user_id(self, user_id):
+        group_ids = self.groups_by_user_id.get(user_id)
+        if not group_ids:
+            return []
+        return [
+            self.get(group_id) for group_id in group_ids
+        ]
 
     def get(self, group_id):
         if group_id not in self.groups_by_id:
@@ -410,6 +422,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 else:
                     user = CommCareUser.create(domain, username, password, commit=False)
                     status_row['flag'] = 'created'
+
                 if phone_number:
                     user.add_phone_number(_fmt_phone(phone_number), default=True)
                 if name:
@@ -455,8 +468,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                     # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
                     user.get_django_user(use_primary_db=True).check_password(password)
 
-                for group_id in Group.by_user_id(user.user_id, wrap=False):
-                    group = group_memoizer.get(group_id)
+                for group in group_memoizer.by_user_id(user.user_id):
                     if group.name not in group_names:
                         group.remove_user(user)
 
