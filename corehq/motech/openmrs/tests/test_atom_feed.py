@@ -162,11 +162,14 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                             "doc_type": "ObservationMapping",
                             "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
                             "value": {
-                                "doc_type": "FormQuestion",
+                                "doc_type": "FormQuestionMap",
                                 "form_question": "/data/bahmni_hypothermia",
+                                "value_map": {
+                                    "emergency_room_user_id": "Hypothermia",  # Value must match diagnosis name
+                                },
                                 "direction": "in",
                             },
-                            "case_property": "bahmni_hypothermia"
+                            "case_property": "owner_id"
                         }
                     ]
                 }]
@@ -220,7 +223,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             bahmni_diagnoses,
             self.repeater.observation_mappings
         )
-        self.assertEqual(case_block_kwargs, {'update': {'bahmni_hypothermia': 'Hypothermia'}})
+        self.assertEqual(case_block_kwargs, {'owner_id': 'emergency_room_user_id', 'update': {}})
 
 
 def test_doctests():
