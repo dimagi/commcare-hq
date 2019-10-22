@@ -1,5 +1,6 @@
 from jsonobject.base_properties import DefaultProperty
 from simpleeval import InvalidExpression
+import textwrap
 
 from dimagi.ext.jsonobject import (
     DictProperty,
@@ -26,7 +27,7 @@ from corehq.apps.userreports.expressions.getters import (
 )
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import EvaluationContext, TypeProperty
-from corehq.apps.userreports.util import add_tabbed_text, truncate_value
+from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -88,7 +89,7 @@ class ConstantGetterSpec(JsonObject):
     def wrap(self, obj):
         if 'constant' not in obj:
             raise BadSpecError('"constant" property is required in object beginning with <pre>{}</pre>'.format(
-                truncate_value(str(obj), from_left=False, suffix="...")
+                textwrap.shorten(str(obj), width=75, placeholder="...")
             ))
         return super(ConstantGetterSpec, self).wrap(obj)
 
