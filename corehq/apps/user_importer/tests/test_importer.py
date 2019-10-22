@@ -18,16 +18,17 @@ from corehq.apps.users.models import CommCareUser, Permissions, UserRole
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
-    def setUp(self):
-        super(TestUserBulkUpload, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
         delete_all_users()
-        self.domain_name = 'mydomain'
-        self.domain = Domain(name=self.domain_name)
-        self.domain.save()
-        self.user_specs = [{
+        cls.domain_name = 'mydomain'
+        cls.domain = Domain(name=cls.domain_name)
+        cls.domain.save()
+        cls.user_specs = [{
             'username': 'hello',
-            'user_id': 'should not update',
-            'name': 'Another One', 'language': None,
+            'name': 'Another One',
+            'language': None,
             'is_active': 'True',
             'phone-number': '23424123',
             'password': 123,
@@ -35,12 +36,15 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         }]
 
         permissions = Permissions(edit_apps=True, view_reports=True)
-        self.role = UserRole.get_or_create_with_permissions(self.domain.name, permissions, 'edit-apps')
+        cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        super().tearDownClass()
 
     def tearDown(self):
-        self.role.delete()
-        self.domain.delete()
-        super(TestUserBulkUpload, self).tearDown()
+        delete_all_users()
 
     @property
     def user(self):
@@ -48,16 +52,16 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.user_specs[0]['username'],
             self.domain.name))
 
-    def test_upload_with_user_id(self):
+    def test_upload_with_missing_user_id(self):
+        spec = deepcopy(self.user_specs[0])
+        spec['user_id'] = 'missing'
         import_users_and_groups(
             self.domain.name,
-            list(self.user_specs),
+            [spec],
             list([]),
         )
 
-        self.assertNotEqual(self.user_specs[0]['user_id'], self.user._id)
-        self.assertEqual(self.user_specs[0]['phone-number'], self.user.phone_number)
-        self.assertEqual(self.user_specs[0]['name'], self.user.name)
+        self.assertIsNone(self.user)
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_not_list(self):
@@ -291,7 +295,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             list(user_spec + self.user_specs),
             list([]),
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], 'Provide a unique password for each mobile worker')
+        self.assertEqual(rows[0]['flag'], "'password' values must be unique")
 
     def test_weak_password(self):
         updated_user_spec = deepcopy(self.user_specs[0])
@@ -302,7 +306,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             list([updated_user_spec]),
             list([]),
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], 'Please provide a stronger password')
+        self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')
 
 
 class TestUserBulkUploadUtils(SimpleTestCase):

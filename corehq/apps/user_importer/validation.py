@@ -9,7 +9,6 @@ from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.user_importer.exceptions import UserUploadError
-from corehq.apps.user_importer.importer import is_password
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.util import normalize_username, raw_username
 
@@ -210,3 +209,12 @@ class GroupValidator(ImportValidator):
         for group_name in group_names:
             if group_name not in self.allowed_groups:
                 return self.error_message.format(group_name)
+
+
+def is_password(password):
+    if not password:
+        return False
+    for c in str(password):
+        if c != "*":
+            return True
+    return False

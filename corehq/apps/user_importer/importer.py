@@ -16,7 +16,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.exceptions import UserUploadError
-from corehq.apps.user_importer.validation import get_user_import_validators
+from corehq.apps.user_importer.validation import get_user_import_validators, is_password
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_existing_usernames,
 )
@@ -288,15 +288,6 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
-def is_password(password):
-    if not password:
-        return False
-    for c in password:
-        if c != "*":
-            return True
-    return False
-
-
 def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, update_progress=None):
     ret = {"errors": [], "rows": []}
 
@@ -363,7 +354,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                     user = CommCareUser.get_by_user_id(user_id, domain)
                     if not user:
                         raise UserUploadError(_(
-                            'User with ID {user_id} not found in domain {domain}'
+                            "User with ID '{user_id}' not found"
                         ).format(user_id=user_id, domain=domain))
 
                     if username and user.username != username:
