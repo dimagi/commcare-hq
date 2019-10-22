@@ -4,9 +4,11 @@ from collections import Counter
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
+from corehq.apps.domain.forms import clean_password
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.importer import is_password
-from corehq.apps.users.util import normalize_username
+from corehq.apps.users.forms import get_mobile_worker_max_username_length
+from corehq.apps.users.util import normalize_username, raw_username
 from dimagi.utils.parsing import string_to_boolean
 
 
@@ -20,6 +22,9 @@ def get_user_import_validators(domain_obj, all_specs):
         Duplicates(domain, 'username', all_specs),
         Duplicates(domain, 'user_id', all_specs),
         Duplicates(domain, 'password', all_specs, is_password) if validate_passwords else NoopValidator(domain),
+        LongUsernames(domain),
+        NewUserPassword(domain),
+        PasswordValidator(domain) if validate_passwords else NoopValidator(domain),
     ]
 
 
@@ -111,3 +116,40 @@ def find_duplicates(specs, field):
     return {
         value for value, count in counter.items() if count > 1
     }
+
+
+class LongUsernames(ImportValidator):
+    _error_message = _("username cannot contain greater than {length} characters")
+
+    def __init__(self, domain, max_length=None):
+        super().__init__(domain)
+        self.max_username_length = max_length or get_mobile_worker_max_username_length(self.domain)
+
+    @property
+    def error_message(self):
+        return self._error_message.format(length=self.max_username_length)
+
+    def validate_spec(self, spec):
+        username = spec.get('username')
+        if len(raw_username(username)) > self.max_username_length:
+            return self.error_message
+
+
+class NewUserPassword(ImportValidator):
+    error_message = _("New users must have a password set.")
+
+    def validate_spec(self, spec):
+        user_id = spec.get('user_id')
+        password = spec.get('password')
+        if not user_id and not is_password(password):
+            return self.error_message
+
+
+class PasswordValidator(ImportValidator):
+    def validate_spec(self, spec):
+        password = spec.get('password')
+        if is_password(password):
+            try:
+                clean_password(password)
+            except ValidationError as e:
+                return e.message

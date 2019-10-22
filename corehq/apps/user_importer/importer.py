@@ -406,18 +406,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 else:
                     user = CommCareUser.get_by_username(username)
 
-                if domain_obj.strong_mobile_passwords and is_password(password):
-                    try:
-                        clean_password(password)
-                    except forms.ValidationError:
-                        if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-                            msg = _("Mobile Worker passwords must be 8 "
-                                "characters long with at least 1 capital "
-                                "letter, 1 special character and 1 number")
-                        else:
-                            msg = _("Please provide a stronger password")
-                        raise UserUploadError(msg)
-
                 if user:
                     if user.domain != domain:
                         raise UserUploadError(_(
@@ -432,13 +420,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                         user.set_password(password)
                     status_row['flag'] = 'updated'
                 else:
-                    max_username_length = get_mobile_worker_max_username_length(domain)
-                    if len(raw_username(username)) > max_username_length:
-                        raise UserUploadError(_(
-                            "username cannot contain greater than %d characters" % max_username_length
-                        ))
-                    if not is_password(password):
-                        raise UserUploadError(_("Cannot create a new user with a blank password"))
                     user = CommCareUser.create(domain, username, password, commit=False)
                     status_row['flag'] = 'created'
                 if phone_number:
