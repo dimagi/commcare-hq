@@ -12,6 +12,7 @@ from couchdbkit.exceptions import (
     ResourceNotFound,
 )
 
+from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.validation import get_user_import_validators
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
@@ -31,10 +32,6 @@ from corehq.apps.users.models import UserRole
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import normalize_username, raw_username
-
-
-class UserUploadError(Exception):
-    pass
 
 
 required_headers = set(['username'])
@@ -354,7 +351,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
     domain_obj = Domain.get_by_name(domain)
     usernames_with_dupe_passwords = users_with_duplicate_passwords(user_specs)
 
-    validators = get_user_import_validators()
+    validators = get_user_import_validators(domain)
     try:
         for row in user_specs:
             if update_progress:
@@ -394,12 +391,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
             try:
                 if password:
                     password = str(password)
-                try:
-                    username = normalize_username(str(username), domain)
-                except TypeError:
-                    username = None
-                except ValidationError:
-                    raise UserUploadError(_('username cannot contain spaces or symbols'))
+
+                username = normalize_username(str(username), domain)
 
                 is_active = row.get('is_active')
                 if isinstance(is_active, str):
