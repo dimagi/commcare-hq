@@ -1412,7 +1412,7 @@ value falls within those ranges.
 
 There are two types: ``conditional_aggregation`` for most values, and
 ``conditional_aggregation_age_in_months``, where the given field must be a date
-and the buckets are based on the number of moonths since that date.
+and the buckets are based on the number of months since that date.
 
 Here's an example that groups children based on their age at the time of
 registration:
