@@ -1940,6 +1940,7 @@ class CasDataExportAPIView(View):
     def valid_types(self):
         return ('woman', 'child', 'awc')
 
+    @staticmethod
     def get_type_code(self, data_type):
         type_map = {
             "child": 'child_health_monthly',
