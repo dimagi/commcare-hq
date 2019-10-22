@@ -1934,7 +1934,9 @@ class CasDataExportAPIView(View):
     @property
     @icds_quickcache([])
     def valid_state_names(self):
-        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+        return list(AwcLocation.objects.filter(
+            aggregation_level=AggregationLevels.STATE, state_is_test=0
+        ).values_list('state_name', flat=True))
 
     @property
     def valid_types(self):
