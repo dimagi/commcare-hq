@@ -8,6 +8,7 @@ from django.conf import settings
 
 from kafka import KafkaConsumer
 
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
 from pillowtop.dao.exceptions import (
     DocumentMismatchError,
@@ -228,8 +229,17 @@ class ErrorCollector(object):
 def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
     doc_transform = doc_transform or (lambda x: x)
     payload = []
+
+    def _is_deleted(change):
+        if change.deleted:
+            return bool(change.id)
+
+        doc = change.get_document()
+        if doc and doc.get('doc_type'):
+            return doc['doc_type'].endswith(DELETED_SUFFIX)
+
     for change in changes:
-        if change.deleted and change.id:
+        if _is_deleted(change):
             payload.append({
                 "_op_type": "delete",
                 "_index": index_info.index,
