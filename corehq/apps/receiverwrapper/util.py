@@ -222,7 +222,7 @@ def from_demo_user(form_json, user):
     else:
         if user_id == DEMO_USER_ID:
             return True
-        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS + ('staging',):
             if user and user.is_demo_user:
                 return True
 
