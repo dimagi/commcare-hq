@@ -384,7 +384,12 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
 
                 if user_id:
                     user = CommCareUser.get_by_user_id(user_id, domain)
-                    if user and username and user.username != username:
+                    if not user:
+                        raise UserUploadError(_(
+                            'User with ID {user_id} not found in domain {domain}'
+                        ).format(user_id=user_id, domain=domain))
+
+                    if username and user.username != username:
                         raise UserUploadError(_(
                             'Changing usernames is not supported: %(username)r to %(new_username)r'
                         ) % {'username': user.username, 'new_username': username})
