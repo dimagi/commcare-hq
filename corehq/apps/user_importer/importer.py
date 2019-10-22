@@ -396,10 +396,12 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 else:
                     user = CommCareUser.get_by_username(username)
                     if user and user.domain != domain:
+                        # this shouldn't happen since the username is namespaced
+                        # to the domain already. In case it does happen somehow don't
+                        # say which domain the user is in.
                         raise UserUploadError(_(
-                            'User with username %(username)r is '
-                            'somehow in domain %(domain)r'
-                        ) % {'username': user.username, 'domain': user.domain})
+                            'Unable to update user: {username}'
+                        ).format(username=username))
 
                 if user:
                     if is_password(password):
