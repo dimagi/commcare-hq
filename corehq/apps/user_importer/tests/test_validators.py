@@ -9,7 +9,7 @@ from corehq.apps.user_importer.validation import (
     NewUserPassword,
     UsernameOrUserIdRequired,
     UsernameValidator,
-    EmailValidator)
+    EmailValidator, RoleValidator, GroupValidator)
 
 factory = Faker()
 factory.seed(1571040848)
@@ -66,6 +66,24 @@ TEST_CASES = [
         ],
         EmailValidator('domain'),
         {0: EmailValidator.error_message}
+    ),
+    (
+        [
+            {'role': 'r3'},
+            {'role': 'r2'},
+            {},
+        ],
+        RoleValidator('domain', {'r1', 'r2'}),
+        {0: RoleValidator.error_message.format('r3')}
+    ),
+    (
+        [
+            {'group': ['g1', 'g2']},
+            {'group': ['g1', 'g3']},
+            {},
+        ],
+        GroupValidator('domain', {'g1', 'g2'}),
+        {1: GroupValidator.error_message.format('g3')}
     ),
 ]
 

@@ -13,7 +13,7 @@ from corehq.apps.users.util import normalize_username, raw_username
 from dimagi.utils.parsing import string_to_boolean
 
 
-def get_user_import_validators(domain_obj, all_specs):
+def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allowed_roles=None):
     domain = domain_obj.name
     validate_passwords = domain_obj.strong_mobile_passwords
     return [
@@ -28,6 +28,8 @@ def get_user_import_validators(domain_obj, all_specs):
         PasswordValidator(domain) if validate_passwords else NoopValidator(domain),
         CustomDataValidator(domain),
         EmailValidator(domain),
+        GroupValidator(domain, allowed_groups),
+        RoleValidator(domain, allowed_roles),
     ]
 
 
@@ -180,3 +182,30 @@ class EmailValidator(ImportValidator):
                 validate_email(email)
             except ValidationError:
                 return self.error_message
+
+
+class RoleValidator(ImportValidator):
+    error_message = _("Role '{}' does not exist")
+
+    def __init__(self, domain, allowed_roles=None):
+        super().__init__(domain)
+        self.allowed_roles = allowed_roles
+
+    def validate_spec(self, spec):
+        role = spec.get('role')
+        if role and role not in self.allowed_roles:
+            return self.error_message.format(role)
+
+
+class GroupValidator(ImportValidator):
+    error_message = _("Group '{}' does not exist (try adding it to your spreadsheet)")
+
+    def __init__(self, domain, allowed_groups=None):
+        super().__init__(domain)
+        self.allowed_groups = allowed_groups
+
+    def validate_spec(self, spec):
+        group_names = list(map(str, spec.get('group') or []))
+        for group_name in group_names:
+            if group_name not in self.allowed_groups:
+                return self.error_message.format(group_name)

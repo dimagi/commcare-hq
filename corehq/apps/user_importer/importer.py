@@ -350,7 +350,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
         location_cache = SiteCodeToLocationCache(domain)
     domain_obj = Domain.get_by_name(domain)
 
-    validators = get_user_import_validators(domain, user_specs)
+    validators = get_user_import_validators(domain_obj, user_specs, allowed_group_names, list(roles_by_name))
     try:
         for row in user_specs:
             if update_progress:
@@ -447,10 +447,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                         location_ids.append(loc.location_id)
 
                 if role:
-                    if role in roles_by_name:
-                        user.set_role(domain, roles_by_name[role].get_qualified_id())
-                    else:
-                        raise UserUploadError(_("Role '%s' does not exist") % role)
+                    user.set_role(domain, roles_by_name[role].get_qualified_id())
 
                 if can_assign_locations:
                     locations_updated = set(user.assigned_location_ids) != set(location_ids)
@@ -477,11 +474,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                         group.remove_user(user)
 
                 for group_name in group_names:
-                    if group_name not in allowed_group_names:
-                        raise UserUploadError(_(
-                            "Can't add to group '%s' "
-                            "(try adding it to your spreadsheet)"
-                        ) % group_name)
                     group_memoizer.by_name(group_name).add_user(user, save=False)
 
             except (UserUploadError, CouchUser.Inconsistent) as e:
