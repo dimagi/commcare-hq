@@ -205,13 +205,10 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             fields.append('_id')
 
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Edit Data Source"),
-                *fields
-            ),
+            *fields,
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Save Changes"),
+                    _("Save"),
                     type="submit",
                     css_class="btn btn-primary",
                 ),
