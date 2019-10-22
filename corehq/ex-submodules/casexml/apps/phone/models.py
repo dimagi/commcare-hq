@@ -1021,16 +1021,10 @@ def get_properly_wrapped_sync_log(doc_id):
 
 
 def properly_wrap_sync_log(doc, synclog_sql=None):
-    synclog = get_sync_log_class_by_format(doc.get('log_format')).wrap(doc)
+    synclog = SimplifiedSyncLog.wrap(doc)
     if synclog_sql:
         synclog._synclog_sql = synclog_sql
     return synclog
-
-
-def get_sync_log_class_by_format(format):
-    if format not in (LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LIVEQUERY):
-        raise SyncLogAssertionError('Unrecognized synclog format')
-    return SimplifiedSyncLog
 
 
 class OwnershipCleanlinessFlag(models.Model):
