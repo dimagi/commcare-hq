@@ -36,12 +36,9 @@ def get_extra_permissions():
         CASE_EXPORT_PERMISSION, CaseExportListView.page_title, lambda domain: True)
     yield ReportPermission(
         SMS_EXPORT_PERMISSION, DownloadNewSmsExportView.page_title, lambda domain: True)
-
-    from corehq.feature_previews import BI_INTEGRATION_PREVIEW
-    from corehq.toggles import NAMESPACE_DOMAIN
     yield ReportPermission(
         ODATA_FEED_PERMISSION, ODataFeedListView.page_title,
-        lambda domain: BI_INTEGRATION_PREVIEW.enabled(domain, NAMESPACE_DOMAIN)
+        lambda domain: domain_has_privilege(domain, privileges.ODATA_FEED)
     )
 
 
