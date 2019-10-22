@@ -255,7 +255,8 @@ class LocationIdToSiteCodeCache(BulkCacheBase):
         ).site_code
 
 
-def create_or_update_groups(domain, group_specs, log):
+def create_or_update_groups(domain, group_specs):
+    log = {"errors": []}
     group_memoizer = GroupMemoizer(domain)
     group_memoizer.load_all()
     group_names = set()
@@ -350,18 +351,15 @@ def users_with_duplicate_passwords(rows):
     return ret
 
 
-def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None):
+def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, update_progress=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     custom_data_validator = UserFieldsView.get_validator(domain)
     ret = {"errors": [], "rows": []}
-    total = len(user_specs) + len(group_specs)
 
-    def _set_progress(progress):
-        if task is not None:
-            DownloadBase.set_progress(task, progress, total)
+    group_memoizer = group_memoizer or GroupMemoizer(domain)
+    group_memoizer.load_all()
 
-    group_memoizer = create_or_update_groups(domain, group_specs, log=ret)
-    current = len(group_specs)
+    current = 0
 
     usernames = set()
     user_ids = set()
@@ -377,8 +375,9 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
 
     try:
         for row in user_specs:
-            _set_progress(current)
-            current += 1
+            if update_progress:
+                update_progress(current)
+                current += 1
 
             data = row.get('data')
             email = row.get('email')
@@ -575,7 +574,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
             ) % (_error_message, e.errors))
             ret['errors'].append(_error_message)
 
-    _set_progress(total)
     return ret
 
 

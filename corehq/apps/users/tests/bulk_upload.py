@@ -88,7 +88,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         result = create_or_update_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
-            list([]),
         )
         self.assertEqual(len(result["rows"]), 1)
 
@@ -147,7 +146,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_or_update_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
-            list([]),
         )
 
         # user's primary location should be loc1
@@ -162,7 +160,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_or_update_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
-            list([]),
         )
 
         # user's location should now be loc2
@@ -181,7 +178,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_or_update_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
-            list([]),
         )
 
         # reassign to loc2
@@ -190,7 +186,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_or_update_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
-            list([]),
         )
 
         # user's location should now be loc2

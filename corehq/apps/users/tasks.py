@@ -1,3 +1,4 @@
+import functools
 from datetime import datetime
 
 from django.urls import reverse
@@ -33,16 +34,31 @@ logger = get_task_logger(__name__)
 
 @task(serializer='pickle')
 def bulk_upload_async(domain, user_specs, group_specs):
-    from corehq.apps.users.bulkupload import create_or_update_users_and_groups
+    from corehq.apps.users.bulkupload import create_or_update_users_and_groups, create_or_update_groups
     task = bulk_upload_async
     DownloadBase.set_progress(task, 0, 100)
-    results = create_or_update_users_and_groups(
+
+    total = len(user_specs) + len(group_specs)
+    DownloadBase.set_progress(task, 0, total)
+
+    group_memoizer, group_results = create_or_update_groups(domain, group_specs)
+
+    DownloadBase.set_progress(task, len(group_specs), total)
+
+    def _update_progress(value, start=0):
+        DownloadBase.set_progress(task, start + value, total)
+
+    user_results = create_or_update_users_and_groups(
         domain,
         user_specs,
-        group_specs,
-        task=task,
+        group_memoizer=group_memoizer,
+        update_progress=functools.partial(_update_progress, start=len(group_specs))
     )
-    DownloadBase.set_progress(task, 100, 100)
+    results = {
+        'errors': group_results['errors'] + user_results['errors'],
+        'rows': user_results['rows']
+    }
+    DownloadBase.set_progress(task, total, total)
     return {
         'messages': results
     }
