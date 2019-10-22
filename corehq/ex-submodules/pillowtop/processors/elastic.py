@@ -29,6 +29,10 @@ def identity(x):
     return x
 
 
+def noop_filter(x):
+    return False
+
+
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
 MAX_RETRIES = 4  # exponential factor threshold for alerts
 
@@ -36,7 +40,7 @@ MAX_RETRIES = 4  # exponential factor threshold for alerts
 class ElasticProcessor(PillowProcessor):
 
     def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
-        self.doc_filter_fn = doc_filter_fn
+        self.doc_filter_fn = doc_filter_fn or noop_filter
         self.elasticsearch = elasticsearch
         self.index_info = index_info
         self.doc_transform_fn = doc_prep_fn or identity
@@ -95,8 +99,11 @@ class ElasticProcessor(PillowProcessor):
 class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
     def process_changes_chunk(self, changes_chunk):
         bad_changes, docs = bulk_fetch_changes_docs(changes_chunk)
+
         changes_to_process = {
-            change.id: change for change in changes_chunk if change.document
+            change.id: change
+            for change in changes_chunk
+            if change.document and not self.doc_filter_fn(change.document)
         }
         retry_changes = list(bad_changes)
 
