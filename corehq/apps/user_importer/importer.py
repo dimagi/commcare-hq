@@ -349,9 +349,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
     if can_assign_locations:
         location_cache = SiteCodeToLocationCache(domain)
     domain_obj = Domain.get_by_name(domain)
-    usernames_with_dupe_passwords = users_with_duplicate_passwords(user_specs)
 
-    validators = get_user_import_validators(domain)
+    validators = get_user_import_validators(domain, user_specs)
     try:
         for row in user_specs:
             if update_progress:
@@ -398,9 +397,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 if is_active and isinstance(is_active, str):
                     is_active = string_to_boolean(is_active) if is_active else None
 
-                if username in usernames or user_id in user_ids:
-                    raise UserUploadError('repeat')
-
                 if username:
                     usernames.add(username)
                 if user_id:
@@ -411,9 +407,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                     user = CommCareUser.get_by_username(username)
 
                 if domain_obj.strong_mobile_passwords and is_password(password):
-                    if raw_username(username) in usernames_with_dupe_passwords:
-                        raise UserUploadError(_("Provide a unique password for each mobile worker"))
-
                     try:
                         clean_password(password)
                     except forms.ValidationError:
