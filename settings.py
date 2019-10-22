@@ -262,6 +262,7 @@ HQ_APPS = (
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
+    'corehq.apps.user_importer',
     'corehq.apps.users',
     'corehq.apps.settings',
     'corehq.apps.ota',

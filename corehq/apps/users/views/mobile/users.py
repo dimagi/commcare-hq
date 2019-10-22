@@ -1,4 +1,3 @@
-import io
 import json
 import re
 from collections import defaultdict
@@ -27,6 +26,7 @@ from django_prbac.utils import has_privilege
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
+from corehq.apps.user_importer.tasks import import_users_and_groups
 from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -60,7 +60,7 @@ from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.users.bulkupload import (
+from corehq.apps.user_importer.importer import (
     UserUploadError,
     check_duplicate_usernames,
     check_existing_usernames,
@@ -86,9 +86,8 @@ from corehq.apps.users.forms import (
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.tasks import (
     bulk_download_users_async,
-    bulk_upload_async,
     reset_demo_user_restore_task,
-    turn_on_demo_mode_task,
+    turn_on_demo_mode_task
 )
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
@@ -235,7 +234,6 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     def page_context(self):
-        from corehq.apps.users.views.mobile import GroupsListView
 
         if self.request.is_view_only:
             make_form_readonly(self.commtrack_form)
@@ -1008,8 +1006,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
-        task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
-        task = bulk_upload_async.delay(
+        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
+        task = import_users_and_groups.delay(
             self.domain,
             self.user_specs,
             list(self.group_specs),

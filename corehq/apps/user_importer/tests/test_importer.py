@@ -7,7 +7,7 @@ from mock import patch
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.bulkupload import (
+from corehq.apps.user_importer.importer import (
     UserUploadError,
     check_duplicate_usernames,
     check_existing_usernames,
@@ -15,7 +15,7 @@ from corehq.apps.users.bulkupload import (
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, Permissions, UserRole
-from corehq.apps.users.tasks import bulk_upload_async
+from corehq.apps.user_importer.tasks import import_users_and_groups
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -50,7 +50,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name))
 
     def test_upload_with_user_id(self):
-        bulk_upload_async(
+        import_users_and_groups(
             self.domain.name,
             list(self.user_specs),
             list([]),
@@ -60,14 +60,14 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user_specs[0]['phone-number'], self.user.phone_number)
         self.assertEqual(self.user_specs[0]['name'], self.user.name)
 
-    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_not_list(self):
         self.setup_locations()
         updated_user_spec = deepcopy(self.user_specs[0])
 
         # location_code can also just be string instead of array for single location assignmentss
         updated_user_spec["location_code"] = self.loc1.site_code
-        bulk_upload_async(
+        import_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
             list([]),
@@ -77,7 +77,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         # multiple locations
         self.assertListEqual([self.loc1._id], self.user.assigned_location_ids)
 
-    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_unknown_site_code(self):
         self.setup_locations()
         updated_user_spec = deepcopy(self.user_specs[0])
@@ -91,13 +91,13 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(len(result["rows"]), 1)
 
-    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_add(self):
         self.setup_locations()
         updated_user_spec = deepcopy(self.user_specs[0])
 
         updated_user_spec["location_code"] = [a.site_code for a in [self.loc1, self.loc2]]
-        bulk_upload_async(
+        import_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
             list([]),
@@ -110,13 +110,13 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         # non-primary location
         self.assertTrue(self.loc2._id in self.user.user_data.get('commcare_location_ids'))
 
-    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_remove(self):
         self.setup_locations()
         updated_user_spec = deepcopy(self.user_specs[0])
         # first assign both locations
         updated_user_spec["location_code"] = [a.site_code for a in [self.loc1, self.loc2]]
-        bulk_upload_async(
+        import_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
             list([]),
@@ -125,7 +125,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         # deassign all locations
         updated_user_spec["location_code"] = []
         updated_user_spec["user_id"] = self.user._id
-        bulk_upload_async(
+        import_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
             list([]),
@@ -136,7 +136,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.user_data.get('commcare_location_id'), None)
         self.assertListEqual(self.user.assigned_location_ids, [])
 
-    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_primary_location_replace(self):
         self.setup_locations()
         updated_user_spec = deepcopy(self.user_specs[0])
@@ -168,7 +168,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.user_data.get('commcare_location_id'), self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
 
-    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_replace(self):
         self.setup_locations()
         updated_user_spec = deepcopy(self.user_specs[0])
@@ -204,7 +204,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["name"] = 1234
 
-        bulk_upload_async(
+        import_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
             list([]),
@@ -219,7 +219,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["name"] = None
 
-        bulk_upload_async(
+        import_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
             list([]),
@@ -233,7 +233,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["email"] = 'IlOvECaPs@gmaiL.Com'
 
-        bulk_upload_async(
+        import_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
             list([]),
@@ -244,7 +244,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["role"] = self.role.name
 
-        bulk_upload_async(
+        import_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
             list([]),
@@ -287,7 +287,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             'email': None
         }]
 
-        rows = bulk_upload_async(
+        rows = import_users_and_groups(
             self.domain.name,
             list(user_spec + self.user_specs),
             list([]),
@@ -298,7 +298,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["password"] = '123'
 
-        rows = bulk_upload_async(
+        rows = import_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
             list([]),
@@ -346,6 +346,6 @@ class TestUserBulkUploadUtils(SimpleTestCase):
             },
         ]
 
-        with patch('corehq.apps.users.bulkupload.get_existing_usernames',
+        with patch('corehq.apps.user_importer.importer.get_existing_usernames',
                 return_value=['hello@domain.commcarehq.org']):
             self.assertRaises(UserUploadError, check_existing_usernames, user_specs, 'domain')
