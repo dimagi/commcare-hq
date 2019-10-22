@@ -2,7 +2,7 @@ from faker import Faker
 from testil import assert_raises
 
 from corehq.apps.user_importer.exceptions import UserUploadError
-from corehq.apps.user_importer.validation import UsernameValidator
+from corehq.apps.user_importer.validation import UsernameValidator, IsActive, UsernameOrUserIdRequired
 
 factory = Faker()
 factory.seed(1571040848)
@@ -16,6 +16,24 @@ TEST_CASES = [
         ],
         UsernameValidator('domain'),
         {0: UsernameValidator.error_message}
+    ),
+    (
+        [
+            {'is_active': 'true'},
+            {'is_active': 'false'},
+            {'is_active': 'active'}
+        ],
+        IsActive('domain'),
+        {2: IsActive.error_message}
+    ),
+    (
+        [
+            {'username': factory.user_name()},
+            {'user_id': factory.uuid4()},
+            {}
+        ],
+        UsernameOrUserIdRequired('domain'),
+        {2: UsernameOrUserIdRequired.error_message}
     ),
 ]
 

@@ -395,16 +395,11 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 username = normalize_username(str(username), domain)
 
                 is_active = row.get('is_active')
-                if isinstance(is_active, str):
-                    try:
-                        is_active = string_to_boolean(is_active) if is_active else None
-                    except ValueError:
-                        raise UserUploadError(_("'is_active' column can only contain 'true' or 'false'"))
+                if is_active and isinstance(is_active, str):
+                    is_active = string_to_boolean(is_active) if is_active else None
 
                 if username in usernames or user_id in user_ids:
                     raise UserUploadError('repeat')
-                if not username and not user_id:
-                    raise UserUploadError('missing-data')
 
                 if username:
                     usernames.add(username)
