@@ -221,7 +221,6 @@ def from_demo_user(form_json, domain):
     except (KeyError, ValueError):
         return False
     else:
-        # require new-style meta/userID (reject Meta/chw_id)
         if user_id == DEMO_USER_ID:
             return True
         if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
