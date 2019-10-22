@@ -11,12 +11,17 @@ from corehq.apps.domain.forms import clean_password
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.util import normalize_username, raw_username
+from corehq.util.workbook_json.excel import (
+    StringTypeRequiredError,
+    enforce_string_type,
+)
 
 
 def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allowed_roles=None):
     domain = domain_obj.name
     validate_passwords = domain_obj.strong_mobile_passwords
     return [
+        StringUsernames(domain),
         UsernameValidator(domain),
         IsActive(domain),
         UsernameOrUserIdRequired(domain),
@@ -137,6 +142,19 @@ class LongUsernames(ImportValidator):
     def validate_spec(self, spec):
         username = spec.get('username')
         if len(raw_username(username)) > self.max_username_length:
+            return self.error_message
+
+
+class StringUsernames(ImportValidator):
+    _error_message = _("username cannot contain greater than {length} characters")
+
+    def validate_spec(self, spec):
+        username = spec.get('username')
+        if not username:
+            return
+        try:
+            enforce_string_type(username)
+        except StringTypeRequiredError:
             return self.error_message
 
 

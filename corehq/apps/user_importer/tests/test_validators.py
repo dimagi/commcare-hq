@@ -10,6 +10,7 @@ from corehq.apps.user_importer.validation import (
     LongUsernames,
     NewUserPassword,
     RoleValidator,
+    StringUsernames,
     UsernameOrUserIdRequired,
     UsernameValidator,
 )
@@ -57,7 +58,8 @@ TEST_CASES = [
         [
             {'username': factory.user_name()},
             {'username': factory.user_name(), 'user_id': factory.uuid4()},
-            {'username': factory.user_name(), 'password': factory.password()}
+            {'username': factory.user_name(), 'password': factory.password()},
+            {'username': factory.user_name(), 'password': 123}
         ],
         NewUserPassword('domain'),
         {0: NewUserPassword.error_message}
@@ -87,6 +89,16 @@ TEST_CASES = [
         ],
         GroupValidator('domain', {'g1', 'g2'}),
         {1: GroupValidator.error_message.format('g3')}
+    ),
+    (
+        [
+            {'username': 'abc'},
+            {'username': 123},
+            {'username': True},
+            {},
+        ],
+        StringUsernames('domain'),
+        {2: StringUsernames.error_message}
     ),
 ]
 

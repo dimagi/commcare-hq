@@ -26,7 +26,6 @@ from django_prbac.utils import has_privilege
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
-from corehq.apps.user_importer.tasks import import_users_and_groups
 from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -59,12 +58,13 @@ from corehq.apps.locations.permissions import (
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.user_importer.importer import (
     UserUploadError,
     check_existing_usernames,
     check_headers,
 )
+from corehq.apps.user_importer.tasks import import_users_and_groups
+from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
@@ -86,7 +86,7 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.tasks import (
     bulk_download_users_async,
     reset_demo_user_restore_task,
-    turn_on_demo_mode_task
+    turn_on_demo_mode_task,
 )
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
@@ -981,17 +981,6 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         # convert to list here because iterator destroys the row once it has
         # been read the first time
         self.user_specs = list(self.user_specs)
-
-        for user_spec in self.user_specs:
-            try:
-                user_spec['username'] = enforce_string_type(user_spec['username'])
-            except StringTypeRequiredError:
-                messages.error(
-                    request,
-                    _("Error: Expected username to be a Text type for username {0}")
-                    .format(user_spec['username'])
-                )
-                return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         try:
             check_existing_usernames(self.user_specs, self.domain)
