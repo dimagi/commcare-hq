@@ -2071,7 +2071,28 @@ class TestExportData(TestCase):
                             "Data Not Entered",
                             "Data Not Entered",
                             16
-                        ]
+                        ],
+                        [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            '\u0930\u0947\u0930\u0935\u093e',
+                            "Data Not Entered",
+                            "Name 1388",
+                            "2013-06-06",
+                            "3 years 11 months ",
+                            "M",
+                            "No",
+                            "2017-05-01",
+                            "11.80",
+                            "Data Not Entered",
+                            "Moderately underweight",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            23
+                        ],
                     ]
                 ],
                 [
