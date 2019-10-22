@@ -109,7 +109,7 @@
       {
         "display": "Age Group",
         "column_id": "age_group",
-        "type": "conditional_aggregation_age_in_months",
+        "type": "age_in_months_buckets",
         "field": "dob",
         "ranges": {
           "0_to_5": [0, 5],

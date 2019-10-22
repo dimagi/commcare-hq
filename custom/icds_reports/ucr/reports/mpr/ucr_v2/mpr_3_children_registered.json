@@ -125,7 +125,7 @@
       {
         "display": "Age Group",
         "column_id": "age_group",
-        "type": "conditional_aggregation",
+        "type": "integer_buckets",
         "field": "age_at_reg",
         "ranges": {
             "0_to_2": [0, 2],

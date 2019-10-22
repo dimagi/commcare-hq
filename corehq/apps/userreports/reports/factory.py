@@ -7,12 +7,12 @@ from jsonobject.exceptions import BadValueError
 
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.specs import (
+    AgeInMonthsBucketsColumn,
     AggregateDateColumn,
-    ConditionalAggregationRangesColumn,
-    ConditionalAggregationAgeInMonthsRangesColumn,
     ExpandedColumn,
     ExpressionColumn,
     FieldColumn,
+    IntegerBucketsColumn,
     LocationColumn,
     MultibarAggregateChartSpec,
     MultibarChartSpec,
@@ -25,15 +25,15 @@ from corehq.apps.userreports.reports.specs import (
 
 class ReportColumnFactory(object):
     class_map = {
+        'age_in_months_buckets': AgeInMonthsBucketsColumn,
         'aggregate_date': AggregateDateColumn,
-        'conditional_aggregation': ConditionalAggregationRangesColumn,
-        'conditional_aggregation_age_in_months': ConditionalAggregationAgeInMonthsRangesColumn,
-        'sum_when': SumWhenColumn,
         'expanded': ExpandedColumn,
-        'field': FieldColumn,
-        'percent': PercentageColumn,
-        'location': LocationColumn,
         'expression': ExpressionColumn,
+        'field': FieldColumn,
+        'integer_buckets': IntegerBucketsColumn,
+        'location': LocationColumn,
+        'percent': PercentageColumn,
+        'sum_when': SumWhenColumn,
     }
 
     @classmethod

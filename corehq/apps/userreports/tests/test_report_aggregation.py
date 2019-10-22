@@ -880,7 +880,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                ['TN', self._relative_month(1, year_offset=-2), 1]]]]
         )
 
-    def test_conditional_aggregation(self):
+    def test_integer_buckets(self):
         report_config = self._create_report(
             aggregation_columns=[
                 'indicator_col_id_state',
@@ -895,7 +895,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'aggregation': 'simple'
                 },
                 {
-                    'type': 'conditional_aggregation',
+                    'type': 'integer_buckets',
                     'display': 'age_range',
                     'column_id': 'age_range',
                     'field': 'age_at_registration',
@@ -926,7 +926,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         ]:
             self.assertIn(table_row, table)
 
-    def test_bad_conditional_aggregation_specs(self):
+    def test_bad_integer_buckets_specs(self):
         report_config = self._create_report(
             aggregation_columns=[
                 'indicator_col_id_state',
@@ -941,7 +941,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'aggregation': 'simple'
                 },
                 {
-                    'type': 'conditional_aggregation',
+                    'type': 'integer_buckets',
                     'display': 'age_range',
                     'column_id': 'age_range',
                     'field': 'age_at_registration',
@@ -972,7 +972,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'aggregation': 'simple'
                 },
                 {
-                    'type': 'conditional_aggregation',
+                    'type': 'integer_buckets',
                     'display': 'age_range',
                     'column_id': 'age_range',
                     'field': 'age_at_registration',
@@ -989,7 +989,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         with self.assertRaises(BadSpecError):
             view.export_table
 
-    def test_conditional_aggregation_age_in_months(self):
+    def test_age_in_months_buckets(self):
         report_config = self._create_report(
             aggregation_columns=[
                 'indicator_col_id_state',
@@ -1004,7 +1004,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'aggregation': 'simple'
                 },
                 {
-                    'type': 'conditional_aggregation_age_in_months',
+                    'type': 'age_in_months_buckets',
                     'display': 'months_ago',
                     'column_id': 'months_ago',
                     'field': 'date',
