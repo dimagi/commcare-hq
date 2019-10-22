@@ -379,6 +379,12 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 update_progress(current)
                 current += 1
 
+            username = row.get('username')
+            status_row = {
+                'username': raw_username(username) if username else None,
+                'row': row,
+            }
+
             data = row.get('data')
             email = row.get('email')
             group_names = list(map(str, row.get('group') or []))
@@ -388,7 +394,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
             phone_number = row.get('phone-number')
             uncategorized_data = row.get('uncategorized_data')
             user_id = row.get('user_id')
-            username = row.get('username')
             location_codes = row.get('location_code') or []
             if location_codes and not isinstance(location_codes, list):
                 location_codes = [location_codes]
@@ -396,167 +401,147 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
             location_codes = [code for code in location_codes if code]
             role = row.get('role', '')
 
-            if password:
-                password = str(password)
             try:
-                username = normalize_username(str(username), domain)
-            except TypeError:
-                username = None
-            except ValidationError:
-                ret['rows'].append({
-                    'username': username,
-                    'row': row,
-                    'flag': _('username cannot contain spaces or symbols'),
-                })
-                continue
-            status_row = {
-                'username': raw_username(username) if username else None,
-                'row': row,
-            }
-
-            is_active = row.get('is_active')
-            if isinstance(is_active, str):
+                if password:
+                    password = str(password)
                 try:
-                    is_active = string_to_boolean(is_active) if is_active else None
-                except ValueError:
-                    ret['rows'].append({
-                        'username': username,
-                        'row': row,
-                        'flag': _("'is_active' column can only contain 'true' or 'false'"),
-                    })
-                    continue
+                    username = normalize_username(str(username), domain)
+                except TypeError:
+                    username = None
+                except ValidationError:
+                    raise UserUploadError(_('username cannot contain spaces or symbols'))
 
-            if username in usernames or user_id in user_ids:
-                status_row['flag'] = 'repeat'
-            elif not username and not user_id:
-                status_row['flag'] = 'missing-data'
-            else:
-                try:
-                    if username:
-                        usernames.add(username)
-                    if user_id:
-                        user_ids.add(user_id)
-                    if user_id:
-                        user = CommCareUser.get_by_user_id(user_id, domain)
-                    else:
-                        user = CommCareUser.get_by_username(username)
+                is_active = row.get('is_active')
+                if isinstance(is_active, str):
+                    try:
+                        is_active = string_to_boolean(is_active) if is_active else None
+                    except ValueError:
+                        raise UserUploadError(_("'is_active' column can only contain 'true' or 'false'"))
 
-                    if domain_obj.strong_mobile_passwords and is_password(password):
-                        if raw_username(username) in usernames_with_dupe_passwords:
-                            raise UserUploadError(_("Provide a unique password for each mobile worker"))
+                if username in usernames or user_id in user_ids:
+                    raise UserUploadError('repeat')
+                if not username and not user_id:
+                    raise UserUploadError('missing-data')
 
-                        try:
-                            clean_password(password)
-                        except forms.ValidationError:
-                            if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
-                                msg = _("Mobile Worker passwords must be 8 "
-                                    "characters long with at least 1 capital "
-                                    "letter, 1 special character and 1 number")
-                            else:
-                                msg = _("Please provide a stronger password")
-                            raise UserUploadError(msg)
+                if username:
+                    usernames.add(username)
+                if user_id:
+                    user_ids.add(user_id)
+                if user_id:
+                    user = CommCareUser.get_by_user_id(user_id, domain)
+                else:
+                    user = CommCareUser.get_by_username(username)
 
-                    if user:
-                        if user.domain != domain:
-                            raise UserUploadError(_(
-                                'User with username %(username)r is '
-                                'somehow in domain %(domain)r'
-                            ) % {'username': user.username, 'domain': user.domain})
-                        if username and user.username != username:
-                            raise UserUploadError(_(
-                                'Changing usernames is not supported: %(username)r to %(new_username)r'
-                            ) % {'username': user.username, 'new_username': username})
-                        if is_password(password):
-                            user.set_password(password)
-                        status_row['flag'] = 'updated'
-                    else:
-                        max_username_length = get_mobile_worker_max_username_length(domain)
-                        if len(raw_username(username)) > max_username_length:
-                            ret['rows'].append({
-                                'username': username,
-                                'row': row,
-                                'flag': _("username cannot contain greater than %d characters" %
-                                          max_username_length)
-                            })
-                            continue
-                        if not is_password(password):
-                            raise UserUploadError(_("Cannot create a new user with a blank password"))
-                        user = CommCareUser.create(domain, username, password, commit=False)
-                        status_row['flag'] = 'created'
-                    if phone_number:
-                        user.add_phone_number(_fmt_phone(phone_number), default=True)
-                    if name:
-                        user.set_full_name(str(name))
-                    if data:
-                        error = custom_data_validator(data)
-                        if error:
-                            raise UserUploadError(error)
-                        user.user_data.update(data)
-                    if uncategorized_data:
-                        user.user_data.update(uncategorized_data)
-                    if language:
-                        user.language = language
-                    if email:
-                        try:
-                            validate_email(email)
-                        except ValidationError:
-                            raise UserUploadError(_("User has an invalid email address"))
+                if domain_obj.strong_mobile_passwords and is_password(password):
+                    if raw_username(username) in usernames_with_dupe_passwords:
+                        raise UserUploadError(_("Provide a unique password for each mobile worker"))
 
-                        user.email = email.lower()
-                    if is_active is not None:
-                        user.is_active = is_active
-
-                    if can_assign_locations:
-                        # Do this here so that we validate the location code before we
-                        # save any other information to the user, this way either all of
-                        # the user's information is updated, or none of it
-                        location_ids = []
-                        for code in location_codes:
-                            loc = get_location_from_site_code(code, location_cache)
-                            location_ids.append(loc.location_id)
-
-                    if role:
-                        if role in roles_by_name:
-                            user.set_role(domain, roles_by_name[role].get_qualified_id())
+                    try:
+                        clean_password(password)
+                    except forms.ValidationError:
+                        if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+                            msg = _("Mobile Worker passwords must be 8 "
+                                "characters long with at least 1 capital "
+                                "letter, 1 special character and 1 number")
                         else:
-                            raise UserUploadError(_(
-                                "Role '%s' does not exist"
-                            ) % role)
+                            msg = _("Please provide a stronger password")
+                        raise UserUploadError(msg)
 
-                    if can_assign_locations:
-                        locations_updated = set(user.assigned_location_ids) != set(location_ids)
-                        primary_location_removed = (user.location_id and not location_ids or
-                                                    user.location_id not in location_ids)
-
-                        if primary_location_removed:
-                            user.unset_location(commit=False)
-                        if locations_updated:
-                            user.reset_locations(location_ids, commit=False)
-
-                    user.save()
-
+                if user:
+                    if user.domain != domain:
+                        raise UserUploadError(_(
+                            'User with username %(username)r is '
+                            'somehow in domain %(domain)r'
+                        ) % {'username': user.username, 'domain': user.domain})
+                    if username and user.username != username:
+                        raise UserUploadError(_(
+                            'Changing usernames is not supported: %(username)r to %(new_username)r'
+                        ) % {'username': user.username, 'new_username': username})
                     if is_password(password):
-                        # Without this line, digest auth doesn't work.
-                        # With this line, digest auth works.
-                        # Other than that, I'm not sure what's going on
-                        # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
-                        user.get_django_user(use_primary_db=True).check_password(password)
+                        user.set_password(password)
+                    status_row['flag'] = 'updated'
+                else:
+                    max_username_length = get_mobile_worker_max_username_length(domain)
+                    if len(raw_username(username)) > max_username_length:
+                        raise UserUploadError(_(
+                            "username cannot contain greater than %d characters" % max_username_length
+                        ))
+                    if not is_password(password):
+                        raise UserUploadError(_("Cannot create a new user with a blank password"))
+                    user = CommCareUser.create(domain, username, password, commit=False)
+                    status_row['flag'] = 'created'
+                if phone_number:
+                    user.add_phone_number(_fmt_phone(phone_number), default=True)
+                if name:
+                    user.set_full_name(str(name))
+                if data:
+                    error = custom_data_validator(data)
+                    if error:
+                        raise UserUploadError(error)
+                    user.user_data.update(data)
+                if uncategorized_data:
+                    user.user_data.update(uncategorized_data)
+                if language:
+                    user.language = language
+                if email:
+                    try:
+                        validate_email(email)
+                    except ValidationError:
+                        raise UserUploadError(_("User has an invalid email address"))
 
-                    for group_id in Group.by_user_id(user.user_id, wrap=False):
-                        group = group_memoizer.get(group_id)
-                        if group.name not in group_names:
-                            group.remove_user(user)
+                    user.email = email.lower()
+                if is_active is not None:
+                    user.is_active = is_active
 
-                    for group_name in group_names:
-                        if group_name not in allowed_group_names:
-                            raise UserUploadError(_(
-                                "Can't add to group '%s' "
-                                "(try adding it to your spreadsheet)"
-                            ) % group_name)
-                        group_memoizer.by_name(group_name).add_user(user, save=False)
+                if can_assign_locations:
+                    # Do this here so that we validate the location code before we
+                    # save any other information to the user, this way either all of
+                    # the user's information is updated, or none of it
+                    location_ids = []
+                    for code in location_codes:
+                        loc = get_location_from_site_code(code, location_cache)
+                        location_ids.append(loc.location_id)
 
-                except (UserUploadError, CouchUser.Inconsistent) as e:
-                    status_row['flag'] = str(e)
+                if role:
+                    if role in roles_by_name:
+                        user.set_role(domain, roles_by_name[role].get_qualified_id())
+                    else:
+                        raise UserUploadError(_("Role '%s' does not exist") % role)
+
+                if can_assign_locations:
+                    locations_updated = set(user.assigned_location_ids) != set(location_ids)
+                    primary_location_removed = (user.location_id and not location_ids or
+                                                user.location_id not in location_ids)
+
+                    if primary_location_removed:
+                        user.unset_location(commit=False)
+                    if locations_updated:
+                        user.reset_locations(location_ids, commit=False)
+
+                user.save()
+
+                if is_password(password):
+                    # Without this line, digest auth doesn't work.
+                    # With this line, digest auth works.
+                    # Other than that, I'm not sure what's going on
+                    # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
+                    user.get_django_user(use_primary_db=True).check_password(password)
+
+                for group_id in Group.by_user_id(user.user_id, wrap=False):
+                    group = group_memoizer.get(group_id)
+                    if group.name not in group_names:
+                        group.remove_user(user)
+
+                for group_name in group_names:
+                    if group_name not in allowed_group_names:
+                        raise UserUploadError(_(
+                            "Can't add to group '%s' "
+                            "(try adding it to your spreadsheet)"
+                        ) % group_name)
+                    group_memoizer.by_name(group_name).add_user(user, save=False)
+
+            except (UserUploadError, CouchUser.Inconsistent) as e:
+                status_row['flag'] = str(e)
 
             ret["rows"].append(status_row)
     finally:
