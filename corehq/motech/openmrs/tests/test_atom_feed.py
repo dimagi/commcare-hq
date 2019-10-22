@@ -15,12 +15,10 @@ from corehq.motech.openmrs.atom_feed import (
     get_encounter_uuid,
     get_patient_uuid,
     get_timestamp,
+    get_updates_from_observations,
     import_encounter,
 )
-from corehq.motech.openmrs.openmrs_config import (
-    ObservationMapping,
-    OpenmrsFormConfig,
-)
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -137,38 +135,34 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             type='patient',
             _id='abcdef',
         )
-        self.repeater = Mock()
-        self.repeater.domain = 'test_domain'
-        self.repeater.get_id = '123456'
-        self.repeater.white_listed_case_types = ['patient']
-        self.repeater.openmrs_config.form_configs = [OpenmrsFormConfig.wrap({
-            "doc_type": "OpenmrsFormConfig",
-            "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
-            "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
-            "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
-            "openmrs_observations": [{
-                "doc_type": "ObservationMapping",
-                "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                "value": {
-                    "doc_type": "FormQuestion",
-                    "form_question": "/data/height"
-                },
-                "case_property": "height"
-            }]
-        })]
-        self.repeater.observation_mappings = {
-            '5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA': [ObservationMapping.wrap({
-                'case_property': 'height',
-                'concept': '5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-                'value': {
-                    'doc_type': 'FormQuestion',
-                    'form_question': '/data/height',
-                }
-            })]
-        }
-
+        self.repeater = OpenmrsRepeater.wrap({
+            "_id": "123456",
+            "domain": "test_domain",
+            "username": "foo",
+            "password": "bar",
+            "white_listed_case_types": ['patient'],
+            "openmrs_config": {
+                "form_configs": [{
+                    "doc_type": "OpenmrsFormConfig",
+                    "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
+                    "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
+                    "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
+                    "openmrs_observations": [{
+                        "doc_type": "ObservationMapping",
+                        "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                        "value": {
+                            "doc_type": "FormQuestion",
+                            "form_question": "/data/height"
+                        },
+                        "case_property": "height"
+                    }]
+                }]
+            }
+        })
         response = Mock()
         response.json.return_value = self.get_json('encounter')
+        self.repeater.requests  # Initialise cached value
+        self.repeater.__dict__["requests"] = Mock()
         self.repeater.requests.get.return_value = response
 
     def test_import_encounter(self):
