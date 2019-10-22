@@ -9,7 +9,7 @@ from corehq.apps.user_importer.validation import (
     NewUserPassword,
     UsernameOrUserIdRequired,
     UsernameValidator,
-)
+    EmailValidator)
 
 factory = Faker()
 factory.seed(1571040848)
@@ -58,7 +58,15 @@ TEST_CASES = [
         ],
         NewUserPassword('domain'),
         {0: NewUserPassword.error_message}
-    )
+    ),
+    (
+        [
+            {'email': 'Joe Smith <email@example.com>'},
+            {'email': 'email@example.com'}
+        ],
+        EmailValidator('domain'),
+        {0: EmailValidator.error_message}
+    ),
 ]
 
 

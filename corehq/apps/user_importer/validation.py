@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from collections import Counter
 
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
 from corehq.apps.domain.forms import clean_password
@@ -25,6 +26,8 @@ def get_user_import_validators(domain_obj, all_specs):
         LongUsernames(domain),
         NewUserPassword(domain),
         PasswordValidator(domain) if validate_passwords else NoopValidator(domain),
+        CustomDataValidator(domain),
+        EmailValidator(domain),
     ]
 
 
@@ -153,3 +156,27 @@ class PasswordValidator(ImportValidator):
                 clean_password(password)
             except ValidationError as e:
                 return e.message
+
+
+class CustomDataValidator(ImportValidator):
+    def __init__(self, domain):
+        super().__init__(domain)
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        self.custom_data_validator = UserFieldsView.get_validator(domain)
+
+    def validate_spec(self, spec):
+        data = spec.get('data')
+        if data:
+            return self.custom_data_validator(data)
+
+
+class EmailValidator(ImportValidator):
+    error_message = _("User has an invalid email address")
+
+    def validate_spec(self, spec):
+        email = spec.get('email')
+        if email:
+            try:
+                validate_email(email)
+            except ValidationError:
+                return self.error_message

@@ -427,20 +427,12 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 if name:
                     user.set_full_name(str(name))
                 if data:
-                    error = custom_data_validator(data)
-                    if error:
-                        raise UserUploadError(error)
                     user.user_data.update(data)
                 if uncategorized_data:
                     user.user_data.update(uncategorized_data)
                 if language:
                     user.language = language
                 if email:
-                    try:
-                        validate_email(email)
-                    except ValidationError:
-                        raise UserUploadError(_("User has an invalid email address"))
-
                     user.email = email.lower()
                 if is_active is not None:
                     user.is_active = is_active
