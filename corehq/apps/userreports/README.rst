@@ -1408,7 +1408,8 @@ ConditionalAggregationRangesColumn
 
 Conditional aggregation columns allow you to define a series of ranges
 with corresponding names, then group together rows where a specific field's
-value falls within those ranges.
+value falls within those ranges. These ranges are inclusive, since they are implemented
+using the ``between`` operator.
 
 There are two types: ``conditional_aggregation`` for most values, and
 ``conditional_aggregation_age_in_months``, where the given field must be a date
