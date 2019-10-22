@@ -91,10 +91,10 @@ class DashBoardUsage:
 
     def get_location_id_string_from_location_type(self, location_type):
         if location_type == 'awc':
-            location_type = 'doc_id'
+            location_id = 'doc_id'
         else:
-            location_type = location_type + '_id'
-        return location_type
+            location_id = location_type + '_id'
+        return location_id
 
     def get_location_type_string_from_location_id(self, location_id):
         return location_id.replace('_id', '')
