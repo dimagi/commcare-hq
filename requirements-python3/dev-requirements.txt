@@ -126,7 +126,7 @@ pdfrw==0.4                # via weasyprint
 pexpect==4.7.0            # via ipython
 phonenumberslite==8.10.10
 pickleshare==0.7.5        # via ipython
-pillow==6.0.0
+pillow==6.2.0
 pip-tools==4.0.0
 ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0
