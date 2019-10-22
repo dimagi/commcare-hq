@@ -221,9 +221,6 @@ def bulk_update_cases(domain, case_changes, device_id):
     case_blocks = []
     for case_id, case_properties, close in case_changes:
         case_block = _get_update_or_close_case_block(case_id, case_properties, close)
-        # Ensure the XML is formatted properly
-        # An exception is raised if not
-        case_block = ElementTree.tostring(case_block.as_xml())
         case_blocks.append(case_block.as_text())
     return submit_case_blocks(case_blocks, domain, device_id=device_id)
 
