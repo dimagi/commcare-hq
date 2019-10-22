@@ -209,6 +209,7 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False, beta=False
                     {
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
+                        'in_month': value['y'],
                         'all': value['all']
                     } for key, value in data['blue'].items()
                 ],
