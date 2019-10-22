@@ -10,7 +10,7 @@ from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import percent_adolescent_girls_enrolled_help_text
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
+from custom.icds_reports.utils import apply_exclude, indian_formatted_number
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -117,14 +117,10 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
         'all': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         valid = row['valid'] or 0
         all_adolescent = row['all'] or 0
         name = row['%s_name' % loc_level]
-        result_set.add(name)
 
         row_values = {
             'valid': valid,
@@ -137,10 +133,6 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
             name,
             valid
         ])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 
