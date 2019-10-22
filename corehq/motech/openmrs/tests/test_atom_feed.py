@@ -15,6 +15,7 @@ from corehq.motech.openmrs.atom_feed import (
     get_encounter_uuid,
     get_patient_uuid,
     get_timestamp,
+    get_updates_from_bahmni_diagnoses,
     get_updates_from_observations,
     import_encounter,
 )
@@ -147,28 +148,41 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                     "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
                     "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
                     "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
-                    "openmrs_observations": [{
-                        "doc_type": "ObservationMapping",
-                        "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                        "value": {
-                            "doc_type": "FormQuestion",
-                            "form_question": "/data/height"
+                    "openmrs_observations": [
+                        {
+                            "doc_type": "ObservationMapping",
+                            "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                            "value": {
+                                "doc_type": "FormQuestion",
+                                "form_question": "/data/height"
+                            },
+                            "case_property": "height"
                         },
-                        "case_property": "height"
-                    }]
+                        {
+                            "doc_type": "ObservationMapping",
+                            "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
+                            "value": {
+                                "doc_type": "FormQuestion",
+                                "form_question": "/data/bahmni_hypothermia",
+                                "direction": "in",
+                            },
+                            "case_property": "bahmni_hypothermia"
+                        }
+                    ]
                 }]
             }
         })
+
+    def test_import_encounter(self):
+        """
+        Importing the given encounter should update the case's "height" property
+        """
         response = Mock()
         response.json.return_value = self.get_json('encounter')
         self.repeater.requests  # Initialise cached value
         self.repeater.__dict__["requests"] = Mock()
         self.repeater.requests.get.return_value = response
 
-    def test_import_encounter(self):
-        """
-        Importing the given encounter should update the case's "height" property
-        """
         with patch('corehq.motech.openmrs.atom_feed.submit_case_blocks') as submit_case_blocks_patch, \
                 patch('corehq.motech.openmrs.atom_feed.importer_util') as importer_util_patch:
             importer_util_patch.lookup_case.return_value = (self.case, None)
@@ -189,6 +203,24 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             self.assertEqual(domain, 'test_domain')
             self.assertEqual(kwargs['device_id'], 'openmrs-atomfeed-123456')
             self.assertEqual(kwargs['xmlns'], 'http://commcarehq.org/openmrs-integration')
+
+    def test_get_updates_from_observations(self):
+        encounter = self.get_json('encounter')
+        observations = encounter['observations']
+        case_updates = get_updates_from_observations(
+            observations,
+            self.repeater.observation_mappings
+        )
+        self.assertEqual(case_updates, {'height': 105})
+
+    def test_get_updates_from_bahmni_diagnoses(self):
+        encounter = self.get_json('encounter_with_diagnoses')
+        bahmni_diagnoses = encounter['bahmniDiagnoses']
+        case_updates = get_updates_from_bahmni_diagnoses(
+            bahmni_diagnoses,
+            self.repeater.observation_mappings
+        )
+        self.assertEqual(case_updates, {'bahmni_hypothermia': 'Hypothermia'})
 
 
 def test_doctests():
