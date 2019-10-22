@@ -6,9 +6,11 @@ from django.test import SimpleTestCase
 from couchdbkit import BadValueError
 
 import corehq.motech.value_source
+from corehq.motech.const import COMMCARE_DATA_TYPE_DECIMAL
 from corehq.motech.value_source import (
     CaseProperty,
     CaseTriggerInfo,
+    ConstantString,
     get_form_question_values,
 )
 
@@ -114,3 +116,33 @@ class CasePropertyValidationTests(SimpleTestCase):
         case_property = CaseProperty.wrap({"case_property": None})
         with self.assertRaisesRegexp(BadValueError, "Property case_property is required."):
             case_property.validate()
+
+
+class ConstantStringTests(SimpleTestCase):
+
+    def test_get_value(self):
+        constant = ConstantString.wrap({"value": "foo"})
+        info = CaseTriggerInfo("test-domain", None)
+        value = constant.get_value(info)
+        self.assertEqual(value, "foo")
+
+    def test_default_get_value(self):
+        constant = ConstantString.wrap({})
+        info = CaseTriggerInfo("test-domain", None)
+        value = constant.get_value(info)
+        self.assertIsNone(value)
+
+    def test_casting_value(self):
+        constant = ConstantString.wrap({
+            "value": "1",
+            "external_data_type": COMMCARE_DATA_TYPE_DECIMAL,
+        })
+        info = CaseTriggerInfo("test-domain", None)
+        value = constant.get_value(info)
+        self.assertEqual(value, 1.0)
+
+    def test_deserialize(self):
+        constant = ConstantString.wrap({"value": "foo"})
+        external_value = "bar"
+        value = constant.deserialize(external_value)
+        self.assertIsNone(value)
