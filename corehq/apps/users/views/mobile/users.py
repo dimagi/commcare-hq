@@ -62,7 +62,6 @@ from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.user_importer.importer import (
     UserUploadError,
-    check_duplicate_usernames,
     check_existing_usernames,
     check_headers,
 )
@@ -996,12 +995,6 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
         try:
             check_existing_usernames(self.user_specs, self.domain)
-        except UserUploadError as e:
-            messages.error(request, _(str(e)))
-            return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
-
-        try:
-            check_duplicate_usernames(self.user_specs)
         except UserUploadError as e:
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))

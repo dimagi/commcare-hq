@@ -7,15 +7,14 @@ from mock import patch
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.models import Domain
+from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.importer import (
-    UserUploadError,
-    check_duplicate_usernames,
     check_existing_usernames,
     create_or_update_users_and_groups,
 )
+from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, Permissions, UserRole
-from corehq.apps.user_importer.tasks import import_users_and_groups
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -307,38 +306,6 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
 
 
 class TestUserBulkUploadUtils(SimpleTestCase):
-
-    def test_check_duplicate_usernames(self):
-        user_specs = [
-            {
-                'username': 'hello',
-                'user_id': 'should not update',
-            },
-            {
-                'username': 'hello',
-                'user_id': 'other id',
-            },
-        ]
-
-        self.assertRaises(UserUploadError, check_duplicate_usernames, user_specs)
-
-    def test_no_duplicate_usernames(self):
-        user_specs = [
-            {
-                'username': 'hello',
-                'user_id': 'should not update',
-            },
-            {
-                'username': 'goodbye',
-                'user_id': 'other id',
-            },
-        ]
-
-        try:
-            check_duplicate_usernames(user_specs)
-        except UserUploadError:
-            self.fail('UserUploadError incorrectly raised')
-
     def test_existing_username_with_no_id(self):
         user_specs = [
             {

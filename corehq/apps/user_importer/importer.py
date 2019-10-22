@@ -62,21 +62,6 @@ def check_headers(user_specs):
         raise UserUploadError('\n'.join(messages))
 
 
-def check_duplicate_usernames(user_specs):
-    usernames = set()
-    duplicated_usernames = set()
-
-    for row in user_specs:
-        username = row.get('username')
-        if username and username in usernames:
-            duplicated_usernames.add(username)
-        usernames.add(username)
-
-    if duplicated_usernames:
-        raise UserUploadError(_("The following usernames have duplicate entries in "
-            "your file: " + ', '.join(duplicated_usernames)))
-
-
 def check_existing_usernames(user_specs, domain):
     usernames_without_ids = set()
     invalid_usernames = set()
@@ -307,29 +292,6 @@ def is_password(password):
         if c != "*":
             return True
     return False
-
-
-def users_with_duplicate_passwords(rows):
-    password_dict = dict()
-
-    for row in rows:
-        username = row.get('username')
-        password = str(row.get('password'))
-        if not is_password(password):
-            continue
-
-        if password_dict.get(password):
-            password_dict[password].add(username)
-        else:
-            password_dict[password] = {username}
-
-    ret = set()
-
-    for usernames in password_dict.values():
-        if len(usernames) > 1:
-            ret = ret.union(usernames)
-
-    return ret
 
 
 def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, update_progress=None):
