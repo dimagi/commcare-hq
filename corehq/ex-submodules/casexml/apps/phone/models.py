@@ -421,7 +421,7 @@ class SyncLogSQL(models.Model):
 
     synclog_id = models.UUIDField(unique=True, primary_key=True, default=uuid.uuid1)
     domain = models.CharField(max_length=255, null=True, blank=True, default=None, db_index=True)
-    user_id = models.CharField(max_length=255, default=None)
+    user_id = models.CharField(max_length=255, default=None, db_index=True)
     date = models.DateTimeField(db_index=True, null=True, blank=True)
     previous_synclog_id = models.UUIDField(max_length=255, default=None, null=True, blank=True)
     doc = JSONField()
@@ -451,11 +451,6 @@ class SyncLogSQL(models.Model):
                 message='Could not publish change for SyncLog',
                 details={'pk': self.pk}
             )
-
-    class Meta:
-        index_together = (
-            ('user_id', 'device_id', 'app_id')
-        )
 
 
 class IndexTree(DocumentSchema):

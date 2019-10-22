@@ -18,11 +18,6 @@ class Migration(migrations.Migration):
             name='log_format',
             field=models.CharField(choices=[('simplified', 'simplified'), ('livequery', 'livequery')], max_length=10),
         ),
-        migrations.AlterField(
-            model_name='synclogsql',
-            name='user_id',
-            field=models.CharField(default=None, max_length=255),
-        ),
         migrations.AddField(
             model_name='synclogsql',
             name='app_id',
