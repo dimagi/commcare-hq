@@ -306,21 +306,6 @@ def update_patient(repeater, patient_uuid):
 
 
 def import_encounter(repeater, encounter_uuid):
-
-    def fields_from_observations(observations, mappings):
-        """
-        Traverse a tree of observations, and return the ones mapped to
-        case properties.
-        """
-        fields = {}
-        for obs in observations:
-            if obs['concept']['uuid'] in mappings:
-                for mapping in mappings[obs['concept']['uuid']]:
-                    fields[mapping.case_property] = mapping.value.deserialize(obs['value'])
-            if obs['groupMembers']:
-                fields.update(fields_from_observations(obs['groupMembers'], mappings))
-        return fields
-
     response = repeater.requests.get(
         '/ws/rest/v1/bahmnicore/bahmniencounter/' + encounter_uuid,
         {'includeAll': 'true'},
@@ -328,7 +313,10 @@ def import_encounter(repeater, encounter_uuid):
     )
     encounter = response.json()
 
-    case_property_updates = fields_from_observations(encounter['observations'], repeater.observation_mappings)
+    case_property_updates = get_updates_from_observations(
+        encounter['observations'],
+        repeater.observation_mappings
+    )
 
     if case_property_updates:
         case_blocks = []
@@ -369,3 +357,18 @@ def import_encounter(repeater, encounter_uuid):
             xmlns=XMLNS_OPENMRS,
             device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.get_id,
         )
+
+
+def get_updates_from_observations(observations, mappings):
+    """
+    Traverse a tree of observations, and return the ones mapped to case
+    properties.
+    """
+    fields = {}
+    for obs in observations:
+        if obs['concept']['uuid'] in mappings:
+            for mapping in mappings[obs['concept']['uuid']]:
+                fields[mapping.case_property] = mapping.value.deserialize(obs['value'])
+        if obs['groupMembers']:
+            fields.update(get_updates_from_observations(obs['groupMembers'], mappings))
+    return fields
