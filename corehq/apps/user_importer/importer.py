@@ -12,6 +12,7 @@ from couchdbkit.exceptions import (
     ResourceNotFound,
 )
 
+from corehq.apps.user_importer.validation import get_user_import_validators
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
 
@@ -353,6 +354,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
     domain_obj = Domain.get_by_name(domain)
     usernames_with_dupe_passwords = users_with_duplicate_passwords(user_specs)
 
+    validators = get_user_import_validators()
     try:
         for row in user_specs:
             if update_progress:
@@ -364,6 +366,14 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 'username': raw_username(username) if username else None,
                 'row': row,
             }
+
+            try:
+                for validator in validators:
+                    validator(row)
+            except UserUploadError as e:
+                status_row['flag'] = str(e)
+                ret['rows'].append(status_row)
+                continue
 
             data = row.get('data')
             email = row.get('email')
