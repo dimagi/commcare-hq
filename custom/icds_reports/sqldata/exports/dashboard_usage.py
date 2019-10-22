@@ -5,7 +5,6 @@ from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db.models import Count
 
 from corehq.apps.es import UserES
-from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.models import AwcLocation, ICDSAuditEntryRecord, AggAwc
 from custom.icds_reports.utils import india_now
 
@@ -109,8 +108,8 @@ class DashBoardUsage:
 
     def prepare_is_launched_agg_list(self, location_type, location_id):
         '''
-        populates the location_id vs is_launched status and location_id vs location_type mappings for the descendants
-         of given location
+        populates the location_id vs is_launched status and location_id vs location_type mappings for the
+         descendants of given location
         :param location_type:
         :param location_id:
         :return: None
@@ -123,7 +122,8 @@ class DashBoardUsage:
         location_type_id_mapping = defaultdict(str)
         for aggregate_record in aggregate_records:
             for sub_location_type in sub_location_types:
-                if sub_location_type != 'is_launched' and aggregate_record[sub_location_type] not in aggregate_records_dict:
+                if sub_location_type != 'is_launched' and aggregate_record[sub_location_type] not in \
+                    aggregate_records_dict:
                     aggregate_records_dict[aggregate_record[sub_location_type]] = aggregate_record['is_launched']
                 if aggregate_record[sub_location_type] not in location_type_id_mapping:
                     location_type_id_mapping[aggregate_record[sub_location_type]] = sub_location_type
