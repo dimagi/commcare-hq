@@ -1,6 +1,7 @@
 import re
 from collections import namedtuple
 
+from django.conf import settings
 from django.http import Http404
 
 from couchdbkit import ResourceNotFound
@@ -209,17 +210,21 @@ def get_app_and_build_ids(domain, build_or_app_id):
     return build_or_app_id, None
 
 
-def from_demo_user(form_json):
+def from_demo_user(form_json, user):
     """
     Whether the form is submitted by demo_user
     """
     from corehq.apps.users.util import DEMO_USER_ID
     try:
-        # require new-style meta/userID (reject Meta/chw_id)
-        if form_json['meta']['userID'] == DEMO_USER_ID:
-            return True
+        user_id = form_json['meta']['userID']
     except (KeyError, ValueError):
         return False
+    else:
+        if user_id == DEMO_USER_ID:
+            return True
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS + ('staging',):
+            if user and user.is_demo_user:
+                return True
 
 # Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
 DEMO_SUBMIT_MODE = 'demo'
@@ -236,4 +241,4 @@ def should_ignore_submission(request):
     instance, _ = couchforms.get_instance_and_attachment(request)
     form_json = convert_xform_to_json(instance)
 
-    return False if from_demo_user(form_json) else True
+    return False if from_demo_user(form_json, request.couch_user) else True

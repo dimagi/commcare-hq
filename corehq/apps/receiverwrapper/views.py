@@ -207,7 +207,7 @@ def post(request, domain, app_id=None):
 
 def _noauth_post(request, domain, app_id=None):
     """
-    This is explictly called for a submission that has secure submissions enabled, but is manually
+    This is explicitly called for a submission that has secure submissions enabled, but is manually
     overriding the submit URL to not specify auth context. It appears to be used by demo mode.
 
     It mainly just checks that we are touching test data only in the right domain and submitting
@@ -218,7 +218,7 @@ def _noauth_post(request, domain, app_id=None):
     case_updates = get_case_updates(form_json)
 
     def form_ok(form_json):
-        return (from_demo_user(form_json) or is_device_report(form_json))
+        return (from_demo_user(form_json, request.couch_user) or is_device_report(form_json))
 
     def case_block_ok(case_updates):
         """
