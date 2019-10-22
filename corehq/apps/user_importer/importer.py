@@ -1,38 +1,29 @@
 import logging
 
-from django import forms
-from django.conf import settings
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
-from django.utils.translation import ugettext as _
-
 from couchdbkit.exceptions import (
     BulkSaveError,
     MultipleResultsFound,
     ResourceNotFound,
 )
-
-from corehq.apps.user_importer.exceptions import UserUploadError
-from corehq.apps.user_importer.validation import get_user_import_validators
-from dimagi.utils.chunked import chunked
-from dimagi.utils.parsing import string_to_boolean
+from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext as _
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
-from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.user_importer.exceptions import UserUploadError
+from corehq.apps.user_importer.validation import get_user_import_validators
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_existing_usernames,
 )
-from corehq.apps.users.models import UserRole
-
-from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import UserRole
 from corehq.apps.users.util import normalize_username, raw_username
-
+from dimagi.utils.chunked import chunked
+from dimagi.utils.parsing import string_to_boolean
 
 required_headers = set(['username'])
 allowed_headers = set([
@@ -330,8 +321,6 @@ def users_with_duplicate_passwords(rows):
 
 
 def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, update_progress=None):
-    from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-    custom_data_validator = UserFieldsView.get_validator(domain)
     ret = {"errors": [], "rows": []}
 
     group_memoizer = group_memoizer or GroupMemoizer(domain)
@@ -339,17 +328,13 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
 
     current = 0
 
-    usernames = set()
-    user_ids = set()
-    allowed_groups = set(group_memoizer.groups)
-    allowed_group_names = [group.name for group in allowed_groups]
-    allowed_roles = UserRole.by_domain(domain)
-    roles_by_name = {role.name: role for role in allowed_roles}
     can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
     if can_assign_locations:
         location_cache = SiteCodeToLocationCache(domain)
-    domain_obj = Domain.get_by_name(domain)
 
+    domain_obj = Domain.get_by_name(domain)
+    allowed_group_names = [group.name for group in group_memoizer.groups]
+    roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
     validators = get_user_import_validators(domain_obj, user_specs, allowed_group_names, list(roles_by_name))
     try:
         for row in user_specs:
@@ -395,27 +380,23 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
 
                 is_active = row.get('is_active')
                 if is_active and isinstance(is_active, str):
-                    is_active = string_to_boolean(is_active) if is_active else None
+                    is_active = string_to_boolean(is_active)
 
-                if username:
-                    usernames.add(username)
-                if user_id:
-                    user_ids.add(user_id)
                 if user_id:
                     user = CommCareUser.get_by_user_id(user_id, domain)
+                    if user and username and user.username != username:
+                        raise UserUploadError(_(
+                            'Changing usernames is not supported: %(username)r to %(new_username)r'
+                        ) % {'username': user.username, 'new_username': username})
                 else:
                     user = CommCareUser.get_by_username(username)
-
-                if user:
-                    if user.domain != domain:
+                    if user and user.domain != domain:
                         raise UserUploadError(_(
                             'User with username %(username)r is '
                             'somehow in domain %(domain)r'
                         ) % {'username': user.username, 'domain': user.domain})
-                    if username and user.username != username:
-                        raise UserUploadError(_(
-                            'Changing usernames is not supported: %(username)r to %(new_username)r'
-                        ) % {'username': user.username, 'new_username': username})
+
+                if user:
                     if is_password(password):
                         user.set_password(password)
                     status_row['flag'] = 'updated'
@@ -446,10 +427,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                         loc = get_location_from_site_code(code, location_cache)
                         location_ids.append(loc.location_id)
 
-                if role:
-                    user.set_role(domain, roles_by_name[role].get_qualified_id())
-
-                if can_assign_locations:
                     locations_updated = set(user.assigned_location_ids) != set(location_ids)
                     primary_location_removed = (user.location_id and not location_ids or
                                                 user.location_id not in location_ids)
@@ -458,6 +435,9 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                         user.unset_location(commit=False)
                     if locations_updated:
                         user.reset_locations(location_ids, commit=False)
+
+                if role:
+                    user.set_role(domain, roles_by_name[role].get_qualified_id())
 
                 user.save()
 

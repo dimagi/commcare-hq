@@ -5,12 +5,13 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
+from dimagi.utils.parsing import string_to_boolean
+
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.importer import is_password
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.util import normalize_username, raw_username
-from dimagi.utils.parsing import string_to_boolean
 
 
 def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allowed_roles=None):

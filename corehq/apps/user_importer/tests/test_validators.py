@@ -4,12 +4,15 @@ from testil import assert_raises
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.validation import (
     Duplicates,
+    EmailValidator,
+    GroupValidator,
     IsActive,
     LongUsernames,
     NewUserPassword,
+    RoleValidator,
     UsernameOrUserIdRequired,
     UsernameValidator,
-    EmailValidator, RoleValidator, GroupValidator)
+)
 
 factory = Faker()
 factory.seed(1571040848)
