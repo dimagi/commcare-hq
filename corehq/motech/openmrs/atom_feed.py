@@ -317,6 +317,11 @@ def import_encounter(repeater, encounter_uuid):
         encounter['observations'],
         repeater.observation_mappings
     )
+    if 'bahmniDiagnoses' in encounter:
+        case_property_updates.update(get_updates_from_bahmni_diagnoses(
+            encounter['bahmniDiagnoses'],
+            repeater.observation_mappings
+        ))
 
     if case_property_updates:
         case_blocks = []
@@ -371,4 +376,17 @@ def get_updates_from_observations(observations, mappings):
                 fields[mapping.case_property] = mapping.value.deserialize(obs['value'])
         if obs['groupMembers']:
             fields.update(get_updates_from_observations(obs['groupMembers'], mappings))
+    return fields
+
+
+def get_updates_from_bahmni_diagnoses(diagnoses, mappings):
+    """
+    Iterate a list of Bahmni diagnoses, and return the ones mapped to
+    case properties.
+    """
+    fields = {}
+    for diag in diagnoses:
+        if diag['codedAnswer']['uuid'] in mappings:
+            for mapping in mappings[diag['codedAnswer']['uuid']]:
+                fields[mapping.case_property] = mapping.value.deserialize(diag['codedAnswer']['name'])
     return fields
