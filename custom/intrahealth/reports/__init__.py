@@ -1,5 +1,3 @@
-# coding=utf-8
-
 from custom.intrahealth.reports.consommation_dashboard import ConsommationReport
 from custom.intrahealth.reports.dashboard_1 import Dashboard1Report
 from custom.intrahealth.reports.disponibilite_dashboard import DisponibiliteReport

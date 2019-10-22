@@ -243,13 +243,17 @@ def display_seconds(seconds):
 
 
 def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
-                      stream=sys.stdout, step=None):
+                      stream=None, offset=0, step=None):
     """Turns 'iterable' into a generator which prints a progress bar.
 
     :param oneline: Set to False to print each update on a new line.
         Useful if there will be other things printing to the terminal.
         Set to "concise" to use exactly one line for all output.
+    :param offset: Number of items already/previously iterated.
+    :param step: deprecated, not used
     """
+    if stream is None:
+        stream = sys.stdout
     if length is None:
         if hasattr(iterable, "__len__"):
             length = len(iterable)
@@ -263,18 +267,20 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
     start = datetime.now()
 
     def draw(position, done=False):
-        percent = float(position) / length if length > 0 else 1
-        dots = int(round(min(percent, 1) * granularity))
+        overall_position = offset + position
+        overall_percent = overall_position / length if length > 0 else 1
+        dots = int(round(min(overall_percent, 1) * granularity))
         spaces = granularity - dots
         elapsed = (datetime.now() - start).total_seconds()
+        percent = position / (length - offset) if length - offset > 0 else 1
         remaining = (display_seconds((elapsed / percent) * (1 - percent))
                      if position > 0 else "-:--:--")
 
         print(prefix, end=' ', file=stream)
         print("[{}{}]".format("." * dots, " " * spaces), end=' ', file=stream)
-        print("{}/{}".format(position, length), end=' ', file=stream)
-        print("{:.0%}".format(percent), end=' ', file=stream)
-        if position >= length or done:
+        print("{}/{}".format(overall_position, length), end=' ', file=stream)
+        print("{:.0%}".format(overall_percent), end=' ', file=stream)
+        if overall_position >= length or done:
             print("{} elapsed".format(datetime.now() - start), end='', file=stream)
         else:
             print("{} remaining".format(remaining), end='', file=stream)
@@ -283,20 +289,41 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
 
     if oneline != "concise":
         print("Started at {:%Y-%m-%d %H:%M:%S}".format(start), file=stream)
-    if step is None:
-        step = length // granularity
-    i = -1
+    should_update = step_calculator(length, granularity)
+    i = 0
     try:
-        for i, x in enumerate(iterable):
+        for i, x in enumerate(iterable, start=1):
             yield x
-            if i % step == 0:
+            if should_update(i):
                 draw(i)
     finally:
-        draw(i + 1, done=True)
+        draw(i, done=True)
     if oneline != "concise":
         end = datetime.now()
         print("Finished at {:%Y-%m-%d %H:%M:%S}".format(end), file=stream)
         print("Elapsed time: {}".format(display_seconds((end - start).total_seconds())), file=stream)
+
+
+def step_calculator(length, granularity):
+    """Make a function that caculates when to post progress updates
+
+    Approximates two updates per output granularity (dot) with update
+    interval bounded at 0.1s <= t <= 5m. This assumes a uniform
+    iteration rate.
+    """
+    def should_update(i):
+        assert i, "divide by zero protection"
+        nonlocal next_update
+        now = datetime.now()
+        if now > next_update:
+            rate = i / (now - start).total_seconds()  # iterations / second
+            secs = min(max(twice_per_dot / rate, 0.1), 300)  # seconds / dot / 2
+            next_update = now + timedelta(seconds=secs)
+            return True
+        return False
+    twice_per_dot = max(length / granularity, 1) / 2  # iterations / dot / 2
+    start = next_update = datetime.now()
+    return should_update
 
 
 def get_traceback_string():

@@ -101,7 +101,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             valid_in_month, end_month_string, start_month_string
         )
         height_eligible = "({} AND {} > 6 AND {} <= 60)".format(valid_in_month, age_in_months_end, age_in_months)
-        fully_immunized_eligible = "({} AND {} > 12)".format(valid_in_month, age_in_months_end)
+        fully_immunized_eligible = "({} AND {} > 12)".format(valid_in_month, age_in_months)
         immunized_age_in_days = "(child_tasks.immun_one_year_date - person_cases.dob)"
         fully_immun_before_month = "(child_tasks.immun_one_year_date < {})".format(end_month_string)
 
@@ -403,4 +403,5 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             'CREATE INDEX IF NOT EXISTS chm_case_idx ON "{}" (case_id)'.format(self.tablename),
             'CREATE INDEX IF NOT EXISTS chm_awc_idx ON "{}" (awc_id)'.format(self.tablename),
             'CREATE INDEX IF NOT EXISTS chm_mother_dob ON "{}" (mother_case_id, dob)'.format(self.tablename),
+            'CREATE INDEX IF NOT EXISTS chm_month_supervisor_id ON "{}" (month, supervisor_id)'.format(self.tablename),
         ]

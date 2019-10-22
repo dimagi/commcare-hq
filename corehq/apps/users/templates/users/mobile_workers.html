@@ -4,15 +4,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}
-  {% if strong_mobile_passwords %}
-    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-  {% endif %}
-  {% compress js %}
-    <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
-    <script src="{% static 'users/js/mobile_workers.js' %}"></script>
-  {% endcompress %}
-{% endblock %}
+{% requirejs_main 'users/js/mobile_workers' %}
 
 {% block page_content %}
   {% initial_page_data 'can_access_all_locations' can_access_all_locations %}
@@ -154,251 +146,251 @@
       <div class="panel-body">
         <table class="table table-striped">
           <thead>
-            <tr>
-              <th class="col-xs-3">{% trans "Username" %}</th>
-              <th class="col-xs-3">{% trans "First Name" %}</th>
-              <th class="col-xs-3">{% trans "Last Name" %}</th>
-              <th class="col-xs-3">{% trans "Status" %}</th>
-            </tr>
+          <tr>
+            <th class="col-xs-3">{% trans "Username" %}</th>
+            <th class="col-xs-3">{% trans "First Name" %}</th>
+            <th class="col-xs-3">{% trans "Last Name" %}</th>
+            <th class="col-xs-3">{% trans "Status" %}</th>
+          </tr>
           </thead>
           <tbody data-bind="foreach: newUsers">
-            <tr>
-              <td data-bind="attr: {class: creation_status}">
+          <tr>
+            <td data-bind="attr: {class: creation_status}">
                 <span data-bind="visible: !user_id()">
                   <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
                 </span>
-                <a data-bind="attr: {href: edit_url}, visible: user_id">
-                  <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
-                </a>
-              </td-->
-              <td data-bind="attr: {class: creation_status}, text: first_name"></td>
-              <td data-bind="attr: {class: creation_status}, text: last_name"></td>
-              <td data-bind="attr: {class: creation_status}">
-                <div data-bind="visible: creation_status() === $root.STATUS.PENDING">
-                  <i class="fa fa-circle-o-notch fa-spin"></i>
-                  {% trans 'Pending...' %}
-                </div>
-                <div data-bind="visible: creation_status() === $root.STATUS.SUCCESS">
+              <a data-bind="attr: {href: edit_url}, visible: user_id">
+                <i class="fa fa-user"></i> <strong data-bind="text: username"></strong>
+              </a>
+            </td>
+            <td data-bind="attr: {class: creation_status}, text: first_name"></td>
+            <td data-bind="attr: {class: creation_status}, text: last_name"></td>
+            <td data-bind="attr: {class: creation_status}">
+              <div data-bind="visible: creation_status() === $root.STATUS.PENDING">
+                <i class="fa fa-circle-o-notch fa-spin"></i>
+                {% trans 'Pending...' %}
+              </div>
+              <div data-bind="visible: creation_status() === $root.STATUS.SUCCESS">
                   <span class="text-success">
                     <i class="fa fa-check"></i> {% trans 'NEW' %}
                   </span>
-                </div>
-                <div data-bind="visible: creation_status() === $root.STATUS.ERROR">
+              </div>
+              <div data-bind="visible: creation_status() === $root.STATUS.ERROR">
                   <span class="text-danger">
                     <i class="fa fa-exclamation-triangle"></i>
                     {% trans "ERROR" %}
                   </span>
-                </div>
-              </td>
-            </tr>
+              </div>
+            </td>
+          </tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
   <div id="users-list" class="ko-template">
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
-    </div>
-    <div class="panel-body">
-      <div class="row">
-        <div class="col-sm-6">
-          <search-box data-apply-bindings="false"
-                      params="value: query,
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">{% trans 'Mobile Workers' %}</h3>
+      </div>
+      <div class="panel-body">
+        <div class="row">
+          <div class="col-sm-6">
+            <search-box data-apply-bindings="false"
+                        params="value: query,
                                             action: function() { goToPage(1); },
                                             placeholder: '{% trans_html_attr "Search Workers..." %}'"></search-box>
-          <p class="help-block">
-            <i class="fa fa-info-circle"></i>
+            <p class="help-block">
+              <i class="fa fa-info-circle"></i>
+              {% blocktrans %}
+                Search any text, or use a targeted query. For more info see the <a
+                      href='https://wiki.commcarehq.org/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-C.SearchforMobileWorkers'
+                      target='_blank'>Mobile Workers</a> help page
+              {% endblocktrans %}
+            </p>
+          </div>
+          <div class="col-sm-6">
+            <button type="button" class="btn btn-default pull-right"
+                    data-bind="visible: !deactivatedOnly(), click: function() { deactivatedOnly(true); }">
+              {% trans 'Show Deactivated Mobile Workers' %}
+            </button>
+            <button type="button" class="btn btn-default pull-right"
+                    data-bind="visible: deactivatedOnly(), click: function() { deactivatedOnly(false); }">
+              {% trans 'Show Active Mobile Workers' %}
+            </button>
+          </div>
+        </div>
+        <div class="alert alert-info" data-bind="visible: showNoUsers">
+          {% blocktrans %}
+            No Mobile Workers were found that matched your query.
+          {% endblocktrans %}
+        </div>
+        <div class="alert alert-info" data-bind="visible: showProjectHasNoUsers">
+          {% if request.is_view_only %}
             {% blocktrans %}
-              Search any text, or use a targeted query. For more info see the <a
-              href='https://wiki.commcarehq.org/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-C.SearchforMobileWorkers'
-              target='_blank'>Mobile Workers</a> help page
+              <strong>There are no mobile workers visible to you at this time.</strong>
+              Please contact your project's administrator if this is incorrect.
             {% endblocktrans %}
-          </p>
-        </div>
-        <div class="col-sm-6">
-          <button type="button" class="btn btn-default pull-right"
-                  data-bind="visible: !deactivatedOnly(), click: function() { deactivatedOnly(true); }">
-            {% trans 'Show Deactivated Mobile Workers' %}
-          </button>
-          <button type="button" class="btn btn-default pull-right"
-                  data-bind="visible: deactivatedOnly(), click: function() { deactivatedOnly(false); }">
-            {% trans 'Show Active Mobile Workers' %}
-          </button>
-        </div>
-      </div>
-      <div class="alert alert-info" data-bind="visible: showNoUsers">
-        {% blocktrans %}
-          No Mobile Workers were found that matched your query.
-        {% endblocktrans %}
-      </div>
-      <div class="alert alert-info" data-bind="visible: showProjectHasNoUsers">
-        {% if request.is_view_only %}
-          {% blocktrans %}
-            <strong>There are no mobile workers visible to you at this time.</strong>
-            Please contact your project's administrator if this is incorrect.
-          {% endblocktrans %}
-        {% else %}
-          {% blocktrans %}
-            <strong>There are currently no mobile workers in this project.</strong>
-            Please create a new mobile worker above to get started.
-          {% endblocktrans %}
-        {% endif %}
-      </div>
-      <table class="table table-striped table-responsive" style="margin-bottom: 0;" data-bind="visible: showTable">
-        <thead>
-        <tr>
-          <th class="col-xs-3">{% trans "Username" %}</th>
-          <th class="col-xs-3">{% trans "First Name" %}</th>
-          <th class="col-xs-2">{% trans "Last Name" %}</th>
-          <th class="col-xs-2">{% trans 'Date Registered' %}</th>
-          {% if not request.is_view_only %}<th class="col-xs-2">{% trans 'Action' %}</th>{% endif %}
-        </tr>
-        </thead>
-        <tbody data-bind="foreach: users">
-        <tr>
-          <td>
-            <a data-bind="attr: {href: edit_url}">
-              <i class="fa fa-user"></i>
-              <strong data-bind="text: username"></strong>
-            </a>
-          </td>
-          <td data-bind="text: first_name"></td>
-          <td data-bind="text: last_name"></td>
-          <td data-bind="text: date_registered"></td>
-          {% if not request.is_view_only %}
-            <td>
-              <div data-bind="visible: !is_active()">
-                <button type="button" class="btn btn-default" data-toggle="modal"
-                        data-bind="attr: {'data-target': '#activate_' + user_id()}">
-                  {% trans "Reactivate" %}
-                </button>
-                <p data-bind="visible: action_error">
-                  <i class="fa fa-exclamation-triangle"></i>
-                  <span data-bind="text: action_error"></span>
-                </p>
-              </div>
-              <div data-bind="visible: is_active()">
-                <button type="button" class="btn btn-default" data-toggle="modal"
-                        data-bind="attr: {'data-target': '#deactivate_' + user_id()}">
-                  {% trans "Deactivate" %}
-                </button>
-                <p data-bind="visible: action_error">
-                  <i class="fa fa-exclamation-triangle"></i>
-                  <span data-bind="text: action_error"></span>
-                </p>
-              </div>
-              <div class="modal fade" data-bind="attr: {id: 'activate_' + user_id()}">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <button type="button" class="close" data-dismiss="modal">
-                        <span aria-hidden="true">&times;</span>
-                        <span class="sr-only">{% trans "Close" %}</span>
-                      </button>
-                      <h4 class="modal-title">{% trans "Reactivate Mobile Worker" %}</h4>
-                    </div>
-                    <div class="modal-body">
-                      <p class="lead">
-                        {% blocktrans %}
-                          Are you sure you want to <strong>reactivate</strong> this mobile worker?
-                        {% endblocktrans %}
-                      </p>
-                      <p class="lead">
-                        <i class="fa fa-user"></i>
-                        <strong data-bind="text: username"></strong>
-                      </p>
-                      <p>
-                        {% blocktrans %}
-                          Deactivated mobile workers are not able to log into new devices.<br />
-                          Read more about
-                          <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers' target="_blank">
-                            deactivating mobile workers
-                          </a> on our Help Site.
-                        {% endblocktrans %}
-                      </p>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-default" data-dismiss="modal">
-                        {% trans "Cancel" %}
-                      </button>
-                      <button type="button" class="btn btn-primary"
-                              data-bind="click: function(user) { user.is_active(true); }">
-                        {% trans 'Reactivate' %}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="modal fade" data-bind="attr: {id: 'deactivate_' + user_id()}">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <button type="button" class="close" data-dismiss="modal">
-                        <span aria-hidden="true">&times;</span>
-                        <span class="sr-only">{% trans "Close" %}</span>
-                      </button>
-                      <h4 class="modal-title">{% trans "Deactivate Mobile Worker" %}</h4>
-                    </div>
-                    <div class="modal-body">
-                      <p class="lead">
-                        {% blocktrans %}
-                          Are you sure you want to <strong>deactivate</strong> this mobile worker?
-                        {% endblocktrans %}
-                      </p>
-                      <p class="lead">
-                        <i class="fa fa-user"></i>
-                        <strong data-bind="text: username"></strong>
-                      </p>
-                      <p>
-                        {% blocktrans %}
-                          Deactivated mobile workers are not able to log into new devices.<br />
-                          Read more about
-                          <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers' target="_blank">
-                            deactivating mobile workers
-                          </a> on our Help Site.
-                        {% endblocktrans %}
-                      </p>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-default" data-dismiss="modal">
-                        {% trans "Cancel" %}
-                      </button>
-                      <button type="button" class="btn btn-danger"
-                              data-bind="click: function(user) { user.is_active(false); }">
-                        {% trans 'Deactivate' %}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </td>
+          {% else %}
+            {% blocktrans %}
+              <strong>There are currently no mobile workers in this project.</strong>
+              Please create a new mobile worker above to get started.
+            {% endblocktrans %}
           {% endif %}
-        </tr>
-        </tbody>
-      </table>
-      <div class="alert alert-info" data-bind="visible: showLoadingSpinner() && !hasError()">
-        <i class="fa fa-spin fa-spinner"></i>
-        {% trans "Loading Workers..." %}
-      </div>
-      <div class="alert alert-danger" data-bind="visible: hasError">
-        {% blocktrans %}
-          <strong>There was an issue contacting the server.</strong>
-          Please check your internet connection.
-          If this issue continues, please
-          <a href="#modalReportIssue" data-toggle="modal">report an issue</a>.
-        {% endblocktrans %}
-      </div>
-      <pagination data-apply-bindings="false"
-                  data-bind="visible: showTable"
-                  params="goToPage: goToPage,
+        </div>
+        <table class="table table-striped table-responsive" style="margin-bottom: 0;" data-bind="visible: showTable">
+          <thead>
+          <tr>
+            <th class="col-xs-3">{% trans "Username" %}</th>
+            <th class="col-xs-3">{% trans "First Name" %}</th>
+            <th class="col-xs-2">{% trans "Last Name" %}</th>
+            <th class="col-xs-2">{% trans 'Date Registered' %}</th>
+            {% if not request.is_view_only %}<th class="col-xs-2">{% trans 'Action' %}</th>{% endif %}
+          </tr>
+          </thead>
+          <tbody data-bind="foreach: users">
+          <tr>
+            <td>
+              <a data-bind="attr: {href: edit_url}">
+                <i class="fa fa-user"></i>
+                <strong data-bind="text: username"></strong>
+              </a>
+            </td>
+            <td data-bind="text: first_name"></td>
+            <td data-bind="text: last_name"></td>
+            <td data-bind="text: date_registered"></td>
+            {% if not request.is_view_only %}
+              <td>
+                <div data-bind="visible: !is_active()">
+                  <button type="button" class="btn btn-default" data-toggle="modal"
+                          data-bind="attr: {'data-target': '#activate_' + user_id()}">
+                    {% trans "Reactivate" %}
+                  </button>
+                  <p data-bind="visible: action_error">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <span data-bind="text: action_error"></span>
+                  </p>
+                </div>
+                <div data-bind="visible: is_active()">
+                  <button type="button" class="btn btn-default" data-toggle="modal"
+                          data-bind="attr: {'data-target': '#deactivate_' + user_id()}">
+                    {% trans "Deactivate" %}
+                  </button>
+                  <p data-bind="visible: action_error">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <span data-bind="text: action_error"></span>
+                  </p>
+                </div>
+                <div class="modal fade" data-bind="attr: {id: 'activate_' + user_id()}">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">
+                          <span aria-hidden="true">&times;</span>
+                          <span class="sr-only">{% trans "Close" %}</span>
+                        </button>
+                        <h4 class="modal-title">{% trans "Reactivate Mobile Worker" %}</h4>
+                      </div>
+                      <div class="modal-body">
+                        <p class="lead">
+                          {% blocktrans %}
+                            Are you sure you want to <strong>reactivate</strong> this mobile worker?
+                          {% endblocktrans %}
+                        </p>
+                        <p class="lead">
+                          <i class="fa fa-user"></i>
+                          <strong data-bind="text: username"></strong>
+                        </p>
+                        <p>
+                          {% blocktrans %}
+                            Deactivated mobile workers are not able to log into new devices.<br />
+                            Read more about
+                            <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers' target="_blank">
+                              deactivating mobile workers
+                            </a> on our Help Site.
+                          {% endblocktrans %}
+                        </p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                          {% trans "Cancel" %}
+                        </button>
+                        <button type="button" class="btn btn-primary"
+                                data-bind="click: function(user) { user.is_active(true); }">
+                          {% trans 'Reactivate' %}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal fade" data-bind="attr: {id: 'deactivate_' + user_id()}">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">
+                          <span aria-hidden="true">&times;</span>
+                          <span class="sr-only">{% trans "Close" %}</span>
+                        </button>
+                        <h4 class="modal-title">{% trans "Deactivate Mobile Worker" %}</h4>
+                      </div>
+                      <div class="modal-body">
+                        <p class="lead">
+                          {% blocktrans %}
+                            Are you sure you want to <strong>deactivate</strong> this mobile worker?
+                          {% endblocktrans %}
+                        </p>
+                        <p class="lead">
+                          <i class="fa fa-user"></i>
+                          <strong data-bind="text: username"></strong>
+                        </p>
+                        <p>
+                          {% blocktrans %}
+                            Deactivated mobile workers are not able to log into new devices.<br />
+                            Read more about
+                            <a href='https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly"Archive")andDeleteMobileWorkers' target="_blank">
+                              deactivating mobile workers
+                            </a> on our Help Site.
+                          {% endblocktrans %}
+                        </p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                          {% trans "Cancel" %}
+                        </button>
+                        <button type="button" class="btn btn-danger"
+                                data-bind="click: function(user) { user.is_active(false); }">
+                          {% trans 'Deactivate' %}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            {% endif %}
+          </tr>
+          </tbody>
+        </table>
+        <div class="alert alert-info" data-bind="visible: showLoadingSpinner() && !hasError()">
+          <i class="fa fa-spin fa-spinner"></i>
+          {% trans "Loading Workers..." %}
+        </div>
+        <div class="alert alert-danger" data-bind="visible: hasError">
+          {% blocktrans %}
+            <strong>There was an issue contacting the server.</strong>
+            Please check your internet connection.
+            If this issue continues, please
+            <a href="#modalReportIssue" data-toggle="modal">report an issue</a>.
+          {% endblocktrans %}
+        </div>
+        <pagination data-apply-bindings="false"
+                    data-bind="visible: showTable"
+                    params="goToPage: goToPage,
                           slug: 'mobile-workers',
                           perPage: itemsPerPage,
                           totalItems: totalItems,
                           onLoad: onPaginationLoad,
                           showSpinner: showPaginationSpinner"></pagination>
+      </div>
     </div>
-    </div-->
   </div>
 {% endblock %}

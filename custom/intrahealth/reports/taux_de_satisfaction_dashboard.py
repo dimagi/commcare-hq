@@ -1,8 +1,7 @@
-# coding=utf-8
-
 import datetime
 
 from django.utils.functional import cached_property
+from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
@@ -10,6 +9,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter
+from custom.intrahealth.reports.utils import change_id_keys_to_names
 from custom.intrahealth.sqldata import SatisfactionRateAfterDeliveryPerProductData
 from dimagi.utils.dates import force_to_date
 
@@ -145,6 +145,7 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
         return context
 
     @property
+    @memoized
     def clean_rows(self):
         return SatisfactionRateAfterDeliveryPerProductData(config=self.config).rows
 
@@ -161,19 +162,28 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                 location_name = quantity['location_name']
                 products = sorted(quantity['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations:
-                    length = len(locations_with_products[location_name])
+                    length = len(locations_with_products[location_id])
+                    product_ids = [p['product_id'] for p in locations_with_products[location_id]]
+                    for product in products:
+                        if product['product_id'] not in product_ids:
+                            locations_with_products[location_id].append({
+                                'product_name': product['product_name'],
+                                'product_id': product['product_id'],
+                                'amt_delivered_convenience': product['amt_delivered_convenience'],
+                                'ideal_topup': product['ideal_topup'],
+                            })
                     for r in range(0, length):
-                        product_for_location = locations_with_products[location_name][r]
+                        product_for_location = locations_with_products[location_id][r]
                         for product in products:
                             if product_for_location['product_id'] == product['product_id']:
                                 amt_delivered_convenience = product['amt_delivered_convenience']
                                 ideal_topup = product['ideal_topup']
-                                locations_with_products[location_name][r][
-                                    'amt_delivered_convenience'] += amt_delivered_convenience
-                                locations_with_products[location_name][r]['ideal_topup'] += ideal_topup
+                                locations_with_products[location_id][r]['amt_delivered_convenience'] += \
+                                    amt_delivered_convenience
+                                locations_with_products[location_id][r]['ideal_topup'] += ideal_topup
                 else:
                     added_locations.append(location_id)
-                    locations_with_products[location_name] = []
+                    locations_with_products[location_id] = []
                     unique_products_for_location = []
                     products_to_add = []
                     for product in products:
@@ -189,7 +199,9 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                             products_to_add[index]['ideal_topup'] += ideal_topup
 
                     for product in products_to_add:
-                        locations_with_products[location_name].append(product)
+                        locations_with_products[location_id].append(product)
+
+            locations_with_products = change_id_keys_to_names(self.config['domain'], locations_with_products)
 
             for location, products in locations_with_products.items():
                 products_names = [x['product_name'] for x in products]
@@ -369,5 +381,5 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
         config['enddate'] = enddate
         config['product_program'] = self.request.GET.get('product_program')
         config['product_product'] = self.request.GET.get('product_product')
-        config['selected_location'] = self.request.GET.get('location_id')
+        config['location_id'] = self.request.GET.get('location_id')
         return config

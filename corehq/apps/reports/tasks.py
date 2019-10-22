@@ -36,6 +36,7 @@ from corehq.elastic import (
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.files import TransientTempfile, safe_filename_header
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 
 from .analytics.esaccessors import (
@@ -46,24 +47,25 @@ from .analytics.esaccessors import (
 logging = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
 
+_calc_props_soft_assert = soft_assert(to='{}@{}'.format('dmore', 'dimagi.com'), exponential_backoff=False)
+
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
-    success = False
     try:
         _update_calculated_properties()
-        success = True
     except Exception:
+        _calc_props_soft_assert(
+            False,
+            "Calculated properties report task was unsuccessful",
+            msg="Sentry will have relevant exception in case of failure",
+        )
         notify_exception(
             None,
             message="update_calculated_properties task has errored",
         )
-    send_mail_async.delay(
-        subject="Calculated properties report task was " + ("successful" if success else "unsuccessful"),
-        message="Sentry will have relevant exception in case of failure",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=["{}@{}.com".format("dmore", "dimagi")]
-    )
+    else:
+        _calc_props_soft_assert(False, "Calculated properties report task was successful")
 
 
 def _update_calculated_properties():
@@ -71,6 +73,9 @@ def _update_calculated_properties():
         get_domains_to_update_es_filter()
     ).fields(["name", "_id"]).run().hits
 
+    all_stats = all_domain_stats()
+
+    active_users_by_domain = {}
     for r in results:
         dom = r["name"]
         domain_obj = Domain.get_by_name(dom)
@@ -79,6 +84,7 @@ def _update_calculated_properties():
             continue
         try:
             props = calced_props(domain_obj, r["_id"], all_stats)
+            active_users_by_domain[dom] = props['cp_n_active_cc_users']
             if props['cp_first_form'] is None:
                 del props['cp_first_form']
             if props['cp_last_form'] is None:
@@ -89,17 +95,23 @@ def _update_calculated_properties():
         except Exception as e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
+    datadog_report_user_stats('commcare.active_mobile_workers.count', active_users_by_domain)
+
 
 @periodic_task(run_every=timedelta(minutes=1), queue='background_queue')
 def run_datadog_user_stats():
     all_stats = all_domain_stats()
-    datadog_report_user_stats(commcare_users_by_domain=all_stats['commcare_users'])
+
+    datadog_report_user_stats(
+        'commcare.mobile_workers.count',
+        commcare_users_by_domain=all_stats['commcare_users'],
+    )
 
 
-def datadog_report_user_stats(commcare_users_by_domain):
+def datadog_report_user_stats(metric_name, commcare_users_by_domain):
     commcare_users_by_domain = summarize_user_counts(commcare_users_by_domain, n=50)
     for domain, user_count in commcare_users_by_domain.items():
-        datadog_gauge('commcare.mobile_workers.count', user_count, tags=[
+        datadog_gauge(metric_name, user_count, tags=[
             'domain:{}'.format('_other' if domain is () else domain)
         ])
 

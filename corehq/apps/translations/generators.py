@@ -162,7 +162,7 @@ class AppTranslationsGenerator(object):
         from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers
         headers = get_bulk_app_sheet_headers(
             self.app,
-            eligible_for_transifex_only=True
+            eligible_for_transifex_only=True,
         )
         for header_row in headers:
             self.headers[header_row[0]] = header_row[1]

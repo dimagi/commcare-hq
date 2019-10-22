@@ -525,17 +525,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         else:
             return []
 
-    @classmethod
-    def field_by_prefix(cls, field, prefix=''):
-        # chr(0xfff8) is something close to the highest character available
-        res = cls.view("domain/fields_by_prefix",
-                       group=True,
-                       startkey=[field, True, prefix],
-                       endkey=[field, True, "%s%c" % (prefix, chr(0xfff8)), {}])
-        vals = [(d['value'], d['key'][2]) for d in res]
-        vals.sort(reverse=True)
-        return [(v[1], v[0]) for v in vals]
-
     def add(self, model_instance, is_active=True):
         """
         Add something to this domain, through the generic relation.

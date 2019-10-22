@@ -18,11 +18,16 @@ class ODataBaseSerializer(Serializer):
 
     metadata_url = None
     table_metadata_url = None
+    offset = 0
 
     def get_config(self, config_id):
         raise NotImplementedError("implement get_config")
 
     def to_json(self, data, options=None):
+
+        # get current object offset for use in row number
+        self.offset = data.get('meta', {}).get('offset', 0)
+
         # Convert bundled objects to JSON
         data['objects'] = [
             bundle.obj for bundle in data['objects']
@@ -77,7 +82,7 @@ class ODataBaseSerializer(Serializer):
         for row_number, document in enumerate(documents):
             rows = table.get_rows(
                 document,
-                row_number,
+                document.get('_id'),  # needed because of pagination
                 split_columns=config.split_multiselects,
                 transform_dates=config.transform_dates,
                 as_json=True,

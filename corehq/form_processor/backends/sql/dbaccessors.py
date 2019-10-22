@@ -1,70 +1,70 @@
 import functools
 import itertools
 import logging
+import operator
 import struct
-from abc import ABCMeta, abstractproperty
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import namedtuple
 from datetime import datetime
 from io import BytesIO
 from itertools import groupby
 from uuid import UUID
 
-import csiphash
-import re
-
-import operator
-from ddtrace import tracer
 from django.conf import settings
-from django.db import connections, InternalError, transaction
-from django.db.models import Q, F
-from django.db.models.functions import Greatest, Concat
+from django.db import InternalError, connections, transaction
+from django.db.models import F, Q
 from django.db.models.expressions import Value
+from django.db.models.functions import Concat, Greatest
+
+import csiphash
+from ddtrace import tracer
 
 from casexml.apps.case.xform import get_case_updates
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.blobs import get_blob_db, CODES
+from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.exceptions import (
-    XFormNotFound,
-    XFormSaveError,
-    CaseNotFound,
     AttachmentNotFound,
+    CaseNotFound,
     CaseSaveError,
     LedgerSaveError,
     LedgerValueNotFound,
     NotAllowed,
+    XFormNotFound,
+    XFormSaveError,
 )
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor,
     AbstractFormAccessor,
-    CaseIndexInfo,
+    AbstractLedgerAccessor,
     AttachmentContent,
-    AbstractLedgerAccessor
+    CaseIndexInfo,
 )
 from corehq.form_processor.models import (
-    XFormInstanceSQL,
-    CommCareCaseIndexSQL,
     CaseAttachmentSQL,
     CaseTransaction,
+    CommCareCaseIndexSQL,
     CommCareCaseSQL,
-    XFormOperationSQL,
-    LedgerValue,
     LedgerTransaction,
+    LedgerValue,
+    XFormInstanceSQL,
+    XFormOperationSQL,
 )
 from corehq.form_processor.utils.sql import (
+    fetchall_as_namedtuple,
     fetchone_as_namedtuple,
-    fetchall_as_namedtuple
 )
 from corehq.sql_db.config import partition_config
 from corehq.sql_db.routers import db_for_read_write, get_cursor
 from corehq.sql_db.util import (
-    split_list_by_db_partition,
+    estimate_row_count,
     get_db_aliases_for_partitioned_query,
+    split_list_by_db_partition,
 )
 from corehq.util.datadog.utils import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
-from dimagi.utils.chunked import chunked
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -170,6 +170,18 @@ class ShardAccessor(object):
         :param doc_ids:
         :return: Dict of ``doc_id -> Django DB alias``
         """
+        return ShardAccessor._get_doc_database_map(doc_ids, by_doc=True)
+
+    @staticmethod
+    def get_docs_by_database(doc_ids):
+        """
+        :param doc_ids:
+        :return: Dict of ``Django DB alias -> doc_id``
+        """
+        return ShardAccessor._get_doc_database_map(doc_ids, by_doc=False)
+
+    @staticmethod
+    def _get_doc_database_map(doc_ids, by_doc=True):
         assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
         consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         databases = {}
@@ -178,10 +190,17 @@ class ShardAccessor(object):
         for chunk in chunked(doc_ids, 100):
             hashes = ShardAccessor.hash_doc_ids_python(chunk)
             shards = {doc_id: hash_ & part_mask for doc_id, hash_ in hashes.items()}
-            databases.update({
-                doc_id: shard_map[shard_id].django_dbname for doc_id, shard_id in shards.items()
-            })
-
+            for doc_id, shard_id in shards.items():
+                dbname = shard_map[shard_id].django_dbname
+                if by_doc:
+                    databases.update({
+                        doc_id: dbname
+                    })
+                else:
+                    if dbname not in databases:
+                        databases[dbname] = [doc_id]
+                    else:
+                        databases[dbname].append(doc_id)
         return databases
 
     @staticmethod
@@ -310,19 +329,11 @@ class ReindexAccessor(metaclass=ABCMeta):
 
     def get_approximate_doc_count(self, from_db):
         """Get the approximate doc count from the given DB
+
         :param from_db: The DB alias to query
         """
         query = self.query(from_db, for_count=True)
-        sql, params = query.query.sql_with_params()
-        explain_query = 'EXPLAIN {}'.format(sql)
-        db_cursor = connections[from_db].cursor()
-        with db_cursor as cursor:
-            cursor.execute(explain_query, params)
-            for row in cursor.fetchall():
-                search = re.search(r' rows=(\d+)', row[0])
-                if search:
-                    return int(search.group(1))
-        return 0
+        return estimate_row_count(query, from_db)
 
 
 class FormReindexAccessor(ReindexAccessor):
@@ -445,7 +456,7 @@ class FormAccessorSQL(AbstractFormAccessor):
                 name=attachment_name,
             )
         except BlobMeta.DoesNotExist:
-            raise AttachmentNotFound(attachment_name)
+            raise AttachmentNotFound(form_id, attachment_name)
 
     @staticmethod
     def get_attachment_content(form_id, attachment_name, stream=False):
@@ -593,7 +604,8 @@ class FormAccessorSQL(AbstractFormAccessor):
         """
         Save a previously unsaved form
         """
-        assert not form.is_saved(), 'form already saved'
+        if form.is_saved():
+            raise XFormSaveError('form already saved')
         logging.debug('Saving new form: %s', form)
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
@@ -898,7 +910,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 [case_id, attachment_name]
             )[0]
         except IndexError:
-            raise AttachmentNotFound(attachment_name)
+            raise AttachmentNotFound(case_id, attachment_name)
 
     @staticmethod
     def get_attachment_content(case_id, attachment_name):

@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import logging
 from collections import namedtuple
 
@@ -27,7 +25,7 @@ from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import has_permission_to_view_report
-from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
+from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
@@ -66,7 +64,7 @@ class SubmissionPost(object):
                  domain=None, app_id=None, build_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
-                 partial_submission=False, case_db=None):
+                 partial_submission=False, case_db=None, force_logs=False):
         assert domain, "'domain' is required"
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -92,6 +90,7 @@ class SubmissionPost(object):
         self.case_db = case_db
         if case_db:
             assert case_db.domain == domain
+        self.force_logs = force_logs
 
         self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
         self.track_load = form_load_counter("form_submission", domain)
@@ -226,7 +225,22 @@ class SubmissionPost(object):
 
         if submitted_form.is_submission_error_log:
             self.formdb.save_new_form(submitted_form)
-            response = self.get_exception_response_and_log(submitted_form, self.path)
+
+            response = None
+            try:
+                xml = self.instance.decode()
+            except UnicodeDecodeError:
+                pass
+            else:
+                if 'log_subreport' in xml:
+                    response = self.get_exception_response_and_log(
+                        'Badly formed device log', submitted_form, self.path
+                    )
+
+            if not response:
+                response = self.get_exception_response_and_log(
+                    'Problem receiving submission', submitted_form, self.path
+                )
             return FormProcessingResult(response, None, [], [], 'submission_error_log')
 
         if submitted_form.xmlns == SYSTEM_ACTION_XMLNS:
@@ -440,7 +454,7 @@ class SubmissionPost(object):
                 response = openrosa_response.get_openarosa_success_response(message=success_message)
             else:
                 error_message = error_message or instance.problem
-                response = self.get_retry_response(error_message, error_nature)
+                response = self.get_v3_error_response(error_message, error_nature)
         else:
             if instance.is_normal:
                 response = openrosa_response.get_openarosa_success_response()
@@ -461,26 +475,32 @@ class SubmissionPost(object):
         ).response()
 
     @staticmethod
-    def get_retry_response(message, nature):
-        """Returns a 422(Unprocessable Entity) response, mobile will retry this submission
+    def get_v3_error_response(message, nature):
+        """Returns a 422(Unprocessable Entity) response
+        - if nature == 'processing_failure' the mobile device will quarantine this form and not retry it
+        - any other value of `nature` will result in the form being marked as a failure and retrying
         """
         return OpenRosaResponse(
             message=message, nature=nature, status=422,
         ).response()
 
     @staticmethod
-    def get_exception_response_and_log(error_instance, path):
-        logging.exception(
-            "Problem receiving submission to %s. Doc id: %s, Error %s" % (
-                path,
-                error_instance.form_id,
-                error_instance.problem
-            )
+    def get_exception_response_and_log(msg, error_instance, path):
+        logging.error(
+            msg,
+            extra={
+                'submission_path': path,
+                'form_id': error_instance.form_id,
+                'error_message': error_instance.problem
+            }
         )
+        # This are generally badly formed XML resulting from file corruption, encryption errors
+        # or other errors on the device which can not be recovered from.
+        # To prevent retries of these errors we submit a 422 response with `processing_failure` nature.
         return OpenRosaResponse(
             message="There was an error processing the form: %s" % error_instance.problem,
-            nature=ResponseNature.SUBMIT_ERROR,
-            status=500,
+            nature=ResponseNature.PROCESSING_FAILURE,
+            status=422,
         ).response()
 
     @tracer.wrap(name='submission.handle_system_action')
@@ -494,9 +514,9 @@ class SubmissionPost(object):
     def process_device_log(self, device_log_form):
         self._conditionally_send_device_logs_to_sumologic(device_log_form)
         ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.NO_DEVICE_LOG_ENVS
-        if not ignore_device_logs:
+        if self.force_logs or not ignore_device_logs:
             try:
-                process_device_log(self.domain, device_log_form)
+                process_device_log(self.domain, device_log_form, self.force_logs)
             except Exception as e:
                 notify_exception(None, "Error processing device log", details={
                     'xml': self.instance,
@@ -517,16 +537,17 @@ def _transform_instance_to_error(interface, exception, instance):
 def handle_unexpected_error(interface, instance, exception):
     instance = _transform_instance_to_error(interface, exception, instance)
 
-    # get this here in case we hit the integrity error below and lose the exception context
-    exec_info = sys.exc_info()
+    notify_submission_error(instance, instance.problem, sys.exc_info())
 
     try:
         FormAccessors(interface.domain).save_new_form(instance)
     except IntegrityError:
+        # handle edge case where saving duplicate form fails
         instance = interface.xformerror_from_xform_instance(instance, instance.problem, with_new_id=True)
         FormAccessors(interface.domain).save_new_form(instance)
-
-    notify_submission_error(instance, instance.problem, exec_info)
+    except XFormSaveError:
+        # try a simple save
+        instance.save()
 
 
 def notify_submission_error(instance, message, exec_info=None):

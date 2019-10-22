@@ -1,5 +1,3 @@
-# coding=utf-8
-
 import datetime
 import re
 
@@ -14,15 +12,15 @@ from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_DATE,
     OPENMRS_DATA_TYPE_DATETIME,
 )
-from corehq.motech.serializers import serializers
+from corehq.motech.serializers import serializers, to_date_str
 
 
 def to_omrs_date(value):
     """
     Drop the time and timezone to export date-only values
 
-    >>> to_omrs_date('2017-06-27T12:00:00+0530') == '2017-06-27'
-    True
+    >>> to_omrs_date('2017-06-27T12:00:00+0530')
+    '2017-06-27'
 
     """
     if isinstance(value, str):
@@ -37,8 +35,8 @@ def to_omrs_datetime(value):
     """
     Converts CommCare dates and datetimes to OpenMRS datetimes.
 
-    >>> to_omrs_datetime('2017-06-27') == '2017-06-27T00:00:00.000+0000'
-    True
+    >>> to_omrs_datetime('2017-06-27')
+    '2017-06-27T00:00:00.000+0000'
 
     """
     if isinstance(value, str):
@@ -61,8 +59,8 @@ def omrs_datetime_to_date(value):
     """
     Converts an OpenMRS datetime to a CommCare date
 
-    >>> omrs_datetime_to_date('2017-06-27T00:00:00.000+0000') == '2017-06-27'
-    True
+    >>> omrs_datetime_to_date('2017-06-27T00:00:00.000+0000')
+    '2017-06-27'
 
     """
     if value and 'T' in value:
@@ -74,9 +72,43 @@ def omrs_boolean_to_text(value):
     return 'true' if value else 'false'
 
 
+def openmrs_timestamp_to_isoformat(value, tz=None):
+    """
+    Converts an OpenMRS timestamp to ISO format. Accepts a timezone,
+    which defaults to UTC. If timezone is given, ISO format includes the
+    offset, otherwise it ends in "Z".
+
+    An OpenMRS timestamp is a Unix timestamp * 1000 (i.e. with
+    milliseconds). Given None returns None. Raises ValueError for
+    non-numeric values.
+
+    >>> openmrs_timestamp_to_isoformat(1551564000000)
+    '2019-03-02T22:00:00Z'
+    >>> tz = datetime.timezone(datetime.timedelta(hours=+2), 'CAT')
+    >>> openmrs_timestamp_to_isoformat(1551564000000, tz)
+    '2019-03-03T00:00:00+02:00'
+    >>> openmrs_timestamp_to_isoformat(1551564000)
+    '2019-03-02T22:00:00Z'
+
+    """
+    if value is None:
+        return None
+    try:
+        timestamp = int(value)
+    except ValueError:
+        raise ValueError(f"{value!r} is not an OpenMRS timestamp")
+    max_seconds = datetime.datetime(datetime.MAXYEAR, 12, 31).timestamp()
+    seconds_since_1970 = timestamp / 1000 if timestamp > max_seconds else timestamp
+    dt = datetime.datetime.fromtimestamp(seconds_since_1970, tz)
+    isoformat = dt.isoformat()
+    if not dt.utcoffset():
+        isoformat += "Z"
+    return isoformat
+
+
 serializers.update({
     # (from_data_type, to_data_type): function
-    (None, OPENMRS_DATA_TYPE_DATE): to_omrs_date,
+    (None, OPENMRS_DATA_TYPE_DATE): to_date_str,
     (None, OPENMRS_DATA_TYPE_DATETIME): to_omrs_datetime,
     (None, OPENMRS_DATA_TYPE_BOOLEAN): to_omrs_boolean,
     (OPENMRS_DATA_TYPE_DATETIME, COMMCARE_DATA_TYPE_DATE): omrs_datetime_to_date,

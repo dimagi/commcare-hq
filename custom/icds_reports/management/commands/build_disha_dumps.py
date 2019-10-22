@@ -1,8 +1,8 @@
 from datetime import datetime
-import argparse
 
 from django.core.management.base import BaseCommand
 
+from corehq.util.argparse_types import date_type
 from custom.icds_reports.reports.disha import build_dumps_for_month
 from dimagi.utils.dates import add_months_to_date
 
@@ -11,16 +11,9 @@ class Command(BaseCommand):
     help = "Build DISHA data dumps for given month for all states"
 
     def add_arguments(self, parser):
-        def valid_date(s):
-            try:
-                return datetime.strptime(s, "%Y-%m-%d").date().replace(day=1)
-            except ValueError:
-                msg = "Not a valid date: '{0}'.".format(s)
-                raise argparse.ArgumentTypeError(msg)
-
         parser.add_argument(
             'month',
-            type=valid_date,
+            type=date_type,
             help="Month of DISHA dump - format = YYYY-MM-DD",
         )
         parser.add_argument(

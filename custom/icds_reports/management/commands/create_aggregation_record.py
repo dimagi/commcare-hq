@@ -1,15 +1,18 @@
-from __future__ import absolute_import, print_function, unicode_literals
-
+import logging
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 
 from django.core.management.base import BaseCommand
+from django.db import IntegrityError
+
+from dateutil.relativedelta import relativedelta
 
 from corehq.apps.locations.models import SQLLocation
-from corehq.sql_db.routers import use_citus_for_request
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.tasks import setup_aggregation
+
+logger = logging.getLogger(__name__)
+
 
 class Command(BaseCommand):
     help = "Creates aggregation record. Used by airflow"
@@ -20,7 +23,6 @@ class Command(BaseCommand):
         parser.add_argument('interval')
 
     def handle(self, agg_uuid, run_date, interval, **options):
-        use_citus_for_request()
         self.agg_uuid = agg_uuid
         self.run_date = run_date
         self.interval = int(interval)
@@ -29,7 +31,10 @@ class Command(BaseCommand):
                      .values_list('location_id', flat=True))
 
         agg_date = self.get_agg_date()
-        AggregationRecord.objects.create(agg_uuid=self.agg_uuid, agg_date=agg_date, state_ids=state_ids)
+        try:
+            AggregationRecord.objects.create(agg_uuid=self.agg_uuid, agg_date=agg_date, state_ids=state_ids)
+        except IntegrityError:
+            logger.info(f'AggregationRecord {agg_uuid} already created')
         setup_aggregation(agg_date)
 
     def get_agg_date(self):

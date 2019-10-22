@@ -414,7 +414,7 @@ class CallCenterTests(BaseCCTests):
             set(indicator_set.user_to_case_map),
             set([self.cc_user.get_id, self.cc_user_no_data.get_id])
         )
-        self.assertEquals(indicator_set.users_needing_data, set([self.cc_user_no_data.get_id]))
+        self.assertEqual(indicator_set.users_needing_data, set([self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user_no_data.get_id]))
         self.check_cc_indicators(indicator_set.get_data(), expected_indicators)
 

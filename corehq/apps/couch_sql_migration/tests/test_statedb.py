@@ -1,4 +1,5 @@
 import pickle
+import os
 import re
 
 from nose.tools import with_setup
@@ -11,9 +12,11 @@ from ..statedb import (
     Counts,
     ResumeError,
     StateDB,
+    _get_state_db_filepath,
     delete_state_db,
     diff_doc_id_idx,
     init_state_db,
+    open_state_db,
 )
 from .. import statedb as mod
 
@@ -50,6 +53,28 @@ def test_db_unique_id():
     delete_db()
     with init_db(memory=False) as db:
         assert db.unique_id != uid, uid
+
+
+@with_setup(teardown=delete_db)
+def test_open_state_db():
+    with open_state_db("test", state_dir) as db:
+        with assert_raises(OperationalError):
+            db.unique_id
+        with assert_raises(OperationalError):
+            db.get_diff_stats()
+        with assert_raises(OperationalError):
+            db.set("key", 1)
+    assert not os.path.exists(_get_state_db_filepath("test", state_dir))
+    with init_db(memory=False) as db:
+        uid = db.unique_id
+        eq(db.get("key"), None)
+        db.set("key", 2)
+    with open_state_db("test", state_dir) as db:
+        eq(db.unique_id, uid)
+        eq(db.get_diff_stats(), {})
+        eq(db.get("key"), 2)
+        with assert_raises(OperationalError):
+            db.set("key", 3)
 
 
 def test_update_cases():
@@ -127,16 +152,24 @@ def test_no_action_case_forms():
 @with_setup(teardown=delete_db)
 def test_resume_state():
     with init_db(memory=False) as db:
-        eq(db.pop_resume_state("test", []), [])
+        with db.pop_resume_state("test", []) as value:
+            eq(value, [])
         db.set_resume_state("test", ["abc", "def"])
 
+    with init_db(memory=False) as db, assert_raises(ValueError):
+        with db.pop_resume_state("test", []) as value:
+            # error in context should not cause state to be lost
+            raise ValueError(value)
+
     with init_db(memory=False) as db:
-        eq(db.pop_resume_state("test", []), ["abc", "def"])
+        with db.pop_resume_state("test", []) as value:
+            eq(value, ["abc", "def"])
 
     # simulate resume without save
     with init_db(memory=False) as db:
         with assert_raises(ResumeError):
-            db.pop_resume_state("test", [])
+            with db.pop_resume_state("test", []):
+                pass
 
 
 def test_replace_case_diffs():
@@ -222,8 +255,10 @@ def test_clone_casediff_data_from():
             eq(list(db.iter_cases_with_unprocessed_forms()), ["a", "b", "c"])
             eq(list(db.iter_problem_forms()), ["problem"])
             eq(db.get_no_action_case_forms(), {"no-action"})
-            eq(db.pop_resume_state("CaseState", "nope"), ["case"])
-            eq(db.pop_resume_state("FormState", "fail"), ["form"])
+            with db.pop_resume_state("CaseState", "nope") as value:
+                eq(value, ["case"])
+            with db.pop_resume_state("FormState", "fail") as value:
+                eq(value, ["form"])
             eq(db.unique_id, uid)
     finally:
         delete_db("main")

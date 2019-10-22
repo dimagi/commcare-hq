@@ -13,9 +13,12 @@ def download_multimedia_paths_rows(app, only_missing=False):
     for ref in app.all_media():
         paths[ref.path].append(ref)
 
+    module_index_by_unique_id = {m.unique_id: m.id for m in app.get_modules()}
+
     def _readable_ref(ref):
-        readable = _("Menu {index}: {name}").format(index=ref.module_id, name=ref.get_module_name())
-        if ref.form_id is not None:
+        module_index = module_index_by_unique_id[ref.module_unique_id]
+        readable = _("Menu {index}: {name}").format(index=module_index, name=ref.get_module_name())
+        if ref.form_unique_id is not None:
             readable += _(" > Form {index}: {name}").format(index=ref.form_order, name=ref.get_form_name())
         return readable
 
@@ -72,21 +75,13 @@ def validate_multimedia_paths_rows(app, rows):
 def update_multimedia_paths(app, paths):
     # Update module and form references
     success_counts = defaultdict(lambda: 0)
-    dirty_xform_ids = set()
     for old_path, new_path in paths.items():
         for module in app.modules:
             success_counts[module.unique_id] += module.rename_media(old_path, new_path)
-            for form in module.forms:
+            for form in module.get_forms():
                 update_count = form.rename_media(old_path, new_path)
                 if update_count:
-                    dirty_xform_ids.add(form.unique_id)
                     success_counts[form.unique_id] += update_count
-
-    # Update any form xml that changed
-    for module in app.modules:
-        for form in module.forms:
-            if form.unique_id in dirty_xform_ids:
-                form.source = etree.tostring(form.memoized_xform().xml).decode('utf-8')
 
     # Update app's master map of multimedia
     for old_path, new_path in paths.items():

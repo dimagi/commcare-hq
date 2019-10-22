@@ -16,23 +16,23 @@ DESCRIPTION = _(
 BASE_ITEM_EXPRESSION = _(
     'You can leave this blank unless you are '
     '<a target="_blank" href="'
-    'https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/README.md#saving-multiple-rows-per-caseform'
+    'https://commcare-hq.readthedocs.io/ucr.html#saving-multiple-rows-per-case-form'
     '">saving multiple rows per case or form</a>')
 CONFIGURED_FILTER = _(
     'Look at '
     '<a target="_blank" href="'
-    'https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md#data-source-filters'
+    'https://commcare-hq.readthedocs.io/ucr/examples.html#data-source-filters'
     '">these examples</a> and '
     '<a target="_blank" href="'
-    'https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/README.md#data-source-filtering'
+    'https://commcare-hq.readthedocs.io/ucr.html#data-source-filtering'
     '">these docs</a>')
 CONFIGURED_INDICATORS = _(
     'Look at '
     '<a target="_blank" href="'
-    'https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md#data-source-indicators'
+    'https://commcare-hq.readthedocs.io/ucr/examples.html#data-source-indicators'
     '">these examples</a> and '
     '<a target="_blank" href="'
-    'https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/README.md#indicators'
+    'https://commcare-hq.readthedocs.io/ucr.html#indicators'
     '">these docs</a>')
 NAMED_EXPRESSIONS = _(
     'For this advanced and useful feature, '

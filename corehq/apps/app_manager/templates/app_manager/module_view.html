@@ -28,7 +28,7 @@
   {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
     {% compress js %}
       <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
-      <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+      <script src="{% static 'hqmedia/js/media_reference_models.js' %}"></script>
     {% endcompress %}
   {% endif %}
   {% compress js %}
@@ -78,6 +78,7 @@
   {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
   {% initial_page_data 'default_language' app.default_language %}
   {% initial_page_data 'current_language' lang %}
+  {% registerurl "view_form" domain app.id '---' %}
   {% registerurl "edit_module_detail_screens" domain app.id module.unique_id %}
   {% registerurl "hqmedia_remove_detail_print_template" domain app.id %}
   {% registerurl "validate_module_for_build" domain app.id module.unique_id %}

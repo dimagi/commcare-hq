@@ -173,7 +173,7 @@
       </tr>
       </tbody>
     </table>
-    <div class="alert alert-block alert-info"
+    <div class="alert alert-info"
          data-bind="visible: !case_preload().length">
       {% trans "No properties will be loaded" %}
     </div>
@@ -247,7 +247,7 @@
           <p class="help-block"
              data-bind="html: validate,
                         visible: validate"></p>
-          <!-- ko if: $data.description && $parent.hasPrivilege -->
+          <!-- ko if: $data.description() && $parent.hasPrivilege -->
           <inline-edit params="value: $data.description,
                                rows: 3,
                                cols: 30,
@@ -272,7 +272,7 @@
       </tr>
       </tbody>
     </table>
-    <div class="alert alert-block alert-info"
+    <div class="alert alert-info"
          data-bind="visible: !case_properties().length">
       {% trans "No properties will be saved" %}
     </div>

@@ -1,4 +1,3 @@
-# coding=utf-8
 import re
 from collections import namedtuple
 
@@ -142,11 +141,13 @@ def get_commcare_version_from_appversion_text(appversion_text):
     '2.4.1'
     >>> get_commcare_version_from_appversion_text(u'संस्करण "2.27.8" (414593)')
     '2.27.8'
+    >>> get_commcare_version_from_appversion_text(u'CommCare Android, आवृत्ती" 2.44.5"(452680). ॲप वि.29635 कॉमर्स आवृत्ती2.44. बिल्ड452680, रोजी तयार केले:2019-01-17')
+    '2.44.3'
     """
     patterns = [
         r'version "([\d.]+)"',
         r'"([\d.]+)"\s+\(\d+\)',
-        r'"([\d.]+)"',
+        r'"\s*([\d.]+)\s*"',
     ]
     return _first_group_match(appversion_text, patterns)
 

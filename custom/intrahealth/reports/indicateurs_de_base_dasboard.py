@@ -1,6 +1,7 @@
 # coding=utf-8
 
 from django.utils.functional import cached_property
+from memoized import memoized
 
 from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -128,8 +129,13 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
 
         return context
 
+    @property
+    @memoized
+    def clean_rows(self):
+        return IndicateursDeBaseData(config=self.config).rows
+
     def calculate_rows(self):
-        rows = IndicateursDeBaseData(config=self.config).rows
+        rows = self.clean_rows
         rows_to_return = []
 
         for row in rows:
@@ -176,7 +182,5 @@ class IndicateursDeBaseReport(CustomProjectReport, YeksiNaaMonthYearMixin):
         }
         config['month'] = self.request.GET.get('month')
         config['year'] = self.request.GET.get('year')
-        config['product_program'] = self.request.GET.get('product_program')
-        config['product_product'] = self.request.GET.get('product_product')
-        config['selected_location'] = self.request.GET.get('location_id')
+        config['location_id'] = self.request.GET.get('location_id')
         return config

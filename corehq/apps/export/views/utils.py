@@ -236,6 +236,7 @@ class ODataFeedMixin(object):
         clean_odata_columns(export_instance)
         export_instance.is_odata_config = True
         export_instance.transform_dates = False
+        export_instance.name = _("Copy of {}").format(export_instance.name)
         return export_instance
 
 
@@ -384,4 +385,8 @@ def can_view_case_exports(couch_user, domain):
 def clean_odata_columns(export_instance):
     for table in export_instance.tables:
         for column in table.columns:
-            column.label = column.label.replace('@', '').replace('.', ' ')
+            column.label = column.label.replace('@', '').replace(
+                '.', ' ').replace('\n', '').replace('\t', ' ').replace('#', '')
+            # truncate labels for PowerBI and Tableau limits
+            if len(column.label) >= 255:
+                column.label = column.label[:255]

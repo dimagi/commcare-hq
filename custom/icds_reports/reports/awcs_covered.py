@@ -161,9 +161,6 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
         'awcs': 0
     })
 
-    loc_children = get_child_locations(domain, location_id, show_test)
-    result_set = set()
-
     for row in data:
         name = row['%s_name' % loc_level]
         awcs = row['awcs'] or 0
@@ -171,7 +168,6 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
         blocks = row['blocks'] or 0
         districts = row['districts'] or 0
         states = row['states'] or 0
-        result_set.add(name)
 
         row_values = {
             'awcs': awcs,
@@ -185,10 +181,6 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
 
     for name, value_dict in tooltips_data.items():
         chart_data['blue'].append([name, value_dict['awcs']])
-
-    for sql_location in loc_children:
-        if sql_location.name not in result_set:
-            chart_data['blue'].append([sql_location.name, 0])
 
     chart_data['blue'] = sorted(chart_data['blue'])
 

@@ -13,6 +13,7 @@ from mock import patch
 
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 from casexml.apps.case.xml import V2
+from casexml.apps.phone.models import SimplifiedSyncLog
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
@@ -291,7 +292,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             )
 
     def test_sync_log_invalidation_bug(self):
-        sync_log = FormProcessorInterface().sync_log_model(
+        sync_log = SimplifiedSyncLog(
             user_id='6dac4940-913e-11e0-9d4b-005056aa7fb5'
         )
         sync_log.save()

@@ -1,7 +1,6 @@
+import csv
 import io
 import json
-
-import csv
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import (
@@ -9,9 +8,10 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
 )
 from corehq.apps.userreports.util import get_table_name
-from custom.icds_reports.const import AWC_LOCATION_TABLE_ID, AWW_USER_TABLE_ID
-from custom.icds_reports.exceptions import LocationRemovedException
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from custom.icds_reports.const import AWW_USER_TABLE_ID
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
+    BaseICDSAggregationDistributedHelper,
+)
 
 
 class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -60,7 +60,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 'aggregation_level': 5,
                 'doc_id': location['location_id'],
                 'awc_name': location['name'].replace("\n", ""),
-                'awc_site_code': location['location_type__code'],
+                'awc_site_code': location['site_code'],
                 'awc_is_test': 1 if metadata.get('is_test_location') == 'test' else 0,
             }
 
@@ -72,7 +72,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 loc.update({
                     '{}_id'.format(loc_type): current_location['location_id'],
                     '{}_name'.format(loc_type): current_location['name'].replace("\n", ""),
-                    '{}_site_code'.format(loc_type): current_location['location_type__code'],
+                    '{}_site_code'.format(loc_type): current_location['site_code'],
                     '{}_is_test'.format(loc_type): 1 if metadata.get('is_test_location') == 'test' else 0,
                 })
                 if loc_type in ('block', 'district', 'state'):
@@ -96,8 +96,6 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         for rollup_query in rollup_queries:
             cursor.execute(rollup_query)
 
-        self.assert_no_awc_missing_from_new_table(cursor)
-
         cursor.execute(self.delete_old_locations())
         cursor.execute(self.move_data_to_local_table())
         cursor.execute(self.create_distributed_table())
@@ -112,9 +110,14 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         return "DELETE FROM \"{local_tablename}\"".format(local_tablename=self.local_tablename)
 
     def aggregate_to_temporary_table(self, cursor, csv_file):
-        columns = csv_file.readline().split('\t')
+        columns = csv_file.readline().replace('\t', ',')
+
+        # using csv format to not consider `\` as special value
+        query = "COPY {}({}) FROM STDIN DELIMITER '\t' CSV ".format(self.temporary_tablename,
+                                                                    columns)
+
         # double cursor to get psycopg2 cursor from django cursor
-        cursor.cursor.copy_from(csv_file, self.temporary_tablename, columns=columns)
+        cursor.cursor.copy_expert(query, csv_file)
 
     def drop_temporary_table_query(self):
         return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
@@ -124,25 +127,6 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             local_tablename=self.local_tablename,
             temporary_tablename=self.temporary_tablename,
         )
-
-    def assert_no_awc_missing_from_new_table(self, cursor):
-        cursor.execute(
-            """
-            SELECT count(*)
-            FROM "{local_tablename}"
-            WHERE aggregation_level = 5 AND doc_id NOT IN (
-                SELECT doc_id
-                FROM "{temporary_tablename}"
-                WHERE aggregation_level = 5
-            )
-            """.format(
-                local_tablename=self.local_tablename,
-                temporary_tablename=self.temporary_tablename,
-            )
-        )
-        num_locations_missing = cursor.fetchone()[0]
-        if num_locations_missing:
-            raise LocationRemovedException(str(num_locations_missing))
 
     def move_data_to_local_table(self):
         columns = (
@@ -301,5 +285,5 @@ def _get_all_locations_for_domain(domain):
     return (
         SQLLocation.objects
         .filter(domain=domain, is_archived=False)
-        .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code')
+        .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code', 'site_code')
     )

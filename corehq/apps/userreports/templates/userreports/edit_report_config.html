@@ -52,7 +52,6 @@
       {% endif %}
     {% endif %}
     <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-default">{% trans 'View report' %}</a>
-    <a href="{% url 'configurable_report_json' domain report.get_id %}" class="btn btn-default">{% trans 'Report Source (Advanced)' %}</a>
   {% endif %}
   <br/>
   {% if not referring_apps  %}
