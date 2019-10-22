@@ -346,7 +346,7 @@ class ConditionalAggregationRangesColumn(_CaseExpressionColumn):
             if len(bounds) != 2:
                 raise BadSpecError('Range must contain 2 items, contains {}'.format(len(bounds)))
             try:
-                bounds = [float(b) for b in bounds]
+                bounds = [int(b) for b in bounds]
             except ValueError:
                 raise BadSpecError('Invalid range: [{}, {}]'.format(bounds[0], bounds[1]))
             whens.update({self._base_expression(bounds): bindparam(None, value)})
