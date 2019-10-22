@@ -187,9 +187,19 @@ Note that while its largely the same, there are differences in tuning Citus quer
 
 ## Locking queries
 
-Find locks that haven't been granted: `SELECT relation::regclass, * FROM pg_locks WHERE NOT GRANTED`
+We log the number of locked queries to datadog under `postgresql.locks.not_granted`.
+There is a graph of this on our Postgres - Overview dashboard.
 
-More specifically for finding Citus locks:
+For more specific troubleshooting for each lock that is currently occurring on the database:
+
+Find locks that haven't been granted: `SELECT * FROM pg_locks WHERE NOT GRANTED`
+Queries that are blocked on a lock:
+`SELECT query_start, query FROM pg_locks, pg_stat_activity WHERE pg_locks.pid = pg_stat_activity.pid AND NOT granted`
+
+Depending on the type of lock acquired (`pg_locks.locktype`), you can adjust your query to find the query that's blocking.
+For example if `locktype` is `virtualxid`, you can run `SELECT * FROM pg_locks WHERE virtualxid = 'xid' AND GRANTED` to find the process(s) that currently have the lock acquired.
+
+More specifically for finding distributed Citus locks:
 
 ```sql
 WITH citus_xacts AS (
