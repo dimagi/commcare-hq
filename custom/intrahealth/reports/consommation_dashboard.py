@@ -122,7 +122,6 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         return headers
 
     @property
-    @memoized
     def clean_rows(self):
         return ConsommationPerProductData(config=self.config).rows
 

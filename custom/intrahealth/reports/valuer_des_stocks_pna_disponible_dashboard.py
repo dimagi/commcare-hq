@@ -124,7 +124,6 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
         return headers
 
     @property
-    @memoized
     def clean_rows(self):
         return ValuationOfPNAStockPerProductV2Data(config=self.config).rows
 

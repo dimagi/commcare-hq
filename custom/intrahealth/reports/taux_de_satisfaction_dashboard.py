@@ -145,7 +145,6 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
         return context
 
     @property
-    @memoized
     def clean_rows(self):
         return SatisfactionRateAfterDeliveryPerProductData(config=self.config).rows
 
