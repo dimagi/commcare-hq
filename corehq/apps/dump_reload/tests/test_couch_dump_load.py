@@ -222,7 +222,7 @@ class TestDumpLoadToggles(SimpleTestCase):
         output_stream.seek(0)
         lines = output_stream.readlines()
         dumped = [json.loads(line.strip()) for line in lines]
-        self.assertEqual(len(dumped, 3), ','.join([d['slug'] for d in dumped]))
+        self.assertEqual(len(dumped), 3, ','.join([d['slug'] for d in dumped]))
         for dump in dumped:
             self.assertItemsEqual(self.expected_items[dump['slug']], dump['enabled_users'])
 
