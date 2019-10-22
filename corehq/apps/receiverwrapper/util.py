@@ -223,7 +223,7 @@ def from_demo_user(form_json, user):
         if user_id == DEMO_USER_ID:
             return True
         if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-            if user.is_demo_user:
+            if user and user.is_demo_user:
                 return True
 
 # Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
