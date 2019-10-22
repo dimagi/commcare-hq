@@ -671,6 +671,6 @@ def test_observation_mappings():
     })
 
 
-    def test_doctests(self):
-        results = doctest.testmod(corehq.motech.openmrs.repeater_helpers)
-        self.assertEqual(results.failed, 0)
+def test_doctests():
+    results = doctest.testmod(corehq.motech.openmrs.repeater_helpers)
+    assert results.failed == 0
