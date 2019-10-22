@@ -44,7 +44,6 @@ from corehq.apps.app_manager.views import (
     edit_report_module,
     edit_schedule_phases,
     edit_visit_schedule,
-    form_casexml,
     form_source,
     form_source_legacy,
     get_app_ui_translations,
@@ -146,7 +145,6 @@ app_urls = [
 urlpatterns = [
     url(r'^browse/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/source/$',
         get_xform_source, name='get_xform_source'),
-    url(r'^casexml/(?P<form_unique_id>[\w-]+)/$', form_casexml, name='form_casexml'),
     url(r'^source/(?P<app_id>[\w-]+)/$', app_source, name='app_source'),
     url(r'^import_app/$', import_app, name='import_app'),
     url(r'^app_from_template/(?P<slug>[\w-]+)/$', app_from_template, name='app_from_template'),

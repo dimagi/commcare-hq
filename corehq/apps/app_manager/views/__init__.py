@@ -62,7 +62,6 @@ from corehq.apps.app_manager.views.forms import (
     edit_form_actions,
     edit_form_attr,
     edit_form_attr_api,
-    form_casexml,
     get_form_datums,
     get_form_questions,
     get_xform_source,
