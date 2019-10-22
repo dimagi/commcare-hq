@@ -11,7 +11,7 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0137_pse_columns_awc_daily'),
+        ('icds_reports', '0138_add_db_index_inactive_aww'),
     ]
 
     operations = [migrator.get_migration('thr_report_view.sql')]
