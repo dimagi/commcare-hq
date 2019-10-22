@@ -122,11 +122,12 @@ class DashBoardUsage:
         location_type_id_mapping = defaultdict(str)
         for aggregate_record in aggregate_records:
             for sub_location_type in sub_location_types:
-                if sub_location_type != 'is_launched' and aggregate_record[sub_location_type] not in \
-                    aggregate_records_dict:
-                    aggregate_records_dict[aggregate_record[sub_location_type]] = aggregate_record['is_launched']
-                if aggregate_record[sub_location_type] not in location_type_id_mapping:
-                    location_type_id_mapping[aggregate_record[sub_location_type]] = sub_location_type
+                if sub_location_type != 'is_launched':
+                    if aggregate_record[sub_location_type] not in aggregate_records_dict:
+                        aggregate_records_dict[aggregate_record[sub_location_type]] =\
+                            aggregate_record['is_launched']
+                    if aggregate_record[sub_location_type] not in location_type_id_mapping:
+                        location_type_id_mapping[aggregate_record[sub_location_type]] = sub_location_type
         self.agg_list = aggregate_records_dict
         self.sql_locations = location_type_id_mapping
 
