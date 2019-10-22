@@ -87,7 +87,7 @@ def allow_migrate(db, app_label, model_name=None):
     elif app_label == SQL_ACCESSORS_APP:
         return db in partition_config.get_form_processing_dbs()
     else:
-        return db == partition_config.get_main_db()
+        return db == 'default'
 
 
 def db_for_read_write(model, write=True):
@@ -120,7 +120,7 @@ def db_for_read_write(model, write=True):
     if app_label == FORM_PROCESSOR_APP:
         return partition_config.get_proxy_db()
     else:
-        default_db = partition_config.get_main_db()
+        default_db = 'default'
         if not write:
             return connection_manager.get_load_balanced_read_db_alias(app_label, default_db)
         return default_db

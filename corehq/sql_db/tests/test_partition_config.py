@@ -10,7 +10,6 @@ def _get_partition_config(shard_config):
     return {
         'shards': shard_config,
         'groups': {
-            'main': ['default'],
             'proxy': ['proxy'],
             'form_processing': ['db1', 'db2'],
         }

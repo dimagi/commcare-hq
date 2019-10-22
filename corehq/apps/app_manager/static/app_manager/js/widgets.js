@@ -62,7 +62,6 @@ hqDefine("app_manager/js/widgets", [
                     return { id: profileId, text: details.name };
                 });
                 if (buildProfiles.length) {
-                    $('#build-profile-id-input').append(new Option(gettext('Select Profile'), '', true, true));
                     $('#build-profile-id-input').select2({
                         data: buildProfiles,
                     });
