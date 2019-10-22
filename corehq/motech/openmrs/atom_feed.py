@@ -306,9 +306,6 @@ def update_patient(repeater, patient_uuid):
 
 
 def import_encounter(repeater, encounter_uuid):
-    # It's possible that an OpenMRS concept appears more than once in
-    # form_configs. Use a defaultdict(list) so that earlier definitions
-    # don't get overwritten by later ones:
 
     def fields_from_observations(observations, mappings):
         """
