@@ -101,10 +101,13 @@ class GroupMemoizer(object):
         self.groups = set()
         self.domain = domain
         self.groups_by_user_id = defaultdict(set)
+        self.loaded = False
 
     def load_all(self):
-        for group in Group.by_domain(self.domain):
-            self.add_group(group)
+        if not self.loaded:
+            for group in Group.by_domain(self.domain):
+                self.add_group(group)
+            self.loaded = True
 
     def add_group(self, new_group):
         # todo
