@@ -223,6 +223,14 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
 
+    def test_blank_is_active(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(is_active='')],
+            [],
+        )
+        self.assertTrue(self.user.is_active)
+
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
     def setUp(self):
