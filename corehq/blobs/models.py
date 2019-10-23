@@ -76,7 +76,12 @@ class BlobMeta(PartitionedModel, Model):
                 fields=['expires_on'],
                 unique=False,
                 where=PQ(expires_on__isnull=False),
-            )
+            ),
+            PartialIndex(
+                fields=['type_code', 'created_on'],
+                unique=False,
+                where=PQ(domain='icds-cas'),
+            ),
         ]
 
     def __repr__(self):

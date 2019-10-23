@@ -19,4 +19,8 @@ class Migration(migrations.Migration):
                 index=partial_index.PartialIndex(fields=['expires_on'], name='blobs_blobm_expires_ed7e3d_partial', unique=False, where=partial_index.PQ(expires_on__isnull=False)),
             )
         ]),
+        migrations.AddIndex(
+            model_name='blobmeta',
+            index=partial_index.PartialIndex(fields=['type_code', 'created_on'], name='blobs_blobm_type_co_23e226_partial', unique=False, where=partial_index.PQ(domain='icds-cas')),
+        ),
     ]
