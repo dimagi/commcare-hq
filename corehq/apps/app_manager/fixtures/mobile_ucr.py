@@ -98,28 +98,6 @@ class BaseReportFixturesProvider(FixtureProvider):
             for report_config in module.report_configs
         }
 
-    @staticmethod
-    def _get_report_and_data_source(report_id, domain):
-        report = get_report_config(report_id, domain)[0]
-        data_source = ConfigurableReportDataSource.from_spec(report, include_prefilters=True)
-        return report, data_source
-
-    @staticmethod
-    def _get_filters_elem(defer_filters, filter_options_by_field, couch_user):
-        filters_elem = E.filters()
-        for ui_filter in defer_filters:
-            # @field is maybe a bad name for this attribute,
-            # since it's actually the filter name
-            filter_elem = E.filter(field=ui_filter.name)
-            option_values = filter_options_by_field[ui_filter.field]
-            choices = ui_filter.choice_provider.get_sorted_choices_for_values(option_values, couch_user)
-            for choice in choices:
-                # add the correct text from ui_filter.choice_provider
-                option_elem = E.option(choice.display, value=choice.value)
-                filter_elem.append(option_elem)
-            filters_elem.append(filter_elem)
-        return filters_elem
-
 
 class ReportFixturesProvider(BaseReportFixturesProvider):
     id = 'commcare:reports'
@@ -172,45 +150,9 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
 
     @staticmethod
     def report_config_to_v1_fixture(report_config, restore_user):
-        domain = restore_user.domain
-        report, data_source = BaseReportFixturesProvider._get_report_and_data_source(
-            report_config.report_id, domain
+        rows_elem, filters_elem = generate_rows_and_filters(
+            report_config, restore_user, ReportFixturesProvider._get_v1_report_elem
         )
-
-        # apply filters specified in report module
-        all_filter_values = {
-            filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
-            for filter_slug, filter in report_config.filters.items()
-        }
-        # apply all prefilters
-        prefilters = [ReportFilterFactory.from_spec(p, report) for p in report.prefilters]
-        prefilter_values = {prefilter.name: prefilter.value() for prefilter in prefilters}
-        all_filter_values.update(prefilter_values)
-        # filter out nulls
-        filter_values = {
-            filter_slug: filter_value for filter_slug, filter_value in all_filter_values.items()
-            if filter_value is not None
-        }
-        defer_filters = [
-            report.get_ui_filter(filter_slug)
-            for filter_slug, filter_value in all_filter_values.items()
-            if filter_value is None and is_valid_mobile_select_filter_type(report.get_ui_filter(filter_slug))
-        ]
-        data_source.set_filter_values(filter_values)
-        data_source.set_defer_fields([f.field for f in defer_filters])
-        filter_options_by_field = defaultdict(set)
-
-        rows_elem = ReportFixturesProvider._get_v1_report_elem(
-            data_source,
-            {ui_filter.field for ui_filter in defer_filters},
-            filter_options_by_field
-        )
-        filters_elem = BaseReportFixturesProvider._get_filters_elem(
-            defer_filters, filter_options_by_field, restore_user._couch_user)
-
-        if (report_config.report_id in settings.UCR_COMPARISONS and
-                COMPARE_UCR_REPORTS.enabled(uuid.uuid4().hex, NAMESPACE_OTHER)):
-            compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
         report_elem.append(filters_elem)
@@ -218,7 +160,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         return report_elem
 
     @staticmethod
-    def _get_v1_report_elem(data_source, deferred_fields, filter_options_by_field):
+    def _get_v1_report_elem(data_source, deferred_fields, filter_options_by_field, last_sync=None):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
@@ -347,47 +289,12 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
 
     @staticmethod
     def report_config_to_v2_fixture(report_config, restore_user):
-        domain = restore_user.domain
-        report, data_source = BaseReportFixturesProvider._get_report_and_data_source(
-            report_config.report_id, domain)
-
-        # apply filters specified in report module
-        all_filter_values = {
-            filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
-            for filter_slug, filter in report_config.filters.items()
-        }
-        # apply all prefilters
-        prefilters = [ReportFilterFactory.from_spec(p, report) for p in report.prefilters]
-        prefilter_values = {prefilter.name: prefilter.value() for prefilter in prefilters}
-        all_filter_values.update(prefilter_values)
-        # filter out nulls
-        filter_values = {
-            filter_slug: filter_value for filter_slug, filter_value in all_filter_values.items()
-            if filter_value is not None
-        }
-        defer_filters = [
-            report.get_ui_filter(filter_slug)
-            for filter_slug, filter_value in all_filter_values.items()
-            if filter_value is None and is_valid_mobile_select_filter_type(report.get_ui_filter(filter_slug))
-        ]
-        data_source.set_filter_values(filter_values)
-        data_source.set_defer_fields([f.field for f in defer_filters])
-        filter_options_by_field = defaultdict(set)
-
-        rows_elem = ReportFixturesProviderV2._get_v2_report_elem(
-            data_source,
-            {f.field for f in defer_filters},
-            filter_options_by_field,
-            _last_sync_time(domain, restore_user.user_id),
+        rows_elem, filters_elem = generate_rows_and_filters(
+            report_config, restore_user, ReportFixturesProviderV2._get_v2_report_elem
         )
-        filters_elem = BaseReportFixturesProvider._get_filters_elem(
-            defer_filters, filter_options_by_field, restore_user._couch_user)
+
         report_filter_elem = E.fixture(id=ReportFixturesProviderV2._report_filter_id(report_config.uuid))
         report_filter_elem.append(filters_elem)
-
-        if (report_config.report_id in settings.UCR_COMPARISONS and
-                COMPARE_UCR_REPORTS.enabled(uuid.uuid4().hex, NAMESPACE_OTHER)):
-            compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.fixture(
             id=ReportFixturesProviderV2._report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
@@ -445,3 +352,72 @@ def _last_sync_time(domain, user_id):
 
 report_fixture_generator = ReportFixturesProvider()
 report_fixture_v2_generator = ReportFixturesProviderV2()
+
+
+def generate_rows_and_filters(report_config, restore_user, get_rows_element):
+    """Generate restore row and filter elements
+    :param get_rows_element: function (
+                data_source, deferred_fields, filter_options_by_field, last_sync
+            ) -> rows_element
+    """
+    domain = restore_user.domain
+    report, data_source = _get_report_and_data_source(report_config.report_id, domain)
+
+    # apply filters specified in report module
+    all_filter_values = {
+        filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
+        for filter_slug, filter in report_config.filters.items()
+    }
+    # apply all prefilters
+    prefilters = [ReportFilterFactory.from_spec(p, report) for p in report.prefilters]
+    prefilter_values = {prefilter.name: prefilter.value() for prefilter in prefilters}
+    all_filter_values.update(prefilter_values)
+    # filter out nulls
+    filter_values = {
+        filter_slug: filter_value for filter_slug, filter_value in all_filter_values.items()
+        if filter_value is not None
+    }
+    defer_filters = [
+        report.get_ui_filter(filter_slug)
+        for filter_slug, filter_value in all_filter_values.items()
+        if filter_value is None and is_valid_mobile_select_filter_type(report.get_ui_filter(filter_slug))
+    ]
+    data_source.set_filter_values(filter_values)
+    data_source.set_defer_fields([f.field for f in defer_filters])
+    filter_options_by_field = defaultdict(set)
+
+    rows_elem = get_rows_element(
+        data_source,
+        {f.field for f in defer_filters},
+        filter_options_by_field,
+        _last_sync_time(domain, restore_user.user_id),
+    )
+    filters_elem = _get_filters_elem(defer_filters, filter_options_by_field, restore_user._couch_user)
+
+    if (report_config.report_id in settings.UCR_COMPARISONS and
+        COMPARE_UCR_REPORTS.enabled(uuid.uuid4().hex, NAMESPACE_OTHER)):
+        compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
+
+    return rows_elem, filters_elem
+
+
+def _get_filters_elem(defer_filters, filter_options_by_field, couch_user):
+    filters_elem = E.filters()
+    for ui_filter in defer_filters:
+        # @field is maybe a bad name for this attribute,
+        # since it's actually the filter name
+        filter_elem = E.filter(field=ui_filter.name)
+        option_values = filter_options_by_field[ui_filter.field]
+        choices = ui_filter.choice_provider.get_sorted_choices_for_values(option_values, couch_user)
+        for choice in choices:
+            # add the correct text from ui_filter.choice_provider
+            option_elem = E.option(choice.display, value=choice.value)
+            filter_elem.append(option_elem)
+        filters_elem.append(filter_elem)
+    return filters_elem
+
+
+def _get_report_and_data_source(report_id, domain):
+    report = get_report_config(report_id, domain)[0]
+    data_source = ConfigurableReportDataSource.from_spec(report, include_prefilters=True)
+    return report, data_source

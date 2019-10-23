@@ -48,7 +48,8 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
         user = Mock()
 
         with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
-                patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource:
+                patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
+                patch('corehq.apps.app_manager.fixtures.mobile_ucr._last_sync_time') as last_sync_time_patch:
 
             report_datasource.from_spec.return_value = self.get_data_source_mock()
             report = provider.report_config_to_v1_fixture(report_app_config, user)
