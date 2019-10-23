@@ -13,9 +13,9 @@ class DashBoardUsage:
 
     title = 'Dashboard usage'
     required_fields = ['state_id', 'state_name', 'district_id', 'district_name', 'block_id', 'block_name',
-                       'supervisor_id', 'supervisor_name', 'doc_id', 'awc_name']
-    location_types = ['state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id']
-    agg_required_fields = ['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id', 'is_launched']
+                       'supervisor_id', 'supervisor_name']
+    location_types = ['state_id', 'district_id', 'block_id', 'supervisor_id']
+    agg_required_fields = ['state_id', 'district_id', 'block_id', 'supervisor_id', 'is_launched']
     roles = {
         '.nod': 'Nodal Officer',
         '.ncd': 'Consultant(Nutrition & Child Development)',
@@ -49,10 +49,6 @@ class DashBoardUsage:
                 return value
         return 'N/A'
 
-    def get_agg_fields(self):
-        location_list = self.location_types.pop()
-        return location_list.append('awc_id')
-
     def convert_boolean_to_string(self, value):
         return 'yes' if value else 'no'
 
@@ -63,10 +59,7 @@ class DashBoardUsage:
         return [u for u in user_query.run().hits]
 
     def get_names_from_ids(self, location_id):
-        if location_id == 'doc_id':
-            return 'awc_name'
-        else:
-            return location_id.split('_')[0] + '_name'
+        return location_id.split('_')[0] + '_name'
 
     def convert_rs_to_matrix(self, results_queryset, main_location_type):
         """
@@ -90,11 +83,7 @@ class DashBoardUsage:
         return location_matrix, location_ids
 
     def get_location_id_string_from_location_type(self, location_type):
-        if location_type == 'awc':
-            location_id = 'doc_id'
-        else:
-            location_id = location_type + '_id'
-        return location_id
+        return location_type + '_id'
 
     def get_location_type_string_from_location_id(self, location_id):
         return location_id.replace('_id', '')
@@ -116,18 +105,23 @@ class DashBoardUsage:
         '''
         location_type = self.get_location_id_string_from_location_type(location_type)
         sub_location_types = self.agg_required_fields[self.location_types.index(location_type) + 1:]
-        filter_dict = {location_type: location_id}
+        filter_dict = {location_type: location_id, 'aggregation_level': 5,
+                       'month': datetime.datetime.now().month}
         aggregate_records = AggAwc.objects.filter(**filter_dict).values(*sub_location_types)
+
         aggregate_records_dict = defaultdict(str)
         location_type_id_mapping = defaultdict(str)
+
         for aggregate_record in aggregate_records:
             for sub_location_type in sub_location_types:
                 if sub_location_type != 'is_launched':
-                    if aggregate_record[sub_location_type] not in aggregate_records_dict:
+                    if aggregate_record[sub_location_type] not in aggregate_records_dict or not\
+                        aggregate_records_dict[aggregate_record[sub_location_type]]:
                         aggregate_records_dict[aggregate_record[sub_location_type]] =\
                             aggregate_record['is_launched']
                     if aggregate_record[sub_location_type] not in location_type_id_mapping:
                         location_type_id_mapping[aggregate_record[sub_location_type]] = sub_location_type
+
         self.agg_list = aggregate_records_dict
         self.sql_locations = location_type_id_mapping
 
@@ -145,7 +139,7 @@ class DashBoardUsage:
             # getting the location types to retrieve for this user location
             location_type_filter = {
                 self.get_location_id_string_from_location_type(user_location.location_type_name):
-                    user_location.get_id}
+                    user_location.get_id, 'aggregation_level': 5}
             all_awc_locations = AwcLocation.objects.filter(**location_type_filter).values(*self.required_fields)
             # converting the result set to matrix to fetch ancestors for a given location
             location_matrix, location_ids =\
