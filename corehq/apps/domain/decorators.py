@@ -97,9 +97,14 @@ def login_and_domain_required(view_func):
                 login_url = reverse('domain_login', kwargs={'domain': domain_name})
                 return redirect_for_login_or_domain(req, login_url=login_url)
 
+        couch_user = _ensure_request_couch_user(req)
         if not domain_obj.is_active:
             return _inactive_domain_response(req, domain_name)
-        couch_user = _ensure_request_couch_user(req)
+        if domain_obj.is_snapshot:
+            if not hasattr(req, 'couch_user') or not req.couch_user.is_previewer():
+                raise Http404()
+            return call_view()
+
         if couch_user.is_member_of(domain_obj):
             if _is_missing_two_factor(view_func, req):
                 return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
@@ -116,9 +121,6 @@ def login_and_domain_required(view_func):
             if not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
             return call_view()
-        elif domain_obj.is_snapshot:
-            # snapshots are publicly viewable
-            return require_previewer(view_func)(req, domain_name, *args, **kwargs)
         elif couch_user.is_web_user() and domain_obj.allow_domain_requests:
             from corehq.apps.users.views import DomainRequestView
             return DomainRequestView.as_view()(req, *args, **kwargs)
@@ -504,17 +506,6 @@ require_superuser = permission_required("is_superuser", login_url='/no_permissio
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 
 cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
-
-
-def require_previewer(view_func):
-    def shim(request, *args, **kwargs):
-        if not hasattr(request, 'couch_user') or not request.couch_user.is_previewer():
-            raise Http404
-        else:
-            return view_func(request, *args, **kwargs)
-    return shim
-
-cls_require_previewer = cls_to_view(additional_decorator=require_previewer)
 
 
 def check_domain_migration(view_func):
