@@ -222,12 +222,13 @@ def from_demo_user(form_json, user):
     else:
         if user_id == DEMO_USER_ID:
             return True
-        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS + ('staging',):
-            if user and user.is_demo_user:
-                return True
+
 
 # Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
 DEMO_SUBMIT_MODE = 'demo'
+
+
+IGNORE_ALL_DEMO_USER_SUBMISSIONS = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS + ('staging',)
 
 
 def should_ignore_submission(request):
@@ -235,6 +236,9 @@ def should_ignore_submission(request):
     If submission request.GET has `submit_mode=demo` and submitting user is not demo_user,
     the submissions should be ignored
     """
+    if hasattr(request, 'couch_user') and IGNORE_ALL_DEMO_USER_SUBMISSIONS and request.couch_user.is_demo_user:
+        return True
+
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
         return False
 
