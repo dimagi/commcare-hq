@@ -392,3 +392,29 @@ def get_updates_from_bahmni_diagnoses(diagnoses, mappings):
             for mapping in mappings[codedanswer_uuid]:
                 fields[mapping.case_property] = mapping.value.deserialize(diag['codedAnswer'].get('name'))
     return fields
+
+
+def deep_update(dict_by_ref: dict, other: dict):
+    """
+    Recursively update ``dict_by_ref`` with values from ``other``.
+
+    >>> nested = {"inner": {"ham": "spam"}}
+    >>> deep_update(nested, {"inner": {"eggs": "spam"}})
+    >>> nested == {"inner": {"ham": "spam", "eggs": "spam"}}
+    True
+
+    >>> nested = {"inner": {"ham": "spam"}}
+    >>> deep_update(nested, {"inner": "SPAM"})
+    >>> nested
+    {'inner': 'SPAM'}
+
+    """
+    for key, value in other.items():
+        if (
+            key in dict_by_ref
+            and isinstance(dict_by_ref[key], dict)
+            and isinstance(value, dict)
+        ):
+            deep_update(dict_by_ref[key], value)
+        else:
+            dict_by_ref[key] = value
