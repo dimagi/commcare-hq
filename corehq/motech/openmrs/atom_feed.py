@@ -394,6 +394,21 @@ def get_updates_from_bahmni_diagnoses(diagnoses, mappings):
     return fields
 
 
+def has_case_updates(case_block_kwargs):
+    """
+    Returns True if case_block_kwargs contains case changes.
+
+    >>> has_case_updates({"owner_id": "123456", "update": {}})
+    True
+    >>> has_case_updates({"update": {}})
+    False
+
+    """
+    if case_block_kwargs.get("update"):
+        return True
+    return any(k for k in case_block_kwargs if k != "update")
+
+
 def deep_update(dict_by_ref: dict, other: dict):
     """
     Recursively update ``dict_by_ref`` with values from ``other``.
