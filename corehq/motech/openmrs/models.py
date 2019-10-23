@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from functools import partial
 
 from memoized import memoized
 
@@ -9,16 +10,17 @@ from dimagi.ext.couchdbkit import (
     DocumentSchema,
     IntegerProperty,
     ListProperty,
-    StringListProperty,
     StringProperty,
 )
 
+from corehq.motech.const import COMMCARE_DATA_TYPES, DATA_TYPE_UNKNOWN
 from corehq.motech.openmrs.const import (
     IMPORT_FREQUENCY_CHOICES,
     IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
     IMPORT_FREQUENCY_WEEKLY,
 )
+from corehq.motech.openmrs.serializers import openmrs_timestamp_to_isoformat
 from corehq.util.timezones.utils import (
     coerce_timezone_value,
     get_timezone_for_domain,
@@ -36,6 +38,26 @@ class ColumnMapping(DocumentSchema):
     column = StringProperty()
     property = StringProperty()
     data_type = StringProperty(choices=DATA_TYPES, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._importer = None
+
+    def set_importer(self, value):
+        self._importer = value
+
+    def _get_timezone(self):
+        return self._importer.get_timezone() if self._importer else None
+
+    def deserialize(self, external_value):
+        """
+        Returns ``external_value`` as its CommCare data type.
+        """
+        as_isoformat = partial(openmrs_timestamp_to_isoformat, tz=self._get_timezone())
+        cast = {
+            POSIX_MILLISECONDS: as_isoformat,
+        }
+        return cast[self.data_type](external_value) if self.data_type else external_value
 
 
 class OpenmrsImporter(Document):
