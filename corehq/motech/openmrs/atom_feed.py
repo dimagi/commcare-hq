@@ -326,44 +326,47 @@ def import_encounter(repeater, encounter_uuid):
         deep_update(case_block_kwargs, more_kwargs)
 
     if has_case_updates(case_block_kwargs):
-        case_blocks = []
-        patient_uuid = encounter['patientUuid']
-        case_type = repeater.white_listed_case_types[0]
-        case, error = importer_util.lookup_case(
-            EXTERNAL_ID,
-            patient_uuid,
-            repeater.domain,
-            case_type=case_type,
-        )
-        if case:
-            case_id = case.get_id
+        create_or_update_case(repeater, encounter['patientUuid'], case_block_kwargs)
 
-        elif error == LookupErrors.NotFound:
-            # The encounter is for a patient that has not yet been imported
-            patient = get_patient_by_uuid(repeater.requests, patient_uuid)
-            owner = get_one_commcare_user_at_location(repeater.domain, repeater.location_id)
-            case_block = get_addpatient_caseblock(case_type, owner, patient, repeater)
-            case_blocks.append(case_block)
-            case_id = case_block.case_id
 
-        else:  # error == LookupErrors.MultipleResults:
-            repeater.requests.notify_error(_(
-                f'{repeater}: More than one case found matching unique OpenMRS '
-                f'UUID. case external_id: "{patient_uuid}". '
-            ))
-            return
+def create_or_update_case(repeater, patient_uuid, case_block_kwargs):
+    case_blocks = []
+    case_type = repeater.white_listed_case_types[0]
+    case, error = importer_util.lookup_case(
+        EXTERNAL_ID,
+        patient_uuid,
+        repeater.domain,
+        case_type=case_type,
+    )
+    if case:
+        case_id = case.get_id
 
-        case_blocks.append(CaseBlock(
-            case_id=case_id,
-            create=False,
-            **case_block_kwargs,
+    elif error == LookupErrors.NotFound:
+        # The encounter is for a patient that has not yet been imported
+        patient = get_patient_by_uuid(repeater.requests, patient_uuid)
+        owner = get_one_commcare_user_at_location(repeater.domain, repeater.location_id)
+        case_block = get_addpatient_caseblock(case_type, owner, patient, repeater)
+        case_blocks.append(case_block)
+        case_id = case_block.case_id
+
+    else:  # error == LookupErrors.MultipleResults:
+        repeater.requests.notify_error(_(
+            f'{repeater}: More than one case found matching unique OpenMRS '
+            f'UUID. case external_id: "{patient_uuid}". '
         ))
-        submit_case_blocks(
-            [cb.as_text() for cb in case_blocks],
-            repeater.domain,
-            xmlns=XMLNS_OPENMRS,
-            device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.get_id,
-        )
+        return
+
+    case_blocks.append(CaseBlock(
+        case_id=case_id,
+        create=False,
+        **case_block_kwargs,
+    ))
+    submit_case_blocks(
+        [cb.as_text() for cb in case_blocks],
+        repeater.domain,
+        xmlns=XMLNS_OPENMRS,
+        device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.get_id,
+    )
 
 
 def get_case_block_kwargs_from_observations(observations, mappings):
