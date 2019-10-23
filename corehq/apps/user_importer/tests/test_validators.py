@@ -94,7 +94,7 @@ TEST_CASES = [
         [
             {'username': 'abc'},
             {'username': 123},
-            {'username': True},
+            {'username': 10.3},
             {},
         ],
         StringUsernames('domain'),

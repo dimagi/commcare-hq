@@ -146,7 +146,7 @@ class LongUsernames(ImportValidator):
 
 
 class StringUsernames(ImportValidator):
-    _error_message = _("username cannot contain greater than {length} characters")
+    error_message = _("username cannot contain greater than {length} characters")
 
     def validate_spec(self, spec):
         username = spec.get('username')
