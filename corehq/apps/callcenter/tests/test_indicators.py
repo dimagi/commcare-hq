@@ -1,6 +1,7 @@
 from collections import namedtuple
 
 from django.core import cache
+from django.db import DEFAULT_DB_ALIAS
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -605,7 +606,7 @@ class TestSavingToUCRDatabase(BaseCCTests):
         self.cc_domain, self.cc_user = create_domain_and_user(self.domain_name, 'user_ucr')
 
         self.ucr_db_name = 'cchq_ucr_tests'
-        db_conn_parts = connection_manager.get_connection_string('default').split('/')
+        db_conn_parts = connection_manager.get_connection_string(DEFAULT_DB_ALIAS).split('/')
         db_conn_parts[-1] = self.ucr_db_name
         self.ucr_db_url = '/'.join(db_conn_parts)
 

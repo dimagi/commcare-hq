@@ -5,7 +5,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, make_location
 from corehq.apps.products.models import Product
 from corehq.apps.users.models import CommCareUser
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
 from custom.intrahealth.models import (
     RecapPassageFluff,
     IntraHealthFluff,
@@ -24,7 +24,7 @@ class IntraHealthTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super(IntraHealthTestCase, cls).setUpClass()
-        cls.engine = connection_manager.get_engine('default')
+        cls.engine = connection_manager.get_engine(DEFAULT_ENGINE_ID)
 
         cls.domain = create_domain(TEST_DOMAIN)
         cls.region_type = LocationType.objects.create(domain=TEST_DOMAIN, name='Région')

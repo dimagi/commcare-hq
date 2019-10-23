@@ -10,7 +10,7 @@ from corehq.apps.es.aggregations import (
 )
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
-from corehq.apps.hqadmin.reporting.reports import get_mobile_users
+from corehq.apps.es.users import UserES
 from corehq.elastic import ES_EXPORT_INSTANCE
 
 
@@ -38,6 +38,16 @@ def get_domain_device_breakdown_es(domain_name, monthspan):
     ).aggregation(TermsAggregation('device_id', 'form.meta.deviceID')).size(0)
 
     return query.run().aggregations.device_id.counts_by_bucket()
+
+
+def get_mobile_users(domains):
+    return set(
+        UserES()
+        .show_inactive()
+        .mobile_users()
+        .domain(domains)
+        .scroll_ids()
+    )
 
 
 def active_mobile_users(domain, start, end, *args):

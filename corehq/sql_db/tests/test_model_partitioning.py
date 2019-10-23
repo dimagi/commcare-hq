@@ -6,7 +6,7 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.sql_db.config import partition_config
 from django.apps import apps
-from django.db import ProgrammingError, transaction
+from django.db import ProgrammingError, transaction, DEFAULT_DB_ALIAS
 from django.test import TestCase
 
 from corehq.util.test_utils import generate_cases
@@ -55,14 +55,14 @@ def test_models_are_located_in_correct_dbs(self, app_label, is_partitioned):
     for model_class in self.get_models(app_label):
         if is_partitioned:
             # models do not exist in main db
-            self.assertModelDoesNotExist(model_class, 'default')
+            self.assertModelDoesNotExist(model_class, DEFAULT_DB_ALIAS)
 
             # models exist in paritioned dbs
             for db in ([proxy_db] + partitioned_dbs):
                 self.assertModelExists(model_class, db)
         else:
             # models exist in main db
-            self.assertModelExists(model_class, 'default')
+            self.assertModelExists(model_class, DEFAULT_DB_ALIAS)
 
             # models do not exist in partitioned dbs
             for db in ([proxy_db] + partitioned_dbs):
@@ -80,7 +80,7 @@ class TestPartitionedModelsWithSingleDB(PartitionedModelsTestMixin, TestCase):
     ('form_processor',),
 ], TestPartitionedModelsWithSingleDB)
 def test_models_are_located_in_correct_db(self, app_label):
-    main_db = 'default'
+    main_db = DEFAULT_DB_ALIAS
 
     for model_class in self.get_models(app_label):
         self.assertModelExists(model_class, main_db)
