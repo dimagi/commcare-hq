@@ -152,13 +152,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             ('C', 'D'),
             ('D', 'E'),
             ('E', 'F'),
-            ('F', 'a'),
-            ('a', 'b'),
-            ('b', 'c'),
-            ('c', 'd'),
-            ('d', 'e'),
-            ('e', 'f'),
-            ('f', 'zzzzzzzzzz'),
+            ('F', 'zzzzzzzzzz'),
         ]
 
         return [

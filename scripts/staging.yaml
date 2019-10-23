@@ -52,7 +52,6 @@ branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
   #- fr/case-templates      # FR May 15
   - rn_only_select_app_type_when_no_advanced # Rohit June 27
-  - bmb/case-sharing  #Biyeun Aug 22
   - jls/turn-off-cdn-for-requirejs # Jenny Sept 16
   - nh/dhis2/te  # Norman Oct 2
   - bmb/odata-permissions  # Biyeun Oct 4
@@ -60,4 +59,6 @@ branches:
   - bmb/odata-release  # Biyeun Oct 9
   - bmb/new-plans  # Biyeun Oct 9
   - sr-session-audit  # Sravan Oct 15
+  - mk/ignore-all-demo-submissions-redone # MK Oct 22
+  - dmr/update-django-security-fix  # Danny Oct 22
 submodules: {}

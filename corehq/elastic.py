@@ -171,44 +171,6 @@ ES_META = {
     "ledgers": EsMeta(LEDGER_INDEX_INFO.index, LEDGER_INDEX_INFO.type),
 }
 
-ADD_TO_ES_FILTER = {
-    "forms": [
-        {"term": {"doc_type": "xforminstance"}},
-        {"not": {"missing": {"field": "xmlns"}}},
-        {"not": {"missing": {"field": "form.meta.userID"}}},
-    ],
-    "archived_forms": [
-        {"term": {"doc_type": "xformarchived"}},
-        {"not": {"missing": {"field": "xmlns"}}},
-        {"not": {"missing": {"field": "form.meta.userID"}}},
-    ],
-    "users": [
-        {"term": {"doc_type": "CommCareUser"}},
-        {"term": {"base_doc": "couchuser"}},
-        {"term": {"is_active": True}},
-    ],
-    "web_users": [
-        {"term": {"doc_type": "WebUser"}},
-        {"term": {"base_doc": "couchuser"}},
-        {"term": {"is_active": True}},
-    ],
-    "users_all": [
-        {"term": {"base_doc": "couchuser"}},
-    ],
-    "active_cases": [
-        {"term": {"closed": False}},
-    ],
-}
-
-DATE_FIELDS = {
-    "forms": "received_on",
-    "cases": "opened_on",
-    "active_cases": "modified_on",
-    "users": "created_on",
-    "users_all": "created_on",
-    "sms": 'date',
-}
-
 ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,
                             #  can change this config value if we want to support querying over more domains
 
@@ -375,29 +337,6 @@ def scan(client, query=None, scroll='5m', **kwargs):
 
     count = initial_resp.get("hits", {}).get("total", None)
     return ScanResult(count, fetch_all(initial_resp))
-
-
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, interval="day", filters=[]):
-    from corehq.apps.es.es_query import HQESQuery
-    date_field = DATE_FIELDS[histo_type]
-
-    query = (
-        HQESQuery(index=histo_type)
-        .range_filter(date_field, gte=startdate, lte=enddate)
-    )
-
-    for filter_ in ADD_TO_ES_FILTER.get(histo_type, []):
-        query = query.filter(filter_)
-
-    if domains is not None:
-        query = query.domain(domains)
-    if filters:
-        query = query.filter(filters)
-
-    query = query.date_histogram('histo', date_field, interval)
-
-    ret_data = query.run().aggregations.histo.as_facet_result()
-    return ret_data
 
 
 SIZE_LIMIT = 1000000
