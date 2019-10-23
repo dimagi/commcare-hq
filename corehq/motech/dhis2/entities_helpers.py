@@ -5,7 +5,6 @@ from django.utils.translation import ugettext as _
 from requests import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
-from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.motech.dhis2.const import DHIS2_API_VERSION, XMLNS_DHIS2
@@ -42,7 +41,7 @@ def send_dhis2_entities(requests, dhis2_entity_config, case_trigger_infos):
                 save_tracked_entity_instance_id(requests.domain_name, tracked_entity, info, case_config)
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
-            notify_exception(err)
+            requests.notify_exception(str(err))
 
     if errors:
         return RepeaterResponse(400, 'Bad Request', "Errors: " + pformat_json([str(e) for e in errors]))
