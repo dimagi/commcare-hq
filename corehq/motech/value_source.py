@@ -1,5 +1,6 @@
 import attr
 from couchdbkit import BadValueError
+from jsonpath_rw import parse as parse_jsonpath
 
 from couchforms.const import TAG_FORM, TAG_META
 from dimagi.ext.couchdbkit import (
@@ -302,6 +303,10 @@ class ConstantValue(ConstantString):
         # `self.commcare_data_type`.
         pass
 
+    def get_import_value(self, external_data):
+        external_value = self._get_external_value(external_data)
+        return self.deserialize(external_value)
+
 
 class CasePropertyMap(CaseProperty):
     """
@@ -377,6 +382,42 @@ class FormUserAncestorLocationField(ValueSource):
         location = get_owner_location(case_trigger_info.domain, user_id)
         if location:
             return get_ancestor_location_metadata_value(location, self.location_field)
+
+
+class JsonPathMixin(DocumentSchema):
+    """
+    Used for importing a value from a JSON document.
+    """
+    jsonpath = StringProperty(required=True, validators=not_blank)
+
+    def _get_external_value(self, external_data):
+        jsonpath = parse_jsonpath(self.jsonpath)
+        matches = jsonpath.find(external_data)
+        values = [m.value for m in matches]
+        if not values:
+            return None
+        elif len(values) == 1:
+            return values[0]
+        else:
+            return values
+
+    def get_import_value(self, external_data):
+        external_value = self._get_external_value(external_data)
+        return self.deserialize(external_value)
+
+
+class JsonPathCaseProperty(CaseProperty, JsonPathMixin):
+    pass
+
+
+class JsonPathCasePropertyMap(CasePropertyMap, JsonPathMixin):
+    pass
+
+
+class JsonPathConstantValue(ConstantValue, JsonPathMixin):
+
+    def _get_external_value(self, external_data):
+        pass  # ConstantValue doesn't use external value
 
 
 def get_form_question_values(form_json):
