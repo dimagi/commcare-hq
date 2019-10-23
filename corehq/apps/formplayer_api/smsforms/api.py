@@ -294,7 +294,7 @@ class XformsResponse(object):
 
 
 def formplayer_post_data_helper(d, content_type, url):
-    session_id = d['session-id']
+    session_id = d.get('session-id')
     data = json.dumps(d).encode('utf-8')
     headers = {}
     headers["Content-Type"] = content_type
