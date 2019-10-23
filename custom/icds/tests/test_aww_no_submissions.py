@@ -30,6 +30,7 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
         cls.user_sans_aggregation = make_user('user_sans_aggregation', cls.loc)
         cls.agg_inactive_aww = AggregateInactiveAWW.objects.create(
             awc_site_code=cls.user.raw_username,
+            awc_id=cls.loc._id,
             last_submission=None,
         )
 
@@ -83,7 +84,7 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
         self.assertEqual(len(messages), 1)
         self.assertIn('one month', messages[0])
 
-    def test_no_app_status_fact(self, patch):
+    def test_no_agg_rows(self, patch):
         messages = run_indicator_for_user(
             self.user_sans_aggregation,
             AWWSubmissionPerformanceIndicator,
