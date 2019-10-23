@@ -20,6 +20,8 @@ import gevent
 import requests
 from celery import Celery
 
+from pillowtop.utils import get_all_pillow_instances
+from pillowtop.checkpoints.manager import MAX_CHECKPOINT_DELAY
 from soil import heartbeat
 
 from corehq.apps.app_manager.models import Application
@@ -230,6 +232,29 @@ def check_formplayer():
         return ServiceStatus(res.ok, msg)
 
 
+def check_pillows():
+    pillows = [
+        pillow for pillow in get_all_pillow_instances()
+        if pillow in getattr(settings, 'ACTIVE_PILLOW_NAMES', [pillow.pillow_id])
+        and isinstance(pillow.get_change_feed(), KafkaChangeFeed)
+    ]
+
+    failed_pillows = []
+    for pillow in pillows:
+        oldest_checkpoint = min(c.last_modified for c in pillow.checkpoint._get_checkpoints())
+        time_since_oldest = datetime.utcnow() - oldest_checkpoint
+
+        # allow 60 second buffer since save only occurs after max is exceeded
+        # and to account for delay between read and comparison
+        if time_since_oldest.seconds > (MAX_CHECKPOINT_DELAY + 60):
+            failed_pillows.append(pillow.pillow_id)
+
+    if failed_pillows:
+        return ServiceStatus(False, '{} have not checkpointed recently'.format(','.join(failed_pillows)))
+    else:
+        return ServiceStatus(True, 'All pillows checkpointed recently')
+
+
 def run_checks(checks_to_do):
     greenlets = []
     with TimingContext() as timer:
@@ -294,4 +319,8 @@ CHECKS = {
         "always_check": True,
         "check_func": check_all_rabbitmq,
     },
+    'pillowtop': {
+        "always_check": True,
+        "check_func": check_pillows,
+    }
 }
