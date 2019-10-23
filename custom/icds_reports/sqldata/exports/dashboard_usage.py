@@ -116,7 +116,7 @@ class DashBoardUsage:
             for sub_location_type in sub_location_types:
                 if sub_location_type != 'is_launched':
                     if aggregate_record[sub_location_type] not in aggregate_records_dict or not\
-                        aggregate_records_dict[aggregate_record[sub_location_type]]:
+                            aggregate_records_dict[aggregate_record[sub_location_type]]:
                         aggregate_records_dict[aggregate_record[sub_location_type]] =\
                             aggregate_record['is_launched']
                     if aggregate_record[sub_location_type] not in location_type_id_mapping:
