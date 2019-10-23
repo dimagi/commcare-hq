@@ -26,8 +26,9 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
 
         cls.loc_types = setup_location_types(cls.domain, ['awc'])
         cls.loc = make_loc('awc', type='awc', domain=cls.domain)
+        cls.loc2 = make_loc('awc2', type='awc', domain=cls.domain)
         cls.user = make_user('user', cls.loc)
-        cls.user_sans_aggregation = make_user('user_sans_aggregation', cls.loc)
+        cls.user_sans_aggregation = make_user('user_sans_aggregation', cls.loc2)
         cls.agg_inactive_aww = AggregateInactiveAWW.objects.create(
             awc_site_code=cls.user.raw_username,
             awc_id=cls.loc._id,

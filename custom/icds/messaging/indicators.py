@@ -236,7 +236,9 @@ def is_aggregate_inactive_aww_data_fresh(send_email=False):
     #   or if the last-submission is older than a day due to pillow lag.
     last_submission = AggregateInactiveAWW.objects.filter(
         last_submission__isnull=False
-    ).order_by('-last_submission')[0].last_submission
+    ).aggregate(Max('last_submission'))['last_submission__max']
+    if not last_submission:
+        return False
     is_fresh = last_submission >= (datetime.today() - timedelta(days=1)).date()
     SMS_TEAM = ['{}@{}'.format('icds-sms-rule', 'dimagi.com')]
     if not send_email:
