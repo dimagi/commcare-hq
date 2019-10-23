@@ -12,9 +12,10 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
 from django.views.generic.edit import FormView
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.web import json_response
 
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,

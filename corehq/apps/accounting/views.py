@@ -32,6 +32,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
 
+from corehq.apps.accounting.decorators import always_allow_project_access
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -1218,9 +1219,14 @@ def _get_account_or_404(request, domain):
     return account
 
 
+@always_allow_project_access
 @login_and_domain_required
 def enterprise_dashboard(request, domain):
     account = _get_account_or_404(request, domain)
+
+    if not has_privilege(request, privileges.PROJECT_ACCESS):
+        return HttpResponseRedirect(reverse(EnterpriseBillingStatementsView.urlname, args=(domain,)))
+
     context = {
         'account': account,
         'domain': domain,
