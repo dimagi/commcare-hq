@@ -30,6 +30,7 @@ STATE_TASKS = {
     'agg_ls_awc_mgt_form': _agg_ls_awc_mgt_form,
     'agg_ls_vhnd_form': _agg_ls_vhnd_form,
     'agg_beneficiary_form': _agg_beneficiary_form,
+    'aggregate_df_forms': _aggregate_df_forms,
 }
 
 ALL_STATES_TASKS = {
@@ -47,7 +48,6 @@ NORMAL_TASKS = {
     'agg_ccs_record': _agg_ccs_record_table,
     'agg_awc_table': _agg_awc_table,
     'aggregate_awc_daily': aggregate_awc_daily,
-    'aggregate_df_forms': _aggregate_df_forms,
 }
 
 

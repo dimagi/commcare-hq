@@ -205,9 +205,11 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=Fa
                     for state_id in state_ids
                 ]
                 stage_1_tasks.extend([
-                    icds_aggregation_task.si(
-                        date=calculation_date, func_name='_aggregate_df_forms', force_citus=force_citus
+                    icds_state_aggregation_task.si(
+                        state_id=state_id, date=monthly_date, func_name='_aggregate_df_forms',
+                        force_citus=force_citus
                     )
+                    for state_id in state_ids
                 ])
                 stage_1_tasks.extend([
                     icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_cf_forms', force_citus=force_citus)
@@ -373,7 +375,6 @@ def icds_aggregation_task(self, date, func_name, force_citus=False):
             '_agg_ls_table': _agg_ls_table,
             '_update_months_table': _update_months_table,
             '_daily_attendance_table': _daily_attendance_table,
-            '_aggregate_df_forms': _aggregate_df_forms,
             '_agg_child_health_table': _agg_child_health_table,
             '_ccs_record_monthly_table': _ccs_record_monthly_table,
             '_agg_ccs_record_table': _agg_ccs_record_table,
@@ -416,13 +417,14 @@ def icds_state_aggregation_task(self, state_id, date, func_name, force_citus=Fal
             '_aggregate_child_health_pnc_forms': _aggregate_child_health_pnc_forms,
             '_aggregate_ccs_record_pnc_forms': _aggregate_ccs_record_pnc_forms,
             '_aggregate_delivery_forms': _aggregate_delivery_forms,
+            '_aggregate_df_forms': _aggregate_df_forms,
             '_aggregate_bp_forms': _aggregate_bp_forms,
             '_aggregate_awc_infra_forms': _aggregate_awc_infra_forms,
             '_child_health_monthly_table': _child_health_monthly_table,
             '_agg_ls_awc_mgt_form': _agg_ls_awc_mgt_form,
             '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
             '_agg_beneficiary_form': _agg_beneficiary_form,
-            '_agg_thr_table': _agg_thr_table
+            '_agg_thr_table': _agg_thr_table,
         }[func_name]
 
         db_alias = get_icds_ucr_citus_db_alias()
@@ -466,8 +468,8 @@ def _aggregate_gm_forms(state_id, day):
 
 
 @track_time
-def _aggregate_df_forms(day):
-    AggregateChildHealthDailyFeedingForms.aggregate(force_to_date(day))
+def _aggregate_df_forms(state_id, day):
+    AggregateChildHealthDailyFeedingForms.aggregate(state_id, day)
 
 
 @track_time
