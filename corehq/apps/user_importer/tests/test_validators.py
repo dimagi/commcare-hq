@@ -25,7 +25,9 @@ TEST_CASES = [
     (
         [
             {'username': 'jack black <email'},
-            {'username': factory.user_name()}
+            {'username': factory.user_name()},
+            {'username': ''},
+            {},
         ],
         UsernameValidator('domain'),
         {0: UsernameValidator.error_message}

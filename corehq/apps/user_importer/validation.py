@@ -67,12 +67,13 @@ class UsernameValidator(ImportValidator):
 
     def validate_spec(self, spec):
         username = spec.get('username')
-        try:
-            normalize_username(str(username), self.domain)
-        except TypeError:
-            pass
-        except ValidationError:
-            return self.error_message
+        if username:
+            try:
+                normalize_username(str(username), self.domain)
+            except TypeError:
+                pass
+            except ValidationError:
+                return self.error_message
 
 
 class IsActive(ImportValidator):
