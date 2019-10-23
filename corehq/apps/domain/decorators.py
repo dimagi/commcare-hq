@@ -113,7 +113,7 @@ def login_and_domain_required(view_func):
             else:
                 return call_view()
         elif user.is_superuser:
-            if domain_obj.restrict_superusers and not _page_is_whitelist(req.path, domain_obj.name):
+            if domain_obj.restrict_superusers and not _page_is_whitelisted(req.path, domain_obj.name):
                 raise Http404()
             if not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
@@ -147,11 +147,9 @@ def _is_missing_two_factor(view_fn, request):
             and not request.user.is_verified())
 
 
-def _page_is_whitelist(path, domain):
-    pages_not_restricted_for_dimagi = getattr(settings, "PAGES_NOT_RESTRICTED_FOR_DIMAGI", tuple())
-    return bool([
-        x for x in pages_not_restricted_for_dimagi if x % {'domain': domain} == path
-    ])
+def _page_is_whitelisted(path, domain):
+    safe_paths = {page.format(domain=domain) for page in settings.PAGES_NOT_RESTRICTED_FOR_DIMAGI}
+    return path in safe_paths
 
 
 def _can_access_project_page(request):
@@ -472,7 +470,7 @@ def domain_admin_required_ex(redirect_page_name=None):
                 raise Http404()
 
             if not (
-                _page_is_whitelist(request.path, domain_name) and request.user.is_superuser
+                _page_is_whitelisted(request.path, domain_name) and request.user.is_superuser
             ) and not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
