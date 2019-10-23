@@ -1,10 +1,12 @@
 from faker import Faker
+from mock import patch
 from testil import assert_raises
 
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.validation import (
     Duplicates,
     EmailValidator,
+    ExistingUsers,
     GroupValidator,
     IsActive,
     LongUsernames,
@@ -158,3 +160,18 @@ def _test_duplicates(specs, duplicates, check=None):
 
     for spec in specs:
         yield _test, spec
+
+
+def test_existing_users():
+    user_specs = [
+        {'username': 'hello'},
+        {'username': 'bob'},
+    ]
+
+    with patch('corehq.apps.user_importer.validation.get_existing_usernames',
+               return_value=['bob@domain.commcarehq.org']):
+        validator = ExistingUsers('domain', user_specs)
+
+    validator(user_specs[0])
+    with assert_raises(UserUploadError):
+        validator(user_specs[1])

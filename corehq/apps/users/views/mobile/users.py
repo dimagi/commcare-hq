@@ -3,6 +3,8 @@ import re
 from collections import defaultdict
 from datetime import datetime
 
+from braces.views import JsonRequestResponseMixin
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -18,18 +20,10 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
-
-from braces.views import JsonRequestResponseMixin
-from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
-
-from dimagi.utils.web import json_response
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -60,7 +54,6 @@ from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.user_importer.importer import (
     UserUploadError,
-    check_existing_usernames,
     check_headers,
 )
 from corehq.apps.user_importer.tasks import import_users_and_groups
@@ -101,13 +94,14 @@ from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
-    StringTypeRequiredError,
     WorkbookJSONError,
     WorksheetNotFound,
-    enforce_string_type,
     get_workbook,
 )
-
+from dimagi.utils.web import json_response
+from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -978,20 +972,10 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
-        # convert to list here because iterator destroys the row once it has
-        # been read the first time
-        self.user_specs = list(self.user_specs)
-
-        try:
-            check_existing_usernames(self.user_specs, self.domain)
-        except UserUploadError as e:
-            messages.error(request, _(str(e)))
-            return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
-
         task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
         task = import_users_and_groups.delay(
             self.domain,
-            self.user_specs,
+            list(self.user_specs),
             list(self.group_specs),
         )
         task_ref.set_task(task)

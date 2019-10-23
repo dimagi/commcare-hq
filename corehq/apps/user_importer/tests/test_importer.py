@@ -1,15 +1,13 @@
 from copy import deepcopy
 
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 
 from mock import patch
 
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.models import Domain
-from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.importer import (
-    check_existing_usernames,
     create_or_update_users_and_groups,
 )
 from corehq.apps.user_importer.tasks import import_users_and_groups
@@ -307,16 +305,3 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             list([]),
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')
-
-
-class TestUserBulkUploadUtils(SimpleTestCase):
-    def test_existing_username_with_no_id(self):
-        user_specs = [
-            {
-                'username': 'hello',
-            },
-        ]
-
-        with patch('corehq.apps.user_importer.importer.get_existing_usernames',
-                return_value=['hello@domain.commcarehq.org']):
-            self.assertRaises(UserUploadError, check_existing_usernames, user_specs, 'domain')

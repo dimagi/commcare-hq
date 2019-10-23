@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
+from corehq.apps.users.dbaccessors.all_commcare_users import get_existing_usernames
+from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.domain.forms import clean_password
@@ -35,6 +37,7 @@ def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allow
         EmailValidator(domain),
         GroupValidator(domain, allowed_groups),
         RoleValidator(domain, allowed_roles),
+        ExistingUsers(domain, all_specs),
     ]
 
 
@@ -236,3 +239,41 @@ def is_password(password):
         if c != "*":
             return True
     return False
+
+
+class ExistingUsers(ImportValidator):
+    error_message = _("The username already belongs to a user. Specify and ID to update the user.")
+
+    def __init__(self, domain, all_sepcs):
+        super().__init__(domain)
+        self.all_specs = all_sepcs
+        self.existing_usernames = self.get_exising_users()
+        print(self.existing_usernames)
+
+    def get_exising_users(self):
+        usernames_without_ids = set()
+
+        for row in self.all_specs:
+            username = row.get('username')
+            if row.get('user_id') or not username:
+                continue
+
+            try:
+                usernames_without_ids.add(normalize_username(username, self.domain))
+            except ValidationError:
+                pass
+
+        existing_usernames = set()
+        for usernames in chunked(usernames_without_ids, 500):
+            existing_usernames.update(get_existing_usernames(usernames))
+
+        return existing_usernames
+
+    def validate_spec(self, spec):
+        try:
+            username = normalize_username(spec.get('username'), self.domain)
+        except ValidationError:
+            return
+
+        if username in self.existing_usernames:
+            return self.error_message

@@ -1,13 +1,15 @@
 import logging
 from collections import defaultdict
 
+from django.utils.translation import ugettext as _
+
 from couchdbkit.exceptions import (
     BulkSaveError,
     MultipleResultsFound,
     ResourceNotFound,
 )
-from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext as _
+
+from dimagi.utils.parsing import string_to_boolean
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -16,15 +18,12 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.exceptions import UserUploadError
-from corehq.apps.user_importer.validation import get_user_import_validators, is_password
-from corehq.apps.users.dbaccessors.all_commcare_users import (
-    get_existing_usernames,
+from corehq.apps.user_importer.validation import (
+    get_user_import_validators,
+    is_password,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models import CommCareUser, CouchUser, UserRole
 from corehq.apps.users.util import normalize_username, raw_username
-from dimagi.utils.chunked import chunked
-from dimagi.utils.parsing import string_to_boolean
 
 required_headers = set(['username'])
 allowed_headers = set([
@@ -60,32 +59,6 @@ def check_headers(user_specs):
                 label=label, headers=', '.join(header_set)))
     if messages:
         raise UserUploadError('\n'.join(messages))
-
-
-def check_existing_usernames(user_specs, domain):
-    usernames_without_ids = set()
-    invalid_usernames = set()
-
-    for row in user_specs:
-        username = row.get('username')
-        user_id = row.get('user_id')
-        if username and user_id:
-            continue
-        try:
-            usernames_without_ids.add(normalize_username(username, domain))
-        except ValidationError:
-            invalid_usernames.add(username)
-
-    if invalid_usernames:
-        raise UserUploadError(_('The following usernames are invalid: ' + ', '.join(invalid_usernames)))
-
-    existing_usernames = set()
-    for usernames in chunked(usernames_without_ids, 500):
-        existing_usernames.update(get_existing_usernames(usernames))
-
-    if existing_usernames:
-        raise UserUploadError(_("The following usernames already exist and must "
-            "have an id specified to be updated: " + ', '.join(existing_usernames)))
 
 
 class GroupMemoizer(object):
