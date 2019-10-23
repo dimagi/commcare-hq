@@ -57,13 +57,13 @@ class FeaturePreview(StaticToggle):
         return has_privilege and can_self_enable
 
 
-@quickcache([])
 def all_previews():
-    return list(all_toggles_by_name_in_scope(globals()).values())
+    return list(all_previews_by_name().values())
 
 
+@quickcache([])
 def all_previews_by_name():
-    return all_toggles_by_name_in_scope(globals())
+    return all_toggles_by_name_in_scope(globals(), toggle_class=FeaturePreview)
 
 
 @quickcache(['domain'])
