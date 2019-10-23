@@ -79,29 +79,6 @@ def redirect_for_login_or_domain(request, login_url=None):
     return redirect_to_login(request.get_full_path(), login_url)
 
 
-def _page_is_whitelist(path, domain):
-    pages_not_restricted_for_dimagi = getattr(settings, "PAGES_NOT_RESTRICTED_FOR_DIMAGI", tuple())
-    return bool([
-        x for x in pages_not_restricted_for_dimagi if x % {'domain': domain} == path
-    ])
-
-
-def _can_access_project_page(request):
-    # always allow for non-SaaS deployments
-    if not settings.IS_SAAS_ENVIRONMENT:
-        return True
-    return has_privilege(request, privileges.PROJECT_ACCESS) or (
-        hasattr(request, 'always_allow_project_access') and request.always_allow_project_access
-    )
-
-
-def _redirect_to_project_access_upgrade(request):
-    from corehq.apps.domain.views.accounting import SubscriptionUpgradeRequiredView
-    return SubscriptionUpgradeRequiredView().get(
-        request, request.domain, privileges.PROJECT_ACCESS
-    )
-
-
 def login_and_domain_required(view_func):
 
     @wraps(view_func)
@@ -166,6 +143,29 @@ def login_and_domain_required(view_func):
             raise Http404
 
     return _inner
+
+
+def _page_is_whitelist(path, domain):
+    pages_not_restricted_for_dimagi = getattr(settings, "PAGES_NOT_RESTRICTED_FOR_DIMAGI", tuple())
+    return bool([
+        x for x in pages_not_restricted_for_dimagi if x % {'domain': domain} == path
+    ])
+
+
+def _can_access_project_page(request):
+    # always allow for non-SaaS deployments
+    if not settings.IS_SAAS_ENVIRONMENT:
+        return True
+    return has_privilege(request, privileges.PROJECT_ACCESS) or (
+        hasattr(request, 'always_allow_project_access') and request.always_allow_project_access
+    )
+
+
+def _redirect_to_project_access_upgrade(request):
+    from corehq.apps.domain.views.accounting import SubscriptionUpgradeRequiredView
+    return SubscriptionUpgradeRequiredView().get(
+        request, request.domain, privileges.PROJECT_ACCESS
+    )
 
 
 def _ensure_request_couch_user(request):
