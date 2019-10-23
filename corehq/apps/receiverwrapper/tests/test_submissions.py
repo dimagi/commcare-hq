@@ -8,6 +8,8 @@ from django.test.client import Client
 from django.test.utils import override_settings
 from django.urls import reverse
 
+from mock import PropertyMock, patch
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
@@ -30,6 +32,7 @@ class SubmissionTest(TestCase):
         self.client = Client()
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])
+        self.demo_mode_url = self.url + '?submit_mode=demo'
 
         self.use_sql = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False)
 
@@ -116,6 +119,55 @@ class SubmissionTest(TestCase):
         form = FormAccessors(self.domain.name).get_form(xform_id)
         self.assertEqual(1, len(form.history))
         self.assertEqual(self.couch_user.get_id, form.history[0].user)
+
+
+    """
+    Demo Mode means the request is being sent with param submit_mode=demo
+    The user id in the form may/may not be DEMO_USER_ID
+    The CommCareUser submitting the form may/may not be a demo user
+    """
+    """
+    In case we are ignoring all demo user form submissions, the form is ignored if submitted by a demo user
+    Else Only forms submitted with user ID as demo user are processed.
+    """
+
+    def test_form_with_demo_user_id_in_demo_mode(self):
+        response = self._submit('demo_mode_simple_form.xml', url=self.demo_mode_url)
+        self.assertTrue('X-CommCareHQ-FormID' in response, 'Demo user ID form not processed in demo mode')
+
+    def test_form_with_non_demo_user_id_in_demo_mode(self):
+        response = self._submit('simple_form.xml', url=self.demo_mode_url)
+        self.assertFalse('X-CommCareHQ-FormID' in response, 'Non Demo ID form processed in demo mode')
+
+    @patch('corehq.apps.users.models.CommCareUser.is_demo_user', return_value=True)
+    @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
+    def test_ignore_all_demo_user_submissions_in_demo_mode(self, *_):
+        response = self._submit('demo_mode_simple_form.xml', url=self.demo_mode_url)
+        self.assertFalse('X-CommCareHQ-FormID' in response, 'Demo user ID form processed in non-demo mode')
+        response = self._submit('simple_form.xml', url=self.demo_mode_url)
+        self.assertFalse('X-CommCareHQ-FormID' in response, 'Non demo user ID form processed in demo mode')
+
+
+    """
+    In case we are ignoring all demo user form submissions, the form is ignored if submitted by a demo user
+    Else process all forms.
+    """
+
+    def test_form_with_demo_user_id_in_normal_mode(self):
+        response = self._submit('demo_mode_simple_form.xml')
+        self.assertTrue('X-CommCareHQ-FormID' in response, 'Demo user ID form not processed in normal mode')
+
+    def test_form_with_non_demo_user_id_in_normal_mode(self):
+        response = self._submit('simple_form.xml')
+        self.assertTrue('X-CommCareHQ-FormID' in response, 'Non Demo user ID form not processed in normal mode')
+
+    @patch('corehq.apps.users.models.CommCareUser.is_demo_user', return_value=True)
+    @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
+    def test_ignore_all_demo_user_submissions_in_normal_mode(self, *_):
+        response = self._submit('demo_mode_simple_form.xml')
+        self.assertFalse('X-CommCareHQ-FormID' in response, 'Demo user ID form processed in non-demo mode')
+        response = self._submit('simple_form.xml')
+        self.assertFalse('X-CommCareHQ-FormID' in response, 'Non demo user ID form processed in demo mode')
 
 
 @use_sql_backend
