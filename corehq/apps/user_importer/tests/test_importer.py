@@ -231,6 +231,20 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertTrue(self.user.is_active)
 
+    def test_update_user_no_username(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec()],
+            [],
+        )
+        self.assertIsNotNone(self.user)
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(user_id=self.user._id, username='')],
+            [],
+        )
+
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
     def setUp(self):

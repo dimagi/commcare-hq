@@ -249,7 +249,6 @@ class ExistingUsers(ImportValidator):
         super().__init__(domain)
         self.all_specs = all_sepcs
         self.existing_usernames = self.get_exising_users()
-        print(self.existing_usernames)
 
     def get_exising_users(self):
         usernames_without_ids = set()
