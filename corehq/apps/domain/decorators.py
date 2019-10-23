@@ -108,6 +108,7 @@ def login_and_domain_required(view_func):
     def _inner(req, domain, *args, **kwargs):
         user = req.user
         domain_name, domain = load_domain(req, domain)
+        def call_view(): return view_func(req, domain_name, *args, **kwargs)
         if not domain:
             msg = _('The domain "{domain}" was not found.').format(domain=domain_name)
             raise Http404(msg)
@@ -136,7 +137,7 @@ def login_and_domain_required(view_func):
                 elif not _can_access_project_page(req):
                     return _redirect_to_project_access_upgrade(req)
                 else:
-                    return view_func(req, domain_name, *args, **kwargs)
+                    return call_view()
 
             elif (
                 _page_is_whitelist(req.path, domain_name) or
@@ -145,7 +146,7 @@ def login_and_domain_required(view_func):
                 # superusers can circumvent domain permissions.
                 if not _can_access_project_page(req):
                     return _redirect_to_project_access_upgrade(req)
-                return view_func(req, domain_name, *args, **kwargs)
+                return call_view()
             elif domain.is_snapshot:
                 # snapshots are publicly viewable
                 return require_previewer(view_func)(req, domain_name, *args, **kwargs)
@@ -158,7 +159,7 @@ def login_and_domain_required(view_func):
             req.path.startswith('/a/{}/reports/custom'.format(domain_name)) and
             PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
         ):
-            return view_func(req, domain_name, *args, **kwargs)
+            return call_view()
         else:
             login_url = reverse('domain_login', kwargs={'domain': domain_name})
             return redirect_for_login_or_domain(req, login_url=login_url)
