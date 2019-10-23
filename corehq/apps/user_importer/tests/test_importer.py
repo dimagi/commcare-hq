@@ -23,15 +23,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.domain_name = 'mydomain'
         cls.domain = Domain(name=cls.domain_name)
         cls.domain.save()
-        cls.user_specs = [{
-            'username': 'hello',
-            'name': 'Another One',
-            'language': None,
-            'is_active': 'True',
-            'phone-number': '23424123',
-            'password': 123,
-            'email': None
-        }]
 
         permissions = Permissions(edit_apps=True, view_reports=True)
         cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
@@ -47,16 +38,27 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @property
     def user(self):
         return CommCareUser.get_by_username('{}@{}.commcarehq.org'.format(
-            self.user_specs[0]['username'],
+            'hello',
             self.domain.name))
 
+    def _get_spec(self, **kwargs):
+        spec = {
+            'username': 'hello',
+            'name': 'Another One',
+            'language': None,
+            'is_active': 'True',
+            'phone-number': '23424123',
+            'password': 123,
+            'email': None
+        }
+        spec.update(kwargs)
+        return spec
+
     def test_upload_with_missing_user_id(self):
-        spec = deepcopy(self.user_specs[0])
-        spec['user_id'] = 'missing'
         import_users_and_groups(
             self.domain.name,
-            [spec],
-            list([]),
+            [self._get_spec(user_id='missing')],
+            [],
         )
 
         self.assertIsNone(self.user)
@@ -64,14 +66,12 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_not_list(self):
         self.setup_locations()
-        updated_user_spec = deepcopy(self.user_specs[0])
 
         # location_code can also just be string instead of array for single location assignmentss
-        updated_user_spec["location_code"] = self.loc1.site_code
         import_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
-            list([]),
+            [self._get_spec(location_code=self.loc1.site_code)],
+            [],
         )
         self.assertEqual(self.user.location_id, self.loc1._id)
         self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
@@ -81,27 +81,22 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_unknown_site_code(self):
         self.setup_locations()
-        updated_user_spec = deepcopy(self.user_specs[0])
-        updated_user_spec["location_code"] = ['unknownsite']
 
         # location_code should be an array of multiple excel columns
         # with self.assertRaises(UserUploadError):
         result = create_or_update_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
+            [self._get_spec(location_code='unknownsite')],
         )
         self.assertEqual(len(result["rows"]), 1)
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_add(self):
         self.setup_locations()
-        updated_user_spec = deepcopy(self.user_specs[0])
-
-        updated_user_spec["location_code"] = [a.site_code for a in [self.loc1, self.loc2]]
         import_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
-            list([]),
+            [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
+            [],
         )
         # first location should be primary location
         self.assertEqual(self.user.location_id, self.loc1._id)
@@ -114,22 +109,18 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_remove(self):
         self.setup_locations()
-        updated_user_spec = deepcopy(self.user_specs[0])
         # first assign both locations
-        updated_user_spec["location_code"] = [a.site_code for a in [self.loc1, self.loc2]]
         import_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
-            list([]),
+            [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
+            [],
         )
 
         # deassign all locations
-        updated_user_spec["location_code"] = []
-        updated_user_spec["user_id"] = self.user._id
         import_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
-            list([]),
+            [self._get_spec(location_code=[], user_id=self.user._id)],
+            [],
         )
 
         # user should have no locations
@@ -140,13 +131,10 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_primary_location_replace(self):
         self.setup_locations()
-        updated_user_spec = deepcopy(self.user_specs[0])
-
         # first assign to loc1
-        updated_user_spec["location_code"] = [a.site_code for a in [self.loc1, self.loc2]]
         create_or_update_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
+            [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
         )
 
         # user's primary location should be loc1
@@ -156,11 +144,9 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertListEqual(self.user.assigned_location_ids, [self.loc1._id, self.loc2._id])
 
         # reassign to loc2
-        updated_user_spec["location_code"] = [self.loc2.site_code]
-        updated_user_spec["user_id"] = self.user._id
         create_or_update_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
+            [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)],
         )
 
         # user's location should now be loc2
@@ -172,21 +158,17 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_replace(self):
         self.setup_locations()
-        updated_user_spec = deepcopy(self.user_specs[0])
 
         # first assign to loc1
-        updated_user_spec["location_code"] = [self.loc1.site_code]
         create_or_update_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
+            [self._get_spec(location_code=[self.loc1.site_code])]
         )
 
         # reassign to loc2
-        updated_user_spec["location_code"] = [self.loc2.site_code]
-        updated_user_spec["user_id"] = self.user._id
         create_or_update_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
+            [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)]
         )
 
         # user's location should now be loc2
@@ -202,13 +184,10 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         """
         Test that bulk upload doesn't choke if the user's name is a number
         """
-        updated_user_spec = deepcopy(self.user_specs[0])
-        updated_user_spec["name"] = 1234
-
         import_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
-            list([]),
+            [self._get_spec(name=1234)],
+            [],
         )
         self.assertEqual(self.user.full_name, "1234")
 
@@ -217,13 +196,10 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         This test confirms that a name of None doesn't set the users name to
         "None" or anything like that.
         """
-        updated_user_spec = deepcopy(self.user_specs[0])
-        updated_user_spec["name"] = None
-
         import_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
-            list([]),
+            [self._get_spec(name=None)],
+            [],
         )
         self.assertEqual(self.user.full_name, "")
 
@@ -231,26 +207,21 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         """
         Ensure that bulk upload throws a proper error when the email has caps in it
         """
-        updated_user_spec = deepcopy(self.user_specs[0])
-        updated_user_spec["email"] = 'IlOvECaPs@gmaiL.Com'
-
+        email = 'IlOvECaPs@gmaiL.Com'
         import_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
-            list([]),
+            [self._get_spec(email=email)],
+            [],
         )
-        self.assertEqual(self.user.email, updated_user_spec['email'].lower())
+        self.assertEqual(self.user.email, email.lower())
 
     def test_set_role(self):
-        updated_user_spec = deepcopy(self.user_specs[0])
-        updated_user_spec["role"] = self.role.name
-
         import_users_and_groups(
             self.domain.name,
-            list([updated_user_spec]),
-            list([]),
+            [self._get_spec(role=self.role.name)],
+            [],
         )
-        self.assertEqual(self.user.get_role(self.domain_name).name, updated_user_spec['role'])
+        self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
@@ -291,7 +262,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         rows = import_users_and_groups(
             self.domain.name,
             list(user_spec + self.user_specs),
-            list([]),
+            [],
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "'password' values must be unique")
 
@@ -302,6 +273,6 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         rows = import_users_and_groups(
             self.domain.name,
             list([updated_user_spec]),
-            list([]),
+            [],
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')
