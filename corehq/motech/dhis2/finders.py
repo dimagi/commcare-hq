@@ -1,7 +1,10 @@
 from collections import namedtuple
 from functools import partial
 
+from django.utils.translation import ugettext as _
+
 from memoized import memoized_property
+from requests import HTTPError
 
 from corehq.motech.dhis2.const import DHIS2_API_VERSION
 from corehq.motech.finders import MATCH_FUNCTIONS, MATCH_TYPE_EXACT
@@ -37,7 +40,18 @@ class TrackedEntityInstanceFinder:
         result has a score > 1, select the best candidate if it exceeds
         a confidence margin. Otherwise return all results with score > 1.
         """
-        results = self.fetch_query_results(case_trigger_info)
+        # For new cases, this is the first API query. If something is
+        # wrong with the configuration or the API, this is the first
+        # chance to find out about it.
+        try:
+            results = self.fetch_query_results(case_trigger_info)
+        except HTTPError as err:
+            err.args += (_(
+                "An error occurred on the first API request to DHIS2. Please "
+                "refer to MOTECH Logs to confirm that the URL and the request "
+                "parameters are correct."
+            ),)
+            raise
         candidate_scores = []
         for instance in results:
             score = self.get_score(instance, case_trigger_info)
