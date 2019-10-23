@@ -38,7 +38,6 @@ class TestAWWSubmissionPerformanceIndicator(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         super(TestAWWSubmissionPerformanceIndicator, cls).tearDownClass()
-        # warehouse entities are cleaned up by db transaction rollback
 
     @property
     def now(self):
