@@ -49,8 +49,16 @@ def get_importer():
             {'column': 'Referencia', 'property': 'celula'},
             {'column': 'genero', 'property': 'genero'},
             {'column': 'data_do_nacimento', 'property': 'data_do_nacimento'},
-            {'column': 'filhos', 'property': 'numero_de_filhos'},
-            {'column': 'testados', 'property': 'numero_de_filhos_testados'},
+            {
+                'column': 'filhos',
+                'commcare_data_type': 'cc_integer',
+                'property': 'numero_de_filhos'
+            },
+            {
+                'column': 'testados',
+                'commcare_data_type': 'cc_integer',
+                'property': 'numero_de_filhos_testados'
+            },
             {'column': 'positivos', 'property': 'numero_de_filhos_positivos'},
             {'column': 'serologia', 'property': 'parceiro_serologia'},
             {'column': 'conviventes', 'property': 'numero_conviventes'},
@@ -144,9 +152,9 @@ def test_get_case_properties():
             'nid': '01234567/12/01234',
             'nome': 'David John',
             'numero_conviventes': None,
-            'numero_de_filhos': 3.0,
+            'numero_de_filhos': 3,
             'numero_de_filhos_positivos': None,
-            'numero_de_filhos_testados': 3.0,
+            'numero_de_filhos_testados': 3,
             'parceiro_serologia': 'positive',
             'provincia': 'Maputo',
             'tarv_elegivel': 1
