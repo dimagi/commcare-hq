@@ -72,6 +72,9 @@ CHILD_CASES = 'child_cases'
 
 ODATA_FEED = 'odata_feeed'
 
+PROJECT_ACCESS = 'project_access'
+
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -111,6 +114,7 @@ MAX_PRIVILEGES = [
     CASE_SHARING_GROUPS,
     CHILD_CASES,
     ODATA_FEED,
+    PROJECT_ACCESS,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -162,4 +166,5 @@ class Titles(object):
             CASE_SHARING_GROUPS: _('Case Sharing via Groups'),
             CHILD_CASES: _('Child Cases'),
             ODATA_FEED: _('Power BI / Tableau Integration'),
+            PROJECT_ACCESS: _("Project Features"),
         }.get(privilege, privilege)

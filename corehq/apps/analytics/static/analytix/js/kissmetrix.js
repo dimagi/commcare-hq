@@ -183,7 +183,7 @@ hqDefine('analytix/js/kissmetrix', [
     */
     _ready.done(function () {
         trackOutboundLink("#cta-trial-days-remaining", "clicked on Days Remaining CTA in trial banner", {});
-        internalClick('#cta-trial-tour-button', 'clicked Get Tour CTA in trial banner', {});
+        trackOutboundLink("#cta-community-sub", "clicked on Subscribe to Professional Plan in Community Banner", {});
     });
 
     return {
