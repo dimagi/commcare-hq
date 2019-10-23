@@ -9,6 +9,7 @@ import corehq.motech.value_source
 from corehq.motech.const import COMMCARE_DATA_TYPE_DECIMAL
 from corehq.motech.value_source import (
     CaseProperty,
+    CasePropertyJsonPath,
     CaseTriggerInfo,
     ConstantString,
     FormQuestionMap,
@@ -191,6 +192,43 @@ class WrapTests(SimpleTestCase):
         }
         foo = ValueSource.wrap(doc)
         self.assertIsNone(foo)
+
+
+class CasePropertyJsonPathTests(SimpleTestCase):
+
+    def test_blank_path(self):
+        with self.assertRaises(BadValueError):
+            CasePropertyJsonPath.wrap({
+                "case_property": "bar",
+                "jsonpath_str": "",
+            })
+
+    def test_no_values(self):
+        json_doc = {"foo": {"bar": "baz"}}
+        value_source = CasePropertyJsonPath.wrap({
+            "case_property": "bar",
+            "jsonpath_str": "foo.qux",
+        })
+        external_value = value_source.get_external_value(json_doc)
+        self.assertIsNone(external_value)
+
+    def test_one_value(self):
+        json_doc = {"foo": {"bar": "baz"}}
+        value_source = CasePropertyJsonPath.wrap({
+            "case_property": "bar",
+            "jsonpath_str": "foo.bar",
+        })
+        external_value = value_source.get_external_value(json_doc)
+        self.assertEqual(external_value, "baz")
+
+    def test_many_values(self):
+        json_doc = {"foo": [{"bar": "baz"}, {"bar": "qux"}]}
+        value_source = CasePropertyJsonPath.wrap({
+            "case_property": "bar",
+            "jsonpath_str": "foo[*].bar",
+        })
+        external_value = value_source.get_external_value(json_doc)
+        self.assertEqual(external_value, ["baz", "qux"])
 
 
 def test_doctests():
