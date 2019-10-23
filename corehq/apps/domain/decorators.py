@@ -107,14 +107,14 @@ def login_and_domain_required(view_func):
     @wraps(view_func)
     def _inner(req, domain, *args, **kwargs):
         user = req.user
-        domain_name, domain = load_domain(req, domain)
+        domain_name, domain_obj = load_domain(req, domain)
         def call_view(): return view_func(req, domain_name, *args, **kwargs)
-        if not domain:
+        if not domain_obj:
             msg = _('The domain "{domain}" was not found.').format(domain=domain_name)
             raise Http404(msg)
 
         if user.is_authenticated and user.is_active:
-            if not domain.is_active:
+            if not domain_obj.is_active:
                 msg = _(
                     'The project space "{domain}" has not yet been activated. '
                     'Please report an issue if you think this is a mistake.'
@@ -122,10 +122,10 @@ def login_and_domain_required(view_func):
                 messages.info(req, msg)
                 return HttpResponseRedirect(reverse("domain_select"))
             couch_user = _ensure_request_couch_user(req)
-            if couch_user.is_member_of(domain):
+            if couch_user.is_member_of(domain_obj):
                 # If the two factor toggle is on, require it for all users.
                 if (
-                    _two_factor_required(view_func, domain, couch_user)
+                    _two_factor_required(view_func, domain_obj, couch_user)
                     and not getattr(req, 'bypass_two_factor', False)
                     and not user.is_verified()
                 ):
@@ -141,16 +141,16 @@ def login_and_domain_required(view_func):
 
             elif (
                 _page_is_whitelist(req.path, domain_name) or
-                not domain.restrict_superusers
+                not domain_obj.restrict_superusers
             ) and user.is_superuser:
                 # superusers can circumvent domain permissions.
                 if not _can_access_project_page(req):
                     return _redirect_to_project_access_upgrade(req)
                 return call_view()
-            elif domain.is_snapshot:
+            elif domain_obj.is_snapshot:
                 # snapshots are publicly viewable
                 return require_previewer(view_func)(req, domain_name, *args, **kwargs)
-            elif couch_user.is_web_user() and domain.allow_domain_requests:
+            elif couch_user.is_web_user() and domain_obj.allow_domain_requests:
                 from corehq.apps.users.views import DomainRequestView
                 return DomainRequestView.as_view()(req, *args, **kwargs)
             else:
