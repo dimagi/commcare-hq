@@ -13,7 +13,7 @@ from memoized import memoized
 from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProvider
+from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProviderV1
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.locations.dbaccessors import (
     get_user_ids_from_primary_location_ids,
@@ -64,7 +64,7 @@ def _get_report_fixture_for_user(domain, report_id, ota_user):
     :param report_id: the index to the result from get_report_configs()
     :param ota_user: the OTARestoreCommCareUser for which to get the report fixture
     """
-    xml = ReportFixturesProvider.report_config_to_v1_fixture(
+    xml = ReportFixturesProviderV1.report_config_to_v1_fixture(
         get_report_configs(domain)[report_id], ota_user
     )
     return etree.tostring(xml)

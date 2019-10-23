@@ -54,7 +54,36 @@ def _should_sync(restore_state):
     )
 
 
-class BaseReportFixturesProvider(FixtureProvider):
+class ReportFixturesProvider(FixtureProvider):
+    id = 'commcare-reports-v1-v2'
+
+    def __call__(self, restore_state):
+        """
+        Generates a report fixture for mobile that can be used by a report module
+        """
+        if not self.uses_reports(restore_state):
+            return []
+
+        restore_user = restore_state.restore_user
+        apps = self._get_apps(restore_state, restore_user)
+        fixtures = []
+
+        needed_versions = {
+            app.mobile_ucr_restore_version
+            for app in apps
+        }
+
+        providers = [
+            ReportFixturesProviderV1(),
+            ReportFixturesProviderV2()
+        ]
+
+        report_configs = self._get_report_configs(apps)
+        for provider in providers:
+            fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
+
+        return fixtures
+
     def uses_reports(self, restore_state):
         restore_user = restore_state.restore_user
         if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
@@ -99,27 +128,19 @@ class BaseReportFixturesProvider(FixtureProvider):
         }
 
 
-class ReportFixturesProvider(BaseReportFixturesProvider):
+report_fixture_generator = ReportFixturesProvider()
+
+
+class ReportFixturesProviderV1(object):
     id = 'commcare:reports'
 
-    def __call__(self, restore_state):
+    def __call__(self, restore_state, restore_user, needed_versions, report_configs):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        if not self.uses_reports(restore_state):
-            return []
-
-        restore_user = restore_state.restore_user
-        apps = self._get_apps(restore_state, restore_user)
         fixtures = []
-
-        needed_versions = {
-            app.mobile_ucr_restore_version
-            for app in apps
-        }
-
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
-            fixtures.extend(self._v1_fixture(restore_user, list(self._get_report_configs(apps).values())))
+            fixtures.extend(self._v1_fixture(restore_user, report_configs))
         else:
             fixtures.extend(self._empty_v1_fixture(restore_user))
 
@@ -151,7 +172,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
     @staticmethod
     def report_config_to_v1_fixture(report_config, restore_user):
         rows_elem, filters_elem = generate_rows_and_filters(
-            report_config, restore_user, ReportFixturesProvider._get_v1_report_elem
+            report_config, restore_user, ReportFixturesProviderV1._get_v1_report_elem
         )
 
         report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
@@ -189,27 +210,16 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         return rows_elem
 
 
-class ReportFixturesProviderV2(BaseReportFixturesProvider):
+class ReportFixturesProviderV2(object):
     id = 'commcare-reports'
 
-    def __call__(self, restore_state):
+    def __call__(self, restore_state, restore_user, needed_versions, report_configs):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        if not self.uses_reports(restore_state):
-            return []
-
-        restore_user = restore_state.restore_user
-        apps = self._get_apps(restore_state, restore_user)
         fixtures = []
 
-        needed_versions = {
-            app.mobile_ucr_restore_version
-            for app in apps
-        }
-
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
-            report_configs = list(self._get_report_configs(apps).values())
             synced_fixtures, purged_fixture_ids = self._relevant_report_configs(restore_state, report_configs)
             fixtures.extend(self._v2_fixtures(restore_user, synced_fixtures))
             for report_uuid in purged_fixture_ids:
@@ -348,10 +358,6 @@ def _utcnow():
 def _last_sync_time(domain, user_id):
     timezone = get_timezone_for_user(user_id, domain)
     return ServerTime(_utcnow()).user_time(timezone).done().isoformat()
-
-
-report_fixture_generator = ReportFixturesProvider()
-report_fixture_v2_generator = ReportFixturesProviderV2()
 
 
 def generate_rows_and_filters(report_config, restore_user, get_rows_element):

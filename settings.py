@@ -483,7 +483,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.products.fixtures.product_fixture_generator",
     "corehq.apps.programs.fixtures.program_fixture_generator",
     "corehq.apps.app_manager.fixtures.report_fixture_generator",
-    "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.locations.fixtures.related_locations_fixture_generator",

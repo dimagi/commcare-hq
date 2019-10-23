@@ -9,7 +9,7 @@ from mock import Mock, patch
 from casexml.apps.phone.models import UCRSyncLog
 
 from corehq.apps.app_manager.fixtures.mobile_ucr import (
-    ReportFixturesProvider,
+    ReportFixturesProviderV1,
     ReportFixturesProviderV2,
 )
 from corehq.apps.app_manager.models import (
@@ -39,7 +39,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
 
     def test_v1_report_fixtures_provider(self):
         report_id = 'deadbeef'
-        provider = ReportFixturesProvider()
+        provider = ReportFixturesProviderV1()
         report_app_config = ReportAppConfig(
             uuid='c0ffee',
             report_id=report_id,
