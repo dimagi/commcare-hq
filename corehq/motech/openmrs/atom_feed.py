@@ -371,10 +371,11 @@ def get_updates_from_observations(observations, mappings):
     """
     fields = {}
     for obs in observations:
-        if obs['concept']['uuid'] in mappings:
-            for mapping in mappings[obs['concept']['uuid']]:
-                fields[mapping.case_property] = mapping.value.deserialize(obs['value'])
-        if obs['groupMembers']:
+        concept_uuid = obs.get('concept', {}).get('uuid')
+        if concept_uuid and concept_uuid in mappings:
+            for mapping in mappings[concept_uuid]:
+                fields[mapping.case_property] = mapping.value.deserialize(obs.get('value'))
+        if obs.get('groupMembers'):
             fields.update(get_updates_from_observations(obs['groupMembers'], mappings))
     return fields
 
@@ -386,7 +387,8 @@ def get_updates_from_bahmni_diagnoses(diagnoses, mappings):
     """
     fields = {}
     for diag in diagnoses:
-        if diag['codedAnswer']['uuid'] in mappings:
-            for mapping in mappings[diag['codedAnswer']['uuid']]:
-                fields[mapping.case_property] = mapping.value.deserialize(diag['codedAnswer']['name'])
+        codedanswer_uuid = diag.get('codedAnswer', {}).get('uuid')
+        if codedanswer_uuid and codedanswer_uuid in mappings:
+            for mapping in mappings[codedanswer_uuid]:
+                fields[mapping.case_property] = mapping.value.deserialize(diag['codedAnswer'].get('name'))
     return fields
