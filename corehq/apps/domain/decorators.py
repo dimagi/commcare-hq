@@ -112,12 +112,9 @@ def login_and_domain_required(view_func):
                 return _redirect_to_project_access_upgrade(req)
             else:
                 return call_view()
-
-        elif (
-            _page_is_whitelist(req.path, domain_name) or
-            not domain_obj.restrict_superusers
-        ) and user.is_superuser:
-            # superusers can circumvent domain permissions.
+        elif user.is_superuser:
+            if domain_obj.restrict_superusers and not _page_is_whitelist(req.path, domain_obj.name):
+                raise Http404()
             if not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
             return call_view()
