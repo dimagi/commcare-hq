@@ -1,16 +1,14 @@
+import warnings
 from contextlib import contextmanager
-import threading
 
 from django.conf import settings
-from django.db import connections
+from django.db import connections, DEFAULT_DB_ALIAS
 
 from corehq.sql_db.connections import (
     AAA_DB_ENGINE_ID,
-    ICDS_UCR_ENGINE_ID,
     ICDS_UCR_CITUS_ENGINE_ID,
     connection_manager,
     get_aaa_db_alias,
-    get_icds_ucr_db_alias,
     get_icds_ucr_citus_db_alias)
 
 from .config import partition_config
@@ -24,8 +22,6 @@ SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
 WAREHOUSE_APP = 'warehouse'
 SYNCLOGS_APP = 'phone'
 AAA_APP = 'aaa'
-
-_thread_local = threading.local()
 
 
 class MultiDBRouter(object):
@@ -64,8 +60,8 @@ def allow_migrate(db, app_label, model_name=None):
     :return: Must return a boolean value, not None.
     """
     if app_label == ICDS_REPORTS_APP:
-        db_aliases = [get_icds_ucr_db_alias(), get_icds_ucr_citus_db_alias()]
-        return db in db_aliases
+        db_alias = get_icds_ucr_citus_db_alias()
+        return bool(db_alias and db_alias == db)
     elif app_label == AAA_APP:
         db_alias = get_aaa_db_alias()
         return bool(db_alias and db_alias == db)
@@ -75,11 +71,11 @@ def allow_migrate(db, app_label, model_name=None):
         return db == settings.WAREHOUSE_DATABASE_ALIAS
 
     if not settings.USE_PARTITIONED_DATABASE:
-        return app_label != PROXY_APP and db in ('default', None)
+        return app_label != PROXY_APP and db in (DEFAULT_DB_ALIAS, None)
 
     if app_label == PROXY_APP:
         return db == partition_config.get_proxy_db()
-    elif app_label == BLOB_DB_APP and db == 'default':
+    elif app_label == BLOB_DB_APP and db == DEFAULT_DB_ALIAS:
         return True
     elif app_label == BLOB_DB_APP and model_name == 'blobexpiration':
         return False
@@ -91,7 +87,7 @@ def allow_migrate(db, app_label, model_name=None):
     elif app_label == SQL_ACCESSORS_APP:
         return db in partition_config.get_form_processing_dbs()
     else:
-        return db == partition_config.get_main_db()
+        return db == DEFAULT_DB_ALIAS
 
 
 def db_for_read_write(model, write=True):
@@ -107,13 +103,7 @@ def db_for_read_write(model, write=True):
     elif app_label == SYNCLOGS_APP:
         return settings.SYNCLOGS_SQL_DB_ALIAS
     elif app_label == ICDS_REPORTS_APP:
-        if forced_citus() or getattr(settings, 'ICDS_USE_CITUS', False):
-            engine_id = ICDS_UCR_CITUS_ENGINE_ID
-        else:
-            engine_id = ICDS_UCR_ENGINE_ID
-            if not write:
-                engine_id = connection_manager.get_load_balanced_read_db_alias(ICDS_UCR_ENGINE_ID)
-        return connection_manager.get_django_db_alias(engine_id)
+        return connection_manager.get_django_db_alias(ICDS_UCR_CITUS_ENGINE_ID)
     elif app_label == AAA_APP:
         engine_id = AAA_DB_ENGINE_ID
         if not write:
@@ -121,16 +111,16 @@ def db_for_read_write(model, write=True):
         return connection_manager.get_django_db_alias(engine_id)
 
     if not settings.USE_PARTITIONED_DATABASE:
-        return 'default'
+        return DEFAULT_DB_ALIAS
 
     if app_label == BLOB_DB_APP:
         if hasattr(model, 'partition_attr'):
             return partition_config.get_proxy_db()
-        return 'default'
+        return DEFAULT_DB_ALIAS
     if app_label == FORM_PROCESSOR_APP:
         return partition_config.get_proxy_db()
     else:
-        default_db = partition_config.get_main_db()
+        default_db = DEFAULT_DB_ALIAS
         if not write:
             return connection_manager.get_load_balanced_read_db_alias(app_label, default_db)
         return default_db
@@ -143,15 +133,5 @@ def get_cursor(model):
 
 @contextmanager
 def force_citus_engine(force=False):
-    if force:
-        _thread_local.force_citus = True
+    warnings.warn('Use of non-citus is deprecated', DeprecationWarning)
     yield
-    _thread_local.force_citus = False
-
-
-def forced_citus():
-    return getattr(_thread_local, 'force_citus', False)
-
-
-def use_citus_for_request():
-    _thread_local.force_citus = True

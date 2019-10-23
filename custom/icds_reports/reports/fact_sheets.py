@@ -4,6 +4,7 @@ from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from memoized import memoized
 
+from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES
 from custom.icds_reports.sqldata.agg_awc_monthly import AggAWCMonthlyDataSource
 from custom.icds_reports.sqldata.agg_ccs_record_monthly import AggCCSRecordMonthlyDataSource
 from custom.icds_reports.sqldata.agg_child_health_monthly import AggChildHealthMonthlyDataSource
@@ -415,7 +416,7 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Percent Aadhaar-seeded beneficiaries',
+                                'header': AADHAR_SEEDED_BENEFICIARIES,
                                 'slug': 'aadhar',
                                 'format': 'percent',
                                 'average': [],

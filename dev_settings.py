@@ -55,6 +55,12 @@ LOCAL_LOGGING_LOGGERS = {
         'handlers': ['null'],
         'level': 'WARNING',
     },
+    # The following configuration will print out all queries that are run through sqlalchemy on the command line
+    # Useful for UCR debugging
+    # 'sqlalchemy.engine': {
+    #     'handlers': ['console'],
+    #     'level': 'INFO',
+    # },
 }
 
 DATABASES = {

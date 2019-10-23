@@ -11,6 +11,7 @@ from corehq.apps.userreports.tests.utils import (
 )
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.pillows.case import get_case_pillow
+from corehq.sql_db.connections import ICDS_UCR_CITUS_ENGINE_ID
 
 
 class DataSourceConfigurationCitusDBTest(TestCase):
@@ -18,7 +19,7 @@ class DataSourceConfigurationCitusDBTest(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.data_source = get_sample_data_source()
-        cls.data_source.engine_id = 'icds-ucr'
+        cls.data_source.engine_id = ICDS_UCR_CITUS_ENGINE_ID
         for indicator in cls.data_source.configured_indicators:
             if indicator['column_id'] == 'owner':
                 indicator['is_primary_key'] = True

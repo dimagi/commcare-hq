@@ -72,7 +72,6 @@ if USE_PARTITIONED_DATABASE:
             'p2': [2, 3]
         },
         'groups': {
-            'main': ['default'],
             'proxy': ['proxy'],
             'form_processing': ['p1', 'p2'],
         },
@@ -83,26 +82,25 @@ if USE_PARTITIONED_DATABASE:
 
     WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
+# See CITUSDB_SETUP.md for explanation
+DATABASES.update({
+    'icds-ucr': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'DISABLE_SERVER_SIDE_CURSORS': True,
+        'NAME': 'commcare_ucr_citus',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
+        'HOST': 'citus_master',
+        'PORT': '5432',
+        'TEST': {
+            # use the same DB for tests to skip expensive setup time in Travs
+            'NAME': 'commcare_ucr_citus',
+            'SERIALIZE': False,
+        },
+    },
+})
 
-# Remove this until we're ready to switch tests to using it
-# # See CITUSDB_SETUP.md for explanation
-# DATABASES.update({
-#     'icds-ucr': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'DISABLE_SERVER_SIDE_CURSORS': True,
-#         'NAME': 'commcare_ucr_citus',
-#         'USER': 'commcarehq',
-#         'PASSWORD': 'commcarehq',
-#         'HOST': 'citus_master',
-#         'PORT': '5432',
-#         'TEST': {
-#             # use the same DB for tests to skip expensive setup time in Travs
-#             'NAME': 'commcare_ucr_citus',
-#             'SERIALIZE': False,
-#         },
-#     },
-# })
-
+ICDS_USE_CITUS = True
 
 ####### Couch Config ######
 COUCH_DATABASES = {

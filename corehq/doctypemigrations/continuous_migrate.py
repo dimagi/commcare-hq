@@ -35,7 +35,7 @@ def copy_docs(source_db, target_db, doc_ids):
                       .format(iter_db.errors_by_type))
 
 
-def _bulk_get_revs(target_db, doc_ids):
+def bulk_get_revs(target_db, doc_ids):
     """
     return (_id, _rev) for every existing doc in doc_ids
 
@@ -51,7 +51,7 @@ def delete_docs(target_db, doc_ids):
     """
     if not doc_ids:
         return
-    doc_id_rev_pairs = _bulk_get_revs(target_db, doc_ids)
+    doc_id_rev_pairs = bulk_get_revs(target_db, doc_ids)
     with IterDB(target_db, new_edits=False) as iter_db:
         for doc_id, doc_rev in doc_id_rev_pairs:
             iter_db.delete({'_id': doc_id, '_rev': doc_rev})

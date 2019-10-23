@@ -142,9 +142,7 @@ class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportPa
 
             return [
                 {
-                    "key":
-                        "Méthode de calcul: nbre de PPS avec le produit "
-                        "disponsible sur le nbre total de PPS visités de la période",
+                    'key': 'valeur péremption sur valeur totale ',
                     'values': com
                 },
             ]

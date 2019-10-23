@@ -231,12 +231,12 @@ hqDefine("reports/js/hq_report", [
                     .done(function () {
                         $(hqReport.emailReportModal).modal('hide');
                         self.resetModal();
-                        $.showMessage(hqReport.emailSuccessMessage, "success");
+                        alertUser.alert_user(hqReport.emailSuccessMessage, "success");
                     })
                     .fail(function () {
                         $(hqReport.emailReportModal).modal('hide');
                         self.resetModal();
-                        $.showMessage(hqReport.emailErrorMessage, "error");
+                        alertUser.alert_user(hqReport.emailErrorMessage, "error");
                     });
             };
 

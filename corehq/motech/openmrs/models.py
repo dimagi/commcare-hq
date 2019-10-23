@@ -1,15 +1,27 @@
+import re
+from datetime import datetime
+
+from memoized import memoized
+
 from dimagi.ext.couchdbkit import (
     DictProperty,
     Document,
     DocumentSchema,
     IntegerProperty,
     ListProperty,
+    StringListProperty,
     StringProperty,
 )
 
 from corehq.motech.openmrs.const import (
     IMPORT_FREQUENCY_CHOICES,
+    IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
+    IMPORT_FREQUENCY_WEEKLY,
+)
+from corehq.util.timezones.utils import (
+    coerce_timezone_value,
+    get_timezone_for_domain,
 )
 
 # Supported values for ColumnMapping.data_type
@@ -35,6 +47,8 @@ class OpenmrsImporter(Document):
     username = StringProperty()
     password = StringProperty()
 
+    notify_addresses_str = StringProperty()
+
     # If a domain has multiple OpenmrsImporter instances, for which CommCare location is this one authoritative?
     location_id = StringProperty()
 
@@ -42,6 +56,9 @@ class OpenmrsImporter(Document):
     import_frequency = StringProperty(choices=IMPORT_FREQUENCY_CHOICES, default=IMPORT_FREQUENCY_MONTHLY)
 
     log_level = IntegerProperty()
+
+    # Timezone name. If not specified, the domain's timezone will be used.
+    timezone = StringProperty()
 
     # OpenMRS UUID of the report of patients to be imported
     report_uuid = StringProperty()
@@ -74,3 +91,28 @@ class OpenmrsImporter(Document):
 
     def __str__(self):
         return self.server_url
+
+    @property
+    def notify_addresses(self):
+        return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
+
+    @memoized
+    def get_timezone(self):
+        if self.timezone:
+            return coerce_timezone_value(self.timezone)
+        else:
+            return get_timezone_for_domain(self.domain)
+
+    def should_import_today(self):
+        today = datetime.today()
+        return (
+            self.import_frequency == IMPORT_FREQUENCY_DAILY
+            or (
+                self.import_frequency == IMPORT_FREQUENCY_WEEKLY
+                and today.weekday() == 1  # Tuesday
+            )
+            or (
+                self.import_frequency == IMPORT_FREQUENCY_MONTHLY
+                and today.day == 1
+            )
+        )

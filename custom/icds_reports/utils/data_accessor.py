@@ -36,7 +36,7 @@ def get_program_summary_data(step, domain, config, now, include_test, pre_releas
     if step == 'maternal_child':
         data = get_maternal_child_data(domain, config, include_test, pre_release_features)
     elif step == 'icds_cas_reach':
-        data = get_cas_reach_data(domain, now, config, include_test)
+        data = get_cas_reach_data(domain, now, config, include_test, pre_release_features)
     elif step == 'demographics':
         data = get_demographics_data(domain, now, config, include_test, beta=pre_release_features)
     elif step == 'awc_infrastructure':

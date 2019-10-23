@@ -370,7 +370,7 @@ class CommCareImage(CommCareMultimedia):
             width = image_size.get('width')
             height = image_size.get('height')
             if width is not None and height is not None:
-                return "{} X {} Pixels".format(width, height)
+                return "{} x {} px".format(width, height)
 
     @classmethod
     def get_image_object(cls, data):
@@ -464,8 +464,8 @@ class ApplicationMediaReference(object):
         Useful info for user-facing things.
     """
 
-    def __init__(self, path, module_id=None, module_name=None, form_id=None,
-                 form_name=None, form_order=None, media_class=None,
+    def __init__(self, path, module_unique_id=None, module_name=None,
+                 form_unique_id=None, form_name=None, form_order=None, media_class=None,
                  is_menu_media=False, app_lang=None, use_default_media=False):
 
         if not isinstance(path, str):
@@ -475,10 +475,10 @@ class ApplicationMediaReference(object):
         if not issubclass(media_class, CommCareMultimedia):
             raise ValueError("media_class should be a type of CommCareMultimedia")
 
-        self.module_id = module_id
+        self.module_unique_id = module_unique_id
         self.module_name = module_name
 
-        self.form_id = form_id
+        self.form_unique_id = form_unique_id
         self.form_name = form_name
         self.form_order = form_order
 
@@ -501,15 +501,15 @@ class ApplicationMediaReference(object):
             'detailed_location': detailed_location,
         }
 
-    def as_dict(self, lang=None):
+    def as_dict(self):
         return {
             'module': {
-                'name': self.get_module_name(lang),
-                'id': self.module_id,
+                'name': self.get_module_name(),
+                'unique_id': self.module_unique_id,
             },
             'form': {
-                'name': self.get_form_name(lang),
-                'id': self.form_id,
+                'name': self.get_form_name(),
+                'unique_id': self.form_unique_id,
                 'order': self.form_order,
             },
             'is_menu_media': self.is_menu_media,
@@ -520,20 +520,18 @@ class ApplicationMediaReference(object):
             "use_default_media": self.use_default_media,
         }
 
-    def _get_name(self, raw_name, lang=None):
+    def _get_name(self, raw_name):
         if not raw_name:
             return ""
         if not isinstance(raw_name, dict):
             return raw_name
-        if lang is None:
-            lang = self.app_lang
-        return raw_name.get(lang, list(raw_name.values())[0])
+        return raw_name.get(self.app_lang, list(raw_name.values())[0])
 
-    def get_module_name(self, lang=None):
-        return self._get_name(self.module_name, lang=lang)
+    def get_module_name(self):
+        return self._get_name(self.module_name)
 
-    def get_form_name(self, lang=None):
-        return self._get_name(self.form_name, lang=lang)
+    def get_form_name(self):
+        return self._get_name(self.form_name)
 
 
 class MediaMixin(object):
@@ -550,6 +548,17 @@ class MediaMixin(object):
             Returns list of ApplicationMediaReference objects
         """
         raise NotImplementedError
+
+    def get_references(self, lang=None):
+        """
+            Used for the multimedia controller.
+        """
+        return [m.as_dict() for m in self.all_media(lang=lang)]
+
+    def get_relevant_multimedia_map(self, app):
+        references = self.get_references()
+        return {r['path']: app.multimedia_map[r['path']]
+                for r in references if r['path'] in app.multimedia_map}
 
     def rename_media(self, old_path, new_path):
         """
@@ -603,9 +612,9 @@ class ModuleMediaMixin(MediaMixin):
         return {
             'app_lang': self.get_app().default_language,
             'module_name': self.name,
-            'module_id': self.id,
+            'module_unique_id': self.unique_id,
             'form_name': None,
-            'form_id': None,
+            'form_unique_id': None,
             'form_order': None,
         }
 
@@ -688,9 +697,9 @@ class FormMediaMixin(MediaMixin):
         return {
             'app_lang': module.get_app().default_language,
             'module_name': module.name,
-            'module_id': module.id,
+            'module_unique_id': module.unique_id,
             'form_name': self.name,
-            'form_id': self.unique_id,
+            'form_unique_id': self.unique_id,
             'form_order': self.id,
         }
 
@@ -704,21 +713,27 @@ class FormMediaMixin(MediaMixin):
         media = copy(self.menu_media(self, lang=lang))
 
         # Form questions
-        parsed = self.wrapped_xform()
-        if parsed.exists():
-            self.validate_form()
-            for image in parsed.image_references(lang=lang):
-                if image:
-                    media.append(ApplicationMediaReference(image, media_class=CommCareImage, **kwargs))
-            for audio in parsed.audio_references(lang=lang):
-                if audio:
-                    media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **kwargs))
-            for video in parsed.video_references(lang=lang):
-                if video:
-                    media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **kwargs))
-            for text in parsed.text_references(lang=lang):
-                if text:
-                    media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **kwargs))
+        try:
+            parsed = self.wrapped_xform()
+            if parsed.exists():
+                self.validate_form()
+            else:
+                return media
+        except (XFormValidationError, XFormException):
+            return media
+
+        for image in parsed.image_references(lang=lang):
+            if image:
+                media.append(ApplicationMediaReference(image, media_class=CommCareImage, **kwargs))
+        for audio in parsed.audio_references(lang=lang):
+            if audio:
+                media.append(ApplicationMediaReference(audio, media_class=CommCareAudio, **kwargs))
+        for video in parsed.video_references(lang=lang):
+            if video:
+                media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **kwargs))
+        for text in parsed.text_references(lang=lang):
+            if text:
+                media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **kwargs))
 
         return media
 
@@ -759,9 +774,11 @@ class ApplicationMediaMixin(Document, MediaMixin):
             media.extend(module.all_media(lang=lang))
             for form in module.get_forms():
                 try:
-                    media.extend(form.all_media(lang=lang))
+                    form.validate_form()
                 except (XFormValidationError, XFormException):
                     self.media_form_errors = True
+                else:
+                    media.extend(form.all_media(lang=lang))
         return media
 
     def multimedia_map_for_build(self, build_profile=None, remove_unused=False):
@@ -784,37 +801,35 @@ class ApplicationMediaMixin(Document, MediaMixin):
     # get_case_list_lookup_image, _get_item_media, and get_media_ref_kwargs) are used to set up context
     # for app manager settings pages. Ideally, they'd be moved into ModuleMediaMixin and FormMediaMixin
     # and perhaps share logic with those mixins' versions of all_media.
-    def get_menu_media(self, module, module_index, form=None, form_index=None, to_language=None):
+    def get_menu_media(self, module, form=None, form_index=None, to_language=None):
         if not module:
             # user_registration isn't a real module, for instance
             return {}
-        media_kwargs = self.get_media_ref_kwargs(
-            module, module_index, form=form, form_index=form_index,
-            is_menu_media=True)
+        media_kwargs = self.get_media_ref_kwargs(module, form=form, form_index=form_index, is_menu_media=True)
         media_kwargs.update(to_language=to_language or self.default_language)
         item = form or module
         return self._get_item_media(item, media_kwargs)
 
-    def get_case_list_form_media(self, module, module_index, to_language=None):
+    def get_case_list_form_media(self, module, to_language=None):
         if not module:
             # user_registration isn't a real module, for instance
             return {}
-        media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        media_kwargs = self.get_media_ref_kwargs(module)
         media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list_form, media_kwargs)
 
-    def get_case_list_menu_item_media(self, module, module_index, to_language=None):
+    def get_case_list_menu_item_media(self, module, to_language=None):
         if not module or not module.uses_media() or not hasattr(module, 'case_list'):
             # user_registration isn't a real module, for instance
             return {}
-        media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        media_kwargs = self.get_media_ref_kwargs(module)
         media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list, media_kwargs)
 
-    def get_case_list_lookup_image(self, module, module_index, type='case'):
+    def get_case_list_lookup_image(self, module, type='case'):
         if not module:
             return {}
-        media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        media_kwargs = self.get_media_ref_kwargs(module)
         details_name = '{}_details'.format(type)
         if not hasattr(module, details_name):
             return {}
@@ -850,14 +865,13 @@ class ApplicationMediaMixin(Document, MediaMixin):
         menu_media['audio'] = audio_ref
         return menu_media
 
-    def get_media_ref_kwargs(self, module, module_index, form=None,
-                             form_index=None, is_menu_media=False):
+    def get_media_ref_kwargs(self, module, form=None, form_index=None, is_menu_media=False):
         return {
             'app_lang': self.default_language,
             'module_name': module.name,
-            'module_id': module_index,
+            'module_unique_id': module.unique_id,
             'form_name': form.name if form else None,
-            'form_id': form.unique_id if form else None,
+            'form_unique_id': form.unique_id if form else None,
             'form_order': form_index,
             'is_menu_media': is_menu_media,
         }
@@ -905,7 +919,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 updated_doc = self.get(self._id)
                 updated_doc.create_mapping(multimedia, form_path)
 
-    def get_media_objects(self, build_profile_id=None, remove_unused=False):
+    def get_media_objects(self, build_profile_id=None, remove_unused=False, multimedia_map=None):
         """
             Gets all the media objects stored in the multimedia map.
             If passed a profile, will only get those that are used
@@ -918,11 +932,12 @@ class ApplicationMediaMixin(Document, MediaMixin):
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
         build_profile = self.build_profiles[build_profile_id] if build_profile_id else None
-        multimedia_map_for_build = self.multimedia_map_for_build(build_profile=build_profile,
-                                                                 remove_unused=remove_unused)
-        expected_ids = [map_item.multimedia_id for map_item in multimedia_map_for_build.values()]
+        if not multimedia_map:
+            multimedia_map = self.multimedia_map_for_build(build_profile=build_profile,
+                                                           remove_unused=remove_unused)
+        expected_ids = [map_item.multimedia_id for map_item in multimedia_map.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
-        for path, map_item in multimedia_map_for_build.items():
+        for path, map_item in multimedia_map.items():
             media_item = raw_docs.get(map_item.multimedia_id)
             if media_item:
                 media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
@@ -937,15 +952,9 @@ class ApplicationMediaMixin(Document, MediaMixin):
                     if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
                         raise e
 
-    def get_references(self, lang=None):
-        """
-            Used for the multimedia controller.
-        """
-        return [m.as_dict(lang) for m in self.all_media()]
-
-    def get_object_map(self):
+    def get_object_map(self, multimedia_map=None):
         object_map = {}
-        for path, media_obj in self.get_media_objects(remove_unused=False):
+        for path, media_obj in self.get_media_objects(remove_unused=False, multimedia_map=multimedia_map):
             object_map[path] = media_obj.get_media_info(path)
         return object_map
 

@@ -11,7 +11,7 @@
 /corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
 /corehq/ex-submodules/pillowtop/ @emord
 /corehq/form_processor/ @snopoke
-/corehq/messaging/ @millerdev
+/corehq/messaging/ @millerdev @orangejenny @mkangia
 /corehq/motech/ @kaapstorm
 /corehq/pillows/ @emord
 /corehq/sql_accessors/ @snopoke
@@ -24,8 +24,9 @@
 /corehq/util/datadog/tests/test_lockmeter.py @millerdev
 /corehq/warehouse/ @calellowitz
 
-/corehq/apps/accounting/static/ @orangejenny
-/corehq/apps/accounting/templates/ @orangejenny
+/corehq/apps/accounting/ @gbova
+/corehq/apps/accounting/static/ @gbova @orangejenny
+/corehq/apps/accounting/templates/ @gbova @orangejenny
 /corehq/apps/analytics/ @orangejenny
 /corehq/apps/app_manager/ @orangejenny @proteusvacuum
 /corehq/apps/callcenter/ @snopoke
@@ -34,7 +35,7 @@
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/commtrack/static/ @esoergel @orangejenny
 /corehq/apps/commtrack/templates/ @esoergel @orangejenny
-/corehq/apps/couch_sql_migration/ @snopoke @emord @millerdev
+/corehq/apps/couch_sql_migration/ @snopoke @millerdev
 /corehq/apps/es/ @esoergel @proteusvacuum
 /corehq/apps/hqwebapp/ @orangejenny
 /corehq/apps/locations/ @esoergel
@@ -44,8 +45,9 @@
 /corehq/apps/ota/ @snopoke
 /corehq/apps/reports/standard/cases/ @proteusvacuum
 /corehq/apps/receiverwrapper/ @snopoke @proteusvacuum
-/corehq/apps/sms*/ @millerdev
-/corehq/apps/smsbillables/static/ @orangejenny
+/corehq/apps/sms*/ @millerdev @orangejenny @mkangia
+/corehq/apps/smsbillables/ @gbova
+/corehq/apps/smsbillables/static/ @gbova @orangejenny
 /corehq/apps/styleguide/ @orangejenny
 /corehq/apps/translations/app_translations/ @orangejenny
 /corehq/apps/userreports/ @emord
@@ -57,7 +59,7 @@
 /corehq/apps/users/templates/ @esoergel @orangejenny
 
 /custom/aaa/ @emord
-/custom/icds_reports/ @calellowitz @czue
+/custom/icds_reports/ @calellowitz @czue @Rohit25negi
 
 /docs/js-guide/ @orangejenny @millerdev
 

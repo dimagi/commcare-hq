@@ -5,6 +5,7 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.db import DEFAULT_DB_ALIAS
 from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import (
@@ -240,7 +241,7 @@ class SiteCodeToLocationCache(BulkCacheBase):
         Note that this can raise SQLLocation.DoesNotExist if the location with the
         given site code is not found.
         """
-        return SQLLocation.objects.using('default').get(
+        return SQLLocation.objects.using(DEFAULT_DB_ALIAS).get(
             domain=self.domain,
             site_code__iexact=site_code
         )

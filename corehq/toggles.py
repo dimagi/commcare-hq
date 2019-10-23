@@ -1,21 +1,34 @@
-import inspect
-from collections import namedtuple
-from functools import wraps
 import hashlib
+import inspect
 import math
+from functools import wraps
 
-from django.contrib import messages
 from django.conf import settings
+from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
-from corehq.util.quickcache import quickcache
-from toggle.models import Toggle
-from toggle.shortcuts import toggle_enabled, set_toggle
 
-Tag = namedtuple('Tag', 'name css_class description')
+from toggle.models import Toggle
+from toggle.shortcuts import set_toggle, toggle_enabled
+
+from corehq.util.quickcache import quickcache
+
+
+@attrs(frozen=True)
+class Tag:
+    name = attrib(type=str)
+    css_class = attrib(type=str)
+    description = attrib(type=str)
+
+    @property
+    def index(self):
+        return ALL_TAGS.index(self)
+
+
 TAG_CUSTOM = Tag(
     name='One-Off / Custom',
     css_class='warning',
@@ -65,7 +78,7 @@ TAG_SOLUTIONS_LIMITED = Tag(
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
     "pricing when the project is transitioned to a subscription. Limited Use Solutions Feature Flags cannot be "
-    "enabled by GS before emailing solutions@dimagi.com and requesting the feature."
+    "enabled by GS before emailing solutions-tech@dimagi.com and requesting the feature."
 )
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
@@ -170,10 +183,14 @@ class StaticToggle(object):
                 if request.user.is_superuser:
                     from corehq.apps.toggle_ui.views import ToggleEditView
                     toggle_url = reverse(ToggleEditView.urlname, args=[self.slug])
-                    messages.warning(request, mark_safe((
-                        'This <a href="{}">feature flag</a> should be enabled '
-                        'to access this URL'
-                    ).format(toggle_url)))
+                    messages.warning(
+                        request,
+                        mark_safe((
+                            'This <a href="{}">feature flag</a> should be enabled '
+                            'to access this URL'
+                        ).format(toggle_url)),
+                        fail_silently=True,  # workaround for tests: https://code.djangoproject.com/ticket/17971
+                    )
                 raise Http404()
             return wrapped_view
         return decorator
@@ -376,11 +393,11 @@ def all_toggles_by_name():
     return all_toggles_by_name_in_scope(globals())
 
 
-def all_toggles_by_name_in_scope(scope_dict):
+def all_toggles_by_name_in_scope(scope_dict, toggle_class=StaticToggle):
     result = {}
     for toggle_name, toggle in scope_dict.items():
         if not toggle_name.startswith('__'):
-            if isinstance(toggle, StaticToggle):
+            if isinstance(toggle, toggle_class):
                 result[toggle_name] = toggle
     return result
 
@@ -549,7 +566,8 @@ MM_CASE_PROPERTIES = StaticToggle(
     'Multimedia Case Properties',
     TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 NEW_MULTIMEDIA_UPLOADER = StaticToggle(
@@ -598,6 +616,7 @@ ASYNC_RESTORE = StaticToggle(
     'Generate restore response in an asynchronous task to prevent timeouts',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 REPORT_BUILDER_BETA_GROUP = StaticToggle(
@@ -614,7 +633,8 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN],
     description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
     "We are actively trying to remove projects from this list. This functionality is now possible by using the "
-    "Advanced Settings on the Organization Levels page and setting the Level to Expand From option."
+    "Advanced Settings on the Organization Levels page and setting the Level to Expand From option.",
+    always_disabled={'icds-cas'}
 )
 
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
@@ -627,6 +647,7 @@ HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
         "compatability for old projects.  We are actively trying to remove "
         "projects from this list."
     ),
+    always_enabled={'icds-cas'}
 )
 
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
@@ -635,6 +656,7 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
     namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )
 
 
@@ -706,7 +728,8 @@ LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',
     TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
 )
 
 NO_VELLUM = StaticToggle(
@@ -890,6 +913,7 @@ FORM_SUBMISSION_BLACKLIST = StaticToggle(
     description="This is a temporary solution to an unusually high volume of "
     "form submissions from a domain.  We have some projects that automatically "
     "send forms. If that ever causes problems, we can use this to cut them off.",
+    always_disabled={'icds-cas'}
 )
 
 
@@ -1011,14 +1035,6 @@ SUPPORT = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
 )
 
-BASIC_CHILD_MODULE = StaticToggle(
-    'child_module',
-    'Basic modules can be sub-menus',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Sub-menus',
-)
-
 LEGACY_CHILD_MODULES = StaticToggle(
     'legacy_child_modules',
     'Legacy, non-nested sub-menus',
@@ -1111,6 +1127,7 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'Run Auto Case Update rules on each case save.',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 EWS_BROADCAST_BY_ROLE = StaticToggle(
@@ -1332,13 +1349,6 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
-    'include_metadata_in_ucr_excel_exports',
-    'Include metadata in UCR excel exports',
-    TAG_SOLUTIONS_CONDITIONAL,
-    [NAMESPACE_DOMAIN]
-)
-
 VIEW_APP_CHANGES = StaticToggle(
     'app-changes-with-improved-diff',
     'Improved app changes view',
@@ -1470,13 +1480,6 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
-ICDS_COMPARE_QUERIES_AGAINST_CITUS = DynamicallyPredictablyRandomToggle(
-    'icds_compare_queries_against_citus',
-    'ICDS: Compare quereies against citus',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_OTHER],
-)
-
 COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     'compare_ucr_reports',
     'Compare UCR reports against other reports or against other databases. '
@@ -1504,6 +1507,13 @@ LINKED_DOMAINS = StaticToggle(
     ),
     help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Project+Spaces',
     notification_emails=['aking'],
+)
+
+MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
+    'multi_master_linked_domains',
+    "Allow linked apps to pull from multiple master apps in the upstream domain",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
 )
 
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
@@ -1652,6 +1662,7 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     'Sort out of order form submissions in the SQL update strategy',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 
@@ -1673,8 +1684,9 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
 MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'manage_releases_per_location',
     'Manage releases per location',
-    TAG_CUSTOM,
+    TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'},
 )
 
 
@@ -1746,19 +1758,6 @@ MANAGE_CCZ_HOSTING = StaticToggle(
     [NAMESPACE_USER]
 )
 
-LOAD_DASHBOARD_FROM_CITUS = StaticToggle(
-    'load_dashboard_from_citus',
-    'Use CitusDB for loading ICDS Dashboard',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-PARALLEL_AGGREGATION = StaticToggle(
-    'parallel_agg',
-    'This makes the icds dashboard aggregation run on both distributed and monolith backends',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
 
 SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
     'skip_orm_fixture_upload',
@@ -1802,4 +1801,45 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     'while investigating database performance issues.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+
+# todo: remove after Nov 15, 2019 if no one is using
+GROUP_API_USE_COUCH_BACKEND = StaticToggle(
+    'group_api_use_couch_backend',
+    'Use Old Couch backend for Group API. '
+    'This is an escape hatch for support '
+    'to immediately revert a domain to old behavior.',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+
+PHI_CAS_INTEGRATION = StaticToggle(
+    'phi_cas_integration',
+    'Integrate with PHI Api to search and validate beneficiaries',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
+
+SESSION_MIDDLEWARE_LOGGING = StaticToggle(
+    'session_middleware_logging',
+    'Log all session object method calls on this domain',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+BYPASS_SESSIONS = StaticToggle(
+    'bypass_sessions',
+    'Bypass sessions for select mobile URLS',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+DAILY_INDICATORS = StaticToggle(
+    'daily_indicators',
+    'Enable daily indicators api',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
 )

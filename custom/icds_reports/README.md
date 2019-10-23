@@ -10,10 +10,11 @@ Dev Environment Setup
 The following two steps must be taken to get the dashboard to load in a development environment.
 This does not include populating any data.
 
-- [Enable the feature flag](http://localhost:8000/hq/flags/edit/dashboard_icds_reports/) for the domain you want
-  to use for testing. It's recommended to use a domain named "icds-cas" for consistency.
+- Create a domain named "icds-cas"
+- [Enable the feature flag](http://localhost:8000/hq/flags/edit/dashboard_icds_reports/) for that domain
 - Add an `'icds-ucr'` entry to `settings.REPORTING_DATABASES` pointing at the desired key from
   `settings.DATABASES` where you want the report data tables to live.
+- Update your `settings.SERVER_ENVIRONMENT` to `'icds'`
 
 ## Citus setup
 
@@ -32,6 +33,20 @@ including the aggregate data.
 
 Note that the above command is destructive to local data and read the warnings
 before proceeding!
+
+If you are using CitusDB and have already initialized the database via migrations, you will need to comment out
+the `_distribute_tables_for_citus(engine)` line in `icds_reports/tests/__init__.py` for the command to succeed.
+
+## Local UCRs
+
+To populate local UCRs (on Citus), you can run:
+
+```bash
+./manage.py bootstrap_icds_citus icds-ucr
+```
+
+If this doesn't create them, you might want to double check your `setings.SERVER_ENVIRONMENT = 'icds'`
+(assuming you are testing in a local domain named `'icds-cas'`).
 
 Aggregate Data Tables
 ---------------------
@@ -75,25 +90,19 @@ If an appropriate data source does not exist, create one in the dashboard UCR fo
 
 New UCRs should have the following data:
 - Associated case or AWC id
-- State id
+- Supervisor/Sector id (if sharding the data source with Citus)
 - timeEnd (Only for forms. Tables should be partitioned on this attribute)
 - received_on (Only for forms)
 - data points from the app to be collected
 
 ### Aggregating the data
 
-The work flow shown in the following picture is the eventual ideal,
-and there is ongoing work to make all of the aggregation follow [this pattern](docs/goal_state_aggregation.png)
-
-Currently Complementary Feeding Forms follows this work flow if you want an example.
-
-If you're collecting data from a form, the first step is to aggregate the data per case id or awc id.
+If you're collecting data from a form, the first step is to aggregate the form data per case id or awc id into a table specifically for that form.
+e.g. `icds_dashboard_growth_monitoring_forms`.
+If you're collecting data from a case, it can be used in the initial setup where appropriate.
+e.g. when collecting ccs_record data it can be inserted with the initial query for ccs_record_monthly
 Then insert this data into the appropriate monthly table.
 If necessary, pass it through to the next tables in the work flow (such as child_health information to agg_awc)
-
-Think through the performance of your additions to this script. Previous mistakes:
-
-- https://github.com/dimagi/commcare-hq/pull/19924
 
 ### Other Notes
 
@@ -149,24 +158,6 @@ Currently number of queues on ICDS is 79
 
 The complementary feeding and PNC forms should give a good baseline for documents we haven't rebuilt before, as they have few related documents.
 
-Extracting forms references from case UCR data sources
-------------------------------------------------------
-
-### Steps
-
-1. Identify form xmlns to be extracted from either (or both) child_health or ccs_record tableau data sources
-2. Create a UCR data source for that form to collect the raw data necessary [Example here](https://github.com/dimagi/commcare-hq/blob/f19872d54fe482e130cdcf0f0c7e83eb1c894072/custom/icds_reports/ucr/data_sources/dashboard/postnatal_care_forms.json)
-3. Add tests using forms from the QA domain (icds-dashboard-qa on india) [Example here](https://github.com/dimagi/commcare-hq/blob/f19872d54fe482e130cdcf0f0c7e83eb1c894072/custom/icds_reports/ucr/tests/test_pnc_form_ucr.py)
-4. Add a model that will follow the same format as the tableau data sources (unique for case_id and month) [Example Here](https://github.com/dimagi/commcare-hq/blob/f19872d54fe482e130cdcf0f0c7e83eb1c894072/custom/icds_reports/models.py#L665-L725)
-5. Create an aggregation helper that will take data from the UCR data source and insert it into the aggregate table [Example Here](https://github.com/dimagi/commcare-hq/blob/f19872d54fe482e130cdcf0f0c7e83eb1c894072/custom/icds_reports/utils/aggregation.py#L229-L315)
-6. In that helper, write a query that compares it to the old data [Example Here](https://github.com/dimagi/commcare-hq/blob/f19872d54fe482e130cdcf0f0c7e83eb1c894072/custom/icds_reports/utils/aggregation.py#L317-L351)
-7. PR & deploy this.
-8. Build the UCR, likely using async_rebuild_table.
-9. Aggregate the data using `aggregate` on the model.
-10. Verify that the data is the same using `compare_with_old_data` on the model.
-11. Change the aggregation script to use the new tables.
-12. After some test time, remove the references to the old columns that you have replaced from the original tableau data source.
-
 Metrics to follow/tradeoff
 --------------------------
 Processing time
@@ -175,51 +166,35 @@ UCR query time
 
 Dashboard query time
 
-Known areas that can be changed to improve performance
-------------------------------------------------------
-1. The aggregation step should be able to be split by state.
-   These tasks can then be kicked off in parallel.
-2. Caching of location lookups.
-   Locations are mostly static so they can be cached quite heavily if we believe it's effective.
-3. Moving to custom queries for some UCRs.
 
-   Following up on [this PR](https://github.com/dimagi/commcare-hq/pull/20452) it could be useful experimenting with joins, multiple queries or SQL not supported in UCR reports.
+Aggregation task
+----------------
 
-   The highest ROI are moving reports based on ccs_record_monthly_v2, child_health_monthly_v2 and person_cases_v2 (in that order).
+To perform our large aggregation task we use [Airflow](https://airflow.apache.org/).
+Airflow is a workflow management system that allows us to specify dependencies between tasks and schedule each task appropriately.
+Our configuration of our workflow is stored in https://github.com/dimagi/pipes.
+That repository only stores information about the workflow.
+The queries and commands being run are stored as part of this repository.
 
-   The end goal being no longer needed either monthly UCR (queries only on the base case UCR & appropriate form UCR) and reducing the number of columns in person_cases_v2.
-   
-   As of March, 2019 we have rolled out person_cases_v3 which achieves the reduction in columns in person_case_v2.
 
-4. Move to native postgres partitioning.
+## Running only one month
 
-   Postgres 10 introduced a native partitioning feature that we could use.
+Currently this must be done manually.
+To run one month, you must access the [airflow server](http://100.71.188.10:8080/admin/) (behind the VPN),
+go to the dashboard aggregation, click "previous month" and select "mark success".
 
-   Postgres 11 will be adding some more features and performance improvements
+## Aggregation running slowly
 
-   Currently the dashboard tables are manually partitioned by inserting directly into the partitioned tables and UCR data sources use triggers created by architect.
-5. Reduce number of partitions on tables.
+Airflow collects some metrics that show the history of a task.
+If you are unfamiliar with how long a task is expected to run, then you can view the history of the task by looking at the "task duration" tab.
+Once you find the task(s) that have slowed, you should check if the query was blocked by another.
+If you find that the query could not acquire the appropriate lock, reference the below troubleshooting section about locks.
+Otherwise reference the slow query section in troubleshooting.
 
-   Check constraints are processed linearly so having many partitions can negatively impact query times.
+## Errors
 
-   Currently a new partition is created for every day in agg_awc_daily and every month 5 are created in agg_child_health & agg_ccs_record
-
-   In postgres 11, this is less of an issue as the query planner can create better queries based on native partitioning
-6. Make use of inserted_at and/or received on to intelligently update the tables
-   Currently we loop over the previous month and fully delete are re-aggregate all data for the month.
-7. Change the aggregation step to insert into temporary tables before dropping real table.
-
-   This should reduce/eliminate any locking that is not needed and also remove any on disk inefficiency introduced by inserting then updating
-8. Sort data before inserting into the aggregate table. Use BRIN indexes on those sorted columns
-9. Include full location hierarchy in each table.
-
-   Currently we join with a location table to get the location's name and full hierarchy. Testing this out may be useful
-10. General postgres config updates.
-11. Experiment with Foreign Data Wrappers
-
-    a) Try out writing different UCR data sources to different databases and aggregating them on a separate dashboard database server
-
-    b) Try out either moving old less accessed data to an older server or separating different state's data on different dashboard servers
+Currently any errors are emailed to the dashboard aggregation email group.
+The emails contain information such as the aggregation step that failed and a link to the log output of the task.
 
 
 Troubleshooting
@@ -227,28 +202,83 @@ Troubleshooting
 
 Connect to ICDS database: `./manage dbshell --database icds-ucr`
 
-Find longest running queries: `select pid, query_start, query from pg_stat_activity order by query_start limit 10`
+## Slow Queries
 
-Find locks that haven't been granted: `SELECT relation::regclass, * FROM pg_locks WHERE NOT GRANTED`
+Find the current longest running queries: `select pid, query_start, query from pg_stat_activity order by query_start limit 10`
+
+`EXPLAIN (statement)` should be the first step to understanding a slow query.
+An official introduction into explain can be found in postgres's docs https://www.postgresql.org/docs/11/using-explain.html.
+There can be a lot of information to understand when looking at your first queries.
+A good rule of thumb is to take note of the estimated total costs displayed and begin looking at the inner most operations.
+From the innermost operation, take one step out at a time and find where you see the largest cost increases.
+The largest cost increase is a good place to begin looking to optimize your query.
+
+Another issue we've seen before is Disk IO contention.
+We run many tasks in parallel and therefore there may be too many tasks running at one time and using much of the disk.
+You can look at the "Postgres - Overview" DataDog dashboard to see if IO wait or disk queue size is very high during the task
+
+Note that while its largely the same, there are differences in tuning Citus queries vs postgres queries.
+[Citus docs](http://docs.citusdata.com/en/v8.3/performance/performance_tuning.html) provide an overview of tuning both.
+
+## Locking queries
+
+We log the number of locked queries to datadog under `postgresql.locks.not_granted`.
+There is a graph of this on our Postgres - Overview dashboard.
+
+For more specific troubleshooting for each lock that is currently occurring on the database:
+
+Find locks that haven't been granted: `SELECT * FROM pg_locks WHERE NOT GRANTED`
+Queries that are blocked on a lock:
+`SELECT query_start, query FROM pg_locks, pg_stat_activity WHERE pg_locks.pid = pg_stat_activity.pid AND NOT granted`
+
+Depending on the type of lock acquired (`pg_locks.locktype`), you can adjust your query to find the query that's blocking.
+For example if `locktype` is `virtualxid`, you can run `SELECT * FROM pg_locks WHERE virtualxid = 'xid' AND GRANTED` to find the process(s) that currently have the lock acquired.
+
+More specifically for finding distributed Citus locks:
+
+```sql
+WITH citus_xacts AS (
+  SELECT * FROM get_all_active_transactions() WHERE initiator_node_identifier = 0
+),
+citus_wait_pids AS (
+  SELECT
+    (SELECT process_id FROM citus_xacts WHERE transaction_number = waiting_transaction_num) AS waiting_pid,
+    (SELECT process_id FROM citus_xacts WHERE transaction_number = blocking_transaction_num) AS blocking_pid
+  FROM
+    dump_global_wait_edges()
+)
+SELECT
+  waiting_pid AS blocked_pid,
+  blocking_pid,
+  waiting.query AS blocked_statement,
+  blocking.query AS current_statement_in_blocking_process
+FROM
+  citus_wait_pids
+JOIN
+  pg_stat_activity waiting ON (waiting_pid = waiting.pid)
+JOIN
+  pg_stat_activity blocking ON (blocking_pid = blocking.pid)
+```
+
+More about locks:
+* https://www.citusdata.com/blog/2018/02/15/when-postgresql-blocks/
+* https://www.citusdata.com/blog/2018/02/22/seven-tips-for-dealing-with-postgres-locks/
+
+## Killing queries
 
 Killing a query should be done with `SELECT pg_cancel_backend(pid)` when possible.
 If that doesn't work `SELECT pg_terminate_backend(pid)` probably will.
 The difference is cancel is SIGTERM and terminate is SIGKILL described in more detail [here](https://www.postgresql.org/docs/current/server-shutdown.html)
 
-Stopping all ucr_indicator_queue to reduce load: `cchq icds fab supervisorctl:"stop commcare-hq-icds-celery_ucr_indicator_queue_0"`
+## Reducing load on the database
 
-Purging all aggregation tasks from the queue: `./manage.py celery amqp queue.purge icds_aggregation_queue`
+Stopping all ucr_indicator_queue to reduce load: `cchq icds celery stop --only ucr_indicator_queue`
 
-Restarting the aggregation *before doing this you should be certain that the aggregation is not running and will not start on its own*:
+Stopping pillows: `cchq icds pillowtop stop`
 
-```python
-from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
-from  dimagi.utils.couch.cache.cache_core import get_redis_client
 
-# clear out the redis key used for @serial_task
-client = get_redis_client()
-client.delete('move_ucr_data_into_aggregation_tables-move-ucr-data-into-aggregate-tables')
+Useful references
+-----------------
 
-# note that this defaults to current date from utcnow (usually what you want)
-move_ucr_data_into_aggregation_tables.delay(intervals=1)
-```
+Postgres documentation: https://www.postgresql.org/docs/11/index.html
+Citus documentation: https://docs.citusdata.com/en/v8.3/index.html

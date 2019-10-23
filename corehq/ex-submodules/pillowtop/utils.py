@@ -1,19 +1,23 @@
-from collections import namedtuple
+import json
+from collections import defaultdict, namedtuple
 from copy import deepcopy
 from datetime import datetime
-import sys
+from operator import methodcaller
 
-import json
 from django.conf import settings
+
 from kafka import KafkaConsumer
 
-from corehq.util.json import CommCareJSONEncoder
-from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
-
+from pillowtop.dao.exceptions import (
+    DocumentMismatchError,
+    DocumentMissingError,
+)
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
-from pillowtop.dao.exceptions import DocumentMismatchError, DocumentMissingError
+
+from corehq.util.io import ClosingContextProxy
 
 
 def _get_pillow_instance(full_class_str):
@@ -142,17 +146,18 @@ def safe_force_seq_int(seq, default=None):
 
 
 def _get_consumer():
-    return KafkaConsumer(
+    return ClosingContextProxy(KafkaConsumer(
         client_id='pillowtop_utils',
         bootstrap_servers=settings.KAFKA_BROKERS,
         request_timeout_ms=1000
-    )
+    ))
 
 
 def get_all_pillows_json():
     pillow_configs = get_all_pillow_configs()
     consumer = _get_consumer()
-    return [get_pillow_json(pillow_config, consumer) for pillow_config in pillow_configs]
+    with consumer:
+        return [get_pillow_json(pillow_config, consumer) for pillow_config in pillow_configs]
 
 
 def get_pillow_json(pillow_config, consumer=None):
@@ -209,6 +214,7 @@ def get_pillow_json(pillow_config, consumer=None):
         'hours_since_last': hours_since_last
     }
 
+
 ChangeError = namedtuple('ChangeError', 'change exception')
 
 
@@ -223,25 +229,33 @@ class ErrorCollector(object):
 def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
     doc_transform = doc_transform or (lambda x: x)
     payload = []
+
+    def _is_deleted(change):
+        if change.deleted:
+            return bool(change.id)
+
+        doc = change.get_document()
+        if doc and doc.get('doc_type'):
+            return doc['doc_type'].endswith(DELETED_SUFFIX)
+
     for change in changes:
-        if change.deleted and change.id:
+        if _is_deleted(change):
             payload.append({
-                "delete": {
-                    "_index": index_info.index,
-                    "_type": index_info.type,
-                    "_id": change.id
-                }
+                "_op_type": "delete",
+                "_index": index_info.index,
+                "_type": index_info.type,
+                "_id": change.id
             })
         elif not change.deleted:
             try:
                 doc = change.get_document()
                 doc = doc_transform(doc)
                 payload.append({
-                    "index": {
-                        "_index": index_info.index,
-                        "_type": index_info.type,
-                        "_id": doc['_id']
-                    }
+                    "_op_type": "index",
+                    "_index": index_info.index,
+                    "_type": index_info.type,
+                    "_id": doc['_id'],
+                    "_source": doc
                 })
                 payload.append({k: v for k, v in doc.items() if k != '_id'})
             except Exception as e:
@@ -249,25 +263,6 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
                     raise
                 error_collector.add_error(ChangeError(change, e))
     return payload
-
-
-def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
-    payloads = [b'']
-    for bulk_chunk in chunked(bulk_changes, chunk_size):
-        current_payload = payloads[-1]
-        json_bulk_chunks = [
-            json.dumps(obj, cls=CommCareJSONEncoder).encode('utf-8')
-            for obj in bulk_chunk
-        ]
-        payload_chunk = b'\n'.join(json_bulk_chunks) + b'\n'
-        appended_payload = current_payload + payload_chunk
-        new_payload_size = sys.getsizeof(appended_payload)
-        if new_payload_size > max_size:
-            payloads.append(payload_chunk)
-        else:
-            payloads[-1] = appended_payload
-
-    return [_f for _f in payloads if _f]
 
 
 def ensure_matched_revisions(change, fetched_document):
@@ -317,3 +312,54 @@ def ensure_document_exists(change):
     change.get_document()
     if change.error_raised is not None and isinstance(change.error_raised, DocumentMissingError):
         raise change.error_raised
+
+
+def bulk_fetch_changes_docs(changes, domain=None):
+    """Take a set of changes and populate them with the documents if necessary.
+    :returns: tuple(<changes with missing or out of date documents>, <document list>)
+    """
+    # break up by doctype
+    changes_by_doctype = defaultdict(list)
+    for change in changes:
+        if domain and change.metadata.domain != domain:
+            raise ValueError("Domain does not match change")
+        changes_by_doctype[change.metadata.data_source_name].append(change)
+
+    # query
+    docs = []
+    for _, _changes in changes_by_doctype.items():
+        doc_store = _changes[0].document_store
+        doc_ids_to_query = [change.id for change in _changes if change.should_fetch_document()]
+        new_docs = list(doc_store.iter_documents(doc_ids_to_query))
+        docs_queried_prior = [change.document for change in _changes if not change.should_fetch_document()]
+        docs.extend(new_docs + docs_queried_prior)
+
+    # catch missing docs
+    bad_changes = set()
+    docs_by_id = {doc['_id']: doc for doc in docs}
+    for change in changes:
+        if change.id not in docs_by_id:
+            # we need to capture DocumentMissingError which is not possible in bulk
+            #   so let pillow fall back to serial mode to capture the error for missing docs
+            bad_changes.add(change)
+            continue
+        else:
+            # set this, so that subsequent doc lookups are avoided
+            change.set_document(docs_by_id[change.id])
+        try:
+            ensure_matched_revisions(change, docs_by_id.get(change.id))
+        except DocumentMismatchError:
+            bad_changes.add(change)
+    return bad_changes, docs
+
+
+def get_errors_with_ids(es_action_errors):
+    return [
+        (item['_id'], item['error'])
+        for op_type, item in _changes_to_list(es_action_errors)
+    ]
+
+
+def _changes_to_list(change_items):
+    """Concert list of dict(key: value) in to a list of tuple(key, value)"""
+    return list(map(methodcaller("popitem"), change_items))

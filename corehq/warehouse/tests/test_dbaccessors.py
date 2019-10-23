@@ -1,23 +1,25 @@
 from datetime import datetime, timedelta
+
 from django.test import TestCase
+
+from casexml.apps.case.tests.util import delete_all_sync_logs
+from casexml.apps.phone.models import SimplifiedSyncLog
 
 from corehq.apps.app_manager.models import Application, LinkedApplication
 from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser, WebUser
-from casexml.apps.case.tests.util import delete_all_sync_logs
-from casexml.apps.phone.models import SimplifiedSyncLog
+from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     delete_all_users,
     hard_delete_deleted_users,
 )
-
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.warehouse.dbaccessors import (
+    get_application_ids_by_last_modified,
     get_group_ids_by_last_modified,
-    get_user_ids_by_last_modified,
     get_synclogs_by_date,
-    get_application_ids_by_last_modified
+    get_user_ids_by_last_modified,
 )
 
 
@@ -32,6 +34,7 @@ class TestDbAccessors(TestCase):
         # Needed because other tests do not always clean up their users or applications.
         delete_all_users()
         hard_delete_deleted_users()
+        delete_all_groups()
         delete_all_apps()
 
         cls.g1 = Group(domain=cls.domain, name='group')

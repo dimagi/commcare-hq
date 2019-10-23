@@ -11,7 +11,7 @@ class ProductsAtLocationTest(TestCase):
     domain = 'test-products-at-location'
 
     def assertEqualProducts(self, products1, products2):
-        self.assertEquals(
+        self.assertEqual(
             sorted(p.product_id for p in products1),
             sorted(p.product_id for p in products2),
         )

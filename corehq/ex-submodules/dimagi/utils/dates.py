@@ -1,17 +1,14 @@
 import datetime
 from calendar import month_name
+
 from django.utils.translation import ugettext_lazy as _
 
-try:
-    # < 3.0
-    from celery.log import get_task_logger
-except ImportError:
-    # >= 3.0
-    from celery.utils.log import get_task_logger
 import dateutil
 import pytz
-from dimagi.utils.parsing import string_to_datetime, ISO_DATE_FORMAT
-from dateutil.rrule import *
+from celery.utils.log import get_task_logger
+from dateutil import rrule
+
+from dimagi.utils.parsing import ISO_DATE_FORMAT, string_to_datetime
 
 
 def force_to_date(val):
@@ -57,7 +54,7 @@ def months_between(start, end):
         months.append((start.year, start.month))
         (yearnext, monthnext) = add_months(start.year, start.month, 1)
         start = date_type(yearnext, monthnext, 1)
-    return months        
+    return months
 
 
 def add_months(year, months, offset):
@@ -125,26 +122,33 @@ class DateSpan(object):
         self.inclusive = inclusive
         self.timezone = timezone
         self.max_days = max_days
+        # todo: delete after 2019-10-17 when we're sure old stuff has been unpickled
+        self._pickle_standard = 2
 
-    def __getstate__(self):
-        """
-            For pickling the DateSpan object.
-        """
-        return dict(
-            startdate=self.startdate.isoformat() if self.startdate else None,
-            enddate=self.enddate.isoformat() if self.enddate else None,
-            format=self.format,
-            inclusive=self.inclusive,
-            is_default=self.is_default,
-            timezone=self.timezone.zone,
-            max_days=self.max_days,
+    def __eq__(self, other):
+        return (
+            self.startdate == other.startdate
+            and self.enddate == other.enddate
+            and self.format == other.format
+            and self.inclusive == other.inclusive
+            and self.timezone == other.timezone
+            and self.max_days == other.max_days
         )
 
     def __setstate__(self, state):
         """
             For un-pickling the DateSpan object.
+
+            This does the same thing as not definining __setstate__ at all,
+            unless it detects state pickled with our previous custom __getstate__ code.
+            todo: delete after 2019-10-17 when we're sure old stuff has been unpickled
         """
-        logging = get_task_logger(__name__) # logging is likely to happen within celery
+        if state.get('_pickle_standard') == 2:
+            self.__dict__.update(state)
+            return
+
+        # unpickle from state pickled with our previous custom __getstate__ code
+        logging = get_task_logger(__name__)  # logging is likely to happen within celery
         try:
             self.startdate = dateutil.parser.parse(state.get('startdate')) if state.get('startdate') else None
             self.enddate = dateutil.parser.parse(state.get('enddate')) if state.get('enddate') else None
@@ -187,7 +191,7 @@ class DateSpan(object):
         that is computed based on the inclusive flag.
         """
         return self.startdate
-        
+
     @property
     def computed_enddate(self):
         """
@@ -198,8 +202,7 @@ class DateSpan(object):
             # you need to add a day to enddate if your dates are meant to be inclusive
             offset = datetime.timedelta(days=1 if self.inclusive else 0)
             return (self.enddate + offset)
-        
-    
+
     @property
     def startdate_param(self):
         """
@@ -272,7 +275,7 @@ class DateSpan(object):
     @property
     def end_of_end_day(self):
         if self.enddate:
-            # if we are doing a 'day' query, we want to make sure 
+            # if we are doing a 'day' query, we want to make sure
             # the end date is the last second of the end day
             return self.enddate.replace(hour=23, minute=59, second=59, microsecond=1000000-1)
 
@@ -283,11 +286,11 @@ class DateSpan(object):
         """
         if self.enddate:
             return self.enddate.strftime(self.format)
-    
+
     def is_valid(self):
         # this is a bit backwards but keeps the logic in one place
         return not bool(self.get_validation_reason())
-    
+
     def get_validation_reason(self):
         if self.startdate is None or self.enddate is None:
             return _("You have to specify both dates!")
@@ -302,21 +305,21 @@ class DateSpan(object):
                 return _("You are limited to a span of {max} days, but this date range spans {total} days").format(
                     max=self.max_days, total=delta.days)
         return ""
-    
+
     def __str__(self):
         if not self.is_valid():
             return "Invalid date span %s - %s" % (self.startdate_param, self.enddate_param)
 
         # if the dates comprise a month exactly, use that
-        if (self.startdate.day == 1 and
-                (self.enddate + datetime.timedelta(days=1)).day == 1
+        if (self.startdate.day == 1
+                and (self.enddate + datetime.timedelta(days=1)).day == 1
                 and (self.enddate - self.startdate) < datetime.timedelta(days=32)):
             return "%s %s" % (month_name[self.startdate.month], self.startdate.year)
 
         # if the end date is today or tomorrow, use "last N days syntax"
         if today_or_tomorrow(self.enddate, self.inclusive):
             return "last %s days" % ((self.enddate - self.startdate).days + (1 if self.inclusive else 0))
-        
+
         return self.default_serialization()
 
     def __repr__(self):
@@ -359,7 +362,7 @@ class DateSpan(object):
 
     @classmethod
     def from_month(cls, month=None, year=None, format=ISO_DATE_FORMAT,
-        inclusive=True, timezone=pytz.utc):
+                   inclusive=True, timezone=pytz.utc):
         """
         Generate a DateSpan object given a numerical month and year.
         Both are optional and default to the current month/year.
@@ -391,15 +394,16 @@ class DateSpan(object):
 def get_day_of_month(year, month, count):
     """
     For a given month get the Nth day.
-    The only reason this function exists in favor of 
+    The only reason this function exists in favor of
     just creating the date object is to support negative numbers
     e.g. pass in -1 for "last"
     """
-    r = rrule(MONTHLY, dtstart=datetime.datetime(year, month, 1),
-              byweekday=(MO, TU, WE, TH, FR, SA, SU),
-              bysetpos=count)
+    r = rrule.rrule(
+        rrule.MONTHLY, dtstart=datetime.datetime(year, month, 1),
+        byweekday=(rrule.MO, rrule.TU, rrule.WE, rrule.TH, rrule.FR, rrule.SA, rrule.SU),
+        bysetpos=count)
     res = r[0]
-    if (res == None or res.month != month or res.year != year):
+    if (res is None or res.month != month or res.year != year):
         raise ValueError("No dates found in range. is there a flaw in your logic?")
     return res.date()
 
@@ -409,18 +413,19 @@ def get_business_day_of_month(year, month, count):
     For a given month get the Nth business day by count.
     Count can also be negative, e.g. pass in -1 for "last"
     """
-    r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
-              dtstart=datetime.datetime(year, month, 1),
-              bysetpos=count)
+    r = rrule.rrule(
+        rrule.MONTHLY, byweekday=(rrule.MO, rrule.TU, rrule.WE, rrule.TH, rrule.FR),
+        dtstart=datetime.datetime(year, month, 1),
+        bysetpos=count)
     res = r[0]
-    if (res == None or res.month != month or res.year != year):
+    if (res is None or res.month != month or res.year != year):
         raise ValueError("No dates found in range. is there a flaw in your logic?")
     return res.date()
 
 
 def get_business_day_of_month_before(year, month, day):
     """
-    For a given month get the business day of the month 
+    For a given month get the business day of the month
     that falls on or before the passed in day
     """
     try:
@@ -433,10 +438,11 @@ def get_business_day_of_month_before(year, month, day):
                 adate = datetime.datetime(year, month, 29)
             except ValueError:
                 adate = datetime.datetime(year, month, 28)
-    r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
-              dtstart=datetime.datetime(year, month, 1))
+    r = rrule.rrule(
+        rrule.MONTHLY, byweekday=(rrule.MO, rrule.TU, rrule.WE, rrule.TH, rrule.FR),
+        dtstart=datetime.datetime(year, month, 1))
     res = r.before(adate, inc=True)
-    if (res == None or res.month != month or res.year != year):
+    if (res is None or res.month != month or res.year != year):
         raise ValueError("No dates found in range. is there a flaw in your logic?")
     return res.date()
 

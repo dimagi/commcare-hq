@@ -1,6 +1,5 @@
 from dateutil.relativedelta import relativedelta
 
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
@@ -42,21 +41,15 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     @property
     def child_health_case_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_health_cases')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, 'static-child_health_cases')
 
     @property
     def child_tasks_case_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_tasks_cases')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, 'static-child_tasks_cases')
 
     @property
     def person_case_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v3')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, 'static-person_cases_v3')
 
     @property
     def tablename(self):
@@ -403,4 +396,5 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             'CREATE INDEX IF NOT EXISTS chm_case_idx ON "{}" (case_id)'.format(self.tablename),
             'CREATE INDEX IF NOT EXISTS chm_awc_idx ON "{}" (awc_id)'.format(self.tablename),
             'CREATE INDEX IF NOT EXISTS chm_mother_dob ON "{}" (mother_case_id, dob)'.format(self.tablename),
+            'CREATE INDEX IF NOT EXISTS chm_month_supervisor_id ON "{}" (month, supervisor_id)'.format(self.tablename),
         ]

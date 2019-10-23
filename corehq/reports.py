@@ -5,9 +5,10 @@ from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import (
     AdminPhoneNumberReport,
-    AdminUserReport,
     DeviceLogSoftAssertReport,
-    UserAuditReport)
+    UserAuditReport,
+    UserListReport,
+)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
@@ -332,13 +333,9 @@ SMS_ADMIN_INTERFACES = (
 )
 
 
-BASIC_REPORTS = (
-    (_('Project Stats'), ()),
-)
-
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
-        AdminUserReport,
+        UserListReport,
         PillowErrorsReport,
         DeviceLogSoftAssertReport,
         AdminPhoneNumberReport,

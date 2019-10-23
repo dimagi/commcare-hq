@@ -56,17 +56,37 @@
           <p>Doc type: {{ doc_type }}</p>
           <p>Database or table: {{ dbname }}</p>
           <p>Domain: {{ domain }}</p>
-          <a href="{% url 'global_quick_find' %}?q={{ doc_id }}">
+          <p>
+            <a href="{% url 'global_quick_find' %}?q={{ doc_id }}">
             <img src="{% static 'hqwebapp/images/commcare-flower.png' %}"
                  alt="CommCare" witdth="14px" height="14px"
                  title="Open in HQ" />
-          </a>
-          <a href="{% url 'doc_in_es' %}?id={{ doc_id }}" target="_blank" title="Search in ES"><i class="fa fa-search"></i></a>
-          <a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc"><i class="fa fa-code"></i></a>
+            </a>
+            <a href="{% url 'doc_in_es' %}?id={{ doc_id }}" target="_blank" title="Search in ES"><i class="fa fa-search"></i></a>
+            <a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc"><i class="fa fa-code"></i></a>
+          </p>
+          {% if errors %}
+          <p>Error messages:</p>
+          <div class="row">
+            <div class="col-sm-12">
+                {% for message in errors %}
+                  <div class="alert alert-margin-top fade in alert-danger">
+                    {{ message }}
+                  </div>
+                {% endfor %}
+            </div>
+          </div>
+          {% endif %}
           <div>
             <h3>Raw Doc:</h3>
             <pre id="doc-element" data-doc="{% html_attr doc %}"></pre>
           </div>
+          {% if raw_data %}
+          <div>
+            <h3>Additional Raw Data:</h3>
+            <pre>{{ raw_data }}</pre>
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>

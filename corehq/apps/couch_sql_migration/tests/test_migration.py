@@ -233,7 +233,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         return self.on_doc(doc_type, doc_id, stop)
 
     @contextmanager
-    def on_doc(self, doc_type, doc_id, handler):
+    def on_doc(self, doc_type, doc_id, handler, raises=KeyboardInterrupt):
         from ..couchsqlmigration import _iter_docs
 
         @wraps(_iter_docs)
@@ -248,9 +248,18 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             else:
                 yield from itr
 
+        if raises is not None:
+            raise_context = self.assertRaises(KeyboardInterrupt)
+        else:
+            raise_context = null_context()
         path = "corehq.apps.couch_sql_migration.couchsqlmigration._iter_docs"
-        with self.assertRaises(KeyboardInterrupt), mock.patch(path, iter_docs):
+        with raise_context, mock.patch(path, iter_docs):
             yield
+
+
+@contextmanager
+def null_context():
+    yield
 
 
 @contextmanager
@@ -1088,9 +1097,9 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_migration_clean_break(self):
         def interrupt():
             os.kill(os.getpid(), SIGINT)
-        self.migrate_with_interruption(interrupt)
+        self.migrate_with_interruption(interrupt, raises=None)
         self.assertEqual(self._get_form_ids(), {"one"})
-        self.assertEqual(self.get_resume_state("CaseDiffQueue"), {'pending': {'test-case': 1}})
+        self.assertEqual(self.get_resume_state("CaseDiffQueue"), {'num_diffed_cases': 1})
         self.resume_after_interruption()
 
     def test_migration_dirty_break(self):
@@ -1102,20 +1111,21 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self.get_resume_state("CaseDiffQueue"), {})
         self.resume_after_interruption()
 
-    def migrate_with_interruption(self, interrupt):
+    def migrate_with_interruption(self, interrupt, **kw):
         self.submit_form(make_test_form("one"), timedelta(minutes=-97))
         self.submit_form(make_test_form("two"), timedelta(minutes=-95))
         self.submit_form(make_test_form("arch"), timedelta(minutes=-93)).archive()
-        with self.patch_migration_chunk_size(1), self.on_doc("XFormInstance", "one", interrupt):
+        with self.patch_migration_chunk_size(1), \
+                self.on_doc("XFormInstance", "one", interrupt, **kw):
             self._do_migration(live=True, diff_process=True)
         self.assert_backend("sql")
         self.assertFalse(self._get_form_ids("XFormArchived"))
 
     def get_resume_state(self, key, default=object()):
         statedb = init_state_db(self.domain_name, self.state_dir)
-        value = statedb.pop_resume_state(key, default)
-        if value is not default:
-            statedb.set_resume_state(key, value)
+        resume = statedb.pop_resume_state(key, default)
+        with self.assertRaises(ValueError), resume as value:
+            raise ValueError
         return value
 
     def resume_after_interruption(self):
@@ -1123,6 +1133,25 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(self._get_form_ids(), {"one", "two"})
         self.assertEqual(self._get_form_ids("XFormArchived"), {"arch"})
+        self._compare_diffs([])
+
+    def test_rebuild_state(self):
+        def interrupt():
+            os.kill(os.getpid(), SIGINT)
+        form_ids = [f"form-{n}" for n in range(7)]
+        for i, form_id in enumerate(form_ids):
+            self.submit_form(make_test_form(form_id), timedelta(minutes=-90))
+        with self.patch_migration_chunk_size(2), \
+                self.on_doc("XFormInstance", "form-3", interrupt, raises=None):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), set(form_ids[:4]))
+        statedb = init_state_db(self.domain_name, self.state_dir)
+        with statedb.pop_resume_state("CaseDiffQueue", None):
+            pass  # simulate failed exit
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(live=True, rebuild_state=True)
+        self.assertEqual(self._get_form_ids(), set(form_ids))
         self._compare_diffs([])
 
     def test_case_forms_list_order(self):
@@ -1243,6 +1272,11 @@ class MigrationTestCase(BaseMigrationTestCase):
             ('XFormInstance', Diff('missing', ['xmlns'], new=MISSING)),
         ])
 
+    def test_case_with_very_long_name(self):
+        self.submit_form(make_test_form("naaaame", case_name="ha" * 128))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([])
+
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):
@@ -1348,13 +1382,15 @@ def create_form_with_missing_xml(domain_name):
 
 
 @nottest
-def make_test_form(form_id, age=27, case_id="test-case"):
+def make_test_form(form_id, age=27, case_id="test-case", case_name="Xeenax"):
     form = TEST_FORM
     assert form.count(">test-form<") == 1
     assert form.count(">27<") == 2
     assert form.count('"test-case"') == 1
+    assert form.count('>Xeenax<') == 2
     form = form.replace(">27<", f">{age}<")
     form = form.replace('"test-case"', f'"{case_id}"')
+    form = form.replace('>Xeenax<', f'>{case_name}<')
     return form.replace(">test-form<", f">{form_id}<")
 
 
