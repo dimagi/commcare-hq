@@ -319,7 +319,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
 
                 username = normalize_username(str(username), domain)
 
-                is_active = row.get('is_active')
+                is_active = row.get('is_active') or None
                 if is_active and isinstance(is_active, str):
                     is_active = string_to_boolean(is_active)
 

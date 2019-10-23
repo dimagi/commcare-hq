@@ -34,7 +34,9 @@ TEST_CASES = [
         [
             {'is_active': 'true'},
             {'is_active': 'false'},
-            {'is_active': 'active'}
+            {'is_active': 'active'},
+            {'is_active': ''},
+            {},
         ],
         IsActive('domain'),
         {2: IsActive.error_message}
