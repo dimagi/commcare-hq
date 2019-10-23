@@ -24,7 +24,6 @@ from corehq.apps.app_manager.views.apps import (
     new_app,
     pull_master_app,
     rearrange,
-    rename_language,
     undo_delete_app,
     update_linked_whitelist,
     validate_language,
