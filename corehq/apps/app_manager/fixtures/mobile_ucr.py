@@ -122,12 +122,12 @@ class ReportFixturesProvider(FixtureProvider):
         return apps
 
     def _get_report_configs(self, apps):
-        return {
-            report_config.uuid: report_config
+        return [
+            report_config
             for app_ in apps
             for module in app_.get_report_modules()
             for report_config in module.report_configs
-        }
+        ]
 
 
 report_fixture_generator = ReportFixturesProvider()
