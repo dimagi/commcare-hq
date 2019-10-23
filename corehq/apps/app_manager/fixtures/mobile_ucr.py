@@ -138,17 +138,15 @@ class ReportDataCache(object):
         self.data_cache = {}
         self.total_row_cache = {}
 
-    def get_data(self, data_source):
-        config_id = data_source.config._id
-        if config_id not in self.data_cache:
-            self.data_cache[config_id] = data_source.get_data()
-        return self.data_cache[config_id]
+    def get_data(self, key, data_source):
+        if key not in self.data_cache:
+            self.data_cache[key] = data_source.get_data()
+        return self.data_cache[key]
 
-    def get_total_row(self, data_source):
-        config_id = data_source.config._id
-        if config_id not in self.total_row_cache:
-            self.total_row_cache[config_id] = data_source.get_total_row()
-        return self.total_row_cache[config_id]
+    def get_total_row(self, key, data_source):
+        if key not in self.total_row_cache:
+            self.total_row_cache[key] = data_source.get_total_row()
+        return self.total_row_cache[key]
 
 
 class BaseReportFixtureProvider(metaclass=ABCMeta):
@@ -214,7 +212,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         report_elem.append(rows_elem)
         return [report_elem]
 
-    def _get_v1_report_elem(self, data_source, deferred_fields, filter_options_by_field, last_sync=None):
+    def _get_v1_report_elem(self, report_config, data_source, deferred_fields, filter_options_by_field, last_sync=None):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
@@ -227,11 +225,11 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         rows_elem = E.rows()
         row_index = 0
 
-        rows = self.report_data_cache.get_data(data_source)
+        rows = self.report_data_cache.get_data(report_config.uuid, data_source)
         for row_index, row in enumerate(rows):
             rows_elem.append(_row_to_row_elem(row, row_index))
         if data_source.has_total_row:
-            total_row = self.report_data_cache.get_total_row(data_source)
+            total_row = self.report_data_cache.get_total_row(report_config.uuid, data_source)
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
@@ -347,7 +345,7 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         report_elem.append(rows_elem)
         return [report_filter_elem, report_elem]
 
-    def _get_v2_report_elem(self, data_source, deferred_fields, filter_options_by_field, last_sync):
+    def _get_v2_report_elem(self, report_config, data_source, deferred_fields, filter_options_by_field, last_sync):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
@@ -359,11 +357,11 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
 
         rows_elem = E.rows(last_sync=last_sync)
         row_index = 0
-        rows = self.report_data_cache.get_data(data_source)
+        rows = self.report_data_cache.get_data(report_config.uuid, data_source)
         for row_index, row in enumerate(rows):
             rows_elem.append(_row_to_row_elem(row, row_index))
         if data_source.has_total_row:
-            total_row = self.report_data_cache.get_total_row(data_source)
+            total_row = self.report_data_cache.get_total_row(report_config.uuid, data_source)
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
@@ -427,6 +425,7 @@ def generate_rows_and_filters(report_config, restore_user, get_rows_element):
     filter_options_by_field = defaultdict(set)
 
     rows_elem = get_rows_element(
+        report_config,
         data_source,
         {f.field for f in defer_filters},
         filter_options_by_field,
