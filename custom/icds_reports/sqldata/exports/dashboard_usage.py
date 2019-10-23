@@ -146,10 +146,12 @@ class DashBoardUsage:
                 self.convert_rs_to_matrix(all_awc_locations, self.get_location_id_string_from_location_type(
                     user_location.location_type_name))
             users = self.get_users_by_location(location_ids)
-            records = ICDSAuditEntryRecord.objects.filter(url='/a/icds-dashboard-qa/cas_export')\
-                .annotate(indicator=KeyTextTransform('indicator', 'post_data')).values('indicator',
-                                                                                       'username')\
-                .annotate(count=Count('indicator')).order_by('username', 'indicator')
+            usernames = [user['username'] for user in users]
+            records = list(ICDSAuditEntryRecord.objects.filter(url='/a/icds-dashboard-qa/cas_export',
+                                                               username__in=usernames)
+                           .annotate(indicator=KeyTextTransform('indicator', 'post_data')).values('indicator',
+                                                                                                  'username')
+                           .annotate(count=Count('indicator')).order_by('username', 'indicator'))
             self.prepare_is_launched_agg_list(user_location.location_type_name, user_location.get_id)
             user_counts = defaultdict(int)
             user_indicators = defaultdict(list)
