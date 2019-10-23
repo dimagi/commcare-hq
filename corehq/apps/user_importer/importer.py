@@ -24,7 +24,7 @@ from corehq.apps.user_importer.validation import (
     is_password,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser, UserRole
-from corehq.apps.users.util import normalize_username, raw_username
+from corehq.apps.users.util import normalize_username
 
 required_headers = set(['username'])
 allowed_headers = set([
