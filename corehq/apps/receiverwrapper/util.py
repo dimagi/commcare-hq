@@ -1,6 +1,7 @@
 import re
 from collections import namedtuple
 
+from django.conf import settings
 from django.http import Http404
 
 from couchdbkit import ResourceNotFound
@@ -224,12 +225,18 @@ def from_demo_user(form_json):
 # Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
 DEMO_SUBMIT_MODE = 'demo'
 
+IGNORE_ALL_DEMO_USER_SUBMISSIONS = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+
 
 def should_ignore_submission(request):
     """
+    If IGNORE_ALL_DEMO_USER_SUBMISSIONS is True then ignore submission if from demo user.
+    Else
     If submission request.GET has `submit_mode=demo` and submitting user is not demo_user,
     the submissions should be ignored
     """
+    if hasattr(request, 'couch_user') and IGNORE_ALL_DEMO_USER_SUBMISSIONS and request.couch_user.is_demo_user:
+        return True
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
         return False
 
