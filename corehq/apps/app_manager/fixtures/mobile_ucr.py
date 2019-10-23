@@ -1,5 +1,6 @@
 import logging
 import uuid
+from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -73,9 +74,10 @@ class ReportFixturesProvider(FixtureProvider):
             for app in apps
         }
 
+        report_data_cache = ReportDataCache()
         providers = [
-            ReportFixturesProviderV1(),
-            ReportFixturesProviderV2()
+            ReportFixturesProviderV1(report_data_cache),
+            ReportFixturesProviderV2(report_data_cache)
         ]
 
         report_configs = self._get_report_configs(apps)
@@ -131,7 +133,40 @@ class ReportFixturesProvider(FixtureProvider):
 report_fixture_generator = ReportFixturesProvider()
 
 
-class ReportFixturesProviderV1(object):
+class ReportDataCache(object):
+    def __init__(self):
+        self.data_cache = {}
+        self.total_row_cache = {}
+
+    def get_data(self, data_source):
+        config_id = data_source.config._id
+        if config_id not in self.data_cache:
+            self.data_cache[config_id] = data_source.get_data()
+        return self.data_cache[config_id]
+
+    def get_total_row(self, data_source):
+        config_id = data_source.config._id
+        if config_id not in self.total_row_cache:
+            self.total_row_cache[config_id] = data_source.get_total_row()
+        return self.total_row_cache[config_id]
+
+
+class BaseReportFixtureProvider(metaclass=ABCMeta):
+    def __init__(self, report_data_cache=None):
+        self.report_data_cache = report_data_cache or ReportDataCache()
+
+    @abstractmethod
+    def __call__(self, restore_state, restore_user, needed_versions, report_configs):
+        raise NotImplementedError
+
+    @abstractmethod
+    def report_config_to_fixture(self, report_config, restore_user):
+        """Standard function for testing
+        :returns: list of fixture elements"""
+        raise NotImplementedError
+
+
+class ReportFixturesProviderV1(BaseReportFixtureProvider):
     id = 'commcare:reports'
 
     def __call__(self, restore_state, restore_user, needed_versions, report_configs):
@@ -155,7 +190,7 @@ class ReportFixturesProviderV1(object):
         reports_elem = E.reports(last_sync=_last_sync_time(restore_user.domain, user_id))
         for report_config in report_configs:
             try:
-                reports_elem.append(self.report_config_to_v1_fixture(report_config, restore_user))
+                reports_elem.extend(self.report_config_to_fixture(report_config, restore_user))
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
@@ -169,19 +204,17 @@ class ReportFixturesProviderV1(object):
         root.append(reports_elem)
         return [root]
 
-    @staticmethod
-    def report_config_to_v1_fixture(report_config, restore_user):
+    def report_config_to_fixture(self, report_config, restore_user):
         rows_elem, filters_elem = generate_rows_and_filters(
-            report_config, restore_user, ReportFixturesProviderV1._get_v1_report_elem
+            report_config, restore_user, self._get_v1_report_elem
         )
 
         report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
         report_elem.append(filters_elem)
         report_elem.append(rows_elem)
-        return report_elem
+        return [report_elem]
 
-    @staticmethod
-    def _get_v1_report_elem(data_source, deferred_fields, filter_options_by_field, last_sync=None):
+    def _get_v1_report_elem(self, data_source, deferred_fields, filter_options_by_field, last_sync=None):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
@@ -193,10 +226,12 @@ class ReportFixturesProviderV1(object):
 
         rows_elem = E.rows()
         row_index = 0
-        for row_index, row in enumerate(data_source.get_data()):
+
+        rows = self.report_data_cache.get_data(data_source)
+        for row_index, row in enumerate(rows):
             rows_elem.append(_row_to_row_elem(row, row_index))
         if data_source.has_total_row:
-            total_row = data_source.get_total_row()
+            total_row = self.report_data_cache.get_total_row(data_source)
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
@@ -210,7 +245,7 @@ class ReportFixturesProviderV1(object):
         return rows_elem
 
 
-class ReportFixturesProviderV2(object):
+class ReportFixturesProviderV2(BaseReportFixtureProvider):
     id = 'commcare-reports'
 
     def __call__(self, restore_state, restore_user, needed_versions, report_configs):
@@ -284,7 +319,7 @@ class ReportFixturesProviderV2(object):
         fixtures = []
         for report_config in report_configs:
             try:
-                fixtures.extend(self.report_config_to_v2_fixture(report_config, restore_user))
+                fixtures.extend(self.report_config_to_fixture(report_config, restore_user))
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
@@ -297,10 +332,9 @@ class ReportFixturesProviderV2(object):
                     raise
         return fixtures
 
-    @staticmethod
-    def report_config_to_v2_fixture(report_config, restore_user):
+    def report_config_to_fixture(self, report_config, restore_user):
         rows_elem, filters_elem = generate_rows_and_filters(
-            report_config, restore_user, ReportFixturesProviderV2._get_v2_report_elem
+            report_config, restore_user, self._get_v2_report_elem
         )
 
         report_filter_elem = E.fixture(id=ReportFixturesProviderV2._report_filter_id(report_config.uuid))
@@ -313,8 +347,7 @@ class ReportFixturesProviderV2(object):
         report_elem.append(rows_elem)
         return [report_filter_elem, report_elem]
 
-    @staticmethod
-    def _get_v2_report_elem(data_source, deferred_fields, filter_options_by_field, last_sync):
+    def _get_v2_report_elem(self, data_source, deferred_fields, filter_options_by_field, last_sync):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
@@ -326,10 +359,11 @@ class ReportFixturesProviderV2(object):
 
         rows_elem = E.rows(last_sync=last_sync)
         row_index = 0
-        for row_index, row in enumerate(data_source.get_data()):
+        rows = self.report_data_cache.get_data(data_source)
+        for row_index, row in enumerate(rows):
             rows_elem.append(_row_to_row_elem(row, row_index))
         if data_source.has_total_row:
-            total_row = data_source.get_total_row()
+            total_row = self.report_data_cache.get_total_row(data_source)
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(

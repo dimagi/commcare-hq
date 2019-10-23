@@ -9,6 +9,7 @@ from mock import Mock, patch
 from casexml.apps.phone.models import UCRSyncLog
 
 from corehq.apps.app_manager.fixtures.mobile_ucr import (
+    ReportDataCache,
     ReportFixturesProviderV1,
     ReportFixturesProviderV2,
 )
@@ -37,30 +38,8 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
         data_source_mock.has_total_row = False
         return data_source_mock
 
-    def test_v1_report_fixtures_provider(self):
+    def _test_report_fixtures_provider(self, provider, expected_filename, data_source=None):
         report_id = 'deadbeef'
-        provider = ReportFixturesProviderV1()
-        report_app_config = ReportAppConfig(
-            uuid='c0ffee',
-            report_id=report_id,
-            filters={'computed_owner_name_40cc88a0_1': StaticChoiceListFilter()}
-        )
-        user = Mock()
-
-        with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
-                patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
-                patch('corehq.apps.app_manager.fixtures.mobile_ucr._last_sync_time') as last_sync_time_patch:
-
-            report_datasource.from_spec.return_value = self.get_data_source_mock()
-            report = provider.report_config_to_v1_fixture(report_app_config, user)
-            self.assertEqual(
-                etree.tostring(report, pretty_print=True),
-                self.get_xml('expected_report')
-            )
-
-    def test_v2_report_fixtures_provider(self):
-        report_id = 'deadbeef'
-        provider = ReportFixturesProviderV2()
         report_app_config = ReportAppConfig(
             uuid='c0ffee',
             report_id=report_id,
@@ -72,15 +51,28 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
                 patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
                 patch('corehq.apps.app_manager.fixtures.mobile_ucr._last_sync_time') as last_sync_time_patch:
 
-            report_datasource.from_spec.return_value = self.get_data_source_mock()
+            report_datasource.from_spec.return_value = data_source or self.get_data_source_mock()
             last_sync_time_patch.return_value = datetime(2017, 9, 11, 6, 35, 20).isoformat()
-            fixtures = provider.report_config_to_v2_fixture(report_app_config, user)
+            fixtures = provider.report_config_to_fixture(report_app_config, user)
             report = E.restore()
             report.extend(fixtures)
             self.assertXMLEqual(
                 etree.tostring(report, pretty_print=True).decode('utf-8'),
-                self.get_xml('expected_v2_report').decode('utf-8')
+                self.get_xml(expected_filename).decode('utf-8')
             )
+
+    def test_v1_report_fixtures_provider(self):
+        self._test_report_fixtures_provider(ReportFixturesProviderV1(), 'expected_v1_report')
+
+    def test_v2_report_fixtures_provider(self):
+        self._test_report_fixtures_provider(ReportFixturesProviderV2(), 'expected_v2_report')
+
+    def test_report_fixtures_data_cache(self):
+        data_source = self.get_data_source_mock()
+        cache = ReportDataCache()
+        self._test_report_fixtures_provider(ReportFixturesProviderV1(cache), 'expected_v1_report', data_source)
+        self._test_report_fixtures_provider(ReportFixturesProviderV2(cache), 'expected_v2_report', data_source)
+        data_source.get_data.assert_called_once()
 
     def test_v2_report_fixtures_provider_caching(self):
         report_id = 'deadbeef'
