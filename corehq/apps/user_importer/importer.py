@@ -334,17 +334,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                         raise UserUploadError(_(
                             'Changing usernames is not supported: %(username)r to %(new_username)r'
                         ) % {'username': user.username, 'new_username': username})
-                else:
-                    user = CommCareUser.get_by_username(username)
-                    if user and user.domain != domain:
-                        # this shouldn't happen since the username is namespaced
-                        # to the domain already. In case it does happen somehow don't
-                        # say which domain the user is in.
-                        raise UserUploadError(_(
-                            'Unable to update user: {username}'
-                        ).format(username=username))
 
-                if user:
                     if is_password(password):
                         user.set_password(password)
                     status_row['flag'] = 'updated'
