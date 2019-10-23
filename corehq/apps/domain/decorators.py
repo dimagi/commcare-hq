@@ -91,35 +91,18 @@ def login_and_domain_required(view_func):
             raise Http404(msg)
 
         if not (user.is_authenticated and user.is_active):
-            if (
-                req.path.startswith('/a/{}/reports/custom'.format(domain_name)) and
-                PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
-            ):
+            if _is_public_custom_report(req.path, domain_name):
                 return call_view()
             else:
                 login_url = reverse('domain_login', kwargs={'domain': domain_name})
                 return redirect_for_login_or_domain(req, login_url=login_url)
 
         if not domain_obj.is_active:
-            msg = _(
-                'The project space "{domain}" has not yet been activated. '
-                'Please report an issue if you think this is a mistake.'
-            ).format(domain=domain_name)
-            messages.info(req, msg)
-            return HttpResponseRedirect(reverse("domain_select"))
+            return _inactive_domain_response(req, domain_name)
         couch_user = _ensure_request_couch_user(req)
         if couch_user.is_member_of(domain_obj):
-            # If the two factor toggle is on, require it for all users.
-            if (
-                _two_factor_required(view_func, domain_obj, couch_user)
-                and not getattr(req, 'bypass_two_factor', False)
-                and not user.is_verified()
-            ):
-                return TemplateResponse(
-                    request=req,
-                    template='two_factor/core/otp_required.html',
-                    status=403,
-                )
+            if _is_missing_two_factor(view_func, req):
+                return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
             elif not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
             else:
@@ -143,6 +126,26 @@ def login_and_domain_required(view_func):
             raise Http404
 
     return _inner
+
+
+def _is_public_custom_report(request_path, domain_name):
+    return (request_path.startswith('/a/{}/reports/custom'.format(domain_name))
+            and PUBLISH_CUSTOM_REPORTS.enabled(domain_name))
+
+
+def _inactive_domain_response(request, domain_name):
+    msg = _(
+        'The project space "{domain}" has not yet been activated. '
+        'Please report an issue if you think this is a mistake.'
+    ).format(domain=domain_name)
+    messages.info(request, msg)
+    return HttpResponseRedirect(reverse("domain_select"))
+
+
+def _is_missing_two_factor(view_fn, request):
+    return (_two_factor_required(view_fn, request.project, request.couch_user)
+            and not getattr(request, 'bypass_two_factor', False)
+            and not request.user.is_verified())
 
 
 def _page_is_whitelist(path, domain):
