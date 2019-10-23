@@ -19,6 +19,7 @@ from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import always_allow_project_access
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import json_response
 from toggle.models import Toggle
@@ -70,14 +71,15 @@ class BaseProjectSettingsView(BaseDomainView):
     @property
     @memoized
     def section_url(self):
-        return reverse(EditBasicProjectInfoView.urlname, args=[self.domain])
+        return reverse(DefaultProjectSettingsView.urlname, args=[self.domain])
 
 
+@method_decorator(always_allow_project_access, name='dispatch')
 class DefaultProjectSettingsView(BaseDomainView):
     urlname = 'domain_settings_default'
 
     def get(self, request, *args, **kwargs):
-        if request.couch_user.is_domain_admin(self.domain):
+        if request.couch_user.is_domain_admin(self.domain) and has_privilege(request, privileges.PROJECT_ACCESS):
             return HttpResponseRedirect(reverse(EditBasicProjectInfoView.urlname, args=[self.domain]))
         return HttpResponseRedirect(reverse(EditMyProjectSettingsView.urlname, args=[self.domain]))
 
@@ -208,6 +210,7 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     urlname = 'my_project_settings'
     page_title = ugettext_lazy("My Timezone")
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
