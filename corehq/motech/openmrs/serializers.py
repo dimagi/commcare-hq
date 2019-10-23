@@ -5,12 +5,14 @@ from dateutil import parser as dateutil_parser
 
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DATE,
+    COMMCARE_DATA_TYPE_DATETIME,
     COMMCARE_DATA_TYPE_TEXT,
 )
 from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_BOOLEAN,
     OPENMRS_DATA_TYPE_DATE,
     OPENMRS_DATA_TYPE_DATETIME,
+    OPENMRS_DATA_TYPE_MILLISECONDS,
 )
 from corehq.motech.serializers import serializers, to_date_str
 
@@ -106,6 +108,11 @@ def openmrs_timestamp_to_isoformat(value, tz=None):
     return isoformat
 
 
+def omrs_timestamp_to_date(value, tz=None):
+    isoformat = openmrs_timestamp_to_isoformat(value, tz)
+    return omrs_datetime_to_date(isoformat)
+
+
 serializers.update({
     # (from_data_type, to_data_type): function
     (None, OPENMRS_DATA_TYPE_DATE): to_date_str,
@@ -113,4 +120,7 @@ serializers.update({
     (None, OPENMRS_DATA_TYPE_BOOLEAN): to_omrs_boolean,
     (OPENMRS_DATA_TYPE_DATETIME, COMMCARE_DATA_TYPE_DATE): omrs_datetime_to_date,
     (OPENMRS_DATA_TYPE_BOOLEAN, COMMCARE_DATA_TYPE_TEXT): omrs_boolean_to_text,
+    (OPENMRS_DATA_TYPE_MILLISECONDS, None): openmrs_timestamp_to_isoformat,
+    (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATETIME): openmrs_timestamp_to_isoformat,
+    (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATE): omrs_timestamp_to_date,
 })

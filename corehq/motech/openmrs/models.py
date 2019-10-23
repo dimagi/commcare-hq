@@ -13,31 +13,39 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
-from corehq.motech.const import COMMCARE_DATA_TYPES, DATA_TYPE_UNKNOWN
+from corehq.motech.const import (
+    COMMCARE_DATA_TYPE_DATE,
+    COMMCARE_DATA_TYPE_DATETIME,
+    COMMCARE_DATA_TYPES,
+    DATA_TYPE_UNKNOWN,
+)
 from corehq.motech.openmrs.const import (
     IMPORT_FREQUENCY_CHOICES,
     IMPORT_FREQUENCY_DAILY,
     IMPORT_FREQUENCY_MONTHLY,
     IMPORT_FREQUENCY_WEEKLY,
+    OPENMRS_DATA_TYPE_MILLISECONDS,
+    OPENMRS_DATA_TYPES,
 )
-from corehq.motech.openmrs.serializers import openmrs_timestamp_to_isoformat
+from corehq.motech.openmrs.serializers import (
+    omrs_timestamp_to_date,
+    openmrs_timestamp_to_isoformat,
+    serializers,
+)
 from corehq.util.timezones.utils import (
     coerce_timezone_value,
     get_timezone_for_domain,
-)
-
-# Supported values for ColumnMapping.data_type
-# ColumnMapping.data_type is only required if json.loads returns the wrong value
-POSIX_MILLISECONDS = 'posix_milliseconds'
-DATA_TYPES = (
-    POSIX_MILLISECONDS,
 )
 
 
 class ColumnMapping(DocumentSchema):
     column = StringProperty()
     property = StringProperty()
-    data_type = StringProperty(choices=DATA_TYPES, required=False)
+    data_type = StringProperty(choices=OPENMRS_DATA_TYPES, required=False)
+    commcare_data_type = StringProperty(
+        required=False, choices=COMMCARE_DATA_TYPES + (DATA_TYPE_UNKNOWN,),
+        default=DATA_TYPE_UNKNOWN, exclude_if_none=True
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -53,11 +61,19 @@ class ColumnMapping(DocumentSchema):
         """
         Returns ``external_value`` as its CommCare data type.
         """
-        as_isoformat = partial(openmrs_timestamp_to_isoformat, tz=self._get_timezone())
-        cast = {
-            POSIX_MILLISECONDS: as_isoformat,
-        }
-        return cast[self.data_type](external_value) if self.data_type else external_value
+        # Update serializers with timezone
+        to_isoformat_tz = partial(openmrs_timestamp_to_isoformat, tz=self._get_timezone())
+        to_date_tz = partial(omrs_timestamp_to_date, tz=self._get_timezone())
+        local_serializers = serializers.copy()
+        local_serializers.update({
+            (OPENMRS_DATA_TYPE_MILLISECONDS, None): to_isoformat_tz,
+            (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATETIME): to_isoformat_tz,
+            (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATE): to_date_tz,
+        })
+
+        serializer = (local_serializers.get((self.data_type, self.commcare_data_type))
+                      or local_serializers.get((None, self.commcare_data_type)))
+        return serializer(external_value) if serializer else external_value
 
 
 class OpenmrsImporter(Document):
