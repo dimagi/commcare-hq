@@ -147,11 +147,11 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL(
             sql=CREATE_INDEX_SQL.format(
-                index='icds_dashboard_growth_monitoring_forms_month_59c07619',
+                index='icds_dashboard_growth_mo_state_id_month_9dfbeda1_idx',
                 table=const.AGG_GROWTH_MONITORING_TABLE,
                 columns=','.join(('state_id', 'month'))
             ),
-            reverse_sql=DROP_INDEX_SQL.format(index='icds_dashboard_growth_monitoring_forms_month_59c07619'),
+            reverse_sql=DROP_INDEX_SQL.format(index='icds_dashboard_growth_mo_state_id_month_9dfbeda1_idx'),
             state_operations=[
                 migrations.AlterIndexTogether(
                     name='aggregategrowthmonitoringforms',
