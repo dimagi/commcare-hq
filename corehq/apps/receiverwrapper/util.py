@@ -210,7 +210,7 @@ def get_app_and_build_ids(domain, build_or_app_id):
     return build_or_app_id, None
 
 
-def from_demo_user(form_json, user):
+def from_demo_user(form_json):
     """
     Whether the form is submitted by demo_user
     """
@@ -245,4 +245,4 @@ def should_ignore_submission(request):
     instance, _ = couchforms.get_instance_and_attachment(request)
     form_json = convert_xform_to_json(instance)
 
-    return False if from_demo_user(form_json, request.couch_user) else True
+    return False if from_demo_user(form_json) else True
