@@ -1,6 +1,6 @@
 import json
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -9,8 +9,6 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods, require_POST
 
 from memoized import memoized
-
-from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -21,10 +19,10 @@ from corehq.motech.dhis2.dbaccessors import (
     get_dataset_maps,
     get_dhis2_connection,
 )
-from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig
-from corehq.motech.dhis2.forms import Dhis2ConfigForm, Dhis2ConnectionForm
+from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig, Dhis2EntityConfig
+from corehq.motech.dhis2.forms import Dhis2ConfigForm, Dhis2ConnectionForm, Dhis2EntityConfigForm
 from corehq.motech.dhis2.models import DataSetMap, DataValueMap
-from corehq.motech.dhis2.repeaters import Dhis2Repeater
+from corehq.motech.dhis2.repeaters import Dhis2Repeater, Dhis2EntityRepeater
 from corehq.motech.dhis2.tasks import send_datasets
 from corehq.motech.requests import Requests
 
@@ -94,9 +92,9 @@ class DataSetMapView(BaseProjectSettingsView):
                     update_dataset_map(dataset_map, new_dataset_maps[j])
                     dataset_map.save()
             get_dataset_maps.clear(request.domain)
-            return json_response({'success': _('DHIS2 DataSet Maps saved')})
+            return JsonResponse({'success': _('DHIS2 DataSet Maps saved')})
         except Exception as err:
-            return json_response({'error': str(err)}, status_code=500)
+            return JsonResponse({'error': str(err)}, status=400)
 
     @property
     def page_context(self):
@@ -123,7 +121,7 @@ class DataSetMapView(BaseProjectSettingsView):
 @require_permission(Permissions.edit_motech)
 def send_dhis2_data(request, domain):
     send_datasets.delay(domain, send_now=True)
-    return json_response({'success': _('Data is being sent to DHIS2.')}, status_code=202)
+    return JsonResponse({'success': _('Data is being sent to DHIS2.')}, status=202)
 
 
 @login_and_domain_required
@@ -152,4 +150,45 @@ def config_dhis2_repeater(request, domain, repeater_id):
         'domain': domain,
         'repeater_id': repeater_id,
         'form': form
+    })
+
+
+@login_and_domain_required
+@require_http_methods(["GET", "POST"])
+def config_dhis2_entity_repeater(request, domain, repeater_id):
+    repeater = Dhis2EntityRepeater.get(repeater_id)
+    assert repeater.domain == domain
+    if request.method == 'POST':
+        errors = []
+        case_configs = []
+        case_types = set()
+        post_data = json.loads(request.POST["case_configs"])
+        for case_config in post_data:
+            form = Dhis2EntityConfigForm(data={"case_config": json.dumps(case_config)})
+            if form.is_valid():
+                case_configs.append(form.cleaned_data["case_config"])
+                case_types.add(form.cleaned_data["case_config"]["case_type"])
+            else:
+                # form.errors is a dictionary where values are lists.
+                errors.extend([err for errlist in form.errors.values() for err in errlist])
+        if len(case_types) < len(case_configs):
+            errors.append(_('You cannot have more than one case config for the same case type.'))
+        if errors:
+            return JsonResponse({'errors': errors}, status=400)
+        else:
+            repeater.dhis2_entity_config = Dhis2EntityConfig.wrap({
+                "case_configs": case_configs
+            })
+            repeater.save()
+            return JsonResponse({'success': _('DHIS2 Tracked Entity configuration saved')})
+
+    else:
+        case_configs = [
+            case_config.to_json()
+            for case_config in repeater.dhis2_entity_config.case_configs
+        ]
+    return render(request, 'dhis2/dhis2_entity_config.html', {
+        'domain': domain,
+        'repeater_id': repeater_id,
+        'case_configs': case_configs,
     })
