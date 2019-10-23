@@ -1023,6 +1023,7 @@ def _get_value(data, field):
     queue='icds_aggregation_queue'
 )
 def collect_inactive_awws(force_citus=False):
+    from custom.icds.messaging.indicators import is_aggregate_inactive_aww_data_fresh
     with force_citus_engine(force_citus):
         celery_task_logger.info("Started updating the Inactive AWW")
         filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
@@ -1058,6 +1059,7 @@ def collect_inactive_awws(force_citus=False):
         sync = IcdsFile(blob_id=filename, data_type='inactive_awws')
         sync.store_file_in_blobdb(export_file)
         sync.save()
+        is_aggregate_inactive_aww_data_fresh.clear()
         celery_task_logger.info("Ended updating the Inactive AWW")
 
 

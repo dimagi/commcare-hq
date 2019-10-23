@@ -1340,7 +1340,7 @@ class AggregateCcsRecordDeliveryForms(models.Model, AggregateMixin):
 class AggregateInactiveAWW(models.Model, AggregateMixin):
     awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
-    awc_site_code = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True, db_index=True)
     supervisor_id = models.TextField(blank=True, null=True)
     supervisor_name = models.TextField(blank=True, null=True)
     block_id = models.TextField(blank=True, null=True)

@@ -19,7 +19,6 @@ from django.views.decorators.http import require_POST
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
-    get_build_doc_by_version,
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.models import (
@@ -165,14 +164,14 @@ class ManageReleasesByAppProfile(BaseProjectSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.creation_form.is_valid():
-            success, error_message = self.creation_form.save()
-            if success:
-                return redirect(self.urlname, self.domain)
-            else:
+            error_messages, success_messages = self.creation_form.save()
+            for success_message in success_messages:
+                messages.success(request, success_message)
+            for error_message in error_messages:
                 messages.error(request, error_message)
-                return self.get(request, *args, **kwargs)
-        else:
-            return self.get(request, *args, **kwargs)
+            if not error_messages:
+                return redirect(self.urlname, self.domain)
+        return self.get(request, *args, **kwargs)
 
 
 @require_can_edit_apps

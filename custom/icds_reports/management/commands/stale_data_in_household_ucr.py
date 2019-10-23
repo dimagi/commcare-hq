@@ -67,9 +67,7 @@ def _get_stale_data(run_config):
 
 
 def _get_ucr_insertion_dates(domain, case_ids):
-    ucr_id = StaticDataSourceConfiguration.get_doc_id(domain, 'static-household_cases')
-    config, _ = get_datasource_config(ucr_id, domain)
-    table_name = get_table_name(domain, config.table_id)
+    table_name = get_table_name(domain, 'static-household_cases')
     with get_cursor(AggAwc) as cursor:
         query = f'''
             SELECT
