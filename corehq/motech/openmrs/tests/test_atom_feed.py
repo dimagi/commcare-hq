@@ -12,11 +12,11 @@ from mock import Mock, patch
 
 import corehq.motech.openmrs.atom_feed
 from corehq.motech.openmrs.atom_feed import (
+    get_case_block_kwargs_from_bahmni_diagnoses,
+    get_case_block_kwargs_from_observations,
     get_encounter_uuid,
     get_patient_uuid,
     get_timestamp,
-    get_updates_from_bahmni_diagnoses,
-    get_updates_from_observations,
     import_encounter,
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
@@ -204,23 +204,23 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             self.assertEqual(kwargs['device_id'], 'openmrs-atomfeed-123456')
             self.assertEqual(kwargs['xmlns'], 'http://commcarehq.org/openmrs-integration')
 
-    def test_get_updates_from_observations(self):
+    def test_get_case_block_kwargs_from_observations(self):
         encounter = self.get_json('encounter')
         observations = encounter['observations']
-        case_updates = get_updates_from_observations(
+        case_block_kwargs = get_case_block_kwargs_from_observations(
             observations,
             self.repeater.observation_mappings
         )
-        self.assertEqual(case_updates, {'height': 105})
+        self.assertEqual(case_block_kwargs, {'update': {'height': 105}})
 
-    def test_get_updates_from_bahmni_diagnoses(self):
+    def test_get_case_block_kwargs_from_bahmni_diagnoses(self):
         encounter = self.get_json('encounter_with_diagnoses')
         bahmni_diagnoses = encounter['bahmniDiagnoses']
-        case_updates = get_updates_from_bahmni_diagnoses(
+        case_block_kwargs = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
             self.repeater.observation_mappings
         )
-        self.assertEqual(case_updates, {'bahmni_hypothermia': 'Hypothermia'})
+        self.assertEqual(case_block_kwargs, {'update': {'bahmni_hypothermia': 'Hypothermia'}})
 
 
 def test_doctests():

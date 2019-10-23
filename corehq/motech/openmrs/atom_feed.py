@@ -30,6 +30,8 @@ from corehq.motech.openmrs.openmrs_config import get_property_map
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
 from corehq.motech.openmrs.repeaters import AtomFeedStatus
 
+CASE_BLOCK_ARGS = ("case_name", "owner_id")
+
 
 def get_feed_xml(requests, feed_name, page):
     if not page:
@@ -217,7 +219,6 @@ def get_updatepatient_caseblock(case, patient, repeater):
 
 
 def get_case_block_kwargs(patient, repeater, case=None):
-    case_block_args = ("case_name", "owner_id")
     property_map = get_property_map(repeater.openmrs_config.case_config)
     case_block_kwargs = {
         "case_name": patient['person']['display'],
@@ -231,7 +232,7 @@ def get_case_block_kwargs(patient, repeater, case=None):
             patient_value = matches[0].value
             new_value = value_source.deserialize(patient_value)
             if case:
-                if prop in case_block_args:
+                if prop in CASE_BLOCK_ARGS:
                     case_value = case.name if prop == "case_name" else getattr(case, prop)
                     if case_value != new_value:
                         case_block_kwargs[prop] = new_value
@@ -240,7 +241,7 @@ def get_case_block_kwargs(patient, repeater, case=None):
                     if case_value != new_value:
                         case_block_kwargs["update"][prop] = new_value
             else:
-                if prop in case_block_args:
+                if prop in CASE_BLOCK_ARGS:
                     case_block_kwargs[prop] = new_value
                 else:
                     case_block_kwargs["update"][prop] = new_value
@@ -313,17 +314,18 @@ def import_encounter(repeater, encounter_uuid):
     )
     encounter = response.json()
 
-    case_property_updates = get_updates_from_observations(
+    case_block_kwargs = get_case_block_kwargs_from_observations(
         encounter['observations'],
         repeater.observation_mappings
     )
     if 'bahmniDiagnoses' in encounter:
-        case_property_updates.update(get_updates_from_bahmni_diagnoses(
+        more_kwargs = get_case_block_kwargs_from_bahmni_diagnoses(
             encounter['bahmniDiagnoses'],
             repeater.observation_mappings
-        ))
+        )
+        deep_update(case_block_kwargs, more_kwargs)
 
-    if case_property_updates:
+    if has_case_updates(case_block_kwargs):
         case_blocks = []
         patient_uuid = encounter['patientUuid']
         case_type = repeater.white_listed_case_types[0]
@@ -354,7 +356,7 @@ def import_encounter(repeater, encounter_uuid):
         case_blocks.append(CaseBlock(
             case_id=case_id,
             create=False,
-            update=case_property_updates,
+            **case_block_kwargs,
         ))
         submit_case_blocks(
             [cb.as_text() for cb in case_blocks],
@@ -364,34 +366,46 @@ def import_encounter(repeater, encounter_uuid):
         )
 
 
-def get_updates_from_observations(observations, mappings):
+def get_case_block_kwargs_from_observations(observations, mappings):
     """
     Traverse a tree of observations, and return the ones mapped to case
     properties.
     """
-    fields = {}
+    case_block_kwargs = {"update": {}}
     for obs in observations:
         concept_uuid = obs.get('concept', {}).get('uuid')
         if concept_uuid and concept_uuid in mappings:
             for mapping in mappings[concept_uuid]:
-                fields[mapping.case_property] = mapping.value.deserialize(obs.get('value'))
+                value = mapping.value.deserialize(obs.get('value'))
+                if mapping.case_property in CASE_BLOCK_ARGS:
+                    case_block_kwargs[mapping.case_property] = value
+                else:
+                    case_block_kwargs["update"][mapping.case_property] = value
         if obs.get('groupMembers'):
-            fields.update(get_updates_from_observations(obs['groupMembers'], mappings))
-    return fields
+            more_kwargs = get_case_block_kwargs_from_observations(
+                obs['groupMembers'],
+                mappings
+            )
+            deep_update(case_block_kwargs, more_kwargs)
+    return case_block_kwargs
 
 
-def get_updates_from_bahmni_diagnoses(diagnoses, mappings):
+def get_case_block_kwargs_from_bahmni_diagnoses(diagnoses, mappings):
     """
     Iterate a list of Bahmni diagnoses, and return the ones mapped to
     case properties.
     """
-    fields = {}
+    case_block_kwargs = {"update": {}}
     for diag in diagnoses:
         codedanswer_uuid = diag.get('codedAnswer', {}).get('uuid')
         if codedanswer_uuid and codedanswer_uuid in mappings:
             for mapping in mappings[codedanswer_uuid]:
-                fields[mapping.case_property] = mapping.value.deserialize(diag['codedAnswer'].get('name'))
-    return fields
+                value = mapping.value.deserialize(diag['codedAnswer'].get('name'))
+                if mapping.case_property in CASE_BLOCK_ARGS:
+                    case_block_kwargs[mapping.case_property] = value
+                else:
+                    case_block_kwargs["update"][mapping.case_property] = value
+    return case_block_kwargs
 
 
 def has_case_updates(case_block_kwargs):
