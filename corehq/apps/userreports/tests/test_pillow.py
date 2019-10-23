@@ -192,22 +192,6 @@ class ChunkedUCRProcessorTest(TestCase):
             set([row.doc_id for row in query.all()])
         )
 
-    def test_get_docs(self):
-        docs = [
-            get_sample_doc_and_indicators(self.fake_time_now)[0]
-            for i in range(10)
-        ]
-        feed = self.pillow.get_change_feed()
-        since = feed.get_latest_offsets()
-        cases = self._create_cases(docs=docs)
-        changes = list(feed.iter_changes(since, forever=False))
-        bad_changes, result_docs = ConfigurableReportPillowProcessor.get_docs_for_changes(
-            changes, docs[1]['domain'])
-        self.assertEqual(
-            set([c.id for c in changes]),
-            set([doc['_id'] for doc in result_docs])
-        )
-
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
     def test_invalid_data_bulk_processor(self, process_change):
         self.config.validations = [

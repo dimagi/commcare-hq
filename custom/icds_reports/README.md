@@ -166,6 +166,37 @@ UCR query time
 
 Dashboard query time
 
+
+Aggregation task
+----------------
+
+To perform our large aggregation task we use [Airflow](https://airflow.apache.org/).
+Airflow is a workflow management system that allows us to specify dependencies between tasks and schedule each task appropriately.
+Our configuration of our workflow is stored in https://github.com/dimagi/pipes.
+That repository only stores information about the workflow.
+The queries and commands being run are stored as part of this repository.
+
+
+## Running only one month
+
+Currently this must be done manually.
+To run one month, you must access the [airflow server](http://100.71.188.10:8080/admin/) (behind the VPN),
+go to the dashboard aggregation, click "previous month" and select "mark success".
+
+## Aggregation running slowly
+
+Airflow collects some metrics that show the history of a task.
+If you are unfamiliar with how long a task is expected to run, then you can view the history of the task by looking at the "task duration" tab.
+Once you find the task(s) that have slowed, you should check if the query was blocked by another.
+If you find that the query could not acquire the appropriate lock, reference the below troubleshooting section about locks.
+Otherwise reference the slow query section in troubleshooting.
+
+## Errors
+
+Currently any errors are emailed to the dashboard aggregation email group.
+The emails contain information such as the aggregation step that failed and a link to the log output of the task.
+
+
 Troubleshooting
 ---------------
 
@@ -182,14 +213,28 @@ A good rule of thumb is to take note of the estimated total costs displayed and 
 From the innermost operation, take one step out at a time and find where you see the largest cost increases.
 The largest cost increase is a good place to begin looking to optimize your query.
 
+Another issue we've seen before is Disk IO contention.
+We run many tasks in parallel and therefore there may be too many tasks running at one time and using much of the disk.
+You can look at the "Postgres - Overview" DataDog dashboard to see if IO wait or disk queue size is very high during the task
+
 Note that while its largely the same, there are differences in tuning Citus queries vs postgres queries.
-[http://docs.citusdata.com/en/v8.3/performance/performance_tuning.html](Citus docs) provide an overview of tuning both.
+[Citus docs](http://docs.citusdata.com/en/v8.3/performance/performance_tuning.html) provide an overview of tuning both.
 
 ## Locking queries
 
-Find locks that haven't been granted: `SELECT relation::regclass, * FROM pg_locks WHERE NOT GRANTED`
+We log the number of locked queries to datadog under `postgresql.locks.not_granted`.
+There is a graph of this on our Postgres - Overview dashboard.
 
-More specifically for finding Citus locks:
+For more specific troubleshooting for each lock that is currently occurring on the database:
+
+Find locks that haven't been granted: `SELECT * FROM pg_locks WHERE NOT GRANTED`
+Queries that are blocked on a lock:
+`SELECT query_start, query FROM pg_locks, pg_stat_activity WHERE pg_locks.pid = pg_stat_activity.pid AND NOT granted`
+
+Depending on the type of lock acquired (`pg_locks.locktype`), you can adjust your query to find the query that's blocking.
+For example if `locktype` is `virtualxid`, you can run `SELECT * FROM pg_locks WHERE virtualxid = 'xid' AND GRANTED` to find the process(s) that currently have the lock acquired.
+
+More specifically for finding distributed Citus locks:
 
 ```sql
 WITH citus_xacts AS (

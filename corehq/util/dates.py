@@ -16,10 +16,6 @@ def get_timestamp(date):
     return time.mktime(date.timetuple())
 
 
-def get_timestamp_millis(date):
-    return 1000 * get_timestamp(date)
-
-
 def iso_string_to_datetime(iso_string, strict=False):
     """
     parse datetime string in iso format with or without microseconds,

@@ -964,19 +964,19 @@ class Response(object):
         return '' if self.content is None else self.content.decode(self.encoding, errors='replace')
 
 
+class DummyRepeater(Repeater):
+
+    @property
+    def generator(self):
+        return FormRepeaterXMLPayloadGenerator(self)
+
+    def payload_doc(self, repeat_record):
+        return {}
+
+
 class HandleResponseTests(SimpleTestCase):
 
     def setUp(self):
-
-        class DummyRepeater(Repeater):
-
-            @property
-            def generator(self):
-                return FormRepeaterXMLPayloadGenerator(self)
-
-            def payload_doc(self, repeat_record):
-                return {}
-
         self.repeater = DummyRepeater(
             domain="test-domain",
             url="https://example.com/api/",
@@ -1050,3 +1050,50 @@ class FormatResponseTests(SimpleTestCase):
         response = Response(500, 'The core is exposed')
         formatted = RepeatRecord._format_response(response)
         self.assertEqual(formatted, '500: The core is exposed.\n')
+
+
+class NotifyAddressesTests(SimpleTestCase):
+
+    def test_default(self):
+        repeater = DummyRepeater.wrap({})
+        self.assertEqual(repeater.notify_addresses, [])
+
+    def test_empty(self):
+        repeater = DummyRepeater.wrap({
+            "notify_addresses_str": "",
+        })
+        self.assertEqual(repeater.notify_addresses, [])
+
+    def test_one(self):
+        repeater = DummyRepeater.wrap({
+            "notify_addresses_str": "admin@example.com"
+        })
+        self.assertEqual(repeater.notify_addresses, ["admin@example.com"])
+
+    def test_comma(self):
+        repeater = DummyRepeater.wrap({
+            "notify_addresses_str": "admin@example.com,user@example.com"
+        })
+        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
+                                                     "user@example.com"])
+
+    def test_space(self):
+        repeater = DummyRepeater.wrap({
+            "notify_addresses_str": "admin@example.com user@example.com"
+        })
+        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
+                                                     "user@example.com"])
+
+    def test_commaspace(self):
+        repeater = DummyRepeater.wrap({
+            "notify_addresses_str": "admin@example.com, user@example.com"
+        })
+        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
+                                                     "user@example.com"])
+
+    def test_mess(self):
+        repeater = DummyRepeater.wrap({
+            "notify_addresses_str": "admin@example.com,,, ,  user@example.com"
+        })
+        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
+                                                     "user@example.com"])
