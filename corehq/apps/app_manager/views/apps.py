@@ -639,22 +639,6 @@ def new_app(request, domain):
     return back_to_main(*main_args)
 
 
-@require_GET
-@login_and_domain_required
-def validate_language(request, domain, app_id):
-    app = get_app(domain, app_id)
-    term = request.GET.get('term', '').lower()
-    if term in [lang.lower() for lang in app.langs]:
-        return HttpResponse(json.dumps({'match': {"code": term, "name": term}, 'suggestions': []}))
-    else:
-        return HttpResponseRedirect(
-            "%s?%s" % (
-                reverse('langcodes.views.validate', args=[]),
-                django_urlencode({'term': term})
-            )
-        )
-
-
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_app_langs(request, domain, app_id):
