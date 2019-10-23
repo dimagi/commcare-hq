@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import six
 import sqlalchemy
+from django.db import DEFAULT_DB_ALIAS
 from mock import patch
 
 from casexml.apps.case.models import CommCareCase
@@ -140,7 +141,7 @@ def load_data_from_db(table_name):
         else:
             return value_str
 
-    engine = connection_manager.get_session_helper('default').engine
+    engine = connection_manager.get_session_helper(DEFAULT_DB_ALIAS).engine
     metadata = sqlalchemy.MetaData(bind=engine)
     metadata.reflect(bind=engine)
     table = metadata.tables[table_name]
