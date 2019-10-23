@@ -29,7 +29,7 @@ from corehq.motech.openmrs.const import (
 )
 from corehq.motech.openmrs.serializers import (
     omrs_timestamp_to_date,
-    openmrs_timestamp_to_isoformat,
+    omrs_timestamp_to_datetime,
     serializers,
 )
 from corehq.util.timezones.utils import (
@@ -62,12 +62,12 @@ class ColumnMapping(DocumentSchema):
         Returns ``external_value`` as its CommCare data type.
         """
         # Update serializers with timezone
-        to_isoformat_tz = partial(openmrs_timestamp_to_isoformat, tz=self._get_timezone())
+        to_datetime_tz = partial(omrs_timestamp_to_datetime, tz=self._get_timezone())
         to_date_tz = partial(omrs_timestamp_to_date, tz=self._get_timezone())
         local_serializers = serializers.copy()
         local_serializers.update({
-            (OPENMRS_DATA_TYPE_MILLISECONDS, None): to_isoformat_tz,
-            (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATETIME): to_isoformat_tz,
+            (OPENMRS_DATA_TYPE_MILLISECONDS, None): to_datetime_tz,
+            (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATETIME): to_datetime_tz,
             (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATE): to_date_tz,
         })
 
