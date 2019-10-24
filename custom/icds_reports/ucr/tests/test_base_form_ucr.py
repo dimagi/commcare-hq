@@ -40,11 +40,12 @@ class BaseFormsTest(SimpleTestCase, TestFileMixin):
         form_json = self._get_form_json(xml_file)
         ucr_result = config.get_all_values(form_json)
         self.assertEqual(len(ucr_result), len(expected_rows))
-        self.assertEqual(expected_rows, [
+        ucr_rows = [
             {
                 i.column.database_column_name.decode('utf-8'): i.value
                 for i in row
                 if i.column.database_column_name not in BLACKLISTED_COLUMNS
             }
             for row in ucr_result
-        ])
+        ]
+        self.assertEqual(expected_rows, ucr_rows)
