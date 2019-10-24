@@ -26,8 +26,12 @@ class BaseFormsTest(SimpleTestCase, TestFileMixin):
         ]
         return config
 
-    def _get_form_json(self, xml_file):
-        form_json = convert_xform_to_json(self.get_xml(xml_file))
+    def _get_form_json(self, xml_file, render_context=None):
+        # can't use .get_xml because we need to do encoding after string formatting
+        xml_string = self.get_file(xml_file, '.xml')
+        if render_context:
+            xml_string = str(xml_string).format(**render_context)
+        form_json = convert_xform_to_json(xml_string.encode('utf-8'))
         return {
             'form': form_json,
             'domain': self.domain,
@@ -35,9 +39,9 @@ class BaseFormsTest(SimpleTestCase, TestFileMixin):
             'doc_type': 'XFormInstance',
         }
 
-    def _test_data_source_results(self, xml_file, expected_rows):
+    def _test_data_source_results(self, xml_file, expected_rows, render_context=None):
         config = self._get_config()
-        form_json = self._get_form_json(xml_file)
+        form_json = self._get_form_json(xml_file, render_context)
         ucr_result = config.get_all_values(form_json)
         self.assertEqual(len(ucr_result), len(expected_rows))
         ucr_rows = [
