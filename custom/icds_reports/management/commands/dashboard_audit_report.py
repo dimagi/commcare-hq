@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Count, Q
 from django.db.models.functions import TruncDay
 
+from corehq.util.argparse_types import date_type
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from dimagi.utils.chunked import chunked
 
@@ -38,22 +39,34 @@ def cache_to_file(cache_name):
 
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'start_date',
+            type=date_type,
+            help='The start date (inclusive). format YYYY-MM-DD'
+        )
+        parser.add_argument(
+            'end_date',
+            type=date_type,
+            help='The end date (exclusive). format YYYY-MM-DD'
+        )
 
-    def handle(self, **options):
+    def handle(self, start_date, end_date, **options):
         domain = 'icds-cas'
-        start_date = datetime(2019, 10, 3).replace(tzinfo=timezone.utc)
-        users_without_permission = self.get_users_without_permission(domain, start_date)
-        self.get_request_data(users_without_permission, start_date)
+        start_date = start_date.replace(tzinfo=timezone.utc)
+        end_date = end_date.replace(tzinfo=timezone.utc)
+        users_without_permission = self.get_users_without_permission(domain, start_date, end_date)
+        self.get_request_data(users_without_permission, start_date, end_date)
         print(f'Request data written to file {REQUEST_DATA_CACHE}')
 
-    def get_request_data(self, usernames, start_date):
+    def get_request_data(self, usernames, start_date, end_date):
         print(f'Compiling request data for {len(usernames)} users')
         request_data = []
         for chunk in with_progress_bar(chunked(usernames, 50), prefix='\tProcessing'):
             query = (
                 ICDSAuditEntryRecord.objects.values('username', 'url', 'response_code')
                 .filter(~Q(url__contains='login'))
-                .filter(username__in=chunk, time_of_use__gt=start_date)
+                .filter(username__in=chunk, time_of_use__gte=start_date, time_of_use__lte=end_date)
                 .annotate(date=TruncDay('time_of_use'))
                 .annotate(Count('username'))
             )
@@ -68,8 +81,8 @@ class Command(BaseCommand):
         _write_to_file(REQUEST_DATA_CACHE, request_data)
 
     @cache_to_file(USER_NO_PERMISSION_CACHE)
-    def get_users_without_permission(self, start_date):
-        usernames = self.get_usernames(start_date)
+    def get_users_without_permission(self, start_date, end_date):
+        usernames = self.get_usernames(start_date, end_date)
 
         print(f'Filter {len(usernames)} users according to permission')
         permission_name = get_permission_name(Permissions.view_report)
@@ -83,12 +96,12 @@ class Command(BaseCommand):
         return users_without_permission
 
     @cache_to_file(USER_DATA_CACHE)
-    def get_usernames(self, start_date):
-        print(f'Getting usernames who have accessed the Dashboard since {start_date}')
+    def get_usernames(self, start_date, end_date):
+        print(f'Getting usernames who have accessed the Dashboard between {start_date} and {end_date}')
         query = (
             ICDSAuditEntryRecord.objects.values('username')
             .filter(~Q(url__contains='login'))
-            .filter(time_of_use__gt=start_date)
+            .filter(time_of_use__gte=start_date, time_of_use__lte=end_date)
             .annotate(Count('username'))
         )
         return [
