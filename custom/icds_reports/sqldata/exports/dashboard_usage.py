@@ -115,7 +115,7 @@ class DashBoardUsage:
         :param location_id:
         :return: None
         """
-        filter_dict = {location_type: location_id, 'aggregation_level': 5,
+        filter_dict = {'aggregation_level': 5,
                        'month': datetime.datetime.now().month}
         if location_type is not None:
             location_type = self.get_location_id_string_from_location_type(location_type)
