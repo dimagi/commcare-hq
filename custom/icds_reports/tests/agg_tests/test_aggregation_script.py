@@ -432,16 +432,10 @@ class InactiveAWWsTest(TestCase):
         with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
             cursor.execute(aggregation_query, agg_params)
+
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
         self.assertEqual(records.count(), 46)
 
-    def test_submission_dates(self):
-        with freeze_time(self.agg_time):
-            missing_location_query = self.helper.missing_location_query()
-            aggregation_query, agg_params = self.helper.aggregate_query()
-        with get_cursor(AggregateInactiveAWW) as cursor:
-            cursor.execute(missing_location_query)
-            cursor.execute(aggregation_query, agg_params)
         record = AggregateInactiveAWW.objects.filter(awc_id='a10').first()
         self.assertEqual(date(2017, 4, 5), record.first_submission)
         self.assertEqual(date(2017, 5, 5), record.last_submission)
