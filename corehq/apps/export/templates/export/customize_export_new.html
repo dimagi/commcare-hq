@@ -284,8 +284,21 @@
               {% trans "Copy this Export" %}
             </a>
           {% endif %}
+
+          {% if export_instance.is_odata_config %}
+            <div style="display: inline-block"
+                 data-bind="if: hasDuplicateColumnLabels">
+              <div class="alert alert-danger">
+                {% blocktrans %}
+                  Column labels must be unique. '<span data-bind="text: duplicateLabel"></span>'
+                  has been used more than once.
+                {% endblocktrans %}
+              </div>
+            </div>
+          {% endif %}
+
           <div class="text-danger"
-               data-bind="if: !isValid()">
+               data-bind="if: !isValid(){% if export_instance.is_odata_config %} && !hasDuplicateColumnLabels(){% endif %}">
             {% trans "There are errors with your configuration. Please fix them before creating the export." %}
           </div>
         </div>
