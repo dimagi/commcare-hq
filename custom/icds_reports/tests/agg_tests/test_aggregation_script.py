@@ -411,14 +411,13 @@ class InactiveAWWsTest(TestCase):
     def setUpClass(cls):
         super(InactiveAWWsTest, cls).setUpClass()
         last_sync = date(2017, 4, 1)
-        cls.agg_time = datetime(2017, 7, 31, 18)
         cls.helper = InactiveAwwsAggregationDistributedHelper(last_sync)
 
     def tearDown(self):
         AggregateInactiveAWW.objects.all().delete()
 
     def test_missing_locations_query(self):
-        with freeze_time(self.agg_time):
+        with freeze_time(datetime(2017, 4, 31, 18)):
             missing_location_query = self.helper.missing_location_query()
         with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
@@ -426,13 +425,18 @@ class InactiveAWWsTest(TestCase):
         self.assertEqual(records.count(), 0)
 
     def test_aggregate_query(self):
-        with freeze_time(self.agg_time):
-            missing_location_query = self.helper.missing_location_query()
-            aggregation_query, agg_params = self.helper.aggregate_query()
-        with get_cursor(AggregateInactiveAWW) as cursor:
-            cursor.execute(missing_location_query)
-            cursor.execute(aggregation_query, agg_params)
+        def run_agg(agg_date):
+            with freeze_time(agg_date):
+                missing_location_query = self.helper.missing_location_query()
+                aggregation_query, agg_params = self.helper.aggregate_query()
+            with get_cursor(AggregateInactiveAWW) as cursor:
+                cursor.execute(missing_location_query)
+                cursor.execute(aggregation_query, agg_params)
 
+        # the agg considers only one month data, run it for 3 months of test data
+        run_agg(datetime(2017, 4, 31, 18))
+        run_agg(datetime(2017, 5, 31, 18))
+        run_agg(datetime(2017, 6, 31, 18))
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
         self.assertEqual(records.count(), 46)
 
