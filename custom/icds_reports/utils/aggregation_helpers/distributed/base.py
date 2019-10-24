@@ -141,7 +141,7 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
     base_tablename = None
     monthly_tablename = None
     model = None
-    temporary_table_to_be_deleted = None
+    previous_agg_table_name = None
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
@@ -181,6 +181,9 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
         INHERITS ({self.base_tablename})
         """)
 
+        logger.info(f"Deleting previous day's agg table for {self.helper_key} {self.month}")
+        cursor.execute(f"DROP TABLE IF EXISTS {self.previous_agg_table_name}")
+
         logger.info(f"Creating indexes for {self.helper_key} {self.month}")
         for index_query in self.indexes():
             cursor.execute(index_query)
@@ -195,7 +198,7 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
             cursor.execute(f'ALTER TABLE IF EXISTS "{self.monthly_tablename}" NO INHERIT "{self.base_tablename}"')
             logger.info(f"Renaming previous table for {self.helper_key} {self.month}")
             cursor.execute(f"""
-            ALTER TABLE IF EXISTS "{self.monthly_tablename}" RENAME TO "{self.temporary_table_to_be_deleted}"
+            ALTER TABLE IF EXISTS "{self.monthly_tablename}" RENAME TO "{self.previous_agg_table_name}"
             """)
             logger.info(f"Renaming new table for {self.helper_key} {self.month}")
             cursor.execute(f"""
@@ -209,7 +212,6 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
     def cleanup(self, cursor):
         logger.info(f'Start {self.helper_key} cleanup')
         cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
-        cursor.execute(f"DROP TABLE IF EXISTS {self.temporary_table_to_be_deleted}")
         logger.info(f'Finish {self.helper_key}cleanup')
 
     def _legacy_tablename_func(self, agg_level):

@@ -7,11 +7,14 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
     helper_key = 'agg-child-health'
     base_tablename = 'agg_child_health'
     staging_tablename = 'staging_agg_child_health'
-    temporary_table_to_be_deleted = "agg_child_health_to_be_deleted"
 
     @property
     def monthly_tablename(self):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
+
+    @property
+    def previous_agg_table_name(self):
+        return f"previous_{self.monthly_tablename}"
 
     @property
     def model(self):
