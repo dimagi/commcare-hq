@@ -160,7 +160,7 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
                 location_id = pna['location_id']
                 location_name = pna['location_name']
                 products = sorted(pna['products'], key=lambda x: x['product_name'])
-                if location_id in added_locations and locations_with_products.get(location_name) is not None:
+                if location_id in added_locations:
                     length = len(locations_with_products[location_id])
                     product_ids = [p['product_id'] for p in locations_with_products[location_id]]
                     for product in products:
@@ -213,9 +213,9 @@ class ValuerDesStocksPNADisponsibleReport(CustomProjectReport, DatespanMixin, Pr
                 ])
                 products_list = sorted(products, key=lambda x: x['product_name'])
                 for product_info in products_list:
-                    actual_consumption = product_info['final_pna_stock_valuation']
+                    final_pna_stock_valuation = product_info['final_pna_stock_valuation']
                     product_id = product_info['product_id']
-                    pna = actual_consumption if product_id is not None else 'pas de données'
+                    pna = final_pna_stock_valuation if product_id is not None else 'pas de données'
                     pnas_to_return[-1].append({
                         'html': '{}'.format(pna),
                         'sort_key': pna
