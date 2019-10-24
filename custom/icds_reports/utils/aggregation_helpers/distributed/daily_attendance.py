@@ -1,4 +1,3 @@
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import DAILY_FEEDING_TABLE_ID
 from custom.icds_reports.utils.aggregation_helpers import date_to_string, transform_day_to_month
@@ -27,9 +26,7 @@ class DailyAttendanceAggregationDistributedHelper(BaseICDSAggregationDistributed
 
     @property
     def ucr_daily_attendance_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ucr_daily_attendance_table)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, self.ucr_daily_attendance_table)
 
     def aggregate_query(self):
         return """

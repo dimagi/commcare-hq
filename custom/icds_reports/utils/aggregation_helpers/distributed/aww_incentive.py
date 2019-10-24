@@ -1,7 +1,3 @@
-from corehq.apps.userreports.models import (
-    StaticDataSourceConfiguration,
-    get_datasource_config,
-)
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import (
     AGG_CCS_RECORD_CF_TABLE,
@@ -20,9 +16,7 @@ class AwwIncentiveAggregationDistributedHelper(StateBasedAggregationPartitionedH
 
     @property
     def ccs_record_case_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, 'static-ccs_record_cases')
 
     def aggregate_query(self):
         month = self.month.replace(day=1)

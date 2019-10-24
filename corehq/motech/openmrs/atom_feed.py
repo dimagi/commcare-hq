@@ -306,24 +306,6 @@ def update_patient(repeater, patient_uuid):
 
 
 def import_encounter(repeater, encounter_uuid):
-    # It's possible that an OpenMRS concept appears more than once in
-    # form_configs. Use a defaultdict(list) so that earlier definitions
-    # don't get overwritten by later ones:
-
-    def fields_from_observations(observations, mappings):
-        """
-        Traverse a tree of observations, and return the ones mapped to
-        case properties.
-        """
-        fields = {}
-        for obs in observations:
-            if obs['concept']['uuid'] in mappings:
-                for mapping in mappings[obs['concept']['uuid']]:
-                    fields[mapping.case_property] = mapping.value.deserialize(obs['value'])
-            if obs['groupMembers']:
-                fields.update(fields_from_observations(obs['groupMembers'], mappings))
-        return fields
-
     response = repeater.requests.get(
         '/ws/rest/v1/bahmnicore/bahmniencounter/' + encounter_uuid,
         {'includeAll': 'true'},
@@ -331,7 +313,15 @@ def import_encounter(repeater, encounter_uuid):
     )
     encounter = response.json()
 
-    case_property_updates = fields_from_observations(encounter['observations'], repeater.observation_mappings)
+    case_property_updates = get_updates_from_observations(
+        encounter['observations'],
+        repeater.observation_mappings
+    )
+    if 'bahmniDiagnoses' in encounter:
+        case_property_updates.update(get_updates_from_bahmni_diagnoses(
+            encounter['bahmniDiagnoses'],
+            repeater.observation_mappings
+        ))
 
     if case_property_updates:
         case_blocks = []
@@ -372,3 +362,33 @@ def import_encounter(repeater, encounter_uuid):
             xmlns=XMLNS_OPENMRS,
             device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.get_id,
         )
+
+
+def get_updates_from_observations(observations, mappings):
+    """
+    Traverse a tree of observations, and return the ones mapped to case
+    properties.
+    """
+    fields = {}
+    for obs in observations:
+        concept_uuid = obs.get('concept', {}).get('uuid')
+        if concept_uuid and concept_uuid in mappings:
+            for mapping in mappings[concept_uuid]:
+                fields[mapping.case_property] = mapping.value.deserialize(obs.get('value'))
+        if obs.get('groupMembers'):
+            fields.update(get_updates_from_observations(obs['groupMembers'], mappings))
+    return fields
+
+
+def get_updates_from_bahmni_diagnoses(diagnoses, mappings):
+    """
+    Iterate a list of Bahmni diagnoses, and return the ones mapped to
+    case properties.
+    """
+    fields = {}
+    for diag in diagnoses:
+        codedanswer_uuid = diag.get('codedAnswer', {}).get('uuid')
+        if codedanswer_uuid and codedanswer_uuid in mappings:
+            for mapping in mappings[codedanswer_uuid]:
+                fields[mapping.case_property] = mapping.value.deserialize(diag['codedAnswer'].get('name'))
+    return fields
