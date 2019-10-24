@@ -82,10 +82,10 @@ def get_openmrs_patients(requests, importer, location=None):
 def get_case_properties(patient, importer):
     name_columns = importer.name_columns.split(' ')
     case_name = ' '.join([patient[column] for column in name_columns])
-    fields_to_update = {}
-    for mapping in importer.column_map:
-        mapping.set_importer(importer)
-        fields_to_update[mapping.property] = mapping.deserialize(patient[mapping.column])
+    fields_to_update = {
+        m.property: m.deserialize(patient[m.column], importer.get_timezone())
+        for m in importer.column_map
+    }
     return case_name, fields_to_update
 
 

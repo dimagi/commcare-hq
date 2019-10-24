@@ -47,23 +47,13 @@ class ColumnMapping(DocumentSchema):
         default=DATA_TYPE_UNKNOWN, exclude_if_none=True
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._importer = None
-
-    def set_importer(self, value):
-        self._importer = value
-
-    def _get_timezone(self):
-        return self._importer.get_timezone() if self._importer else None
-
-    def deserialize(self, external_value):
+    def deserialize(self, external_value, timezone=None):
         """
         Returns ``external_value`` as its CommCare data type.
         """
         # Update serializers with timezone
-        to_datetime_tz = partial(omrs_timestamp_to_datetime, tz=self._get_timezone())
-        to_date_tz = partial(omrs_timestamp_to_date, tz=self._get_timezone())
+        to_datetime_tz = partial(omrs_timestamp_to_datetime, tz=timezone)
+        to_date_tz = partial(omrs_timestamp_to_date, tz=timezone)
         local_serializers = serializers.copy()
         local_serializers.update({
             (OPENMRS_DATA_TYPE_MILLISECONDS, None): to_datetime_tz,
