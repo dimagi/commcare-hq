@@ -22,15 +22,22 @@ class TestExportData(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestExportData, cls).setUpClass()
+        now = '16:21:11 15 November 2017'
         cls.india_now_mock = mock.patch(
             'custom.icds_reports.utils.india_now',
-            new=mock.Mock(return_value='16:21:11 15 November 2017')
+            new=mock.Mock(return_value=now)
         )
         cls.india_now_mock.start()
+        cls.other_india_now_mock = mock.patch(
+            'custom.icds_reports.utils.mixins.india_now',
+            new=mock.Mock(return_value=now)
+        )
+        cls.other_india_now_mock.start()
 
     @classmethod
     def tearDownClass(cls):
         cls.india_now_mock.stop()
+        cls.other_india_now_mock.stop()
         super(TestExportData, cls).tearDownClass()
 
     def test_children_export(self):
