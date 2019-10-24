@@ -15,8 +15,8 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     slug = 'taux_de_perte_par_produit_report'
-    comment = 'Taux de Perte (hors péremption)'
     name = 'Taux de Perte par Produit'
+    comment = 'Nombre Total de produits PNA perdus (*exclu produits expirés) / Stock Final PNA'
     default_rows = 10
     exportable = True
 

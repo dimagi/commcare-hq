@@ -15,8 +15,8 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 class TauxDePeremptionReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     slug = 'taux_de_peremption_par_produit_report'
-    comment = 'valeur péremption sur valeur totale'
     name = 'Taux de Péremption par Produit'
+    comment = 'Valeur des produits PNA expirés / Valeur du stock final PNA'
     default_rows = 10
     exportable = True
 

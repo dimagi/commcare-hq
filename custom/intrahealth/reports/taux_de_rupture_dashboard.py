@@ -22,7 +22,7 @@ from custom.intrahealth.utils import PNAMultiBarChart
 class TauxDeRuptureReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     name = "Taux de Rupture par Produit"
     slug = 'taux_de_rupture_par_produit_report'
-    comment = 'Indicateur logistique: Taux de rupture par produit'
+    comment = 'Nombre de PPS avec le produit en rupture de stock / Nombre de PPS visités'
     default_rows = 10
     exportable = True
 

@@ -18,8 +18,8 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     slug = 'taux_de_satisfaction_par_produit_report'
-    comment = 'produits proposés sur produits livrés'
     name = 'Taux de Satisfaction par Produit'
+    comment = 'Quantité de produits livrés / Quantité de produits commandés'
     default_rows = 10
     exportable = True
 

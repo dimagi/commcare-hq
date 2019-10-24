@@ -19,7 +19,7 @@ from custom.intrahealth.utils import PNAMultiBarChart
 class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     name = "Disponibilité par Produit"
     slug = 'disponibilite_par_produit_report'
-    comment = 'Taux de disponibilité de la gamme'
+    comment = ' Nombre de PPS ayant au moins un produit ou plus disponible / Nombre de PPS visités'
     default_rows = 10
     exportable = True
 
