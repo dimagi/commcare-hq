@@ -1427,8 +1427,8 @@ registration:
        "type": "integer_buckets",
        "field": "age_at_registration",
        "ranges": {
-            "infant": [0, 12],
-            "toddler": [12, 36],
+            "infant": [0, 11],
+            "toddler": [12, 35],
             "preschooler": [36, 60]
        },
        "else_": "older"
@@ -1446,7 +1446,7 @@ Here's an example using ``age_in_months_buckets``:
        "column_id": "age_group",
        "type": "age_in_months_buckets",
        "field": "dob",
-       "whens": {
+       "ranges": {
             "0_to_5": [0, 5],
             "6_to_11": [6, 11],
             "12_to_35": [12, 35],
