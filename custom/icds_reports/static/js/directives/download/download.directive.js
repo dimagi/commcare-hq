@@ -130,7 +130,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     ];
 
     if (vm.haveAccessToFeatures) {
-        vm.indicators.push({id: 11, name: 'Dashboard usage'})
+        vm.indicators.push({id: 11, name: 'Dashboard usage'});
     }
 
     var ALL_OPTION = {
