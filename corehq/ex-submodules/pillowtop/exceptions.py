@@ -14,3 +14,7 @@ class PillowtopIndexingError(Exception):
 
 class PillowConfigError(Exception):
     pass
+
+
+class BulkDocExeption(Exception):
+    pass

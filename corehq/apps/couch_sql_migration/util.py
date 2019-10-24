@@ -1,6 +1,7 @@
 from functools import wraps
 
 import gevent
+from greenlet import GreenletExit
 
 
 def exit_on_error(func):
@@ -9,6 +10,8 @@ def exit_on_error(func):
         try:
             func(*args, **kw)
         except gevent.get_hub().SYSTEM_ERROR:
+            raise
+        except GreenletExit:
             raise
         except BaseException as err:
             raise UnhandledError(err) from err

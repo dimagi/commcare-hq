@@ -63,9 +63,11 @@ class CasePillowTest(TestCase):
     @run_with_all_backends
     def test_case_pillow_error_in_case_es(self):
         self.assertEqual(0, PillowError.objects.filter(pillow='case-pillow').count())
-        with patch('corehq.pillows.case_search.domain_needs_search_index', return_value=True):
-            with patch('corehq.pillows.case.transform_case_for_elasticsearch') as transform_patch:
-                transform_patch.side_effect = Exception()
+        with patch('corehq.pillows.case_search.domain_needs_search_index', return_value=True), \
+            patch('corehq.pillows.case.transform_case_for_elasticsearch') as case_transform, \
+            patch('corehq.pillows.case_search.transform_case_for_elasticsearch') as case_search_transform:
+                case_transform.side_effect = Exception('case_transform error')
+                case_search_transform.side_effect = Exception('case_search_transform error')
                 case_id, case_name = self._create_case_and_sync_to_es()
 
         # confirm change did not make it to case search index

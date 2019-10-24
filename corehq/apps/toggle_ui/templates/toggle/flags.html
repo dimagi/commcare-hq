@@ -58,7 +58,11 @@
       <tbody>
       {% for toggle in toggles %}
         <tr>
-          <td><span class="label label-{{ toggle.tag.css_class }}">{{ toggle.tag.name }}</span></td>
+            <td>
+                {# Put the index here (hidden) so it sorts properly #}
+                <span class="hide">{{ toggle.tag.index }}</span>
+                <span class="label label-{{ toggle.tag.css_class }}">{{ toggle.tag.name }}</span>
+            </td>
           <td>
             {% if toggle.randomness %}
               <i class="fa fa-random" title="Also applied randomly under certain conditions"></i>

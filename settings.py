@@ -111,6 +111,7 @@ FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
+SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -125,7 +126,8 @@ SECRET_KEY = 'you should really change this'
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    # 'django.contrib.sessions.middleware.SessionMiddleware',
+    'corehq.middleware.LoggingSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -225,7 +227,6 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.data_pipeline_audit',
     'corehq.apps.domain',
-    'corehq.apps.domainsync',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
@@ -389,10 +390,14 @@ LOGIN_URL = "/accounts/login/"
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
 PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
-    '/a/%(domain)s/settings/project/internal_subscription_management/',
-    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/billing/statements/',
+    '/a/%(domain)s/settings/project/billing_information/',
+    '/a/%(domain)s/settings/project/flags/',
     '/a/%(domain)s/settings/project/internal/calculations/',
-    '/a/%(domain)s/settings/project/flags/'
+    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/internal_subscription_management/',
+    '/a/%(domain)s/settings/project/project_limits/',
+    '/a/%(domain)s/settings/project/subscription/',
 )
 
 ####### Release Manager App settings  #######
@@ -900,6 +905,19 @@ CUSTOM_LANDING_TEMPLATE = {
 }
 
 ES_SETTINGS = None
+PHI_API_KEY = None
+PHI_PASSWORD = None
+
+SESSION_BYPASS_URLS = [
+    r'^/a/{domain}/receiver/',
+    r'^/a/{domain}/phone/restore/',
+    r'^/a/{domain}/phone/search/',
+    r'^/a/{domain}/phone/claim-case/',
+    r'^/a/{domain}/phone/heartbeat/',
+    r'^/a/{domain}/phone/keys/',
+    r'^/a/{domain}/phone/admin_keys/',
+    r'^/a/{domain}/apps/download/',
+]
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1117,6 +1135,14 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 20
         },
+        'session_access_log': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': SESSION_ACCESS_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 20
+        },
     },
     'root': {
         'level': 'INFO',
@@ -1212,7 +1238,12 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
-        }
+        },
+        'session_access_log': {
+            'handlers': ['session_access_log'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     }
 }
 

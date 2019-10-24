@@ -6,14 +6,15 @@ from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn, \
     MonthColumn
 from collections import defaultdict
+
 from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.products.models import SQLProduct
-
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
     TableDataFormat, calculate_total_row
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
+
 from custom.intrahealth import PRODUCT_NAMES as INIT_PRODUCT_NAMES
 from custom.intrahealth import PRODUCT_MAPPING
 from custom.intrahealth.report_calcs import _locations_per_type
@@ -4768,10 +4769,37 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
 
         return loc_names, data
 
+    def flatten_records_by_date(self, records):
+        flatten_records = {}
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date_repeat']) \
+                    or record['product_id'] not in self.products:
+                continue
+
+            if record[self.loc_id]:
+                location = (record[self.loc_id]) + record['product_id']
+            else:
+                continue
+            final_stock = record['final_pna_stock']
+            loss_amt = record['loss_amt']
+            if not flatten_records.get(location):
+                flatten_records[location] = record
+                if not loss_amt:
+                    flatten_records[location]['loss_amt'] = {'html': 0}
+                if not final_stock:
+                    flatten_records[location]['final_pna_stock'] = {'html': 0}
+            else:
+                if final_stock:
+                    flatten_records[location]['final_pna_stock']['html'] += final_stock['html']
+                if loss_amt:
+                    flatten_records[location]['loss_amt']['html'] += loss_amt['html']
+
+        return flatten_records.values()
+
     @property
     def rows(self):
         records = self.get_data()
-
+        records = self.flatten_records_by_date(records)
         loc_names, data = self.get_loss_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
         rows = self.parse_loss_rate_to_rows(loc_names, data)
@@ -5204,7 +5232,7 @@ class ValuationOfPNAStockPerProductV2Data(LocationLevelMixin, VisiteDeLOperateur
             self.loc_id_to_get, self.loc_name_to_get,
             'final_pna_stock_valuation'
         ]
-        if self.loc_id_to_get != 'pps_is':
+        if self.loc_id_to_get != 'pps_id':
             group_by.append('pps_id')
             group_by.append('pps_name')
 
@@ -5444,7 +5472,7 @@ class RecapPassageOneData(IntraHealthSqlData):
             DatabaseColumn(_("Facturable"), SumColumn('billed_consumption')),
             DatabaseColumn("Pertes et Adjustement", SumColumn('loss_amt')),
             DatabaseColumn("Amount billed", SumColumn('amount_billed')),
-            DatabaseColumn("Amount owed", SumColumn('amount_owed')),
+            DatabaseColumn("Delivery amt", SumColumn('delivery_amt_owed')),
             DatabaseColumn("Amt delivered", SumColumn('amt_delivered_convenience')),
             DatabaseColumn("Total loss amt", SumColumn('total_loss_amt')),
             DatabaseColumn("Expired pna", SumColumn('expired_pna')),
@@ -5506,7 +5534,6 @@ class RecapPassageOneData(IntraHealthSqlData):
         rows_by_visit = self.sort_rows_by_visit(rows)
         valid_products = self.program_products
         pps_visits = {}
-
         for doc_id, rows in rows_by_visit.items():
             data = {}
             product_names = set()
@@ -5517,8 +5544,7 @@ class RecapPassageOneData(IntraHealthSqlData):
             for row in rows:
                 product_name = row['product_name']
                 product_id = row['product_id']
-                if valid_products and \
-                   product_id not in valid_products:
+                if valid_products and product_id not in valid_products:
                     continue
                 product_names.add(product_name)
                 if not data.get(product_name):
@@ -5551,23 +5577,25 @@ class RecapPassageOneData(IntraHealthSqlData):
             self.product_names = product_names
 
             rows = []
-            for key in data[product_names[0]]:
-                next_row = [key]
-                for product in product_names:
-                    next_row.append(data[product][key])
+            if product_names:
+                for key in data[product_names[0]]:
+                    next_row = [key]
+                    for product in product_names:
+                        next_row.append(data[product][key])
 
-                rows.append(next_row)
+                    rows.append(next_row)
 
-            facturation_fill = len(rows[0]) - 2
-            facturation_group = ['Facturation Groupe', amount_billed_sum]
-            facturation_group.extend([' ' for _ in range(facturation_fill)])
-            rows.append(facturation_group)
-            pps_visits[doc_id] = {
-                'rows': rows,
-                'title': location,
-                'headers': self.get_headers(),
-                'comment': date,
-            }
+                facturation_fill = len(rows[0]) - 2
+                facturation_group = ['Facturation Groupe', amount_billed_sum]
+                facturation_group.extend([' ' for _ in range(facturation_fill)])
+                rows.append(facturation_group)
+
+                pps_visits[doc_id] = {
+                    'rows': rows,
+                    'title': location,
+                    'headers': self.get_headers(),
+                    'comment': date,
+                }
 
         return pps_visits
 
@@ -5579,17 +5607,33 @@ class RecapPassageOneData(IntraHealthSqlData):
             'Net à Payer': 0,
         }
         valid_products = self.program_products
+        delivery_amt_owed_dict = {}
         for row in rows:
+            pps_name = row['pps_name']
             if valid_products and \
                row['product_id'] not in valid_products:
                 continue
 
             data['Total Facture'] += self.get_value(row['amount_billed'])
-            data['Net à Payer'] += self.get_value(row['amount_owed'])
+            delivery_amt_owed = self.get_value(row['delivery_amt_owed'])
+            date = row['real_date_repeat'].strftime('%Y/%m/%d')
+            if delivery_amt_owed_dict.get(pps_name, None):
+                delivery_amt_owed_dict[pps_name].add(
+                    (delivery_amt_owed, date)
+                )
+            else:
+                delivery_amt_owed_dict[pps_name] = set()
+                delivery_amt_owed_dict[pps_name].add(
+                    (delivery_amt_owed, date)
+                )
 
         # data['Net à Payer'] = int(data['Total Facture'] * 1.075)
         data['Total Facture'] = round(float(data['Total Facture']), 2)
-        data['Net à Payer'] = round(float(data['Net à Payer']), 2)
+        net_a_payer = 0
+        for pps_values in delivery_amt_owed_dict.values():
+            for pps_value in pps_values:
+                net_a_payer += pps_value[0]
+        data['Net à Payer'] = round(float(net_a_payer), 2)
         rows = []
         headers = data.keys()
         for header in headers:
@@ -5662,7 +5706,7 @@ class RecapPassageTwoData(RecapPassageOneData):
             ])
         columns.extend([
             DatabaseColumn(_('Doc_id'), SimpleColumn('doc_id')),
-            DatabaseColumn(_('Delivery Amt'), SumColumn('delivery_amt_owed')),
+            DatabaseColumn(_('Amount Owed'), SumColumn('amount_owed')),
             DatabaseColumn(_('Delivery Margin'), SumColumn('delivery_total_margin')),
         ])
         return columns
@@ -6034,9 +6078,11 @@ class IndicateursDeBaseData(SqlData, LocationLevelMixin):
 
     def is_requested_location(self, location_name):
         if self.config['location_id']:
-            location = SQLLocation.objects.filter(domain=self.config['domain'],
-                                                  location_id=self.config['location_id'])[0]
-
+            try:
+                location = SQLLocation.objects.get(domain=self.config['domain'],
+                                                   location_id=self.config['location_id'])
+            except SQLLocation.DoesNotExist:
+                return False
             if location.location_type.name != 'District':
                 location = SQLLocation.objects.filter(domain=self.config['domain'],
                                                       parent=location.id)

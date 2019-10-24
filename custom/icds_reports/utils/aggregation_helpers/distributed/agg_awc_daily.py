@@ -108,11 +108,15 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
             SELECT
                 awc_id,
                 pse_date,
-                sum(awc_open_count) AS daily_attendance_open
+                sum(awc_open_count) AS daily_attendance_open,
+                sum(eligible_children) AS total_eligible_pse,
+                sum(attended_children) AS total_attended_pse
             FROM daily_attendance WHERE pse_date = %(date)s
             GROUP BY awc_id, pse_date;
         UPDATE "{tablename}" agg_awc SET
-            daily_attendance_open = ut.daily_attendance_open
+            daily_attendance_open = ut.daily_attendance_open,
+            total_eligible_pse = ut.total_eligible_pse,
+            total_attended_pse = ut.total_attended_pse
         FROM (
             SELECT * FROM "{temp_table}"
         ) ut
@@ -162,6 +166,8 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
             ('cases_person_adolescent_girls_11_14_all',),
             ('cases_person_adolescent_girls_15_18_all',),
             ('daily_attendance_open',),
+            ('total_eligible_pse',),
+            ('total_attended_pse',),
             ('num_awcs',),
             ('num_launched_states', lambda col: _launched_col(col)),
             ('num_launched_districts', lambda col: _launched_col(col)),

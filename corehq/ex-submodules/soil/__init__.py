@@ -8,8 +8,8 @@ from wsgiref.util import FileWrapper
 
 from django.conf import settings
 from django.core import cache
+from django.core.cache import DEFAULT_CACHE_ALIAS
 from django.urls import reverse
-from django.db import IntegrityError
 from django.http import HttpResponse, StreamingHttpResponse
 
 from django_transfer import TransferHttpResponse
@@ -20,8 +20,8 @@ from corehq.const import ONE_DAY
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
-SOIL_DEFAULT_CACHE = getattr(settings, 'SOIL_DEFAULT_CACHE', 'default')
-if SOIL_DEFAULT_CACHE != 'default':
+SOIL_DEFAULT_CACHE = getattr(settings, 'SOIL_DEFAULT_CACHE', DEFAULT_CACHE_ALIAS)
+if SOIL_DEFAULT_CACHE != DEFAULT_CACHE_ALIAS:
     assert SOIL_DEFAULT_CACHE in settings.CACHES, \
         "%s not found in settings.CACHES. Check you SOIL_DEFAULT_CACHE setting." % SOIL_DEFAULT_CACHE
 

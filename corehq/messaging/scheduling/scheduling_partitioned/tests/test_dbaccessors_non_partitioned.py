@@ -1,4 +1,7 @@
 import uuid
+
+from django.db import DEFAULT_DB_ALIAS
+
 from corehq.form_processor.tests.utils import only_run_with_non_partitioned_database
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_alert_schedule_instance,
@@ -31,7 +34,7 @@ class BaseSchedulingNontPartitionedDBAccessorsTest(TestCase):
     def setUpClass(cls):
         super(BaseSchedulingNontPartitionedDBAccessorsTest, cls).setUpClass()
         cls.domain = 'scheduling-non-partitioned-test'
-        cls.db = 'default'
+        cls.db = DEFAULT_DB_ALIAS
 
     @classmethod
     def make_alert_schedule_instance(cls, schedule_instance_id=None, schedule_id=None, active=True):

@@ -62,10 +62,11 @@ class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
             self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
         )
 
-    def test_unicode(self):
-        self.xform.new_question('name', 'သင့်နာမည်ဘယ်လိုခေါ်လဲ?')  # ("What is your name?" in Myanmar/Burmese)
+    def test_unicode_translation(self):
+        self.xform.new_question('name', {'en': 'What is your name?',
+                                         'bur': 'သင့်နာမည်ဘယ်လိုခေါ်လဲ?'})  # (Myanmar/Burmese)
         self.assertXmlEqual(
-            self.replace_xmlns(self.get_xml('unicode'), self.xform.xmlns),
+            self.replace_xmlns(self.get_xml('unicode_translation'), self.xform.xmlns),
             self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
         )
 

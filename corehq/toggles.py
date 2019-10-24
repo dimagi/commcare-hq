@@ -1,21 +1,34 @@
-import inspect
-from collections import namedtuple
-from functools import wraps
 import hashlib
+import inspect
 import math
+from functools import wraps
 
-from django.contrib import messages
 from django.conf import settings
+from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
-from corehq.util.quickcache import quickcache
-from toggle.models import Toggle
-from toggle.shortcuts import toggle_enabled, set_toggle
 
-Tag = namedtuple('Tag', 'name css_class description')
+from toggle.models import Toggle
+from toggle.shortcuts import set_toggle, toggle_enabled
+
+from corehq.util.quickcache import quickcache
+
+
+@attrs(frozen=True)
+class Tag:
+    name = attrib(type=str)
+    css_class = attrib(type=str)
+    description = attrib(type=str)
+
+    @property
+    def index(self):
+        return ALL_TAGS.index(self)
+
+
 TAG_CUSTOM = Tag(
     name='One-Off / Custom',
     css_class='warning',
@@ -380,11 +393,11 @@ def all_toggles_by_name():
     return all_toggles_by_name_in_scope(globals())
 
 
-def all_toggles_by_name_in_scope(scope_dict):
+def all_toggles_by_name_in_scope(scope_dict, toggle_class=StaticToggle):
     result = {}
     for toggle_name, toggle in scope_dict.items():
         if not toggle_name.startswith('__'):
-            if isinstance(toggle, StaticToggle):
+            if isinstance(toggle, toggle_class):
                 result[toggle_name] = toggle
     return result
 
@@ -1746,13 +1759,6 @@ MANAGE_CCZ_HOSTING = StaticToggle(
 )
 
 
-PARALLEL_AGGREGATION = StaticToggle(
-    'parallel_agg',
-    'This makes the icds dashboard aggregation run on both distributed and monolith backends',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
     'skip_orm_fixture_upload',
     'Exposes an option in fixture api upload to skip saving through couchdbkit',
@@ -1798,9 +1804,42 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
 )
 
 
-GROUP_API_USE_ES_BACKEND = StaticToggle(
-    'group_api_use_es_backend',
-    'Use ES backend for Group API',
+# todo: remove after Nov 15, 2019 if no one is using
+GROUP_API_USE_COUCH_BACKEND = StaticToggle(
+    'group_api_use_couch_backend',
+    'Use Old Couch backend for Group API. '
+    'This is an escape hatch for support '
+    'to immediately revert a domain to old behavior.',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+
+PHI_CAS_INTEGRATION = StaticToggle(
+    'phi_cas_integration',
+    'Integrate with PHI Api to search and validate beneficiaries',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
+
+SESSION_MIDDLEWARE_LOGGING = StaticToggle(
+    'session_middleware_logging',
+    'Log all session object method calls on this domain',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+BYPASS_SESSIONS = StaticToggle(
+    'bypass_sessions',
+    'Bypass sessions for select mobile URLS',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+DAILY_INDICATORS = StaticToggle(
+    'daily_indicators',
+    'Enable daily indicators api',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
 )

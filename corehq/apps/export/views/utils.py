@@ -386,7 +386,8 @@ def clean_odata_columns(export_instance):
     for table in export_instance.tables:
         for column in table.columns:
             column.label = column.label.replace('@', '').replace(
-                '.', ' ').replace('\n', '').replace('\t', ' ').replace('#', '')
+                '.', ' ').replace('\n', '').replace('\t', ' ').replace(
+                '#', '').replace(',', '')
             # truncate labels for PowerBI and Tableau limits
             if len(column.label) >= 255:
                 column.label = column.label[:255]

@@ -1,10 +1,10 @@
 import json
 
+from django.conf import settings
 from django.test import SimpleTestCase
 
-from mock import Mock, patch
-
 import requests
+from mock import Mock, patch
 
 from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.requests import Requests
@@ -124,3 +124,25 @@ class RequestsTests(SimpleTestCase):
                 self.requests.get('me')
             self.requests.get('me')
             self.assertEqual(close_mock.call_count, 2)
+
+    def test_notify_error_no_address(self):
+        with patch('corehq.motech.requests.send_mail_async') as send_mail_mock:
+            self.requests.notify_error('foo')
+            send_mail_mock.delay.assert_not_called()
+
+    def test_notify_error_address_list(self):
+        requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+                            notify_addresses=['foo@example.com', 'bar@example.com'])
+        with patch('corehq.motech.requests.send_mail_async') as send_mail_mock:
+            requests.notify_error('foo')
+            send_mail_mock.delay.assert_called_with(
+                'MOTECH Error',
+                (
+                    'foo\r\n'
+                    'Project space: test-domain\r\n'
+                    'Remote API base URL: http://localhost:9080/api/\r\n'
+                    'Remote API username: admin'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=['foo@example.com', 'bar@example.com']
+            )

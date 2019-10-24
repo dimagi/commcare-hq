@@ -1,4 +1,4 @@
-from django.core.cache import caches
+from django.core.cache import caches, DEFAULT_CACHE_ALIAS
 from django.test import TestCase
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -18,7 +18,7 @@ class InferredSchemaSignalTest(TestCase):
         delete_all_export_data_schemas()
         CaseType.objects.filter(domain=self.domain, name=self.case_type).delete()
         caches['locmem'].clear()
-        caches['default'].clear()
+        caches[DEFAULT_CACHE_ALIAS].clear()
 
     def _add_props(self, props, num_queries=3):
         with self.assertNumQueries(num_queries):
