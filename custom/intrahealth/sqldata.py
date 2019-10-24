@@ -4798,17 +4798,42 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
 
         return flatten_records.values()
 
-    @property
-    def rows(self):
+    def rows(self, for_chart=False):
         records = self.get_data()
         records = self.flatten_records_by_date(records)
-        loc_names, data = self.get_loss_rate_per_month(records)
-        self.total_row = self.calculate_total_row(data)
-        rows = self.parse_loss_rate_to_rows(loc_names, data)
-        return sorted(rows, key=lambda x: x[0]['html'])
 
-    def transform_rows(self):
-        pass
+        if not for_chart:
+            loc_names, data = self.get_loss_rate_per_month(records)
+            self.total_row = self.calculate_total_row(data)
+            rows = self.parse_loss_rate_to_rows(loc_names, data)
+            return sorted(rows, key=lambda x: x[0]['html'])
+        else:
+            rows = self._get_data_for_products(records)
+            return sorted(rows, key=lambda x: x), rows
+
+    def _get_data_for_products(self, records):
+        products = {}
+        added_products = []
+        for record in records:
+            product_id = record['product_id']
+            product_name = record['product_name']
+            loss_amt = record['loss_amt']['html']
+            final_pna_stock = record['final_pna_stock']['html']
+            if product_id not in added_products and final_pna_stock != 0:
+                added_products.append(product_id)
+                products[product_name] = {
+                    'loss_amt': loss_amt,
+                    'final_pna_stock': final_pna_stock,
+                    'percent': self.percent_fn(loss_amt, final_pna_stock)
+                }
+            elif product_id in added_products and final_pna_stock != 0:
+                products[product_name]['loss_amt'] += loss_amt
+                products[product_name]['final_pna_stock'] += final_pna_stock
+                products[product_name]['percent'] = self.percent_fn(
+                    products[product_name]['loss_amt'], products[product_name]['final_pna_stock']
+                )
+
+        return products
 
     @property
     def headers(self):
@@ -5005,13 +5030,42 @@ class ExpirationRatePerProductData2(LossRatePerProductData2):
                     record['final_pna_stock_valuation']['html']
         return loc_names, data
 
-    @property
-    def rows(self):
+    def rows(self, for_chart=False):
         records = self.get_data()
-        loc_names, data = self.get_expiration_rate_per_month(records)
-        self.total_row = self.calculate_total_row(data)
-        rows = self.parse_expiration_rate_to_rows(loc_names, data)
-        return sorted(rows, key=lambda x: x[0]['html'])
+
+        if not for_chart:
+            loc_names, data = self.get_expiration_rate_per_month(records)
+            self.total_row = self.calculate_total_row(data)
+            rows = self.parse_expiration_rate_to_rows(loc_names, data)
+            return sorted(rows, key=lambda x: x[0]['html'])
+        else:
+            rows = self._get_data_for_products(records)
+            return sorted(rows, key=lambda x: x), rows
+
+    def _get_data_for_products(self, records):
+        products = {}
+        added_products = []
+        for record in records:
+            product_id = record['product_id']
+            product_name = record['product_name']
+            expired_pna_valuation = record['expired_pna_valuation']['html']
+            final_pna_stock_valuation = record['final_pna_stock_valuation']['html']
+            if product_id not in added_products and product_id in self.products and final_pna_stock_valuation != 0:
+                added_products.append(product_id)
+                products[product_name] = {
+                    'expired_pna_valuation': expired_pna_valuation,
+                    'final_pna_stock_valuation': final_pna_stock_valuation,
+                    'percent': self.percent_fn(expired_pna_valuation, final_pna_stock_valuation)
+                }
+            elif product_id in added_products and final_pna_stock_valuation != 0:
+                products[product_name]['expired_pna_valuation'] += expired_pna_valuation
+                products[product_name]['final_pna_stock_valuation'] += final_pna_stock_valuation
+                products[product_name]['percent'] = self.percent_fn(
+                    products[product_name]['expired_pna_valuation'],
+                    products[product_name]['final_pna_stock_valuation']
+                )
+
+        return products
 
 
 class SatisfactionRateAfterDeliveryPerProductData(LocationLevelMixin, VisiteDeLOperateurPerProductDataSource):
@@ -5951,7 +6005,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                 row.append(amount_sum)
 
             if add_latest_visit_column:
-                latest_date = self._get_latest_date(pps_data)
+                latest_date = self._get_latest_date(most_recent_pps_data)
 
                 row.append(latest_date)
 
@@ -6022,15 +6076,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         return data_to_return
 
     def _get_latest_date(self, data):
-        date_to_return = None
-        for record in data:
-            current_record_date = record['real_date_repeat']
-            if not date_to_return:
-                date_to_return = current_record_date
-            else:
-                date_to_return = current_record_date if current_record_date > date_to_return else date_to_return
-
-        return date_to_return.strftime('%Y/%m/%d')
+        return data[0]['real_date_repeat'].strftime('%Y/%m/%d')
 
     def _get_visits_for_pps(self, data):
         visits = set()

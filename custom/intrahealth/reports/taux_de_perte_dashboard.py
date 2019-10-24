@@ -115,8 +115,8 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
 
         return context
 
-    def calculate_rows(self):
-        rows = LossRatePerProductData2(config=self.config).rows
+    def calculate_rows(self, for_chart=False):
+        rows = LossRatePerProductData2(config=self.config).rows(for_chart=for_chart)
         return rows
 
     @property
@@ -130,15 +130,10 @@ class TauxDePerteReport(CustomProjectReport, DatespanMixin, ProjectReportParamet
 
         def get_data_for_graph():
             com = []
-            rows = self.calculate_rows()
-            for row in rows:
-                #-1 removes % symbol for cast to float
-                y = row[-1]['html'][:-1]
-                try:
-                    y = float(y)
-                except ValueError:
-                    y = 0
-                com.append({"x": row[0]['html'], "y": y})
+            sorted_products, rows = self.calculate_rows(for_chart=True)
+            for product in sorted_products:
+                y = float(rows[product]['percent'][:-1])
+                com.append({"x": product, "y": y})
 
             return [
                 {

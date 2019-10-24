@@ -310,37 +310,44 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
 
         def data_to_chart(quantities_list):
             quantities_to_return = []
-            locations_data = {}
-            added_locations = []
+            products_data = []
+            added_products = []
 
             for quantity in quantities_list:
-                location_name = quantity['location_name']
                 location_id = quantity['location_id']
+                location_name = quantity['location_name']
                 for product in quantity['products']:
+                    product_id = product['product_id']
+                    product_name = product['product_name']
                     amt_delivered_convenience = product['amt_delivered_convenience']
                     ideal_topup = product['ideal_topup']
-                    if location_id not in added_locations:
-                        added_locations.append(location_id)
-                        locations_data[location_id] = {
+                    if product_id not in added_products:
+                        added_products.append(product_id)
+                        product_dict = {
+                            'product_id': product_id,
+                            'product_name': product_name,
+                            'location_id': location_id,
                             'location_name': location_name,
                             'amt_delivered_convenience': amt_delivered_convenience,
                             'ideal_topup': ideal_topup,
                         }
+                        products_data.append(product_dict)
                     else:
-                        locations_data[location_id]['amt_delivered_convenience'] += amt_delivered_convenience
-                        locations_data[location_id]['ideal_topup'] += ideal_topup
+                        for product_data in products_data:
+                            if product_data['product_id'] == product_id:
+                                product_data['amt_delivered_convenience'] += amt_delivered_convenience
+                                product_data['ideal_topup'] += ideal_topup
 
-            sorted_locations_data_values = sorted(locations_data.values(), key=lambda x: x['location_name'])
-            for location_info in sorted_locations_data_values:
-                location_name = location_info['location_name']
-                amt_delivered_convenience = location_info['amt_delivered_convenience']
-                ideal_topup = location_info['ideal_topup']
-                percent = (amt_delivered_convenience / float(ideal_topup) * 100) \
-                    if ideal_topup != 0 else 0
+            products = sorted(products_data, key=lambda x: x['product_name'])
+            for product in products:
+                product_name = product['product_name']
+                amt_delivered_convenience = product['amt_delivered_convenience']
+                ideal_topup = product['ideal_topup']
+                percent = (amt_delivered_convenience / float(ideal_topup)) * 100 if ideal_topup != 0 else 0
                 quantities_to_return.append([
-                    location_name,
+                    product_name,
                     {
-                        'html': '{:.2f} %'.format(percent),
+                        'html': '{}'.format(percent),
                         'sort_key': percent
                     }
                 ])
