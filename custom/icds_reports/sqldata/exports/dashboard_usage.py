@@ -2,6 +2,7 @@ import datetime
 import re
 from collections import defaultdict
 
+import dateutil
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.db.models import Count
 
@@ -103,9 +104,10 @@ class DashBoardUsage:
     def check_if_date_in_last_week(self, date):
         if date is None:
             return False
-        d = datetime.datetime.strptime(date, "%Y-%m-%d")
+        d = dateutil.parser.parse(date).strftime("%Y-%m-%d")
+        d = datetime.datetime.strptime(d, "%Y-%m-%d")
         now = datetime.datetime.now()
-        return (d - now).days < 7
+        return (now - d).days < 7
 
     def prepare_is_launched_agg_list(self, location_type=None, location_id=None):
         """
@@ -116,7 +118,7 @@ class DashBoardUsage:
         :return: None
         """
         filter_dict = {'aggregation_level': 5,
-                       'month': datetime.datetime.now().month}
+                       'month': datetime.date.today().replace(day=1)}
         if location_type is not None:
             location_type = self.get_location_id_string_from_location_type(location_type)
             sub_location_types = self.agg_required_fields[self.location_types.index(location_type) + 1:]
@@ -158,7 +160,7 @@ class DashBoardUsage:
 
         loop_counter = 0
         # Need to fetch all users for a national user
-        while (self.national_user and loop_counter < 1) and len(logged_in_user_locations) > loop_counter:
+        while (self.national_user and loop_counter < 1) or len(logged_in_user_locations) > loop_counter:
             user_location = logged_in_user_locations[loop_counter]
             # getting the location types to retrieve for this user location
 
