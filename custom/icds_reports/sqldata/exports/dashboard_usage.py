@@ -161,13 +161,13 @@ class DashBoardUsage:
         loop_counter = 0
         # Need to fetch all users for a national user
         while (self.national_user and loop_counter < 1) or len(logged_in_user_locations) > loop_counter:
-            user_location = logged_in_user_locations[loop_counter]
             # getting the location types to retrieve for this user location
 
             location_type_filter = {
                 'aggregation_level': 5
             }
             if not self.national_user:
+                user_location = logged_in_user_locations[loop_counter]
                 location_type_filter[self.get_location_id_string_from_location_type(
                     user_location.location_type_name)]: user_location.get_id
 
