@@ -7,7 +7,6 @@ from django.utils.translation import ugettext_noop
 from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.ivr.models import Call
-from corehq.apps.reminders.util import get_form_name
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import (
@@ -64,7 +63,6 @@ class CallReport(BaseCommConnectLogReport):
             DataTablesColumn(_("User Name")),
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
-            DataTablesColumn(_("Form")),
             DataTablesColumn(_("View Submission")),
             DataTablesColumn(_("Answered")),
             DataTablesColumn(_("Duration")),
@@ -91,7 +89,6 @@ class CallReport(BaseCommConnectLogReport):
         
         # Store the results of lookups for faster loading
         contact_cache = {}
-        form_map = {}
         xforms_sessions = {}
         
         direction_map = {
@@ -108,15 +105,6 @@ class CallReport(BaseCommConnectLogReport):
             doc_info = self.get_recipient_info(self.domain, call.couch_recipient_doc_type,
                 call.couch_recipient, contact_cache)
 
-            form_unique_id = call.form_unique_id
-            if form_unique_id in [None, ""]:
-                form_name = "-"
-            elif form_unique_id in form_map:
-                form_name = form_map.get(form_unique_id)
-            else:
-                form_name = get_form_name(form_unique_id)
-                form_map[form_unique_id] = form_name
-            
             phone_number = call.phone_number
             if abbreviate_phone_number and phone_number is not None:
                 phone_number = phone_number[0:7] if phone_number[0:1] == "+" else phone_number[0:6]
@@ -137,7 +125,6 @@ class CallReport(BaseCommConnectLogReport):
                 self._fmt_contact_link(call.couch_recipient, doc_info),
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(call.direction, "-")),
-                self._fmt(form_name),
                 self._fmt("-"),
                 self._fmt(answered),
                 self._fmt(call.duration),
