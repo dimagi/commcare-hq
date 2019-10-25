@@ -75,29 +75,6 @@ def get_version_from_build_id(domain, build_id):
         return build.version
 
 
-@quickcache(['domain', 'build_id'], timeout=24 * 60 * 60)
-def get_version_and_app_from_build_id(domain, build_id):
-    """
-    fast lookup of app version number given build_id
-
-    implemented as simple caching around _get_version_from_build_id
-
-    """
-    if not build_id:
-        return None, None
-
-    try:
-        build = get_app(domain, build_id)
-    except (ResourceNotFound, Http404):
-        return None, None
-    if not build.copy_of:
-        return None, None
-    elif domain and build.domain != domain:
-        return None, None
-    else:
-        return build.version, build.copy_of
-
-
 def get_version_from_appversion_text(appversion_text):
     """
     >>> # these first two could certainly be replaced

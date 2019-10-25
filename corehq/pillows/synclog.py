@@ -13,7 +13,7 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
     KafkaCheckpointEventHandler,
 )
-from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
+from corehq.apps.receiverwrapper.util import get_version_from_build_id
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
@@ -90,7 +90,7 @@ def mark_last_synclog(domain, user_id, app_id, build_id, sync_date, device_id):
 
     version = None
     if build_id:
-        version, _ = get_version_and_app_from_build_id(domain, build_id)
+        version = get_version_from_build_id(domain, build_id)
 
     save = update_last_sync(user, app_id, sync_date, version)
     if version:
