@@ -119,12 +119,7 @@ class LedgerV1DocumentStore(DjangoDocumentStore):
         from corehq.apps.commtrack.models import StockState
         assert not should_use_sql_backend(domain), "Only non-SQL backend supported"
         self.domain = domain
-
-        def _doc_gen_fn(obj):
-            return obj.to_json()
-
-        super(LedgerV1DocumentStore, self).__init__(
-            StockState, _doc_gen_fn, model_manager=StockState.include_archived)
+        super(LedgerV1DocumentStore, self).__init__(StockState, model_manager=StockState.include_archived)
 
 
 class DocStoreLoadTracker(object):
