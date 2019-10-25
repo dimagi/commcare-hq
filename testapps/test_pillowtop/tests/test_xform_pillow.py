@@ -97,6 +97,20 @@ class XFormPillowTest(TestCase):
         self.assertEqual(0, results.total)
 
     @run_with_all_backends
+    @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=False)
+    def test_app_metadata_tracker_non_batch(self):
+        form, metadata = self._create_form_and_sync_to_es()
+        user = CommCareUser.get_by_user_id(self.user._id, self.domain)
+        self.assertEqual(len(user.reporting_metadata.last_submissions), 1)
+        last_submission = user.reporting_metadata.last_submissions[0]
+
+        self.assertEqual(
+            last_submission.submission_date,
+            string_to_utc_datetime(self.metadata.received_on),
+        )
+        self.assertEqual(last_submission.app_id, self.metadata.app_id)
+
+    @run_with_all_backends
     @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=True)
     def test_app_metadata_tracker(self):
         form, metadata = self._create_form_and_sync_to_es()
