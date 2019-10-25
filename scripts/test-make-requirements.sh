@@ -4,6 +4,9 @@ set -e
 make requirements
 git --no-pager diff
 git update-index -q --refresh
+# 19.3.1 causes locally reproduceable test failure
+# todo: remove this line once that's no longer a problem
+pip install 'pip<19.3.0'
 if git diff-index --quiet HEAD --; then
     # No changes
     echo "requirements ok"
