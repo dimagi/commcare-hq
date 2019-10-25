@@ -9,8 +9,7 @@ function (doc) {
     if (doc.copy_of) {
         return;
     }
-    if (doc.doc_type === 'Application' ||
-            (doc.doc_type === 'LinkedApplication' && !doc.uses_master_app_form_ids)) {
+    if (doc.doc_type === 'Application') {
         if (doc.user_registration) {
             doEmit(doc.user_registration);
         }
