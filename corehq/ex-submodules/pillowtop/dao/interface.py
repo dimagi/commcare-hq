@@ -14,8 +14,8 @@ class DocumentStore(metaclass=ABCMeta):
         # todo: can convert to @abstractmethod once subclasses handle it
         raise NotImplementedError('this function not yet implemented')
 
+    @abstractmethod
     def iter_documents(self, ids):
-        # todo: can convert to @abstractmethod once subclasses handle it
         raise NotImplementedError('this function not yet implemented')
 
 
