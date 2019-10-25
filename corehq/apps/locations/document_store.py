@@ -16,7 +16,8 @@ class LocationDocumentStore(DjangoDocumentStore):
 
     def __init__(self, domain):
         self.domain = domain
-        queryset = SQLLocation.active_objects.filter(domain=domain).select_related('parent', 'location_type')
+        queryset = SQLLocation.active_objects\
+            .filter(domain=domain).select_related('parent', 'location_type')
         super().__init__(SQLLocation, model_manager=queryset, id_field='location_id')
 
 
