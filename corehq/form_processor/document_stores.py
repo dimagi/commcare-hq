@@ -23,12 +23,16 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
     def get_document(self, doc_id):
         try:
             form = self.form_accessors.get_form(doc_id)
-            if isinstance(form, XFormInstanceSQL):
-                return form.to_json(include_attachments=True)
-            else:
-                return form.to_json()
+            return self._to_json(form)
         except (XFormNotFound, BlobError) as e:
             raise DocumentNotFoundError(e)
+
+    @staticmethod
+    def _to_json(form):
+        if isinstance(form, XFormInstanceSQL):
+            return form.to_json(include_attachments=True)
+        else:
+            return form.to_json()
 
     def iter_document_ids(self, last_id=None):
         # todo: support last_id
@@ -36,7 +40,7 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
 
     def iter_documents(self, ids):
         for wrapped_form in self.form_accessors.iter_forms(ids):
-            yield wrapped_form.to_json()
+            yield self._to_json(wrapped_form)
 
 
 class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
