@@ -1,6 +1,7 @@
 import cgi
 
 from django.conf import settings
+from django.contrib import messages
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -56,6 +57,16 @@ class CallReport(BaseCommConnectLogReport):
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return domain_has_any_calls(domain)
+
+    @property
+    def template_context(self):
+        msg = """
+        WARNING! This page will be deleted in early November 2019.
+        If you rely on this report, please contact <a href='mailto:{}'>{}</a>
+        to discuss as soon as possible.
+        """.format(settings.SUPPORT_EMAIL, settings.SUPPORT_EMAIL)
+        messages.add_message(self.request, messages.ERROR, msg, extra_tags="html")
+        return super().template_context
 
     @property
     def headers(self):
@@ -193,6 +204,16 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return domain_has_any_expected_callbacks(domain)
+
+    @property
+    def template_context(self):
+        msg = """
+        WARNING! This page will be deleted in early November 2019.
+        If you rely on this report, please contact <a href='mailto:{}'>{}</a>
+        to discuss as soon as possible.
+        """.format(settings.SUPPORT_EMAIL, settings.SUPPORT_EMAIL)
+        messages.add_message(self.request, messages.ERROR, msg, extra_tags="html")
+        ctxt = super().template_context
 
     @property
     def headers(self):
