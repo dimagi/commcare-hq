@@ -17,5 +17,5 @@ class MockDocumentStore(DocumentStore):
         for doc_id in ids:
             yield self.get_document(doc_id)
 
-    def iter_document_ids(self, last_id=None):
+    def iter_document_ids(self):
         return iter(self._data_store)

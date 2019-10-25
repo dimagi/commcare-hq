@@ -30,8 +30,7 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
         except (XFormNotFound, BlobError) as e:
             raise DocumentNotFoundError(e)
 
-    def iter_document_ids(self, last_id=None):
-        # todo: support last_id
+    def iter_document_ids(self):
         return iter(self.form_accessors.iter_form_ids_by_xmlns(self.xmlns))
 
     def iter_documents(self, ids):
@@ -52,7 +51,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
         except CaseNotFound as e:
             raise DocumentNotFoundError(e)
 
-    def iter_document_ids(self, last_id=None):
+    def iter_document_ids(self):
         if should_use_sql_backend(self.domain):
             accessor = CaseReindexAccessor(self.domain, case_type=self.case_type)
             return iter_all_ids(accessor)
@@ -85,7 +84,7 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
         from corehq.apps.products.models import SQLProduct
         return list(SQLProduct.objects.filter(domain=self.domain).product_ids())
 
-    def iter_document_ids(self, last_id=None):
+    def iter_document_ids(self):
         if should_use_sql_backend(self.domain):
             accessor = LedgerReindexAccessor(self.domain)
             return iter_all_ids(accessor)

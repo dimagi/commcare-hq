@@ -11,7 +11,7 @@ class DocumentStore(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def iter_document_ids(self, last_id=None):
+    def iter_document_ids(self):
         raise NotImplementedError('this function not yet implemented')
 
     @abstractmethod

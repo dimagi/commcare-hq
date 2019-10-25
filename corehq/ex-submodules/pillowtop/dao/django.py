@@ -26,8 +26,7 @@ class DjangoDocumentStore(DocumentStore):
         except ObjectDoesNotExist:
             raise DocumentNotFoundError()
 
-    def iter_document_ids(self, last_id=None):
-        # todo: support last_id
+    def iter_document_ids(self):
         return self._model_manager.all().values_list(self._id_field, flat=True)
 
     def iter_documents(self, ids):
