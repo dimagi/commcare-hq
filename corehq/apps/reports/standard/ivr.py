@@ -213,7 +213,7 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
         to discuss as soon as possible.
         """.format(settings.SUPPORT_EMAIL, settings.SUPPORT_EMAIL)
         messages.add_message(self.request, messages.ERROR, msg, extra_tags="html")
-        ctxt = super().template_context
+        return super().template_context
 
     @property
     def headers(self):
