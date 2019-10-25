@@ -212,7 +212,7 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
         self.datadog_patch = _patch.start()
         # patch docstore to avoid overhead of saving/querying docs
         docstore_patch = mock.patch(
-            'corehq.form_processor.document_stores.ReadonlyCaseDocumentStore.iter_documents',
+            'corehq.form_processor.document_stores.CaseDocumentStore.iter_documents',
             new=fake_iter_documents
         )
         docstore_patch.start()

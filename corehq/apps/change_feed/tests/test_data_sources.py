@@ -1,19 +1,19 @@
 from django.test import SimpleTestCase, override_settings
 
-from casexml.apps.phone.document_store import ReadonlySyncLogDocumentStore
+from casexml.apps.phone.document_store import SyncLogDocumentStore
 from pillowtop.dao.couch import CouchDocumentStore
 
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
-from corehq.apps.locations.document_store import ReadonlyLocationDocumentStore
-from corehq.apps.sms.document_stores import ReadonlySMSDocumentStore
+from corehq.apps.locations.document_store import LocationDocumentStore
+from corehq.apps.sms.document_stores import SMSDocumentStore
 from corehq.form_processor.document_stores import (
     DocStoreLoadTracker,
     LedgerV1DocumentStore,
-    ReadonlyCaseDocumentStore,
-    ReadonlyFormDocumentStore,
-    ReadonlyLedgerV2DocumentStore,
+    CaseDocumentStore,
+    FormDocumentStore,
+    LedgerV2DocumentStore,
 )
 from corehq.util.exceptions import DatabaseNotFound
 from corehq.util.test_utils import generate_cases
@@ -33,21 +33,21 @@ class DocumentStoreTests(SimpleTestCase):
     (data_sources.SOURCE_COUCH, 'test_commcarehq', CouchDocumentStore),
 
     # legacy
-    (data_sources.CASE_SQL, '', ReadonlyCaseDocumentStore, True),
-    (data_sources.FORM_SQL, '', ReadonlyFormDocumentStore, True),
+    (data_sources.CASE_SQL, '', CaseDocumentStore, True),
+    (data_sources.FORM_SQL, '', FormDocumentStore, True),
     (data_sources.LEDGER_V1, '', LedgerV1DocumentStore),
-    (data_sources.LEDGER_V2, '', ReadonlyLedgerV2DocumentStore, True),
-    (data_sources.LOCATION, '', ReadonlyLocationDocumentStore),
-    (data_sources.SYNCLOG_SQL, '', ReadonlySyncLogDocumentStore),
-    (data_sources.SMS, '', ReadonlySMSDocumentStore),
+    (data_sources.LEDGER_V2, '', LedgerV2DocumentStore, True),
+    (data_sources.LOCATION, '', LocationDocumentStore),
+    (data_sources.SYNCLOG_SQL, '', SyncLogDocumentStore),
+    (data_sources.SMS, '', SMSDocumentStore),
 
-    (data_sources.SOURCE_SQL, data_sources.CASE_SQL, ReadonlyCaseDocumentStore, True),
-    (data_sources.SOURCE_SQL, data_sources.FORM_SQL, ReadonlyFormDocumentStore, True),
+    (data_sources.SOURCE_SQL, data_sources.CASE_SQL, CaseDocumentStore, True),
+    (data_sources.SOURCE_SQL, data_sources.FORM_SQL, FormDocumentStore, True),
     (data_sources.SOURCE_SQL, data_sources.LEDGER_V1, LedgerV1DocumentStore),
-    (data_sources.SOURCE_SQL, data_sources.LEDGER_V2, ReadonlyLedgerV2DocumentStore, True),
-    (data_sources.SOURCE_SQL, data_sources.LOCATION, ReadonlyLocationDocumentStore),
-    (data_sources.SOURCE_SQL, data_sources.SYNCLOG_SQL, ReadonlySyncLogDocumentStore),
-    (data_sources.SOURCE_SQL, data_sources.SMS, ReadonlySMSDocumentStore),
+    (data_sources.SOURCE_SQL, data_sources.LEDGER_V2, LedgerV2DocumentStore, True),
+    (data_sources.SOURCE_SQL, data_sources.LOCATION, LocationDocumentStore),
+    (data_sources.SOURCE_SQL, data_sources.SYNCLOG_SQL, SyncLogDocumentStore),
+    (data_sources.SOURCE_SQL, data_sources.SMS, SMSDocumentStore),
 
 ], DocumentStoreTests)
 def test_get_document_store(self, source_type, source_name, expected, sql_domain=False):

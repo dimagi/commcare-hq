@@ -1,19 +1,30 @@
 from collections import defaultdict
 
 from corehq.blobs import Error as BlobError
-from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL, \
-    iter_all_ids, CaseReindexAccessor, LedgerReindexAccessor
-from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, LedgerValueNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseReindexAccessor,
+    LedgerAccessorSQL,
+    LedgerReindexAccessor,
+    iter_all_ids,
+)
+from corehq.form_processor.exceptions import (
+    CaseNotFound,
+    LedgerValueNotFound,
+    XFormNotFound,
+)
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+)
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.quickcache import quickcache
 from pillowtop.dao.django import DjangoDocumentStore
 from pillowtop.dao.exceptions import DocumentNotFoundError
-from pillowtop.dao.interface import ReadOnlyDocumentStore
+from pillowtop.dao.interface import DocumentStore
 
 
-class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
+class FormDocumentStore(DocumentStore):
 
     def __init__(self, domain, xmlns=None):
         self.domain = domain
@@ -38,7 +49,7 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
             yield wrapped_form.to_json()
 
 
-class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
+class CaseDocumentStore(DocumentStore):
 
     def __init__(self, domain, case_type=None):
         self.domain = domain
@@ -63,7 +74,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
             yield wrapped_case.to_json()
 
 
-class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
+class LedgerV2DocumentStore(DocumentStore):
 
     def __init__(self, domain):
         assert should_use_sql_backend(domain), "Only SQL backend supported: {}".format(domain)

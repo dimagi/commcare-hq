@@ -12,7 +12,7 @@ from .models import SQLLocation
 LOCATION_DOC_TYPE = "Location"
 
 
-class ReadonlyLocationDocumentStore(DjangoDocumentStore):
+class LocationDocumentStore(DjangoDocumentStore):
 
     def __init__(self, domain):
         self.domain = domain

@@ -2,7 +2,7 @@ from casexml.apps.phone.models import SyncLogSQL
 from pillowtop.dao.django import DjangoDocumentStore
 
 
-class ReadonlySyncLogDocumentStore(DjangoDocumentStore):
+class SyncLogDocumentStore(DjangoDocumentStore):
     def __init__(self):
 
         def _to_doc(model):

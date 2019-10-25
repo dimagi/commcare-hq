@@ -17,7 +17,3 @@ class DocumentStore(metaclass=ABCMeta):
     @abstractmethod
     def iter_documents(self, ids):
         raise NotImplementedError('this function not yet implemented')
-
-
-class ReadOnlyDocumentStore(DocumentStore):
-    pass
