@@ -11,6 +11,7 @@ from django.views.generic import View
 import pytz
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.toggles import NAMESPACE_DOMAIN
 from couchexport.models import Format
 from dimagi.utils.web import get_url_base, json_response
@@ -47,7 +48,6 @@ from corehq.apps.users.permissions import (
     ODATA_FEED_PERMISSION,
 )
 from corehq.blobs.exceptions import NotFound
-from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -73,7 +73,7 @@ def user_can_view_deid_exports(domain, couch_user):
 
 
 def user_can_view_odata_feed(domain, couch_user):
-    domain_can_view_odata = BI_INTEGRATION_PREVIEW.enabled(domain, NAMESPACE_DOMAIN)
+    domain_can_view_odata = domain_has_privilege(domain, privileges.ODATA_FEED)
     return (domain_can_view_odata
             and couch_user.has_permission(
                 domain,
@@ -206,7 +206,7 @@ class DashboardFeedMixin(DailySavedExportMixin):
 
 class ODataFeedMixin(object):
 
-    @method_decorator(BI_INTEGRATION_PREVIEW.required_decorator())
+    @method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED))
     def dispatch(self, *args, **kwargs):
         return super(ODataFeedMixin, self).dispatch(*args, **kwargs)
 
