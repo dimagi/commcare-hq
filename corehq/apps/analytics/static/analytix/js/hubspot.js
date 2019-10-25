@@ -52,6 +52,7 @@ hqDefine('analytix/js/hubspot', [
                         }
 
                         _utils.loadDemoForm(apiId, formId);
+                        _utils.loadTrialForm(apiId, '9c8ecc33-b088-474e-8f4c-1b10fae50c2f');
                     });
             });
         }
@@ -131,6 +132,86 @@ hqDefine('analytix/js/hubspot', [
                             });
                             // target is the the iframe containing the schedule once form
                             var target = document.getElementById('SOI_commcaredemoform');
+                            observer.observe(target, { attributes: true, attributeFilter: ['style'] });
+                        }, 3000);
+                    });
+            },
+        });
+    };
+
+    /**
+     * Loads the Hubspot Request Trial form and loads a Schedule Once Calendar
+     * Widget for auto-booking an appointment as soon as the form is submitted.
+     * @param {string} apiId
+     * @param {string} formId
+     */
+    _utils.loadTrialForm = function (apiId, formId) {
+        hbspt.forms.create({
+            portalId: apiId,
+            formId: formId,
+            target: "#get-trial-cta-form-content",
+            css: "",
+            onFormReady: function () {
+                var $hubspotFormModal = $('#cta-form-start-trial'),
+                    hasInteractedWithForm = false;
+
+                $hubspotFormModal.on('shown.bs.modal', function () {
+                    kissmetrics.track.event("Get Trial Workflow - Viewed Form");
+                });
+
+                $hubspotFormModal.on('hide.bs.modal', function () {
+                    kissmetrics.track.event("Get Trial Workflow - Dismissed Form");
+                });
+
+                $('#get-trial-cta-form-content').find('input').click(function () {
+                    if (!hasInteractedWithForm) {
+                        kissmetrics.track.event("Get Trial Workflow - Interacted With Form");
+                        hasInteractedWithForm = true;
+                    }
+                });
+            },
+            onFormSubmit: function ($form) {
+                $('#get-trial-cta-calendar-content').fadeIn();
+                $('#get-trial-cta-form-content').addClass('hide');
+
+                var email = $form.find('[name="email"]').val(),
+                    firstname = $form.find('[name="firstname"]').val(),
+                    lastname = $form.find('[name="lastname"]').val(),
+                    newUrl = document.location.href + '?email=' + email + '&name=' + firstname + '%20' + lastname;
+
+                kissmetrics.track.event("Get Trial Workflow - Contact Info Received");
+
+                // This nastiness is required for Schedule Once to auto-fill
+                // required fields. Sending snark the way of the S.O. devs...
+                window.history.pushState({}, document.title, newUrl);
+
+                // Causes the Schedule Once form to populate the element
+                // #SOIDIV_commcaretrialform as soon as it loads. Once it's
+                // loaded this does not leave the page.
+                $.getScript('//cdn.scheduleonce.com/mergedjs/so.js')
+                    .done(function () {
+                        kissmetrics.track.event("Get Trial Workflow - Loaded Booking Options");
+                        setTimeout(function () {
+                            // This is a bit of a hack, but the only way to detect if
+                            // the Schedule Once Form was submitted on our side.
+                            // The style attribute changes when the form is successfully
+                            // submitted.
+                            var lastKnownHeight = 0,
+                                observer = new MutationObserver(function (mutations) {
+                                    mutations.forEach(function () {
+                                        var newHeight = $('#SOIDIV_CommCareTrial').height();
+                                        if (newHeight < lastKnownHeight) {
+                                            var coreUrl = document.location.href.split('?')[0];
+                                            kissmetrics.track.event("Get Trial Workflow - Trial Scheduled");
+                                            $('#cta-form-get-trial ').off('hide.bs.modal');
+                                            window.history.pushState({}, document.title, coreUrl);
+                                        }
+                                        lastKnownHeight = newHeight;
+
+                                    });
+                            });
+                            // target is the the iframe containing the schedule once form
+                            var target = document.getElementById('SOIDIV_CommCareTrial');
                             observer.observe(target, { attributes: true, attributeFilter: ['style'] });
                         }, 3000);
                     });
