@@ -28,6 +28,7 @@ from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.exceptions import (
     BadExportConfiguration,
     ExportAppException,
+    ExportODataDuplicateLabelException,
 )
 from corehq.apps.export.models import (
     CaseExportDataSchema,
@@ -147,6 +148,7 @@ class BaseExportView(BaseProjectDataView):
 
         if export.is_odata_config:
             for table_id, table in enumerate(export.tables):
+                labels = []
                 for column in table.columns:
                     is_reserved_number = (
                         column.label == 'number' and table_id > 0 and table.selected
@@ -155,6 +157,14 @@ class BaseExportView(BaseProjectDataView):
                             or column.label == 'caseid'
                             or is_reserved_number):
                         column.selected = True
+
+                    if column.label not in labels and column.selected:
+                        labels.append(column.label)
+                    elif column.selected:
+                        raise ExportODataDuplicateLabelException(
+                            _("Column labels must be unique. "
+                              "'{}' appears more than once.").format(column.label)
+                        )
             num_nodes = sum([1 for table in export.tables[1:] if table.selected])
             if hasattr(self, 'is_copy') and self.is_copy:
                 event_title = "[BI Integration] Clicked Save button for feed copy"
