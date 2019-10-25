@@ -270,7 +270,10 @@
             "live": 0,
             "still": 1
           },
-          "default": 0
+          "default": {
+              "type": "constant",
+              "constant": null
+          }
         }
       }
     ],

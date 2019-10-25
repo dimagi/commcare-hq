@@ -15,7 +15,7 @@ class TestDeliveryForms(BaseFormsTest):
         test_cases = (
             ('live', 0),
             ('still', 1),
-            ('default', 0),
+            ('unexpected', None),
         )
         for xml_value, report_value in test_cases:
             self._test_data_source_results(
