@@ -24,16 +24,6 @@ class CouchDocumentStore(DocumentStore):
             else:
                 raise DocumentDeletedError()
 
-    def save_document(self, doc_id, document):
-        document['_id'] = doc_id
-        self._couch_db.save_doc(document)
-
-    def delete_document(self, doc_id):
-        try:
-            return self._couch_db.delete_doc(doc_id)
-        except ResourceNotFound:
-            raise DocumentNotFoundError()
-
     def iter_document_ids(self, last_id=None):
         from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
 
