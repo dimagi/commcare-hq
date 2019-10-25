@@ -135,16 +135,19 @@ class SoftwarePlanEdition(object):
     ENTERPRISE = "Enterprise"
     RESELLER = "Reseller"
     MANAGED_HOSTING = "Managed Hosting"
+    PAUSED = "Paused"
     CHOICES = (
         (COMMUNITY, COMMUNITY),
         (STANDARD, STANDARD),
         (PRO, PRO),
         (ADVANCED, ADVANCED),
         (ENTERPRISE, ENTERPRISE),
+        (PAUSED, PAUSED),
         (RESELLER, RESELLER),
         (MANAGED_HOSTING, MANAGED_HOSTING),
     )
     SELF_SERVICE_ORDER = [
+        PAUSED,
         COMMUNITY,
         STANDARD,
         PRO,
@@ -912,6 +915,10 @@ class SoftwarePlanVersion(models.Model):
                     return True
         return False
 
+    @property
+    def is_paused(self):
+        return self.plan.edition == SoftwarePlanEdition.PAUSED
+
 
 class SubscriberManager(models.Manager):
 
@@ -1135,6 +1142,10 @@ class Subscription(models.Model):
         Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
 
     @property
+    def is_community(self):
+        return self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+
+    @property
     def allowed_attr_changes(self):
         """
         These are the attributes of a Subscription that can always be
@@ -1151,6 +1162,13 @@ class Subscription(models.Model):
                 filter(Q(date_end__isnull=True) | ~Q(date_start=F('date_end'))))
 
     @property
+    def previous_subscription_filter(self):
+        return Subscription.visible_objects.filter(
+            subscriber=self.subscriber,
+            date_start__lt=self.date_start - datetime.timedelta(days=1)
+        ).exclude(pk=self.pk)
+
+    @property
     def is_renewed(self):
         """
         Checks to see if there's another Subscription for this subscriber
@@ -1162,6 +1180,13 @@ class Subscription(models.Model):
     def next_subscription(self):
         try:
             return self.next_subscription_filter.order_by('date_start')[0]
+        except (Subscription.DoesNotExist, IndexError):
+            return None
+
+    @property
+    def previous_subscription(self):
+        try:
+            return self.previous_subscription_filter.order_by('date_end')[0]
         except (Subscription.DoesNotExist, IndexError):
             return None
 
