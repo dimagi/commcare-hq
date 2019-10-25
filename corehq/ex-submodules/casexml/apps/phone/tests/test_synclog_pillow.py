@@ -30,6 +30,12 @@ class SyncLogPillowTest(TestCase):
         )
         cls.ccuser.save()
 
+    def tearDown(self):
+        user = CommCareUser.get(self.ccuser._id)
+        user.reporting_metadata.last_syncs = []
+        user.save()
+        super().tearDown()
+
     @classmethod
     def tearDownClass(cls):
         delete_all_sync_logs()
@@ -49,7 +55,8 @@ class SyncLogPillowTest(TestCase):
         kafka_seq = get_topic_offset(topics.SYNCLOG_SQL)
 
         # make sure user has empty reporting-metadata before a sync
-        self.assertEqual(self.ccuser.reporting_metadata.last_syncs, [])
+        ccuser = CommCareUser.get(self.ccuser._id)
+        self.assertEqual(ccuser.reporting_metadata.last_syncs, [])
 
         # do a sync
         synclog = SimplifiedSyncLog(domain=self.domain.name, user_id=self.ccuser._id,
@@ -80,7 +87,8 @@ class SyncLogPillowTest(TestCase):
         kafka_seq = get_topic_offset(topics.SYNCLOG_SQL)
 
         # make sure user has empty reporting-metadata before a sync
-        self.assertEqual(self.ccuser.reporting_metadata.last_syncs, [])
+        ccuser = CommCareUser.get(self.ccuser._id)
+        self.assertEqual(ccuser.reporting_metadata.last_syncs, [])
 
         # do a sync
         synclog = SimplifiedSyncLog(domain=self.domain.name, user_id=self.ccuser._id,

@@ -80,7 +80,7 @@ class UserSyncHistoryProcessor(PillowProcessor):
         if settings.USER_REPORTING_METADATA_BATCH_ENABLED:
             UserReportingMetadataStaging.add_sync(domain, user_id, app_id, build_id, sync_date, device_id)
         else:
-            mark_last_synclog(domain, user_id, app_id, build_id, sync_date, device_id)
+            mark_last_synclog(domain, user_id, build_id, sync_date, device_id)
 
 
 def mark_last_synclog(domain, user_id, build_id, sync_date, device_id):
