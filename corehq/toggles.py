@@ -1687,6 +1687,7 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     always_disabled={'icds-cas'},
+    help_link='https://confluence.dimagi.com/display/ccinternal/Manage+Releases+per+Location',
 )
 
 

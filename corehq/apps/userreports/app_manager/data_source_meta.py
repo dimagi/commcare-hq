@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.app_manager.models import Form
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.xform import XForm
 
 DATA_SOURCE_TYPE_CASE = 'case'
@@ -62,7 +62,7 @@ def make_form_data_source_filter(xmlns, app_id):
     }
 
 
-def get_app_data_source_meta(domain, data_source_type, data_source_id):
+def get_app_data_source_meta(domain, app_id, data_source_type, data_source_id):
     """
     Get an AppDataSourceMeta object based on the expected domain, source type and ID
     :param domain: the domain
@@ -72,9 +72,9 @@ def get_app_data_source_meta(domain, data_source_type, data_source_id):
     """
     assert data_source_type in APP_DATA_SOURCE_TYPE_VALUES
     if data_source_type == DATA_SOURCE_TYPE_CASE:
-        return CaseDataSourceMeta(domain, data_source_type, data_source_id)
+        return CaseDataSourceMeta(domain, app_id, data_source_type, data_source_id)
     else:
-        return FormDataSourceMeta(domain, data_source_type, data_source_id)
+        return FormDataSourceMeta(domain, app_id, data_source_type, data_source_id)
 
 
 class AppDataSourceMeta(metaclass=ABCMeta):
@@ -82,8 +82,9 @@ class AppDataSourceMeta(metaclass=ABCMeta):
     Utility base class for interacting with forms/cases inside an app and data sources
     """
 
-    def __init__(self, domain, data_source_type, data_source_id):
+    def __init__(self, domain, app_id, data_source_type, data_source_id):
         self.domain = domain
+        self.app = get_app(domain, app_id)
         self.data_source_type = data_source_type
         self.data_source_id = data_source_id
 
@@ -103,9 +104,9 @@ class CaseDataSourceMeta(AppDataSourceMeta):
 
 class FormDataSourceMeta(AppDataSourceMeta):
 
-    def __init__(self, domain, data_source_type, data_source_id):
-        super(FormDataSourceMeta, self).__init__(domain, data_source_type, data_source_id)
-        self.source_form = Form.get_form(self.data_source_id)
+    def __init__(self, domain, app_id, data_source_type, data_source_id):
+        super().__init__(domain, app_id, data_source_type, data_source_id)
+        self.source_form = self.app.get_form(self.data_source_id)
         self.source_xform = XForm(self.source_form.source)
 
     def get_filter(self):
