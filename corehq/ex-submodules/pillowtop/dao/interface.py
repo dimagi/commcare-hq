@@ -10,8 +10,8 @@ class DocumentStore(metaclass=ABCMeta):
     def get_document(self, doc_id):
         pass
 
+    @abstractmethod
     def iter_document_ids(self, last_id=None):
-        # todo: can convert to @abstractmethod once subclasses handle it
         raise NotImplementedError('this function not yet implemented')
 
     @abstractmethod
