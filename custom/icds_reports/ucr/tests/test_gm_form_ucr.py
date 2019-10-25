@@ -57,5 +57,5 @@ class TestGMForms(BaseFormsTest):
                 "zscore_grading_wfh": 0,
                 "muac_grading": 0,
             }],
-            render_context={"still_live": 0}
+            render_context={"still_live": "live"}
         )
