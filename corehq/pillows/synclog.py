@@ -80,17 +80,17 @@ class UserSyncHistoryProcessor(PillowProcessor):
         if settings.USER_REPORTING_METADATA_BATCH_ENABLED:
             UserReportingMetadataStaging.add_sync(domain, user_id, app_id, build_id, sync_date, device_id)
         else:
-            mark_last_synclog(domain, user_id, build_id, sync_date, device_id)
+            mark_last_synclog(domain, user_id, app_id, build_id, sync_date, device_id)
 
 
-def mark_last_synclog(domain, user_id, build_id, sync_date, device_id):
+def mark_last_synclog(domain, user_id, app_id, build_id, sync_date, device_id):
     user = CouchUser.get_by_user_id(user_id)
     if not user:
         return
 
-    version, app_id = None, None
+    version = None
     if build_id:
-        version, app_id = get_version_and_app_from_build_id(domain, build_id)
+        version, _ = get_version_and_app_from_build_id(domain, build_id)
 
     save = update_last_sync(user, app_id, sync_date, version)
     if version:

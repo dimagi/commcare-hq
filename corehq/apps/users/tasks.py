@@ -329,7 +329,8 @@ def process_reporting_metadata_staging():
                 )
             if record.device_id or record.sync_date:
                 mark_last_synclog(
-                    record.domain, record.user_id, record.build_id, record.sync_date, record.device_id
+                    record.domain, record.user_id, record.app_id, record.build_id,
+                    record.sync_date, record.device_id
                 )
             record.delete()
 
