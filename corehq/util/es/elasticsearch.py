@@ -40,3 +40,21 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 2:
     from elasticsearch2.helpers import bulk
 else:
     raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 1 or 2")
+
+
+__all__ = [
+    'AuthorizationException',
+    'ConflictError',
+    'ConnectionError',
+    'ConnectionTimeout',
+    'Elasticsearch',
+    'ElasticsearchException',
+    'IndicesClient',
+    'NotFoundError',
+    'RequestError',
+    'SerializationError',
+    'SnapshotClient',
+    'TransportError',
+    'bulk',
+    'elasticsearch',
+]
