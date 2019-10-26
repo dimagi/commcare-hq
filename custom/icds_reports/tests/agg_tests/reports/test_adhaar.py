@@ -193,6 +193,7 @@ class TestAdhaar(TestCase):
                     'aggregation_level': 1
                 }, loc_level='state'
             ))
+        assert False
         self.assertDictEqual(
             get_adhaar_data_chart(
                 'icds-cas',
