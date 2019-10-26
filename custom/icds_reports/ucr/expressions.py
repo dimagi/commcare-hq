@@ -231,7 +231,7 @@ class FormsInDateExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     @staticmethod
     def _bulk_get_form_json_from_es(forms):
         form_ids = [form.form_id for form in forms]
-        es_forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(form_ids, source=True)
+        es_forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(form_ids)
         return {
             f['_id']: f for f in es_forms
         }
@@ -249,8 +249,8 @@ class FormsInDateExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         return (XFORM_CACHE_KEY_PREFIX, form.form_id)
 
     @staticmethod
-    def _bulk_get_forms_from_elasticsearch(form_ids, source):
-        forms = mget_query('forms', form_ids, source)
+    def _bulk_get_forms_from_elasticsearch(form_ids):
+        forms = mget_query('forms', form_ids)
         return list(filter(None, [
             FormsInDateExpressionSpec._transform_time_end_and_filter_bad_data(f) for f in forms
         ]))

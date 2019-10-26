@@ -215,7 +215,7 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
         raise ESError(e)
 
 
-def mget_query(index_name, ids, source):
+def mget_query(index_name, ids):
     if not ids:
         return []
 
@@ -223,7 +223,7 @@ def mget_query(index_name, ids, source):
     es_meta = ES_META[index_name]
     try:
         return es_instance.mget(
-            index=es_meta.index, doc_type=es_meta.type, body={'ids': ids}, _source=source
+            index=es_meta.index, doc_type=es_meta.type, body={'ids': ids}, _source=True
         )['docs']
     except ElasticsearchException as e:
         raise ESError(e)
@@ -232,7 +232,7 @@ def mget_query(index_name, ids, source):
 def iter_es_docs(index_name, ids):
     """Returns a generator which pulls documents from elasticsearch in chunks"""
     for ids_chunk in chunked(ids, 100):
-        for result in mget_query(index_name, ids_chunk, source=True):
+        for result in mget_query(index_name, ids_chunk):
             if result['found']:
                 yield result['_source']
 
