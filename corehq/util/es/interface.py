@@ -58,7 +58,7 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return results
 
     def scroll(self, scroll_id=None, body=None, params=None, **kwargs):
-        results = self.es.scroll(scroll_id, body, params or {}, **kwargs)
+        results = self.es.scroll(scroll_id, body, params=params or {}, **kwargs)
         self._fix_hits_in_results(results)
         return results
 

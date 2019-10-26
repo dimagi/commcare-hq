@@ -321,7 +321,7 @@ def scan(client, query=None, scroll='5m', **kwargs):
         while True:
 
             start = int(time.time() * 1000)
-            resp = client.scroll(scroll_id, scroll=scroll)
+            resp = es_interface.scroll(scroll_id, scroll=scroll)
             for hit in resp['hits']['hits']:
                 yield hit
 
