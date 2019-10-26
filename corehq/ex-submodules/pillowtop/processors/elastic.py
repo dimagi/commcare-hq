@@ -11,6 +11,7 @@ from corehq.util.es.elasticsearch import (
     RequestError,
     bulk,
 )
+from corehq.util.es.interface import ElasticsearchInterface
 
 from pillowtop.exceptions import BulkDocExeption, PillowtopIndexingError
 from pillowtop.logger import pillow_logging
@@ -141,18 +142,19 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None,
     """
     data = data if data is not None else {}
     current_tries = 0
+    es_interface = ElasticsearchInterface(es_getter())
     while current_tries < retries:
         try:
             if delete:
-                es_getter().delete(index, doc_type, doc_id)
+                es_interface.delete_doc(index, doc_type, doc_id)
             elif update:
                 params = {'retry_on_conflict': 2}
                 if es_merge_update:
-                    es_getter().update(index, doc_type, doc_id, body={"doc": data}, params=params)
+                    es_interface.update_doc_fields(index, doc_type, doc_id, fields=data, params=params)
                 else:
-                    es_getter().index(index, doc_type, body=data, id=doc_id, params=params)
+                    es_interface.update_doc(index, doc_type, doc_id, doc=data, params=params)
             else:
-                es_getter().create(index, doc_type, body=data, id=doc_id)
+                es_interface.create_doc(index, doc_type, doc_id, doc=data)
             break
         except ConnectionError as ex:
             current_tries += 1
