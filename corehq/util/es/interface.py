@@ -72,7 +72,8 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
 
     @staticmethod
     def _fix_hit(hit):
-        hit['_source']['_id'] = hit['_id']
+        if '_source' in hit:
+            hit['_source']['_id'] = hit['_id']
 
     def _fix_hits_in_results(self, results):
         try:
