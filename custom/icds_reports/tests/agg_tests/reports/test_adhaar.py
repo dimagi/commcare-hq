@@ -213,7 +213,7 @@ class TestAdhaar(TestCase):
                 ],
                 "top_five": [
                     {'loc_name': 'st1', 'percent': 24.774193548387096},
-                    {'loc_name': 'st2', 'percent': 18.509615384615383},
+                    {'loc_name': 'st2', 'percent': 18.48739495798319},
                     {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
@@ -237,12 +237,12 @@ class TestAdhaar(TestCase):
                             {
                                 "y": 0.19528178243774574,
                                 "x": 1491004800000,
-                                "all": 1525
+                                "all": 1526
                             },
                             {
                                 "y": 0.21490683229813665,
                                 "x": 1493596800000,
-                                "all": 1609
+                                "all": 1610
                             }
                         ],
                         "key": "Percentage of beneficiaries with Aadhaar numbers"
@@ -250,7 +250,7 @@ class TestAdhaar(TestCase):
                 ],
                 "all_locations": [
                     {'loc_name': 'st1', 'percent': 24.774193548387096},
-                    {'loc_name': 'st2', 'percent': 18.509615384615383},
+                    {'loc_name': 'st2', 'percent': 18.48739495798319},
                     {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
