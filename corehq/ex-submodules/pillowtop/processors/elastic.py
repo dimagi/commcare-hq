@@ -9,7 +9,6 @@ from corehq.util.es.elasticsearch import (
     ConnectionError,
     NotFoundError,
     RequestError,
-    bulk,
 )
 from corehq.util.es.interface import ElasticsearchInterface
 
@@ -46,6 +45,7 @@ class ElasticProcessor(PillowProcessor):
     def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
         self.doc_filter_fn = doc_filter_fn or noop_filter
         self.elasticsearch = elasticsearch
+        self.es_interface = ElasticsearchInterface(self.elasticsearch)
         self.index_info = index_info
         self.doc_transform_fn = doc_prep_fn or identity
 
@@ -118,7 +118,8 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
         error_changes = error_collector.errors
 
         try:
-            _, errors = bulk(self.elasticsearch, es_actions, raise_on_error=False, raise_on_exception=False)
+            _, errors = self.es_interface.bulk_ops(
+                es_actions, raise_on_error=False, raise_on_exception=False)
         except Exception as e:
             pillow_logging.exception("[%s] ES bulk load error")
             error_changes.extend([

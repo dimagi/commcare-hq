@@ -2,6 +2,8 @@ import abc
 
 from django.conf import settings
 
+from corehq.util.es.elasticsearch import bulk
+
 
 class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
     def __init__(self, es):
@@ -51,6 +53,12 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
 
     def delete_doc(self, index, doc_type, doc_id):
         self.es.delete(index, doc_type, doc_id)
+
+    def bulk_ops(self, actions, stats_only=False, **kwargs):
+        for action in actions:
+            if '_source' in action:
+                action['_source'] = self._without_id_field(action['_source'])
+        return bulk(self.es, actions, stats_only=stats_only, **kwargs)
 
     def search(self, index=None, doc_type=None, body=None, params=None, **kwargs):
         results = self.es.search(index, doc_type, body=body, params=params or {}, **kwargs)
