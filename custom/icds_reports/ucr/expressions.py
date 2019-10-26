@@ -257,7 +257,6 @@ class FormsInDateExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
 
     @staticmethod
     def _transform_time_end_and_filter_bad_data(xform):
-        xform = xform.get('_source', {})
         if not xform.get('xmlns', None):
             return None
         try:
