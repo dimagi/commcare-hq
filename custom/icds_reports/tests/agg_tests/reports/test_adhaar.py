@@ -185,15 +185,6 @@ class TestAdhaar(TestCase):
         self.assertEqual(data['rightLegend']['average'], 24.774193548387096)
 
     def test_chart_data(self):
-        print(
-            get_adhaar_data_chart(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                }, loc_level='state'
-            ))
-        assert False
         self.assertDictEqual(
             get_adhaar_data_chart(
                 'icds-cas',
@@ -214,7 +205,7 @@ class TestAdhaar(TestCase):
                 ],
                 "top_five": [
                     {'loc_name': 'st1', 'percent': 24.774193548387096},
-                    {'loc_name': 'st2', 'percent': 18.48739495798319},
+                    {'loc_name': 'st2', 'percent': 18.509615384615383},
                     {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
@@ -236,14 +227,14 @@ class TestAdhaar(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.19528178243774574,
+                                "y": 0.19540983606557377,
                                 "x": 1491004800000,
-                                "all": 1526
+                                "all": 1525
                             },
                             {
-                                "y": 0.21490683229813665,
+                                "y": 0.21504039776258546,
                                 "x": 1493596800000,
-                                "all": 1610
+                                "all": 1609
                             }
                         ],
                         "key": "Percentage of beneficiaries with Aadhaar numbers"
@@ -251,7 +242,7 @@ class TestAdhaar(TestCase):
                 ],
                 "all_locations": [
                     {'loc_name': 'st1', 'percent': 24.774193548387096},
-                    {'loc_name': 'st2', 'percent': 18.48739495798319},
+                    {'loc_name': 'st2', 'percent': 18.509615384615383},
                     {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
