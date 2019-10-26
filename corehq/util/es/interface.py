@@ -38,6 +38,8 @@ class ElasticsearchInterface1(AbstractElasticsearchInterface):
 class ElasticsearchInterface2(AbstractElasticsearchInterface):
     _deprecated_index_settings = (
         'merge.policy.merge_factor',
+        'store.throttle.max_bytes_per_sec',
+        'store.throttle.type',
     )
 
     def update_index_settings(self, index, settings_dict):
