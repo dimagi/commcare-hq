@@ -179,20 +179,29 @@ def setup_tables_and_fixtures(domain_name):
     metadata.reflect(bind=engine, extend_existing=True)
     path = os.path.join(os.path.dirname(__file__), 'fixtures')
     for file_name in os.listdir(path):
-        with open(os.path.join(path, file_name), encoding='utf-8') as f:
-            table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
-            table = metadata.tables[table_name]
-            if not table_name.startswith('icds_dashboard_'):
-                columns = [
-                    '"{}"'.format(c.strip())  # quote to preserve case
-                    for c in f.readline().split(',')
-                ]
-                postgres_copy.copy_from(f, table, engine, format='csv', null='', columns=columns)
+        setup_table_from_fixture(file_name)
 
-    _distribute_tables_for_citus(engine)
+    distribute_tables_for_citus(engine)
 
 
-def _distribute_tables_for_citus(engine):
+def setup_table_from_fixture(file_name):
+    engine = connection_manager.get_engine(ICDS_UCR_CITUS_ENGINE_ID)
+    metadata = sqlalchemy.MetaData(bind=engine)
+    metadata.reflect(bind=engine, extend_existing=True)
+
+    path = os.path.join(os.path.dirname(__file__), 'fixtures')
+    with open(os.path.join(path, file_name), encoding='utf-8') as f:
+        table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
+        table = metadata.tables[table_name]
+        if not table_name.startswith('icds_dashboard_'):
+            columns = [
+                '"{}"'.format(c.strip())  # quote to preserve case
+                for c in f.readline().split(',')
+            ]
+            postgres_copy.copy_from(f, table, engine, format='csv', null='', columns=columns)
+
+
+def distribute_tables_for_citus(engine):
     for table, col in DISTRIBUTED_TABLES:
         with engine.begin() as conn:
 
