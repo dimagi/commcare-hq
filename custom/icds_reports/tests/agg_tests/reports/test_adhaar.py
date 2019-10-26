@@ -82,7 +82,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], 21.490683229813666)
+        self.assertEqual(data['rightLegend']['average'], 21.504039776258544)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_adhaar_data_map(
