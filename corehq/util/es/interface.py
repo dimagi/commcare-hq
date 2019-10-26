@@ -33,16 +33,21 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return docs
 
     def create_doc(self, index, doc_type, doc_id, doc):
-        # Field [_id] is a metadata field and cannot be added inside a document.
-        # Use the index API request parameters.
-        doc = {key: value for key, value in doc.items() if key != '_id'}
-        self.es.create(index, doc_type, body=doc, id=doc_id)
+        self.es.create(index, doc_type, body=self._without_id_field(doc), id=doc_id)
 
     def update_doc(self, index, doc_type, doc_id, doc, params=None):
-        self.es.index(index, doc_type, body=doc, id=doc_id, params=params or {})
+        self.es.index(index, doc_type, body=self._without_id_field(doc), id=doc_id,
+                      params=params or {})
 
     def update_doc_fields(self, index, doc_type, doc_id, fields, params=None):
-        self.es.update(index, doc_type, doc_id, body={"doc": fields}, params=params or {})
+        self.es.update(index, doc_type, doc_id, body={"doc": self._without_id_field(fields)},
+                       params=params or {})
+
+    @staticmethod
+    def _without_id_field(doc):
+        # Field [_id] is a metadata field and cannot be added inside a document.
+        # Use the index API request parameters.
+        return {key: value for key, value in doc.items() if key != '_id'}
 
     def delete_doc(self, index, doc_type, doc_id):
         self.es.delete(index, doc_type, doc_id)
