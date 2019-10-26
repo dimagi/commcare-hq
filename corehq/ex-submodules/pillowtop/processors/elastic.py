@@ -1,5 +1,6 @@
 import math
 import time
+import traceback
 
 from django.conf import settings
 
@@ -155,23 +156,23 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None,
             break
         except ConnectionError as ex:
             current_tries += 1
-            pillow_logging.error("[%s] put_robust error %s attempt %d/%d" % (
+            pillow_logging.error("[{}] put_robust error {} attempt {}/{}".format(
                 name, ex, current_tries, retries))
 
             if current_tries == retries:
-                message = "[%s] Max retry error on %s/%s/%s" % (name, index, doc_type, doc_id)
+                message = "[{}] Max retry error on {}/{}/{}:\n\n{}".format(
+                    name, index, doc_type, doc_id, traceback.format_exc())
                 if propagate_failure:
                     raise PillowtopIndexingError(message)
                 else:
                     pillow_logging.error(message)
 
             time.sleep(math.pow(RETRY_INTERVAL, current_tries))
-        except RequestError as ex:
-            error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s/%s/%s\n\t%s" % (
-                name,
-                ex.error or "No error message",
-                index, doc_type, doc_id,
-                list(data))
+        except RequestError:
+            error_message = (
+                "Pillowtop put_robust error [{}]:\n\n{}\n\tpath: {}/{}/{}\n\t{}".format(
+                    name, traceback.format_exc(), index, doc_type, doc_id, list(data))
+            )
 
             if propagate_failure:
                 raise PillowtopIndexingError(error_message)
