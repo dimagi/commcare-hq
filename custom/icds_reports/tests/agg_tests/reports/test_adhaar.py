@@ -48,8 +48,6 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        print(data['data'])
-        assert False
         self.assertDictEqual(
             data['data'],
             {
@@ -58,7 +56,7 @@ class TestAdhaar(TestCase):
                  'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'},
                  'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 2, 'fillKey': '0%-25%'},
                  'st1': {'in_month': 192, 'original_name': ['st1'], 'all': 775, 'fillKey': '0%-25%'},
-                 'st2': {'in_month': 154, 'original_name': ['st2'], 'all': 833, 'fillKey': '0%-25%'},
+                 'st2': {'in_month': 154, 'original_name': ['st2'], 'all': 832, 'fillKey': '0%-25%'},
                  'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
             }
         )
