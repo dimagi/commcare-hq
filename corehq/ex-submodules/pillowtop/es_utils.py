@@ -6,25 +6,6 @@ from datetime import datetime
 from corehq.util.es.elasticsearch import TransportError
 from pillowtop.logger import pillow_logging
 
-INDEX_REINDEX_SETTINGS = {
-    "index": {
-        "refresh_interval": "1800s",
-        # todo: remove these deprecated properties we are off ES 1
-        "merge.policy.merge_factor": 20,
-        "store.throttle.max_bytes_per_sec": "1mb",
-        "store.throttle.type": "merge",
-    }
-}
-INDEX_STANDARD_SETTINGS = {
-    "index": {
-        "refresh_interval": "5s",
-        # todo: remove these deprecated properties we are off ES 1
-        "merge.policy.merge_factor": 10,
-        "store.throttle.max_bytes_per_sec": "5mb",
-        "store.throttle.type": "node",
-    }
-}
-
 
 def _get_analysis(*names):
     return {
@@ -134,6 +115,7 @@ def set_index_reindex_settings(es, index):
     """
     Set a more optimized setting setup for fast reindexing
     """
+    from pillowtop.index_settings import INDEX_REINDEX_SETTINGS
     return ElasticsearchInterface(es).update_index_settings(index, INDEX_REINDEX_SETTINGS)
 
 
@@ -141,6 +123,7 @@ def set_index_normal_settings(es, index):
     """
     Normal indexing configuration
     """
+    from pillowtop.index_settings import INDEX_STANDARD_SETTINGS
     return ElasticsearchInterface(es).update_index_settings(index, INDEX_STANDARD_SETTINGS)
 
 

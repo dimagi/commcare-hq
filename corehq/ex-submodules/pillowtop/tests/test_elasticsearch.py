@@ -8,9 +8,15 @@ from corehq.util.es.elasticsearch import ConnectionError
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
-from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, \
-    set_index_reindex_settings, set_index_normal_settings, mapping_exists, initialize_index, \
-    initialize_index_and_mapping, assume_alias
+from pillowtop.es_utils import (
+    assume_alias,
+    initialize_index,
+    initialize_index_and_mapping,
+    mapping_exists,
+    set_index_normal_settings,
+    set_index_reindex_settings,
+)
+from pillowtop.index_settings import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
 from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.processors.elastic import send_to_elasticsearch
