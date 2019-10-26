@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
-from elasticsearch import TransportError
-from elasticsearch.helpers import bulk
+from corehq.util.es.elasticsearch import TransportError
+from corehq.util.es.elasticsearch import bulk
 
 from pillowtop.es_utils import (
     initialize_mapping_if_necessary,

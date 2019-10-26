@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 
 from pillow_retry.models import PillowError
 from pillowtop.es_utils import initialize_index_and_mapping

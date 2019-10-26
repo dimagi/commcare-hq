@@ -1,5 +1,5 @@
 from django.conf import settings
-from elasticsearch import NotFoundError
+from corehq.util.es.elasticsearch import NotFoundError
 
 from corehq.util.test_utils import unit_testing_only
 
