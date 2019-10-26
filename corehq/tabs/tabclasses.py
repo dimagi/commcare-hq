@@ -2087,7 +2087,7 @@ class AdminTab(UITab):
         sections = [
             (_('Administrative Reports'), [
                 {'title': _('User List'),
-                 'url': reverse('admin_report_dispatcher', args=('user_list',))},
+                 'url': UserListReport.get_url()},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('Download Global Impact Report'),
@@ -2111,7 +2111,7 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [DeviceLogSoftAssertReport, UserAuditReport, UserListReport]
+            } for report in [DeviceLogSoftAssertReport, UserAuditReport]
         ]))
         return sections
 

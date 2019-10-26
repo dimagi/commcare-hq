@@ -2,7 +2,7 @@ import warnings
 from contextlib import contextmanager
 
 from django.conf import settings
-from django.db import connections
+from django.db import connections, DEFAULT_DB_ALIAS
 
 from corehq.sql_db.connections import (
     AAA_DB_ENGINE_ID,
@@ -71,11 +71,11 @@ def allow_migrate(db, app_label, model_name=None):
         return db == settings.WAREHOUSE_DATABASE_ALIAS
 
     if not settings.USE_PARTITIONED_DATABASE:
-        return app_label != PROXY_APP and db in ('default', None)
+        return app_label != PROXY_APP and db in (DEFAULT_DB_ALIAS, None)
 
     if app_label == PROXY_APP:
         return db == partition_config.get_proxy_db()
-    elif app_label == BLOB_DB_APP and db == 'default':
+    elif app_label == BLOB_DB_APP and db == DEFAULT_DB_ALIAS:
         return True
     elif app_label == BLOB_DB_APP and model_name == 'blobexpiration':
         return False
@@ -87,7 +87,7 @@ def allow_migrate(db, app_label, model_name=None):
     elif app_label == SQL_ACCESSORS_APP:
         return db in partition_config.get_form_processing_dbs()
     else:
-        return db == partition_config.get_main_db()
+        return db == DEFAULT_DB_ALIAS
 
 
 def db_for_read_write(model, write=True):
@@ -111,16 +111,16 @@ def db_for_read_write(model, write=True):
         return connection_manager.get_django_db_alias(engine_id)
 
     if not settings.USE_PARTITIONED_DATABASE:
-        return 'default'
+        return DEFAULT_DB_ALIAS
 
     if app_label == BLOB_DB_APP:
         if hasattr(model, 'partition_attr'):
             return partition_config.get_proxy_db()
-        return 'default'
+        return DEFAULT_DB_ALIAS
     if app_label == FORM_PROCESSOR_APP:
         return partition_config.get_proxy_db()
     else:
-        default_db = partition_config.get_main_db()
+        default_db = DEFAULT_DB_ALIAS
         if not write:
             return connection_manager.get_load_balanced_read_db_alias(app_label, default_db)
         return default_db

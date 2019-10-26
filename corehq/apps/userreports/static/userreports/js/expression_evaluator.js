@@ -9,7 +9,9 @@ hqDefine('userreports/js/expression_evaluator', function () {
         self.documentId = ko.observable(initialData.documentId);
         self.dataSourceId = ko.observable(initialData.dataSourceId);
         self.expressionText = ko.observable(editor.getSession().getValue());
-        self.uiFeedback = ko.observable();
+        self.error = ko.observable();
+        self.result = ko.observable();
+        self.isEvaluating = ko.observable(false);
 
         self.getExpressionJSON = function () {
             try {
@@ -22,7 +24,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
             self.expressionText(self.editor.getSession().getValue());
         });
 
-        self.hasError = ko.computed(function () {
+        self.hasParseError = ko.computed(function () {
             return self.getExpressionJSON() === null;
         }, self);
 
@@ -45,13 +47,15 @@ hqDefine('userreports/js/expression_evaluator', function () {
         };
 
         self.evaluateExpression = function () {
-            self.uiFeedback("");
-            if (self.hasError()) {
-                self.uiFeedback("Please fix all parsing errors before evaluating.");
+            self.error("");
+            self.result("");
+            if (self.hasParseError()) {
+                return;
             } else if (!self.documentId()) {
-                self.uiFeedback("Please enter a document ID.");
+                self.error("Please enter a document ID.");
             }
             else {
+                self.isEvaluating(true);
                 $.post({
                     url: self.submitUrl,
                     data: {
@@ -61,11 +65,13 @@ hqDefine('userreports/js/expression_evaluator', function () {
                         expression: self.expressionText(),
                     },
                     success: function (data) {
-                        self.uiFeedback("<strong>Result:</strong> " + JSON.stringify(data.result));
+                        self.result(JSON.stringify(data.result));
                         self.updateUrl();
+                        self.isEvaluating(false);
                     },
                     error: function (data) {
-                        self.uiFeedback("<strong>Failure!:</strong> " + data.responseJSON ? data.responseJSON.error : "Unknown error");
+                        self.error(data.responseJSON ? data.responseJSON.error : gettext("Unknown error"));
+                        self.isEvaluating(false);
                     },
                 });
             }

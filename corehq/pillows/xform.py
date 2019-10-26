@@ -30,7 +30,7 @@ from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
-from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.processors.elastic import BulkElasticProcessor, ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 
@@ -183,7 +183,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         exclude_ucrs=exclude_ucrs,
         run_migrations=(process_num == 0),  # only first process runs migrations
     )
-    xform_to_es_processor = ElasticProcessor(
+    xform_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch,
@@ -206,7 +206,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     if settings.RUN_FORM_META_PILLOW:
         processors.append(form_meta_processor)
     if not settings.ENTERPRISE_MODE:
-        xform_to_report_es_processor = ElasticProcessor(
+        xform_to_report_es_processor = BulkElasticProcessor(
             elasticsearch=get_es_new(),
             index_info=REPORT_XFORM_INDEX_INFO,
             doc_prep_fn=transform_xform_for_report_forms_index,
