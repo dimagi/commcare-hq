@@ -185,13 +185,13 @@ class TestAdhaar(TestCase):
         self.assertEqual(data['rightLegend']['average'], 24.774193548387096)
 
     def test_chart_data(self):
-        print(get_adhaar_data_chart(
+        print(
+            get_adhaar_data_chart(
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
                     'aggregation_level': 1
-                },
-                loc_level='state'
+                }, loc_level='state'
             ))
         self.assertDictEqual(
             get_adhaar_data_chart(

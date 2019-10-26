@@ -2050,7 +2050,7 @@ class TestExportData(TestCase):
                             "Data Not Entered",
                             "Data Not Entered",
                             16
-                        ],
+                        ]
                     ]
                 ],
                 [
