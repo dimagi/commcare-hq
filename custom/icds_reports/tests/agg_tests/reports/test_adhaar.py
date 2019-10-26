@@ -102,7 +102,7 @@ class TestAdhaar(TestCase):
                 },
                 {
                     'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',
-                    'value': '21.49%'
+                    'value': '21.50%'
                 }
             ]
         )
