@@ -92,17 +92,14 @@ class ConfigurableReportEditForm(DocumentFormBase):
             fields.append('_id')
 
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Report Configuration"),
-                *fields
-            ),
+            *fields
         )
         # Restrict edit for static reports
         if not read_only:
             self.helper.layout.append(
                 hqcrispy.FormActions(
                     twbscrispy.StrictButton(
-                        _("Save Changes"),
+                        _("Save"),
                         type="submit",
                         css_class="btn btn-primary",
                     ),
@@ -208,13 +205,10 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             fields.append('_id')
 
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Edit Data Source"),
-                *fields
-            ),
+            *fields,
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Save Changes"),
+                    _("Save"),
                     type="submit",
                     css_class="btn btn-primary",
                 ),

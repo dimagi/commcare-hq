@@ -850,6 +850,14 @@ class ImportConfigReportView(BaseUserConfigReportsView):
         }
 
 
+@login_and_domain_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def report_source_json(request, domain, report_id):
+    config, _ = get_report_config_or_404(report_id, domain)
+    config._doc.pop('_rev', None)
+    return json_response(config)
+
+
 class ExpressionDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
     template_name = 'userreports/expression_debugger.html'
@@ -907,9 +915,7 @@ def evaluate_expression(request, domain):
         )
     except BadSpecError as e:
         return json_response(
-            {"error": _("Problem with expression: {}.").format(
-                e
-            )},
+            {"error": _("Problem with expression: {}").format(e)},
             status_code=400,
         )
     except Exception as e:
@@ -1230,6 +1236,14 @@ def build_data_source_in_place(request, domain, config_id):
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
+
+
+@login_and_domain_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def data_source_json(request, domain, config_id):
+    config, _ = get_datasource_config_or_404(config_id, domain)
+    config._doc.pop('_rev', None)
+    return json_response(config)
 
 
 class PreviewDataSourceView(BaseUserConfigReportsView):

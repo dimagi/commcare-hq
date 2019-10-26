@@ -98,7 +98,7 @@
 
   <div class="row">
     <div class="col-xs-8 col-md-8 col-lg-8 loc_search" id="location_search">
-      <label for="location_search" class="col-xs-2 col-md-1 col-lg-1 control-label">Location</label>
+      <label for="location_search" class="col-xs-2 col-md-1 col-lg-1 control-label">{% trans "Location" %}</label>
 
       <div class="col-xs-7 col-md-7 col-lg-8">
 
@@ -110,13 +110,18 @@
                 name="location_search"
                 style="max-width:80%;"></select>
 
-        <button type="button" class="btn btn-secondary" style="display:inline; cursor:pointer;" data-bind="visible: selected_location_id(), click: clearLocationSelection">
+        <button type="button" class="btn btn-default" style="display:inline; cursor:pointer;" data-bind="visible: selected_location_id(), click: clearLocationSelection">
           <i class="fa fa-times" aria-hidden="true"></i>
         </button>
 
         <span class="help-block">
-            <i class="fa fa-info-circle"></i>
-            To quick search for a location, write your query as "parent"/descendant. For more info, see the <a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" target="_blank">Location Search</a> help page.
+          <i class="fa fa-info-circle"></i>
+          {% blocktrans %}
+            To quick search for a location, write your query as "parent"/descendant.
+            For more info, see the
+            <a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" target="_blank">Location Search</a>
+            help page.
+          {% endblocktrans %}
         </span>
 
       </div>

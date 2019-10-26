@@ -1,5 +1,6 @@
 import uuid
 
+from django.db import DEFAULT_DB_ALIAS
 from django.test import TestCase
 
 from mock import patch
@@ -22,6 +23,7 @@ from corehq.apps.userreports.tests.utils import (
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.pillows.case import get_case_pillow
 from corehq.sql_db import connections
+from corehq.sql_db.connections import DEFAULT_ENGINE_ID
 from corehq.sql_db.tests.utils import temporary_database
 from corehq.util.test_utils import flag_enabled
 
@@ -33,7 +35,7 @@ class UCRMultiDBTest(TestCase):
     def setUpClass(cls):
         super(UCRMultiDBTest, cls).setUpClass()
         cls.db2_name = 'cchq_ucr_tests'
-        db_conn_parts = connections.connection_manager.get_connection_string('default').split('/')
+        db_conn_parts = connections.connection_manager.get_connection_string(DEFAULT_DB_ALIAS).split('/')
         db_conn_parts[-1] = cls.db2_name
         cls.db2_url = '/'.join(db_conn_parts)
 
@@ -87,13 +89,13 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual('engine-1', get_engine_id(self.ds_1))
         self.assertEqual('engine-2', get_engine_id(self.ds_2))
 
-        self.assertEqual(connections.connection_manager.get_connection_string('default'),
+        self.assertEqual(connections.connection_manager.get_connection_string(DEFAULT_DB_ALIAS),
                          connections.connection_manager.get_connection_string('engine-1'))
         self.assertEqual(self.db2_url,
                          connections.connection_manager.get_connection_string('engine-2'))
 
         self.assertNotEqual(str(self.ds1_adapter.engine.url), str(self.ds2_adapter.engine.url))
-        self.assertEqual(connections.connection_manager.get_connection_string('default'),
+        self.assertEqual(connections.connection_manager.get_connection_string(DEFAULT_DB_ALIAS),
                          str(self.ds1_adapter.engine.url))
         self.assertEqual(self.db2_url, str(self.ds2_adapter.engine.url))
 
@@ -162,7 +164,7 @@ class UCRMultiDBTest(TestCase):
 
     def test_mirroring(self):
         ds3 = DataSourceConfiguration.wrap(get_sample_data_source().to_json())
-        ds3.engine_id = "default"
+        ds3.engine_id = DEFAULT_ENGINE_ID
         ds3.mirrored_engine_ids = ['engine-2']
         adapter = get_indicator_adapter(ds3)
         self.assertEqual(type(adapter.adapter), MultiDBSqlAdapter)

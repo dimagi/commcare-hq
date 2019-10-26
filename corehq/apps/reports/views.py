@@ -1142,7 +1142,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
     timezone = get_timezone_for_user(request.couch_user, domain)
     next_transaction = int(request.GET.get('next_transaction', 0))
 
-    paged_changes, last_trasaction_checked = get_paged_changes_to_case_property(
+    paged_changes, last_transaction_checked = get_paged_changes_to_case_property(
         case,
         case_property_name,
         start=next_transaction,
@@ -1157,7 +1157,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
 
     return json_response({
         'changes': changes,
-        'last_transaction_checked': last_trasaction_checked,
+        'last_transaction_checked': last_transaction_checked,
     })
 
 

@@ -101,7 +101,7 @@ Option 1
 
 This option raises a celery exception which tells celery to ignore future state updates.
 The resulting task result will not be marked as "successful" so ``task.successful()`` will return ``False``
-If calling with ``CELERY_ALWAYS_EAGER = True`` (i.e. a dev environment), and with ``.delay()``,
+If calling with ``CELERY_TASKS_ALWAYS_EAGER = True`` (i.e. a dev environment), and with ``.delay()``,
 the exception will be caught by celery and ``task.result`` will return the exception.
 
 .. code-block:: python
@@ -126,7 +126,7 @@ Option 2
 This option raises an exception which celery does not catch.
 Soil will catch this and set the error to the error message in the exception.
 The resulting task will be marked as a failure meaning ``task.failed()`` will return ``True``
-If calling with ``CELERY_ALWAYS_EAGER = True`` (i.e. a dev environment), the exception will "bubble up" to the calling code.
+If calling with ``CELERY_TASKS_ALWAYS_EAGER = True`` (i.e. a dev environment), the exception will "bubble up" to the calling code.
 
 .. code-block:: python
 
