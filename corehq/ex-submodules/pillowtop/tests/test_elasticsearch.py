@@ -63,7 +63,7 @@ class ElasticPillowTest(SimpleTestCase):
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
         self.assertEqual(0, get_doc_count(self.es, self.index))
-        self.es.create(self.index, 'case', doc, id=doc_id)
+        self.es_interface.create_doc(self.index, 'case', doc_id, doc)
         self.assertEqual(0, get_doc_count(self.es, self.index, refresh_first=False))
         self.es.indices.refresh(self.index)
         self.assertEqual(1, get_doc_count(self.es, self.index, refresh_first=False))
