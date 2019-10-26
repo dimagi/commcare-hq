@@ -114,31 +114,40 @@ class ElasticPillowTest(SimpleTestCase):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         self.es_interface.update_index_settings(self.index, INDEX_REINDEX_SETTINGS)
         index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
-        self._compare_es_dicts(INDEX_REINDEX_SETTINGS, index_settings_back, 'index')
+        self._compare_es_dicts(INDEX_REINDEX_SETTINGS, index_settings_back)
         self.es_interface.update_index_settings(self.index, INDEX_STANDARD_SETTINGS)
         index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
-        self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back, 'index')
+        self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back)
 
     def test_set_index_reindex(self):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         set_index_reindex_settings(self.es, self.index)
         index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
-        self._compare_es_dicts(INDEX_REINDEX_SETTINGS, index_settings_back, 'index')
+        self._compare_es_dicts(INDEX_REINDEX_SETTINGS, index_settings_back)
 
     def test_set_index_normal(self):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         set_index_normal_settings(self.es, self.index)
         index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
-        self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back, 'index')
+        self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back)
 
-    def _compare_es_dicts(self, expected, returned, prefix):
-        sub_returned = returned[prefix]
-        for key, value in expected[prefix].items():
+    def _compare_es_dicts(self, expected, returned):
+        sub_returned = returned['index']
+        should_not_exist = ElasticsearchInterface._disallowed_index_settings
+        for key, value in expected['index'].items():
+            if key in should_not_exist:
+                continue
             split_key = key.split('.')
             returned_value = sub_returned[split_key[0]]
             for sub_key in split_key[1:]:
                 returned_value = returned_value[sub_key]
             self.assertEqual(str(value), returned_value)
+
+        for disallowed_setting in should_not_exist:
+            self.assertNotIn(
+                disallowed_setting, sub_returned,
+                '{} is disallowed and should not be in the index settings'
+                .format(disallowed_setting))
 
 
 class TestSendToElasticsearch(SimpleTestCase):

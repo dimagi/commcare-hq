@@ -8,6 +8,13 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         self.es = es
 
     def update_index_settings(self, index, settings_dict):
+        assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()
+        settings_dict = {
+            "index": {
+                key: value for key, value in settings_dict['index'].items()
+                if key not in self._disallowed_index_settings
+            }
+        }
         return self.es.indices.put_settings(settings_dict, index=index)
 
     def get_doc(self, index, doc_type, doc_id):
@@ -64,25 +71,17 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
 
 
 class ElasticsearchInterface1(AbstractElasticsearchInterface):
-    pass
+    _disallowed_index_settings = (
+        'max_result_window',
+    )
 
 
 class ElasticsearchInterface2(AbstractElasticsearchInterface):
-    _deprecated_index_settings = (
+    _disallowed_index_settings = (
         'merge.policy.merge_factor',
         'store.throttle.max_bytes_per_sec',
         'store.throttle.type',
     )
-
-    def update_index_settings(self, index, settings_dict):
-        assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()
-        settings_dict = {
-            "index": {
-                key: value for key, value in settings_dict['index'].items()
-                if key not in self._deprecated_index_settings
-            }
-        }
-        super(ElasticsearchInterface2, self).update_index_settings(index, settings_dict)
 
 
 ElasticsearchInterface = {
