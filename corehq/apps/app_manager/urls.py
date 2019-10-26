@@ -150,7 +150,7 @@ urlpatterns = [
     url(r'^view/(?P<app_id>[\w-]+)/', include(app_urls)),
     url(r'^compare/(?P<first_app_id>[\w-]+)..(?P<second_app_id>[\w-]+)',
         FormSummaryDiffView.as_view(), name=FormSummaryDiffView.urlname),
-    url(r'^schema/form/(?P<form_unique_id>[\w-]+)/$',
+    url(r'^schema/(?P<app_id>[\w-]+)/form/(?P<form_unique_id>[\w-]+)/$',
         get_form_data_schema, name='get_form_data_schema'),
     url(r'^new_module/(?P<app_id>[\w-]+)/$', new_module, name='new_module'),
     url(r'^new_app/$', new_app, name='new_app'),

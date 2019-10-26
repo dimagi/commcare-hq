@@ -908,6 +908,10 @@ ES_SETTINGS = None
 PHI_API_KEY = None
 PHI_PASSWORD = None
 
+STATIC_DATA_SOURCE_PROVIDERS = [
+    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+]
+
 SESSION_BYPASS_URLS = [
     r'^/a/{domain}/receiver/',
     r'^/a/{domain}/phone/restore/',
@@ -1894,11 +1898,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ]
-
-STATIC_DATA_SOURCE_PROVIDERS = [
-    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-]
-
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])

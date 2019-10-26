@@ -61,4 +61,6 @@ branches:
   - sr-session-audit  # Sravan Oct 15
   - mk/ignore-all-demo-submissions-redone # MK Oct 22
   - dmr/update-django-security-fix  # Danny Oct 22
+  - bmb/odata-duplicate-labels # Biyeun Oct 24
+  - jls/kill-uses_master_app_form_ids # Jenny Oct 25
 submodules: {}
