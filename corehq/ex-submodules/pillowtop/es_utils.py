@@ -1,9 +1,9 @@
+from corehq.util.es.interface import ElasticsearchInterface
 from dimagi.ext import jsonobject
 from django.conf import settings
 from copy import copy, deepcopy
 from datetime import datetime
 from corehq.util.es.elasticsearch import TransportError
-from pillowtop import get_all_pillow_classes
 from pillowtop.logger import pillow_logging
 
 INDEX_REINDEX_SETTINGS = {
@@ -129,22 +129,18 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
         return json
 
 
-def update_settings(es, index, settings_dict):
-    return es.indices.put_settings(settings_dict, index=index)
-
-
 def set_index_reindex_settings(es, index):
     """
     Set a more optimized setting setup for fast reindexing
     """
-    return update_settings(es, index, INDEX_REINDEX_SETTINGS)
+    return ElasticsearchInterface(es).update_index_settings(index, INDEX_REINDEX_SETTINGS)
 
 
 def set_index_normal_settings(es, index):
     """
     Normal indexing configuration
     """
-    return update_settings(es, index, INDEX_STANDARD_SETTINGS)
+    return ElasticsearchInterface(es).update_index_settings(index, INDEX_STANDARD_SETTINGS)
 
 
 def create_index_and_set_settings_normal(es, index, metadata=None):

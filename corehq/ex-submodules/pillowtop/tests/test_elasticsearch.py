@@ -8,9 +8,10 @@ from corehq.util.es.elasticsearch import ConnectionError
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
-from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
+from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, \
     set_index_reindex_settings, set_index_normal_settings, mapping_exists, initialize_index, \
     initialize_index_and_mapping, assume_alias
+from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.processors.elastic import send_to_elasticsearch
 from .utils import get_doc_count, get_index_mapping, TEST_INDEX_INFO
@@ -21,6 +22,7 @@ class ElasticPillowTest(SimpleTestCase):
     def setUp(self):
         self.index = TEST_INDEX_INFO.index
         self.es = get_es_new()
+        self.es_interface = ElasticsearchInterface(self.es)
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(self.index)
 
@@ -104,10 +106,10 @@ class ElasticPillowTest(SimpleTestCase):
 
     def test_update_settings(self):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
-        update_settings(self.es, self.index, INDEX_REINDEX_SETTINGS)
+        self.es_interface.update_index_settings(self.index, INDEX_REINDEX_SETTINGS)
         index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
         self._compare_es_dicts(INDEX_REINDEX_SETTINGS, index_settings_back, 'index')
-        update_settings(self.es, self.index, INDEX_STANDARD_SETTINGS)
+        self.es_interface.update_index_settings(self.index, INDEX_STANDARD_SETTINGS)
         index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
         self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back, 'index')
 
