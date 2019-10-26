@@ -200,6 +200,8 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
     else:
         es_instance = get_es_instance(es_instance_alias)
 
+    es_interface = ElasticsearchInterface(es_instance)
+
     try:
         es_meta = ES_META[index_name]
     except KeyError:
@@ -209,7 +211,7 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
         else:
             raise
     try:
-        results = es_instance.search(es_meta.index, es_meta.type, body=q)
+        results = es_interface.search(es_meta.index, es_meta.type, body=q)
         report_and_fail_on_shard_failures(results)
         return results
     except ElasticsearchException as e:
@@ -305,7 +307,8 @@ def scan(client, query=None, scroll='5m', **kwargs):
     """
     kwargs['search_type'] = 'scan'
     # initial search
-    initial_resp = client.search(body=query, scroll=scroll, **kwargs)
+    es_interface = ElasticsearchInterface(client)
+    initial_resp = es_interface.search(body=query, scroll=scroll, **kwargs)
 
     def fetch_all(initial_response):
 
@@ -405,11 +408,11 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
         return q
 
     es_index = es_index or 'domains'
-    es = get_es_new()
+    es_interface = ElasticsearchInterface(get_es_new())
     meta = ES_META[es_index]
 
     try:
-        result = es.search(meta.index, meta.type, body=q)
+        result = es_interface.search(meta.index, meta.type, body=q)
         report_and_fail_on_shard_failures(result)
     except ElasticsearchException as e:
         raise ESError(e)
