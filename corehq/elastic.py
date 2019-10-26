@@ -9,6 +9,7 @@ from django.conf import settings
 
 from memoized import memoized
 
+from corehq.util.es.interface import ElasticsearchInterface
 from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
@@ -219,15 +220,10 @@ def mget_query(index_name, ids):
     if not ids:
         return []
 
-    es_instance = get_es_new()
+    es_interface = ElasticsearchInterface(get_es_new())
     es_meta = ES_META[index_name]
     try:
-        return (
-            result['_source'] for result in es_instance.mget(
-                index=es_meta.index, doc_type=es_meta.type, body={'ids': ids}, _source=True
-            )['docs']
-            if result['found']
-        )
+        return es_interface.get_bulk_docs(es_meta.index, es_meta.type, ids)
     except ElasticsearchException as e:
         raise ESError(e)
 
@@ -235,8 +231,7 @@ def mget_query(index_name, ids):
 def iter_es_docs(index_name, ids):
     """Returns a generator which pulls documents from elasticsearch in chunks"""
     for ids_chunk in chunked(ids, 100):
-        for result in mget_query(index_name, ids_chunk):
-            yield result
+        yield from mget_query(index_name, ids_chunk)
 
 
 def iter_es_docs_from_query(query):

@@ -10,16 +10,28 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
     def update_index_settings(self, index, settings_dict):
         return self.es.indices.put_settings(settings_dict, index=index)
 
+    def get_doc(self, index, doc_type, doc_id):
+        doc = self.es.get_source(index, doc_type, doc_id)
+        doc['_id'] = doc_id
+        return doc
+
+    def get_bulk_docs(self, index, doc_type, doc_ids):
+        docs = []
+        results = self.es.mget(
+            index=index, doc_type=doc_type, body={'ids': doc_ids}, _source=True)
+        for doc_result in results['docs']:
+            doc_id = doc_result['_id']
+            if doc_result['found']:
+                doc = doc_result['_source']
+                doc['_id'] = doc_id
+                docs.append(doc)
+        return docs
+
     def create_doc(self, index, doc_type, doc_id, doc):
         # Field [_id] is a metadata field and cannot be added inside a document.
         # Use the index API request parameters.
         doc = {key: value for key, value in doc.items() if key != '_id'}
         self.es.create(index, doc_type, body=doc, id=doc_id)
-
-    def get_doc(self, index, doc_type, doc_id):
-        doc = self.es.get_source(index, doc_type, doc_id)
-        doc['_id'] = doc_id
-        return doc
 
     def update_doc(self, index, doc_type, doc_id, doc, params=None):
         self.es.index(index, doc_type, body=doc, id=doc_id, params=params)
