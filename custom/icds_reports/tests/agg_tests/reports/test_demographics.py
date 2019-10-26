@@ -217,7 +217,7 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adhaar",
-            "all": 1610,
+            "all": 1609,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
