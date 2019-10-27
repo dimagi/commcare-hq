@@ -65,7 +65,7 @@ class TestDemographics(TestCase):
             "all": 1609,
             "format": "percent_and_div",
             "color": "green",
-            "percent": 10.049606069448492,
+            "percent": 10.045841136893584,
             "value": 346,
             "label": AADHAR_SEEDED_BENEFICIARIES,
             "frequency": "month",
