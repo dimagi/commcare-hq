@@ -202,6 +202,17 @@ class TestImmunizationCoverage(TestCase):
         self.assertEqual(data['rightLegend']['average'], 14.612676056338028)
 
     def test_chart_data(self):
+        print(
+            get_immunization_coverage_data_chart(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'aggregation_level': 1
+                },
+                loc_level='state'
+            )
+        )
+        assert False
         self.assertDictEqual(
             get_immunization_coverage_data_chart(
                 'icds-cas',
