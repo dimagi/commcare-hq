@@ -134,27 +134,27 @@ class TestEnrolledChildren(TestCase):
                             {
                                 "y": 5,
                                 "x": "0-1 month",
-                                "all": 1288
+                                "all": 1287
                             },
                             {
                                 "y": 45,
                                 "x": "1-6 months",
-                                "all": 1288
+                                "all": 1287
                             },
                             {
                                 "y": 51,
                                 "x": "6-12 months",
-                                "all": 1288
+                                "all": 1287
                             },
                             {
                                 "y": 213,
                                 "x": "1-3 years",
-                                "all": 1288
+                                "all": 1287
                             },
                             {
                                 "y": 974,
                                 "x": "3-6 years",
-                                "all": 1288
+                                "all": 1287
                             }
                         ],
                         "key": "Children (0-6 years) who are enrolled"

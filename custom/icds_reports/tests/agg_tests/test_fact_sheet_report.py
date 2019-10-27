@@ -1142,13 +1142,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][8],
             {
                 'average': {
-                    'html': 1288,
-                    'sort_key': 1288
+                    'html': 1287,
+                    'sort_key': 1287
                 },
                 'data': [
                     {'html': 'Total children (0-6 years)'},
                     {'html': 1262, 'sort_key': 1262},
-                    {'html': 1288, 'sort_key': 1288},
+                    {'html': 1287, 'sort_key': 1287},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
@@ -1162,13 +1162,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][9],
             {
                 'average': {
-                    'html': 1288,
-                    'sort_key': 1288
+                    'html': 1287,
+                    'sort_key': 1287
                 },
                 'data': [
                     {'html': 'Total chldren (0-6 years) enrolled for Anganwadi Services'},
                     {'html': 1262, 'sort_key': 1262},
-                    {'html': 1288, 'sort_key': 1288},
+                    {'html': 1287, 'sort_key': 1287},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
