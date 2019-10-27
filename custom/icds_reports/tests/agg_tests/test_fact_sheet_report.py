@@ -351,14 +351,14 @@ class TestFactSheetReportInterventions(TestCase):
                 'rows_config': [
                     {
                         'average': {
-                            'html': 10.783487784330244,
-                            'sort_key': 10.783487784330244
+                            'html': 10.79258010118044,
+                            'sort_key': 10.79258010118044
                         },
                         'data': [
                             {'html': 'Children 1 year+ who have recieved complete immunization'
                                      ' required by age 1.'},
                             {'html': 10.517241379310345, 'sort_key': 10.517241379310345},
-                            {'html': 10.783487784330244, 'sort_key': 10.783487784330244},
+                            {'html': 10.79258010118044, 'sort_key': 10.79258010118044},
                             {'html': 0}
                         ],
                         'data_source': 'AggChildHealthMonthlyDataSource',

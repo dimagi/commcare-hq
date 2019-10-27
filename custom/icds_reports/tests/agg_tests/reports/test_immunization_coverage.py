@@ -90,7 +90,7 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], 10.783487784330244)
+        self.assertEqual(data['rightLegend']['average'], 10.79258010118044)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_immunization_coverage_data_map(
