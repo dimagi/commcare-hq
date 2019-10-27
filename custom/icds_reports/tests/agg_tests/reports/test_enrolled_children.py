@@ -115,6 +115,14 @@ class TestEnrolledChildren(TestCase):
         )
 
     def test_chart_data(self):
+        print('icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'aggregation_level': 1
+                },
+                loc_level='state'
+            )
+        assert False
         self.assertDictEqual(
             get_enrolled_children_data_chart(
                 'icds-cas',
