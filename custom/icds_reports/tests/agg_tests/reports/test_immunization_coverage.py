@@ -202,17 +202,6 @@ class TestImmunizationCoverage(TestCase):
         self.assertEqual(data['rightLegend']['average'], 14.612676056338028)
 
     def test_chart_data(self):
-        print(
-            get_immunization_coverage_data_chart(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            )
-        )
-        assert False
         self.assertDictEqual(
             get_immunization_coverage_data_chart(
                 'icds-cas',
@@ -233,7 +222,7 @@ class TestImmunizationCoverage(TestCase):
                 ],
                 "top_five": [
                     {'loc_name': 'st1', 'percent': 14.612676056338028},
-                    {'loc_name': 'st2', 'percent': 7.281553398058253},
+                    {'loc_name': 'st2', 'percent': 7.293354943273906},
                     {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
@@ -257,15 +246,15 @@ class TestImmunizationCoverage(TestCase):
                                 "in_month": 0
                             },
                             {
-                                "y": 0.10517241379310345,
+                                "y": 0.10526315789473684,
                                 "x": 1491004800000,
-                                "all": 1160,
+                                "all": 1159,
                                 "in_month": 122
                             },
                             {
-                                "y": 0.10783487784330244,
+                                "y": 0.10792580101180438,
                                 "x": 1493596800000,
-                                "all": 1187,
+                                "all": 1186,
                                 "in_month": 128
                             }
                         ],
@@ -274,7 +263,7 @@ class TestImmunizationCoverage(TestCase):
                 ],
                 "all_locations": [
                     {'loc_name': 'st1', 'percent': 14.612676056338028},
-                    {'loc_name': 'st2', 'percent': 7.281553398058253},
+                    {'loc_name': 'st2', 'percent': 7.293354943273906},
                     {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
