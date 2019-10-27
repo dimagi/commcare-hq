@@ -48,6 +48,8 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='state'
         )
+        print(data['data'])
+        assert False
         self.assertDictEqual(
             data['data'],
             {
