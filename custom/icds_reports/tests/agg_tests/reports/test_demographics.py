@@ -243,11 +243,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/enrolled_children",
-            "all": 1288,
+            "all": 1287,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0,
-            "value": 1288,
+            "value": 1287,
             "label": CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES,
             "frequency": "day",
             "help_text": percent_children_enrolled_help_text()
