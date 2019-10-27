@@ -1262,13 +1262,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][14],
             {
                 'average': {
-                    'html': 974,
-                    'sort_key': 974
+                    'html': 973,
+                    'sort_key': 973
                 },
                 'data': [
                     {'html': 'Children (3 years - 6 years)  enrolled for Anganwadi Services'},
                     {'html': 923, 'sort_key': 923},
-                    {'html': 974, 'sort_key': 974},
+                    {'html': 973, 'sort_key': 973},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
