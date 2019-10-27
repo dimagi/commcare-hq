@@ -128,7 +128,7 @@ class TestBulkDocOperations(TestCase):
         missing_case_ids = [uuid.uuid4().hex, uuid.uuid4().hex]
         changes = self._changes_from_ids(self.case_ids + missing_case_ids)
 
-        with patch('pillowtop.processors.elastic.bulk', return_value=mock_response):
+        with patch.object(ElasticsearchInterface, 'bulk_ops', return_value=mock_response):
             retry, errors = processor.process_changes_chunk(changes)
         self.assertEqual(
             set(missing_case_ids),
