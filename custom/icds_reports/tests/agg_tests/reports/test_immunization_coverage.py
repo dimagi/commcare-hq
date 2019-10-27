@@ -48,8 +48,6 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='state'
         )
-        print(data['data'])
-        assert False
         self.assertDictEqual(
             data['data'],
             {
@@ -58,7 +56,7 @@ class TestImmunizationCoverage(TestCase):
                 'st6': {'all': 0, 'original_name': ['st6'], 'children': 0, 'fillKey': '0%-20%'},
                 'st7': {'all': 1, 'original_name': ['st7'], 'children': 0, 'fillKey': '0%-20%'},
                 'st1': {'all': 568, 'original_name': ['st1'], 'children': 83, 'fillKey': '0%-20%'},
-                'st2': {'all': 618, 'original_name': ['st2'], 'children': 45, 'fillKey': '0%-20%'},
+                'st2': {'all': 617, 'original_name': ['st2'], 'children': 45, 'fillKey': '0%-20%'},
                 'st3': {'all': 0, 'original_name': ['st3'], 'children': 0, 'fillKey': '0%-20%'}
             }
         )
