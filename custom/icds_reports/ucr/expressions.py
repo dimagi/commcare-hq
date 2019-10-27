@@ -198,7 +198,7 @@ class FormsInDateExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
             return context.get_cache_value(cache_key)
 
         source = True if es_toggle_enabled else ['form.meta.timeEnd', 'xmlns', '_id']
-        forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(xform_ids, source)
+        forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(xform_ids)
         context.set_cache_value(cache_key, forms)
         return forms
 
