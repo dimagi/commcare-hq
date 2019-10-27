@@ -1,14 +1,15 @@
 from casexml.apps.phone.models import SyncLogSQL
-from pillowtop.dao.exceptions import DocumentNotFoundError
-from pillowtop.dao.interface import ReadOnlyDocumentStore
+from pillowtop.dao.django import DjangoDocumentStore
 
 
-class ReadonlySyncLogDocumentStore(ReadOnlyDocumentStore):
+class SyncLogDocumentStore(DjangoDocumentStore):
+    def __init__(self):
 
-    def get_document(self, doc_id):
-        try:
-            sycnlog = SyncLogSQL.objects.get(synclog_id=doc_id)
-        except SyncLogSQL.DoesNotExist as e:
-            raise DocumentNotFoundError(e)
+        def _to_doc(model):
+            return model.doc
 
-        return sycnlog.doc
+        super().__init__(SyncLogSQL, doc_generator_fn=_to_doc)
+
+    def iter_document_ids(self):
+        for doc_id in super().iter_document_ids():
+            yield doc_id.hex
