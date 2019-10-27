@@ -11,17 +11,7 @@ from django.test import TestCase
 class TestEnrolledChildren(TestCase):
 
     def test_map_data(self):
-        print(
-            get_enrolled_children_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            )
-        )
-        assert False
+
         self.assertDictEqual(
             get_enrolled_children_data_map(
                 'icds-cas',
@@ -39,11 +29,11 @@ class TestEnrolledChildren(TestCase):
                         {
                             'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi '
                                          'Services:',
-                            'value': "1,288"
+                            'value': "1,287"
                         },
                         {
                             'indicator': 'Total number of children (0 - 6 years) who are registered: ',
-                            'value': "1,288"
+                            'value': "1,287"
                         },
                         {
                             'indicator': (
@@ -64,7 +54,7 @@ class TestEnrolledChildren(TestCase):
                     'st6': {'all': 0, 'valid': 0, 'original_name': ['st6'], 'fillKey': 'Children'},
                     'st7': {'all': 1, 'valid': 1, 'original_name': ['st7'], 'fillKey': 'Children'},
                     'st1': {'all': 618, 'valid': 618, 'original_name': ['st1'], 'fillKey': 'Children'},
-                    'st2': {'all': 669, 'valid': 669, 'original_name': ['st2'], 'fillKey': 'Children'},
+                    'st2': {'all': 668, 'valid': 668, 'original_name': ['st2'], 'fillKey': 'Children'},
                     'st3': {'all': 0, 'valid': 0, 'original_name': ['st3'], 'fillKey': 'Children'}
                 },
                 "slug": "enrolled_children",
