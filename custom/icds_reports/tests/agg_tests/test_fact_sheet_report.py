@@ -1026,8 +1026,8 @@ class TestFactSheetReportDemographics(TestCase):
                 },
                 'data': [
                     {'html': 'Total number of members enrolled at AWC'},
-                    {'html': 1526, 'sort_key': 1526},
-                    {'html': 1609, 'sort_key': 1610},
+                    {'html': 1525, 'sort_key': 1525},
+                    {'html': 1609, 'sort_key': 1609},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
