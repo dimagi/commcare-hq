@@ -106,7 +106,7 @@ class TestImmunizationCoverage(TestCase):
             [
                 {
                     'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
-                    'value': "1,187"
+                    'value': "1,186"
                 },
                 {
                     'indicator': (
@@ -119,7 +119,7 @@ class TestImmunizationCoverage(TestCase):
                     'indicator': (
                         '% of children who have recieved complete immunizations required by age 1:'
                     ),
-                    'value': '10.78%'
+                    'value': '10.79%'
                 }
             ]
         )
