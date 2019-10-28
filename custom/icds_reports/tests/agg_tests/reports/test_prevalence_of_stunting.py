@@ -103,7 +103,7 @@ class TestPrevalenceOfStunting(TestCase):
                     'total_measured': 25,
                     'original_name': ['st2'],
                     'severe': 9,
-                    'total': 497,
+                    'total': 496,
                     'fillKey': '38%-100%'
                 },
                 'st3': {

@@ -107,10 +107,10 @@ class TestPrevalenceOfSevere(TestCase):
                     'normal': 16,
                     'total_measured': 20,
                     'original_name': ['st2'],
-                    'total_weighed': 379,
+                    'total_weighed': 378,
                     'severe': 0,
                     'moderate': 4,
-                    'total_height_eligible': 497,
+                    'total_height_eligible': 496,
                     'fillKey': '7%-100%'
                 },
                 'st3': {
@@ -801,10 +801,10 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     'normal': 16,
                     'total_measured': 20,
                     'original_name': ['st2'],
-                    'total_weighed': 379,
+                    'total_weighed': 378,
                     'severe': 0,
                     'moderate': 4,
-                    'total_height_eligible': 497,
+                    'total_height_eligible': 496,
                     'fillKey': '7%-100%'
                 },
                 'st3': {
