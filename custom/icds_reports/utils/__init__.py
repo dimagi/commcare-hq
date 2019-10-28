@@ -1479,6 +1479,103 @@ def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_
     return file_hash
 
 
+def get_dashboard_usage_excel_file(excel_data, data_type):
+    export_info = excel_data[1][1]
+    primary_headers = ['', '', '', '', '', '', '', '', '', '', 'Tabular Report Download Frequency']
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Dashboard Usage"
+    bold_font = Font(size=14, color="FFFFFF")
+    cell_pattern_blue = PatternFill("solid", fgColor="4472C4")
+    text_alignment = Alignment(horizontal="center", vertical='top', wrap_text=True)
+    thin_border_no_top = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style=None),
+        bottom=Side(style='thin')
+    )
+
+    thin_border_no_bottom = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style=None)
+
+    )
+
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+
+    )
+
+    # Primary Header
+    main_header = worksheet.row_dimensions[1]
+    main_header.height = 30
+    current_column_location = 1
+    for index, primary_header in enumerate(primary_headers):
+        cell_name = get_column_letter(current_column_location)
+        cell = worksheet['{}1'.format(cell_name)]
+        cell.alignment = text_alignment
+
+        cell.value = primary_header
+        cell.fill = cell_pattern_blue
+        cell.font = bold_font
+        cell.border = thin_border_no_bottom
+        if primary_header == 'Tabular Report Download Frequency':
+            worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
+                                                   get_column_letter(current_column_location + 10)))
+            cell.border = thin_border_no_top
+        current_column_location += 1
+
+    # Secondary Header
+    secondary_header = worksheet.row_dimensions[2]
+    secondary_header.height = 30
+    headers = excel_data[0][1][0]
+    bold_font_black = Font(size=11)
+    for index, header in enumerate(headers):
+        location_column = get_column_letter(index + 1)
+        cell = worksheet['{}2'.format(location_column)]
+        cell.alignment = text_alignment
+        worksheet.column_dimensions[location_column].width = 30
+        cell.value = header
+        cell.fill = cell_pattern_blue
+        cell.font = bold_font
+        cell.border = thin_border_no_top
+
+    # Fill data
+    for row_index, row in enumerate(excel_data[0][1][1:]):
+        for col_index, col_value in enumerate(row):
+            row_num = row_index + 3
+            column_name = get_column_letter(col_index + 1)
+            cell = worksheet['{}{}'.format(column_name, row_num)]
+            cell.value = col_value
+            cell.border = thin_border
+            cell.font = bold_font_black
+
+    # Export info
+    worksheet2 = workbook.create_sheet("Export Info")
+    worksheet2.column_dimensions['A'].width = 14
+    for n, export_info_item in enumerate(export_info, start=1):
+        worksheet2['A{0}'.format(n)].value = export_info_item[0]
+        worksheet2['B{0}'.format(n)].value = export_info_item[1]
+
+    #Export to icds file
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=ONE_DAY)
+    icds_file.save()
+
+    return file_hash
+
+
+
 def get_datatables_ordering_info(request):
     # retrive table ordering provided by datatables plugin upon clicking on column header
     start = int(request.GET.get('start', 0))
