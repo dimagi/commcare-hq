@@ -332,7 +332,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     {
                         "y": 0.7478260869565218,
                         "x": 1491004800000,
-                        "weighed": 3455,
+                        "weighed": 3450,
                         "unweighed": 1655
                     },
                     {
