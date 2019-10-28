@@ -43,22 +43,26 @@ class KeywordTestCase(TouchformsTestCase):
         self.create_survey_keyword("VALIDATION_TEST", self.app.get_id, self.app.modules[0].forms[2].unique_id)
         self.create_structured_sms_keyword(
             "REG_SS",
+            self.app.get_id,
             self.app.modules[0].forms[0].unique_id,
             "Thank you for your registration submission.",
         )
         self.create_structured_sms_keyword(
             "MOD_SS",
+            self.app.get_id,
             self.app.modules[0].forms[1].unique_id,
             "Thank you for your modification submission.",
         )
         self.create_structured_sms_keyword(
             "MOD_SS_2",
+            self.app.get_id,
             self.app.modules[0].forms[1].unique_id,
             "Thank you for your modification submission.",
             delimiter=",",
         )
         self.create_structured_sms_keyword(
             "MOD_SS_3",
+            self.app.get_id,
             self.app.modules[0].forms[1].unique_id,
             "Thank you for your modification submission.",
             delimiter=",",
@@ -69,17 +73,20 @@ class KeywordTestCase(TouchformsTestCase):
         )
         self.create_structured_sms_keyword(
             "VALIDATION_TEST_SS_1",
+            self.app.get_id,
             self.app.modules[0].forms[2].unique_id,
             "Thank you for your submission.",
         )
         self.create_structured_sms_keyword(
             "VALIDATION_TEST_SS_2",
+            self.app.get_id,
             self.app.modules[0].forms[2].unique_id,
             "Thank you for your submission.",
             delimiter=",",
         )
         self.create_structured_sms_keyword(
             "VALIDATION_TEST_SS_3",
+            self.app.get_id,
             self.app.modules[0].forms[2].unique_id,
             "Thank you for your submission.",
             delimiter=",",
@@ -96,6 +103,7 @@ class KeywordTestCase(TouchformsTestCase):
         )
         self.create_structured_sms_keyword(
             "VALIDATION_TEST_SS_4",
+            self.app.get_id,
             self.app.modules[0].forms[2].unique_id,
             "Thank you for your submission.",
             delimiter=",",
@@ -776,6 +784,7 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         self.app = self.load_app("app_source.json")
         self.create_structured_sms_keyword(
             "REG",
+            self.app.get_id,
             self.app.modules[0].forms[0].unique_id,
             "Thank you for your registration submission.",
         )

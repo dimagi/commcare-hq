@@ -218,7 +218,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             form_unique_id=form_unique_id,
         )
 
-    def create_structured_sms_keyword(self, keyword, form_unique_id, reply_sms,
+    def create_structured_sms_keyword(self, keyword, app_id, form_unique_id, reply_sms,
             delimiter=None, named_args=None, named_args_separator=None,
             override_open_sessions=True, initiator_filter=None):
 
@@ -241,6 +241,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         k.keywordaction_set.create(
             recipient=KeywordAction.RECIPIENT_SENDER,
             action=KeywordAction.ACTION_STRUCTURED_SMS,
+            app_id=app_id,
             form_unique_id=form_unique_id,
             use_named_args=(named_args is not None),
             named_args=(named_args or {}),
