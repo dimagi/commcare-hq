@@ -2,7 +2,6 @@ from django.db import migrations
 import partial_index
 
 from corehq.sql_db.migrations import partitioned
-
 CREATE_INDEX_SQL = """
     CREATE INDEX CONCURRENTLY IF NOT EXISTS "blobs_blobm_type_co_23e226_partial"
     ON "blobs_blobmeta" ("type_code", "created_on")
