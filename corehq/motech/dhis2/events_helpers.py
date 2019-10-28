@@ -7,6 +7,7 @@ from corehq.motech.value_source import (
 
 def send_dhis2_event(request, form_config, payload):
     event = get_event(request.domain_name, form_config, payload)
+    event = event_schema.validate(event)
     return request.post('/api/%s/events' % DHIS2_API_VERSION, json=event)
 
 
