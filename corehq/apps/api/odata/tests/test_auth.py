@@ -35,7 +35,7 @@ class TestOdataAuth(TestCase, CaseOdataTestMixin):
         cls._teardown_accounting()
         super(TestOdataAuth, cls).tearDownClass()
 
-    def test_sucess(self):
+    def test_success(self):
         response = self._execute_query(self._get_correct_credentials())
         self.assertEqual(response.status_code, 200)
 
