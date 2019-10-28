@@ -17,7 +17,7 @@ def _get_data_for_daily_indicators(filters):
 
 @icds_quickcache([], timeout=30 * 60)
 def get_daily_indicators():
-    today_date = date(2017, 5, 29)#date.today()
+    today_date = date.today()
     filters = {
         'date': today_date
     }
