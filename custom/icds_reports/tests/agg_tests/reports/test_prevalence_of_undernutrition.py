@@ -46,6 +46,8 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
+        print(data['data'])
+        assert False
         self.assertDictEqual(
             data['data'],
             {
@@ -266,7 +268,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 20.58047493403694},
+                {'loc_name': 'st2', 'percent': 20.37037037037037},
                 {'loc_name': 'st1', 'percent': 22.71293375394322}
             ]
         )
@@ -448,7 +450,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 20.58047493403694},
+                {'loc_name': 'st2', 'percent': 20.37037037037037},
                 {'loc_name': 'st1', 'percent': 22.71293375394322}
             ]
         )
