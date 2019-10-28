@@ -89,7 +89,6 @@ from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.app_manager.models import (
     Application,
     AppReleaseByLocation,
-    FormBase,
     LatestEnabledBuildProfiles,
     RemoteApp,
 )
@@ -412,17 +411,17 @@ class SnapshotSettingsForm(forms.Form):
 
         sr = cleaned_data["share_reminders"]
         if sr:  # check that the forms referenced by the events in each reminders exist in the project
-            referenced_forms = AutomaticUpdateRule.get_referenced_form_unique_ids_from_sms_surveys(
-                self.dom.name)
-            if referenced_forms:
-                apps = [Application.get(app_id) for app_id in app_ids]
-                app_forms = [f.unique_id for forms in [app.get_forms() for app in apps] for f in forms]
-                nonexistent_forms = [f for f in referenced_forms if f not in app_forms]
-                nonexistent_forms = [FormBase.get_form(f) for f in nonexistent_forms]
-                if nonexistent_forms:
-                    forms_str = str([f.default_name() for f in nonexistent_forms]).strip('[]')
+            referenced_pairs = AutomaticUpdateRule.get_referenced_app_form_pairs_from_sms_surveys(self.dom.name)
+            if referenced_pairs:
+                all_apps_by_id = {app.get_id: app for app in get_apps_in_domain(self.dom.name)}
+                referenced_apps = [all_apps_by_id[app_id] for app_id in app_ids]
+                app_forms = [f.unique_id for forms in [app.get_forms() for app in referenced_apps] for f in forms]
+                nonexistent_pairs = [pair for pair in referenced_pairs if pair[1] not in app_forms]
+                if nonexistent_pairs:
+                    nonexistent_forms = [all_apps_by_id[pair[0]].get_form(pair[1]) for pair in nonexistent_pairs]
                     msg = _("Your reminders reference forms that are not being published. Make sure the following "
-                            "forms are being published: %s") % forms_str
+                            "forms are being published: %s") % ", ".join([form.default_name()
+                                                                          for form in nonexistent_forms])
                     self._errors["share_reminders"] = self.error_class([msg])
 
         return cleaned_data
