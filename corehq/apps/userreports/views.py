@@ -916,9 +916,7 @@ def evaluate_expression(request, domain):
         )
     except BadSpecError as e:
         return json_response(
-            {"error": _("Problem with expression: {}.").format(
-                e
-            )},
+            {"error": _("Problem with expression: {}").format(e)},
             status_code=400,
         )
     except Exception as e:

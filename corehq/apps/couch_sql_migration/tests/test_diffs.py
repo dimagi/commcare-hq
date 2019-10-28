@@ -494,6 +494,34 @@ class DiffTestCases(SimpleTestCase):
             FormJsonDiff('diff', ('case_attachments', 'xyz', 'properties'), 'value', 'eulav'),
         ])
 
+    def test_case_name_diff(self):
+        couch_case = {'doc_type': 'CommCareCase', 'name': 'shorter'}
+        sql_case = {'doc_type': 'CommCareCase', 'name': 'short'}
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [FormJsonDiff('diff', ('name',), 'shorter', 'short')])
+
+    def test_case_name_null(self):
+        couch_case = {'doc_type': 'CommCareCase', 'name': None}
+        sql_case = {'doc_type': 'CommCareCase', 'name': 'thing'}
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [FormJsonDiff('type', ('name',), None, 'thing')])
+
+    def test_case_name_missing(self):
+        couch_case = {'doc_type': 'CommCareCase'}
+        sql_case = {'doc_type': 'CommCareCase', 'name': 'thing'}
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [FormJsonDiff('missing', ('name',), MISSING, 'thing')])
+
+    def test_case_name_truncated(self):
+        couch_case = {'doc_type': 'CommCareCase', 'name': 'ha' * 128}
+        sql_case = {'doc_type': 'CommCareCase', 'name': 'ha' * 126 + 'hah'}
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
+
     def test_form_with_couch_attachments(self):
         couch_form = {
             "doc_type": "XFormInstance",

@@ -71,6 +71,18 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.months = vm.monthsCopy;
     }
 
+    //if report is requested in first three days of the month, then we will remove the current month in filter
+    vm.excludeCurrentMonthIfInitialThreeDays = function () {
+        var latest = new Date();
+        if (latest.getDate() <= 3 && vm.months[vm.months.length - 1].id === latest.getMonth() + 1 &&
+            vm.selectedYear === latest.getFullYear()) {
+            vm.months.pop();
+            vm.selectedMonth = vm.months[vm.months.length - 1].id;
+        }
+    };
+
+    vm.excludeCurrentMonthIfInitialThreeDays();
+
     for (var year=2017; year <= new Date().getFullYear(); year++ ) {
         vm.yearsCopy.push({
             name: year,
@@ -126,9 +138,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 7, name: 'ICDS-CAS Monthly Register'},
         {id: 8, name: 'AWW Performance Report'},
         {id: 9, name: 'LS Performance Report'},
-        {id: 10, name: 'Take Home Ration (THR)'}
+        {id: 10, name: 'Take Home Ration (THR)'},
     ];
 
+    if (vm.haveAccessToFeatures) {
+        vm.indicators.push({id: 11, name: 'Dashboard usage'});
+    }
 
     var ALL_OPTION = {
         name: 'All',
@@ -354,9 +369,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             vm.years = _.filter(vm.yearsCopy, function (y) {
                 return y.id >= 2018;
             });
-            vm.months = _.filter(vm.monthsCopy, function (month) {
-                return month.id < latest.getMonth() + 1;
-            });
             vm.setAvailableAndSelectedMonthForAWWPerformanceReport();
             return;
         }
@@ -397,12 +409,15 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         } else {
             vm.months = vm.monthsCopy;
         }
+        vm.excludeCurrentMonthIfInitialThreeDays();
     };
 
     //if selected year is 2018 make only months from october selectable as the report is only available from october 2018
     vm.setAvailableAndSelectedMonthForAWWPerformanceReport = function () {
         var today = new Date();
         if (vm.selectedYear === today.getFullYear()) {
+            vm.setMonthToPreviousIfAfterThe15thAndTwoMonthsIfBefore15th(today);
+
             if (vm.selectedMonth > vm.months[0].id) {
                 vm.selectedMonth = vm.months[0].id;
             }
@@ -414,8 +429,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
-    vm.setMonthToPreviousIfBeforeThe15th = function (date) {
-        var offset = date.getDate() < 15 ? 1 : 0;
+    vm.setMonthToPreviousIfAfterThe15thAndTwoMonthsIfBefore15th = function (date) {
+        var offset = date.getDate() < 15 ? 2 : 1;
 
         vm.months = _.filter(vm.monthsCopy, function (month) {
             return month.id <= (date.getMonth() + 1) - offset;
@@ -567,6 +582,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.selectedIndicator === 10;
     };
 
+    vm.isDashboardUsageSelected = function () {
+        return vm.selectedIndicator === 11;
+    };
+
     vm.isSupervisorOrBelowSelected = function () {
         return vm.selectedLocations[3] && vm.selectedLocations[3] !== ALL_OPTION.location_id;
     };
@@ -581,8 +600,22 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.showViewBy = function () {
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
-            vm.isLadySupervisorSelected());
+            vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected());
     };
+
+
+    vm.showLocationFilter = function () {
+        return !vm.isDashboardUsageSelected();
+    };
+
+    vm.showMonthFilter = function () {
+        return !vm.isDashboardUsageSelected();
+    };
+
+    vm.showYearFilter = function () {
+        return !vm.isDashboardUsageSelected();
+    };
+
 
     vm.isDistrictOrBelowSelected = function() {
         return vm.selectedLocations[1] && vm.selectedLocations[1] !== ALL_OPTION.location_id;

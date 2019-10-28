@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-01 19:31+0000\n"
+"POT-Creation-Date: 2019-10-22 18:35+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2019\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -122,7 +122,7 @@ msgid "There was an error saving."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:33
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:45
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
@@ -556,25 +556,25 @@ msgstr "Écran précédent"
 msgid "Link to other form"
 msgstr "Ouvrir un autre formulaire"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js:58
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js:61
 msgid "This form either no longer exists or has a different case type"
 msgstr ""
 "Soit ce formulaire n'exsite plus soit il a un type de dossier différent"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js:72
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js:90
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js:75
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_workflow.js:93
 msgid "Unrecognized value"
 msgstr "Valeur non reconnue"
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:24
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:26
 msgid "Active"
 msgstr "Actif"
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:24
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:26
 msgid "Inactive"
 msgstr "Inactif "
 
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:33
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:45
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
 #: corehq/apps/sms/static/sms/js/add_gateway.js:11
 msgid "Remove"
@@ -600,11 +600,11 @@ msgstr ""
 "'commcare-user' est un type de dossier réservé. Veuillez changer le type de "
 "dossier"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:163
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:166
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:164
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:167
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -681,10 +681,8 @@ msgid "(Default)"
 msgstr "(Par défaut)"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:51
-#, fuzzy
-#| msgid "Unknown"
 msgid "Unknown App"
-msgstr "Inconnu"
+msgstr "App. inconnue"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:237
 msgid ""
@@ -2519,10 +2517,12 @@ msgstr ""
 msgid "no comment"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/widgets.js:65
-#: corehq/apps/app_manager/static/app_manager/js/widgets.js:74
-msgid "Select profile"
-msgstr ""
+#: corehq/apps/app_manager/static/app_manager/js/widgets.js:88
+#: corehq/apps/translations/static/translations/js/app_translations.js:40
+#, fuzzy
+#| msgid "Select File"
+msgid "Select Profile"
+msgstr "Sélectionner un fichier"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:18
 msgid "Form Data"
@@ -2782,7 +2782,7 @@ msgstr "Soumettre la demande de Facture"
 msgid "Buy Credits"
 msgstr "Acheter des crédits "
 
-#: corehq/apps/domain/static/domain/js/info_basic.js:25
+#: corehq/apps/domain/static/domain/js/info_basic.js:12
 msgid "Select a Timezone..."
 msgstr ""
 
@@ -2977,15 +2977,7 @@ msgstr ""
 msgid "No items were found to update."
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:14
-msgid "Show All References"
-msgstr "Afficher toutes les références"
-
-#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:14
-msgid "Show Only Missing References"
-msgstr ""
-
-#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:59
+#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:72
 msgid ""
 "Error fetching multimedia, please try again or report an issue if the "
 "problem persists."
@@ -3776,31 +3768,31 @@ msgstr "Complet"
 msgid "Unable to save DataSet maps"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:40
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:41
 msgid "Daily"
 msgstr "Chaque jour"
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:41
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:42
 msgid "Weekly"
 msgstr "Chaque semaine"
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:42
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:43
 msgid "Monthly"
 msgstr "Chaque mois"
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:45
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:46
 msgid "Disable logging"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:112
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:114
 msgid "Unable to save OpenMRS Importers"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:117
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:119
 msgid "Importing from OpenMRS will begin shortly."
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:119
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:121
 msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
@@ -3856,3 +3848,6 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
+
+#~ msgid "Show All References"
+#~ msgstr "Afficher toutes les références"

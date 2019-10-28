@@ -3,7 +3,7 @@ import uuid
 
 from django.conf import settings
 from django.test import SimpleTestCase
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
@@ -215,7 +215,7 @@ class TestSendToElasticsearch(SimpleTestCase):
 
     def test_connection_failure(self):
         def _bad_es_getter():
-            from elasticsearch import Elasticsearch
+            from corehq.util.es.elasticsearch import Elasticsearch
             return Elasticsearch(
                 [{
                     'host': settings.ELASTICSEARCH_HOST,

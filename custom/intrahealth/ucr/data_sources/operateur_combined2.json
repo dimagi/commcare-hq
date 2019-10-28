@@ -258,7 +258,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -276,7 +276,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -295,7 +295,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -313,7 +313,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -331,7 +331,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "type": "property_path",
       "property_path": [
@@ -350,7 +350,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -368,7 +368,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -386,7 +386,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -405,7 +405,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -423,7 +423,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -441,7 +441,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -459,7 +459,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -478,7 +478,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -497,7 +497,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -516,7 +516,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -535,13 +535,13 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "type": "expression",
     "transform": {},
     "is_primary_key": false,
     "is_nullable": true,
     "expression": {
-      "datatype": "integer",
+      "datatype": "decimal",
       "type": "property_path",
       "property_path": [
         "actual_consumption"
@@ -553,7 +553,7 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "expression": {
       "datatype": null,
       "type": "property_path",
@@ -571,14 +571,14 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "type": "expression",
     "transform": {},
     "is_primary_key": false,
     "is_nullable": true,
     "expression": {
       "expression": {
-        "datatype": "integer",
+        "datatype": "decimal",
         "type": "property_path",
         "property_path": [
           "form",
@@ -596,14 +596,14 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "type": "expression",
     "transform": {},
     "is_primary_key": false,
     "is_nullable": true,
     "expression": {
       "expression": {
-        "datatype": "integer",
+        "datatype": "decimal",
         "type": "property_path",
         "property_path": [
           "form",
@@ -618,14 +618,14 @@
     "comment": null,
     "create_index": false,
     "display_name": null,
-    "datatype": "integer",
+    "datatype": "decimal",
     "type": "expression",
     "transform": {},
     "is_primary_key": false,
     "is_nullable": true,
     "expression": {
       "expression": {
-        "datatype": "integer",
+        "datatype": "decimal",
         "type": "property_path",
         "property_path": [
           "form",

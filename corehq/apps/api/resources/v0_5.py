@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
+from memoized import memoized_property
 
 from tastypie import fields, http
 from tastypie.authentication import ApiKeyAuthentication
@@ -487,10 +488,22 @@ class GroupResource(v0_4.GroupResource):
             obj = bundle_or_obj.obj
         else:
             obj = bundle_or_obj
-        return reverse('api_dispatch_detail', kwargs=dict(resource_name=self._meta.resource_name,
-                                                          domain=obj.domain,
-                                                          api_name=self._meta.api_name,
-                                                          pk=obj._id))
+        return self._get_resource_uri(obj)
+
+    def _get_resource_uri(self, obj):
+        # This function is called up to 1000 times per request
+        # so build url from a known string template
+        # to avoid calling the expensive `reverse` function each time
+        return self._get_resource_uri_template.format(domain=obj.domain, pk=obj._id)
+
+    @memoized_property
+    def _get_resource_uri_template(self):
+        """Returns the literal string "/a/{domain}/api/v0.5/group/{pk}/" in a DRY way"""
+        return reverse('api_dispatch_detail', kwargs=dict(
+            resource_name=self._meta.resource_name,
+            api_name=self._meta.api_name,
+            domain='__domain__',
+            pk='__pk__')).replace('__pk__', '{pk}').replace('__domain__', '{domain}')
 
     def obj_create(self, bundle, request=None, **kwargs):
         if not Group.by_name(kwargs['domain'], bundle.data.get("name")):

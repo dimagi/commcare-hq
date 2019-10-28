@@ -33,7 +33,7 @@ class TestICDSCASReach(TestCase):
                         },
                         {
                             'all': 22,
-                            'format': 'div',
+                            'format': 'number_and_percent',
                             'color': 'green',
                             'percent': 127.27272727272728,
                             'value': 50,
@@ -115,10 +115,10 @@ class TestICDSCASReach(TestCase):
                         {
                             'redirect': 'icds_cas_reach/awc_daily_status',
                             'all': 22,
-                            'format': 'div',
+                            'format': 'number_and_percent',
                             'color': 'red',
-                            'percent': -100.0,
-                            'value': 0,
+                            'percent': -97.05882352941177,
+                            'value': 1,
                             'label': 'Number of AWCs Open yesterday',
                             'frequency': 'day',
                             'help_text': 'Total Number of Angwanwadi Centers that '
@@ -198,10 +198,10 @@ class TestICDSCASReach(TestCase):
                         {
                             'redirect': 'icds_cas_reach/awc_daily_status',
                             'all': 22,
-                            'format': 'div',
+                            'format': 'number_and_percent',
                             'color': 'red',
-                            'percent': -100.0,
-                            'value': 0,
+                            'percent': -97.05882352941177,
+                            'value': 1,
                             'label': 'Number of AWCs Open yesterday',
                             'frequency': 'day',
                             'help_text': 'Total Number of Angwanwadi Centers that '

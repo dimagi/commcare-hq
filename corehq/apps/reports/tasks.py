@@ -36,6 +36,7 @@ from corehq.elastic import (
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.files import TransientTempfile, safe_filename_header
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 
 from .analytics.esaccessors import (
@@ -46,24 +47,25 @@ from .analytics.esaccessors import (
 logging = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
 
+_calc_props_soft_assert = soft_assert(to='{}@{}'.format('dmore', 'dimagi.com'), exponential_backoff=False)
+
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
-    success = False
     try:
         _update_calculated_properties()
-        success = True
     except Exception:
+        _calc_props_soft_assert(
+            False,
+            "Calculated properties report task was unsuccessful",
+            msg="Sentry will have relevant exception in case of failure",
+        )
         notify_exception(
             None,
             message="update_calculated_properties task has errored",
         )
-    send_mail_async.delay(
-        subject="Calculated properties report task was " + ("successful" if success else "unsuccessful"),
-        message="Sentry will have relevant exception in case of failure",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=["{}@{}.com".format("dmore", "dimagi")]
-    )
+    else:
+        _calc_props_soft_assert(False, "Calculated properties report task was successful")
 
 
 def _update_calculated_properties():

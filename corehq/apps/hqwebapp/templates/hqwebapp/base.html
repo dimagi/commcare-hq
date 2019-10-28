@@ -264,7 +264,7 @@
 
       <!--[if IE]>
         <div id="unsupported-browser"
-             class="alert alert-danger alert-block alert-full">
+             class="alert alert-danger">
           <p>
             <i class="fa fa-warning-sign"></i>
             <strong>
@@ -287,7 +287,7 @@
             <div class="col-sm-12">
               {% if messages %}
                 {% for message in messages %}
-                  <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
+                  <div class="alert alert-margin-top fade in{% if message.tags %} {{ message.tags }}{% endif %}">
                     <a class="close" data-dismiss="alert" href="#">&times;</a>
                     {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
                   </div>

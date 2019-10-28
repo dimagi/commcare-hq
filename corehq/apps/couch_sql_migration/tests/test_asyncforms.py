@@ -37,6 +37,39 @@ class TestAsyncFormProcessor(SimpleTestCase):
         with statedb.pop_resume_state(type(queue).__name__, None) as unprocessed:
             self.assertEqual(unprocessed, [])
 
+    def test_try_to_empty_queues_should_empty_when_full(self):
+        def migrate_form(form, case_ids):
+            print(f"migrating {form}")
+            gevent.sleep()
+            migrated.append(form)
+
+        def add(form, queue):
+            case_ids = {form.form_id - 1, form.form_id}
+            return queue.queues.try_obj(case_ids, form)
+
+        def setup(queue):
+            queue.queues.max_size = 10
+            assert add(form0, queue), form0
+            for form in forms:
+                assert not add(form, queue), form
+            queue.queues.release_lock(form0)
+
+        forms = [Form(n) for n in range(20)]
+        form0 = forms.pop(0)
+        migrated = []
+        statedb = StateDB.init(":memory:")
+        with mod.AsyncFormProcessor(statedb, migrate_form) as queue:
+            setup(queue)
+            assert queue.queues.full, len(queue.queues)
+            assert not migrated, migrated
+            queue._try_to_empty_queues()
+            assert not queue.queues, len(queue.queues)
+            assert queue.queues.processing
+
+        self.assertEqual(migrated, forms)
+        with statedb.pop_resume_state(type(queue).__name__, None) as unprocessed:
+            self.assertEqual(unprocessed, [])
+
     def test_retry_form(self):
         def get_case_ids(form):
             if retrying:

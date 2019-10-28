@@ -17,3 +17,8 @@ class SimpleDomain(BaseSimpleFilter):
     slug = 'domain_name'
     label = ugettext_lazy('Domain')
     help_inline = ugettext_lazy('Optional')
+
+
+class SimpleSearch(BaseSimpleFilter):
+    slug = 'search_string'
+    label = ugettext_lazy('Search')

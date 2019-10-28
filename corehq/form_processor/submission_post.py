@@ -225,7 +225,22 @@ class SubmissionPost(object):
 
         if submitted_form.is_submission_error_log:
             self.formdb.save_new_form(submitted_form)
-            response = self.get_exception_response_and_log(submitted_form, self.path)
+
+            response = None
+            try:
+                xml = self.instance.decode()
+            except UnicodeDecodeError:
+                pass
+            else:
+                if 'log_subreport' in xml:
+                    response = self.get_exception_response_and_log(
+                        'Badly formed device log', submitted_form, self.path
+                    )
+
+            if not response:
+                response = self.get_exception_response_and_log(
+                    'Problem receiving submission', submitted_form, self.path
+                )
             return FormProcessingResult(response, None, [], [], 'submission_error_log')
 
         if submitted_form.xmlns == SYSTEM_ACTION_XMLNS:
@@ -439,7 +454,7 @@ class SubmissionPost(object):
                 response = openrosa_response.get_openarosa_success_response(message=success_message)
             else:
                 error_message = error_message or instance.problem
-                response = self.get_retry_response(error_message, error_nature)
+                response = self.get_v3_error_response(error_message, error_nature)
         else:
             if instance.is_normal:
                 response = openrosa_response.get_openarosa_success_response()
@@ -460,27 +475,32 @@ class SubmissionPost(object):
         ).response()
 
     @staticmethod
-    def get_retry_response(message, nature):
-        """Returns a 422(Unprocessable Entity) response, mobile will retry this submission
+    def get_v3_error_response(message, nature):
+        """Returns a 422(Unprocessable Entity) response
+        - if nature == 'processing_failure' the mobile device will quarantine this form and not retry it
+        - any other value of `nature` will result in the form being marked as a failure and retrying
         """
         return OpenRosaResponse(
             message=message, nature=nature, status=422,
         ).response()
 
     @staticmethod
-    def get_exception_response_and_log(error_instance, path):
-        logging.exception(
-            "Problem receiving submission",
+    def get_exception_response_and_log(msg, error_instance, path):
+        logging.error(
+            msg,
             extra={
                 'submission_path': path,
                 'form_id': error_instance.form_id,
                 'error_message': error_instance.problem
             }
         )
+        # This are generally badly formed XML resulting from file corruption, encryption errors
+        # or other errors on the device which can not be recovered from.
+        # To prevent retries of these errors we submit a 422 response with `processing_failure` nature.
         return OpenRosaResponse(
             message="There was an error processing the form: %s" % error_instance.problem,
-            nature=ResponseNature.SUBMIT_ERROR,
-            status=500,
+            nature=ResponseNature.PROCESSING_FAILURE,
+            status=422,
         ).response()
 
     @tracer.wrap(name='submission.handle_system_action')

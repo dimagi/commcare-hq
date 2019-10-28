@@ -292,7 +292,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 tmp_doc = doc.copy()
                 tmp_doc['doc_type'] = 'XFormInstance'
                 rows = self.get_all_values(tmp_doc)
-                if not rows:
+                if rows:
                     first_row = rows[0]
                     sharded_column_value = [
                         i.value for i in first_row

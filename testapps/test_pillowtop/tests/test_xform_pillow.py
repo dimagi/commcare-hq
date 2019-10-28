@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.test.testcases import SimpleTestCase, TestCase
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es import FormES
 from corehq.elastic import get_es_new

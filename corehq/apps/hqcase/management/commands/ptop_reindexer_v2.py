@@ -17,10 +17,6 @@ from corehq.pillows.case_search import (
 from corehq.pillows.domain import DomainReindexerFactory
 from corehq.pillows.group import GroupReindexerFactory
 from corehq.pillows.groups_to_user import GroupToUserReindexerFactory
-from corehq.pillows.ledger import (
-    LedgerV1ReindexerFactory,
-    LedgerV2ReindexerFactory,
-)
 from corehq.pillows.reportcase import ReportCaseReindexerFactory
 from corehq.pillows.reportxform import ReportFormReindexerFactory
 from corehq.pillows.sms import SmsReindexerFactory
@@ -51,8 +47,6 @@ FACTORIES = [
     SqlFormReindexerFactory,
     CaseSearchReindexerFactory,
     ResumableCaseSearchReindexerFactory,
-    LedgerV2ReindexerFactory,
-    LedgerV1ReindexerFactory,
     SmsReindexerFactory,
     ReportCaseReindexerFactory,
     ReportFormReindexerFactory,

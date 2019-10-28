@@ -40,7 +40,7 @@ from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, \
     GROWTH_MONITORING_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT, \
-    THR_REPORT_EXPORT
+    THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT
 from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -110,7 +110,8 @@ from couchexport.shortcuts import export_response
 from couchexport.export import Format
 from custom.icds_reports.utils.data_accessor import get_inc_indicator_api_data
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.models.views import NICIndicatorsView
+from custom.icds_reports.models.views import NICIndicatorsView, AggAwcDailyView
+from custom.icds_reports.reports.daily_indicators import get_daily_indicators
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -790,9 +791,11 @@ class ExportIndicatorView(View):
             latest_year, latest_month = add_months(today.year, today.month, -month_offset)
             if year > latest_year or month > latest_month and year == latest_year:
                 return HttpResponseBadRequest()
+        if indicator == DASHBOARD_USAGE_EXPORT:
+            config['couch_user'] = self.request.couch_user
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
-                         LS_REPORT_EXPORT, THR_REPORT_EXPORT):
+                         LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
@@ -1813,6 +1816,19 @@ class NICIndicatorAPIView(View):
 class APWebservice(View):
     def get(self, request, *args, **kwargs):
         return JsonResponse({'message': 'Connection Successful'})
+
+
+@method_decorator([login_and_domain_required, toggles.DAILY_INDICATORS.required_decorator()], name='dispatch')
+class DailyIndicators(View):
+    def get(self, request, *args, **kwargs):
+
+        try:
+            filename, export_file = get_daily_indicators(request.domain)
+        except AggAwcDailyView.DoesNotExist:
+            return JsonResponse({'message': 'No data for Yesterday'}, status=500)
+        response = HttpResponse(export_file.read(), content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+        return response
 
 
 @location_safe

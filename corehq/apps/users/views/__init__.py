@@ -100,7 +100,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
-from corehq.elastic import ADD_TO_ES_FILTER, es_query
+from corehq.elastic import es_query
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
 from django_digest.decorators import httpdigest
@@ -590,8 +590,10 @@ def paginate_web_users(request, domain):
     def _query_es(limit, skip, query=None):
         web_user_filter = [
             {"term": {"user.domain_memberships.domain": domain}},
+            {"term": {"doc_type": "WebUser"}},
+            {"term": {"base_doc": "couchuser"}},
+            {"term": {"is_active": True}},
         ]
-        web_user_filter.extend(ADD_TO_ES_FILTER['web_users'])
 
         q = {
             "filter": {"and": web_user_filter},

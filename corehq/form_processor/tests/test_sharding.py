@@ -121,7 +121,6 @@ PARTITION_DATABASE_CONFIG = {
         'p5': [820, 1023]
     },
     'groups': {
-        'main': ['default'],
         'proxy': ['proxy'],
         'form_processing': ['p1', 'p2', 'p3', 'p4', 'p5'],
     }
@@ -154,7 +153,7 @@ class ShardAccessorTests(TestCase):
         N = 1001
         doc_ids = [str(i) for i in range(N)]
         hashes = ShardAccessor.hash_doc_ids_sql_for_testing(doc_ids)
-        self.assertEquals(len(hashes), N)
+        self.assertEqual(len(hashes), N)
         self.assertTrue(all(isinstance(hash_, int) for hash_ in hashes.values()))
 
     def test_get_database_for_docs(self):
@@ -183,7 +182,7 @@ class ShardAccessorTests(TestCase):
         sql_hashes = ShardAccessor.hash_doc_ids_sql_for_testing(doc_ids)
 
         csiphash_hashes = ShardAccessor.hash_doc_ids_python(doc_ids)
-        self.assertEquals(len(csiphash_hashes), N)
+        self.assertEqual(len(csiphash_hashes), N)
         self.assertTrue(all(isinstance(hash_, int) for hash_ in csiphash_hashes.values()))
 
         N_shards = 1024

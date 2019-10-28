@@ -144,6 +144,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
                 ciphertext=b64_aes_encrypt(cleaned_data['password'])
             )
         repeater.format = cleaned_data['format']
+        repeater.notify_addresses_str = cleaned_data['notify_addresses_str']
         repeater.skip_cert_verify = cleaned_data['skip_cert_verify']
         return repeater
 

@@ -1,20 +1,25 @@
 import attr
+from couchdbkit import BadValueError
 
 from couchforms.const import TAG_FORM, TAG_META
-from dimagi.ext.couchdbkit import DictProperty, DocumentSchema, StringProperty
+from dimagi.ext.couchdbkit import (
+    DictProperty,
+    DocumentSchema,
+    Property,
+    StringProperty,
+)
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.motech.const import (
+    COMMCARE_DATA_TYPE_DECIMAL,
+    COMMCARE_DATA_TYPE_INTEGER,
+    COMMCARE_DATA_TYPE_TEXT,
     COMMCARE_DATA_TYPES,
     DATA_TYPE_UNKNOWN,
     DIRECTION_BOTH,
-    # pylint: disable=unused-import,F401
-    # (F401 = flake8 "'%s' imported but unused")
-    # Used in ValueSource.check_direction doctest
     DIRECTION_EXPORT,
     DIRECTION_IMPORT,
-    # pylint: enable=unused-import,F401
     DIRECTIONS,
 )
 from corehq.motech.serializers import serializers
@@ -24,20 +29,25 @@ from corehq.motech.serializers import serializers
 class CaseTriggerInfo:
     domain = attr.ib()
     case_id = attr.ib()
-    type = attr.ib()
-    name = attr.ib()
-    owner_id = attr.ib()
-    modified_by = attr.ib()
-    updates = attr.ib()
-    created = attr.ib()
-    closed = attr.ib()
-    extra_fields = attr.ib()
-    form_question_values = attr.ib()
+    type = attr.ib(default=None)
+    name = attr.ib(default=None)
+    owner_id = attr.ib(default=None)
+    modified_by = attr.ib(default=None)
+    updates = attr.ib(factory=dict)
+    created = attr.ib(default=None)
+    closed = attr.ib(default=None)
+    extra_fields = attr.ib(factory=dict)
+    form_question_values = attr.ib(factory=dict)
 
     def __str__(self):
         if self.name:
             return f'<CaseTriggerInfo {self.case_id} {self.name!r}>'
         return f"<CaseTriggerInfo {self.case_id}>"
+
+
+def not_blank(value):
+    if not str(value):
+        raise BadValueError("Value cannot be blank.")
 
 
 def recurse_subclasses(cls):
@@ -144,7 +154,7 @@ class CaseProperty(ValueSource):
     #       }
     #     }
     #
-    case_property = StringProperty()
+    case_property = StringProperty(required=True, validators=not_blank)
 
     def _get_commcare_value(self, case_trigger_info):
         """
@@ -220,6 +230,68 @@ class ConstantString(ValueSource):
 
     def _get_commcare_value(self, case_trigger_info):
         return self.value
+
+
+class ConstantValue(ConstantString):
+    """
+    ConstantValue provides a ValueSource for constant values.
+
+    ``value`` must be cast as ``value_data_type``.
+
+    ``ConstantValue.deserialize()`` returns the value for import. Use
+    ``commcare_data_type`` to cast the import value.
+
+    ``ConstantValue.get_value(case_trigger_info)`` returns the value for
+    export.
+
+    >>> one = ConstantValue.wrap({
+    ...     "value": 1.0,
+    ...     "value_data_type": COMMCARE_DATA_TYPE_DECIMAL,
+    ...     "commcare_data_type": COMMCARE_DATA_TYPE_INTEGER,
+    ...     "external_data_type": COMMCARE_DATA_TYPE_TEXT,
+    ... })
+    >>> info = CaseTriggerInfo("test-domain", None)
+    >>> one.deserialize("foo")
+    1
+    >>> one.get_value(info)  # Returns '1', not '1.0'. See note below.
+    '1'
+
+    .. NOTE::
+       ``one.get_value(info)`` returns  ``'1'``, not ``'1.0'``, because
+       ``ConstantValue._get_commcare_value`` casts ``value`` as
+       ``commcare_data_type`` first. ``ValueSource.serialize()`` casts
+       it from ``commcare_data_type`` to ``external_data_type``.
+
+       This may seem counter-intuitive, but we do it to preserve the
+       behaviour of ``serialize()`` because it is public and is used
+       outside the class.
+
+    """
+    value = Property()
+    value_data_type = StringProperty(default=COMMCARE_DATA_TYPE_TEXT)
+
+    def __eq__(self, other):
+        return (
+            super().__eq__(other)
+            and self.value_data_type == other.value_data_type
+        )
+
+    def deserialize(self, external_value):
+        """
+        Ignores ``external_value`` and returns ``self.value`` cast from
+        ``self.value_data_type`` to ``self.commcare_data_type``.
+        """
+        serializer = (serializers.get((self.value_data_type, self.commcare_data_type))
+                      or serializers.get((None, self.commcare_data_type)))
+        return serializer(self.value) if serializer else self.value
+
+    def _get_commcare_value(self, case_trigger_info):
+        """
+        Returns ``self.value`` cast as ``self.commcare_data_type``.
+
+        Used by ``self.get_value()``.
+        """
+        return self.deserialize(self.value)
 
 
 class CasePropertyMap(CaseProperty):
