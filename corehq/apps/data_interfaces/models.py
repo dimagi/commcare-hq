@@ -166,17 +166,19 @@ class AutomaticUpdateRule(models.Model):
         return False
 
     @classmethod
-    def get_referenced_form_unique_ids_from_sms_surveys(cls, domain):
+    def get_referenced_app_form_pairs_from_sms_surveys(cls, domain):
         """
         Examines all of the scheduling rules in the given domain and returns
-        all form_unique_ids that are referenced from SMS Surveys.
+        all app + form_unique_id pairs that are referenced from SMS Surveys.
+
+        Returns list of tuples, each (app_id, form_unique_id)
         """
         result = []
         for rule in cls.by_domain(domain, cls.WORKFLOW_SCHEDULING, active_only=False):
             schedule = rule.get_schedule()
             for event in schedule.memoized_events:
                 if isinstance(event.content, SMSSurveyContent):
-                    result.append(event.content.form_unique_id)
+                    result.append((event.content.app_id, event.content.form_unique_id))
 
         return list(set(result))
 
