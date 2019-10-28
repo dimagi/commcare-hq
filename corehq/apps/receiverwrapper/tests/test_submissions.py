@@ -122,35 +122,61 @@ class SubmissionTest(BaseSubmissionTest):
         self.assertEqual(self.couch_user.get_id, form.history[0].user)
 
 
-class DemoModeSubmissionTest(BaseSubmissionTest):
-    """
-        Demo Mode means the request is being sent with param submit_mode=demo
-        The user id in the form may/may not be DEMO_USER_ID
-        The CommCareUser submitting the form may/may not be a demo user
-        In case we are ignoring all demo user form submissions, the form is ignored if submitted by a demo user
-        Else Only forms submitted with user ID as demo user are processed.
-    """
+@patch('corehq.apps.receiverwrapper.views.domain_requires_auth', return_value=True)
+class NoAuthSubmissionTest(BaseSubmissionTest):
     def setUp(self):
-        super(DemoModeSubmissionTest, self).setUp()
-        self.url = self.url + '?submit_mode=demo'
+        super(NoAuthSubmissionTest, self).setUp()
+        self.url = self.url + '?authtype=noauth'
 
-    def test_form_with_demo_user_id_in_demo_mode(self):
+    def test_successful_processing_for_demo_user_form(self, *_):
         response = self._submit('demo_mode_simple_form.xml', url=self.url)
         self.assertTrue('X-CommCareHQ-FormID' in response, 'Demo user ID form not processed in demo mode')
 
-    def test_form_with_non_demo_user_id_in_demo_mode(self):
+    def test_ignore_all_non_demo_user_submissions(self, *_):
+        response = self._submit('simple_form.xml', url=self.url)
+        self.assertEqual(response.status_code, 403)
+
+
+@patch('corehq.apps.receiverwrapper.views.domain_requires_auth', return_value=True)
+class DefaultDemoModeSubmissionTest(BaseSubmissionTest):
+    """
+        Demo Mode means the request is being sent with param submit_mode=demo and authtype as noauth
+        The user id in the form is expected to be DEMO_USER_ID
+        Only forms submitted with user ID as demo_user are processed.
+    """
+    def setUp(self):
+        super(DefaultDemoModeSubmissionTest, self).setUp()
+        self.domain.secure_submissions = True
+        self.domain.save()
+        self.url = self.url + '?submit_mode=demo&authtype=noauth'
+
+    def test_successful_processing_for_demo_user_form(self, *_):
+        response = self._submit('demo_mode_simple_form.xml', url=self.url)
+        self.assertTrue('X-CommCareHQ-FormID' in response, 'Demo user ID form not processed in demo mode')
+
+    def test_ignore_all_non_demo_user_submissions(self, *_):
         response = self._submit('simple_form.xml', url=self.url)
         self.assertFalse('X-CommCareHQ-FormID' in response, 'Non Demo ID form processed in demo mode')
+
+
+@patch('corehq.apps.receiverwrapper.views.domain_requires_auth', return_value=True)
+class PracticeMobileWorkerSubmissionTest(BaseSubmissionTest):
+    """
+    Just like demo mode, the request is sent with param submit_mode=demo and authtype=noauth
+    but the userID in the form is expected to be the user ID of the practice mobile worker
+    """
+    def setUp(self):
+        super(PracticeMobileWorkerSubmissionTest, self).setUp()
+        self.url = self.url + '?submit_mode=demo&authtype=noauth'
+        self.domain.secure_submissions = True
+        self.domain.save()
 
     @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
     @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
     def test_ignore_all_practice_mobile_worker_submissions_in_demo_mode(self, user_stub, *_):
-        user_stub.return_value = self.couch_user
-        response = self._submit('simple_form.xml', url=self.url)
-        # ignores even if not demo user
-        self.assertFalse('X-CommCareHQ-FormID' in response, 'Practice mobile worker form processed in demo mode')
-
+        # ignore submission if from a practice mobile worker and HQ is ignoring all demo user submissions
         self.couch_user.is_demo_user = True
+        user_stub.return_value = self.couch_user
         response = self._submit('simple_form.xml', url=self.url)
         self.assertFalse('X-CommCareHQ-FormID' in response, 'Practice mobile worker form processed in demo mode')
 
