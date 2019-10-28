@@ -127,6 +127,8 @@ class NoAuthSubmissionTest(BaseSubmissionTest):
     def setUp(self):
         super(NoAuthSubmissionTest, self).setUp()
         self.url = self.url + '?authtype=noauth'
+        # skip any authorization
+        self.client = Client()
 
     def test_successful_processing_for_demo_user_form(self, *_):
         response = self._submit('demo_mode_simple_form.xml', url=self.url)
@@ -149,6 +151,8 @@ class DefaultDemoModeSubmissionTest(BaseSubmissionTest):
         self.domain.secure_submissions = True
         self.domain.save()
         self.url = self.url + '?submit_mode=demo&authtype=noauth'
+        # skip any authorization
+        self.client = Client()
 
     def test_successful_processing_for_demo_user_form(self, *_):
         response = self._submit('demo_mode_simple_form.xml', url=self.url)
@@ -170,6 +174,8 @@ class PracticeMobileWorkerSubmissionTest(BaseSubmissionTest):
         self.url = self.url + '?submit_mode=demo&authtype=noauth'
         self.domain.secure_submissions = True
         self.domain.save()
+        # skip any authorization
+        self.client = Client()
 
     @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
     @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
