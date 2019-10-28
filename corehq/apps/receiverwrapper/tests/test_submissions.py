@@ -142,13 +142,17 @@ class DemoModeSubmissionTest(BaseSubmissionTest):
         response = self._submit('simple_form.xml', url=self.url)
         self.assertFalse('X-CommCareHQ-FormID' in response, 'Non Demo ID form processed in demo mode')
 
-    @patch('corehq.apps.users.models.CommCareUser.is_demo_user', return_value=True)
     @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
-    def test_ignore_all_demo_user_submissions_in_demo_mode(self, *_):
-        response = self._submit('demo_mode_simple_form.xml', url=self.url)
-        self.assertFalse('X-CommCareHQ-FormID' in response, 'Demo user ID form processed in non-demo mode')
+    @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
+    def test_ignore_all_practice_mobile_worker_submissions_in_demo_mode(self, user_stub, *_):
+        user_stub.return_value = self.couch_user
         response = self._submit('simple_form.xml', url=self.url)
-        self.assertFalse('X-CommCareHQ-FormID' in response, 'Non demo user ID form processed in demo mode')
+        # ignores even if not demo user
+        self.assertFalse('X-CommCareHQ-FormID' in response, 'Practice mobile worker form processed in demo mode')
+
+        self.couch_user.is_demo_user = True
+        response = self._submit('simple_form.xml', url=self.url)
+        self.assertFalse('X-CommCareHQ-FormID' in response, 'Practice mobile worker form processed in demo mode')
 
 
 class NormalModeSubmissionTest(BaseSubmissionTest):
@@ -164,13 +168,16 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
         response = self._submit('simple_form.xml')
         self.assertTrue('X-CommCareHQ-FormID' in response, 'Non Demo user ID form not processed in normal mode')
 
-    @patch('corehq.apps.users.models.CommCareUser.is_demo_user', return_value=True)
     @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
-    def test_ignore_all_demo_user_submissions_in_normal_mode(self, *_):
-        response = self._submit('demo_mode_simple_form.xml')
-        self.assertFalse('X-CommCareHQ-FormID' in response, 'Demo user ID form processed in non-demo mode')
+    @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
+    def test_ignore_all_practice_mobile_worker_submissions_in_normal_mode(self, user_stub, *_):
+        user_stub.return_value = self.couch_user
         response = self._submit('simple_form.xml')
-        self.assertFalse('X-CommCareHQ-FormID' in response, 'Non demo user ID form processed in demo mode')
+        self.assertTrue('X-CommCareHQ-FormID' in response, 'Normal user form not processed in non-demo mode')
+
+        self.couch_user.is_demo_user = True
+        response = self._submit('simple_form.xml')
+        self.assertFalse('X-CommCareHQ-FormID' in response, 'Practice mobile worker form processed in non-demo mode')
 
 
 @use_sql_backend
