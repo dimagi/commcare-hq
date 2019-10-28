@@ -954,7 +954,7 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
            target="_blank">
             Learn more.
         </a><br />
-        This feature allows {odata_feed_limit} feed configurations. Need more? 
+        This feature allows {odata_feed_limit} feed configurations. Need more?
         Please write to us at <a href="mailto:{sales_email}">{sales_email}</a>.
         """).format(
             odata_feed_limit=self.odata_feed_limit,
