@@ -645,6 +645,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
                 content.set_context(case=case)
             elif survey_keyword_action.action == KeywordAction.ACTION_SMS_SURVEY:
                 content = SMSSurveyContent(
+                    app_id=survey_keyword_action.app_id,
                     form_unique_id=survey_keyword_action.form_unique_id,
                     expire_after=SQLXFormsSession.MAX_SESSION_LENGTH,
                 )
