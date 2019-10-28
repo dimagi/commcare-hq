@@ -949,7 +949,7 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     def lead_text(self):
         return _("""
         Use OData feeds to integrate your CommCare data with Power BI or Tableau.
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Integration+with+PowerBi+and+Tableau"
+        <a href="https://confluence.dimagi.com/pages/viewpage.action?pageId=63013347"
            id="js-odata-track-learn-more"
            target="_blank">
             Learn more.
