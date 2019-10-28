@@ -407,16 +407,16 @@ class TestPrevalenceOfSevere(TestCase):
                     {
                         "y": 0.1111111111111111,
                         "x": 1491004800000,
-                        "total_weighed": 691,
+                        "total_weighed": 690,
                         'total_measured': 9,
-                        'total_height_eligible': 981,
+                        'total_height_eligible': 980,
                     },
                     {
                         "y": 0.2962962962962963,
                         "x": 1493596800000,
-                        "total_weighed": 696,
+                        "total_weighed": 695,
                         'total_measured': 27,
-                        'total_height_eligible': 952,
+                        'total_height_eligible': 951,
                     }
                 ],
                 "key": "% moderately wasted (moderate acute malnutrition)"
@@ -456,16 +456,16 @@ class TestPrevalenceOfSevere(TestCase):
                     {
                         "y": 0.2222222222222222,
                         "x": 1491004800000,
-                        "total_weighed": 691,
+                        "total_weighed": 690,
                         'total_measured': 9,
-                        'total_height_eligible': 981,
+                        'total_height_eligible': 980,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
-                        "total_weighed": 696,
+                        "total_weighed": 695,
                         'total_measured': 27,
-                        'total_height_eligible': 952,
+                        'total_height_eligible': 951,
                     }
                 ],
                 "key": "% severely wasted (severe acute malnutrition)"
