@@ -345,27 +345,6 @@ def get_user_stubs(user_ids):
         .values(*SimplifiedUserInfo.ES_FIELDS))
 
 
-def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):
-
-    date_filter_fn = submitted_filter if by_submission_time else completed_filter
-    query = (
-        FormES()
-        .domain(domain)
-        .filter(date_filter_fn(gte=startdate, lte=enddate))
-        .app(app_ids)
-        .xmlns(xmlnss)
-        .size(5000)
-    )
-
-    if user_ids:
-        query = (query
-            .user_ids_handle_unknown(user_ids)
-            .remove_default_filter('has_user'))
-
-    result = query.run()
-    return PagedResult(total=result.total, hits=result.hits)
-
-
 def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
                                   xmlnss=None, by_submission_time=True, export=False):
 
