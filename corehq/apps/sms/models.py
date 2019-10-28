@@ -1163,6 +1163,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     @classmethod
     def get_content_info_from_keyword(cls, keyword):
         content_type = cls.CONTENT_NONE
+        app_id = None
         form_unique_id = None
         form_name = None
 
@@ -1176,7 +1177,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                 elif action.action == KeywordAction.ACTION_SMS:
                     content_type = cls.CONTENT_SMS
 
-        return (content_type, form_unique_id, form_name)
+        return (content_type, app_id, form_unique_id, form_name)
 
     @classmethod
     def get_source_and_id_from_schedule_instance(cls, schedule_instance):
@@ -1224,15 +1225,15 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
 
         if isinstance(content, (SMSContent, CustomContent)):
-            return cls.CONTENT_SMS, None, None
+            return cls.CONTENT_SMS, None, None, None
         elif isinstance(content, SMSSurveyContent):
             app, module, form, requires_input = content.get_memoized_app_module_form(domain)
             form_name = form.full_path_name if form else None
-            return cls.CONTENT_SMS_SURVEY, content.form_unique_id, form_name
+            return cls.CONTENT_SMS_SURVEY, content.app_id, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
-            return cls.CONTENT_EMAIL, None, None
+            return cls.CONTENT_EMAIL, None, None, None
         else:
-            return cls.CONTENT_NONE, None, None
+            return cls.CONTENT_NONE, None, None, None
 
     @classmethod
     def get_recipient_type_and_id_from_schedule_instance(cls, schedule_instance):
@@ -1267,7 +1268,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     @classmethod
     def create_from_schedule_instance(cls, schedule_instance, content):
         source, source_id = cls.get_source_and_id_from_schedule_instance(schedule_instance)
-        content_type, form_unique_id, form_name = (
+        content_type, app_id, form_unique_id, form_name = (
             cls.get_content_info_from_content_object(schedule_instance.domain, content)
         )
 
@@ -1298,7 +1299,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         """
         recipient_type = self.get_recipient_type(contact)
 
-        content_type, form_unique_id, form_name = (
+        content_type, app_id, form_unique_id, form_name = (
             self.get_content_info_from_content_object(self.domain, content)
         )
 
@@ -1321,8 +1322,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         keyword - the keyword object
         contact - the person who initiated the keyword
         """
-        content_type, form_unique_id, form_name = cls.get_content_info_from_keyword(
-            keyword)
+        content_type, app_id, form_unique_id, form_name = cls.get_content_info_from_keyword(keyword)
         recipient_type = cls.get_recipient_type(contact)
 
         return cls.objects.create(
