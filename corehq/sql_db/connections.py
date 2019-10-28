@@ -16,7 +16,6 @@ from .util import select_db_for_read
 
 DEFAULT_ENGINE_ID = DEFAULT_DB_ALIAS
 UCR_ENGINE_ID = 'ucr'
-ICDS_UCR_NON_DASHBOARD_ENGINE_ID = 'icds-ucr-non-dashboard'
 AAA_DB_ENGINE_ID = 'aaa-data'
 ICDS_UCR_CITUS_ENGINE_ID = 'icds-ucr-citus'
 
