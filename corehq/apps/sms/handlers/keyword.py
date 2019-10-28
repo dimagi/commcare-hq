@@ -491,7 +491,8 @@ def is_form_complete(current_question):
 def keyword_uses_form_that_requires_case(survey_keyword):
     for action in survey_keyword.keywordaction_set.all():
         if action.action in [KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS]:
-            form = Form.get_form(action.form_unique_id)
+            app = get_app(survey_keyword.domain, action.app_id)
+            form = app.get_form(action.form_unique_id)
             if form.requires_case():
                 return True
     return False
