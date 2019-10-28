@@ -66,12 +66,11 @@ class _Importer(object):
         return self.results.to_json()
 
     def import_row(self, row_num, raw_row):
-        search_id = _parse_search_id(self.config, raw_row)
-        fields_to_update = _populate_updated_fields(self.config, raw_row)
-        if not any(fields_to_update.values()):
-            # if the row was blank, just skip it, no errors
+        if row_is_blank(raw_row):
             return
 
+        search_id = _parse_search_id(self.config, raw_row)
+        fields_to_update = _populate_updated_fields(self.config, raw_row)
         row = _CaseImportRow(
             search_id=search_id,
             fields_to_update=fields_to_update,
@@ -152,6 +151,25 @@ class _Importer(object):
                     'error adding inferred export properties in domain '
                     '({}): {}'.format(self.domain, ", ".join(properties))
                 )
+
+
+def row_is_blank(row_dict):
+    return all(is_blank(v) for v in row_dict.values())
+
+
+def is_blank(value):
+    """
+    Returns True if ``value`` is ``None`` or an empty string.
+
+    >>> is_blank("")
+    True
+    >>> is_blank(0)
+    False
+    >>> is_blank([])
+    False
+
+    """
+    return value is None or value == ""
 
 
 class _CaseImportRow(object):
