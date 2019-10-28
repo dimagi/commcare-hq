@@ -32,6 +32,9 @@
         {% endblocktrans %}
       </h1>
     </div>
+    {% if is_paused %}
+      {% include 'hqwebapp/partials/paused_plan_notice.html' %}
+    {% endif %}
     <div id="dashboard-tiles">
       <div class="row" data-bind="foreach: tiles">
         <div class="col-md-3">
