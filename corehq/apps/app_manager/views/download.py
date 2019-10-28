@@ -1,4 +1,5 @@
 import json
+import pytz
 import re
 from collections import OrderedDict, defaultdict
 
@@ -35,6 +36,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.soft_assert import soft_assert
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import set_file_download
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
@@ -293,7 +295,8 @@ def download_file(request, domain, app_id, path):
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)
         if path in ['profile.ccpr', 'media_profile.ccpr'] and request.app.last_released:
-            response['X-CommCareHQ-AppReleasedOn'] = request.app.last_released.isoformat()
+            last_released = ServerTime(request.app.last_released).user_time(pytz.UTC).done().isoformat()
+            response['X-CommCareHQ-AppReleasedOn'] = last_released
         response['Content-Length'] = len(response.content)
         return response
     except (ResourceNotFound, AssertionError):
