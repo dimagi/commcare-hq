@@ -3,7 +3,7 @@ import base64
 from django.test import Client
 from django.urls import reverse
 
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 from tastypie.models import ApiKey
 
 from pillowtop.es_utils import initialize_index_and_mapping

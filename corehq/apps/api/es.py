@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django.utils.decorators import classonlymethod, method_decorator
 from django.views.generic import View
 
-from elasticsearch.exceptions import ElasticsearchException, NotFoundError
+from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
 
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.logging import notify_exception

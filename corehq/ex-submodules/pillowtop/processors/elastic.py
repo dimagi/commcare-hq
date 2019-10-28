@@ -1,13 +1,13 @@
 import math
 import time
 
-from elasticsearch.exceptions import (
+from corehq.util.es.elasticsearch import (
     ConflictError,
     ConnectionError,
     NotFoundError,
     RequestError,
+    bulk,
 )
-from elasticsearch.helpers import bulk
 
 from pillowtop.exceptions import BulkDocExeption, PillowtopIndexingError
 from pillowtop.logger import pillow_logging

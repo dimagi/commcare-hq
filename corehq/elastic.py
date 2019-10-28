@@ -1,20 +1,18 @@
-import json
-from collections import namedtuple
 import copy
+import json
 import logging
 import time
-
+from collections import namedtuple
 from urllib.parse import unquote
 
-from corehq.util.json import CommCareJSONEncoder
-from dimagi.utils.chunked import chunked
 from django.conf import settings
-from elasticsearch import Elasticsearch, SerializationError
-from elasticsearch.exceptions import ElasticsearchException
+
+from memoized import memoized
+
+from dimagi.utils.chunked import chunked
+from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
 from corehq.apps.es.utils import flatten_field_dict
-from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.files import TransientTempfile
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -26,8 +24,14 @@ from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from memoized import memoized
-from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.es.elasticsearch import (
+    Elasticsearch,
+    ElasticsearchException,
+    SerializationError,
+)
+from corehq.util.files import TransientTempfile
+from corehq.util.json import CommCareJSONEncoder
 
 
 class ESJSONSerializer(object):

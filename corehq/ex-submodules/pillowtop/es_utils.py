@@ -2,7 +2,7 @@ from dimagi.ext import jsonobject
 from django.conf import settings
 from copy import copy, deepcopy
 from datetime import datetime
-from elasticsearch import TransportError
+from corehq.util.es.elasticsearch import TransportError
 from pillowtop import get_all_pillow_classes
 from pillowtop.logger import pillow_logging
 

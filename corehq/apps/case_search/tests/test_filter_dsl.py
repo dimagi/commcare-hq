@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase, TestCase
 
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 from eulxml.xpath import parse as parse_xpath
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
