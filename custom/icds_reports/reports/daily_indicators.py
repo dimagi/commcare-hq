@@ -1,10 +1,9 @@
-from custom.icds_reports.models.views import DailyIndicatorsView
-from dateutil.relativedelta import relativedelta
-from io import StringIO
-from custom.icds_reports.utils import apply_exclude
 import csv
-from datetime import date
+from datetime import date, timedelta
+from io import StringIO
+
 from custom.icds_reports.cache import icds_quickcache
+from custom.icds_reports.models.views import DailyIndicatorsView
 
 
 def _get_data_for_daily_indicators(filters):
@@ -17,13 +16,14 @@ def _get_data_for_daily_indicators(filters):
 
 @icds_quickcache([], timeout=30 * 60)
 def get_daily_indicators():
+
     today_date = date.today()
+    filename = 'CAS_Daily_Status_{}.csv'.format(today_date.strftime('%Y%m%d'))
+
     filters = {
-        'date': today_date
+        'date': today_date - timedelta(days=1)
     }
 
-    filename = 'CAS_Daily_Status_{}.csv'.format(filters['date'].strftime('%Y%m%d'))
-    filters['date'] -= relativedelta(days=1)
     daily_yesterday = _get_data_for_daily_indicators(filters)
 
     if not daily_yesterday:
