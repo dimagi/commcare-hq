@@ -177,7 +177,8 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
 
         self.couch_user.is_demo_user = True
         response = self._submit('simple_form.xml')
-        self.assertFalse('X-CommCareHQ-FormID' in response, 'Practice mobile worker form processed in non-demo mode')
+        self.assertFalse('X-CommCareHQ-FormID' in response,
+                         'Practice mobile worker form processed in non-demo mode')
 
 
 @use_sql_backend
