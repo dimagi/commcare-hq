@@ -8,7 +8,7 @@ from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
-from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
+from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
@@ -89,8 +89,9 @@ class DotExpandedDict(dict):
 
 def get_form_list(domain):
     form_list = []
-    for app_id in get_app_ids_in_domain(domain):
-        latest_app = get_app(domain, app_id, latest=True)
+    briefs = get_brief_apps_in_domain(domain)
+    for brief in sorted(briefs, key=lambda b: b.name):
+        latest_app = get_app(domain, brief.id, latest=True)
         if not is_remote_app(latest_app):
             for m in latest_app.get_modules():
                 for f in m.get_forms():
