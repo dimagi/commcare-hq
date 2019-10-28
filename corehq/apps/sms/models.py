@@ -1054,6 +1054,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     # Only used when content_type is CONTENT_SMS_SURVEY or CONTENT_IVR_SURVEY
     # This is redundantly stored here (as well as the subevent) so that it
     # doesn't have to be looked up for reporting.
+    app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126, null=True)
     form_name = models.TextField(null=True)
 
@@ -1465,6 +1466,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     content_type = models.CharField(max_length=3, choices=MessagingEvent.CONTENT_CHOICES, null=False)
 
     # Only used when content_type is CONTENT_SMS_SURVEY or CONTENT_IVR_SURVEY
+    app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126, null=True)
     form_name = models.TextField(null=True)
     xforms_session = models.ForeignKey('smsforms.SQLXFormsSession', null=True, on_delete=models.PROTECT)
@@ -2780,6 +2782,7 @@ class KeywordAction(models.Model):
 
     # Only used for action in [ACTION_SMS_SURVEY, ACTION_STRUCTURED_SMS]
     # The form unique id of the form to use as a survey when processing this action.
+    app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126, null=True)
 
     # Only used for action == ACTION_STRUCTURED_SMS

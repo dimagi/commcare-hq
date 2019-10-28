@@ -161,6 +161,7 @@ class CaseReminderEvent(DocumentSchema):
     subject = DictProperty()
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
+    app_id = StringProperty()
     form_unique_id = StringProperty()
 
 
@@ -317,6 +318,7 @@ class SurveyKeywordAction(DocumentSchema):
     message_content = StringProperty()
 
     # Only used for action in [METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS]
+    app_id = StringProperty()
     form_unique_id = StringProperty()
 
     # Only used for action == METHOD_STRUCTURED_SMS
@@ -336,6 +338,7 @@ class SurveyKeyword(Document):
 
     # Properties needed for migration and then can be removed
     form_type = StringProperty(choices=FORM_TYPE_CHOICES, default=FORM_TYPE_ONE_BY_ONE)
+    app_id = StringProperty()
     form_unique_id = StringProperty()
     use_named_args = BooleanProperty()
     named_args = DictProperty()
