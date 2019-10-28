@@ -354,6 +354,8 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
+        print(data['chart_data'][1])
+        assert False
         self.assertDictEqual(
             data['chart_data'][1],
             {
