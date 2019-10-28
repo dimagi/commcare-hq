@@ -51,11 +51,6 @@ KEYWORD_RECIPIENT_CHOICES = (
 )
 
 
-def form_choices(domain):
-    available_forms = get_form_list(domain)
-    return [(form['code'], form['name']) for form in available_forms]
-
-
 def validate_time(value):
     if isinstance(value, time):
         return value
@@ -443,7 +438,8 @@ class KeywordForm(Form):
     @property
     @memoized
     def form_choices(self):
-        return form_choices(self.domain)
+        available_forms = get_form_list(self.domain)
+        return [(form['code'], form['name']) for form in available_forms]
 
     @property
     def current_values(self):

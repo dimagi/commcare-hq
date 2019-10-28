@@ -11,7 +11,6 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reminders.forms import NO_RESPONSE, KeywordForm
-from corehq.apps.reminders.util import get_form_list
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.sms.views import BaseMessagingSectionView
 
@@ -48,7 +47,6 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
     def page_context(self):
         return {
             'form': self.keyword_form,
-            'form_list': get_form_list(self.domain),
         }
 
     @property
