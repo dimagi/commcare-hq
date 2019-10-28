@@ -198,7 +198,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             message_content=reply_sms,
         )
 
-    def create_survey_keyword(self, keyword, form_unique_id, delimiter=None,
+    def create_survey_keyword(self, keyword, app_id, form_unique_id, delimiter=None,
             override_open_sessions=True, initiator_filter=None):
 
         k = Keyword(
@@ -214,6 +214,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         k.keywordaction_set.create(
             recipient=KeywordAction.RECIPIENT_SENDER,
             action=KeywordAction.ACTION_SMS_SURVEY,
+            app_id=app_id,
             form_unique_id=form_unique_id,
         )
 
