@@ -1,13 +1,15 @@
-from custom.icds_reports.models import AggAwcDailyView
+from custom.icds_reports.models.views import DailyIndicatorsView
 from dateutil.relativedelta import relativedelta
 from io import StringIO
 from custom.icds_reports.utils import apply_exclude
 import csv
 from datetime import date
+from custom.icds_reports.cache import icds_quickcache
 
 
+@icds_quickcache(['filters', 'domain', 'show_test'], timeout=30 * 60)
 def _get_data_for_daily_indicators(filters, domain, show_test=False):
-    queryset = AggAwcDailyView.objects.filter(
+    queryset = DailyIndicatorsView.objects.filter(
         **filters
     ).values('state_name', 'num_launched_awcs', 'daily_attendance_open',
              'total_eligible_pse', 'total_attended_pse')
@@ -28,7 +30,7 @@ def get_daily_indicators(domain):
     daily_yesterday = _get_data_for_daily_indicators(filters, domain)
 
     if not daily_yesterday:
-        raise AggAwcDailyView.DoesNotExist()
+        raise DailyIndicatorsView.DoesNotExist()
 
     columns = ['State', 'Total Anganwadis having ICDS CAS', 'Number of  anganwadis open',
                'Percentage of anganwadis open',
