@@ -159,10 +159,10 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '952'},
+                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '951'},
                 {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
                  'value': '32'},
-                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '920'},
+                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '919'},
                 {'indicator': '% children (0 - 5 years) with severely stunted growth:', 'value': '34.38%'},
                 {'indicator': '% children (0 - 5 years) with moderate stunted growth:', 'value': '25.00%'},
                 {'indicator': '% children (0 - 5 years) with normal stunted growth:', 'value': '40.62%'}
