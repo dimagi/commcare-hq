@@ -162,6 +162,7 @@ class SMSSurveyContent(Content):
         See Content.create_copy() for docstring
         """
         return SMSSurveyContent(
+            app_id=None,
             form_unique_id=None,
             expire_after=self.expire_after,
             reminder_intervals=deepcopy(self.reminder_intervals),
