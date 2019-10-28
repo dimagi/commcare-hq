@@ -32,5 +32,3 @@ Common issues
 
 + On Windows, if Celery gives this error on startup: `TypeError: 'LazySettings' object is not iterable` apply the
   changes decribed in this bug report comment: https://github.com/celery/django-celery/issues/228#issuecomment-13562642
-
-+ On Amazon EC2's latest Ubuntu Server 14.04 Edition with default source list, `install.sh` may not install elasticsearch due to dependency issues. Use instructions provided in `https://gist.github.com/wingdspur/2026107` to install
