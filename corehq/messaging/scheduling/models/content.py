@@ -2,8 +2,8 @@ import jsonfield as old_jsonfield
 from contextlib import contextmanager
 from copy import deepcopy
 from corehq.apps.accounting.utils import domain_is_on_trial
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import XFormIdNotUnique
-from corehq.apps.app_manager.models import Form
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
@@ -173,8 +173,8 @@ class SMSSurveyContent(Content):
     @memoized
     def get_memoized_app_module_form(self, domain):
         try:
-            form = Form.get_form(self.form_unique_id)
-            app = form.get_app()
+            app = get_app(domain, self.app_id)
+            form = app.get_form(self.form_unique_id)
             module = form.get_module()
         except (ResourceNotFound, XFormIdNotUnique):
             return None, None, None, None
