@@ -32,5 +32,6 @@ CREATE VIEW daily_indicators AS
         ("awc_location"."state_id" = "agg_child"."state_id") AND
         (date_trunc('MONTH',("agg_awc"."date")) = "agg_child"."month")
     )
-    WHERE "awc_location"."aggregation_level"=1
-
+    WHERE
+        "awc_location"."aggregation_level"=1 AND
+        "awc_location"."state_is_test"<>1;
