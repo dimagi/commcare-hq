@@ -34,6 +34,7 @@ NOSE_ARGS = [
 NOSE_PLUGINS = [
     'corehq.tests.nose.HqTestFinderPlugin',
     'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
+    'corehq.tests.noseplugins.elasticsearch.ElasticsearchPlugin',
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
     'corehq.tests.noseplugins.cmdline_params.CmdLineParametersPlugin',
     'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
