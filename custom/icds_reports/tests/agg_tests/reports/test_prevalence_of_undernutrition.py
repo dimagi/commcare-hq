@@ -310,6 +310,8 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
+        print(data['chart_data'][0])
+        assert False
         self.assertDictEqual(
             data['chart_data'][0],
             {
@@ -354,8 +356,6 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        print(data['chart_data'][1])
-        assert False
         self.assertDictEqual(
             data['chart_data'][1],
             {
@@ -376,15 +376,15 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "unweighed": 0
                     },
                     {
-                        "y": 0.23154848046309695,
+                        "y": 0.23043478260869565,
                         "x": 1491004800000,
-                        "weighed": 3455,
+                        "weighed": 3450,
                         "unweighed": 1655
                     },
                     {
-                        "y": 0.1867816091954023,
+                        "y": 0.1856115107913669,
                         "x": 1493596800000,
-                        "weighed": 3480,
+                        "weighed": 3475,
                         "unweighed": 1480
                     }
                 ],
@@ -400,6 +400,8 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
+        print(data['chart_data'][2])
+        assert False
         self.assertDictEqual(
             data['chart_data'][2],
             {
