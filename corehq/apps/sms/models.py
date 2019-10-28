@@ -16,7 +16,6 @@ from dimagi.ext.couchdbkit import Document, StringProperty
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import Form
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (
@@ -1153,9 +1152,10 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         return self.messagingsubevent_set.all()
 
     @classmethod
-    def get_form_name_or_none(cls, form_unique_id):
+    def get_form_name_or_none(cls, domain, app_id, form_unique_id):
         try:
-            form = Form.get_form(form_unique_id)
+            app = get_app(domain, app_id)
+            form = app.get_form(form_unique_id)
             return form.full_path_name
         except:
             return None
@@ -1170,8 +1170,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             if action.recipient == KeywordAction.RECIPIENT_SENDER:
                 if action.action in (KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS):
                     content_type = cls.CONTENT_SMS_SURVEY
+                    app_id = action.app_id
                     form_unique_id = action.form_unique_id
-                    form_name = cls.get_form_name_or_none(action.form_unique_id)
+                    form_name = cls.get_form_name_or_none(keyword.domain, action.app_id, action.form_unique_id)
                 elif action.action == KeywordAction.ACTION_SMS:
                     content_type = cls.CONTENT_SMS
 
