@@ -2822,8 +2822,11 @@ class KeywordAction(models.Model):
         if self.action == self.ACTION_SMS and not self.message_content:
             raise self.InvalidModelStateException("Expected a value for message_content")
 
-        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS] and not self.form_unique_id:
-            raise self.InvalidModelStateException("Expected a value for form_unique_id")
+        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS]:
+            if not self.app_id:
+                raise self.InvalidModelStateException("Expected a value for app_id")
+            if not self.form_unique_id:
+                raise self.InvalidModelStateException("Expected a value for form_unique_id")
 
         super(KeywordAction, self).save(*args, **kwargs)
 
