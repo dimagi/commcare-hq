@@ -14,7 +14,7 @@ from pillowtop.tests.utils import TEST_INDEX_INFO
 from pillowtop.utils import bulk_fetch_changes_docs, get_errors_with_ids
 
 from corehq.elastic import get_es_new
-from corehq.form_processor.document_stores import ReadonlyCaseDocumentStore
+from corehq.form_processor.document_stores import CaseDocumentStore
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -82,7 +82,7 @@ class TestBulkDocOperations(TestCase):
             Change(
                 id=case_id,
                 sequence_id=None,
-                document_store=ReadonlyCaseDocumentStore('domain'),
+                document_store=CaseDocumentStore('domain'),
                 metadata=ChangeMeta(
                     document_id=case_id, domain='domain', data_source_type='sql', data_source_name='case-sql'
                 )
