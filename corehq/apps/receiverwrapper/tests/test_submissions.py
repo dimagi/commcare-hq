@@ -172,8 +172,6 @@ class PracticeMobileWorkerSubmissionTest(BaseSubmissionTest):
     def setUp(self):
         super(PracticeMobileWorkerSubmissionTest, self).setUp()
         self.url = self.url + '?submit_mode=demo&authtype=noauth'
-        self.domain.secure_submissions = True
-        self.domain.save()
         # skip any authorization
         self.client = Client()
 
