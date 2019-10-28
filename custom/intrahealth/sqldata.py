@@ -5667,7 +5667,7 @@ class RecapPassageOneData(IntraHealthSqlData):
         for row in rows:
             pps_name = row['pps_name']
             if valid_products and \
-                row['product_id'] not in valid_products:
+                    row['product_id'] not in valid_products:
                 continue
 
             data['Total Facture'] += self.get_value(row['amount_billed'])

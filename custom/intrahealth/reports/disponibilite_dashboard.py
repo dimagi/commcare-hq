@@ -269,7 +269,7 @@ class DisponibiliteReport(CustomProjectReport, DatespanMixin, ProjectReportParam
 
     @property
     def charts(self):
-        x_axis = 'Product' # if self.selected_location_type != 'PPS' else 'Produits disponibles'
+        x_axis = 'Product'
         chart = PNAMultiBarChart(None, Axis(x_axis), Axis('Percent', format='.2f'))
         chart.height = 550
         chart.marginBottom = 150
