@@ -147,6 +147,7 @@ class EmailContent(Content):
 
 
 class SMSSurveyContent(Content):
+    app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126)
 
     # See corehq.apps.smsforms.models.SQLXFormsSession for an
@@ -355,6 +356,7 @@ class IVRSurveyContent(Content):
     """
 
     # The unique id of the form that will be used as the IVR Survey
+    app_id = models.CharField(max_length=126, null=True)
     form_unique_id = models.CharField(max_length=126)
 
     # If empty list, this is ignored. Otherwise, this is a list of intervals representing
