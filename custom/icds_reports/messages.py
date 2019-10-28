@@ -176,3 +176,17 @@ def lady_supervisor_number_of_vhnds_observed_help_text():
     return _(
         'Number of VHSND observed: Number of VHSND observed by LS in the current month'
     )
+
+
+def awcs_reported_infantometer_text():
+    return _(
+        'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
+        'AWCs that reported having an Infantometer'
+    )
+
+
+def awcs_reported_stadiometer_text():
+    return _(
+        'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
+        'AWCs that reported having an Stadiometer'
+    )
