@@ -177,8 +177,11 @@ def _get_sql_form_data_for_db(db, run_config):
 
 
 def _get_es_modified_dates_for_forms(domain, form_ids):
-    results = (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
+    results = (
+        FormES(es_instance_alias=ES_EXPORT_INSTANCE)
+        .remove_default_filters()
         .domain(domain)
         .form_ids(form_ids)
-        .values_list('_id', 'received_on'))
+        .values_list('_id', 'received_on')
+    )
     return dict(results)
