@@ -29,6 +29,9 @@ def get_combined_id(app_id, form_unique_id):
     if app_id is None and form_unique_id is None:
         return None
 
+    app_id = app_id or ''
+    form_unique_id = form_unique_id or ''
+
     if '|' in app_id:
         raise ValueError("Unexpected token '|' in app_id '%s'" % app_id)
 
