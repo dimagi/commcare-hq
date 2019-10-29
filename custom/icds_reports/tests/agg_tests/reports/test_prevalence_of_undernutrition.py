@@ -46,8 +46,6 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        print(data['data'])
-        assert False
         self.assertDictEqual(
             data['data'],
             {
@@ -100,9 +98,9 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     'severely_underweight': 60,
                     'normal': 1505,
                     'original_name': ['st2'],
-                    'weighed': 1895,
-                    'moderately_underweight': 330,
-                    'total': 2570,
+                    'weighed': 1890,
+                    'moderately_underweight': 325,
+                    'total': 2565,
                     'fillKey': '20%-35%'
                 },
                 'st3': {
@@ -136,7 +134,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], '21.55')
+        self.assertEqual(data['rightLegend']['average'], '21.44')
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_undernutrition_data_map(
@@ -149,11 +147,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '3,480'},
+                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '3,475'},
                 {'indicator': 'Number of children unweighed (0 - 5 years):', 'value': '1,480'},
-                {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '2.87%'},
-                {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.68%'},
-                {'indicator': '% Normal (0 - 5 years):', 'value': '78.45%'}
+                {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '2.88%'},
+                {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.56%'},
+                {'indicator': '% Normal (0 - 5 years):', 'value': '78.56%'}
             ]
         )
 
