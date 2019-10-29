@@ -264,8 +264,8 @@ class AutomaticUpdateRule(models.Model):
 
         :param to_domain: The name of the domain to attempt copying this alert to
 
-        :param convert_form_unique_id_function: A function which should take one argument, the form unique id
-        which pertains to the form unique id of a form in this alert's domain, and returns the form unique id
+        :param convert_form_unique_id_function: A function which should take two arguments, the app id and
+        form unique id which pertain a form in this alert's domain, and returns the app id and form unique id
         of the same copied form in to_domain. This is optional, and if omitted, alerts which use SMS Surveys
         will not be copied.
         """
@@ -327,7 +327,9 @@ class AutomaticUpdateRule(models.Model):
         return new_rule
 
     def fix_sms_survey_reference(self, copied_content, original_content, convert_form_unique_id_function):
-        copied_content.form_unique_id = convert_form_unique_id_function(original_content.form_unique_id)
+        copied_content.app_id, copied_content.form_unique_id = convert_form_unique_id_function(
+            original_content.app_id, original_content.form_unique_id
+        )
 
     def copy_schedule(self, schedule, to_domain, convert_form_unique_id_function=None):
         """
