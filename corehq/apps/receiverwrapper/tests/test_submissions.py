@@ -210,6 +210,12 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
         self.assertFalse('X-CommCareHQ-FormID' in response,
                          'Practice mobile worker form processed in non-demo mode')
 
+    @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
+    def test_invalid_form_xml(self, *_):
+        response = self._submit('invalid_form_xml.xml')
+        self.assertTrue(response.status_code, 422)
+        self.assertTrue("There was an error processing the form: Invalid XML" in response.content.decode('utf-8'))
+
 
 @use_sql_backend
 class SubmissionTestSQL(SubmissionTest):

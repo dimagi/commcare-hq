@@ -253,9 +253,14 @@ def should_ignore_submission(request):
     form_json = None
     if IGNORE_ALL_DEMO_USER_SUBMISSIONS:
         instance, _ = couchforms.get_instance_and_attachment(request)
-        form_json = convert_xform_to_json(instance)
-        if _submitted_by_demo_user(form_json, request.domain):
-            return True
+        try:
+            form_json = convert_xform_to_json(instance)
+        except couchforms.XMLSyntaxError:
+            # let the usual workflow handle response for invalid xml
+            return False
+        else:
+            if _submitted_by_demo_user(form_json, request.domain):
+                return True
 
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
         return False
