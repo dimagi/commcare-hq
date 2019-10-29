@@ -1,24 +1,24 @@
 import inspect
 import sys
 from collections import namedtuple
-
-import dateutil
-from django.core.management.base import BaseCommand, CommandError
 from datetime import datetime
 
+from django.core.management.base import BaseCommand, CommandError
+
+import dateutil
+
+from casexml.apps.case.models import CommCareCase
+from dimagi.utils.chunked import chunked
+
+from corehq.apps.es import CaseES, FormES
+from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.form_processor.backends.sql.dbaccessors import state_to_doc_type
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.util.log import with_progress_bar
-from dimagi.utils.chunked import chunked
-
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.es import CaseES, FormES
-from corehq.elastic import ES_EXPORT_INSTANCE
-from corehq.util.dates import iso_string_to_datetime
 from corehq.util.couch_helpers import paginate_view
-
+from corehq.util.dates import iso_string_to_datetime
+from corehq.util.log import with_progress_bar
 
 RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date', 'case_type'])
 
