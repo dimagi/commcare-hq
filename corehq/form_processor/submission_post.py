@@ -389,6 +389,7 @@ class SubmissionPost(object):
     @tracer.wrap(name='submission.post_save_actions')
     def do_post_save_actions(case_db, xforms, case_stock_result):
         instance = xforms[0]
+        case_db.clear_changed()
         try:
             case_stock_result.case_result.commit_dirtiness_flags()
             case_stock_result.stock_result.finalize()
