@@ -253,7 +253,7 @@ def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
     es_meta = ES_META[index_name]
     try:
         return scan(
-            get_es_instance(es_instance_alias),
+            get_es_interface(es_instance_alias),
             index=es_meta.index,
             doc_type=es_meta.type,
             query=q,
@@ -273,7 +273,7 @@ class ScanResult(object):
             yield x
 
 
-def scan(client, query=None, scroll='5m', **kwargs):
+def scan(es_interface, query=None, scroll='5m', **kwargs):
     """
     This is a copy of elasticsearch.helpers.scan, except this function returns
     a ScanResult (which includes the total number of documents), and removes
@@ -300,7 +300,6 @@ def scan(client, query=None, scroll='5m', **kwargs):
     """
     kwargs['search_type'] = 'scan'
     # initial search
-    es_interface = ElasticsearchInterface(client)
     initial_resp = es_interface.search(body=query, scroll=scroll, **kwargs)
 
     def fetch_all(initial_response):
