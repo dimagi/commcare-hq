@@ -79,7 +79,15 @@ def _form_uses_name_enum(form):
     return bool(form.name_enum)
 
 
+def _should_use_root_display(module):
+    # child modules set to display only forms should use their parent module's
+    # name so as not to confuse mobile when the two are combined
+    return module.put_in_root and module.root_module and not module.root_module.put_in_root
+
+
 def get_module_locale_id(module):
+    if _should_use_root_display(module):
+        module = module.root_module
     if not _module_uses_name_enum(module):
         return id_strings.module_locale(module)
 
@@ -90,6 +98,8 @@ def get_form_locale_id(form):
 
 
 def get_module_enum_text(module):
+    if _should_use_root_display(module):
+        module = module.root_module
     if not _module_uses_name_enum(module):
         return None
 
