@@ -280,7 +280,11 @@ class CaseDiffQueue(object):
             state["to_diff"] = list(to_diff)
         if self.num_diffed_cases:
             state["num_diffed_cases"] = self.num_diffed_cases
-        self.statedb.set_resume_state(type(self).__name__, state)
+        try:
+            self.statedb.set_resume_state(type(self).__name__, state)
+        except Exception:
+            log.warning("unable to save state\n%r", state)
+            raise
         log_state = state if log.isEnabledFor(logging.DEBUG) else {
             k: len(v) if hasattr(v, "__len__") else v for k, v in state.items()
         }
