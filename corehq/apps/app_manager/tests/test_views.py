@@ -28,7 +28,7 @@ from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import WebUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 
 from .test_form_versioning import BLANK_TEMPLATE, INVALID_TEMPLATE
@@ -50,7 +50,7 @@ class TestViews(TestCase):
         cls.user.is_superuser = True
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
-        cls.es = get_es_new()
+        cls.es = get_es_instance()
         initialize_index_and_mapping(cls.es, APP_INDEX_INFO)
 
         toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.project.name), True)

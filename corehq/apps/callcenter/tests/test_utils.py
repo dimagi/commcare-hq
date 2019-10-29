@@ -29,7 +29,7 @@ from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
@@ -446,7 +446,7 @@ class DomainTimezoneTests(SimpleTestCase):
 class CallCenterDomainTest(SimpleTestCase):
     def setUp(self):
         self.index_info = DOMAIN_INDEX_INFO
-        self.elasticsearch = get_es_new()
+        self.elasticsearch = get_es_instance()
         ensure_index_deleted(self.index_info.index)
         initialize_index(self.elasticsearch, self.index_info)
         import time

@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 import simplejson
 from corehq.util.es.elasticsearch import NotFoundError
 
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.pillows.utils import get_all_expected_es_indices
 from pillowtop.es_utils import assume_alias
 
@@ -37,7 +37,7 @@ class Command(BaseCommand):
         flip_all = options['flip_all']
         code_red = options['code_red']
 
-        es = get_es_new()
+        es = get_es_instance()
         es_indices = list(get_all_expected_es_indices())
         if code_red:
             if input('\n'.join([

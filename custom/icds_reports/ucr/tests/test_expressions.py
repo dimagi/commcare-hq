@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseStructure, CaseFactory
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
@@ -39,7 +39,7 @@ class TestFormsExpressionSpecWithFilter(TestCase):
 
     @classmethod
     def _setup_es_for_data(cls):
-        cls.es = get_es_new()
+        cls.es = get_es_instance()
         cls.es_indices = [XFORM_INDEX_INFO]
         for index_info in cls.es_indices:
             initialize_index_and_mapping(cls.es, index_info)

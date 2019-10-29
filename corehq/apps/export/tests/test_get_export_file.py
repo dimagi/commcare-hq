@@ -47,7 +47,7 @@ from corehq.apps.export.tests.util import (
     get_export_json,
     new_case,
 )
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.files import TransientTempfile
@@ -679,7 +679,7 @@ class ExportTest(SimpleTestCase):
     def setUpClass(cls):
         super(ExportTest, cls).setUpClass()
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            cls.es = get_es_new()
+            cls.es = get_es_instance()
             initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
 
         case = new_case(_id='robin', name='batman', foo="apple", bar="banana", date='2016-4-24')

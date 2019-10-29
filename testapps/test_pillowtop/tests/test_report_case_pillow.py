@@ -5,7 +5,7 @@ from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es import CaseES
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -24,7 +24,7 @@ class ReportCasePillowTest(TestCase):
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_cases()
         with trap_extra_setup(ConnectionError):
-            self.elasticsearch = get_es_new()
+            self.elasticsearch = get_es_instance()
             ensure_index_deleted(REPORT_CASE_INDEX_INFO.index)
             initialize_index_and_mapping(self.elasticsearch, REPORT_CASE_INDEX_INFO)
 
@@ -71,7 +71,7 @@ class ReportCaseReindexerTest(TestCase):
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_cases()
         with trap_extra_setup(ConnectionError):
-            self.elasticsearch = get_es_new()
+            self.elasticsearch = get_es_instance()
             ensure_index_deleted(REPORT_CASE_INDEX_INFO.index)
 
     def tearDown(self):

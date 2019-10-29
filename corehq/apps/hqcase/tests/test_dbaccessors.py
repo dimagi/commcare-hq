@@ -21,7 +21,7 @@ from corehq.apps.hqcase.dbaccessors import (
     get_case_ids_in_domain_by_owner,
     get_cases_in_domain,
 )
-from corehq.elastic import EsMeta, get_es_new
+from corehq.elastic import EsMeta, get_es_instance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
@@ -171,7 +171,7 @@ class ESAccessorsTest(TestCase):
     def setUp(self):
         super(ESAccessorsTest, self).setUp()
         with trap_extra_setup(ConnectionError):
-            self.elasticsearch = get_es_new()
+            self.elasticsearch = get_es_instance()
             initialize_index_and_mapping(self.elasticsearch, CASE_INDEX_INFO)
             initialize_index_and_mapping(self.elasticsearch, DOMAIN_INDEX_INFO)
 

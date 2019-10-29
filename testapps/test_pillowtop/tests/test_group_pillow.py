@@ -7,7 +7,7 @@ from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.es import GroupES
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.pillows.groups_to_user import get_group_pillow
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
@@ -18,7 +18,7 @@ from pillowtop.es_utils import initialize_index
 class GroupPillowTest(TestCase):
 
     def setUp(self):
-        self.elasticsearch = get_es_new()
+        self.elasticsearch = get_es_instance()
         for index in [GROUP_INDEX_INFO, USER_INDEX_INFO]:
             ensure_index_deleted(index.index)
             initialize_index(self.elasticsearch, index)

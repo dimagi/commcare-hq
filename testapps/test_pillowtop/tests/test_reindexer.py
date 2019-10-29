@@ -15,7 +15,7 @@ from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
     run_with_all_backends
 from corehq.pillows.case_search import domains_needing_search_index
@@ -41,7 +41,7 @@ class PillowtopReindexerTest(TestCase):
     def setUpClass(cls):
         super(PillowtopReindexerTest, cls).setUpClass()
         with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(get_es_new(), CASE_INDEX_INFO)
+            initialize_index_and_mapping(get_es_instance(), CASE_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):
@@ -74,7 +74,7 @@ class PillowtopReindexerTest(TestCase):
 
     @run_with_all_backends
     def test_case_search_reindexer(self):
-        es = get_es_new()
+        es = get_es_instance()
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 

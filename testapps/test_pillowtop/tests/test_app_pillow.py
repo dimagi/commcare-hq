@@ -13,7 +13,7 @@ from corehq.apps.change_feed.pillow import get_application_db_kafka_pillow
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.es import AppES
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.application import get_app_to_elasticsearch_pillow
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
@@ -31,7 +31,7 @@ class AppPillowTest(TestCase):
         super(AppPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         with trap_extra_setup(ConnectionError):
-            self.es = get_es_new()
+            self.es = get_es_instance()
 
         ensure_index_deleted(APP_INDEX_INFO.index)
         initialize_index_and_mapping(self.es, APP_INDEX_INFO)

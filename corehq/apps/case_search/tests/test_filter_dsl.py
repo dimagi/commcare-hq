@@ -12,7 +12,7 @@ from corehq.apps.case_search.filter_dsl import (
     get_properties_from_ast,
 )
 from corehq.apps.es import CaseSearchES
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -324,7 +324,7 @@ class TestFilterDslLookups(TestCase):
     def setUpClass(cls):
         super(TestFilterDslLookups, cls).setUpClass()
         with trap_extra_setup(ConnectionError):
-            cls.es = get_es_new()
+            cls.es = get_es_instance()
             initialize_index_and_mapping(cls.es, CASE_SEARCH_INDEX_INFO)
 
         cls.child_case_id = 'margaery'

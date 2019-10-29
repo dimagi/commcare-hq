@@ -10,7 +10,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.form_processor.change_publishers import change_meta_from_sql_form
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
@@ -31,7 +31,7 @@ class UserPillowTestBase(TestCase):
     def setUp(self):
         super(UserPillowTestBase, self).setUp()
         self.index_info = USER_INDEX_INFO
-        self.elasticsearch = get_es_new()
+        self.elasticsearch = get_es_instance()
         delete_all_users()
         ensure_index_deleted(self.index_info.index)
         initialize_index(self.elasticsearch, self.index_info)

@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from corehq.util.es.interface import ElasticsearchInterface
 from dimagi.utils.chunked import chunked
 
-from corehq.elastic import ES_META, get_es_new
+from corehq.elastic import ES_META, get_es_instance
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 DOC_TYPES = ('XFormInstance', )
@@ -53,7 +53,7 @@ def form_ids_in_domain(domain):
 
 def form_ids_in_es(form_ids):
     query = {"filter": {"ids": {"values": list(form_ids)}}}
-    es_interface = ElasticsearchInterface(get_es_new())
+    es_interface = ElasticsearchInterface(get_es_instance())
     es_meta = ES_META['forms']
     results = es_interface.search(es_meta.index, es_meta.type, query,
                                   params={'size': CHUNK_SIZE})

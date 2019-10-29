@@ -2,7 +2,7 @@ import json
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.groups.models import Group
-from corehq.elastic import send_to_elasticsearch, get_es_new
+from corehq.elastic import send_to_elasticsearch, get_es_instance
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -17,7 +17,7 @@ class TestGroupResource(APIResourceTest):
     @classmethod
     def setUpClass(cls):
         super(TestGroupResource, cls).setUpClass()
-        cls.es = get_es_new()
+        cls.es = get_es_instance()
         cls.es.indices.delete(GROUP_INDEX_INFO.index)
         initialize_index_and_mapping(cls.es, GROUP_INDEX_INFO)
 

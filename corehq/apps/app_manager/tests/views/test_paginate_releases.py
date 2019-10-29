@@ -7,7 +7,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.elastic import delete_es_index
 from corehq.util.test_utils import flag_enabled
@@ -37,7 +37,7 @@ class TestPaginateReleases(TestCase):
         cls.app_build.save()
 
         # publish app and build to ES
-        es = get_es_new()
+        es = get_es_instance()
         initialize_index_and_mapping(es, APP_INDEX_INFO)
         send_to_elasticsearch('apps', cls.app.to_json())
         send_to_elasticsearch('apps', cls.app_build.to_json())

@@ -4,7 +4,7 @@ from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.es.sms import SMSES
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.sms import get_sql_sms_pillow
 from corehq.util.elastic import ensure_index_deleted
@@ -21,7 +21,7 @@ class SqlSMSPillowTest(TestCase):
 
     def setUp(self):
         super(SqlSMSPillowTest, self).setUp()
-        self.elasticsearch = get_es_new()
+        self.elasticsearch = get_es_instance()
         ensure_index_deleted(SMS_INDEX_INFO.index)
 
     def tearDown(self):

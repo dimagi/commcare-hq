@@ -2,7 +2,7 @@ from django.test import override_settings, TestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es import FormES
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
@@ -23,7 +23,7 @@ class ReportXformPillowTest(TestCase):
         super(ReportXformPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
         with trap_extra_setup(ConnectionError):
-            self.elasticsearch = get_es_new()
+            self.elasticsearch = get_es_instance()
             ensure_index_deleted(REPORT_XFORM_INDEX_INFO.index)
             initialize_index_and_mapping(self.elasticsearch, REPORT_XFORM_INDEX_INFO)
 
@@ -70,7 +70,7 @@ class ReportXformReindexerTest(TestCase):
         super(ReportXformReindexerTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
         with trap_extra_setup(ConnectionError):
-            self.elasticsearch = get_es_new()
+            self.elasticsearch = get_es_instance()
             ensure_index_deleted(REPORT_XFORM_INDEX_INFO.index)
 
     def tearDown(self):

@@ -9,7 +9,7 @@ from pillowtop.models import str_to_kafka_seq
 from pillowtop.utils import get_all_pillow_instances
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 
 DEFAULT_EMPTY_CHECKPOINT_SEQUENCE_FOR_RESTORE = {
     'text': '0',
@@ -44,7 +44,7 @@ class Command(BaseCommand):
         pillows = input("Have you stopped all pillows? (y/n)")
         if pillows.lower() != "y":
             return
-        es = get_es_new()
+        es = get_es_instance()
         client = self.get_client_and_close_indices(es, indices)
         try:
             self.restore_snapshot(es, date, indices)

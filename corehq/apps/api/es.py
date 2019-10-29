@@ -23,7 +23,7 @@ from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.elastic import (
     ESError,
-    get_es_new,
+    get_es_instance,
     report_and_fail_on_shard_failures,
 )
 from corehq.pillows.base import VALUE_TAG, restore_property_dict
@@ -84,7 +84,7 @@ class ESView(View):
     def __init__(self, domain):
         super(ESView, self).__init__()
         self.domain = domain.lower()
-        self.es = get_es_new()
+        self.es = get_es_instance()
         self.es_interface = ElasticsearchInterface(self.es)
 
     def head(self, *args, **kwargs):

@@ -6,7 +6,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.export.esaccessors import get_groups_user_ids
 from corehq.apps.groups.models import Group
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 
@@ -18,7 +18,7 @@ class TestGroupUserIds(SimpleTestCase):
     def setUpClass(cls):
         super(TestGroupUserIds, cls).setUpClass()
         ensure_index_deleted(GROUP_INDEX_INFO.index)
-        cls.es = get_es_new()
+        cls.es = get_es_instance()
         initialize_index_and_mapping(cls.es, GROUP_INDEX_INFO)
         cls.es.indices.refresh(GROUP_INDEX_INFO.index)
 

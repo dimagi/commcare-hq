@@ -9,7 +9,7 @@ from corehq.apps.change_feed.topics import CASE_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.messaging.pillow import CaseMessagingSyncProcessor
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -55,7 +55,7 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
     assert pillow_id == 'CaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO, CASE_TOPICS)
     case_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
+        elasticsearch=get_es_instance(),
         index_info=CASE_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
@@ -99,7 +99,7 @@ def get_case_pillow(
     if ucr_configs:
         ucr_processor.bootstrap(ucr_configs)
     case_to_es_processor = BulkElasticProcessor(
-        elasticsearch=get_es_new(),
+        elasticsearch=get_es_instance(),
         index_info=CASE_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
@@ -145,7 +145,7 @@ class CouchCaseReindexerFactory(ReindexerFactory):
         ])
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
+            elasticsearch=get_es_instance(),
             index_info=CASE_INDEX_INFO,
             doc_transform=transform_case_for_elasticsearch,
             pillow=get_case_to_elasticsearch_pillow(),
@@ -181,7 +181,7 @@ class SqlCaseReindexerFactory(ReindexerFactory):
         doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
+            elasticsearch=get_es_instance(),
             index_info=CASE_INDEX_INFO,
             doc_transform=transform_case_for_elasticsearch,
             **self.options

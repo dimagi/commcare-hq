@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.pillows.base import convert_property_dict
@@ -41,7 +41,7 @@ def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsear
     assert pillow_id == 'ReportXFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_XFORM_INDEX_INFO, topics.FORM_TOPICS)
     form_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
+        elasticsearch=get_es_instance(),
         index_info=REPORT_XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_report_forms_index,
         doc_filter_fn=report_xform_filter
@@ -75,7 +75,7 @@ class ReportFormReindexerFactory(ReindexerFactory):
         return ElasticPillowReindexer(
             pillow_or_processor=get_report_xform_to_elasticsearch_pillow(),
             change_provider=change_provider,
-            elasticsearch=get_es_new(),
+            elasticsearch=get_es_instance(),
             index_info=REPORT_XFORM_INDEX_INFO,
             **self.options
         )

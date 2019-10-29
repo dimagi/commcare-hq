@@ -15,7 +15,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
 from corehq.apps.users.models import CommCareUser
 from corehq.const import MISSING_APP_ID
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 
@@ -34,7 +34,7 @@ class MaltGeneratorTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(MaltGeneratorTest, cls).setUpClass()
-        cls.es = get_es_new()
+        cls.es = get_es_instance()
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
         cls._setup_domain_user()

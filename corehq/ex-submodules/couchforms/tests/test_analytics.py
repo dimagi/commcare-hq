@@ -20,7 +20,7 @@ from couchforms.models import XFormInstance, XFormError
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
-from corehq.elastic import get_es_new, EsMeta, send_to_elasticsearch
+from corehq.elastic import get_es_instance, EsMeta, send_to_elasticsearch
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
@@ -40,7 +40,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         delete_all_xforms()
 
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            cls.es = get_es_new()
+            cls.es = get_es_instance()
             initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
 
         cls.domain = 'exports_forms_analytics_domain'
@@ -150,7 +150,7 @@ class CouchformsESAnalyticsTest(TestCase):
         cls.app_id = uuid.uuid4().hex
         cls.xmlns = 'my://crazy.xmlns/'
         with trap_extra_setup(ConnectionError):
-            cls.elasticsearch = get_es_new()
+            cls.elasticsearch = get_es_instance()
             initialize_index_and_mapping(cls.elasticsearch, XFORM_INDEX_INFO)
             cls.forms = [create_form_and_sync_to_es(cls.now), create_form_and_sync_to_es(cls.now-cls._60_days)]
 

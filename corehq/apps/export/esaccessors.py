@@ -2,7 +2,7 @@ from corehq.util.es.elasticsearch import ElasticsearchException
 
 from corehq.apps.es import CaseES, FormES, GroupES
 from corehq.apps.es.sms import SMSES
-from corehq.elastic import ES_EXPORT_INSTANCE, get_es_new
+from corehq.elastic import ES_EXPORT_INSTANCE, get_es_instance
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
@@ -50,7 +50,7 @@ def get_groups_user_ids(group_ids):
 def get_case_name(case_id):
     from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
     try:
-        result = get_es_new().get(CASE_INDEX_INFO.index, case_id, _source_include=['name'])
+        result = get_es_instance().get(CASE_INDEX_INFO.index, case_id, _source_include=['name'])
     except ElasticsearchException:
         return None
 

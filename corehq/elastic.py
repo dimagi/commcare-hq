@@ -132,7 +132,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     else:
         assert isinstance(doc_id_or_dict, dict)
         doc_id = doc_id_or_dict['_id']
-    return get_es_new().exists(index_info.index, index_info.type, doc_id)
+    return get_es_instance().exists(index_info.index, index_info.type, doc_id)
 
 
 def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
@@ -151,7 +151,7 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
         index=es_meta.index,
         doc_type=es_meta.type,
         doc_id=doc_id,
-        es_getter=get_es_new,
+        es_getter=get_es_instance,
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
                                   send_to_elasticsearch.__name__, index_name),
         data=doc,
@@ -164,7 +164,7 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
 
 def refresh_elasticsearch_index(index_name):
     es_meta = ES_META[index_name]
-    es = get_es_new()
+    es = get_es_instance()
     es.indices.refresh(index=es_meta.index)
 
 
@@ -232,7 +232,7 @@ def mget_query(index_name, ids):
     if not ids:
         return []
 
-    es_interface = ElasticsearchInterface(get_es_new())
+    es_interface = ElasticsearchInterface(get_es_instance())
     es_meta = ES_META[index_name]
     try:
         return es_interface.get_bulk_docs(es_meta.index, es_meta.type, ids)
@@ -418,7 +418,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
         return q
 
     es_index = es_index or 'domains'
-    es_interface = ElasticsearchInterface(get_es_new())
+    es_interface = ElasticsearchInterface(get_es_instance())
     meta = ES_META[es_index]
 
     try:

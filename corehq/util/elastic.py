@@ -22,8 +22,8 @@ def ensure_index_deleted(es_index):
 @unit_testing_only
 def delete_es_index(es_index):
     if es_index.startswith(TEST_ES_PREFIX):
-        from corehq.elastic import get_es_new
-        es = get_es_new()
+        from corehq.elastic import get_es_instance
+        es = get_es_instance()
         es.indices.delete(index=es_index)
     else:
         raise DeleteProductionESIndex('You cannot delete a production index in tests!!')

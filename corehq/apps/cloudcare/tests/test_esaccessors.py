@@ -8,7 +8,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted
@@ -24,7 +24,7 @@ class TestCloudcareESAccessors(SimpleTestCase):
         cls.last_name = 'kent'
         cls.doc_type = 'CommCareUser'
         cls.domain = 'user-esaccessors-test'
-        cls.es = get_es_new()
+        cls.es = get_es_instance()
 
     def setUp(self):
         initialize_index_and_mapping(self.es, USER_INDEX_INFO)

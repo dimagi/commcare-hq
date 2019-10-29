@@ -5,7 +5,7 @@ from django.conf import settings
 from django.test import SimpleTestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 from pillowtop.es_utils import (
@@ -27,7 +27,7 @@ class ElasticPillowTest(SimpleTestCase):
 
     def setUp(self):
         self.index = TEST_INDEX_INFO.index
-        self.es = get_es_new()
+        self.es = get_es_instance()
         self.es_interface = ElasticsearchInterface(self.es)
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(self.index)
@@ -84,7 +84,7 @@ class ElasticPillowTest(SimpleTestCase):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        send_to_elasticsearch(self.index, TEST_INDEX_INFO.type, doc_id, get_es_new, 'test', doc)
+        send_to_elasticsearch(self.index, TEST_INDEX_INFO.type, doc_id, get_es_instance, 'test', doc)
         self.assertEqual(1, get_doc_count(self.es, self.index))
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
         es_doc = self.es_interface.get_doc(TEST_INDEX_INFO.alias, TEST_INDEX_INFO.type, doc_id)
@@ -153,7 +153,7 @@ class ElasticPillowTest(SimpleTestCase):
 class TestSendToElasticsearch(SimpleTestCase):
 
     def setUp(self):
-        self.es = get_es_new()
+        self.es = get_es_instance()
         self.es_interface = ElasticsearchInterface(self.es)
         self.index = TEST_INDEX_INFO.index
 
@@ -177,7 +177,7 @@ class TestSendToElasticsearch(SimpleTestCase):
             index=self.index,
             doc_type=TEST_INDEX_INFO.type,
             doc_id=doc['_id'],
-            es_getter=esgetter or get_es_new,
+            es_getter=esgetter or get_es_instance,
             name='test',
             data=doc,
             update=update,

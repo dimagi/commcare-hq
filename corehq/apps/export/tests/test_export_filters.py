@@ -29,7 +29,7 @@ from corehq.apps.export.tests.util import (
     new_form,
 )
 from corehq.apps.groups.models import Group
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -56,7 +56,7 @@ class ExportFilterResultTest(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            es = get_es_new()
+            es = get_es_instance()
             cls.tearDownClass()
             initialize_index_and_mapping(es, CASE_INDEX_INFO)
             initialize_index_and_mapping(es, GROUP_INDEX_INFO)

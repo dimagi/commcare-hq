@@ -8,7 +8,7 @@ from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvi
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
 from corehq.elastic import (
     doc_exists_in_es,
-    send_to_elasticsearch, get_es_new, ES_META
+    send_to_elasticsearch, get_es_instance, ES_META
 )
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.util.quickcache import quickcache
@@ -87,7 +87,7 @@ def _get_user_fields_from_form_doc(form_doc):
 class UnknownUsersProcessor(PillowProcessor):
 
     def __init__(self):
-        self._es = get_es_new()
+        self._es = get_es_instance()
 
     def process_change(self, change):
         update_unknown_user_from_form_if_necessary(self._es, change.get_document())
@@ -102,7 +102,7 @@ def add_demo_user_to_user_index():
 
 def get_user_es_processor():
     return BulkElasticProcessor(
-        elasticsearch=get_es_new(),
+        elasticsearch=get_es_instance(),
         index_info=USER_INDEX_INFO,
         doc_prep_fn=transform_user_for_elasticsearch,
     )
@@ -113,7 +113,7 @@ def get_user_pillow_old(pillow_id='UserPillow', num_processes=1, process_num=0, 
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
     user_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
+        elasticsearch=get_es_instance(),
         index_info=USER_INDEX_INFO,
         doc_prep_fn=transform_user_for_elasticsearch,
     )
@@ -193,7 +193,7 @@ class UserReindexerFactory(ReindexerFactory):
                     'include_docs': True,
                 }
             ),
-            elasticsearch=get_es_new(),
+            elasticsearch=get_es_instance(),
             index_info=USER_INDEX_INFO,
             **self.options
         )

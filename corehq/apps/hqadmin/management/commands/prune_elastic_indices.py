@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.pillows.utils import get_all_expected_es_indices
 from corehq.util.es import AuthorizationException
 
@@ -29,7 +29,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
-        es = get_es_new()
+        es = get_es_instance()
         # call this before getting existing indices because apparently getting the pillow will create the index
         # if it doesn't exist
         # fixme: this can delete real indices if a reindex is in progress

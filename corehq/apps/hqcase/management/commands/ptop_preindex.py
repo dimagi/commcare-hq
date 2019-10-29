@@ -11,7 +11,7 @@ from gevent import monkey
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
     FACTORIES_BY_SLUG,
 )
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.pillows.user import add_demo_user_to_user_index
 from corehq.pillows.utils import get_all_expected_es_indices
 from corehq.util.log import get_traceback_string
@@ -74,7 +74,7 @@ class Command(BaseCommand):
     def handle(self, **options):
         runs = []
         all_es_indices = get_all_expected_es_indices()
-        es = get_es_new()
+        es = get_es_instance()
         indices_needing_reindex = [info for info in all_es_indices if not es.indices.exists(info.index)]
 
         if not indices_needing_reindex:

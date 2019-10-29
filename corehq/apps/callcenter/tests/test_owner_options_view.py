@@ -13,7 +13,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, NAMESPACE_DOMAIN
@@ -34,7 +34,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
         super(CallCenterLocationOwnerOptionsViewTest, cls).setUpClass()
 
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            es = get_es_new()
+            es = get_es_instance()
             ensure_index_deleted(USER_INDEX_INFO.index)
             ensure_index_deleted(GROUP_INDEX_INFO.index)
             initialize_index_and_mapping(es, USER_INDEX_INFO)

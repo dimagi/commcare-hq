@@ -21,7 +21,7 @@ from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xml
 )
 from corehq.apps.cleanup.tasks import fix_xforms_with_missing_xmlns
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted
@@ -37,7 +37,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         super(TestFixFormsWithMissingXmlns, cls).setUpClass()
-        cls.es = get_es_new()
+        cls.es = get_es_instance()
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
             initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
 

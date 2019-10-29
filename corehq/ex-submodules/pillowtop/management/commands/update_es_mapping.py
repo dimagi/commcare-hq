@@ -3,7 +3,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.pillows.utils import get_all_expected_es_indices
 
 
@@ -31,7 +31,7 @@ class Command(BaseCommand):
         if not indexes:
             raise CommandError("No matching index found: {}".format(index_name))
         index_info = indexes[0]
-        es = get_es_new()
+        es = get_es_instance()
         if (noinput or _confirm("Confirm that you want to update the mapping for '{}'".format(index_info.index))):
             mapping = copy(index_info.mapping)
             mapping['_meta']['created'] = datetime.utcnow().isoformat()

@@ -4,7 +4,7 @@ from django.conf import settings
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
@@ -34,7 +34,7 @@ def transform_case_to_report_es(doc_dict):
 
 def get_case_to_report_es_processor():
     return ElasticProcessor(
-        elasticsearch=get_es_new(),
+        elasticsearch=get_es_instance(),
         index_info=REPORT_CASE_INDEX_INFO,
         doc_prep_fn=transform_case_to_report_es,
         doc_filter_fn=report_case_filter,
@@ -47,7 +47,7 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
     assert pillow_id == 'ReportCaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_CASE_INDEX_INFO, topics.CASE_TOPICS)
     form_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
+        elasticsearch=get_es_instance(),
         index_info=REPORT_CASE_INDEX_INFO,
         doc_prep_fn=transform_case_to_report_es,
         doc_filter_fn=report_case_filter,
@@ -81,7 +81,7 @@ class ReportCaseReindexerFactory(ReindexerFactory):
         return ElasticPillowReindexer(
             pillow_or_processor=get_report_case_to_elasticsearch_pillow(),
             change_provider=change_provider,
-            elasticsearch=get_es_new(),
+            elasticsearch=get_es_instance(),
             index_info=REPORT_CASE_INDEX_INFO,
             **self.options
         )

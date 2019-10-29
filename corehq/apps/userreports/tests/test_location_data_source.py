@@ -13,7 +13,7 @@ from corehq.apps.userreports.pillow import get_location_pillow
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
@@ -24,7 +24,7 @@ class TestLocationDataSource(TestCase):
 
     def setUp(self):
         self.domain_obj = create_domain(self.domain)
-        es = get_es_new()
+        es = get_es_instance()
         initialize_index_and_mapping(es, USER_INDEX_INFO)
         self.region = LocationType.objects.create(domain=self.domain, name="region")
         self.town = LocationType.objects.create(domain=self.domain, name="town", parent_type=self.region)

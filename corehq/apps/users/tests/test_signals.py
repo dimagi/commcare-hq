@@ -11,7 +11,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.reports.analytics.esaccessors import get_user_stubs
-from corehq.elastic import doc_exists_in_es, get_es_new
+from corehq.elastic import doc_exists_in_es, get_es_instance
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.test_utils import mock_out_couch, trap_extra_setup
 
@@ -71,7 +71,7 @@ class TestUserSyncToEs(SimpleTestCase):
         super(TestUserSyncToEs, cls).setUpClass()
 
         # create the index
-        cls.es = get_es_new()
+        cls.es = get_es_instance()
         with trap_extra_setup(ConnectionError):
             initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
 

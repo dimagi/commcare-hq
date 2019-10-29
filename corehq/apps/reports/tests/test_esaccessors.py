@@ -43,7 +43,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs.mixin import BlobMetaRef
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
@@ -64,7 +64,7 @@ class BaseESAccessorsTest(TestCase):
     def setUp(self):
         super(BaseESAccessorsTest, self).setUp()
         with trap_extra_setup(ConnectionError):
-            self.es = get_es_new()
+            self.es = get_es_instance()
             self._delete_es_index()
             self.domain = uuid.uuid4().hex
             if isinstance(self.es_index_info, (list, tuple)):
@@ -860,7 +860,7 @@ class TestUserESAccessors(SimpleTestCase):
         self.last_name = 'kent'
         self.doc_type = 'CommCareUser'
         self.domain = 'user-esaccessors-test'
-        self.es = get_es_new()
+        self.es = get_es_instance()
         ensure_index_deleted(USER_INDEX)
         initialize_index_and_mapping(self.es, USER_INDEX_INFO)
 
@@ -920,7 +920,7 @@ class TestGroupESAccessors(SimpleTestCase):
         self.domain = 'group-esaccessors-test'
         self.reporting = True
         self.case_sharing = False
-        self.es = get_es_new()
+        self.es = get_es_instance()
 
     def _send_group_to_es(self, _id=None):
         group = Group(

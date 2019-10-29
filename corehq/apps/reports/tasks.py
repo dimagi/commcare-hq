@@ -29,7 +29,7 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
 from corehq.elastic import (
     ES_META,
-    get_es_new,
+    get_es_instance,
     send_to_elasticsearch,
     stream_es_query,
 )
@@ -163,7 +163,7 @@ def is_app_active(app_id, domain):
 
 @periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
 def apps_update_calculated_properties():
-    es = get_es_new()
+    es = get_es_instance()
     q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}
     results = stream_es_query(q=q, es_index='apps', size=999999, chunksize=500)
     for r in results:

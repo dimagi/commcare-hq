@@ -14,7 +14,7 @@ from pillowtop.processors.elastic import BulkElasticProcessor
 from pillowtop.tests.utils import TEST_INDEX_INFO
 from pillowtop.utils import bulk_fetch_changes_docs, get_errors_with_ids
 
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.form_processor.document_stores import CaseDocumentStore
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.tests.utils import (
@@ -65,7 +65,7 @@ class TestBulkDocOperations(TestCase):
             for case_id in cls.case_ids:
                 create_form_for_test(cls.domain, case_id)
 
-        cls.es = get_es_new()
+        cls.es = get_es_instance()
         cls.es_interface = ElasticsearchInterface(cls.es)
         cls.index = TEST_INDEX_INFO.index
 

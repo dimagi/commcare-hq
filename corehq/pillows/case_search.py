@@ -19,7 +19,7 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaCheckpointEventHandler,
 )
 from corehq.apps.es import CaseSearchES
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
@@ -112,7 +112,7 @@ class CaseSearchPillowProcessor(ElasticProcessor):
 
 def get_case_search_processor():
     return CaseSearchPillowProcessor(
-        elasticsearch=get_es_new(),
+        elasticsearch=get_es_instance(),
         index_info=CASE_SEARCH_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
@@ -155,7 +155,7 @@ class CaseSearchReindexerFactory(ReindexerFactory):
         domain = self.options.pop('domain', None)
 
         limit_db_aliases = [limit_to_db] if limit_to_db else None
-        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
+        initialize_index_and_mapping(get_es_instance(), CASE_SEARCH_INDEX_INFO)
         try:
             if domain is not None:
                 if not domain_needs_search_index(domain):
@@ -182,7 +182,7 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
     assert pillow_id == 'CaseSearchToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_SEARCH_INDEX_INFO, topics.CASE_TOPICS)
     case_processor = CaseSearchPillowProcessor(
-        elasticsearch=get_es_new(),
+        elasticsearch=get_es_instance(),
         index_info=CASE_SEARCH_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
@@ -236,7 +236,7 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
         doc_provider = SqlDocumentProvider(iteration_key, accessor)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
-            elasticsearch=get_es_new(),
+            elasticsearch=get_es_instance(),
             index_info=CASE_SEARCH_INDEX_INFO,
             doc_transform=transform_case_for_elasticsearch,
             **self.options
@@ -248,7 +248,7 @@ def delete_case_search_cases(domain):
         raise TypeError("Domain attribute is required")
 
     query = {'query': CaseSearchES().domain(domain).raw_query['query']}
-    get_es_new().delete_by_query(
+    get_es_instance().delete_by_query(
         index=CASE_SEARCH_INDEX,
         doc_type=CASE_ES_TYPE,
         body=query,

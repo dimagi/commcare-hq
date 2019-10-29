@@ -101,11 +101,11 @@ class AllCommCareUsersTest(TestCase):
 
     def test_get_all_commcare_users_by_domain(self):
         from corehq.util.elastic import ensure_index_deleted
-        from corehq.elastic import get_es_new, send_to_elasticsearch
+        from corehq.elastic import get_es_instance, send_to_elasticsearch
         from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO, USER_INDEX
         from pillowtop.es_utils import initialize_index_and_mapping
 
-        es = get_es_new()
+        es = get_es_instance()
         ensure_index_deleted(USER_INDEX)
         initialize_index_and_mapping(es, USER_INDEX_INFO)
         send_to_elasticsearch('users', self.ccuser_1.to_json())

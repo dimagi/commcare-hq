@@ -17,7 +17,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -100,7 +100,7 @@ def setup_es_form_index():
 
 def _setup_es_index(index_info):
     with trap_extra_setup(ConnectionError):
-        elasticsearch_instance = get_es_new()
+        elasticsearch_instance = get_es_instance()
         initialize_index_and_mapping(elasticsearch_instance, index_info)
 
 

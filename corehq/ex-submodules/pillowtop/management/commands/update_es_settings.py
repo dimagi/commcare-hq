@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.pillows.utils import get_all_expected_es_indices
 
 
@@ -21,7 +21,7 @@ class Command(BaseCommand):
         es_indices = list(get_all_expected_es_indices())
 
         to_update = []
-        es = get_es_new()
+        es = get_es_instance()
 
         for index_info in es_indices:
             old_settings = es.indices.get_settings(index=index_info.index)

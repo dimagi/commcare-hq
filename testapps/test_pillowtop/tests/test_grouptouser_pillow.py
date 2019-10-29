@@ -11,7 +11,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_instance, send_to_elasticsearch
 from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_pillow, \
     remove_group_from_users
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
@@ -28,7 +28,7 @@ class GroupToUserPillowTest(SimpleTestCase):
         super(GroupToUserPillowTest, self).setUp()
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(USER_INDEX)
-        self.es_client = get_es_new()
+        self.es_client = get_es_instance()
         initialize_index_and_mapping(self.es_client, USER_INDEX_INFO)
         self.user_id = 'user1'
         _create_es_user(self.es_client, self.user_id, self.domain)
@@ -142,7 +142,7 @@ class GroupToUserPillowDbTest(TestCase):
 
     def setUp(self):
         ensure_index_deleted(USER_INDEX)
-        self.es_client = get_es_new()
+        self.es_client = get_es_instance()
         initialize_index_and_mapping(self.es_client, USER_INDEX_INFO)
 
     def tearDown(self):
@@ -204,7 +204,7 @@ class GroupsToUserReindexerTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(GroupsToUserReindexerTest, cls).setUpClass()
-        cls.es = get_es_new()
+        cls.es = get_es_instance()
         ensure_index_deleted(USER_INDEX)
         initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
 

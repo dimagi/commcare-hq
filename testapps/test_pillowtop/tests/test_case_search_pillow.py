@@ -15,7 +15,7 @@ from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.apps.es import CaseSearchES
 from corehq.apps.userreports.tests.utils import doc_to_change
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case import get_case_pillow
 from corehq.pillows.case_search import (
@@ -39,12 +39,12 @@ class CaseSearchPillowTest(TestCase):
     def setUp(self):
         super(CaseSearchPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
-        self.elasticsearch = get_es_new()
+        self.elasticsearch = get_es_instance()
         self.pillow = get_case_pillow(skip_ucr=True)
         ensure_index_deleted(CASE_SEARCH_INDEX)
 
         # Bootstrap ES
-        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
+        initialize_index_and_mapping(get_es_instance(), CASE_SEARCH_INDEX_INFO)
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)

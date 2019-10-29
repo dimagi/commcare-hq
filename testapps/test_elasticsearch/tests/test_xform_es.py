@@ -5,7 +5,7 @@ from django.test import SimpleTestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es import FormES
-from corehq.elastic import get_es_new, send_to_elasticsearch, doc_exists_in_es
+from corehq.elastic import get_es_instance, send_to_elasticsearch, doc_exists_in_es
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
@@ -22,7 +22,7 @@ class XFormESTestCase(SimpleTestCase):
         cls.now = datetime.datetime.utcnow()
         cls.forms = []
         with trap_extra_setup(ConnectionError):
-            cls.es = get_es_new()
+            cls.es = get_es_instance()
             initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
 
     def setUp(self):

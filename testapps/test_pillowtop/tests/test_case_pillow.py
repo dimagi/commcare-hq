@@ -9,7 +9,7 @@ from pillow_retry.models import PillowError
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.es import CaseES, CaseSearchES
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -37,7 +37,7 @@ class CasePillowTest(TestCase):
         self.process_case_changes.add_pillow('case-pillow', {'skip_ucr': True})
         FormProcessorTestUtils.delete_all_cases()
         with trap_extra_setup(ConnectionError):
-            self.elasticsearch = get_es_new()
+            self.elasticsearch = get_es_instance()
             initialize_index_and_mapping(self.elasticsearch, CASE_INDEX_INFO)
             initialize_index_and_mapping(self.elasticsearch, CASE_SEARCH_INDEX_INFO)
 

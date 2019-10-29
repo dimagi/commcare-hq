@@ -25,7 +25,7 @@ from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import ES_DEFAULT_INSTANCE, get_es_new
+from corehq.elastic import ES_DEFAULT_INSTANCE, get_es_instance
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case_search import CaseSearchReindexerFactory
@@ -280,7 +280,7 @@ class CaseClaimEndpointTests(TestCase):
     def setUp(self):
         self.domain = create_domain(DOMAIN)
         self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD)
-        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
+        initialize_index_and_mapping(get_es_instance(), CASE_SEARCH_INDEX_INFO)
         CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
         delete_all_cases()
         self.case_id = uuid4().hex
@@ -295,7 +295,7 @@ class CaseClaimEndpointTests(TestCase):
             update={'opened_by': OWNER_ID},
         ).as_xml()], {'domain': DOMAIN})
         CaseSearchReindexerFactory(domain=DOMAIN).build().reindex()
-        es = get_es_new()
+        es = get_es_instance()
         es.indices.refresh(CASE_SEARCH_INDEX)
 
     def tearDown(self):

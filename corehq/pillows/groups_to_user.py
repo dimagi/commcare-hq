@@ -2,7 +2,7 @@ from collections import namedtuple
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
-from corehq.elastic import stream_es_query, get_es_new, ES_META
+from corehq.elastic import stream_es_query, get_es_instance, ES_META
 from corehq.apps.es import UserES
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.group import get_group_to_elasticsearch_processor
@@ -16,7 +16,7 @@ from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer, Reindex
 class GroupsToUsersProcessor(PillowProcessor):
 
     def __init__(self):
-        self._es = get_es_new()
+        self._es = get_es_instance()
 
     def process_change(self, change):
         if change.deleted:
@@ -84,7 +84,7 @@ def remove_group_from_users(group_doc, es_client):
 
 def update_es_user_with_groups(group_doc, es_client=None):
     if not es_client:
-        es_client = get_es_new()
+        es_client = get_es_instance()
 
     for user_source in stream_user_sources(group_doc.get("users", [])):
         if group_doc["name"] not in user_source.group_names or group_doc["_id"] not in user_source.group_ids:

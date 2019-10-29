@@ -4,7 +4,7 @@ from django.test.testcases import SimpleTestCase, TestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es import FormES
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_instance
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
@@ -31,7 +31,7 @@ class XFormPillowTest(TestCase):
         super(XFormPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
         with trap_extra_setup(ConnectionError):
-            self.elasticsearch = get_es_new()
+            self.elasticsearch = get_es_instance()
             initialize_index_and_mapping(self.elasticsearch, XFORM_INDEX_INFO)
         delete_es_index(XFORM_INDEX_INFO.index)
 
