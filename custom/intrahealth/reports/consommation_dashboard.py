@@ -19,7 +19,7 @@ from custom.intrahealth.utils import PNAMultiBarChart
 class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     name = "Consommation par Produit"
     slug = 'consommation_par_produit_report'
-    comment = 'Consommation de la gamme par produit'
+    comment = 'Nombre de produit consommés'
     default_rows = 10
     exportable = True
 
@@ -122,7 +122,6 @@ class ConsommationReport(CustomProjectReport, DatespanMixin, ProjectReportParame
         return headers
 
     @property
-    @memoized
     def clean_rows(self):
         return ConsommationPerProductData(config=self.config).rows
 

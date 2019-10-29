@@ -16,3 +16,7 @@ class ExportFormValidationException(Exception):
 
 class ExportAsyncException(Exception):
     pass
+
+
+class ExportODataDuplicateLabelException(Exception):
+    pass

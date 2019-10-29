@@ -88,7 +88,6 @@ class RecapPassageTwoReport(YeksiNaaMonthYearMixin, MultiReport):
         context = [normalize_context(c) for c in context]
         return context
 
-
     def get_report_context(self, table_context):
         self.data_source = table_context
         if self.needs_filters:
