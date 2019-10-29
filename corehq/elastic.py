@@ -90,37 +90,16 @@ ES_KWARGS = {
 }
 
 
-def get_es_new():
+@memoized
+def get_es_instance(es_instance_alias=ES_DEFAULT_INSTANCE):
     """
     Get a handle to the configured elastic search DB.
     Returns an elasticsearch.Elasticsearch instance.
+
     """
-    return _get_es()
-
-
-def get_es_export():
-    """
-    Get a handle to the configured elastic search DB settings geared towards exports.
-    Returns an elasticsearch.Elasticsearch instance.
-    """
-    return _get_es(preset=ES_EXPORT_INSTANCE)
-
-
-@memoized
-def _get_es(preset=ES_DEFAULT_INSTANCE):
+    assert es_instance_alias in ES_KWARGS
     hosts = _es_hosts()
-    return Elasticsearch(hosts, **ES_KWARGS[preset])
-
-
-ES_INSTANCES = {
-    ES_DEFAULT_INSTANCE: get_es_new,
-    ES_EXPORT_INSTANCE: get_es_export,
-}
-
-
-def get_es_instance(es_instance_alias=ES_DEFAULT_INSTANCE):
-    assert es_instance_alias in ES_INSTANCES
-    return ES_INSTANCES[es_instance_alias]()
+    return Elasticsearch(hosts, **ES_KWARGS[es_instance_alias])
 
 
 def doc_exists_in_es(index_info, doc_id_or_dict):
