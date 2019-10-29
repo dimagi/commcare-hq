@@ -102,6 +102,11 @@ def get_es_instance(es_instance_alias=ES_DEFAULT_INSTANCE):
     return Elasticsearch(hosts, **ES_KWARGS[es_instance_alias])
 
 
+@memoized
+def get_es_interface(es_instance_alias=ES_DEFAULT_INSTANCE):
+    return ElasticsearchInterface(get_es_instance(es_instance_alias))
+
+
 def doc_exists_in_es(index_info, doc_id_or_dict):
     """
     Check if a document exists, by ID or the whole document.
@@ -183,13 +188,12 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
         if not settings.DEBUG:
             raise Exception("You can only specify an ES env in DEBUG mode")
         es_host = settings.ELASTICSEARCH_DEBUG_HOSTS[debug_host]
-        es_instance = Elasticsearch([{'host': es_host,
-                                      'port': settings.ELASTICSEARCH_PORT}],
-                                    timeout=3, max_retries=0)
+        es_interface = ElasticsearchInterface(
+            Elasticsearch([{'host': es_host, 'port': settings.ELASTICSEARCH_PORT}],
+                          timeout=3, max_retries=0)
+        )
     else:
-        es_instance = get_es_instance(es_instance_alias)
-
-    es_interface = ElasticsearchInterface(es_instance)
+        es_interface = get_es_interface(es_instance_alias)
 
     try:
         es_meta = ES_META[index_name]
@@ -211,7 +215,7 @@ def mget_query(index_name, ids):
     if not ids:
         return []
 
-    es_interface = ElasticsearchInterface(get_es_instance())
+    es_interface = get_es_interface()
     es_meta = ES_META[index_name]
     try:
         return es_interface.get_bulk_docs(es_meta.index, es_meta.type, ids)
@@ -397,7 +401,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
         return q
 
     es_index = es_index or 'domains'
-    es_interface = ElasticsearchInterface(get_es_instance())
+    es_interface = get_es_interface()
     meta = ES_META[es_index]
 
     try:

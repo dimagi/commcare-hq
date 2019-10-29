@@ -6,13 +6,12 @@ from django.conf import settings
 from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
-from corehq.util.es.interface import ElasticsearchInterface
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_error
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.history import get_recent_changes
-from corehq.elastic import get_es_instance
+from corehq.elastic import get_es_instance, get_es_interface
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
@@ -137,7 +136,7 @@ def _get_latest_doc_from_index(es_index, sort_field):
         "sort": {sort_field: "desc"},
         "size": 1
     }
-    es_interface = ElasticsearchInterface(get_es_instance())
+    es_interface = get_es_interface()
 
     try:
         res = es_interface.search(es_index, body=recent_query)
@@ -159,7 +158,7 @@ def _check_es_rev(index, doc_id, couch_revs):
     doc_id: id to query in ES
     couch_rev: target couch_rev that you want to match
     """
-    es_interface = ElasticsearchInterface(get_es_instance())
+    es_interface = get_es_interface()
     doc_id_query = {
         "filter": {
             "ids": {"values": [doc_id]}
