@@ -6,6 +6,7 @@ import dateutil
 from django.core.management.base import BaseCommand, CommandError
 from datetime import datetime
 
+from corehq.form_processor.backends.sql.dbaccessors import state_to_doc_type
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
@@ -72,8 +73,8 @@ class Command(BaseCommand):
                 for case_id, case_type, es_date, primary_date in get_server_modified_on_for_domain(run_config):
                     print(f"{case_id},CommCareCase,{case_type},{es_date},{primary_date}")
             elif data_model.lower() == 'form':
-                for form_id, xmlns, es_date, primary_date in get_stale_form_data(run_config):
-                    print(f"{form_id},XFormInstance,{xmlns},{es_date},{primary_date}")
+                for form_id, doc_type, xmlns, es_date, primary_date in get_stale_form_data(run_config):
+                    print(f"{form_id},{doc_type},{xmlns},{es_date},{primary_date}")
             else:
                 raise CommandError('Only valid options for data model are "case" and "form"')
 
@@ -165,11 +166,12 @@ def _get_stale_form_data_for_sql_backend(run_config):
                                        length=length, stream=sys.stderr):
             form_ids = [val[0] for val in chunk]
             es_modified_on_by_ids = _get_es_modified_dates_for_forms(run_config.domain, form_ids)
-            for form_id, xmlns, sql_modified_on in chunk:
+            for form_id, state, xmlns, sql_modified_on in chunk:
+                doc_type = state_to_doc_type.get(state, 'XFormInstance')
                 sql_modified_on_str = f'{sql_modified_on.isoformat()}Z'
                 es_modified_on = es_modified_on_by_ids.get(form_id)
                 if not es_modified_on or (es_modified_on < sql_modified_on_str):
-                    yield (form_id, xmlns, es_modified_on, sql_modified_on_str)
+                    yield (form_id, doc_type, xmlns, es_modified_on, sql_modified_on_str)
 
 
 def _get_sql_form_data_for_db(db, run_config):
@@ -177,7 +179,7 @@ def _get_sql_form_data_for_db(db, run_config):
         domain=run_config.domain,
         received_on__gte=run_config.start_date,
         received_on__lte=run_config.end_date,
-    ).values_list('form_id', 'xmlns', 'received_on')
+    ).values_list('form_id', 'state', 'xmlns', 'received_on')
 
 
 def _get_es_modified_dates_for_forms(domain, form_ids):
