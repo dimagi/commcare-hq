@@ -24,7 +24,8 @@ def check_es_cluster_health():
     The color state of the cluster health is just a simple indicator for how a cluster is running
     It'll mainly be useful for finding out if shards are in good/bad state (red)
 
-    There are better realtime tools for monitoring ES clusters which should probably be looked at. specifically paramedic or bigdesk
+    There are better realtime tools for monitoring ES clusters
+    which should probably be looked at: specifically paramedic or bigdesk.
     """
     ret = {}
     es = get_es_new()  # assign to variable to avoid weak reference error
