@@ -135,7 +135,6 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
         index=es_meta.index,
         doc_type=es_meta.type,
         doc_id=doc_id,
-        es_getter=get_es_instance,
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
                                   send_to_elasticsearch.__name__, index_name),
         data=doc,

@@ -10,7 +10,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.domain.calculations import all_domain_stats, calced_props, sms
 from corehq.apps.domain.models import Domain
-from corehq.elastic import get_es_instance, refresh_elasticsearch_index
+from corehq.elastic import get_es_instance, refresh_elasticsearch_index, get_es_interface
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -48,7 +48,6 @@ class DomainCalculatedPropertiesTest(TestCase):
             index=SMS_INDEX_INFO.index,
             doc_type=SMS_INDEX_INFO.type,
             doc_id=sms_doc['_id'],
-            es_getter=get_es_instance,
             name='ElasticProcessor',
             data=sms_doc,
             update=False,

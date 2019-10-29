@@ -80,7 +80,7 @@ class ElasticProcessor(PillowProcessor):
                 index=self.index_info.index,
                 doc_type=self.index_info.type,
                 doc_id=change.id,
-                es_getter=self.es_getter,
+                es_interface=ElasticsearchInterface(self.elasticsearch),
                 name='ElasticProcessor',
                 data=doc_ready_to_save,
                 update=self._doc_exists(change.id),
@@ -131,9 +131,9 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
         return retry_changes, error_changes
 
 
-def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None,
-                          retries=MAX_RETRIES, propagate_failure=settings.UNIT_TESTING,
-                          update=False, delete=False, es_merge_update=False):
+def send_to_elasticsearch(index, doc_type, doc_id, name, data=None, retries=MAX_RETRIES,
+                          propagate_failure=settings.UNIT_TESTING, update=False, delete=False,
+                          es_merge_update=False, es_interface=None):
     """
     More fault tolerant es.put method
     kwargs:
@@ -141,9 +141,12 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None,
             which merges existing ES doc and current update. If this is set to False, the doc will be replaced
 
     """
+    from corehq.elastic import get_es_interface
+
+    es_interface = es_interface or get_es_interface()
+
     data = data if data is not None else {}
     current_tries = 0
-    es_interface = ElasticsearchInterface(es_getter())
     while current_tries < retries:
         try:
             if delete:

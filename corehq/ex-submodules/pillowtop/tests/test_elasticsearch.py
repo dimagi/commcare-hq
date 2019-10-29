@@ -5,7 +5,7 @@ from django.conf import settings
 from django.test import SimpleTestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
-from corehq.elastic import get_es_instance
+from corehq.elastic import get_es_instance, get_es_interface
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 from pillowtop.es_utils import (
@@ -84,7 +84,7 @@ class ElasticPillowTest(SimpleTestCase):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        send_to_elasticsearch(self.index, TEST_INDEX_INFO.type, doc_id, get_es_instance, 'test', doc)
+        send_to_elasticsearch(self.index, TEST_INDEX_INFO.type, doc_id, name='test', data=doc)
         self.assertEqual(1, get_doc_count(self.es, self.index))
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
         es_doc = self.es_interface.get_doc(TEST_INDEX_INFO.alias, TEST_INDEX_INFO.type, doc_id)
@@ -169,7 +169,7 @@ class TestSendToElasticsearch(SimpleTestCase):
         self._send_to_es_and_check(doc)
 
     def _send_to_es_and_check(self, doc, update=False, es_merge_update=False,
-                              delete=False, esgetter=None):
+                              delete=False, es_interface=None):
         if update and es_merge_update:
             old_doc = self.es_interface.get_doc(self.index, TEST_INDEX_INFO.type, doc['_id'])
 
@@ -177,7 +177,7 @@ class TestSendToElasticsearch(SimpleTestCase):
             index=self.index,
             doc_type=TEST_INDEX_INFO.type,
             doc_id=doc['_id'],
-            es_getter=esgetter or get_es_instance,
+            es_interface=es_interface or get_es_interface(),
             name='test',
             data=doc,
             update=update,
@@ -231,20 +231,20 @@ class TestSendToElasticsearch(SimpleTestCase):
         self._send_to_es_and_check(doc, delete=True)
 
     def test_connection_failure(self):
-        def _bad_es_getter():
+        def _bad_es_interface():
             from corehq.util.es.elasticsearch import Elasticsearch
-            return Elasticsearch(
+            return ElasticsearchInterface(Elasticsearch(
                 [{
                     'host': settings.ELASTICSEARCH_HOST,
                     'port': settings.ELASTICSEARCH_PORT - 2,  # bad port
                 }],
                 timeout=0.1,
-            )
+            ))
 
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
 
         with self.assertRaises(PillowtopIndexingError):
-            self._send_to_es_and_check(doc, esgetter=_bad_es_getter)
+            self._send_to_es_and_check(doc, es_interface=_bad_es_interface())
 
     def test_not_found(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
