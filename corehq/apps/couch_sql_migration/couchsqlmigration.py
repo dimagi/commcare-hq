@@ -654,11 +654,12 @@ def _get_case_and_ledger_updates(domain, sql_form):
         load_src="couchsqlmigration",
     ) as case_db:
         touched_cases = interface.get_cases_from_forms(case_db, xforms)
-        extensions_to_close = get_all_extensions_to_close(domain, list(touched_cases.values()))
+        cases = [case_meta.case for case_meta in touched_cases.values()]
+        extensions_to_close = get_all_extensions_to_close(domain, cases)
         case_result = CaseProcessingResult(
             domain,
             [update.case for update in touched_cases.values()],
-            [],  # ignore dirtiness_flags,
+            [],  # ignore dirtiness_flags
             extensions_to_close
         )
         for case in case_result.cases:

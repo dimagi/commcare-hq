@@ -3,7 +3,7 @@ import uuid
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from casexml.apps.case.xform import get_extensions_to_close
+from casexml.apps.case.xform import get_all_extensions_to_close
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
@@ -140,19 +140,19 @@ class AutoCloseExtensionsTest(TestCase):
         """should return empty if case is not a host, otherwise should return full chain"""
         created_cases = self._create_extension_chain()
         # host open, should be empty
-        no_cases = get_extensions_to_close(created_cases[-1], self.domain)
+        no_cases = get_all_extensions_to_close(self.domain, [created_cases[-1]])
         self.assertEqual(set(), no_cases)
 
         # don't actually close the cases otherwise they will get excluded
         created_cases[-1].closed = True
 
         # top level host closed, should get full chain
-        full_chain = get_extensions_to_close(created_cases[-1], self.domain)
+        full_chain = get_all_extensions_to_close(self.domain, [created_cases[-1]])
         self.assertEqual(set(self.extension_ids), full_chain)
 
         # extension (also a host), should get it's chain
         created_cases[2].closed = True
-        no_cases = get_extensions_to_close(created_cases[2], self.domain)
+        no_cases = get_all_extensions_to_close(self.domain, [created_cases[2]])
         self.assertEqual(set(self.extension_ids[1:3]), no_cases)
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
@@ -160,18 +160,18 @@ class AutoCloseExtensionsTest(TestCase):
         """should still return extension chain if outgoing index is a child index"""
         created_cases = self._create_host_is_subcase_chain()
         # host open, should be empty
-        no_cases = get_extensions_to_close(created_cases[-1], self.domain)
+        no_cases = get_all_extensions_to_close(self.domain, [created_cases[-1]])
         self.assertEqual(set(), no_cases)
 
         # close parent, shouldn't get extensions
         # don't actually close the cases otherwise they will get excluded
         created_cases[-1].closed = True
-        no_cases = get_extensions_to_close(created_cases[-1], self.domain)
+        no_cases = get_all_extensions_to_close(self.domain, [created_cases[-1]])
         self.assertEqual(set(), no_cases)
 
         # close host that is also a child
         created_cases[-2].closed = True
-        full_chain = get_extensions_to_close(created_cases[-2], self.domain)
+        full_chain = get_all_extensions_to_close(self.domain, [created_cases[-2]])
         self.assertEqual(set(self.extension_ids[0:2]), full_chain)
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
