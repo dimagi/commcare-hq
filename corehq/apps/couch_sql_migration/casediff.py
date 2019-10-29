@@ -469,7 +469,7 @@ class CaseDiffProcess(object):
             log.info("stopping case diff process")
         self.request_status()
         self.calls.put((TERMINATE, is_error))
-        self.status_logger.join(timeout=30)
+        self.status_logger.join()
         self.process.join(timeout=30)
         self.statedb.clone_casediff_data_from(self.state_path)
         log.info("casediff state copied to %s", self.statedb)
