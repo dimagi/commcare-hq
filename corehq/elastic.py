@@ -72,35 +72,45 @@ def _es_hosts():
     return hosts
 
 
-@memoized
-def get_es_new():
-    """
-    Get a handle to the configured elastic search DB.
-    Returns an elasticsearch.Elasticsearch instance.
-    """
-    hosts = _es_hosts()
-    return Elasticsearch(hosts, timeout=30, serializer=ESJSONSerializer())
+ES_DEFAULT_INSTANCE = 'default'
+ES_EXPORT_INSTANCE = 'export'
 
 
-@memoized
-def get_es_export():
-    """
-    Get a handle to the configured elastic search DB with settings geared towards exports.
-    Returns an elasticsearch.Elasticsearch instance.
-    """
-    hosts = _es_hosts()
-    return Elasticsearch(
-        hosts,
+ES_KWARGS = {
+    ES_DEFAULT_INSTANCE: dict(
+        timeout=30, serializer=ESJSONSerializer()
+    ),
+    ES_EXPORT_INSTANCE: dict(
         retry_on_timeout=True,
         max_retries=3,
         # Timeout in seconds for an elasticsearch query
         timeout=300,
         serializer=ESJSONSerializer(),
-    )
+    ),
+}
 
 
-ES_DEFAULT_INSTANCE = 'default'
-ES_EXPORT_INSTANCE = 'export'
+def get_es_new():
+    """
+    Get a handle to the configured elastic search DB.
+    Returns an elasticsearch.Elasticsearch instance.
+    """
+    return _get_es()
+
+
+def get_es_export():
+    """
+    Get a handle to the configured elastic search DB settings geared towards exports.
+    Returns an elasticsearch.Elasticsearch instance.
+    """
+    return _get_es(preset=ES_EXPORT_INSTANCE)
+
+
+@memoized
+def _get_es(preset=ES_DEFAULT_INSTANCE):
+    hosts = _es_hosts()
+    return Elasticsearch(hosts, **ES_KWARGS[preset])
+
 
 ES_INSTANCES = {
     ES_DEFAULT_INSTANCE: get_es_new,
