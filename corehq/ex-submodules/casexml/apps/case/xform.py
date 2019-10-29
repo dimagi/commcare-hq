@@ -32,13 +32,10 @@ class CaseProcessingResult(object):
     Lightweight class used to collect results of case processing
     """
 
-    def __init__(self, domain, cases, dirtiness_flags, extensions_to_close=None):
+    def __init__(self, domain, cases, dirtiness_flags):
         self.domain = domain
         self.cases = cases
         self.dirtiness_flags = dirtiness_flags
-        if extensions_to_close is None:
-            extensions_to_close = set()
-        self.extensions_to_close = extensions_to_close
 
     def get_clean_owner_ids(self):
         dirty_flags = self.get_flags_to_save()
@@ -52,7 +49,8 @@ class CaseProcessingResult(object):
 
     def close_extensions(self, case_db, device_id):
         from casexml.apps.case.cleanup import close_cases
-        extensions_to_close = case_db.filter_closed_extensions(list(self.extensions_to_close))
+        extensions_to_close = get_all_extensions_to_close(case_db.domain, self.cases)
+        extensions_to_close = case_db.filter_closed_extensions(list(extensions_to_close))
         if extensions_to_close:
             return close_cases(
                 extensions_to_close,
@@ -148,13 +146,10 @@ def _get_or_update_cases(xforms, case_db):
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
     _validate_indices(case_db, [case_update_meta.case for case_update_meta in touched_cases.values()])
     dirtiness_flags = _get_all_dirtiness_flags_from_cases(domain, case_db, touched_cases)
-    cases = [update.case for update in touched_cases.values()]
-    extensions_to_close = get_all_extensions_to_close(domain, cases)
     return CaseProcessingResult(
         domain,
         [update.case for update in touched_cases.values()],
         dirtiness_flags,
-        extensions_to_close
     )
 
 
