@@ -47,19 +47,6 @@ class CaseProcessingResult(object):
     def get_flags_to_save(self):
         return {f.owner_id: f.case_id for f in self.dirtiness_flags}
 
-    def close_extensions(self, case_db, device_id):
-        from casexml.apps.case.cleanup import close_cases
-        extensions_to_close = get_all_extensions_to_close(case_db.domain, self.cases)
-        extensions_to_close = case_db.filter_closed_extensions(list(extensions_to_close))
-        if extensions_to_close:
-            return close_cases(
-                extensions_to_close,
-                self.domain,
-                SYSTEM_USER_ID,
-                device_id,
-                case_db,
-            )
-
     def commit_dirtiness_flags(self):
         """
         Updates any dirtiness flags in the database.
@@ -264,6 +251,20 @@ def _is_change_of_ownership(previous_owner_id, next_owner_id):
         and previous_owner_id != UNOWNED_EXTENSION_OWNER_ID
         and previous_owner_id != next_owner_id
     )
+
+
+def close_extension_cases(case_db, cases, device_id):
+    from casexml.apps.case.cleanup import close_cases
+    extensions_to_close = get_all_extensions_to_close(case_db.domain, cases)
+    extensions_to_close = case_db.filter_closed_extensions(list(extensions_to_close))
+    if extensions_to_close:
+        return close_cases(
+            extensions_to_close,
+            case_db.domain,
+            SYSTEM_USER_ID,
+            device_id,
+            case_db,
+        )
 
 
 def get_all_extensions_to_close(domain, cases):
