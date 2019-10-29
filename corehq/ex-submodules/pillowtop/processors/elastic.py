@@ -42,15 +42,11 @@ MAX_RETRIES = 4  # exponential factor threshold for alerts
 
 class ElasticProcessor(PillowProcessor):
 
-    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
+    def __init__(self, es_interface, index_info, doc_prep_fn=None, doc_filter_fn=None):
         self.doc_filter_fn = doc_filter_fn or noop_filter
-        self.elasticsearch = elasticsearch
-        self.es_interface = ElasticsearchInterface(self.elasticsearch)
+        self.es_interface = es_interface
         self.index_info = index_info
         self.doc_transform_fn = doc_prep_fn or identity
-
-    def es_getter(self):
-        return self.elasticsearch
 
     def process_change(self, change):
         if change.deleted and change.id:
@@ -80,18 +76,18 @@ class ElasticProcessor(PillowProcessor):
                 index=self.index_info.index,
                 doc_type=self.index_info.type,
                 doc_id=change.id,
-                es_interface=ElasticsearchInterface(self.elasticsearch),
+                es_interface=self.es_interface,
                 name='ElasticProcessor',
                 data=doc_ready_to_save,
                 update=self._doc_exists(change.id),
             )
 
     def _doc_exists(self, doc_id):
-        return self.elasticsearch.exists(self.index_info.index, self.index_info.type, doc_id)
+        return self.es_interface.doc_exists(self.index_info.index, self.index_info.type, doc_id)
 
     def _delete_doc_if_exists(self, doc_id):
         if self._doc_exists(doc_id):
-            self.elasticsearch.delete(self.index_info.index, self.index_info.type, doc_id)
+            self.es_interface.delete_doc(self.index_info.index, self.index_info.type, doc_id)
 
     def _datadog_timing(self, step):
         return datadog_bucket_timer('commcare.change_feed.processor.timing', tags=[

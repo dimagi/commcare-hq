@@ -106,7 +106,7 @@ class TestBulkDocOperations(TestCase):
         )
 
     def test_process_changes_chunk(self):
-        processor = BulkElasticProcessor(self.es, TEST_INDEX_INFO)
+        processor = BulkElasticProcessor(self.es_interface, TEST_INDEX_INFO)
 
         changes = self._changes_from_ids(self.case_ids)
 

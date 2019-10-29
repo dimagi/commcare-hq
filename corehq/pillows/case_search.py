@@ -19,7 +19,7 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaCheckpointEventHandler,
 )
 from corehq.apps.es import CaseSearchES
-from corehq.elastic import get_es_instance
+from corehq.elastic import get_es_instance, get_es_interface
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
@@ -112,7 +112,7 @@ class CaseSearchPillowProcessor(ElasticProcessor):
 
 def get_case_search_processor():
     return CaseSearchPillowProcessor(
-        elasticsearch=get_es_instance(),
+        es_interface=get_es_interface(),
         index_info=CASE_SEARCH_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
@@ -182,7 +182,7 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
     assert pillow_id == 'CaseSearchToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_SEARCH_INDEX_INFO, topics.CASE_TOPICS)
     case_processor = CaseSearchPillowProcessor(
-        elasticsearch=get_es_instance(),
+        es_interface=get_es_interface(),
         index_info=CASE_SEARCH_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )

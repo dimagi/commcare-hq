@@ -51,6 +51,9 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         # Use the index API request parameters.
         return {key: value for key, value in doc.items() if key != '_id'}
 
+    def doc_exists(self, index, doc_type, doc_id):
+        return self.es.exists(index, doc_type, doc_id)
+
     def delete_doc(self, index, doc_type, doc_id):
         self.es.delete(index, doc_type, doc_id)
 

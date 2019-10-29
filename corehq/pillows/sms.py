@@ -1,7 +1,7 @@
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.sms.change_publishers import change_meta_from_sms
-from corehq.elastic import get_es_instance
+from corehq.elastic import get_es_instance, get_es_interface
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
@@ -17,7 +17,7 @@ def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0,
     assert pillow_id == 'SqlSMSPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, SMS_INDEX_INFO, [topics.SMS])
     processor = BulkElasticProcessor(
-        elasticsearch=get_es_instance(),
+        es_interface=get_es_interface(),
         index_info=SMS_INDEX_INFO,
         doc_prep_fn=lambda x: x
     )

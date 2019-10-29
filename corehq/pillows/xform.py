@@ -14,7 +14,7 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpoi
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
-from corehq.elastic import get_es_instance
+from corehq.elastic import get_es_instance, get_es_interface
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -143,7 +143,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
     assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, FORM_TOPICS)
     form_processor = ElasticProcessor(
-        elasticsearch=get_es_instance(),
+        es_interface=get_es_interface(),
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
@@ -184,7 +184,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         run_migrations=(process_num == 0),  # only first process runs migrations
     )
     xform_to_es_processor = BulkElasticProcessor(
-        elasticsearch=get_es_instance(),
+        es_interface=get_es_interface(),
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
@@ -207,7 +207,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         processors.append(form_meta_processor)
     if not settings.ENTERPRISE_MODE:
         xform_to_report_es_processor = BulkElasticProcessor(
-            elasticsearch=get_es_instance(),
+            es_interface=get_es_interface(),
             index_info=REPORT_XFORM_INDEX_INFO,
             doc_prep_fn=transform_xform_for_report_forms_index,
             doc_filter_fn=report_xform_filter

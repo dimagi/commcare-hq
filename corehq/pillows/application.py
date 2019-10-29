@@ -4,7 +4,7 @@ from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplica
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.elastic import get_es_instance
+from corehq.elastic import get_es_instance, get_es_interface
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
@@ -25,7 +25,7 @@ def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'
     assert pillow_id == 'ApplicationToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, APP_INDEX_INFO, [topics.APP])
     app_processor = ElasticProcessor(
-        elasticsearch=get_es_instance(),
+        es_interface=get_es_interface(),
         index_info=APP_INDEX_INFO,
         doc_prep_fn=transform_app_for_es
     )

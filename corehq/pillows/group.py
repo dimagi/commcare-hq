@@ -1,7 +1,7 @@
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
-from corehq.elastic import get_es_instance
+from corehq.elastic import get_es_instance, get_es_interface
 
 from .mappings.group_mapping import GROUP_INDEX_INFO
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
@@ -16,7 +16,7 @@ def get_group_to_elasticsearch_processor():
     This processor adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
     return ElasticProcessor(
-        elasticsearch=get_es_instance(),
+        es_interface=get_es_interface(),
         index_info=GROUP_INDEX_INFO,
     )
 
