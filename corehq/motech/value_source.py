@@ -75,9 +75,10 @@ class ValueSource(DocumentSchema):
                                choices=DIRECTIONS)
 
     def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
         return (
-            isinstance(other, self.__class__)
-            and self.doc_type == other.doc_type
+            self.doc_type == other.doc_type
             and self.external_data_type == other.external_data_type
             and self.commcare_data_type == other.commcare_data_type
             and self.direction == other.direction
