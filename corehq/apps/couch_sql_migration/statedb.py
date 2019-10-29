@@ -19,6 +19,7 @@ from sqlalchemy import (
     func,
     or_,
 )
+from sqlalchemy.exc import IntegrityError
 
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import json_diff
@@ -199,9 +200,13 @@ class StateDB(DiffDB):
             yield form_id
 
     def add_no_action_case_form(self, form_id):
-        with self.session() as session:
-            session.add(NoActionCaseForm(id=form_id))
-        self.get_no_action_case_forms.reset_cache(self)
+        try:
+            with self.session() as session:
+                session.add(NoActionCaseForm(id=form_id))
+        except IntegrityError:
+            pass
+        else:
+            self.get_no_action_case_forms.reset_cache(self)
 
     @memoized
     def get_no_action_case_forms(self):
