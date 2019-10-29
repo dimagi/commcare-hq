@@ -1,5 +1,5 @@
-
 import inspect
+import sys
 from collections import namedtuple
 
 import dateutil
@@ -9,6 +9,7 @@ from datetime import datetime
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
 
 from casexml.apps.case.models import CommCareCase
@@ -158,7 +159,10 @@ def _get_stale_form_data_for_sql_backend(run_config):
     for db in get_db_aliases_for_partitioned_query():
         matching_records_for_db = _get_sql_form_data_for_db(db, run_config)
         chunk_size = 1000
-        for chunk in chunked(matching_records_for_db, chunk_size):
+        length = len(matching_records_for_db) // chunk_size
+        chunk_iter = chunked(matching_records_for_db, chunk_size)
+        for chunk in with_progress_bar(chunk_iter, prefix=f'Processing DB {db}',
+                                       length=length, stream=sys.stderr):
             form_ids = [val[0] for val in chunk]
             es_modified_on_by_ids = _get_es_modified_dates_for_forms(run_config.domain, form_ids)
             for form_id, xmlns, sql_modified_on in chunk:
