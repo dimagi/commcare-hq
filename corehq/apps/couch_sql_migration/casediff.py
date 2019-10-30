@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 
 STATUS_INTERVAL = 300  # 5 minutes
 MAX_FORMS_PER_MEMORIZED_CASE = 20
-MAX_FORMS_PER_DIFF = 500
+MAX_FORMS_PER_DIFF = 1000
 
 
 class CaseDiffQueue(object):
@@ -64,7 +64,7 @@ class CaseDiffQueue(object):
     """
 
     BATCH_SIZE = 100
-    MAX_DIFF_WORKERS = 20
+    MAX_DIFF_WORKERS = 10
     MAX_MEMORIZED_CASES = 4096
 
     def __init__(self, statedb, status_interval=STATUS_INTERVAL):
