@@ -1,5 +1,9 @@
+from datetime import datetime
+
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
+from django.contrib import messages
+from django.http import HttpResponseRedirect
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.crispy import FormActions
@@ -8,9 +12,11 @@ from corehq.apps.hqwebapp.crispy import FormActions
 from django import forms
 from django.utils.decorators import method_decorator
 
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.hqadmin.views import BaseAdminSectionView
 from django.utils.translation import ugettext_lazy as _
+
+from corehq.util import reverse
 
 
 @method_decorator(require_superuser, name='dispatch')
@@ -38,6 +44,32 @@ class TombstoneManagement(BaseAdminSectionView):
                 project = Domain.get_by_name(domain)
                 self.domain_results.append((domain, project))
         return self.get(request, *args, **kwargs)
+
+
+@require_superuser
+def create_tombstone(request):
+    domain = request.POST.get('domain')
+    project = Domain.get_by_name(domain)
+    if project:
+        messages.error(
+            request,
+            "Could not create tombstone for {} because that domain already exists"
+            .format(domain))
+    else:
+        project = Domain(
+            name=domain,
+            hr_name='{} (Created as a tombstone)'.format(domain),
+            is_active=False,
+            date_created=datetime.utcnow(),
+            creating_user=request.couch_user.username,
+            secure_submissions=True,
+            use_sql_backend=True,
+            first_domain_for_user=False,
+            is_tombstone=True,
+        )
+        project.save()
+        messages.success(request, "Successfully created a tombstone for {}".format(domain))
+    return HttpResponseRedirect(reverse(TombstoneManagement.urlname))
 
 
 class TombstoneManagementForm(forms.Form):
