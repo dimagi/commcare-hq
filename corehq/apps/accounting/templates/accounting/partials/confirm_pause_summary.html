@@ -1,0 +1,67 @@
+{% load i18n %}
+
+<p class="lead text-center">
+  {% blocktrans %}
+    Continuing will pause your subscription.
+  {% endblocktrans %}
+</p>
+
+<p>
+  <strong>
+    {% blocktrans %}
+      What happens after your subscription gets paused?
+    {% endblocktrans %}
+  </strong>
+</p>
+
+<ul>
+  <li>
+    {% blocktrans %}
+      You will lose access to your project space, but you will be able to
+      re-subscribe any time in the future.
+    {% endblocktrans %}
+  </li>
+  <li>
+    {% blocktrans %}
+      You will no longer be billed. However, based on your payment method
+      you may have an open invoice for the service provided this month.
+    {% endblocktrans %}
+  </li>
+  <li>
+    {% blocktrans %}
+      After you re-subscribe, you will get your entire project space back,
+      which includes your data, apps, reports and configurations!
+    {% endblocktrans %}
+  </li>
+</ul>
+
+<p>
+  {% blocktrans %}
+    If you don't intend to use this project space again and would like to delete it,
+    please inform us at <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.
+  {% endblocktrans %}
+</p>
+
+<div class="alert alert-warning alert-subscription">
+  {% if is_downgrade_before_minimum %}
+    <h4>
+      {% trans "We hope to see you soon!" %}
+    </h4>
+    <p>
+      {% blocktrans with current_plan as p %}
+        You’ll have access to the features on your
+        <strong>{{ p }} Edition Software Plan </strong> through {{ current_subscription_end_date }}.<br />
+        On {{ current_subscription_end_date }} your current subscription will be paused.
+      {% endblocktrans %}
+    </p>
+  {% else %}
+    <h4>
+      {% trans "We hope to see you soon!" %}
+    </h4>
+    <p>
+      {% blocktrans with current_plan as p %}
+        Your subscription will be paused immediately upon clicking the Confirm Pause button.
+      {% endblocktrans %}
+    </p>
+  {% endif %}
+</div>

@@ -29,6 +29,8 @@ from two_factor.views import (
     SetupView,
 )
 
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
 
