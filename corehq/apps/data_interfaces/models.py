@@ -206,7 +206,7 @@ class AutomaticUpdateRule(models.Model):
             if not isinstance(definition, allowed_criteria_definitions):
                 return False
 
-        action_definition = self.get_messaging_rule_action_definition()
+        action_definition = self.get_action_definition()
 
         allowed_recipient_types = (
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF,
@@ -305,7 +305,7 @@ class AutomaticUpdateRule(models.Model):
                         "Unexpected criteria definition. Did conditional_alert_can_be_copied() get called?"
                     )
 
-            action_definition = self.get_messaging_rule_action_definition()
+            action_definition = self.get_action_definition()
             schedule = action_definition.schedule
 
             new_schedule = self.copy_schedule(schedule, to_domain,
@@ -690,7 +690,7 @@ class AutomaticUpdateRule(models.Model):
                 active_only=active_only,
             )
 
-    def get_messaging_rule_action_definition(self):
+    def get_action_definition(self):
         if self.workflow != self.WORKFLOW_SCHEDULING:
             raise ValueError("Expected scheduling workflow")
 
@@ -705,7 +705,7 @@ class AutomaticUpdateRule(models.Model):
         return action_definition
 
     def get_schedule(self):
-        return self.get_messaging_rule_action_definition().schedule
+        return self.get_action_definition().schedule
 
 
 class CaseRuleCriteria(models.Model):
