@@ -91,6 +91,13 @@ PRIMARY_WITH_NO_STANDBY = _get_partition_config(
     {'db1s': 'db1'}
 )
 
+STANDBY_IS_PRIMARY = _get_partition_config(
+    {
+        'db1': [0, 3],
+    },
+    {'db1': 'db1'}
+)
+
 
 db_dict = {'NAME': 'commcarehq', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
 TEST_DATABASES = {
@@ -171,6 +178,7 @@ def test_partition_config_validation():
         (MISSING_STANDBY_DB, PartitionValidationError, 'db1smissing not in found in DATABASES'),
         (MISSING_SHARD_DB, PartitionValidationError, 'db2a not in found in DATABASES'),
         (PRIMARY_WITH_NO_STANDBY, PartitionValidationError, 'No standby listed for primary db2'),
+        (STANDBY_IS_PRIMARY, PartitionValidationError, 'DB listed as primary and standby: db1'),
     ]
     for config, exception, message in cases:
         yield _run_test, config, exception, message

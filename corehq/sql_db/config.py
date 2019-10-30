@@ -92,6 +92,8 @@ class PartitionConfig(object):
                 )
             if standby_db not in self.database_config:
                 raise PartitionValidationError('{} not in found in DATABASES'.format(standby_db))
+            if standby_db in self.partition_config['shards']:
+                raise PartitionValidationError(f'DB listed as primary and standby: {standby_db}')
 
         if self.partition_config['standbys']:
             primary_standby_map = {p: s for s, p in self.partition_config['standbys'].items()}
