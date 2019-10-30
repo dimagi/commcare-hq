@@ -388,6 +388,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
     auto_case_update_limit = IntegerProperty()
 
+    # Allowed number of max OData feeds that this domain can create.
+    # If this value is None, the value in settings.DEFAULT_ODATA_FEED_LIMIT is used
+    odata_feed_limit = IntegerProperty()
+
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
     is_approved = BooleanProperty(default=False)
