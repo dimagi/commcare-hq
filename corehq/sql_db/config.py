@@ -53,7 +53,8 @@ class DbShard(object):
 
 class PartitionConfig(object):
 
-    def __init__(self, config):
+    def __init__(self, config, plproxy_cluster_name=None):
+        self.plproxy_cluster_name = plproxy_cluster_name or settings.PL_PROXY_CLUSTER_NAME
         self.partition_config = config
         shards_seen = set()
         for db, shard_range, in config['shards'].items():
@@ -166,7 +167,7 @@ def get_standby_config(config):
         }
     }
     validate_partition_config(standby_config)
-    return PartitionConfig(standby_config)
+    return PartitionConfig(standby_config, settings.PL_PROXY_STANDBY_CLUSTER_NAME)
 
 
 def _is_power_of_2(num):
