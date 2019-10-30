@@ -295,7 +295,8 @@ def download_file(request, domain, app_id, path):
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)
         if path in ['profile.ccpr', 'media_profile.ccpr'] and request.app.last_released:
-            last_released = ServerTime(request.app.last_released).user_time(pytz.UTC).done().isoformat()
+            last_released = request.app.last_released.replace(microsecond=0)    # mobile doesn't want microseconds
+            last_released = ServerTime(last_released).user_time(pytz.UTC).done().isoformat()
             response['X-CommCareHQ-AppReleasedOn'] = last_released
         response['Content-Length'] = len(response.content)
         return response
