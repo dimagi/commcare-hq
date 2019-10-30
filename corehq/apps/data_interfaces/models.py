@@ -1161,7 +1161,7 @@ class VisitSchedulerIntegrationHelper(object):
         self.scheduler_module_info = scheduler_module_info
 
     @classmethod
-    @quickcache(['domain', 'app_id', 'form_unique_id'], timeout=60 * 60)
+    @quickcache(['domain', 'app_id', 'form_unique_id'], timeout=60 * 60, memoize_timeout=60, session_function=None)
     def get_visit_scheduler_module_and_form(cls, domain, app_id, form_unique_id):
         app = get_latest_released_app(domain, app_id)
         if app is None:
