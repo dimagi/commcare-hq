@@ -10,11 +10,20 @@ from ..exceptions import NotPowerOf2Error, NotZeroStartError, NonContinuousShard
 def _get_partition_config(shard_config):
     return {
         'shards': shard_config,
-        'groups': {
-            'proxy': ['proxy'],
-            'form_processing': ['db1', 'db2'],
-        }
+        'proxy': 'proxy'
     }
+
+
+TEST_LEGACY_FORMAT = {
+    'shards': {
+        'db1': [0, 1],
+        'db2': [2, 3],
+    },
+    'groups': {
+        'proxy': ['proxy'],
+        'form_processing': ['db1', 'db2'],
+    }
+}
 
 TEST_PARTITION_CONFIG = _get_partition_config({
     'db1': [0, 1],
@@ -111,6 +120,12 @@ class TestPartitionConfig(SimpleTestCase):
     def test_invalid_shard_range_power_2(self):
         with self.assertRaises(NotPowerOf2Error):
             PartitionConfig()
+
+    @override_settings(PARTITION_DATABASE_CONFIG=TEST_LEGACY_FORMAT)
+    def test_legacy_format(self):
+        config = PartitionConfig()
+        self.assertEqual('proxy', config.get_proxy_db())
+        self.assertEqual({'db1', 'db2'}, set(config.get_form_processing_dbs()))
 
 
 @override_settings(DATABASES=TEST_DATABASES)

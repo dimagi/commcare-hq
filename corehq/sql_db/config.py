@@ -58,10 +58,9 @@ class PartitionConfig(object):
         self._validate()
 
     def _validate(self):
-        for group, dbs in self.partition_config['groups'].items():
-            for db in dbs:
-                if db not in self.database_config:
-                    raise PartitionValidationError('{} not in found in DATABASES'.format(db))
+        proxy_db = self.partition_config['proxy']
+        if proxy_db not in self.database_config:
+            raise PartitionValidationError(f'{proxy_db} not in found in DATABASES')
 
         shards_seen = set()
         previous_range = None
@@ -92,24 +91,22 @@ class PartitionConfig(object):
 
     @property
     def partition_config(self):
-        return settings.PARTITION_DATABASE_CONFIG
+        config = settings.PARTITION_DATABASE_CONFIG
+        if 'groups' in config:
+            # convert old format
+            config['proxy'] = config['groups']['proxy'][0]
+            del config['groups']
+        return config
 
     @property
     def database_config(self):
         return settings.DATABASES
 
     def get_proxy_db(self):
-        return self._dbs_by_group(PROXY_GROUP, 1)[0]
+        return self.partition_config['proxy']
 
     def get_form_processing_dbs(self):
-        return self._dbs_by_group(FORM_PROCESSING_GROUP)
-
-    def _dbs_by_group(self, group, check_len=None):
-        """Given a database group, returns the list of dbs associated with it"""
-        dbs = self.partition_config['groups'][group]
-        if check_len:
-            assert len(dbs) == check_len
-        return dbs
+        return list(self.partition_config['shards'])
 
     @memoized
     def _get_django_shards(self):
