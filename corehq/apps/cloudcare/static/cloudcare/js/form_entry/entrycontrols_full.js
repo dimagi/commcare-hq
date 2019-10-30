@@ -340,10 +340,19 @@ function ChoiceLabelEntry(question, options) {
     self.choices = question.choices;
     self.templateType = 'choice-label';
 
+    self.hideLabel = ko.observable(options.hideLabel);
+
     self.colStyle = ko.computed(function () {
         var colWidth = parseInt(12 / self.choices().length) || 1;
         return 'col-xs-' + colWidth;
     });
+
+    self.onClear = function () {
+        self.rawAnswer(Formplayer.Const.NO_ANSWER);
+    };
+    self.isValid = function () {
+        return true;
+    };
 }
 ChoiceLabelEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 ChoiceLabelEntry.prototype.constructor = EntrySingleAnswer;
@@ -752,6 +761,7 @@ function getEntry(question) {
     var isMinimal = false;
     var isCombobox = false;
     var isLabel = false;
+    var hideLabel = false;
     var style;
 
     if (question.style) {
@@ -799,7 +809,8 @@ function getEntry(question) {
                 isCombobox = style.startsWith(Formplayer.Const.COMBOBOX);
             }
             if (style) {
-                isLabel = style.startsWith(Formplayer.Const.LABEL);
+                isLabel = style === Formplayer.Const.LABEL || style === Formplayer.Const.LIST_NOLABEL;
+                hideLabel = style === Formplayer.Const.LIST_NOLABEL;
             }
 
             if (isMinimal) {
@@ -819,7 +830,9 @@ function getEntry(question) {
                     matchType: question.style.raw().split(' ')[1],
                 });
             } else if (isLabel) {
-                entry = new ChoiceLabelEntry(question, {});
+                entry = new ChoiceLabelEntry(question, {
+                    hideLabel: hideLabel,
+                });
             } else {
                 entry = new SingleSelectEntry(question, {});
             }
