@@ -58,12 +58,9 @@ class PartitionConfig(object):
         self._validate()
 
     def _validate(self):
-        all_dbs = set()
-        for group, dbs in self.partition_config['groups'].items():
-            for db in dbs:
-                if db not in self.database_config:
-                    raise PartitionValidationError('{} not in found in DATABASES'.format(db))
-            all_dbs.update(dbs)
+        proxy_db = self.partition_config['proxy']
+        if proxy_db not in self.database_config:
+            raise PartitionValidationError(f'{proxy_db} not in found in DATABASES')
 
         shards_seen = set()
         previous_range = None
@@ -87,7 +84,7 @@ class PartitionConfig(object):
             raise NotPowerOf2Error('Total number of shards must be a power of 2: {}'.format(num_shards))
 
         for standby_db, primary_db in self.partition_config['standbys'].items():
-            if primary_db not in all_dbs:
+            if primary_db not in self.partition_config['shards']:
                 raise PartitionValidationError(
                     f'Standby DB mapped to unknown primary DB: {standby_db} -> {primary_db}'
                 )
@@ -105,6 +102,11 @@ class PartitionConfig(object):
         config = settings.PARTITION_DATABASE_CONFIG
         if 'standbys' not in config:
             config['standbys'] = {}
+
+        if 'groups' in config:
+            # convert old format
+            config['proxy'] = config['groups']['proxy'][0]
+            del config['groups']
         return config
 
     @property
@@ -112,17 +114,10 @@ class PartitionConfig(object):
         return settings.DATABASES
 
     def get_proxy_db(self):
-        return self._dbs_by_group(PROXY_GROUP, 1)[0]
+        return self.partition_config['proxy']
 
     def get_form_processing_dbs(self):
-        return self._dbs_by_group(FORM_PROCESSING_GROUP)
-
-    def _dbs_by_group(self, group, check_len=None):
-        """Given a database group, returns the list of dbs associated with it"""
-        dbs = self.partition_config['groups'][group]
-        if check_len:
-            assert len(dbs) == check_len
-        return dbs
+        return list(self.partition_config['shards'])
 
     @memoized
     def _get_django_shards(self):

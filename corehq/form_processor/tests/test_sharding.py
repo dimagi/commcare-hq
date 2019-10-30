@@ -120,10 +120,7 @@ PARTITION_DATABASE_CONFIG = {
         'p4': [615, 819],
         'p5': [820, 1023]
     },
-    'groups': {
-        'proxy': ['proxy'],
-        'form_processing': ['p1', 'p2', 'p3', 'p4', 'p5'],
-    }
+    'proxy': 'proxy',
 }
 
 

@@ -21,6 +21,18 @@ def _get_partition_config(shard_config, standbys=None):
         }
     }
 
+
+TEST_LEGACY_FORMAT = {
+    'shards': {
+        'db1': [0, 1],
+        'db2': [2, 3],
+    },
+    'groups': {
+        'proxy': ['proxy'],
+        'form_processing': ['db1', 'db2'],
+    }
+}
+
 TEST_PARTITION_CONFIG = _get_partition_config({
     'db1': [0, 1],
     'db2': [2, 3],
@@ -117,6 +129,12 @@ class TestPartitionConfig(SimpleTestCase):
             ShardMeta(id=0, dbname='db1', host='localhost', port=5432),
             ShardMeta(id=1, dbname='db2', host='hqdb2', port=5432),
         ])
+
+    @override_settings(PARTITION_DATABASE_CONFIG=TEST_LEGACY_FORMAT)
+    def test_legacy_format(self):
+        config = PartitionConfig()
+        self.assertEqual('proxy', config.get_proxy_db())
+        self.assertEqual({'db1', 'db2'}, set(config.get_form_processing_dbs()))
 
 
 def test_partition_config_validation():
