@@ -28,6 +28,7 @@ class RunConfig(object):
     case_type = attr.ib()
     xmlns = attr.ib()
 
+    @property
     def run_with_forms(self):
         return bool(self.xmlns)
 
