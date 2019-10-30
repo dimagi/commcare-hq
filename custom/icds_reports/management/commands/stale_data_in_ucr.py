@@ -89,7 +89,7 @@ class Command(BaseCommand):
 
 def _get_stale_data(run_config):
     for db in get_db_aliases_for_partitioned_query():
-        matching_records_for_db = get_sql_case_data_for_db(db, run_config)
+        matching_records_for_db = _get_primary_data_for_db(db, run_config)
         chunk_size = 1000
         for chunk in chunked(matching_records_for_db, chunk_size):
             doc_ids = [val[0] for val in chunk]
@@ -115,7 +115,7 @@ def _get_ucr_insertion_dates(domain, table_id, doc_ids):
         return dict(cursor.fetchall())
 
 
-def _get_primary_data_for_db(run_config, db):
+def _get_primary_data_for_db(db, run_config):
     if run_config.run_with_forms:
         matching_xforms = XFormInstanceSQL.objects.using(db).filter(
             domain=run_config.domain,
