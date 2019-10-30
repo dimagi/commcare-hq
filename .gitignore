@@ -65,4 +65,3 @@ node_modules/
 docker/data
 *.lock
 fab/config.py
-/custom/icds_reports/tests/
