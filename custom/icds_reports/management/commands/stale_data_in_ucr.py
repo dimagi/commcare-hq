@@ -121,6 +121,7 @@ def _get_primary_data_for_db(db, run_config):
             domain=run_config.domain,
             received_on__gte=run_config.start_date,
             received_on__lte=run_config.end_date,
+            state=XFormInstanceSQL.NORMAL,
         )
         if run_config.xmlns:
             matching_xforms = matching_xforms.filter(xmlns=run_config.xmlns)
