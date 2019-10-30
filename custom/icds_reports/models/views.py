@@ -1073,3 +1073,18 @@ class NICIndicatorsView(models.Model):
         app_label = 'icds_reports'
         managed = False
         db_table = 'nic_indicators'
+
+
+class DailyIndicatorsView(models.Model):
+    state_id = models.TextField(primary_key=True)
+    state_name = models.TextField(blank=True, null=True)
+    date = models.DateField(blank=True, null=True)
+    pse_eligible = models.IntegerField(blank=True, null=True)
+    total_attended_pse = models.IntegerField(blank=True, null=True)
+    num_launched_awcs = models.IntegerField(blank=True, null=True)
+    daily_attendance_open = models.IntegerField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'daily_indicators'

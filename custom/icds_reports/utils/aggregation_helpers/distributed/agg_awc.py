@@ -64,12 +64,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             1,
             'no',
             5,
-            CASE WHEN
-                (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
-                THEN 1 ELSE 0 END,
-            CASE WHEN
-                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))> 1
-                THEN 1 ELSE 0 END,
+            CASE WHEN vhnd_conducted is not null and vhnd_conducted>0 THEN 1 ELSE 0 END,
+            CASE WHEN cbe_conducted is not null and cbe_conducted>1 THEN 1 ELSE 0 END,
             thr_v2.thr_distribution_image_count,
             0,
             0,
@@ -77,18 +73,24 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             0,
             0
             FROM awc_location_local awc_location
-            LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
-            LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
+            LEFT JOIN (
+                        select awc_id,
+                               count(*) as cbe_conducted from
+                            "{cbe_table}"
+                                WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s
+                                GROUP BY awc_id
+                        ) cbe_table on  awc_location.doc_id = cbe_table.awc_id
+            LEFT JOIN (
+                        SELECT awc_id,
+                               count(*) as vhnd_conducted from
+                                "{vhnd_table}"
+                                WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s
+                                GROUP BY awc_id
+                        ) vhnd_table on awc_location.doc_id = vhnd_table.awc_id
             LEFT JOIN "{thr_v2_table}" thr_v2 on (awc_location.doc_id = thr_v2.awc_id AND
                                                 thr_v2.month = %(start_date)s
                                                 )
             WHERE awc_location.aggregation_level = 5
-            GROUP BY awc_location.state_id,
-            awc_location.district_id,
-            awc_location.block_id,
-            awc_location.supervisor_id,
-            awc_location.doc_id,
-            thr_distribution_image_count
         )
         """.format(
             tablename=self.tablename,

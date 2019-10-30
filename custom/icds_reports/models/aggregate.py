@@ -738,7 +738,6 @@ class AggAwcDaily(models.Model, AggregateMixin):
     cases_person_adolescent_girls_11_14_all = models.IntegerField(null=True)
     cases_person_adolescent_girls_15_18_all = models.IntegerField(null=True)
     daily_attendance_open = models.IntegerField(null=True)
-    total_eligible_pse = models.IntegerField(null=True)
     total_attended_pse = models.IntegerField(null=True)
     num_awcs = models.IntegerField(null=True)
     num_launched_states = models.IntegerField(null=True)

@@ -13,6 +13,8 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 import sys
+
+from casexml.apps.case.xform import close_extension_cases
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
@@ -387,14 +389,16 @@ class SubmissionPost(object):
     @tracer.wrap(name='submission.post_save_actions')
     def do_post_save_actions(case_db, xforms, case_stock_result):
         instance = xforms[0]
+        case_db.clear_changed()
         try:
             case_stock_result.case_result.commit_dirtiness_flags()
             case_stock_result.stock_result.finalize()
 
             SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)
 
-            case_stock_result.case_result.close_extensions(
+            close_extension_cases(
                 case_db,
+                case_stock_result.case_models,
                 "SubmissionPost-%s-close_extensions" % instance.form_id
             )
         except PostSaveError:
