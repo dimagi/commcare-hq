@@ -2,6 +2,10 @@ from decimal import Decimal
 
 from django.test.testcases import SimpleTestCase, TestCase
 
+from couchdbkit import ResourceConflict
+from mock import patch
+
+from pillow_retry.models import PillowError
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.es import FormES
@@ -40,6 +44,7 @@ class XFormPillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
+        PillowError.objects.all().delete()
         super(XFormPillowTest, self).tearDown()
 
     @run_with_all_backends
@@ -71,6 +76,19 @@ class XFormPillowTest(TestCase):
         # ensure not there anymore
         results = FormES().run()
         self.assertEqual(0, results.total)
+
+    @run_with_all_backends
+    def test_form_pillow_error_in_form_metadata(self):
+        self.assertEqual(0, PillowError.objects.filter(pillow='xform-pillow').count())
+        with patch('pillowtop.processors.form.mark_latest_submission') as mark_latest_submission:
+            mark_latest_submission.side_effect = ResourceConflict('couch sucks')
+            case_id, case_name = self._create_form_and_sync_to_es()
+
+        # confirm change made it to form index
+        results = FormES().run()
+        self.assertEqual(1, results.total)
+
+        self.assertEqual(1, PillowError.objects.filter(pillow='xform-pillow').count())
 
     def _create_form_and_sync_to_es(self):
         with self.process_form_changes:
