@@ -333,6 +333,14 @@
         ">
   </select>
 </script>
+<script type="text/html" id="choice-label-entry-ko-template">
+  <div class="row"
+       data-bind="foreach: choices">
+    <div data-bind="attr: { 'class': $parent.colStyle }">
+      <span data-bind="renderMarkdown: $data"></span>
+    </div>
+  </div>
+</script>
 <script type="text/html" id="date-entry-ko-template">
   <div class="input-group">
     <input type="text" class="form-control" data-bind="attr: { id: entryId } "/>
