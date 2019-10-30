@@ -450,10 +450,10 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     @property
     def doc_type(self):
         """Comparability with couch forms"""
-        from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
+        from corehq.form_processor.backends.sql.dbaccessors import state_to_doc_type
         if self.is_deleted:
             return 'XFormInstance' + DELETED_SUFFIX
-        return {v: k for k, v in doc_type_to_state.items()}.get(self.state, 'XFormInstance')
+        return state_to_doc_type.get(self.state, 'XFormInstance')
 
     @property
     @memoized
