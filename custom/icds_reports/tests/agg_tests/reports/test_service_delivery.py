@@ -6,6 +6,8 @@ from custom.icds_reports.reports.service_delivery_dashboard import get_service_d
 class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_0_3(self):
+        get_service_delivery_data.clear('icds-cas', 0, 10, None, False,
+                                        {'aggregation_level': 1}, 2017, 5, 'pw_lw_children')
         data = get_service_delivery_data(
             'icds-cas',
             0,

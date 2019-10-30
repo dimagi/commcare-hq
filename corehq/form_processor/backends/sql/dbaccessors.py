@@ -75,6 +75,8 @@ doc_type_to_state = {
     "SubmissionErrorLog": XFormInstanceSQL.SUBMISSION_ERROR_LOG
 }
 
+state_to_doc_type = {v: k for k, v in doc_type_to_state.items()}
+
 
 def iter_all_rows(reindex_accessor):
     """Returns a generator that will iterate over all rows provided by the
