@@ -300,6 +300,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     _blobdb_type_code = BLOB_CODES.domain
 
     name = StringProperty()
+    is_tombstone = BooleanProperty(default=False)
     is_active = BooleanProperty()
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
@@ -945,7 +946,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     def delete(self):
         self._pre_delete()
-        super(Domain, self).delete()
+        self.is_tombstone = True
+        self.save()
 
     def _pre_delete(self):
         from corehq.apps.domain.signals import commcare_domain_pre_delete
