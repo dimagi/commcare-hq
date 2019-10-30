@@ -1,17 +1,20 @@
-
 import inspect
-
-import dateutil
-from django.core.management.base import BaseCommand, CommandError
 from datetime import datetime
 
-from corehq.apps.hqadmin.management.commands.stale_data_in_es import RunConfig, get_sql_case_data_for_db
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
+from django.core.management.base import BaseCommand, CommandError
+
+import dateutil
+
+from dimagi.utils.chunked import chunked
+
+from corehq.apps.hqadmin.management.commands.stale_data_in_es import (
+    RunConfig,
+    get_sql_case_data_for_db,
+)
 from corehq.apps.userreports.util import get_table_name
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from custom.icds_reports.models.aggregate import get_cursor, AggAwc
-from dimagi.utils.chunked import chunked
+from custom.icds_reports.models.aggregate import AggAwc, get_cursor
 
 
 class Command(BaseCommand):
