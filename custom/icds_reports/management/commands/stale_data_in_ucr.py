@@ -116,10 +116,13 @@ def _get_ucr_insertion_dates(domain, table_id, doc_ids):
 
 def _get_primary_data_for_db(run_config, db):
     if run_config.run_with_forms:
-        return XFormInstanceSQL.objects.using(db).filter(
+        matching_xforms = XFormInstanceSQL.objects.using(db).filter(
             domain=run_config.domain,
             received_on__gte=run_config.start_date,
             received_on__lte=run_config.end_date,
-        ).values_list('form_id', 'xmlns', 'received_on')
+        )
+        if run_config.xmlns:
+            matching_xforms = matching_xforms.filter(xmlns=run_config.xmlns)
+        return matching_xforms.values_list('form_id', 'xmlns', 'received_on')
     else:
         return get_sql_case_data_for_db(db, run_config)
