@@ -173,7 +173,7 @@ class AutomaticUpdateRule(models.Model):
         """
         result = []
         for rule in cls.by_domain(domain, cls.WORKFLOW_SCHEDULING, active_only=False):
-            schedule = rule.get_messaging_rule_schedule()
+            schedule = rule.get_schedule()
             for event in schedule.memoized_events:
                 if isinstance(event.content, SMSSurveyContent):
                     result.append(event.content.form_unique_id)
@@ -543,7 +543,7 @@ class AutomaticUpdateRule(models.Model):
             self.deleted = True
             self.save()
             if self.workflow == self.WORKFLOW_SCHEDULING:
-                schedule = self.get_messaging_rule_schedule()
+                schedule = self.get_schedule()
                 schedule.deleted = True
                 schedule.save()
                 if isinstance(schedule, AlertSchedule):
@@ -704,7 +704,7 @@ class AutomaticUpdateRule(models.Model):
 
         return action_definition
 
-    def get_messaging_rule_schedule(self):
+    def get_schedule(self):
         return self.get_messaging_rule_action_definition().schedule
 
 
