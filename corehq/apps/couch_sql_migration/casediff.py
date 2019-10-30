@@ -539,6 +539,14 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug
     def terminate(is_error):
         raise (ParentError if is_error else GracefulExit)
 
+    def consume(calls, stop=False):
+        while True:
+            action, *args = calls.get()
+            if stop and action != STATUS:
+                log.warning("ignoring %s%r", action, args)
+            else:
+                dispatch(action, *args)
+
     def dispatch(action, *args):
         log.debug("case diff dispatch: %s", action)
         if action in process_actions:
@@ -558,16 +566,19 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug
     statedb.is_rebuild = is_rebuild
     setup_logging(state_path, debug)
     queue = None
+    consumer = None
     with calls, stats:
         try:
             with queue_class(statedb, status_interval=0) as queue:
                 queue = CasesReceivedCounter(queue)
                 try:
-                    while True:
-                        call = calls.get()
-                        dispatch(*call)
+                    consume(calls)
                 except GracefulExit:
                     pass
+                finally:
+                    consumer = gevent.spawn(consume, calls, stop=True)
+            if consumer is not None:
+                consumer.kill()
         except ParentError:
             log.error("stopped due to error in parent process")
         except Exception:
