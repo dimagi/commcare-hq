@@ -234,7 +234,7 @@ class StateDB(DiffDB):
                 kv.value = RESUME_NOT_ALLOWED
 
     def _get_kv(self, key, session):
-        return session.query(KeyValue).filter_by(key=key).scalar()
+        return session.query(KeyValue).get(key)
 
     def _set_kv(self, key, value, session=None):
         with self.session(session) as session:
