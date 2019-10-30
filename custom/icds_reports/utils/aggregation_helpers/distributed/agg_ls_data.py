@@ -35,8 +35,8 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
         for index_query in index_queries:
             cursor.execute(index_query)
 
-    def _tablename_func(self, agg_level):
-        return "{}_{}_{}".format(self.base_tablename, self.month_start.strftime("%Y-%m-%d"), agg_level)
+    def _tablename_func(self, month, agg_level):
+        return "{}_{}_{}".format(self.base_tablename, month.strftime("%Y-%m-%d"), agg_level)
 
     def drop_table_if_exists(self, agg_level):
         return """
@@ -58,7 +58,11 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
 
     @property
     def tablename(self):
-        return self._tablename_func(4)
+        return self._tablename_func(self.month_start, 4)
+
+    @property
+    def prev_month_table(self):
+        return self._tablename_func(self.month_start - relativedelta(months=1), 4)
 
     def aggregate_query(self):
         """
@@ -107,14 +111,25 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
             location.supervisor_id = beneficiary_table.supervisor_id AND
             beneficiary_table.month = %(start_date)s
         )
-        )
+        );
+
+        -- if launched in prev month make it launched in this month
+        UPDATE "{tablename}" agg_ls SET
+            num_supervisor_launched = ut.num_supervisor_launched
+        FROM (
+            SELECT supervisor_id, num_supervisor_launched
+            FROM "{prev_month_table}" WHERE num_supervisor_launched=1
+        ) ut
+        agg_ls.supervisor_id = ut.supervisor_id;
         """.format(
             tablename=self.tablename,
+            prev_month_table = self.prev_month_table,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
             awc_table=AGG_LS_AWC_VISIT_TABLE,
             vhnd_table=AGG_LS_VHND_TABLE,
             beneficiary_table=AGG_LS_BENEFICIARY_TABLE
+
         ), {
             'start_date': self.month_start
         }
