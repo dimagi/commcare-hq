@@ -74,7 +74,7 @@ class CaseDiffQueue(object):
         self.status_interval = status_interval
         self.pending_cases = defaultdict(int)  # case id -> processed form count
         self.pending_loads = defaultdict(int)  # case id -> processed form count
-        self.cases_to_diff = defaultdict(int)  # case id ready to diff -> form count
+        self.cases_to_diff = {}  # case id ready to diff -> form count
         self.pool = Group()
         # The diff pool is used for case diff jobs. It has limited
         # concurrency to prevent OOM conditions caused by loading too
@@ -192,14 +192,21 @@ class CaseDiffQueue(object):
     def enqueue(self, case_id, num_forms=None):
         if num_forms is None:
             num_forms = self.statedb.get_forms_count(case_id)
-        if sum(self.cases_to_diff.values()) + num_forms > MAX_FORMS_PER_DIFF:
-            self._diff_cases()
-        self.cases_to_diff[case_id] += num_forms
+        if self.cases_to_diff:
+            total_forms = sum(self.cases_to_diff.values()) + num_forms
+            if total_forms > MAX_FORMS_PER_DIFF:
+                self._diff_cases()
+        self.cases_to_diff[case_id] = num_forms
         if len(self.cases_to_diff) >= self.BATCH_SIZE or num_forms > MAX_FORMS_PER_DIFF:
             self._diff_cases()
 
     def _diff_cases(self):
-        def diff(case_ids):
+        def diff(cases_to_diff):
+            case_ids = list(cases_to_diff)
+            num_forms = sum(cases_to_diff.values())
+            if num_forms > MAX_FORMS_PER_DIFF:
+                # maybe adjust MAX_FORMS_PER_DIFF if this is frequent
+                log.warning("diff %s cases with %s forms", len(case_ids), num_forms)
             couch_cases = {}
             to_load = []
             pop_case = self.cases.pop
@@ -216,16 +223,12 @@ class CaseDiffQueue(object):
             self.cache_hits[1] += len(case_ids)
             self.num_diffed_cases += len(case_ids)
 
-        def spawn_diff(case_ids):
+        def spawn_diff(cases_to_diff):
             # may block due to concurrency limit on diff pool
-            self.diff_batcher.spawn(diff, case_ids)
+            self.diff_batcher.spawn(diff, cases_to_diff)
 
-        count = sum(self.cases_to_diff.values())
-        if count > MAX_FORMS_PER_DIFF:
-            # maybe adjust MAX_FORMS_PER_DIFF if this is frequent
-            log.warning("diff %s cases with %s forms", len(self.cases_to_diff), count)
-        self.diff_spawner.spawn(spawn_diff, list(self.cases_to_diff))
-        self.cases_to_diff = defaultdict(int)
+        self.diff_spawner.spawn(spawn_diff, self.cases_to_diff)
+        self.cases_to_diff = {}
 
     def process_remaining_diffs(self):
         log.debug("process remaining diffs")
@@ -285,7 +288,7 @@ class CaseDiffQueue(object):
             # use dict to approximate ordered set (remove duplicates)
             to_diff = dict.fromkeys(chain.from_iterable(self.diff_batcher))
             to_diff.update((k, None) for k in chain.from_iterable(self.diff_spawner))
-            to_diff.update((k, None) for k in self.cases_to_diff)
+            to_diff.update(self.cases_to_diff)
             state["to_diff"] = list(to_diff)
         if self.num_diffed_cases:
             state["num_diffed_cases"] = self.num_diffed_cases
