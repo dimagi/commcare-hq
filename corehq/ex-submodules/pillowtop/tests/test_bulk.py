@@ -6,6 +6,7 @@ from mock import Mock, patch
 from six.moves import range
 
 from casexml.apps.case.signals import case_post_save
+from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change, ChangeMeta
 from pillowtop.pillow.interface import PillowBase
@@ -65,6 +66,7 @@ class TestBulkDocOperations(TestCase):
                 create_form_for_test(cls.domain, case_id)
 
         cls.es = get_es_new()
+        cls.es_interface = ElasticsearchInterface(cls.es)
         cls.index = TEST_INDEX_INFO.index
 
         with trap_extra_setup(ConnectionError):
@@ -112,11 +114,10 @@ class TestBulkDocOperations(TestCase):
         self.assertEqual([], retry)
         self.assertEqual([], errors)
 
-        es_docs = self.es.mget(
-            index=self.index, doc_type=TEST_INDEX_INFO.type, body={'ids': self.case_ids}, _source=True
-        )['docs']
+        es_docs = self.es_interface.get_bulk_docs(
+            index=self.index, doc_type=TEST_INDEX_INFO.type, doc_ids=self.case_ids)
         ids_in_es = {
-            doc['_source']['_id'] for doc in es_docs
+            doc['_id'] for doc in es_docs
         }
         self.assertEqual(set(self.case_ids), ids_in_es)
 
@@ -127,7 +128,7 @@ class TestBulkDocOperations(TestCase):
         missing_case_ids = [uuid.uuid4().hex, uuid.uuid4().hex]
         changes = self._changes_from_ids(self.case_ids + missing_case_ids)
 
-        with patch('pillowtop.processors.elastic.bulk', return_value=mock_response):
+        with patch.object(ElasticsearchInterface, 'bulk_ops', return_value=mock_response):
             retry, errors = processor.process_changes_chunk(changes)
         self.assertEqual(
             set(missing_case_ids),
