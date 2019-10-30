@@ -6,7 +6,6 @@ its Atom Feed (daily or more) to track changes.
 import uuid
 from collections import namedtuple
 from datetime import datetime
-from functools import partial
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -38,9 +37,8 @@ from corehq.motech.openmrs.const import (
 )
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.logger import logger
-from corehq.motech.openmrs.models import POSIX_MILLISECONDS, OpenmrsImporter
+from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.openmrs.serializers import openmrs_timestamp_to_isoformat
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
 
@@ -82,18 +80,11 @@ def get_openmrs_patients(requests, importer, location=None):
 
 
 def get_case_properties(patient, importer):
-    as_isoformat = partial(openmrs_timestamp_to_isoformat,
-                           tz=importer.get_timezone())
-    cast = {
-        POSIX_MILLISECONDS: as_isoformat,
-    }
     name_columns = importer.name_columns.split(' ')
     case_name = ' '.join([patient[column] for column in name_columns])
     fields_to_update = {
-        mapping.property: (cast[mapping.data_type](patient[mapping.column])
-                           if mapping.data_type else
-                           patient[mapping.column])
-        for mapping in importer.column_map
+        m.property: m.deserialize(patient[m.column], importer.get_timezone())
+        for m in importer.column_map
     }
     return case_name, fields_to_update
 

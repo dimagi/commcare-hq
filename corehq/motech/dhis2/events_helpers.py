@@ -14,14 +14,6 @@ def get_event(domain, config, form_json):
     info = CaseTriggerInfo(
         domain=domain,
         case_id=None,
-        type=None,
-        name=None,
-        owner_id=None,
-        modified_by=None,
-        updates=None,
-        created=None,
-        closed=None,
-        extra_fields=None,
         form_question_values=get_form_question_values(form_json),
     )
     event = {}

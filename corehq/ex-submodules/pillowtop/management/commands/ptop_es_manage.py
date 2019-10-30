@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 import simplejson
-from elasticsearch.exceptions import NotFoundError
+from corehq.util.es.elasticsearch import NotFoundError
 
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices

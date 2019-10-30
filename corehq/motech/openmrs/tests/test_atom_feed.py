@@ -12,15 +12,14 @@ from mock import Mock, patch
 
 import corehq.motech.openmrs.atom_feed
 from corehq.motech.openmrs.atom_feed import (
+    get_case_block_kwargs_from_bahmni_diagnoses,
+    get_case_block_kwargs_from_observations,
     get_encounter_uuid,
     get_patient_uuid,
     get_timestamp,
     import_encounter,
 )
-from corehq.motech.openmrs.openmrs_config import (
-    ObservationMapping,
-    OpenmrsFormConfig,
-)
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -137,44 +136,56 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             type='patient',
             _id='abcdef',
         )
-        self.repeater = Mock()
-        self.repeater.domain = 'test_domain'
-        self.repeater.get_id = '123456'
-        self.repeater.white_listed_case_types = ['patient']
-        self.repeater.openmrs_config.form_configs = [OpenmrsFormConfig.wrap({
-            "doc_type": "OpenmrsFormConfig",
-            "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
-            "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
-            "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
-            "openmrs_observations": [{
-                "doc_type": "ObservationMapping",
-                "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                "value": {
-                    "doc_type": "FormQuestion",
-                    "form_question": "/data/height"
-                },
-                "case_property": "height"
-            }]
-        })]
-        self.repeater.observation_mappings = {
-            '5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA': [ObservationMapping.wrap({
-                'case_property': 'height',
-                'concept': '5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-                'value': {
-                    'doc_type': 'FormQuestion',
-                    'form_question': '/data/height',
-                }
-            })]
-        }
-
-        response = Mock()
-        response.json.return_value = self.get_json('encounter')
-        self.repeater.requests.get.return_value = response
+        self.repeater = OpenmrsRepeater.wrap({
+            "_id": "123456",
+            "domain": "test_domain",
+            "username": "foo",
+            "password": "bar",
+            "white_listed_case_types": ['patient'],
+            "openmrs_config": {
+                "form_configs": [{
+                    "doc_type": "OpenmrsFormConfig",
+                    "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
+                    "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
+                    "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
+                    "openmrs_observations": [
+                        {
+                            "doc_type": "ObservationMapping",
+                            "concept": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                            "value": {
+                                "doc_type": "FormQuestion",
+                                "form_question": "/data/height"
+                            },
+                            "case_property": "height"
+                        },
+                        {
+                            "doc_type": "ObservationMapping",
+                            "concept": "f7e8da66-f9a7-4463-a8ca-99d8aeec17a0",
+                            "value": {
+                                "doc_type": "FormQuestionMap",
+                                "form_question": "/data/bahmni_hypothermia",
+                                "value_map": {
+                                    "emergency_room_user_id": "Hypothermia",  # Value must match diagnosis name
+                                },
+                                "direction": "in",
+                            },
+                            "case_property": "owner_id"
+                        }
+                    ]
+                }]
+            }
+        })
 
     def test_import_encounter(self):
         """
         Importing the given encounter should update the case's "height" property
         """
+        response = Mock()
+        response.json.return_value = self.get_json('encounter')
+        self.repeater.requests  # Initialise cached value
+        self.repeater.__dict__["requests"] = Mock()
+        self.repeater.requests.get.return_value = response
+
         with patch('corehq.motech.openmrs.atom_feed.submit_case_blocks') as submit_case_blocks_patch, \
                 patch('corehq.motech.openmrs.atom_feed.importer_util') as importer_util_patch:
             importer_util_patch.lookup_case.return_value = (self.case, None)
@@ -195,6 +206,24 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
             self.assertEqual(domain, 'test_domain')
             self.assertEqual(kwargs['device_id'], 'openmrs-atomfeed-123456')
             self.assertEqual(kwargs['xmlns'], 'http://commcarehq.org/openmrs-integration')
+
+    def test_get_case_block_kwargs_from_observations(self):
+        encounter = self.get_json('encounter')
+        observations = encounter['observations']
+        case_block_kwargs = get_case_block_kwargs_from_observations(
+            observations,
+            self.repeater.observation_mappings
+        )
+        self.assertEqual(case_block_kwargs, {'update': {'height': 105}})
+
+    def test_get_case_block_kwargs_from_bahmni_diagnoses(self):
+        encounter = self.get_json('encounter_with_diagnoses')
+        bahmni_diagnoses = encounter['bahmniDiagnoses']
+        case_block_kwargs = get_case_block_kwargs_from_bahmni_diagnoses(
+            bahmni_diagnoses,
+            self.repeater.observation_mappings
+        )
+        self.assertEqual(case_block_kwargs, {'owner_id': 'emergency_room_user_id', 'update': {}})
 
 
 def test_doctests():

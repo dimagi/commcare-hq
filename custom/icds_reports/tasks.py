@@ -58,6 +58,7 @@ from custom.icds_reports.const import (
     SYSTEM_USAGE_EXPORT,
     THR_REPORT_EXPORT,
     THREE_MONTHS,
+    DASHBOARD_USAGE_EXPORT,
 )
 from custom.icds_reports.models import (
     AggAwc,
@@ -105,6 +106,7 @@ from custom.icds_reports.sqldata.exports.awc_infrastructure import (
 )
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
+from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
@@ -125,6 +127,7 @@ from custom.icds_reports.utils import (
     icds_pre_release_features,
     track_time,
     zip_folder,
+    get_dashboard_usage_excel_file,
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
@@ -838,8 +841,25 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 )
             else:
                 cache_key = create_excel_file(excel_data, data_type, file_format)
+        elif indicator == DASHBOARD_USAGE_EXPORT:
+            excel_data = DashBoardUsage(
+                couch_user=config['couch_user'],
+                domain=config['domain']
+            ).get_excel_data()
+            export_info = excel_data[1][1]
+            generated_timestamp = date_parser.parse(export_info[0][1])
+            formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+            data_type = 'Dashboard usage Report__{}'.format(formatted_timestamp)
+            if file_format == 'xlsx':
+                cache_key = get_dashboard_usage_excel_file(
+                    excel_data,
+                    data_type
+                )
+            else:
+                cache_key = create_excel_file(excel_data, data_type, file_format)
 
-        if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT):
+        if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
+                             DASHBOARD_USAGE_EXPORT):
             if file_format == 'xlsx' and beta:
                 cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
             else:
@@ -1023,6 +1043,7 @@ def _get_value(data, field):
     queue='icds_aggregation_queue'
 )
 def collect_inactive_awws(force_citus=False):
+    from custom.icds.messaging.indicators import is_aggregate_inactive_aww_data_fresh
     with force_citus_engine(force_citus):
         celery_task_logger.info("Started updating the Inactive AWW")
         filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
@@ -1058,6 +1079,7 @@ def collect_inactive_awws(force_citus=False):
         sync = IcdsFile(blob_id=filename, data_type='inactive_awws')
         sync.store_file_in_blobdb(export_file)
         sync.save()
+        is_aggregate_inactive_aww_data_fresh.clear()
         celery_task_logger.info("Ended updating the Inactive AWW")
 
 

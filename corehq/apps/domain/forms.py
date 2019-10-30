@@ -23,6 +23,7 @@ from django.forms.fields import (
     Field,
     ImageField,
     IntegerField,
+    SelectMultiple,
 )
 from django.forms.widgets import Select
 from django.template.loader import render_to_string
@@ -789,9 +790,20 @@ class PrivacySecurityForm(forms.Form):
     restrict_superusers = BooleanField(
         label=ugettext_lazy("Restrict Dimagi Staff Access"),
         required=False,
-        help_text=ugettext_lazy("Dimagi staff sometimes require access to projects to provide support. Checking "
-                                "this box may restrict your ability to receive this support in the event you "
-                                "report an issue. You may also miss out on important communications and updates.")
+        help_text=ugettext_lazy(
+            "CommCare support staff sometimes require access "
+            "to your project space to provide rapid, in-depth support. "
+            "Checking this box will restrict the degree of support they "
+            "will be able to provide in the event that you report an issue. "
+            "You may also miss out on important communications and updates. "
+            "Regardless of whether this option is checked, "
+            "Commcare support staff will have access "
+            "to your billing information and project metadata; "
+            "and CommCare system administrators will also have direct access "
+            "to data infrastructure strictly for the purposes of system administration "
+            "as outlined in our "
+            '<a href="https://www.dimagi.com/terms/latest/privacy/">Privacy Policy</a>.'
+        )
     )
     secure_submissions = BooleanField(
         label=ugettext_lazy("Secure submissions"),
@@ -2568,15 +2580,24 @@ class SearchManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
 
 class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
     build_profile_id = forms.CharField(label=ugettext_lazy('Build Profile'),
-                                       required=False, widget=Select(choices=[]))
+                                       required=True, widget=SelectMultiple(choices=[]),)
 
     def save(self):
-        try:
-            LatestEnabledBuildProfiles.update_status(self.build, self.cleaned_data['build_profile_id'],
-                                                     active=True)
-        except ValidationError as e:
-            return False, ','.join(e.messages)
-        return True, None
+        success_messages = []
+        error_messages = []
+        for build_profile_id in self.cleaned_data['build_profile_id']:
+            try:
+                LatestEnabledBuildProfiles.update_status(self.build, build_profile_id,
+                                                         active=True)
+                success_messages.append(_('Restriction for profile {profile} set successfully.').format(
+                    profile=self.build.build_profiles[build_profile_id]['name'],
+                ))
+            except ValidationError as e:
+                error_messages.append(_('Restriction for profile {profile} failed: {message}').format(
+                    profile=self.build.build_profiles[build_profile_id]['name'],
+                    message=', '.join(e.messages)
+                ))
+        return error_messages, success_messages
 
     @cached_property
     def build(self):
@@ -2612,10 +2633,7 @@ class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
                                _("You don't have permission to set restriction for this application"))
 
     def clean_build_profile_id(self):
-        # ensure value is present for a post request
-        if not self.cleaned_data.get('build_profile_id'):
-            self.add_error('build_profile_id', _("Please select build profile"))
-        return self.cleaned_data.get('build_profile_id')
+        return self.data.getlist('build_profile_id')
 
     def clean_version(self):
         # ensure value is present for a post request

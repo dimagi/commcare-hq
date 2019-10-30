@@ -510,6 +510,12 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_view_odata_feed(self):
+        from corehq.apps.export.views.utils import user_can_view_odata_feed
+        return user_can_view_odata_feed(self.domain, self.couch_user)
+
+    @property
+    @memoized
     def can_use_lookup_tables(self):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
@@ -729,7 +735,7 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': True,
                     'subpages': []
                 })
-            if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+            if self.can_view_odata_feed:
                 subpages = [
                     {
                         'title': _(CreateODataCaseFeedView.page_title),
@@ -849,7 +855,7 @@ class ProjectDataTab(UITab):
                 _('Explore Case Data (Preview)'),
                 url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
-        if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+        if self.can_view_odata_feed:
             from corehq.apps.export.views.list import ODataFeedListView
             items.append(dropdown_dict(
                 _(ODataFeedListView.page_title),
@@ -2087,7 +2093,7 @@ class AdminTab(UITab):
         sections = [
             (_('Administrative Reports'), [
                 {'title': _('User List'),
-                 'url': reverse('admin_report_dispatcher', args=('user_list',))},
+                 'url': UserListReport.get_url()},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('Download Global Impact Report'),
@@ -2111,7 +2117,7 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [DeviceLogSoftAssertReport, UserAuditReport, UserListReport]
+            } for report in [DeviceLogSoftAssertReport, UserAuditReport]
         ]))
         return sections
 

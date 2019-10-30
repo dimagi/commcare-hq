@@ -162,7 +162,7 @@ class ChunkedUCRProcessorTest(TestCase):
         process_change_patch.assert_has_calls([mock.call(mock.ANY)] * 10)
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
-    @mock.patch('corehq.form_processor.document_stores.ReadonlyCaseDocumentStore.iter_documents')
+    @mock.patch('corehq.form_processor.document_stores.CaseDocumentStore.iter_documents')
     def test_partial_fallback_calls(self, iter_docs_patch, process_change_patch):
         # this is equivalent to failing on last 4 docs, since they are missing in docstore
         docs = [
@@ -175,7 +175,7 @@ class ChunkedUCRProcessorTest(TestCase):
         # since chunked processing failed, normal processing should get called
         process_change_patch.assert_has_calls([mock.call(mock.ANY)] * 4)
 
-    @mock.patch('corehq.form_processor.document_stores.ReadonlyCaseDocumentStore.iter_documents')
+    @mock.patch('corehq.form_processor.document_stores.CaseDocumentStore.iter_documents')
     def test_partial_fallback_data(self, iter_docs_patch):
         docs = [
             get_sample_doc_and_indicators(self.fake_time_now)[0]
@@ -190,22 +190,6 @@ class ChunkedUCRProcessorTest(TestCase):
         self.assertEqual(
             set([case.case_id for case in cases]),
             set([row.doc_id for row in query.all()])
-        )
-
-    def test_get_docs(self):
-        docs = [
-            get_sample_doc_and_indicators(self.fake_time_now)[0]
-            for i in range(10)
-        ]
-        feed = self.pillow.get_change_feed()
-        since = feed.get_latest_offsets()
-        cases = self._create_cases(docs=docs)
-        changes = list(feed.iter_changes(since, forever=False))
-        bad_changes, result_docs = ConfigurableReportPillowProcessor.get_docs_for_changes(
-            changes, docs[1]['domain'])
-        self.assertEqual(
-            set([c.id for c in changes]),
-            set([doc['_id'] for doc in result_docs])
         )
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')

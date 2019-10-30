@@ -393,11 +393,11 @@ def all_toggles_by_name():
     return all_toggles_by_name_in_scope(globals())
 
 
-def all_toggles_by_name_in_scope(scope_dict):
+def all_toggles_by_name_in_scope(scope_dict, toggle_class=StaticToggle):
     result = {}
     for toggle_name, toggle in scope_dict.items():
         if not toggle_name.startswith('__'):
-            if isinstance(toggle, StaticToggle):
+            if isinstance(toggle, toggle_class):
                 result[toggle_name] = toggle
     return result
 
@@ -1115,13 +1115,6 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
-COPY_CONDITIONAL_ALERTS = StaticToggle(
-    'copy_conditional_alerts',
-    'Allow copying conditional alerts to another project (or within the same project).',
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_USER],
-)
-
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
@@ -1687,6 +1680,7 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     always_disabled={'icds-cas'},
+    help_link='https://confluence.dimagi.com/display/ccinternal/Manage+Releases+per+Location',
 )
 
 
@@ -1822,11 +1816,19 @@ PHI_CAS_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-PRUNE_PREVIOUS_SYNCLOGS = DynamicallyPredictablyRandomToggle(
-    'prune_previous_synclogs',
-    'Delete old synclogs during form submission',
+
+SESSION_MIDDLEWARE_LOGGING = StaticToggle(
+    'session_middleware_logging',
+    'Log all session object method calls on this domain',
     TAG_CUSTOM,
-    [NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
+)
+
+BYPASS_SESSIONS = StaticToggle(
+    'bypass_sessions',
+    'Bypass sessions for select mobile URLS',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )
 
 DAILY_INDICATORS = StaticToggle(

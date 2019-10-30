@@ -1,5 +1,6 @@
 import re
 
+from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from testil import assert_raises
@@ -15,7 +16,6 @@ def _get_partition_config(shard_config, standbys=None):
         'shards': shard_config,
         'standbys': standbys or {},
         'groups': {
-            'main': ['default'],
             'proxy': ['proxy'],
             'form_processing': ['db1', 'db2'],
         }
@@ -67,7 +67,7 @@ MISSING_STANDBY_DB = _get_partition_config(
 
 db_dict = {'NAME': 'commcarehq', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
 TEST_DATABASES = {
-    'default': db_dict,
+    DEFAULT_DB_ALIAS: db_dict,
     'proxy': db_dict,
     'db1': {'NAME': 'db1', 'USER': 'commcarehq', 'HOST': 'hqdb1', 'PORT': 5432},
     'db2': {'NAME': 'db2', 'USER': 'commcarehq', 'HOST': 'hqdb2', 'PORT': 5432},

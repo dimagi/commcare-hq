@@ -2,6 +2,7 @@ from contextlib import contextmanager
 
 from django.conf import settings
 from django.core import signals
+from django.db import DEFAULT_DB_ALIAS
 from django.utils.functional import cached_property
 
 import sqlalchemy
@@ -13,9 +14,8 @@ from corehq.util.test_utils import unit_testing_only
 
 from .util import select_db_for_read
 
-DEFAULT_ENGINE_ID = 'default'
+DEFAULT_ENGINE_ID = DEFAULT_DB_ALIAS
 UCR_ENGINE_ID = 'ucr'
-ICDS_UCR_NON_DASHBOARD_ENGINE_ID = 'icds-ucr-non-dashboard'
 AAA_DB_ENGINE_ID = 'aaa-data'
 ICDS_UCR_CITUS_ENGINE_ID = 'icds-ucr-citus'
 
@@ -156,7 +156,7 @@ class ConnectionManager(object):
 
     def get_connection_string(self, engine_id):
         connection_string = self.db_connection_map.get(engine_id)
-        return connection_string or self.db_connection_map['default']
+        return connection_string or self.db_connection_map[DEFAULT_DB_ALIAS]
 
     def _populate_connection_map(self):
         reporting_db_config = self._get_reporting_db_config()
@@ -186,12 +186,12 @@ class ConnectionManager(object):
             assert set(dbs).issubset(set(settings.DATABASES))
 
         if DEFAULT_ENGINE_ID not in self.db_connection_map:
-            self._add_django_db(DEFAULT_ENGINE_ID, 'default')
+            self._add_django_db(DEFAULT_ENGINE_ID, DEFAULT_DB_ALIAS)
         if UCR_ENGINE_ID not in self.db_connection_map:
-            self._add_django_db(UCR_ENGINE_ID, 'default')
+            self._add_django_db(UCR_ENGINE_ID, DEFAULT_DB_ALIAS)
 
     def _populate_from_legacy_settings(self):
-        default_db = self._connection_string_from_django('default')
+        default_db = self._connection_string_from_django(DEFAULT_DB_ALIAS)
         ucr_db_reporting_url = getattr(settings, 'UCR_DATABASE_URL', None)
         self.db_connection_map[DEFAULT_ENGINE_ID] = default_db
         self.db_connection_map[UCR_ENGINE_ID] = ucr_db_reporting_url or default_db
