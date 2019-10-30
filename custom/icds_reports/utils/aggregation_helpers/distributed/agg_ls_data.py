@@ -75,7 +75,8 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
             ('awc_visits', 'COALESCE(awc_table.awc_visits, 0)'),
             ('vhnd_observed', 'COALESCE(vhnd_table.vhnd_observed, 0)'),
             ('beneficiary_vists', 'COALESCE(beneficiary_table.beneficiary_vists, 0)'),
-            ('aggregation_level', '4')
+            ('aggregation_level', '4'),
+            ('num_supervisor_launched', 'CASE WHEN GREATEST(awc_table.form_count, vhnd_table.form_count, beneficiary_table.form_count)>0 THEN 1 ELSE 0 END')
         )
         return """
         INSERT INTO "{tablename}" (
@@ -156,6 +157,7 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
             vhnd_observed,
             beneficiary_vists,
             awc_visits,
+            num_supervisor_launched,
             aggregation_level,
             state_id,
             district_id,
@@ -167,6 +169,7 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
                 sum(vhnd_observed) as vhnd_observed,
                 sum(beneficiary_vists) as beneficiary_vists,
                 sum(awc_visits) as awc_visits,
+                sum(num_supervisor_launched) as num_supervisor_launched,
                 {agg_level},
                 {locations},
                 month
