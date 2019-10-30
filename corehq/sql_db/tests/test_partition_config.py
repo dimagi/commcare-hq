@@ -74,7 +74,7 @@ MISSING_STANDBY_DB = _get_partition_config(
         'db1': [0, 1],
         'db2': [2, 3],
     },
-    {'db1s': 'db1'}
+    {'db1smissing': 'db1'}
 )
 
 MISSING_SHARD_DB = _get_partition_config({
@@ -83,12 +83,22 @@ MISSING_SHARD_DB = _get_partition_config({
 })
 
 
+PRIMARY_WITH_NO_STANDBY = _get_partition_config(
+    {
+        'db1': [0, 1],
+        'db2': [2, 3],
+    },
+    {'db1s': 'db1'}
+)
+
+
 db_dict = {'NAME': 'commcarehq', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
 TEST_DATABASES = {
     DEFAULT_DB_ALIAS: db_dict,
     'proxy': db_dict,
     'db1': {'NAME': 'db1', 'USER': 'commcarehq', 'HOST': 'hqdb1', 'PORT': 5432},
     'db2': {'NAME': 'db2', 'USER': 'commcarehq', 'HOST': 'hqdb2', 'PORT': 5432},
+    'db1s': {'NAME': 'db2', 'USER': 'commcarehq', 'HOST': 'hqdb2', 'PORT': 5432},
 }
 
 
@@ -158,8 +168,9 @@ def test_partition_config_validation():
         (INVALID_SHARD_RANGE_CONTINUOUS, NonContinuousShardsError, None),
         (INVALID_SHARD_RANGE_POWER_2, NotPowerOf2Error, None),
         (INVALID_STANDBY_MAPPING, PartitionValidationError, re.compile('.*unknown primary DB: db1s -> dbX')),
-        (MISSING_STANDBY_DB, PartitionValidationError, 'db1s not in found in DATABASES'),
+        (MISSING_STANDBY_DB, PartitionValidationError, 'db1smissing not in found in DATABASES'),
         (MISSING_SHARD_DB, PartitionValidationError, 'db2a not in found in DATABASES'),
+        (PRIMARY_WITH_NO_STANDBY, PartitionValidationError, 'No standby listed for primary db2'),
     ]
     for config, exception, message in cases:
         yield _run_test, config, exception, message
