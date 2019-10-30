@@ -1,29 +1,48 @@
+import json
+import logging
+import uuid
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
-import architect
-import uuid
-import json
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from casexml.apps.phone.exceptions import IncompatibleSyncLogType, MissingSyncLog
-from corehq.toggles import LEGACY_SYNC_SUPPORT
-from corehq.util.global_request import get_request_domain
-from corehq.util.soft_assert import soft_assert
-from corehq.toggles import ENABLE_LOADTEST_USERS
-from corehq.apps.domain.models import Domain
-from dimagi.ext.couchdbkit import *
-from django.db import models
+
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
+from django.db import models
+
+import architect
+import six
 from memoized import memoized
-from dimagi.utils.couch import LooselyEqualDocumentSchema
-from dimagi.utils.logging import notify_exception
+
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
-from casexml.apps.phone.checksum import Checksum, CaseStateHash
 from casexml.apps.phone.change_publishers import publish_synclog_saved
-import logging
-import six
+from casexml.apps.phone.checksum import CaseStateHash, Checksum
+from casexml.apps.phone.exceptions import (
+    IncompatibleSyncLogType,
+    MissingSyncLog,
+)
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SafeSaveDocument,
+    SchemaDictProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    SetProperty,
+    StringListProperty,
+    StringProperty,
+)
+from dimagi.utils.couch import LooselyEqualDocumentSchema
+from dimagi.utils.logging import notify_exception
+
+from corehq.apps.domain.models import Domain
+from corehq.toggles import ENABLE_LOADTEST_USERS, LEGACY_SYNC_SUPPORT
+from corehq.util.global_request import get_request_domain
+from corehq.util.soft_assert import soft_assert
 
 
 def _get_logger():
@@ -239,7 +258,6 @@ class SyncLogAssertionError(AssertionError):
         super(SyncLogAssertionError, self).__init__(*args, **kwargs)
 
 
-LOG_FORMAT_LEGACY = 'legacy'
 LOG_FORMAT_SIMPLIFIED = 'simplified'
 LOG_FORMAT_LIVEQUERY = 'livequery'
 
@@ -251,9 +269,10 @@ class UCRSyncLog(Document):
 
 class AbstractSyncLog(SafeSaveDocument):
     date = DateTimeProperty()
-    domain = StringProperty()  # this is only added as of 11/2016 - not guaranteed to be set
+    domain = StringProperty()
     user_id = StringProperty()
-    build_id = StringProperty()  # this is only added as of 11/2016 and only works with app-aware sync
+    build_id = StringProperty()  # only works with app-aware sync
+    app_id = StringProperty()  # only works with app-aware sync
 
     previous_log_id = StringProperty()  # previous sync log, forming a chain
     duration = IntegerProperty()  # in seconds
@@ -321,18 +340,6 @@ class AbstractSyncLog(SafeSaveDocument):
         """
         raise NotImplementedError()
 
-    def get_previous_log(self):
-        """
-        Get the previous sync log, if there was one.  Otherwise returns nothing.
-        """
-        if not self.previous_log_id:
-            return
-
-        try:
-            return get_properly_wrapped_sync_log(self.previous_log_id)
-        except MissingSyncLog:
-            return None
-
     @classmethod
     def from_other_format(cls, other_sync_log):
         """
@@ -360,20 +367,16 @@ def save_synclog_to_sql(synclog_json_object):
     return synclog
 
 
-def delete_synclog(synclog_id):
-    """
-    Deletes synclog object both from Couch and SQL, if the doc
-        isn't found in either couch or SQL an exception is raised
-    """
-    try:
-        synclog = SyncLogSQL.objects.filter(synclog_id=synclog_id).first()
-        if synclog:
-            synclog.delete()
-            return
-    except ValidationError:
-        pass
-
-    raise MissingSyncLog("No synclog object with this synclog_id ({}) is  found".format(synclog_id))
+def delete_synclogs(current_synclog):
+    if current_synclog.user_id and current_synclog.device_id and current_synclog.app_id:
+        SyncLogSQL.objects.filter(
+            user_id=current_synclog.user_id,
+            device_id=current_synclog.device_id,
+            app_id=current_synclog.app_id,
+            date__lt=current_synclog.date
+        ).delete()
+    elif current_synclog.previous_log_id:
+        SyncLogSQL.objects.filter(synclog_id=current_synclog.previous_log_id).delete()
 
 
 def synclog_to_sql_object(synclog_json_object):
@@ -394,15 +397,21 @@ def synclog_to_sql_object(synclog_json_object):
             user_id=synclog_json_object.user_id,
             synclog_id=synclog_id,
             date=synclog_json_object.date,
-            previous_synclog_id=getattr(synclog_json_object, 'previous_log_id', None),
             log_format=synclog_json_object.log_format,
             build_id=synclog_json_object.build_id,
+            app_id=synclog_json_object.app_id,
+            device_id=synclog_json_object.device_id,
             duration=synclog_json_object.duration,
-            last_submitted=synclog_json_object.last_submitted,
             had_state_error=synclog_json_object.had_state_error,
             error_date=synclog_json_object.error_date,
             error_hash=synclog_json_object.error_hash,
         )
+    field_mapping = [
+        ('previous_log_id', 'previous_synclog_id'),
+        ('last_submitted', 'last_submitted'),
+    ]
+    for from_field, to_field in field_mapping:
+        setattr(synclog, to_field, getattr(synclog_json_object, from_field, None))
     synclog.doc = synclog_json_object.to_json()
     return synclog
 
@@ -418,17 +427,18 @@ class SyncLogSQL(models.Model):
     doc = JSONField()
     log_format = models.CharField(
         max_length=10,
-        default=LOG_FORMAT_LEGACY,
         choices=[
             (format, format)
-            for format in [LOG_FORMAT_LEGACY, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LIVEQUERY]
+            for format in [LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LIVEQUERY]
         ]
     )
     build_id = models.CharField(max_length=255, null=True, blank=True)
+    app_id = models.CharField(max_length=255, null=True)
+    device_id = models.CharField(max_length=255, null=True)
     duration = models.PositiveIntegerField(null=True, blank=True)
     last_submitted = models.DateTimeField(db_index=True, null=True, blank=True)
     had_state_error = models.BooleanField(default=False)
-    error_date = models.DateTimeField(db_index=True, null=True, blank=True)
+    error_date = models.DateTimeField(null=True, blank=True)
     error_hash = models.CharField(max_length=255, null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -954,18 +964,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
             ', '.join(self.dependent_case_ids_on_phone)))
         _get_logger().debug('index tree after update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree after update: {}'.format(self.extension_index_tree))
-        if made_changes or case_list:
-            try:
-                if made_changes:
-                    _get_logger().debug('made changes, saving.')
-                    self.last_submitted = datetime.utcnow()
-                    self.rev_before_last_submitted = self._rev
-                    self.save()
-            except ResourceConflict:
-                logging.exception('doc update conflict saving sync log {id}'.format(
-                    id=self._id,
-                ))
-                raise
+        if made_changes or not self.last_submitted:
+            _get_logger().debug('made changes')
+            self.last_submitted = datetime.utcnow()
+            self.rev_before_last_submitted = self._rev
+        return made_changes
 
     def purge_dependent_cases(self):
         """
@@ -1018,16 +1021,10 @@ def get_properly_wrapped_sync_log(doc_id):
 
 
 def properly_wrap_sync_log(doc, synclog_sql=None):
-    synclog = get_sync_log_class_by_format(doc.get('log_format')).wrap(doc)
+    synclog = SimplifiedSyncLog.wrap(doc)
     if synclog_sql:
         synclog._synclog_sql = synclog_sql
     return synclog
-
-
-def get_sync_log_class_by_format(format):
-    if format == LOG_FORMAT_LEGACY:
-        raise SyncLogAssertionError('Legacy type not supported')
-    return SimplifiedSyncLog
 
 
 class OwnershipCleanlinessFlag(models.Model):

@@ -35,6 +35,7 @@ from corehq.apps.domain.views.releases import (
 from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
+    UserListReport,
 )
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
@@ -135,12 +136,23 @@ class ProjectReportsTab(UITab):
         from corehq.apps.reports.views import MySavedReportsView
         if isinstance(self.couch_user, AnonymousCouchUser) and PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
             return []
-        return [(_("Tools"), [
-            {'title': _(MySavedReportsView.page_title),
-             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
-             'icon': 'icon-tasks fa fa-tasks',
-             'show_in_dropdown': True}
-        ])]
+        tools = [{
+            'title': _(MySavedReportsView.page_title),
+            'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
+            'icon': 'icon-tasks fa fa-tasks',
+            'show_in_dropdown': True,
+        }]
+        if toggles.USER_CONFIGURABLE_REPORTS.enabled(self.couch_user.username):
+            # Only show for **users** with the flag. This flag is also available for domains
+            # but should not be granted by domain, as the feature is too advanced to turn
+            # on for all of a domain's users.
+            from corehq.apps.userreports.views import UserConfigReportsHomeView
+            tools.append({
+                'title': _(UserConfigReportsHomeView.section_name),
+                'url': reverse(UserConfigReportsHomeView.urlname, args=[self.domain]),
+                'icon': 'icon-tasks fa fa-wrench',
+            })
+        return [(_("Tools"), tools)]
 
     def _get_report_builder_items(self):
         user_reports = []
@@ -498,6 +510,12 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_view_odata_feed(self):
+        from corehq.apps.export.views.utils import user_can_view_odata_feed
+        return user_can_view_odata_feed(self.domain, self.couch_user)
+
+    @property
+    @memoized
     def can_use_lookup_tables(self):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
@@ -717,7 +735,7 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': True,
                     'subpages': []
                 })
-            if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+            if self.can_view_odata_feed:
                 subpages = [
                     {
                         'title': _(CreateODataCaseFeedView.page_title),
@@ -837,7 +855,7 @@ class ProjectDataTab(UITab):
                 _('Explore Case Data (Preview)'),
                 url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
-        if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+        if self.can_view_odata_feed:
             from corehq.apps.export.views.list import ODataFeedListView
             items.append(dropdown_dict(
                 _(ODataFeedListView.page_title),
@@ -2075,7 +2093,7 @@ class AdminTab(UITab):
         sections = [
             (_('Administrative Reports'), [
                 {'title': _('User List'),
-                 'url': reverse('admin_report_dispatcher', args=('user_list',))},
+                 'url': UserListReport.get_url()},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('Download Global Impact Report'),

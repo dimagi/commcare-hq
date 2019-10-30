@@ -4,7 +4,7 @@ import uuid
 from django.core.management import call_command
 from django.test import TestCase
 
-from elasticsearch import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 from mock import MagicMock, patch
 from testil import tempdir
 

@@ -14,7 +14,6 @@ from corehq.sql_db.connections import (
     ICDS_UCR_CITUS_ENGINE_ID,
     connection_manager,
 )
-from custom.icds_reports.exceptions import LocationRemovedException
 from custom.icds_reports.models.aggregate import (
     AggregateInactiveAWW,
     AwcLocation,
@@ -512,11 +511,6 @@ class LocationAggregationTest(TestCase):
         self.maxDiff = None
 
         with maybe_atomic(AwcLocation):
-            # if we ran the aggregation now, we'd have 55 fewer locations
-            with self.assertRaisesRegex(LocationRemovedException, '55'):
-                with get_cursor(AwcLocation) as cursor:
-                    self.helper.aggregate(cursor)
-
             try:
                 with maybe_atomic(AwcLocation):
                     # run agg again without any locations in awc_location

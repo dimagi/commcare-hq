@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from casexml.apps.phone.document_store import ReadonlySyncLogDocumentStore
+from casexml.apps.phone.document_store import SyncLogDocumentStore
 from couchforms.models import all_known_formlike_doc_types
 from pillowtop.dao.couch import CouchDocumentStore
 
@@ -8,15 +8,15 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.locations.document_store import (
     LOCATION_DOC_TYPE,
-    ReadonlyLocationDocumentStore,
+    LocationDocumentStore,
 )
-from corehq.apps.sms.document_stores import ReadonlySMSDocumentStore
+from corehq.apps.sms.document_stores import SMSDocumentStore
 from corehq.form_processor.document_stores import (
     DocStoreLoadTracker,
     LedgerV1DocumentStore,
-    ReadonlyCaseDocumentStore,
-    ReadonlyFormDocumentStore,
-    ReadonlyLedgerV2DocumentStore,
+    CaseDocumentStore,
+    FormDocumentStore,
+    LedgerV2DocumentStore,
 )
 from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couchdb_management import couch_config
@@ -52,24 +52,24 @@ def get_document_store(data_source_type, data_source_name, domain, load_source="
                 return None
             raise
     elif FORM_SQL in type_or_name:
-        store = ReadonlyFormDocumentStore(domain)
+        store = FormDocumentStore(domain)
         load_counter = form_load_counter
     elif CASE_SQL in type_or_name:
-        store = ReadonlyCaseDocumentStore(domain)
+        store = CaseDocumentStore(domain)
         load_counter = case_load_counter
     elif SMS in type_or_name:
-        store = ReadonlySMSDocumentStore()
+        store = SMSDocumentStore()
         load_counter = sms_load_counter
     elif LEDGER_V2 in type_or_name:
-        store = ReadonlyLedgerV2DocumentStore(domain)
+        store = LedgerV2DocumentStore(domain)
         load_counter = ledger_load_counter
     elif LEDGER_V1 in type_or_name:
         store = LedgerV1DocumentStore(domain)
         load_counter = ledger_load_counter
     elif LOCATION in type_or_name:
-        return ReadonlyLocationDocumentStore(domain)
+        return LocationDocumentStore(domain)
     elif SYNCLOG_SQL in type_or_name:
-        return ReadonlySyncLogDocumentStore()
+        return SyncLogDocumentStore()
     else:
         raise UnknownDocumentStore(
             'getting document stores for backend {} is not supported!'.format(data_source_type)
@@ -88,15 +88,15 @@ def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None, l
     """
     from corehq.apps.change_feed import document_types
     if doc_type in all_known_formlike_doc_types():
-        store = ReadonlyFormDocumentStore(domain, xmlns=case_type_or_xmlns)
+        store = FormDocumentStore(domain, xmlns=case_type_or_xmlns)
         load_counter = form_load_counter
     elif doc_type in document_types.CASE_DOC_TYPES:
-        store = ReadonlyCaseDocumentStore(domain, case_type=case_type_or_xmlns)
+        store = CaseDocumentStore(domain, case_type=case_type_or_xmlns)
         load_counter = case_load_counter
     elif doc_type == LOCATION_DOC_TYPE:
-        return ReadonlyLocationDocumentStore(domain)
+        return LocationDocumentStore(domain)
     elif doc_type == topics.LEDGER:
-        return ReadonlyLedgerV2DocumentStore(domain)
+        return LedgerV2DocumentStore(domain)
     else:
         # all other types still live in couchdb
         return CouchDocumentStore(

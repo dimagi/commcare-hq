@@ -7,7 +7,7 @@ from random import choices
 from django import db
 from django.conf import settings
 from django.db import OperationalError
-from django.db.utils import InterfaceError as DjangoInterfaceError
+from django.db.utils import InterfaceError as DjangoInterfaceError, DEFAULT_DB_ALIAS
 
 from memoized import memoized
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
@@ -156,7 +156,7 @@ def get_db_alias_for_partitioned_doc(partition_value):
         from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
         db_name = ShardAccessor.get_database_for_doc(partition_value)
     else:
-        db_name = 'default'
+        db_name = DEFAULT_DB_ALIAS
     return db_name
 
 
@@ -164,12 +164,12 @@ def get_db_aliases_for_partitioned_query():
     if settings.USE_PARTITIONED_DATABASE:
         db_names = partition_config.get_form_processing_dbs()
     else:
-        db_names = ['default']
+        db_names = [DEFAULT_DB_ALIAS]
     return db_names
 
 
 def get_default_db_aliases():
-    return ['default']
+    return [DEFAULT_DB_ALIAS]
 
 
 def get_all_db_aliases():
@@ -323,6 +323,9 @@ def select_db_for_read(weighted_dbs):
             ]
 
     """
+    if not weighted_dbs:
+        return
+
     # convert to a db to weight dictionary
     weights_by_db = {_db: weight for _db, weight in weighted_dbs}
 

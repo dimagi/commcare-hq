@@ -1,33 +1,24 @@
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import (
+    AGG_CCS_RECORD_CF_TABLE,
     AWW_INCENTIVE_TABLE,
-    AGG_CCS_RECORD_CF_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
+    StateBasedAggregationPartitionedHelper,
+)
 
 
-class AwwIncentiveAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+class AwwIncentiveAggregationDistributedHelper(StateBasedAggregationPartitionedHelper):
     helper_key = 'awc-incentive'
     aggregate_parent_table = AWW_INCENTIVE_TABLE
     aggregate_child_table_prefix = 'icds_db_aww_incentive_'
 
-    def aggregate(self, cursor):
-        curr_month_query, curr_month_params = self.create_table_query()
-        agg_query, agg_params = self.aggregation_query()
-
-        cursor.execute(self.drop_table_query())
-        cursor.execute(curr_month_query, curr_month_params)
-        cursor.execute(agg_query, agg_params)
-
     @property
     def ccs_record_case_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, 'static-ccs_record_cases')
 
-    def aggregation_query(self):
+    def aggregate_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
 

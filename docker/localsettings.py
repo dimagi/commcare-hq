@@ -72,7 +72,6 @@ if USE_PARTITIONED_DATABASE:
             'p2': [2, 3]
         },
         'groups': {
-            'main': ['default'],
             'proxy': ['proxy'],
             'form_processing': ['p1', 'p2'],
         },

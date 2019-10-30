@@ -3,6 +3,12 @@ User Configurable Reporting
 
 An overview of the design, API and data structures used here.
 
+The docs on
+`reporting <https://commcare-hq.readthedocs.io/reporting.html>`_,
+`pillows <https://commcare-hq.readthedocs.io/pillows.html>`_,
+and `change feeds <https://commcare-hq.readthedocs.io/change_feeds.html>`_,
+are useful background.
+
 .. contents::
    :local:
 
@@ -19,6 +25,11 @@ live in the database. The data source config determines how raw data
 (forms and cases) gets mapped to rows in an intermediary table, while
 the report config(s) determine how that report table gets turned into an
 interactive report in the UI.
+
+A UCR table is created when a new data source is created.
+The table's structure is updated whenever the UCR is "rebuilt", which happens when the data source config is edited.
+Rebuilds can also be kicked off manually via either ``rebuild_indicator_table`` or the UI.
+Rebuilding happens asynchronously. Data in the table is refreshed continuously by pillows.
 
 Data Sources
 ============
@@ -1392,16 +1403,18 @@ Keep in mind that the only variables available for formatting are
 | "%b (%y)" | "Sep (08)"        |
 +-----------+-------------------+
 
-ConditionalAggregationColumn
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+IntegerBucketsColumn and AgeInMonthsBucketsColumn
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**NOTE** This feature is only available to static UCR reports maintained
-by Dimagi developers.
+Bucket columns allow you to define a series of ranges with corresponding names,
+then group together rows where a specific field's value falls within those ranges.
+These ranges are inclusive, since they are implemented using the ``between`` operator.
+It is the user's responsibility to make sure the ranges do not overlap; if a value
+falls into multiple ranges, it is undefined behavior which bucket it will be assigned to.
 
-Conditional aggregation columns allow you to define a series of
-conditional expressions with corresponding names, then group together
-rows which which meet the same conditions. They have a type of
-``"conditional_aggregation"``.
+There are two types: ``integer_buckets`` for integer values, and
+``age_in_months_buckets``, where the given field must be a date
+and the buckets are based on the number of months since that date.
 
 Here's an example that groups children based on their age at the time of
 registration:
@@ -1411,34 +1424,34 @@ registration:
    {
        "display": "age_range",
        "column_id": "age_range",
-       "type": "conditional_aggregation",
-       "whens": {
-           "0 <= age_at_registration AND age_at_registration < 12": "infant",
-           "12 <= age_at_registration AND age_at_registration < 36": "toddler",
-           "36 <= age_at_registration AND age_at_registration < 60": "preschooler"
+       "type": "integer_buckets",
+       "field": "age_at_registration",
+       "ranges": {
+            "infant": [0, 11],
+            "toddler": [12, 35],
+            "preschooler": [36, 60]
        },
        "else_": "older"
    }
 
-The ``"whens"`` attribute maps conditional expressions to labels. If
-none of the conditions are met, the row will receive the ``"else_"``
-value, if provided.
+The ``"ranges"`` attribute maps conditional expressions to labels. If the field's value
+does not fall into any of these ranges, the row will receive the ``"else_"`` value, if provided.
 
-Here's a more complex example which uses SQL functions to dynamically
-calculate ranges based on a date property:
+Here's an example using ``age_in_months_buckets``:
 
 .. code:: json
 
    {
        "display": "Age Group",
        "column_id": "age_group",
-       "type": "conditional_aggregation",
-       "whens": {
-           "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 0 and 5": "0_to_5",
-           "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 6 and 11": "6_to_11",
-           "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 12 and 35": "12_to_35",
-           "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 36 and 59": "36_to_59",
-           "extract(year from age(dob))*12 + extract(month from age(dob)) BETWEEN 60 and 71": "60_to_71"
+       "type": "age_in_months_buckets",
+       "field": "dob",
+       "ranges": {
+            "0_to_5": [0, 5],
+            "6_to_11": [6, 11],
+            "12_to_35": [12, 35],
+            "36_to_59": [36, 59],
+            "60_to_71": [60, 71],
        }
    }
 
@@ -2065,32 +2078,27 @@ Getting Started
 
 The easiest way to get started is to start with sample data and reports.
 
-First copy the dimagi domain to your developer machine. You only really
-need forms, users, and cases:
+Create a simple app and submit a few forms. You can then use report builder to create a report.
+Start at ``a/DOMAIN/reports/builder/select_source/`` and create a report based on your form, either a form list or
+form summary.
 
-::
+When your report is created, clicking "Edit" will bring you to the report builder editor.
+An individual report can be viewed in the UCR editor by changing the report builder URL,
+``/a/DOMAIN/reports/builder/edit/REPORT_ID/`` to the UCR URL, ``/a/DOMAIN/configurable_reports/reports/edit/REPORT_ID/``.
+In this view, you can examine the columns, filters, and aggregation columns that report builder created.
 
-   ./manage.py copy_domain https://<your_username>:<your_password>@commcarehq.cloudant.com/commcarehq dimagi --include=CommCareCase,XFormInstance,CommCareUser
+The UCR config UI also includes pages to add new data sources, imports reports, etc.,
+all based at ``/a/DOMAIN/configurable_reports/``.  If you add a new report via the UCR UI and copy in the
+columns, filters, etc. from a report builder report, that new report will then automatically open in the UCR UI when you edit it.
+You can also take an existing report builder report and set ``my_report.report_meta.created_by_builder`` to false
+to force it to open in the UCR UI in the future.
 
-Then load and rebuild the data table:
+Two example UCRs, a case-based UCR for the ``dimagi`` domain and a form-based UCR for the ``gsid`` domain,
+are checked into source code. Their data source specs and report specs are in ``corehq/apps/userreports/examples/``.
 
-::
+The tests are also a good source of documentation for the various filter and indicator formats that are supported.
 
-   ./manage.py load_spec corehq/apps/userreports/examples/dimagi/dimagi-case-data-source.json --rebuild
-
-Then load the report:
-
-::
-
-   ./manage.py load_spec corehq/apps/userreports/examples/dimagi/dimagi-chart-report.json
-
-Fire up a browser and you should see the new report in your domain. You
-should also be able to navigate to the edit UI, or look at and edit the
-example JSON files. There is a second example based off the "gsid"
-domain as well using forms.
-
-The tests are also a good source of documentation for the various filter
-and indicator formats that are supported.
+When editing data sources, you can check the progress of rebuilding using ``my_datasource.meta.build.finished``
 
 Static data sources
 -------------------

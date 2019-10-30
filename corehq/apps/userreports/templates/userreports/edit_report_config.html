@@ -1,73 +1,117 @@
 {% extends "userreports/userreports_base.html" %}
 {% load crispy_forms_tags %}
 {% load i18n %}
+
 {% block page_content %}
-  {% crispy form %}
-  {% if report.get_id %}
-    <hr />
-    {% if not report.is_static%}
-      {% if referring_apps %}
-        <a href="#confirm_delete" class="btn btn-danger pull-right" data-toggle="modal">
-          {% trans 'Delete Report'%}
-        </a>
-        <div id="confirm_delete" class="modal fade" tabindex="-1" role="dialog">
-          <div class="modal-dialog" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">{% trans 'Are you sure you want to delete this report'%}</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <fieldset>
-                  <legend>{% trans 'Deleting this will break below apps that refer the report. In addition there may be older app versions that depend on these reports, they are not displayed here. Please delete with caution.' %}</legend>
-                  <ul>
-                    {% for app in referring_apps %}
-                      <li>
-                        <a href="{{ app.module_url }}">{{ app.module_name}}</a> module in
-                        <a href="{{ app.app_url }}">{{app.app_name}}</a> app
-                      </li>
-                    {% endfor %}
-                  </ul>
-                </fieldset>
-              </div>
+  <div class="pull-right page-actions-toolbar">
+    <div class="btn-toolbar">
+      {% if report.get_id %}
+        <div class="btn-group">
+          <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-default">{% trans 'View Report' %}</a>
+        </div>
+        <div class="btn-group">
+          <a href="{% url 'configurable_report_json' domain report.get_id %}"
+             class="btn btn-default track-usage-link"
+             data-category="UCR"
+             data-action="View Source"
+             data-label="Report Config">{% trans 'Report Source' %}</a>
+        </div>
+        {% if not report.is_static%}
+          <div class="btn-group">
+            {% if referring_apps %}
+              <a href="#confirm_delete" class="btn btn-danger pull-right" data-toggle="modal">
+                {% trans 'Delete Report' %}
+              </a>
+            {% else %}
               <form method='post' action="{% url 'delete_configurable_report' domain report.get_id %}" >
                 {% csrf_token %}
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">
-                    {% trans "Cancel" %}
-                  </button>
-                  <button type="submit" value="{% trans 'Delete Report'%}" class="disable-on-submit btn btn-danger btn-secondary">{% trans 'Delete Report'%}</button>
-                </div>
+                <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit pull-right">
               </form>
-            </div>
+            {% endif %}
           </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+  <div class="clearfix"></div>
+
+  <ul class="nav nav-tabs">
+    <li class="active"><a data-toggle="tab" href="#tabs-configuration">Configuration</a></li>
+    <li><a data-toggle="tab" href="#tabs-usage">Usage</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade in active" id="tabs-configuration">
+      <div class="spacer"></div>
+      {% crispy form %}
+    </div>
+    <div class="tab-pane fade" id="tabs-usage">
+      <div class="spacer"></div>
+      {% if not referring_apps %}
+        <div class="alert alert-info">
+          {% trans "This report is not referred to by any apps in this domain." %}
+          {% if report.is_static%}
+            <br />
+            {% trans "This is a static report, which might be referred to by apps in other domains." %}
+          {% endif %}
         </div>
       {% else %}
-        <form method='post' action="{% url 'delete_configurable_report' domain report.get_id %}" >
-          {% csrf_token %}
-          <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit pull-right">
-        </form>
+        <p>
+          {% blocktrans %}
+            The following apps depend on this report:
+          {% endblocktrans %}
+        </p>
+        <ul>
+          <li>a thing</li>
+          {% for app in referring_apps %}
+            <li>
+              <a href="{{ app.module_url }}">{{ app.module_name}}</a> module in
+              <a href="{{ app.app_url }}">{{app.app_name}}</a> app
+            </li>
+          {% endfor %}
+        </ul>
       {% endif %}
-    {% endif %}
-    <a href="{% url 'configurable' domain report.get_id %}" class="btn btn-default">{% trans 'View report' %}</a>
-    <a href="{% url 'configurable_report_json' domain report.get_id %}" class="btn btn-default">{% trans 'Report Source (Advanced)' %}</a>
-  {% endif %}
-  <br/>
-  {% if not referring_apps  %}
-    <label class="label label-danger">This report is not referred by any apps in this domain. Please note, a static report might be referred by apps in other domains.</label>
-  {% else %}
-    <fieldset>
-      <legend>Apps dependent on this report</legend>
-      <ul>
-        {% for app in referring_apps %}
-          <li>
-            <a href="{{ app.module_url }}">{{ app.module_name}}</a> module in
-            <a href="{{ app.app_url }}">{{app.app_name}}</a> app
-          </li>
-        {% endfor %}
-      </ul>
-    </fieldset>
+    </div>
+  </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+  {% if referring_apps %}
+    <div id="confirm_delete" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title">{% trans 'Are you sure you want to delete this report?' %}</h4>
+          </div>
+          <div class="modal-body">
+            {% blocktrans %}
+              Deleting this will break the apps below, which refer to this report.
+              In addition, there may be older app versions that depend on these reports but are not displayed here.
+              Please delete with caution.
+            {% endblocktrans %}
+            <ul>
+              {% for app in referring_apps %}
+                <li>
+                  <a href="{{ app.module_url }}">{{ app.module_name}}</a> module in
+                  <a href="{{ app.app_url }}">{{app.app_name}}</a> app
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+          <form method='post' action="{% url 'delete_configurable_report' domain report.get_id %}" >
+            {% csrf_token %}
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">
+                {% trans "Cancel" %}
+              </button>
+              <button type="submit" value="{% trans 'Delete Report'%}" class="disable-on-submit btn btn-danger">{% trans 'Delete Report'%}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   {% endif %}
 {% endblock %}
