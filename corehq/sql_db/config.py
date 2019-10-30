@@ -128,32 +128,45 @@ def validate_partition_config(config):
     if not _is_power_of_2(num_shards):
         raise NotPowerOf2Error('Total number of shards must be a power of 2: {}'.format(num_shards))
 
-    for standby_db, primary_db in config['standbys'].items():
-        if primary_db not in config['shards']:
-            raise PartitionValidationError(
-                f'Standby DB mapped to unknown primary DB: {standby_db} -> {primary_db}'
-            )
-        if standby_db not in settings.DATABASES:
-            raise PartitionValidationError('{} not in found in DATABASES'.format(standby_db))
-        if standby_db in config['shards']:
-            raise PartitionValidationError(f'DB listed as primary and standby: {standby_db}')
+    if config.get('standbys'):
+        for standby_db, primary_db in config['standbys'].items():
+            if primary_db not in config['shards']:
+                raise PartitionValidationError(
+                    f'Standby DB mapped to unknown primary DB: {standby_db} -> {primary_db}'
+                )
+            if standby_db not in settings.DATABASES:
+                raise PartitionValidationError('{} not in found in DATABASES'.format(standby_db))
+            if standby_db in config['shards']:
+                raise PartitionValidationError(f'DB listed as primary and standby: {standby_db}')
 
-    if config['standbys']:
-        primary_standby_map = {p: s for s, p in config['standbys'].items()}
-        for db in config['shards']:
-            if db not in primary_standby_map:
-                raise PartitionValidationError(f'No standby listed for primary {db}')
+            primary_standby_map = {p: s for s, p in config['standbys'].items()}
+            for db in config['shards']:
+                if db not in primary_standby_map:
+                    raise PartitionValidationError(f'No standby listed for primary {db}')
 
 
 def normalize_partition_config(config):
-    if 'standbys' not in config:
-        config['standbys'] = {}
-
     if 'groups' in config:
         # convert old format
         config['proxy'] = config['groups']['proxy'][0]
         del config['groups']
     return config
+
+
+def get_standby_config(config):
+    standbys = config['standbys']
+    if not standbys:
+        return None
+    shards = config['shards']
+    standby_config = {
+        'proxy': config['proxy'],
+        'shards': {
+            standby_db: shards[primary_db]
+            for standby_db, primary_db in standbys.items()
+        }
+    }
+    validate_partition_config(standby_config)
+    return PartitionConfig(standby_config)
 
 
 def _is_power_of_2(num):
@@ -182,14 +195,10 @@ def get_shards_to_update(existing_shards, new_shards):
     return shards_to_update
 
 
-@memoized
-def _get_config():
-    if settings.USE_PARTITIONED_DATABASE:
-        config = normalize_partition_config(settings.PARTITION_DATABASE_CONFIG)
-        validate_partition_config(config)
-        return PartitionConfig(config)
-    else:
-        return object()
-
-
-partition_config = _get_config()
+partition_config = None
+standby_partition_config = None
+if settings.USE_PARTITIONED_DATABASE:
+    config = normalize_partition_config(settings.PARTITION_DATABASE_CONFIG)
+    validate_partition_config(config)
+    partition_config = PartitionConfig(config)
+    standby_partition_config = get_standby_config(config)

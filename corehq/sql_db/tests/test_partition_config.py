@@ -9,6 +9,7 @@ from testil import assert_raises
 from corehq.sql_db.config import (
     ShardMeta,
     get_shards_to_update,
+    get_standby_config,
     normalize_partition_config,
     parse_existing_shard,
     validate_partition_config,
@@ -164,6 +165,20 @@ class TestPartitionConfig(SimpleTestCase):
         config = PartitionConfig(normalize_partition_config(TEST_LEGACY_FORMAT))
         self.assertEqual('proxy', config.get_proxy_db())
         self.assertEqual({'db1', 'db2'}, set(config.get_form_processing_dbs()))
+
+    def test_get_standby_config(self):
+        config = get_standby_config(_get_partition_config(
+            {
+                'db1': [0, 3],
+            },
+            {'db1s': 'db1'}
+        ))
+        self.assertEqual(config.partition_config, {
+            'proxy': 'proxy',
+            'shards': {
+                'db1s': [0, 3]
+            }
+        })
 
 
 def test_partition_config_validation():
