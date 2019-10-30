@@ -35,6 +35,7 @@ log = logging.getLogger(__name__)
 
 STATUS_INTERVAL = 300  # 5 minutes
 MAX_FORMS_PER_MEMORIZED_CASE = 20
+MAX_FORMS_PER_DIFF = 500
 
 
 class CaseDiffQueue(object):
@@ -73,7 +74,7 @@ class CaseDiffQueue(object):
         self.status_interval = status_interval
         self.pending_cases = defaultdict(int)  # case id -> processed form count
         self.pending_loads = defaultdict(int)  # case id -> processed form count
-        self.cases_to_diff = []  # case ids ready to diff
+        self.cases_to_diff = defaultdict(int)  # case id ready to diff -> form count
         self.pool = Group()
         # The diff pool is used for case diff jobs. It has limited
         # concurrency to prevent OOM conditions caused by loading too
@@ -146,7 +147,7 @@ class CaseDiffQueue(object):
                     self._async_load_cases(batch)
                     batch = self.pending_loads = defaultdict(int)
             elif total_forms <= processed_forms:
-                self.enqueue(case_id)
+                self.enqueue(case_id, processed_forms)
             else:
                 update_lru(case_id)
         if self._is_flushing and batch:
@@ -182,15 +183,19 @@ class CaseDiffQueue(object):
             result = self.statedb.update_cases(case_records)
             for case_id, total_forms, processed_forms in result:
                 if total_forms <= processed_forms:
-                    self.enqueue(case_id)
+                    self.enqueue(case_id, processed_forms)
         missing = set(case_ids) - loaded_case_ids
         if missing:
             log.error("Found %s missing Couch cases", len(missing))
             self.statedb.add_missing_docs("CommCareCase-couch", missing)
 
-    def enqueue(self, case_id):
-        self.cases_to_diff.append(case_id)
-        if len(self.cases_to_diff) >= self.BATCH_SIZE:
+    def enqueue(self, case_id, num_forms=None):
+        if num_forms is None:
+            num_forms = self.statedb.get_forms_count(case_id)
+        if sum(self.cases_to_diff.values()) + num_forms > MAX_FORMS_PER_DIFF:
+            self._diff_cases()
+        self.cases_to_diff[case_id] += num_forms
+        if len(self.cases_to_diff) >= self.BATCH_SIZE or num_forms > MAX_FORMS_PER_DIFF:
             self._diff_cases()
 
     def _diff_cases(self):
@@ -215,8 +220,12 @@ class CaseDiffQueue(object):
             # may block due to concurrency limit on diff pool
             self.diff_batcher.spawn(diff, case_ids)
 
-        self.diff_spawner.spawn(spawn_diff, self.cases_to_diff)
-        self.cases_to_diff = []
+        count = sum(self.cases_to_diff.values())
+        if count > MAX_FORMS_PER_DIFF:
+            # maybe adjust MAX_FORMS_PER_DIFF if this is frequent
+            log.warning("diff %s cases with %s forms", len(self.cases_to_diff), count)
+        self.diff_spawner.spawn(spawn_diff, list(self.cases_to_diff))
+        self.cases_to_diff = defaultdict(int)
 
     def process_remaining_diffs(self):
         log.debug("process remaining diffs")
@@ -251,8 +260,8 @@ class CaseDiffQueue(object):
             join(pool)
             if complete:
                 log.info("Diffing cases with unprocessed forms...")
-                for case_id in self.statedb.iter_cases_with_unprocessed_forms():
-                    self.enqueue(case_id)
+                for case_id, num_forms in self.statedb.iter_cases_with_unprocessed_forms():
+                    self.enqueue(case_id, num_forms)
             while self.cases_to_diff or pool or diff_pool:
                 if self.cases_to_diff:
                     self._diff_cases()
