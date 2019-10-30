@@ -53,75 +53,12 @@ class DbShard(object):
 
 class PartitionConfig(object):
 
-    def __init__(self):
-        assert settings.USE_PARTITIONED_DATABASE
-        self._validate()
-
-    def _validate(self):
-        proxy_db = self.partition_config['proxy']
-        if proxy_db not in self.database_config:
-            raise PartitionValidationError(f'{proxy_db} not in found in DATABASES')
-
+    def __init__(self, config):
+        self.partition_config = config
         shards_seen = set()
-        previous_range = None
-        for db, shard_range, in sorted(list(self.partition_config['shards'].items()), key=lambda x: x[1]):
-            if db not in self.database_config:
-                raise PartitionValidationError(f'{db} not in found in DATABASES')
-            if not previous_range:
-                if shard_range[0] != 0:
-                    raise NotZeroStartError('Shard numbering must start at 0')
-            else:
-                if previous_range[1] + 1 != shard_range[0]:
-                    raise NonContinuousShardsError(
-                        'Shards must be numbered consecutively: {} -> {}'.format(
-                            previous_range[1], shard_range[0]
-                        ))
-
+        for db, shard_range, in config['shards'].items():
             shards_seen |= set(range(shard_range[0], shard_range[1] + 1))
-            previous_range = shard_range
-
-        num_shards = len(shards_seen)
-
-        if not _is_power_of_2(num_shards):
-            raise NotPowerOf2Error('Total number of shards must be a power of 2: {}'.format(num_shards))
-
-        for standby_db, primary_db in self.partition_config['standbys'].items():
-            if primary_db not in self.partition_config['shards']:
-                raise PartitionValidationError(
-                    f'Standby DB mapped to unknown primary DB: {standby_db} -> {primary_db}'
-                )
-            if standby_db not in self.database_config:
-                raise PartitionValidationError('{} not in found in DATABASES'.format(standby_db))
-            if standby_db in self.partition_config['shards']:
-                raise PartitionValidationError(f'DB listed as primary and standby: {standby_db}')
-
-        if self.partition_config['standbys']:
-            primary_standby_map = {p: s for s, p in self.partition_config['standbys'].items()}
-            for db in self.partition_config['shards']:
-                if db not in primary_standby_map:
-                    raise PartitionValidationError(f'No standby listed for primary {db}')
-
-        self._num_shards = num_shards
-
-    @property
-    def num_shards(self):
-        return self._num_shards
-
-    @memoized_property
-    def partition_config(self):
-        config = settings.PARTITION_DATABASE_CONFIG
-        if 'standbys' not in config:
-            config['standbys'] = {}
-
-        if 'groups' in config:
-            # convert old format
-            config['proxy'] = config['groups']['proxy'][0]
-            del config['groups']
-        return config
-
-    @property
-    def database_config(self):
-        return settings.DATABASES
+        self.num_shards = len(shards_seen)
 
     def get_proxy_db(self):
         return self.partition_config['proxy']
@@ -163,6 +100,62 @@ class PartitionConfig(object):
         return {shard.shard_id: shard for shard in db_shards}
 
 
+def validate_partition_config(config):
+    proxy_db = config['proxy']
+    if proxy_db not in settings.DATABASES:
+        raise PartitionValidationError(f'{proxy_db} not in found in DATABASES')
+
+    shards_seen = set()
+    previous_range = None
+    for db, shard_range, in sorted(list(config['shards'].items()), key=lambda x: x[1]):
+        if db not in settings.DATABASES:
+            raise PartitionValidationError(f'{db} not in found in DATABASES')
+        if not previous_range:
+            if shard_range[0] != 0:
+                raise NotZeroStartError('Shard numbering must start at 0')
+        else:
+            if previous_range[1] + 1 != shard_range[0]:
+                raise NonContinuousShardsError(
+                    'Shards must be numbered consecutively: {} -> {}'.format(
+                        previous_range[1], shard_range[0]
+                    ))
+
+        shards_seen |= set(range(shard_range[0], shard_range[1] + 1))
+        previous_range = shard_range
+
+    num_shards = len(shards_seen)
+
+    if not _is_power_of_2(num_shards):
+        raise NotPowerOf2Error('Total number of shards must be a power of 2: {}'.format(num_shards))
+
+    for standby_db, primary_db in config['standbys'].items():
+        if primary_db not in config['shards']:
+            raise PartitionValidationError(
+                f'Standby DB mapped to unknown primary DB: {standby_db} -> {primary_db}'
+            )
+        if standby_db not in settings.DATABASES:
+            raise PartitionValidationError('{} not in found in DATABASES'.format(standby_db))
+        if standby_db in config['shards']:
+            raise PartitionValidationError(f'DB listed as primary and standby: {standby_db}')
+
+    if config['standbys']:
+        primary_standby_map = {p: s for s, p in config['standbys'].items()}
+        for db in config['shards']:
+            if db not in primary_standby_map:
+                raise PartitionValidationError(f'No standby listed for primary {db}')
+
+
+def normalize_partition_config(config):
+    if 'standbys' not in config:
+        config['standbys'] = {}
+
+    if 'groups' in config:
+        # convert old format
+        config['proxy'] = config['groups']['proxy'][0]
+        del config['groups']
+    return config
+
+
 def _is_power_of_2(num):
     return num and not (num & (num - 1))
 
@@ -192,7 +185,9 @@ def get_shards_to_update(existing_shards, new_shards):
 @memoized
 def _get_config():
     if settings.USE_PARTITIONED_DATABASE:
-        return PartitionConfig()
+        config = normalize_partition_config(settings.PARTITION_DATABASE_CONFIG)
+        validate_partition_config(config)
+        return PartitionConfig(config)
     else:
         return object()
 
