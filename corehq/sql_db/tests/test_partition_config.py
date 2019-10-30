@@ -77,6 +77,12 @@ MISSING_STANDBY_DB = _get_partition_config(
     {'db1s': 'db1'}
 )
 
+MISSING_SHARD_DB = _get_partition_config({
+    'db1': [0, 1],
+    'db2a': [2, 3],
+})
+
+
 db_dict = {'NAME': 'commcarehq', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
 TEST_DATABASES = {
     DEFAULT_DB_ALIAS: db_dict,
@@ -153,6 +159,7 @@ def test_partition_config_validation():
         (INVALID_SHARD_RANGE_POWER_2, NotPowerOf2Error, None),
         (INVALID_STANDBY_MAPPING, PartitionValidationError, re.compile('.*unknown primary DB: db1s -> dbX')),
         (MISSING_STANDBY_DB, PartitionValidationError, 'db1s not in found in DATABASES'),
+        (MISSING_SHARD_DB, PartitionValidationError, 'db2a not in found in DATABASES'),
     ]
     for config, exception, message in cases:
         yield _run_test, config, exception, message
