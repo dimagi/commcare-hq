@@ -1,10 +1,10 @@
 import inspect
-from collections import namedtuple
 from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connections
 
+import attr
 import dateutil
 
 from dimagi.utils.chunked import chunked
@@ -13,11 +13,23 @@ from corehq.apps.hqadmin.management.commands.stale_data_in_es import (
     get_sql_case_data_for_db,
 )
 from corehq.apps.userreports.util import get_table_name
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
-RunConfig = namedtuple('RunConfig', ['domain', 'table_id', 'start_date', 'end_date', 'case_type'])
+
+@attr.s
+class RunConfig(object):
+    domain = attr.ib()
+    table_id = attr.ib()
+    start_date = attr.ib()
+    end_date = attr.ib()
+    case_type = attr.ib()
+    xmlns = attr.ib()
+
+    def run_with_forms(self):
+        return bool(self.xmlns)
 
 
 class Command(BaseCommand):
@@ -39,6 +51,16 @@ class Command(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('table_id')
         parser.add_argument(
+            '--case-type',
+            action='store',
+            help='Mutually exclusive with XMLNS',
+        )
+        parser.add_argument(
+            '--xmlns',
+            action='store',
+            help='Mutually exclusive with case_type',
+        )
+        parser.add_argument(
             '--start',
             action='store',
             help='Only include data modified after this date',
@@ -50,13 +72,18 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain, table_id, **options):
+        if options['case_type'] and options['xmlns']:
+            raise CommandError('You may only specify one of case_type or XMLNS')
+
         start = dateutil.parser.parse(options['start']) if options['start'] else datetime(2010, 1, 1)
         end = dateutil.parser.parse(options['end']) if options['end'] else datetime.utcnow()
-        run_config = RunConfig(domain, table_id, start, end, 'household')
+
+        run_config = RunConfig(domain, table_id, start, end, options['case_type'], options['xmlns'])
         if not should_use_sql_backend(run_config.domain):
             raise CommandError('This command only supports SQL domains.')
-        for case_id, case_type, ucr_date, primary_date in _get_stale_data(run_config):
-            print(f"{case_id},CommCareCase,{case_type},{ucr_date},{primary_date}")
+
+        for doc_id, doc_type, ucr_date, primary_date in _get_stale_data(run_config):
+            print(f"{doc_id},{doc_type},{ucr_date},{primary_date}")
 
 
 def _get_stale_data(run_config):
@@ -64,16 +91,16 @@ def _get_stale_data(run_config):
         matching_records_for_db = get_sql_case_data_for_db(db, run_config)
         chunk_size = 1000
         for chunk in chunked(matching_records_for_db, chunk_size):
-            case_ids = [val[0] for val in chunk]
-            ucr_insertion_dates = _get_ucr_insertion_dates(run_config.domain, run_config.table_id, case_ids)
-            for case_id, case_type, sql_modified_on in chunk:
-                ucr_insert_date = ucr_insertion_dates.get(case_id)
+            doc_ids = [val[0] for val in chunk]
+            ucr_insertion_dates = _get_ucr_insertion_dates(run_config.domain, run_config.table_id, doc_ids)
+            for doc_id, doc_type, sql_modified_on in chunk:
+                ucr_insert_date = ucr_insertion_dates.get(doc_id)
                 if not ucr_insert_date or (ucr_insert_date < sql_modified_on):
                     ucr_date_string = ucr_insert_date.isoformat() if ucr_insert_date else ''
-                    yield (case_id, case_type, ucr_date_string, sql_modified_on.isoformat())
+                    yield (doc_id, doc_type, ucr_date_string, sql_modified_on.isoformat())
 
 
-def _get_ucr_insertion_dates(domain, table_id, case_ids):
+def _get_ucr_insertion_dates(domain, table_id, doc_ids):
     table_name = get_table_name(domain, table_id)
     with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
         query = f'''
@@ -81,7 +108,18 @@ def _get_ucr_insertion_dates(domain, table_id, case_ids):
                 doc_id,
                 inserted_at
             FROM "{table_name}"
-            WHERE doc_id = ANY(%(case_ids)s);
+            WHERE doc_id = ANY(%(doc_ids)s);
         '''
-        cursor.execute(query, {'case_ids': case_ids})
+        cursor.execute(query, {'doc_ids': doc_ids})
         return dict(cursor.fetchall())
+
+
+def _get_primary_data_for_db(run_config, db):
+    if run_config.run_with_forms:
+        return XFormInstanceSQL.objects.using(db).filter(
+            domain=run_config.domain,
+            received_on__gte=run_config.start_date,
+            received_on__lte=run_config.end_date,
+        ).values_list('form_id', 'xmlns', 'received_on')
+    else:
+        return get_sql_case_data_for_db(db, run_config)
