@@ -2293,7 +2293,7 @@ class TestExportData(TestCase):
                                    ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched']]],
              ['Export Info', [
-                 ['Generated at', "16:21:11 15 November 2017"],
+                 ['Generated at', india_now()],
                  ['State', 'st1'],
                  ['District', 'd1'],
                  ['Block', 'b1'],
