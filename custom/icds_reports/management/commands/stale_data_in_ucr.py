@@ -89,6 +89,7 @@ class Command(BaseCommand):
 
 def _get_stale_data(run_config):
     for db in get_db_aliases_for_partitioned_query():
+        print(f"Starting db {db}")
         matching_records_for_db = _get_primary_data_for_db(db, run_config)
         chunk_size = 1000
         for chunk in chunked(matching_records_for_db, chunk_size):
