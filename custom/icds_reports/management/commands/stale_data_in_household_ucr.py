@@ -2,6 +2,7 @@ import inspect
 from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
+from django.db import connections
 
 import dateutil
 
@@ -13,8 +14,8 @@ from corehq.apps.hqadmin.management.commands.stale_data_in_es import (
 )
 from corehq.apps.userreports.util import get_table_name
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from custom.icds_reports.models.aggregate import AggAwc, get_cursor
 
 
 class Command(BaseCommand):
@@ -71,7 +72,7 @@ def _get_stale_data(run_config):
 
 def _get_ucr_insertion_dates(domain, case_ids):
     table_name = get_table_name(domain, 'static-household_cases')
-    with get_cursor(AggAwc) as cursor:
+    with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
         query = f'''
             SELECT
                 doc_id,
