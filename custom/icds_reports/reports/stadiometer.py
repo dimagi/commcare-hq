@@ -14,7 +14,7 @@ from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indi
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_infantometer_data_map(domain, config, loc_level, show_test=False):
+def get_stadiometer_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])

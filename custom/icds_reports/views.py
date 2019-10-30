@@ -75,6 +75,8 @@ from custom.icds_reports.reports.functional_toilet import get_functional_toilet_
     get_functional_toilet_data_map, get_functional_toilet_sector_data
 from custom.icds_reports.reports.immunization_coverage_data import get_immunization_coverage_data_chart, \
     get_immunization_coverage_data_map, get_immunization_coverage_sector_data
+from custom.icds_reports.reports.infantometer import get_infantometer_sector_data, get_infantometer_data_map, \
+    get_infantometer_data_chart
 from custom.icds_reports.reports.infants_weight_scale import get_infants_weight_scale_data_chart, \
     get_infants_weight_scale_data_map, get_infants_weight_scale_sector_data
 from custom.icds_reports.reports.institutional_deliveries_sector import get_institutional_deliveries_data_chart,\
@@ -95,6 +97,7 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
 from custom.icds_reports.reports.service_delivery_dashboard import get_service_delivery_data
+from custom.icds_reports.reports.stadiometer import get_stadiometer_sector_data, get_stadiometer_data_map
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
     prepare_issnip_monthly_register_reports, prepare_excel_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
@@ -1520,6 +1523,68 @@ class MedicineKitView(BaseReportView):
             'report_data': data,
         })
 
+
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class InfantometerView(BaseReportView):
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        config = {
+            'month': tuple(selected_month.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
+
+        data = {}
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_infantometer_sector_data(domain, config, loc_level, location, include_test)
+            else:
+                data = get_infantometer_data_map(domain, config.copy(), loc_level, include_test)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_infantometer_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
+        elif step == "chart":
+            data = get_infantometer_data_chart(domain, config, loc_level, include_test)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class StadiometerView(BaseReportView):
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        config = {
+            'month': tuple(selected_month.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
+
+        data = {}
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_stadiometer_sector_data(domain, config, loc_level, location, include_test)
+            else:
+                data = get_stadiometer_data_map(domain, config.copy(), loc_level, include_test)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_stadiometer_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
+        elif step == "chart":
+            data = get_stadiometer_data_chart(domain, config, loc_level, include_test)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
 
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class InfantsWeightScaleView(BaseReportView):
