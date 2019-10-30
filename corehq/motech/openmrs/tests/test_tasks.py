@@ -49,8 +49,16 @@ def get_importer():
             {'column': 'Referencia', 'property': 'celula'},
             {'column': 'genero', 'property': 'genero'},
             {'column': 'data_do_nacimento', 'property': 'data_do_nacimento'},
-            {'column': 'filhos', 'property': 'numero_de_filhos'},
-            {'column': 'testados', 'property': 'numero_de_filhos_testados'},
+            {
+                'column': 'filhos',
+                'commcare_data_type': 'cc_integer',
+                'property': 'numero_de_filhos'
+            },
+            {
+                'column': 'testados',
+                'commcare_data_type': 'cc_integer',
+                'property': 'numero_de_filhos_testados'
+            },
             {'column': 'positivos', 'property': 'numero_de_filhos_positivos'},
             {'column': 'serologia', 'property': 'parceiro_serologia'},
             {'column': 'conviventes', 'property': 'numero_conviventes'},
@@ -67,6 +75,7 @@ def get_importer():
             {
                 'column': 'data_proxima_consulta',
                 'data_type': 'posix_milliseconds',
+                'commcare_data_type': 'cc_date',
                 'property': 'data_proxima_consulta'
             }
         ],
@@ -134,7 +143,7 @@ def test_get_case_properties():
             'coinfectado': 'FALSE',
             'contact_phone_number': '811231234',
             'data_do_nacimento': '1981-10-31',
-            'data_proxima_consulta': '2019-03-03T00:00:00+02:00',
+            'data_proxima_consulta': '2019-03-03',
             'data_ultima_consulta': '2019-02-25T00:00:00+02:00',
             'distrito': 'Matola',
             'estado_tarv': 'pre-TARV',
@@ -143,9 +152,9 @@ def test_get_case_properties():
             'nid': '01234567/12/01234',
             'nome': 'David John',
             'numero_conviventes': None,
-            'numero_de_filhos': 3.0,
+            'numero_de_filhos': 3,
             'numero_de_filhos_positivos': None,
-            'numero_de_filhos_testados': 3.0,
+            'numero_de_filhos_testados': 3,
             'parceiro_serologia': 'positive',
             'provincia': 'Maputo',
             'tarv_elegivel': 1

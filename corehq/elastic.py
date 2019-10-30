@@ -9,6 +9,7 @@ from django.conf import settings
 
 from memoized import memoized
 
+from corehq.util.es.interface import ElasticsearchInterface
 from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
@@ -144,7 +145,7 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
                                   send_to_elasticsearch.__name__, index_name),
         data=doc,
-        except_on_failure=True,
+        propagate_failure=True,
         update=doc_exists,
         delete=delete,
         es_merge_update=es_merge_update,
@@ -199,6 +200,8 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
     else:
         es_instance = get_es_instance(es_instance_alias)
 
+    es_interface = ElasticsearchInterface(es_instance)
+
     try:
         es_meta = ES_META[index_name]
     except KeyError:
@@ -208,23 +211,21 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
         else:
             raise
     try:
-        results = es_instance.search(es_meta.index, es_meta.type, body=q)
+        results = es_interface.search(es_meta.index, es_meta.type, body=q)
         report_and_fail_on_shard_failures(results)
         return results
     except ElasticsearchException as e:
         raise ESError(e)
 
 
-def mget_query(index_name, ids, source):
+def mget_query(index_name, ids):
     if not ids:
         return []
 
-    es_instance = get_es_new()
+    es_interface = ElasticsearchInterface(get_es_new())
     es_meta = ES_META[index_name]
     try:
-        return es_instance.mget(
-            index=es_meta.index, doc_type=es_meta.type, body={'ids': ids}, _source=source
-        )['docs']
+        return es_interface.get_bulk_docs(es_meta.index, es_meta.type, ids)
     except ElasticsearchException as e:
         raise ESError(e)
 
@@ -232,9 +233,7 @@ def mget_query(index_name, ids, source):
 def iter_es_docs(index_name, ids):
     """Returns a generator which pulls documents from elasticsearch in chunks"""
     for ids_chunk in chunked(ids, 100):
-        for result in mget_query(index_name, ids_chunk, source=True):
-            if result['found']:
-                yield result['_source']
+        yield from mget_query(index_name, ids_chunk)
 
 
 def iter_es_docs_from_query(query):
@@ -308,7 +307,8 @@ def scan(client, query=None, scroll='5m', **kwargs):
     """
     kwargs['search_type'] = 'scan'
     # initial search
-    initial_resp = client.search(body=query, scroll=scroll, **kwargs)
+    es_interface = ElasticsearchInterface(client)
+    initial_resp = es_interface.search(body=query, scroll=scroll, **kwargs)
 
     def fetch_all(initial_response):
 
@@ -321,7 +321,7 @@ def scan(client, query=None, scroll='5m', **kwargs):
         while True:
 
             start = int(time.time() * 1000)
-            resp = client.scroll(scroll_id, scroll=scroll)
+            resp = es_interface.scroll(scroll_id, scroll=scroll)
             for hit in resp['hits']['hits']:
                 yield hit
 
@@ -408,11 +408,11 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
         return q
 
     es_index = es_index or 'domains'
-    es = get_es_new()
+    es_interface = ElasticsearchInterface(get_es_new())
     meta = ES_META[es_index]
 
     try:
-        result = es.search(meta.index, meta.type, body=q)
+        result = es_interface.search(meta.index, meta.type, body=q)
         report_and_fail_on_shard_failures(result)
     except ElasticsearchException as e:
         raise ESError(e)

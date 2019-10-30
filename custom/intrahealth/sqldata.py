@@ -4796,17 +4796,42 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
 
         return flatten_records.values()
 
-    @property
-    def rows(self):
+    def rows(self, for_chart=False):
         records = self.get_data()
         records = self.flatten_records_by_date(records)
-        loc_names, data = self.get_loss_rate_per_month(records)
-        self.total_row = self.calculate_total_row(data)
-        rows = self.parse_loss_rate_to_rows(loc_names, data)
-        return sorted(rows, key=lambda x: x[0]['html'])
 
-    def transform_rows(self):
-        pass
+        if not for_chart:
+            loc_names, data = self.get_loss_rate_per_month(records)
+            self.total_row = self.calculate_total_row(data)
+            rows = self.parse_loss_rate_to_rows(loc_names, data)
+            return sorted(rows, key=lambda x: x[0]['html'])
+        else:
+            rows = self._get_data_for_products(records)
+            return sorted(rows, key=lambda x: x), rows
+
+    def _get_data_for_products(self, records):
+        products = {}
+        added_products = []
+        for record in records:
+            product_id = record['product_id']
+            product_name = record['product_name']
+            loss_amt = record['loss_amt']['html']
+            final_pna_stock = record['final_pna_stock']['html']
+            if product_id not in added_products and final_pna_stock != 0:
+                added_products.append(product_id)
+                products[product_name] = {
+                    'loss_amt': loss_amt,
+                    'final_pna_stock': final_pna_stock,
+                    'percent': self.percent_fn(loss_amt, final_pna_stock)
+                }
+            elif product_id in added_products and final_pna_stock != 0:
+                products[product_name]['loss_amt'] += loss_amt
+                products[product_name]['final_pna_stock'] += final_pna_stock
+                products[product_name]['percent'] = self.percent_fn(
+                    products[product_name]['loss_amt'], products[product_name]['final_pna_stock']
+                )
+
+        return products
 
     @property
     def headers(self):
@@ -5003,13 +5028,42 @@ class ExpirationRatePerProductData2(LossRatePerProductData2):
                     record['final_pna_stock_valuation']['html']
         return loc_names, data
 
-    @property
-    def rows(self):
+    def rows(self, for_chart=False):
         records = self.get_data()
-        loc_names, data = self.get_expiration_rate_per_month(records)
-        self.total_row = self.calculate_total_row(data)
-        rows = self.parse_expiration_rate_to_rows(loc_names, data)
-        return sorted(rows, key=lambda x: x[0]['html'])
+
+        if not for_chart:
+            loc_names, data = self.get_expiration_rate_per_month(records)
+            self.total_row = self.calculate_total_row(data)
+            rows = self.parse_expiration_rate_to_rows(loc_names, data)
+            return sorted(rows, key=lambda x: x[0]['html'])
+        else:
+            rows = self._get_data_for_products(records)
+            return sorted(rows, key=lambda x: x), rows
+
+    def _get_data_for_products(self, records):
+        products = {}
+        added_products = []
+        for record in records:
+            product_id = record['product_id']
+            product_name = record['product_name']
+            expired_pna_valuation = record['expired_pna_valuation']['html']
+            final_pna_stock_valuation = record['final_pna_stock_valuation']['html']
+            if product_id not in added_products and product_id in self.products and final_pna_stock_valuation != 0:
+                added_products.append(product_id)
+                products[product_name] = {
+                    'expired_pna_valuation': expired_pna_valuation,
+                    'final_pna_stock_valuation': final_pna_stock_valuation,
+                    'percent': self.percent_fn(expired_pna_valuation, final_pna_stock_valuation)
+                }
+            elif product_id in added_products and final_pna_stock_valuation != 0:
+                products[product_name]['expired_pna_valuation'] += expired_pna_valuation
+                products[product_name]['final_pna_stock_valuation'] += final_pna_stock_valuation
+                products[product_name]['percent'] = self.percent_fn(
+                    products[product_name]['expired_pna_valuation'],
+                    products[product_name]['final_pna_stock_valuation']
+                )
+
+        return products
 
 
 class SatisfactionRateAfterDeliveryPerProductData(LocationLevelMixin, VisiteDeLOperateurPerProductDataSource):
@@ -5611,7 +5665,7 @@ class RecapPassageOneData(IntraHealthSqlData):
         for row in rows:
             pps_name = row['pps_name']
             if valid_products and \
-               row['product_id'] not in valid_products:
+                    row['product_id'] not in valid_products:
                 continue
 
             data['Total Facture'] += self.get_value(row['amount_billed'])
@@ -5734,35 +5788,6 @@ class RecapPassageTwoData(RecapPassageOneData):
         else:
             return None
 
-    def only_latest_visit_data(self, rows):
-        pps_data = {}
-        for row in rows:
-            name = row['pps_id']
-            if not pps_data.get(name, None):
-                pps_data[name] = []
-
-            pps_data[name].append(row)
-
-        relevant = []
-        relevant_doc_ids = {}
-        for id, data in pps_data.items():
-            # TODO: Check if second date with same date should be relevant
-            sorted_visits_info = sorted(data, key=lambda k: k['real_date_repeat'], reverse=True)
-            latest_date = sorted_visits_info[0]['real_date_repeat']
-            latest_doc_for_pps = sorted_visits_info[0]['doc_id']
-
-            for visit in sorted_visits_info:
-                if visit['real_date_repeat'] != latest_date:
-                    break
-                else:
-                    relevant_doc_ids[visit['pps_id']] = latest_doc_for_pps
-
-        for row in rows:
-            if row['doc_id'] == relevant_doc_ids[row['pps_id']]:
-                relevant.append(row)
-
-        return relevant
-
     @property
     def program_name(self):
         program_id = self.config.get('product_program', None)
@@ -5776,7 +5801,6 @@ class RecapPassageTwoData(RecapPassageOneData):
 
     def calculate_table_data(self):
         rows = self.get_data()
-        rows = self.only_latest_visit_data(rows)
 
         product_names = set()
         data = {}
@@ -5884,18 +5908,24 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
     @property
     def billed_consumption_context(self):
-        context = self.create_table_context('billed_consumption', 'Consommations Facturables')
+        context = self.create_table_context(
+            'billed_consumption', 'Consommations Facturables', add_amount_owed_column=True
+        )
 
         return context
 
     @property
     def actual_consumption_context(self):
-        context = self.create_table_context('actual_consumption', 'Consommation Réelle')
+        context = self.create_table_context(
+            'actual_consumption', 'Consommation Réelle', add_latest_visit_column=True
+        )
         return context
 
     @property
     def amt_delivered_convenience_context(self):
-        context = self.create_table_context('amt_delivered_convenience', 'Livraison Total Effectuées')
+        context = self.create_table_context(
+            'amt_delivered_convenience', 'Livraison Total Effectuées', add_sum_of_visits_column=True
+        )
         rows = context['rows']
         new_row = self.create_row_with_column_values_sum('Livraison Effectuées', rows)
         if new_row:
@@ -5905,7 +5935,9 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
     @property
     def display_total_stock_context(self):
-        context = self.create_table_context('total_stock', 'Stock Disponible Utilisable')
+        context = self.create_table_context(
+            'total_stock', 'Stock Disponible Utilisable', add_availability_column=True
+        )
         rows = context['rows']
         sum_row = self.create_row_with_column_values_sum('SDU avant Livraison', rows)
         if sum_row:
@@ -5915,23 +5947,36 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         context['rows'].append(display_stock_row)
         return context
 
-    def create_table_context(self, displayed_values, title, add_amount_owed_column=True):
+    def create_table_context(self, displayed_values, title, add_amount_owed_column=False,
+                             add_latest_visit_column=False, add_sum_of_visits_column=False,
+                             add_availability_column=False):
         if self.recap_rows is None:
             self.calculate_table_data()
 
         headers = self.get_headers()
-        rows = self.create_table_rows(displayed_values, add_amount_owed_column=add_amount_owed_column)
+        rows = self.create_table_rows(
+            displayed_values, add_amount_owed_column=add_amount_owed_column,
+            add_latest_visit_column=add_latest_visit_column, add_sum_of_visits_column=add_sum_of_visits_column,
+            add_availability_column=add_availability_column
+        )
 
         if add_amount_owed_column:
             headers.add_column(DataTablesColumn('Recouvrement PPS Net à Payer'))
+        if add_latest_visit_column:
+            headers.add_column(DataTablesColumn('Date Dernier Passage'))
+        if add_sum_of_visits_column:
+            headers.add_column(DataTablesColumn('Nombre de Passage'))
+        if add_availability_column:
+            headers.add_column(DataTablesColumn('Taux de Disponibilité de la gamme'))
 
         context = self.create_context(
-            rows=rows, headers=headers,
-            title=title)
+            rows=rows, headers=headers, title=title
+        )
 
         return context
 
-    def create_table_rows(self, displayed_values, add_amount_owed_column=True):
+    def create_table_rows(self, displayed_values, add_amount_owed_column=False, add_latest_visit_column=False,
+                          add_sum_of_visits_column=False, add_availability_column=False):
         rows = []
         data = self.recap_rows
 
@@ -5940,13 +5985,14 @@ class RecapPassageTwoTables(RecapPassageTwoData):
             pps_name = pps_data[0]['pps_name']
             row = [pps_name]
 
-            pps_product_values = self.get_row_product_values(pps_data, displayed_values)
+            most_recent_pps_data = self._get_most_recent_visits(pps_data)
+            pps_product_values = self.get_row_product_values(most_recent_pps_data, displayed_values)
             for name in self.product_names:
                 product_value = pps_product_values.get(name, {'html': 0})
                 row.append(product_value)
 
             if add_amount_owed_column:
-                products_amount = self.get_row_product_values(pps_data, 'amount_owed')
+                products_amount = self.get_row_product_values(most_recent_pps_data, 'amount_owed')
                 amount_sum = {
                     'html': 0
                 }
@@ -5955,6 +6001,21 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                     amount_sum['html'] += product_value['html']
 
                 row.append(amount_sum)
+
+            if add_latest_visit_column:
+                latest_date = self._get_latest_date(most_recent_pps_data)
+
+                row.append(latest_date)
+
+            if add_sum_of_visits_column:
+                visits_for_pps = self._get_visits_for_pps(pps_data)
+
+                row.append(visits_for_pps)
+
+            if add_availability_column:
+                availability = self._get_availability(most_recent_pps_data)
+
+                row.append(availability)
 
             rows.append(row)
 
@@ -5977,7 +6038,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         row_values = [0 for column in range(0, number_of_columns)]
         for row in rows:
             for index, column_value in enumerate(row):
-                row_values[index] += column_value['html']
+                row_values[index] += column_value['html'] if not column_value.get('percent', False) else 0
 
         new_row.extend(row_values)
         return new_row
@@ -5986,6 +6047,52 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         rows = self.create_table_rows(value_name, False)
         sum_row = self.create_row_with_column_values_sum(row_name, rows)
         return sum_row
+
+    def _get_most_recent_visits(self, data):
+        data_to_return = []
+        fresh_records_dict = {}
+        for row in data:
+            pps_name = row['pps_name']
+            product_id = row['product_id']
+            if pps_name not in fresh_records_dict.keys():
+                fresh_records_dict[pps_name] = {
+                    product_id: row
+                }
+            else:
+                if product_id not in fresh_records_dict[pps_name].keys():
+                    fresh_records_dict[pps_name][product_id] = row
+                else:
+                    date = fresh_records_dict[pps_name][product_id]['real_date_repeat']
+                    new_date = row['real_date_repeat']
+                    if new_date > date:
+                        fresh_records_dict[pps_name][product_id] = row
+
+        for pps_name, products in fresh_records_dict.items():
+            for product, product_data in products.items():
+                data_to_return.append(product_data)
+
+        return data_to_return
+
+    def _get_latest_date(self, data):
+        return data[0]['real_date_repeat'].strftime('%Y/%m/%d')
+
+    def _get_visits_for_pps(self, data):
+        visits = set()
+        for record in data:
+            visits.add(record['doc_id'])
+
+        return {'html': len(visits)}
+
+    def _get_availability(self, data):
+        products_available = 0
+        for record in data:
+            products_available += 1 if record['total_stock']['html'] else 0
+        availability = round((float(products_available / len(self.product_names)) * 100), 2)
+
+        return {
+            'html': f'{availability}%',
+            'percent': True,
+        }
 
 
 class IndicateursDeBaseData(SqlData, LocationLevelMixin):
