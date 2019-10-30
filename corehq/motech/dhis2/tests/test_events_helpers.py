@@ -16,11 +16,11 @@ from corehq.motech.dhis2.repeaters import Dhis2Repeater
 DOMAIN = "dhis2-test"
 
 
-class TestDhisHandler(TestCase):
+class TestDhis2EventsHelpers(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestDhisHandler, cls).setUpClass()
+        super().setUpClass()
 
         cls.domain = create_domain(DOMAIN)
         location_type = LocationType.objects.create(
@@ -41,8 +41,9 @@ class TestDhisHandler(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.location.delete()
+        cls.user.delete()
         cls.domain.delete()
-        super(TestDhisHandler, cls).tearDownClass()
+        super().tearDownClass()
 
     def setUp(self):
         super().setUp()
