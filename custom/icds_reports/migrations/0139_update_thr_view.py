@@ -14,4 +14,6 @@ class Migration(migrations.Migration):
         ('icds_reports', '0138_add_db_index_inactive_aww'),
     ]
 
-    operations = [migrator.get_migration('thr_report_view.sql')]
+    replaces = [('icds_reports', '0138_update_thr_view'), ]
+
+    operations = [migrator.get_migration('thr_report_view.sql'),]

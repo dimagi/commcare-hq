@@ -1823,7 +1823,7 @@ class DailyIndicators(View):
     def get(self, request, *args, **kwargs):
 
         try:
-            filename, export_file = get_daily_indicators(request.domain)
+            filename, export_file = get_daily_indicators()
         except AggAwcDailyView.DoesNotExist:
             return JsonResponse({'message': 'No data for Yesterday'}, status=500)
         response = HttpResponse(export_file.read(), content_type='text/csv')

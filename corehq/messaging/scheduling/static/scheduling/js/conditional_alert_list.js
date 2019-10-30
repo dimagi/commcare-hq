@@ -16,12 +16,10 @@ hqDefine("scheduling/js/conditional_alert_list", [
 
     var rule = function (options) {
         var self = ko.mapping.fromJS(options);
-        self.projectName = ko.observable('');
         self.requestInProgress = ko.observable(false);
 
         self.init = function (options) {
             ko.mapping.fromJS(options, self);
-            self.projectName('');
             self.requestInProgress(false);
         };
         self.init(options);
@@ -40,7 +38,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
                 data: {
                     action: action,
                     rule_id: self.id(),
-                    project: self.projectName(),   // only used in copy
                 },
             })
                 .done(function (result) {
@@ -58,13 +55,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
                             text = interpolate(text, [result.minutes_remaining]);
                             alert(text);
                         }
-                    } else if (action === 'copy') {
-                        if (result.status === 'success') {
-                            alert(gettext("Copy successful."));
-                        } else if (result.status === 'error') {
-                            alert(interpolate(gettext("Error: %s"), [result.error_msg]));
-                        }
-                        self.projectName('');
                     }
                 });
         };
@@ -96,17 +86,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
             }
             if (confirm(prompt)) {
                 self.action('restart', e);
-            }
-        };
-
-        self.copy = function (model, e) {
-            if (self.projectName() === '') {
-                alert(gettext("Please enter a project name first."));
-                return;
-            }
-
-            if (confirm(interpolate(gettext("Copy this alert to project %s?"), [self.projectName()]))) {
-                self.action('copy', e);
             }
         };
 
@@ -151,11 +130,9 @@ hqDefine("scheduling/js/conditional_alert_list", [
             self.goToPage(self.currentPage());
         };
 
-        // Refresh table periodically, unless someone is typing a project name in the copy input
+        // Refresh table periodically
         setInterval(function () {
-            if (!_.find(self.rules(), function (r) { return r.projectName(); })) {
-                self.goToPage(self.currentPage());
-            }
+            self.goToPage(self.currentPage());
         }, 10000);
 
         return self;

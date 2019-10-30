@@ -328,7 +328,7 @@
             <td>
               <input class="form-control"
                      type="text"
-                     data-bind="value: column.label,
+                     data-bind="textInput: column.label,
                                 disable: $root.isReservedOdataColumn(column, $parentContext.$index())" />
             </td>
           {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}

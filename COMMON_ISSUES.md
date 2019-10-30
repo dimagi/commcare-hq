@@ -19,18 +19,3 @@ Common issues
 	        $ brew link libxslt --force
 
 	+ If you encounter an authorization error related to CouchDB, try going to your `localsettings.py` file and change `COUCH_PASSWORD` to an empty string.
-
-+ On Windows, to get python-magic to work you will need to install the following dependencies.
-  Once they are installed make sure the install folder is on the path.
-  + [GNUWin32 regex][regex]
-  + [GNUWin32 zlib][zlib]
-  + [GNUWin32 file][file]
-
- [regex]: http://sourceforge.net/projects/gnuwin32/files/regex/
- [zlib]: http://sourceforge.net/projects/gnuwin32/files/zlib/
- [file]: http://sourceforge.net/projects/gnuwin32/files/file/
-
-+ On Windows, if Celery gives this error on startup: `TypeError: 'LazySettings' object is not iterable` apply the
-  changes decribed in this bug report comment: https://github.com/celery/django-celery/issues/228#issuecomment-13562642
-
-+ On Amazon EC2's latest Ubuntu Server 14.04 Edition with default source list, `install.sh` may not install elasticsearch due to dependency issues. Use instructions provided in `https://gist.github.com/wingdspur/2026107` to install
