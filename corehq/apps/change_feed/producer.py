@@ -70,7 +70,7 @@ def _on_error(change_meta, exc_info):
 
 
 def _audit_log(stage, change_meta):
-    logger.debug('%s change to kafka: %s,%s', stage, change_meta.document_type, change_meta.document_id)
+    logger.debug('%s,%s,%s', stage, change_meta.document_type, change_meta.document_id)
 
 
 producer = ChangeProducer()
