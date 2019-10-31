@@ -29,7 +29,7 @@ from .diff import filter_case_diffs, filter_ledger_diffs
 from .lrudict import LRUDict
 from .statedb import StateDB
 from .status import run_status_logger
-from .util import exit_on_error
+from .util import ProcessError, exit_on_error, gipc_process_error_handler
 
 log = logging.getLogger(__name__)
 
@@ -480,6 +480,8 @@ class CaseDiffProcess(object):
     def __exit__(self, *exc_info):
         is_error = exc_info[0] is not None
         if is_error:
+            if isinstance(exc_info[1], ProcessError):
+                return
             log.error("stopping process with error", exc_info=exc_info)
         else:
             log.info("stopping case diff process")
@@ -492,14 +494,17 @@ class CaseDiffProcess(object):
         self.stats_pipe.__exit__(*exc_info)
         self.calls_pipe.__exit__(*exc_info)
 
+    @gipc_process_error_handler()
     def update(self, case_ids, form_id):
         self.num_cases_sent += len(case_ids)
         self.calls.put(("update", case_ids, form_id))
 
+    @gipc_process_error_handler()
     def enqueue(self, case_id):
         self.num_cases_sent += 1
         self.calls.put(("enqueue", case_id))
 
+    @gipc_process_error_handler()
     def request_status(self):
         log.debug("reqeust status...")
         self.calls.put((STATUS,))
@@ -522,7 +527,8 @@ class CaseDiffProcess(object):
         result = requested = object()
         action = STATUS
         while action != TERMINATE:
-            with gevent.Timeout(self.status_interval, False) as timeout:
+            with gevent.Timeout(self.status_interval, False) as timeout, \
+                    gipc_process_error_handler():
                 result = self.stats.get(timeout=timeout)
             if result is None:
                 self.request_status()
