@@ -36,5 +36,5 @@ class Command(BaseCommand):
                 print("\n\t\tDomain deletion cancelled.")
                 return
         print("Deleting domain {}".format(domain_name))
-        domain_obj.delete()
+        domain_obj.delete(leave_tombstone=True)
         print("Operation completed")
