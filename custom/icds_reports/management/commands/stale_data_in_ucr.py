@@ -36,12 +36,12 @@ class RunConfig(object):
 class Command(BaseCommand):
     """
     Returns list of (doc_id, doc_type, doc_subtype, ucr_insert_on, modified_on)
-    tuples for all househould cases that are not found static-household_cases UCR.
+    tuples for all cases or forms that are not found in the specified UCR.
 
     Can be used in conjunction with republish_doc_changes
 
-        1. Generate tuples not updated in ES with extra debug columns
-        $ ./manage.py stale_data_in_househould_ucr <DOMAIN> --start 2019-09-19 --end 2019-09-28 > stale_ids.txt
+        1. Generate tuples not updated in the UCR data source with extra debug columns
+        $ ./manage.py stale_data_in_ucr <DOMAIN> <table_id> --xmlns <xmlns> --start 2019-09-19 --end 2019-09-28 > stale_ids.txt
 
         2. Republish case changes
         $ ./manage.py republish_doc_changes <DOMAIN> stale_ids.txt
