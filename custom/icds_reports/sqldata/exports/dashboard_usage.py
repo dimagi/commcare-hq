@@ -168,14 +168,18 @@ class DashBoardUsage:
             }
             if not self.national_user:
                 user_location = logged_in_user_locations[loop_counter]
+                user_location_type_name = \
+                    self.get_location_id_string_from_location_type(user_location.location_type_name)
                 location_type_filter[self.get_location_id_string_from_location_type(
                     user_location.location_type_name)]: user_location.get_id
+            else:
+                user_location_type_name = None
 
             all_awc_locations = AwcLocation.objects.filter(**location_type_filter).values(*self.required_fields)
             # converting the result set to matrix to fetch ancestors for a given location
             location_matrix, location_ids =\
-                self.convert_rs_to_matrix(all_awc_locations, self.get_location_id_string_from_location_type(
-                    user_location.location_type_name))
+                self.convert_rs_to_matrix(all_awc_locations, user_location_type_name)
+
 
             users = self.get_users_by_location(location_ids)
 
