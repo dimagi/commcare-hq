@@ -95,6 +95,7 @@ from custom.icds_reports.models.aggregate import (
     DailyAttendance,
 )
 from custom.icds_reports.models.helper import IcdsFile
+from custom.icds_reports.models.util import UcrReconciliationStatus
 from custom.icds_reports.reports.disha import DishaDump, build_dumps_for_month
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.issnip_monthly_register import (
@@ -1343,3 +1344,19 @@ def email_location_changes(domain, old_location_blob_id, new_location_blob_id):
         '[{}] - ICDS Dashboard Location Table Changed'.format(settings.SERVER_ENVIRONMENT),
         DASHBOARD_TEAM_EMAILS, email_content,
     )
+
+
+@periodic_task(run_every=crontab(hour=22, minute=0))
+def create_reconciliation_records():
+    # Setup yesterday's data to reduce noise in case we're behind by a lot in pillows
+    UcrReconciliationStatus.setup_days_records(date.today() - timedelta(days=1))
+
+
+@task(queue='background_queue')
+def reconcile_form_data_not_in_ucr(ucr_table_id, day, xmlns):
+    pass
+
+
+@task(queue='background_queue')
+def reconcile_case_data_not_in_ucr(ucr_table_id, day, case_type):
+    pass
