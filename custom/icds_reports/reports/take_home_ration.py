@@ -36,8 +36,6 @@ class TakeHomeRationExport(object):
 
         query_set = TakeHomeRationMonthly.objects.filter(**filters).order_by(*order_by)
 
-        filters = [['Generated at', india_now()]]
-
         data = query_set.values('state_name', 'district_name', 'block_name',
                                 'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number',
                                 'is_launched', 'total_thr_candidates', 'thr_given_21_days',
@@ -77,6 +75,7 @@ class TakeHomeRationExport(object):
                 ])
 
             excel_rows.append(row_data)
+        filters = [['Generated at', india_now()]]
         if self.location:
             locs = SQLLocation.objects.get(location_id=self.location).get_ancestors(include_self=True)
             for loc in locs:
