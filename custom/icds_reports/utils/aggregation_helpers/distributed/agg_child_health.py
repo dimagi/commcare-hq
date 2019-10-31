@@ -1,4 +1,4 @@
-from custom.icds_reports.utils.aggregation_helpers.distributed ChildHealthMonthlyAggregationDistributedHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed import ChildHealthMonthlyAggregationDistributedHelper
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
     AggregationPartitionedHelper,
 )
