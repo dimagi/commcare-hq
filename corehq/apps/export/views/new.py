@@ -15,6 +15,7 @@ from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
@@ -44,7 +45,6 @@ from corehq.apps.export.views.utils import (
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
-from corehq.feature_previews import BI_INTEGRATION_PREVIEW
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 
 
@@ -298,7 +298,7 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
     urlname = 'new_form_faily_saved_export'
 
 
-@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
+@method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED), name='dispatch')
 class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_odata_case_feed'
     page_title = ugettext_lazy("Create OData Case Feed")
@@ -309,7 +309,7 @@ class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
         return export_instance
 
 
-@method_decorator(BI_INTEGRATION_PREVIEW.required_decorator(), name='dispatch')
+@method_decorator(requires_privilege_with_fallback(privileges.ODATA_FEED), name='dispatch')
 class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_odata_form_feed'
     page_title = ugettext_lazy("Create OData Form Feed")
