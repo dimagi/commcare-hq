@@ -1,5 +1,5 @@
 import inspect
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connections
@@ -97,7 +97,9 @@ def _get_stale_data(run_config):
             ucr_insertion_dates = _get_ucr_insertion_dates(run_config.domain, run_config.table_id, doc_ids)
             for doc_id, doc_type, sql_modified_on in chunk:
                 ucr_insert_date = ucr_insertion_dates.get(doc_id)
-                if not ucr_insert_date or (ucr_insert_date < sql_modified_on):
+                if (not ucr_insert_date
+                        # Handle small time drift between databases
+                        or (sql_modified_on - ucr_insert_date) < timedelta(seconds=1)):
                     ucr_date_string = ucr_insert_date.isoformat() if ucr_insert_date else ''
                     yield (doc_id, doc_type, ucr_date_string, sql_modified_on.isoformat())
 
