@@ -55,10 +55,11 @@ class SearchByParamsPayloadGenerator(BasePayloadGenerator):
     def _setup_name(self, name, key_name, key_name_local, data):
         data[key_name] = ""
         data[key_name_local] = ""
-        if self._has_special_chars(name):
-            data[key_name_local] = name
-        else:
-            data[key_name] = name
+        if name:
+            if self._has_special_chars(name):
+                data[key_name_local] = name
+            else:
+                data[key_name] = name
 
     @staticmethod
     def _has_special_chars(value):
@@ -83,7 +84,7 @@ class ValidatePHIDPayloadGenerator(BasePayloadGenerator):
 
     def handle_success(self, response, case, repeat_record):
         case_update = {'phid_validated': 'yes'}
-        if response.json()['result'] == 'true':
+        if response.json()['result'] in ['true', 'True']:
             case_update['phid_valid'] = 'yes'
         else:
             case_update['phid_valid'] = 'no'

@@ -7,38 +7,36 @@ class DjangoDocumentStore(DocumentStore):
     """
     An implementation of the DocumentStore that uses the Django ORM.
     """
-
-    def __init__(self, model_class, doc_generator_fn, model_generator_fn=None, model_manager=None):
-        self._model_manager = model_manager or model_class.objects
+    def __init__(self, model_class, doc_generator_fn=None, model_manager=None, id_field='pk'):
+        self._model_manager = model_manager
+        if model_manager is None:
+            self._model_manager = model_class.objects
         self._model_class = model_class
         self._doc_generator_fn = doc_generator_fn
-        if model_generator_fn is None:
-            # the default generator just assumes the dict is flat set of model fields
-            model_generator_fn = lambda document_dict: self._model_class(**document_dict)
-        self._model_generator_fn = model_generator_fn
+        if not doc_generator_fn:
+            try:
+                self._doc_generator_fn = model_class.to_json
+            except AttributeError:
+                raise ValueError('DjangoDocumentStore must be supplied with a doc_generator_fn argument')
+        self._id_field = id_field
+        self._in_query_filter = f'{id_field}__in'
 
     def get_document(self, doc_id):
         try:
-            model = self._model_manager.get(pk=doc_id)
+            model = self._model_manager.get(**{self._id_field: doc_id})
             return self._doc_generator_fn(model)
         except ObjectDoesNotExist:
             raise DocumentNotFoundError()
 
-    def save_document(self, doc_id, document):
-        document['pk'] = doc_id
-        instance = self._model_generator_fn(document)
-        instance.save()
-
-    def delete_document(self, doc_id):
-        self._model_manager.filter(pk=doc_id).delete()
-
-    def iter_document_ids(self, last_id=None):
-        # todo: support last_id
-        return self._model_manager.all().values_list('id', flat=True)
+    def iter_document_ids(self):
+        return self._model_manager.all().values_list(self._id_field, flat=True)
 
     def iter_documents(self, ids):
         from dimagi.utils.chunked import chunked
         for chunk in chunked(ids, 500):
             chunk = list([_f for _f in chunk if _f])
-            for model in self._model_manager.filter(pk__in=chunk):
+            filters = {
+                self._in_query_filter: chunk
+            }
+            for model in self._model_manager.filter(**filters):
                 yield self._doc_generator_fn(model)

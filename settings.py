@@ -731,6 +731,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_MAJOR_VERSION = 1
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -908,6 +909,10 @@ CUSTOM_LANDING_TEMPLATE = {
 ES_SETTINGS = None
 PHI_API_KEY = None
 PHI_PASSWORD = None
+
+STATIC_DATA_SOURCE_PROVIDERS = [
+    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+]
 
 SESSION_BYPASS_URLS = [
     r'^/a/{domain}/receiver/',
@@ -1895,11 +1900,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ]
-
-STATIC_DATA_SOURCE_PROVIDERS = [
-    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-]
-
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])

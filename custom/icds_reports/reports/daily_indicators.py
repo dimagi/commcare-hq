@@ -1,34 +1,33 @@
-from custom.icds_reports.models import AggAwcDailyView
-from dateutil.relativedelta import relativedelta
-from io import StringIO
-from custom.icds_reports.utils import apply_exclude
 import csv
-from datetime import date
+from datetime import date, timedelta
+from io import StringIO
+
+from custom.icds_reports.cache import icds_quickcache
+from custom.icds_reports.models.views import DailyIndicatorsView
 
 
-def _get_data_for_daily_indicators(filters, domain, show_test=False):
-    queryset = AggAwcDailyView.objects.filter(
+def _get_data_for_daily_indicators(filters):
+    queryset = DailyIndicatorsView.objects.filter(
         **filters
     ).values('state_name', 'num_launched_awcs', 'daily_attendance_open',
-             'total_eligible_pse', 'total_attended_pse')
-    if not show_test:
-        queryset = apply_exclude(domain, queryset)
+             'pse_eligible', 'total_attended_pse')
     return queryset
 
 
-def get_daily_indicators(domain):
+@icds_quickcache([], timeout=30 * 60)
+def get_daily_indicators():
+
     today_date = date.today()
+    filename = 'CAS_Daily_Status_{}.csv'.format(today_date.strftime('%Y%m%d'))
+
     filters = {
-        'aggregation_level': 1,
-        'date': today_date
+        'date': today_date - timedelta(days=1)
     }
 
-    filename = 'CAS_Daily_Status_{}.csv'.format(filters['date'].strftime('%Y%m%d'))
-    filters['date'] -= relativedelta(days=1)
-    daily_yesterday = _get_data_for_daily_indicators(filters, domain)
+    daily_yesterday = _get_data_for_daily_indicators(filters)
 
     if not daily_yesterday:
-        raise AggAwcDailyView.DoesNotExist()
+        raise DailyIndicatorsView.DoesNotExist()
 
     columns = ['State', 'Total Anganwadis having ICDS CAS', 'Number of  anganwadis open',
                'Percentage of anganwadis open',
@@ -49,22 +48,22 @@ def get_daily_indicators(domain):
         if data['num_launched_awcs']:
             percent_awc_open = round(data['daily_attendance_open'] / data['num_launched_awcs'] * 100, 2)
 
-        if data['total_eligible_pse']:
-            percent_pse_attended = round(data['total_attended_pse'] / data['total_eligible_pse'] * 100, 2)
+        if data['pse_eligible']:
+            percent_pse_attended = round(data['total_attended_pse'] / data['pse_eligible'] * 100, 2)
 
         rows.append([
             data['state_name'],
             data['num_launched_awcs'],
             data['daily_attendance_open'],
             '{}%'.format(percent_awc_open),
-            data['total_eligible_pse'],
+            data['pse_eligible'],
             data['total_attended_pse'],
             '{}%'.format(percent_pse_attended)
         ])
 
         total_launched += data['num_launched_awcs']
         total_open += data['daily_attendance_open']
-        total_pse_eligible += data['total_eligible_pse']
+        total_pse_eligible += data['pse_eligible']
         total_pse_attended += data['total_attended_pse']
 
     rows.append([

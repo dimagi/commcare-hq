@@ -476,5 +476,4 @@ https://github.com/jeffh/sniffer/
 
 ## Other links
 
-+ [Pre-Docker environment setup instructions](https://github.com/dimagi/commcare-hq/blob/master/PRE_DOCKER_SETUP.md)
 + [Common Issues](https://github.com/dimagi/commcare-hq/blob/master/COMMON_ISSUES.md)

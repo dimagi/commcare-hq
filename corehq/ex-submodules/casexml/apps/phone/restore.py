@@ -466,6 +466,8 @@ class RestoreState(object):
             extensions_checked=True,
             device_id=self.params.device_id,
         )
+        if self.params.app:
+            new_synclog.app_id = self.params.app.copy_of or self.params.app_id
         if self.is_livequery:
             new_synclog.log_format = LOG_FORMAT_LIVEQUERY
         return new_synclog
