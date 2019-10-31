@@ -8,7 +8,7 @@ def exit_on_error(func):
     @wraps(func)
     def wrapper(*args, **kw):
         try:
-            func(*args, **kw)
+            return func(*args, **kw)
         except gevent.get_hub().SYSTEM_ERROR:
             raise
         except GreenletExit:
