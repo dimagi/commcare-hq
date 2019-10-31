@@ -345,53 +345,6 @@ def task_switch():
     gevent.sleep()
 
 
-class CaseRecord(object):
-
-    def __init__(self, case, stock_forms, processed_forms):
-        self.id = case.case_id
-        case_forms = get_case_form_ids(case)
-        self.total_forms = len(case_forms) + len(stock_forms)
-        self.processed_forms = processed_forms
-
-    def __repr__(self):
-        return "case {id} with {n} of {m} forms processed".format(
-            id=self.id,
-            n=self.processed_forms,
-            m=self.total_forms,
-        )
-
-    @property
-    def should_memorize_case(self):
-        # do not keep cases with large history in memory
-        return self.total_forms <= MAX_FORMS_PER_MEMORIZED_CASE
-
-
-def get_case_form_ids(couch_case):
-    """Get the set of form ids that touched the given couch case object"""
-    form_ids = set(couch_case.xform_ids)
-    for action in couch_case.actions:
-        if action.xform_id:
-            form_ids.add(action.xform_id)
-    return form_ids
-
-
-def get_stock_forms_by_case_id(case_ids):
-    """Get a dict of form id sets by case id for the given list of case ids
-
-    This function loads Couch stock forms (even though they are
-    technically stored in SQL).
-    """
-    form_ids_by_case_id = defaultdict(set)
-    for case_id, form_id in (
-        StockReport.objects
-        .filter(stocktransaction__case_id__in=case_ids)
-        .values_list("stocktransaction__case_id", "form_id")
-        .distinct()
-    ):
-        form_ids_by_case_id[case_id].add(form_id)
-    return form_ids_by_case_id
-
-
 class BatchProcessor(object):
     """Process batches of items with a worker pool
 
@@ -761,3 +714,50 @@ def is_orphaned_case(couch_case):
 
     case_id = couch_case["_id"]
     return not any(references_case(x) for x in couch_case["xform_ids"])
+
+
+class CaseRecord(object):
+
+    def __init__(self, case, stock_forms, processed_forms):
+        self.id = case.case_id
+        case_forms = get_case_form_ids(case)
+        self.total_forms = len(case_forms) + len(stock_forms)
+        self.processed_forms = processed_forms
+
+    def __repr__(self):
+        return "case {id} with {n} of {m} forms processed".format(
+            id=self.id,
+            n=self.processed_forms,
+            m=self.total_forms,
+        )
+
+    @property
+    def should_memorize_case(self):
+        # do not keep cases with large history in memory
+        return self.total_forms <= MAX_FORMS_PER_MEMORIZED_CASE
+
+
+def get_case_form_ids(couch_case):
+    """Get the set of form ids that touched the given couch case object"""
+    form_ids = set(couch_case.xform_ids)
+    for action in couch_case.actions:
+        if action.xform_id:
+            form_ids.add(action.xform_id)
+    return form_ids
+
+
+def get_stock_forms_by_case_id(case_ids):
+    """Get a dict of form id sets by case id for the given list of case ids
+
+    This function loads Couch stock forms (even though they are
+    technically stored in SQL).
+    """
+    form_ids_by_case_id = defaultdict(set)
+    for case_id, form_id in (
+        StockReport.objects
+        .filter(stocktransaction__case_id__in=case_ids)
+        .values_list("stocktransaction__case_id", "form_id")
+        .distinct()
+    ):
+        form_ids_by_case_id[case_id].add(form_id)
+    return form_ids_by_case_id
