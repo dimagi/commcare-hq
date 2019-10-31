@@ -1,18 +1,16 @@
 from datetime import datetime
 
 from crispy_forms import layout as crispy
-from crispy_forms.helper import FormHelper
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.crispy import FormActions
-
+from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper
 
 from django import forms
 from django.utils.decorators import method_decorator
 
-from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
+from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqadmin.views import BaseAdminSectionView
 from django.utils.translation import ugettext_lazy as _
 
@@ -78,23 +76,20 @@ class TombstoneManagementForm(forms.Form):
         widget=forms.Textarea()
     )
 
+    @staticmethod
+    def split_csv(comma_separated_list):
+        return list(
+            filter(None, (domain.strip() for domain in comma_separated_list.split(','))))
+
     def clean(self):
         csv_domain_list = self.cleaned_data.get('csv_domain_list', '')
-        domains = csv_domain_list.split(',')
-
-        if len(domains) > 10:
-            raise forms.ValidationError(
-                "This command is intended to create a few tombstones at a time. "
-                "If you need to create more than 10, do them in batches."
-            )
-
-        self.cleaned_data['domains'] = domains
+        self.cleaned_data['domains'] = self.split_csv(csv_domain_list)
         return self.cleaned_data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.helper = FormHelper()
+        self.helper = HQFormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
