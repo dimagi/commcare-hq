@@ -182,7 +182,7 @@ class AggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):
         """)
 
         logger.info(f"Deleting previous day's agg table for {self.helper_key} {self.month}")
-        cursor.execute(f"DROP TABLE IF EXISTS {self.previous_agg_table_name}")
+        cursor.execute(f'DROP TABLE IF EXISTS "{self.previous_agg_table_name}"')
 
         logger.info(f"Creating indexes for {self.helper_key} {self.month}")
         for index_query in self.indexes():

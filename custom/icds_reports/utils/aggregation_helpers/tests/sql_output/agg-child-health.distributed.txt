@@ -516,7 +516,7 @@ DROP TABLE IF EXISTS staging_agg_child_health
         INHERITS (agg_child_health)
         
 {}
-DROP TABLE IF EXISTS previous_agg_child_health_2019-01-01
+DROP TABLE IF EXISTS "previous_agg_child_health_2019-01-01"
 {}
 CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_1" ON "agg_child_health_2019-01-01" (aggregation_level, state_id)
 {}
