@@ -577,10 +577,6 @@ def update_child_health_monthly_table(day, state_ids):
     with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
 
-    celery_task_logger.info("Dropping temporary table")
-    with get_cursor(ChildHealthMonthly) as cursor:
-        cursor.execute(helper.drop_temporary_table())
-
 
 @task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
 @track_time
