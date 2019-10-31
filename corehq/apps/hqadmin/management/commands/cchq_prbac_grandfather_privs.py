@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import SoftwarePlanVersion
-from corehq.apps.accounting.utils import ensure_grants
+from corehq.apps.accounting.utils import ensure_grants, get_role_edition
 from corehq.privileges import MAX_PRIVILEGES
 
 
@@ -16,8 +16,10 @@ class Command(BaseCommand):
 
         query = SoftwarePlanVersion.objects
 
+        skipped_editions = []
         if skip_edition:
-            query = query.exclude(plan__edition__in=skip_edition.split(','))
+            skipped_editions = skip_edition.split(',')
+            query = query.exclude(plan__edition__in=skipped_editions)
 
         all_role_slugs = set(
             query.distinct('role__slug').values_list('role__slug', flat=True)
@@ -27,6 +29,14 @@ class Command(BaseCommand):
             set(MAX_PRIVILEGES) -  # no privileges should be in software plan roles, this is just a safeguard
             set(plan_slug.strip() for plan_slug in kwargs.get('skip', '').split(','))
         )
+
+        # make sure that these roles are not attached to SoftwarePlanEditions
+        # that they aren't meant to be attached to. e.g. thw pro_plan_v0 role
+        # attached to a SoftwarePlanVersion under the Advanced edition.
+        # see https://dimagi-dev.atlassian.net/browse/SAASP-10124
+        all_plan_slugs = [
+            plan_slug for plan_slug in all_plan_slugs if get_role_edition(plan_slug) not in skipped_editions
+        ]
 
         if not dry_run and not noinput and not _confirm('Are you sure you want to grant {} to {}?'.format(
                 ', '.join(privs),
