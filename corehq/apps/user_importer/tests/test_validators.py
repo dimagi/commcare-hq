@@ -4,16 +4,16 @@ from testil import assert_raises
 
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.validation import (
-    Duplicates,
+    DuplicateValidator,
     EmailValidator,
-    ExistingUsers,
+    ExistingUserValidator,
     GroupValidator,
-    IsActive,
-    LongUsernames,
-    NewUserPassword,
+    IsActiveValidator,
+    UsernameLengthValidator,
+    NewUserPasswordValidator,
     RoleValidator,
-    StringUsernames,
-    UsernameOrUserIdRequired,
+    UsernameTypeValidator,
+    RequiredFieldsValidator,
     UsernameValidator,
 )
 
@@ -40,8 +40,8 @@ TEST_CASES = [
             {'is_active': ''},
             {},
         ],
-        IsActive('domain'),
-        {2: IsActive.error_message}
+        IsActiveValidator('domain'),
+        {2: IsActiveValidator.error_message}
     ),
     (
         [
@@ -49,16 +49,16 @@ TEST_CASES = [
             {'user_id': factory.uuid4()},
             {}
         ],
-        UsernameOrUserIdRequired('domain'),
-        {2: UsernameOrUserIdRequired.error_message}
+        RequiredFieldsValidator('domain'),
+        {2: RequiredFieldsValidator.error_message}
     ),
     (
         [
             {'username': 'verylongusernamelessthan30char'},
             {'username': 'verylongusernamemorethan30chars'}
         ],
-        LongUsernames('domain', 30),
-        {1: LongUsernames._error_message.format(length=30)}
+        UsernameLengthValidator('domain', 30),
+        {1: UsernameLengthValidator._error_message.format(length=30)}
     ),
     (
         [
@@ -67,8 +67,8 @@ TEST_CASES = [
             {'username': factory.user_name(), 'password': factory.password()},
             {'username': factory.user_name(), 'password': 123}
         ],
-        NewUserPassword('domain'),
-        {0: NewUserPassword.error_message}
+        NewUserPasswordValidator('domain'),
+        {0: NewUserPasswordValidator.error_message}
     ),
     (
         [
@@ -103,8 +103,8 @@ TEST_CASES = [
             {'username': 10.3},
             {},
         ],
-        StringUsernames('domain'),
-        {2: StringUsernames.error_message}
+        UsernameTypeValidator('domain'),
+        {2: UsernameTypeValidator.error_message}
     ),
 ]
 
@@ -153,7 +153,7 @@ def test_duplicates_with_check():
 
 
 def _test_duplicates(specs, duplicates, check=None):
-    validator = Duplicates('domain', 'name', specs, check_function=check)
+    validator = DuplicateValidator('domain', 'name', specs, check_function=check)
 
     def _test(spec):
         if spec.get('name') in duplicates:
@@ -174,7 +174,7 @@ def test_existing_users():
 
     with patch('corehq.apps.user_importer.validation.get_existing_usernames',
                return_value=['bob@domain.commcarehq.org']):
-        validator = ExistingUsers('domain', user_specs)
+        validator = ExistingUserValidator('domain', user_specs)
 
     validator(user_specs[0])
     with assert_raises(UserUploadError):

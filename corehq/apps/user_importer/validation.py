@@ -22,22 +22,23 @@ from corehq.util.workbook_json.excel import (
 def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allowed_roles=None):
     domain = domain_obj.name
     validate_passwords = domain_obj.strong_mobile_passwords
+    noop = NoopValidator(domain)
     return [
-        StringUsernames(domain),
+        UsernameTypeValidator(domain),
         UsernameValidator(domain),
-        IsActive(domain),
-        UsernameOrUserIdRequired(domain),
-        Duplicates(domain, 'username', all_specs),
-        Duplicates(domain, 'user_id', all_specs),
-        Duplicates(domain, 'password', all_specs, is_password) if validate_passwords else NoopValidator(domain),
-        LongUsernames(domain),
-        NewUserPassword(domain),
-        PasswordValidator(domain) if validate_passwords else NoopValidator(domain),
+        IsActiveValidator(domain),
+        RequiredFieldsValidator(domain),
+        DuplicateValidator(domain, 'username', all_specs),
+        DuplicateValidator(domain, 'user_id', all_specs),
+        DuplicateValidator(domain, 'password', all_specs, is_password) if validate_passwords else noop,
+        UsernameLengthValidator(domain),
+        NewUserPasswordValidator(domain),
+        PasswordValidator(domain) if validate_passwords else noop,
         CustomDataValidator(domain),
         EmailValidator(domain),
         GroupValidator(domain, allowed_groups),
         RoleValidator(domain, allowed_roles),
-        ExistingUsers(domain, all_specs),
+        ExistingUserValidator(domain, all_specs),
     ]
 
 
@@ -76,7 +77,7 @@ class UsernameValidator(ImportValidator):
                 return self.error_message
 
 
-class IsActive(ImportValidator):
+class IsActiveValidator(ImportValidator):
     error_message = _("'is_active' column can only contain 'true' or 'false'")
 
     def validate_spec(self, spec):
@@ -88,7 +89,7 @@ class IsActive(ImportValidator):
                 return self.error_message
 
 
-class UsernameOrUserIdRequired(ImportValidator):
+class RequiredFieldsValidator(ImportValidator):
     error_message = _("One of 'username' or 'user_id' is required")
 
     def validate_spec(self, spec):
@@ -98,7 +99,7 @@ class UsernameOrUserIdRequired(ImportValidator):
             return self.error_message
 
 
-class Duplicates(ImportValidator):
+class DuplicateValidator(ImportValidator):
     _error_message = _("'{field}' values must be unique")
 
     def __init__(self, domain, field, all_specs, check_function=None):
@@ -132,7 +133,7 @@ def find_duplicates(specs, field):
     }
 
 
-class LongUsernames(ImportValidator):
+class UsernameLengthValidator(ImportValidator):
     _error_message = _("username cannot contain greater than {length} characters")
 
     def __init__(self, domain, max_length=None):
@@ -149,7 +150,7 @@ class LongUsernames(ImportValidator):
             return self.error_message
 
 
-class StringUsernames(ImportValidator):
+class UsernameTypeValidator(ImportValidator):
     error_message = _("Username must be Text")
 
     def validate_spec(self, spec):
@@ -162,7 +163,7 @@ class StringUsernames(ImportValidator):
             return self.error_message
 
 
-class NewUserPassword(ImportValidator):
+class NewUserPasswordValidator(ImportValidator):
     error_message = _("New users must have a password set.")
 
     def validate_spec(self, spec):
@@ -242,7 +243,7 @@ def is_password(password):
     return False
 
 
-class ExistingUsers(ImportValidator):
+class ExistingUserValidator(ImportValidator):
     error_message = _("The username already belongs to a user. Specify and ID to update the user.")
 
     def __init__(self, domain, all_sepcs):
