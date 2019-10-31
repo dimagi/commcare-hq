@@ -1,4 +1,3 @@
-from custom.icds_reports.utils.aggregation_helpers.distributed import ChildHealthMonthlyAggregationDistributedHelper
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
     AggregationPartitionedHelper,
 )
@@ -20,6 +19,7 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
 
     @property
     def child_temp_tablename(self):
+        from custom.icds_reports.utils.aggregation_helpers.distributed import ChildHealthMonthlyAggregationDistributedHelper
         return ChildHealthMonthlyAggregationDistributedHelper([], self.month).temporary_tablename
 
     def staging_queries(self):
