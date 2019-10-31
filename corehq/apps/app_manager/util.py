@@ -141,6 +141,10 @@ def first_elem(elem_list):
     return elem_list[0] if elem_list else None
 
 
+def generate_xmlns():
+    return str(uuid.uuid4()).upper()
+
+
 def save_xform(app, form, xml):
 
     def change_xmlns(xform, old_xmlns, new_xmlns):
@@ -156,10 +160,7 @@ def save_xform(app, form, xml):
         pass
     else:
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
-        # we assume form.get_unique_id() is unique across all of HQ and
-        # therefore is suitable to create an XMLNS that will not confict
-        # with any other form
-        uid = form.get_unique_id()
+        uid = generate_xmlns()
         tag_xmlns = xform.data_node.tag_xmlns
         new_xmlns = form.xmlns or "http://openrosa.org/formdesigner/%s" % uid
         if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  # no xmlns
@@ -369,9 +370,6 @@ def enable_usercase(domain_name):
             domain_obj.usercase_enabled = True
             domain_obj.save()
             create_user_cases.delay(domain_name)
-
-
-
 
 
 def prefix_usercase_properties(properties):

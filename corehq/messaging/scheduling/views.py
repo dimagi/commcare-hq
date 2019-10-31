@@ -625,7 +625,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
         )
 
     def _format_rule_for_json(self, rule):
-        schedule = rule.get_messaging_rule_schedule()
+        schedule = rule.get_schedule()
         return {
             'name': rule.name,
             'case_type': rule.case_type,
@@ -680,7 +680,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
         we don't send a large quantity of stale messages.
         """
         with transaction.atomic():
-            schedule = rule.get_messaging_rule_schedule()
+            schedule = rule.get_schedule()
             if active_flag and not self.can_use_inbound_sms and schedule.memoized_uses_sms_survey:
                 return HttpResponseBadRequest(
                     "Cannot create or edit survey reminders because subscription "
@@ -933,7 +933,7 @@ class EditConditionalAlertView(CreateConditionalAlertView):
 
     @cached_property
     def schedule(self):
-        return self.rule.get_messaging_rule_schedule()
+        return self.rule.get_schedule()
 
     def dispatch(self, request, *args, **kwargs):
         with get_conditional_alert_edit_critical_section(self.rule_id):
