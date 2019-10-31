@@ -35,11 +35,8 @@ class ChangeProducer(object):
             self.producer.send(topic, message_json_dump, key=change_meta.document_id)
             if self.auto_flush:
                 self.producer.flush()
-        except Exception as e:
-            _assert = soft_assert(notify_admins=True)
-            _assert(False, 'Problem sending change to kafka {}: {} ({})'.format(
-                message, e, type(e)
-            ))
+        except Exception:
+            notify_exception(None, 'Problem sending change to Kafka', details=message)
             raise
 
     def flush(self, timeout=None):
