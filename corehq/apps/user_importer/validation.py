@@ -48,9 +48,9 @@ class ImportValidator(metaclass=ABCMeta):
         self.domain = domain
 
     def __call__(self, spec):
-        error = self.validate_spec(spec)
-        if error:
-            raise UserUploadError(error)
+        error_message = self.validate_spec(spec)
+        if error_message:
+            raise UserUploadError(error_message)
 
     @abstractmethod
     def validate_spec(self, spec):
@@ -150,7 +150,7 @@ class LongUsernames(ImportValidator):
 
 
 class StringUsernames(ImportValidator):
-    error_message = _("username cannot contain greater than {length} characters")
+    error_message = _("Username must be Text")
 
     def validate_spec(self, spec):
         username = spec.get('username')
