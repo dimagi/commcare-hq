@@ -206,7 +206,7 @@ class CaseDiffQueue(object):
             num_forms = sum(cases_to_diff.values())
             if num_forms > MAX_FORMS_PER_DIFF:
                 # maybe adjust MAX_FORMS_PER_DIFF if this is frequent
-                log.warning("diff %s cases with %s forms", len(case_ids), num_forms)
+                log.warning("diff case %s with %s forms", case_ids, num_forms)
             couch_cases = {}
             to_load = []
             pop_case = self.cases.pop
