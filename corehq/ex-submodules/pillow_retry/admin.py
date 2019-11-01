@@ -1,7 +1,9 @@
 from django.contrib import admin
-from .models import PillowError
+
+from pillow_retry.models import PillowError
 
 
+@admin.register(PillowError)
 class PillowErrorAdmin(admin.ModelAdmin):
 
     model = PillowError
@@ -14,6 +16,6 @@ class PillowErrorAdmin(admin.ModelAdmin):
         'date_next_attempt'
     ]
     list_filter = ('pillow', 'error_type')
-
-
-admin.site.register(PillowError, PillowErrorAdmin)
+    actions = [
+        'delete_selected'
+    ]
