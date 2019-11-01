@@ -9,7 +9,6 @@ from corehq.apps.hqadmin.reports import (
     UserAuditReport,
     UserListReport,
 )
-from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
     monitoring, inspect,
@@ -336,7 +335,6 @@ SMS_ADMIN_INTERFACES = (
 ADMIN_REPORTS = (
     (_('Domain Stats'), (
         UserListReport,
-        PillowErrorsReport,
         DeviceLogSoftAssertReport,
         AdminPhoneNumberReport,
         UserAuditReport,
