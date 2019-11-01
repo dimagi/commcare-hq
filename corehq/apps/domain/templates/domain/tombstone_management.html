@@ -13,22 +13,39 @@
     <div class="col-xs-12">
       <table class="table">
         <tr><th>Name</th><th>Status</th><th></th></tr>
-        {% for name, project in domains %}
+        {% for name, projects in domains %}
         <tr>
           <td>{{ name }}</td><td>
-          {% if project and project.doc_type == 'Domain-Deleted' %}
-            Project Tombstone
-          {% elif project %}
-            Normal Project
-          {% else %}
-            Project does not exist
-          {% endif %}
+            {% if projects|length == 0 %}
+              Project does not exist
+            {% elif projects|length == 1 %}
+              {% if project.doc_type == 'Domain-Deleted' %}
+                Project Tombstone
+              {% else %}
+                Normal Project
+              {% endif %}
+            {% else %}
+              Multiple Projects with this name!
+              {% regroup projects by doc_type as doc_type_list %}
+              <ul>
+              {% for doc_type in doc_type_list %}
+                <li>
+                {% if doc_type.grouper == 'Domain-Deleted' %}
+                  Project Tombstones:
+                {% else %}
+                  Normal Projects:
+                {% endif %}
+                {{ doc_type.list|length }}
+                </li>
+              {% endfor %}
+              </ul>
+            {% endif %}
           </td>
           <td>
             <form method="post" action="{% url "create_tombstone" %}">
             {% csrf_token %}
             <input type="hidden" name="domain" value="{{ name }}">
-            {% if not project %}<button class="btn btn-danger" type="submit">Create Tombstone</button>{% endif %}
+            {% if not projects|length %}<button class="btn btn-danger" type="submit">Create Tombstone</button>{% endif %}
             </form>
           </td>
         </tr>

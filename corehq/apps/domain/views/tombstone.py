@@ -4,6 +4,7 @@ from crispy_forms import layout as crispy
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 
+from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_with_name
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper
 
@@ -33,15 +34,15 @@ class TombstoneManagement(BaseAdminSectionView):
             'domains': self.domain_results or [],
         }
 
-    def post(self, request, *args, **kwargs):
-        self.form = TombstoneManagementForm(self.request.POST)
+    def get(self, request, *args, **kwargs):
+        self.form = TombstoneManagementForm(self.request.GET)
         if self.form.is_valid():
             domain_names = self.form.cleaned_data['domains']
             self.domain_results = []
             for domain in domain_names:
-                project = Domain.get_by_name(domain)
-                self.domain_results.append((domain, project))
-        return self.get(request, *args, **kwargs)
+                projects = list(iter_all_domains_and_deleted_domains_with_name(domain))
+                self.domain_results.append((domain, projects))
+        return super().get(request, *args, **kwargs)
 
 
 @require_superuser
@@ -90,6 +91,7 @@ class TombstoneManagementForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         self.helper = HQFormHelper()
+        self.helper.form_method = 'get'
         self.helper.form_class = "form-horizontal"
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
