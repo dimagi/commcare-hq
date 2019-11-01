@@ -16,7 +16,7 @@
         {% for name, project in domains %}
         <tr>
           <td>{{ name }}</td><td>
-          {% if project and project.is_tombstone %}
+          {% if project and project.doc_type == 'Domain-Deleted' %}
             Project Tombstone
           {% elif project %}
             Normal Project

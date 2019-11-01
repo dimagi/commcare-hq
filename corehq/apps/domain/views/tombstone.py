@@ -55,6 +55,7 @@ def create_tombstone(request):
             .format(domain))
     else:
         project = Domain(
+            doc_type='Domain-Deleted',
             name=domain,
             hr_name='{} (Created as a tombstone)'.format(domain),
             is_active=False,
@@ -63,7 +64,6 @@ def create_tombstone(request):
             secure_submissions=True,
             use_sql_backend=True,
             first_domain_for_user=False,
-            is_tombstone=True,
         )
         project.save()
         messages.success(request, "Successfully created a tombstone for {}".format(domain))

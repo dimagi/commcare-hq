@@ -67,8 +67,6 @@ def load_domain(req, domain):
     domain_name = normalize_domain_name(domain)
     domain_obj = Domain.get_by_name(domain_name)
     req.project = domain_obj
-    if req.project and req.project.is_tombstone:
-        raise Http404
     return domain_name, domain_obj
 
 ########################################################################################################

@@ -300,7 +300,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     _blobdb_type_code = BLOB_CODES.domain
 
     name = StringProperty()
-    is_tombstone = BooleanProperty(default=False)
     is_active = BooleanProperty()
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
@@ -701,8 +700,12 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save(self, **params):
+        from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
+
         self.last_modified = datetime.utcnow()
         if not self._rev:
+            if domain_or_deleted_domain_exists(self.name):
+                raise NameUnavailableException(self.name)
             # mark any new domain as timezone migration complete
             set_tz_migration_complete(self.name)
         super(Domain, self).save(**params)
@@ -951,7 +954,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         self._pre_delete()
         if leave_tombstone:
             domain = Domain.get_by_name(self.name)
-            domain.is_tombstone = True
+            if not domain.doc_type.endswith('-Deleted'):
+                domain.doc_type = '{}-Deleted'.format(self.doc_type)
             domain.save()
         else:
             super().delete()
