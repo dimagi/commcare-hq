@@ -1,5 +1,6 @@
 import errno
 import json
+import logging
 import os
 import os.path
 from collections import namedtuple
@@ -18,11 +19,14 @@ from sqlalchemy import (
     func,
     or_,
 )
+from sqlalchemy.exc import IntegrityError
 
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import json_diff
 
 from .diff import filter_form_diffs
+
+log = logging.getLogger(__name__)
 
 
 def init_state_db(domain, state_dir):
@@ -196,9 +200,13 @@ class StateDB(DiffDB):
             yield form_id
 
     def add_no_action_case_form(self, form_id):
-        with self.session() as session:
-            session.add(NoActionCaseForm(id=form_id))
-        self.get_no_action_case_forms.reset_cache(self)
+        try:
+            with self.session() as session:
+                session.add(NoActionCaseForm(id=form_id))
+        except IntegrityError:
+            pass
+        else:
+            self.get_no_action_case_forms.reset_cache(self)
 
     @memoized
     def get_no_action_case_forms(self):
@@ -226,7 +234,7 @@ class StateDB(DiffDB):
                 kv.value = RESUME_NOT_ALLOWED
 
     def _get_kv(self, key, session):
-        return session.query(KeyValue).filter_by(key=key).scalar()
+        return session.query(KeyValue).get(key)
 
     def _set_kv(self, key, value, session=None):
         with self.session(session) as session:
@@ -335,6 +343,7 @@ class StateDB(DiffDB):
             return column.key == "id" and isinstance(column.type, Integer)
 
         def copy(model, session, where_expr=None):
+            log.info("copying casediff data: %s", model.__name__)
             where = f"WHERE {where_expr}" if where_expr else ""
             fields = ", ".join(c.key for c in model.__table__.columns if not is_id(c))
             session.execute(f"DELETE FROM main.{model.__tablename__} {where}")
@@ -343,6 +352,7 @@ class StateDB(DiffDB):
                 SELECT {fields} FROM cddb.{model.__tablename__} {where}
             """)
 
+        log.info("checking casediff data preconditions...")
         casediff_db = type(self).open(casediff_state_path)
         with casediff_db.session() as cddb:
             expect_casediff_kinds = {

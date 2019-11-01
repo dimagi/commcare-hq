@@ -243,9 +243,7 @@ describe('Download Directive', function () {
         });
 
         it('test to check if current month is enabled after first three days', function () {
-            var fakeDate = new Date();
-            fakeDate.setMonth(8);
-            fakeDate.setDate(4);
+            var fakeDate = new Date(2019, 8, 4);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
             controller.selectedIndicator = 1;
             controller.selectedYear = fakeDate.getFullYear();
@@ -266,9 +264,7 @@ describe('Download Directive', function () {
         });
 
         it('test to check if current month is not enabled before first three days', function () {
-            var fakeDate = new Date();
-            fakeDate.setMonth(8);
-            fakeDate.setDate(2);
+            var fakeDate = new Date(2019, 8, 2);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
             controller.selectedIndicator = 1;
             controller.selectedYear = fakeDate.getFullYear();
@@ -289,9 +285,7 @@ describe('Download Directive', function () {
 
         it('test to check if AWW performance report is downloadable only till last month ' +
             'after current month 15th ', function () {
-            var fakeDate = new Date();
-            fakeDate.setMonth(8);
-            fakeDate.setDate(17);
+            var fakeDate = new Date(2019, 8, 17);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
             controller.selectedIndicator = 8;
             controller.selectedYear = fakeDate.getFullYear();
@@ -312,9 +306,7 @@ describe('Download Directive', function () {
 
         it('test to check if AWW performance report is downloadable only till last before month ' +
             'before current month 15th ', function () {
-            var fakeDate = new Date();
-            fakeDate.setMonth(8);
-            fakeDate.setDate(5);
+            var fakeDate = new Date(2019, 8, 5);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
             controller.selectedIndicator = 8;
             controller.selectedYear = fakeDate.getFullYear();
