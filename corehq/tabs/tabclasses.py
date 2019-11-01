@@ -69,7 +69,6 @@ from corehq.apps.users.permissions import (
     can_view_sms_exports,
 )
 from corehq.feature_previews import (
-    BI_INTEGRATION_PREVIEW,
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
 )
@@ -510,6 +509,12 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_view_odata_feed(self):
+        from corehq.apps.export.views.utils import user_can_view_odata_feed
+        return user_can_view_odata_feed(self.domain, self.couch_user)
+
+    @property
+    @memoized
     def can_use_lookup_tables(self):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
@@ -729,7 +734,7 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': True,
                     'subpages': []
                 })
-            if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+            if self.can_view_odata_feed:
                 subpages = [
                     {
                         'title': _(CreateODataCaseFeedView.page_title),
@@ -849,7 +854,7 @@ class ProjectDataTab(UITab):
                 _('Explore Case Data (Preview)'),
                 url=reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
             ))
-        if BI_INTEGRATION_PREVIEW.enabled_for_request(self._request):
+        if self.can_view_odata_feed:
             from corehq.apps.export.views.list import ODataFeedListView
             items.append(dropdown_dict(
                 _(ODataFeedListView.page_title),

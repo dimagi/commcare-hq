@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 
 import pytz
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 from mock import patch
 
 from casexml.apps.case.const import CASE_ACTION_CREATE

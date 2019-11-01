@@ -3,7 +3,12 @@ from decimal import Decimal
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase, TestCase
 
+from couchdbkit import ResourceConflict
 from elasticsearch.exceptions import ConnectionError
+from mock import patch
+
+from pillow_retry.models import PillowError
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -22,6 +27,7 @@ from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
+from corehq.util.es.elasticsearch import ConnectionError
 from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup
 from testapps.test_pillowtop.utils import process_pillow_changes
 
@@ -59,6 +65,7 @@ class XFormPillowTest(TestCase):
         user = CommCareUser.get_by_user_id(self.user._id, self.domain)
         user.reporting_metadata.last_submissions = []
         user.save()
+        PillowError.objects.all().delete()
         super().tearDown()
 
     @classmethod
@@ -128,6 +135,19 @@ class XFormPillowTest(TestCase):
             string_to_utc_datetime(self.metadata.received_on),
         )
         self.assertEqual(last_submission.app_id, self.metadata.app_id)
+
+    @run_with_all_backends
+    def test_form_pillow_error_in_form_metadata(self):
+        self.assertEqual(0, PillowError.objects.filter(pillow='xform-pillow').count())
+        with patch('pillowtop.processors.form.mark_latest_submission') as mark_latest_submission:
+            mark_latest_submission.side_effect = ResourceConflict('couch sucks')
+            case_id, case_name = self._create_form_and_sync_to_es()
+
+        # confirm change made it to form index
+        results = FormES().run()
+        self.assertEqual(1, results.total)
+
+        self.assertEqual(1, PillowError.objects.filter(pillow='xform-pillow').count())
 
     def _create_form_and_sync_to_es(self):
         with self.process_form_changes:

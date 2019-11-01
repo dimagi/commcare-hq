@@ -733,6 +733,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_MAJOR_VERSION = 1
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -899,6 +900,8 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+
+DEFAULT_ODATA_FEED_LIMIT = 25
 
 # used for providing separate landing pages for different URLs
 # default will be used if no hosts match

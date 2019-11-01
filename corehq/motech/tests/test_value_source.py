@@ -11,6 +11,8 @@ from corehq.motech.value_source import (
     CaseProperty,
     CaseTriggerInfo,
     ConstantString,
+    FormQuestionMap,
+    ValueSource,
     get_form_question_values,
 )
 
@@ -139,6 +141,56 @@ class ConstantStringTests(SimpleTestCase):
         external_value = "bar"
         value = constant.deserialize(external_value)
         self.assertIsNone(value)
+
+
+class WrapTests(SimpleTestCase):
+
+    def test_wrap_subclass(self):
+        doc = {
+            "doc_type": "FormQuestionMap",
+            "form_question": "/data/abnormal_temperature",
+            "value_map": {
+                "yes": "05ced69b-0790-4aad-852f-ba31fe82fbd9",
+                "no": "eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0"
+            },
+        }
+        form_question_map = ValueSource.wrap(doc)
+        self.assertIsInstance(form_question_map, ValueSource)
+        self.assertIsInstance(form_question_map, FormQuestionMap)
+
+    def test_subclass_wrap(self):
+        doc = {
+            "doc_type": "FormQuestionMap",
+            "form_question": "/data/abnormal_temperature",
+            "value_map": {
+                "yes": "05ced69b-0790-4aad-852f-ba31fe82fbd9",
+                "no": "eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0"
+            },
+        }
+        form_question_map = FormQuestionMap.wrap(doc)
+        self.assertIsInstance(form_question_map, ValueSource)
+        self.assertIsInstance(form_question_map, FormQuestionMap)
+
+    def test_wrap_class(self):
+        """
+        Wrapping a ValueSource instance should return None.
+
+        ValueSource must be subclassed because ValueSource.get_value
+        raises NotImplementedError.
+        """
+        doc = {
+            "doc_type": "ValueSource"
+        }
+        value_source = ValueSource.wrap(doc)
+        self.assertIsNone(value_source)
+
+    def test_wrap_something_else(self):
+        doc = {
+            "doc_type": "Foo",
+            "foo": "bar"
+        }
+        foo = ValueSource.wrap(doc)
+        self.assertIsNone(foo)
 
 
 def test_doctests():

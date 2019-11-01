@@ -16,11 +16,16 @@
     <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'reports_core/js/choice_list_utils.js' %}"></script>
     <script src="{% static 'reports_core/js/charts.js' %}"></script>
-    <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-    <script src="{% static 'reports/js/maps_utils.js' %}"></script><!-- depends on leaflet -->
-    <script src="{% static 'reports_core/js/maps.js' %}"></script>
     <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
   {% endcompress %}
+
+  {# don't compress this block related to maps. it causes strange issues with the default image path #}
+  {# see https://dimagi-dev.atlassian.net/browse/SAASP-179 #}
+  <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+  <script src="{% static 'reports/js/maps_utils.js' %}"></script><!-- depends on leaflet -->
+  <script src="{% static 'reports_core/js/maps.js' %}"></script>
+
+
   {% include 'reports/partials/filters_js.html' %}
   {% include 'reports/partials/graphs/charts_js.html' %}
   <script src="{% static 'reports_core/js/base_template_new.js' %}"></script>
