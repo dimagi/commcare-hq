@@ -1,5 +1,5 @@
 from collections import defaultdict
-from django.db import migrations, models, transaction
+from django.db import migrations, models
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.util.django_migrations import skip_on_fresh_install
@@ -26,9 +26,8 @@ def _update_model(model, domain, domain_forms):
 def _populate_app_id(apps, schema_editor):
     Call = apps.get_model('ivr', 'Call')
     domain_forms = {}
-    with transaction.atomic():
-        for call in Call.objects.filter(form_unique_id__isnull=False).all():
-            _update_model(call, call.domain, domain_forms)
+    for call in Call.objects.filter(form_unique_id__isnull=False).all():
+        _update_model(call, call.domain, domain_forms)
 
 
 class Migration(migrations.Migration):

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from django.db import migrations, models, transaction
+from django.db import migrations, models
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.sms.models import Keyword, MessagingEvent, MessagingSubEvent
@@ -33,14 +33,12 @@ def _populate_app_id(apps, schema_editor):
             _update_model(action, keyword.domain, domain_forms)
 
     # MessagingEvent
-    with transaction.atomic():
-        for event in MessagingEvent.objects.filter(form_unique_id__isnull=False).all():
-            _update_model(event, event.domain, domain_forms)
+    for event in MessagingEvent.objects.filter(form_unique_id__isnull=False).all():
+        _update_model(event, event.domain, domain_forms)
 
     # MessagingSubEvent
-    with transaction.atomic():
-        for subevent in MessagingSubEvent.objects.filter(form_unique_id__isnull=False).all():
-            _update_model(subevent, subevent.parent.domain, domain_forms)
+    for subevent in MessagingSubEvent.objects.filter(form_unique_id__isnull=False).all():
+        _update_model(subevent, subevent.parent.domain, domain_forms)
 
 
 class Migration(migrations.Migration):
