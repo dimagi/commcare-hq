@@ -1,10 +1,7 @@
-from collections import defaultdict
 from django.db import migrations, models
 from itertools import chain
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.messaging.scheduling.models.alert_schedule import AlertSchedule
-from corehq.messaging.scheduling.models.timed_schedule import TimedSchedule
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
@@ -13,7 +10,7 @@ def _update_model(model, domain, domain_forms):
         return None
 
     if domain not in domain_forms:
-        domain_forms[domain] = defaultdict(dict)
+        domain_forms[domain] = {}
         apps = get_apps_in_domain(domain)
         for app in apps:
             for module in app.modules:
@@ -28,6 +25,8 @@ def _update_model(model, domain, domain_forms):
 @skip_on_fresh_install
 def _populate_app_id(apps, schema_editor):
     domain_forms = {}
+    AlertSchedule = apps.get_model('scheduling', 'AlertSchedule')
+    TimedSchedule = apps.get_model('scheduling', 'TimedSchedule')
     for schedule in chain(AlertSchedule.objects.all(), TimedSchedule.objects.all()):
         for event in schedule.memoized_events:
             if event.sms_survey_content:
