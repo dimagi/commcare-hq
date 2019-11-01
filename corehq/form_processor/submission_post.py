@@ -13,6 +13,8 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 import sys
+
+from casexml.apps.case.xform import close_extension_cases
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
@@ -387,14 +389,16 @@ class SubmissionPost(object):
     @tracer.wrap(name='submission.post_save_actions')
     def do_post_save_actions(case_db, xforms, case_stock_result):
         instance = xforms[0]
+        case_db.clear_changed()
         try:
             case_stock_result.case_result.commit_dirtiness_flags()
             case_stock_result.stock_result.finalize()
 
             SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)
 
-            case_stock_result.case_result.close_extensions(
+            close_extension_cases(
                 case_db,
+                case_stock_result.case_models,
                 "SubmissionPost-%s-close_extensions" % instance.form_id
             )
         except PostSaveError:
@@ -454,7 +458,7 @@ class SubmissionPost(object):
                 response = openrosa_response.get_openarosa_success_response(message=success_message)
             else:
                 error_message = error_message or instance.problem
-                response = self.get_retry_response(error_message, error_nature)
+                response = self.get_v3_error_response(error_message, error_nature)
         else:
             if instance.is_normal:
                 response = openrosa_response.get_openarosa_success_response()
@@ -475,8 +479,10 @@ class SubmissionPost(object):
         ).response()
 
     @staticmethod
-    def get_retry_response(message, nature):
-        """Returns a 422(Unprocessable Entity) response, mobile will retry this submission
+    def get_v3_error_response(message, nature):
+        """Returns a 422(Unprocessable Entity) response
+        - if nature == 'processing_failure' the mobile device will quarantine this form and not retry it
+        - any other value of `nature` will result in the form being marked as a failure and retrying
         """
         return OpenRosaResponse(
             message=message, nature=nature, status=422,
@@ -492,10 +498,13 @@ class SubmissionPost(object):
                 'error_message': error_instance.problem
             }
         )
+        # This are generally badly formed XML resulting from file corruption, encryption errors
+        # or other errors on the device which can not be recovered from.
+        # To prevent retries of these errors we submit a 422 response with `processing_failure` nature.
         return OpenRosaResponse(
             message="There was an error processing the form: %s" % error_instance.problem,
-            nature=ResponseNature.SUBMIT_ERROR,
-            status=500,
+            nature=ResponseNature.PROCESSING_FAILURE,
+            status=422,
         ).response()
 
     @tracer.wrap(name='submission.handle_system_action')

@@ -1,84 +1,21 @@
-from django.db import transaction
-
-from corehq.sql_db.routers import db_for_read_write
-from custom.icds_reports.utils.aggregation_helpers import (
-    transform_day_to_month,
-)
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
-    BaseICDSAggregationDistributedHelper,
+    AggregationPartitionedHelper,
 )
 
 
-class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
     helper_key = 'agg-child-health'
     base_tablename = 'agg_child_health'
-
-    def __init__(self, month):
-        self.month = transform_day_to_month(month)
-
-    def aggregate(self, cursor):
-        staging_queries = self.staging_queries()
-        update_queries = self.update_queries()
-        rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
-
-        cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
-        # create staging table
-        cursor.execute(f"CREATE UNLOGGED TABLE {self.staging_tablename} (LIKE {self.base_tablename})")
-        # initial inserts into staging table
-        for staging_query, params in staging_queries:
-            cursor.execute(staging_query, params)
-        # update staging table
-        for query, params in update_queries:
-            cursor.execute(query, params)
-        for query in rollup_queries:
-            cursor.execute(query)
-
-        # create new monthly table if it does not exist
-        cursor.execute(f"""
-        CREATE TABLE IF NOT EXISTS "{self.monthly_tablename}" (
-            CHECK (month = DATE '{self.month.strftime('%Y-%m-01')}')
-        )
-        INHERITS ({self.base_tablename})
-        """)
-        for index_query in self.indexes():
-            cursor.execute(index_query)
-
-        from custom.icds_reports.models import AggChildHealth
-        db_alias = db_for_read_write(AggChildHealth)
-        with transaction.atomic(using=db_alias):
-            # drop old style tables if they exist
-            for i in range(1, 6):
-                cursor.execute(f'DROP TABLE IF EXISTS "{self._tablename_func(i)}"')
-            # delete data from monthly table
-            cursor.execute(f'DELETE FROM "{self.monthly_tablename}"')
-            # insert into monthly table from staging table
-            cursor.execute(f"""
-            INSERT INTO "{self.monthly_tablename}" (
-                SELECT * FROM "{self.staging_tablename}"
-                ORDER BY aggregation_level, state_id, district_id, block_id, supervisor_id, awc_id
-            )
-            """)
-
-        # drop staging table
-        cursor.execute(f"DROP TABLE IF EXISTS {self.staging_tablename}")
-
-    def _tablename_func(self, agg_level):
-        return "{}_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"), agg_level)
-
-    @property
-    def staging_tablename(self):
-        return f"staging_{self.base_tablename}"
-
-    @property
-    def tablename(self):
-        return self._tablename_func(5)
+    staging_tablename = 'staging_agg_child_health'
 
     @property
     def monthly_tablename(self):
         return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
-    def drop_table_query(self):
-        return 'DELETE FROM "{}"'.format(self.tablename)
+    @property
+    def model(self):
+        from custom.icds_reports.models import AggChildHealth
+        return AggChildHealth
 
     def staging_queries(self):
         columns = (
@@ -215,13 +152,7 @@ class AggChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedH
             ('C', 'D'),
             ('D', 'E'),
             ('E', 'F'),
-            ('F', 'a'),
-            ('a', 'b'),
-            ('b', 'c'),
-            ('c', 'd'),
-            ('d', 'e'),
-            ('e', 'f'),
-            ('f', 'zzzzzzzzzz'),
+            ('F', 'zzzzzzzzzz'),
         ]
 
         return [

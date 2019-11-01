@@ -1,6 +1,7 @@
 import mock
 from collections import Counter
 
+from django.db import DEFAULT_DB_ALIAS
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase
 
@@ -21,13 +22,13 @@ def _get_db_config(db_name):
 
 
 DATABASES = {
-    'default': _get_db_config('default'),
+    DEFAULT_DB_ALIAS: _get_db_config('default'),
     'ucr': _get_db_config('ucr'),
     'other': _get_db_config('other')
 }
 REPORTING_DATABASES = {
-    'default': 'default',
-    'ucr': 'default'
+    'default': DEFAULT_DB_ALIAS,
+    'ucr': DEFAULT_DB_ALIAS
 }
 
 
@@ -49,7 +50,7 @@ class ConnectionManagerTests(SimpleTestCase):
             'ucr': 'postgresql+psycopg2://:@localhost:5432/default'
         })
 
-    @override_settings(REPORTING_DATABASES={'default': 'default', 'ucr': 'ucr', 'other': 'other'})
+    @override_settings(REPORTING_DATABASES={'default': DEFAULT_DB_ALIAS, 'ucr': 'ucr', 'other': 'other'})
     def test_new_settings(self):
         manager = ConnectionManager()
         self.assertEqual(manager.db_connection_map, {
@@ -87,11 +88,11 @@ class ConnectionManagerTests(SimpleTestCase):
             for db, requests in balanced.items():
                 self.assertAlmostEqual(requests, expected[db], delta=randomness_margin)
 
-        with override_settings(REPORTING_DATABASES={'default': 'default'}):
+        with override_settings(REPORTING_DATABASES={'default': DEFAULT_DB_ALIAS}):
             manager = ConnectionManager()
             self.assertEqual(
-                ['default', 'default', 'default'],
-                [manager.get_load_balanced_read_db_alias('default') for i in range(3)]
+                [DEFAULT_DB_ALIAS] * 3,
+                [manager.get_load_balanced_read_db_alias(DEFAULT_DB_ALIAS) for i in range(3)]
             )
 
     @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x, y: {'ucr': 4}.get(x, 0))
@@ -120,8 +121,8 @@ class ConnectionManagerTests(SimpleTestCase):
 
         with override_settings(
             LOAD_BALANCED_APPS=load_balanced_apps,
-            DATABASES = {
-                'default': _get_db_config('default'),
+            DATABASES={
+                DEFAULT_DB_ALIAS: _get_db_config('default'),
                 'users_db1': _get_db_config('users_db1')}):
             manager = ConnectionManager()
             self.assertEqual(

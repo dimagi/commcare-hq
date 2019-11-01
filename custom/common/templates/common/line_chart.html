@@ -1,5 +1,5 @@
 {% load hq_shared_tags %}
-<script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}'></script>
+<script src='{% static 'common/js/nvd3_charts_helper.js' %}'></script>
 <script>
     nv.addGraph(function() {
         var chart_config = {{ chart.config_dict|JSON }};

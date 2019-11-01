@@ -5,12 +5,14 @@ from dateutil import parser as dateutil_parser
 
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DATE,
+    COMMCARE_DATA_TYPE_DATETIME,
     COMMCARE_DATA_TYPE_TEXT,
 )
 from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_BOOLEAN,
     OPENMRS_DATA_TYPE_DATE,
     OPENMRS_DATA_TYPE_DATETIME,
+    OPENMRS_DATA_TYPE_MILLISECONDS,
 )
 from corehq.motech.serializers import serializers, to_date_str
 
@@ -72,7 +74,7 @@ def omrs_boolean_to_text(value):
     return 'true' if value else 'false'
 
 
-def openmrs_timestamp_to_isoformat(value, tz=None):
+def omrs_timestamp_to_datetime(value, tz=None):
     """
     Converts an OpenMRS timestamp to ISO format. Accepts a timezone,
     which defaults to UTC. If timezone is given, ISO format includes the
@@ -82,12 +84,12 @@ def openmrs_timestamp_to_isoformat(value, tz=None):
     milliseconds). Given None returns None. Raises ValueError for
     non-numeric values.
 
-    >>> openmrs_timestamp_to_isoformat(1551564000000)
+    >>> omrs_timestamp_to_datetime(1551564000000)
     '2019-03-02T22:00:00Z'
     >>> tz = datetime.timezone(datetime.timedelta(hours=+2), 'CAT')
-    >>> openmrs_timestamp_to_isoformat(1551564000000, tz)
+    >>> omrs_timestamp_to_datetime(1551564000000, tz)
     '2019-03-03T00:00:00+02:00'
-    >>> openmrs_timestamp_to_isoformat(1551564000)
+    >>> omrs_timestamp_to_datetime(1551564000)
     '2019-03-02T22:00:00Z'
 
     """
@@ -106,6 +108,11 @@ def openmrs_timestamp_to_isoformat(value, tz=None):
     return isoformat
 
 
+def omrs_timestamp_to_date(value, tz=None):
+    isoformat = omrs_timestamp_to_datetime(value, tz)
+    return omrs_datetime_to_date(isoformat)
+
+
 serializers.update({
     # (from_data_type, to_data_type): function
     (None, OPENMRS_DATA_TYPE_DATE): to_date_str,
@@ -113,4 +120,7 @@ serializers.update({
     (None, OPENMRS_DATA_TYPE_BOOLEAN): to_omrs_boolean,
     (OPENMRS_DATA_TYPE_DATETIME, COMMCARE_DATA_TYPE_DATE): omrs_datetime_to_date,
     (OPENMRS_DATA_TYPE_BOOLEAN, COMMCARE_DATA_TYPE_TEXT): omrs_boolean_to_text,
+    (OPENMRS_DATA_TYPE_MILLISECONDS, None): omrs_timestamp_to_datetime,
+    (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATETIME): omrs_timestamp_to_datetime,
+    (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATE): omrs_timestamp_to_date,
 })

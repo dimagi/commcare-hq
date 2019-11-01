@@ -346,15 +346,15 @@ class CouchSqlDomainMigrator(object):
             get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
             for doc_type in doc_types
         ])
-        for doc_type in doc_types:
-            doc_count -= self.counter.get(doc_type)
+        offset = sum(self.counter.get(doc_type) for doc_type in doc_types)
         if self.timing_context:
             current_timer = self.timing_context.peek()
             current_timer.normalize_denominator = doc_count
 
         if self.with_progress:
             prefix = "{} ({})".format(progress_name, ', '.join(doc_types))
-            return with_progress_bar(iterable, doc_count, prefix=prefix, oneline=False)
+            return with_progress_bar(
+                iterable, doc_count, prefix=prefix, oneline=False, offset=offset)
         else:
             log.info("{} {} ({})".format(progress_name, doc_count, ', '.join(doc_types)))
             return iterable
@@ -654,12 +654,10 @@ def _get_case_and_ledger_updates(domain, sql_form):
         load_src="couchsqlmigration",
     ) as case_db:
         touched_cases = interface.get_cases_from_forms(case_db, xforms)
-        extensions_to_close = get_all_extensions_to_close(domain, list(touched_cases.values()))
         case_result = CaseProcessingResult(
             domain,
             [update.case for update in touched_cases.values()],
-            [],  # ignore dirtiness_flags,
-            extensions_to_close
+            []  # ignore dirtiness_flags
         )
         for case in case_result.cases:
             case_db.post_process_case(case, sql_form)

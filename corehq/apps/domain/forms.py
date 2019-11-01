@@ -23,6 +23,7 @@ from django.forms.fields import (
     Field,
     ImageField,
     IntegerField,
+    SelectMultiple,
 )
 from django.forms.widgets import Select
 from django.template.loader import render_to_string
@@ -789,9 +790,20 @@ class PrivacySecurityForm(forms.Form):
     restrict_superusers = BooleanField(
         label=ugettext_lazy("Restrict Dimagi Staff Access"),
         required=False,
-        help_text=ugettext_lazy("Dimagi staff sometimes require access to projects to provide support. Checking "
-                                "this box may restrict your ability to receive this support in the event you "
-                                "report an issue. You may also miss out on important communications and updates.")
+        help_text=ugettext_lazy(
+            "CommCare support staff sometimes require access "
+            "to your project space to provide rapid, in-depth support. "
+            "Checking this box will restrict the degree of support they "
+            "will be able to provide in the event that you report an issue. "
+            "You may also miss out on important communications and updates. "
+            "Regardless of whether this option is checked, "
+            "Commcare support staff will have access "
+            "to your billing information and project metadata; "
+            "and CommCare system administrators will also have direct access "
+            "to data infrastructure strictly for the purposes of system administration "
+            "as outlined in our "
+            '<a href="https://www.dimagi.com/terms/latest/privacy/">Privacy Policy</a>.'
+        )
     )
     secure_submissions = BooleanField(
         label=ugettext_lazy("Secure submissions"),
@@ -1094,6 +1106,20 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         min_value=1000,
     )
+    use_custom_odata_feed_limit = forms.ChoiceField(
+        label=ugettext_lazy("Set custom OData Feed Limit? Default is {}.").format(
+            settings.DEFAULT_ODATA_FEED_LIMIT),
+        required=True,
+        choices=(
+            ('N', ugettext_lazy("No")),
+            ('Y', ugettext_lazy("Yes")),
+        ),
+    )
+    odata_feed_limit = forms.IntegerField(
+        label=ugettext_lazy("Max allowed OData Feeds"),
+        required=False,
+        min_value=1,
+    )
     granted_messaging_access = forms.BooleanField(
         label="Enable Messaging",
         required=False,
@@ -1166,6 +1192,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                     crispy.Field('auto_case_update_limit'),
                     data_bind="visible: use_custom_auto_case_update_limit() === 'Y'",
                 ),
+                crispy.Field(
+                    'use_custom_odata_feed_limit',
+                    data_bind="value: use_custom_odata_feed_limit",
+                ),
+                crispy.Div(
+                    crispy.Field('odata_feed_limit'),
+                    data_bind="visible: use_custom_odata_feed_limit() === 'Y'",
+                ),
                 'granted_messaging_access',
             ),
             crispy.Fieldset(
@@ -1186,6 +1220,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     def current_values(self):
         return {
             'use_custom_auto_case_update_limit': self['use_custom_auto_case_update_limit'].value(),
+            'use_custom_odata_feed_limit': self['use_custom_odata_feed_limit'].value()
         }
 
     def _get_user_or_fail(self, field):
@@ -1208,6 +1243,16 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         value = self.cleaned_data.get('auto_case_update_limit')
         if not value:
             raise forms.ValidationError(_("This field is required"))
+
+        return value
+
+    def clean_odata_feed_limit(self):
+        if self.cleaned_data.get('use_custom_odata_feed_limit') != 'Y':
+            return None
+
+        value = self.cleaned_data.get('odata_feed_limit')
+        if not value:
+            raise forms.ValidationError(_("Please specify a limit for OData feeds."))
 
         return value
 
@@ -1242,6 +1287,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         )
         domain.is_test = self.cleaned_data['is_test']
         domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
+        domain.odata_feed_limit = self.cleaned_data['odata_feed_limit']
         domain.granted_messaging_access = self.cleaned_data['granted_messaging_access']
         domain.update_internal(
             sf_contract_id=self.cleaned_data['sf_contract_id'],
@@ -2424,7 +2470,7 @@ class ManageReleasesByLocationForm(forms.Form):
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
-            crispy.Field('app_id', id='app-id-search-select', css_class="ko-select2"),
+            crispy.Field('app_id', id='app-id-search-select', css_class="hqwebapp-select2"),
             crispy.Field('location_id', id='location_search_select'),
             crispy.Field('version', id='version-input'),
             crispy.Field('status', id='status-input'),
@@ -2491,41 +2537,26 @@ class ManageReleasesByLocationForm(forms.Form):
         return True, None
 
 
-class ManageReleasesByAppProfileForm(forms.Form):
+class BaseManageReleasesByAppProfileForm(forms.Form):
     app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
     version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
-    build_profile_id = forms.CharField(label=ugettext_lazy('Application Profile'),
-                                       required=False, widget=Select(choices=[]))
-    status = forms.ChoiceField(label=ugettext_lazy("Status"),
-                               choices=(
-                                   ('', ugettext_lazy('Select Status')),
-                                   ('active', ugettext_lazy('Active')),
-                                   ('inactive', ugettext_lazy('Inactive'))),
-                               required=False,
-                               help_text=ugettext_lazy("Applicable for search only"))
 
     def __init__(self, request, domain, *args, **kwargs):
         self.request = request
         self.domain = domain
-        super(ManageReleasesByAppProfileForm, self).__init__(*args, **kwargs)
+        super(BaseManageReleasesByAppProfileForm, self).__init__(*args, **kwargs)
         self.fields['app_id'].choices = self.app_id_choices()
-        if request.GET.get('app_id'):
-            self.fields['app_id'].initial = request.GET.get('app_id')
-        if request.GET.get('status'):
-            self.fields['status'].initial = request.GET.get('status')
         self.helper = HQFormHelper()
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
-            crispy.Field('app_id', id='app-id-search-select', css_class="ko-select2"),
-            crispy.Field('version', id='version-input'),
-            crispy.Field('build_profile_id', id='app-profile-id-input'),
-            crispy.Field('status', id='status-input'),
+            crispy.Fieldset(
+                "",
+                *self.form_fields()
+            ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
-                    crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
-                    Submit('submit', ugettext_lazy("Add New Restriction"))
+                    *self._buttons()
                 )
             )
         )
@@ -2536,13 +2567,71 @@ class ManageReleasesByAppProfileForm(forms.Form):
             choices.append((app.id, app.name))
         return choices
 
+    def form_fields(self):
+        return [
+            crispy.Field('app_id', css_class="hqwebapp-select2 app-id-search-select"),
+            crispy.Field('version', css_class='version-input'),
+        ]
+
+    @staticmethod
+    def _buttons():
+        raise NotImplementedError
+
+
+class SearchManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
+    app_build_profile_id = forms.ChoiceField(label=ugettext_lazy("Build Profile"), choices=(),
+                                             required=False)
+    status = forms.ChoiceField(label=ugettext_lazy("Status"),
+                               choices=(
+                                   ('', ugettext_lazy('Select Status')),
+                                   ('active', ugettext_lazy('Active')),
+                                   ('inactive', ugettext_lazy('Inactive'))),
+                               required=False)
+
+    def __init__(self, request, domain, *args, **kwargs):
+        super(SearchManageReleasesByAppProfileForm, self).__init__(request, domain, *args, **kwargs)
+        if request.GET.get('app_id'):
+            self.fields['app_id'].initial = request.GET.get('app_id')
+        if request.GET.get('status'):
+            self.fields['status'].initial = request.GET.get('status')
+
+    def form_fields(self):
+        form_fields = super(SearchManageReleasesByAppProfileForm, self).form_fields()
+        form_fields.extend([
+            crispy.Field('app_build_profile_id', css_class="hqwebapp-select2 app-build-profile-id-select"),
+            crispy.Field('status', id='status-input')
+        ])
+        return form_fields
+
+    @staticmethod
+    def _buttons():
+        return [
+            crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search",
+                          css_class='btn-primary'),
+            crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
+        ]
+
+
+class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
+    build_profile_id = forms.CharField(label=ugettext_lazy('Build Profile'),
+                                       required=True, widget=SelectMultiple(choices=[]),)
+
     def save(self):
-        try:
-            LatestEnabledBuildProfiles.update_status(self.build, self.cleaned_data['build_profile_id'],
-                                                     active=True)
-        except ValidationError as e:
-            return False, ','.join(e.messages)
-        return True, None
+        success_messages = []
+        error_messages = []
+        for build_profile_id in self.cleaned_data['build_profile_id']:
+            try:
+                LatestEnabledBuildProfiles.update_status(self.build, build_profile_id,
+                                                         active=True)
+                success_messages.append(_('Restriction for profile {profile} set successfully.').format(
+                    profile=self.build.build_profiles[build_profile_id]['name'],
+                ))
+            except ValidationError as e:
+                error_messages.append(_('Restriction for profile {profile} failed: {message}').format(
+                    profile=self.build.build_profiles[build_profile_id]['name'],
+                    message=', '.join(e.messages)
+                ))
+        return error_messages, success_messages
 
     @cached_property
     def build(self):
@@ -2553,6 +2642,17 @@ class ManageReleasesByAppProfileForm(forms.Form):
         app_id = self.cleaned_data['app_id']
         version = self.cleaned_data['version']
         return get_version_build_id(self.domain, app_id, version)
+
+    def form_fields(self):
+        form_fields = super(CreateManageReleasesByAppProfileForm, self).form_fields()
+        form_fields.extend([
+            crispy.Field('build_profile_id', id='build-profile-id-input')
+        ])
+        return form_fields
+
+    @staticmethod
+    def _buttons():
+        return [Submit('submit', ugettext_lazy("Add New Restriction"), css_class='btn-primary')]
 
     def clean(self):
         if self.cleaned_data.get('version'):
@@ -2567,10 +2667,7 @@ class ManageReleasesByAppProfileForm(forms.Form):
                                _("You don't have permission to set restriction for this application"))
 
     def clean_build_profile_id(self):
-        # ensure value is present for a post request
-        if not self.cleaned_data.get('build_profile_id'):
-            self.add_error('build_profile_id', _("Please select build profile"))
-        return self.cleaned_data.get('build_profile_id')
+        return self.data.getlist('build_profile_id')
 
     def clean_version(self):
         # ensure value is present for a post request

@@ -1,7 +1,7 @@
 import uuid
 from django.core.management import call_command
 from django.test import SimpleTestCase, TestCase
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc

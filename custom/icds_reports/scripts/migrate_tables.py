@@ -364,34 +364,65 @@ def stats(db_path, **kwargs):
     """.format(total, migrated, 100 * migrated // total, errored, 100 * errored // total))
 
 
-def print_table(rows):
+def print_table(rows, table_sizes=None, total_size=None, all_tables_total_size=None):
     cols = [
         ('source_table', '<', 55),
         ('date', '<', 15),
         ('migrated', '^', 8),
         ('errored', '^', 8),
-        ('target_table', '<', 50)
+        ('target_table', '<', 50),
     ]
+    headers = cols.copy()
+    if table_sizes:
+        cols.extend([
+            ('rows', '^', 10),
+            ('percent', '^', '11.1f'),
+            ('percent_total', '^', '11.1f'),
+        ])
+        headers.extend([
+            ('rows', '^', 10),
+            ('percent', '^', 11),
+            ('percent_total', '^', 11),
+        ])
     template = " | ".join(['{{{}:{}{}}}'.format(*col) for col in cols])
-    print(template.format(
+    print(" | ".join(['{{{}:{}{}}}'.format(*col) for col in headers]).format(
         source_table='Source Table',
         date='Table Date',
         migrated='Migrated',
         errored='Errored',
-        target_table='Target Table'
+        target_table='Target Table',
+        rows='Rows' if table_sizes and total_size else '',
+        percent='% of query',
+        percent_total='% of total',
     ))
     for row in rows:
-        row = {
-            col: val if val is not None else ''
-            for col, val in dict(row).items()
-        }
+        if table_sizes and total_size:
+            source_table = row['source_table']
+            tsize = table_sizes[source_table]
+            row['rows'] = tsize
+            row['percent'] = 100 * float(tsize) / total_size
+            row['percent_total'] = 100 * float(tsize) / all_tables_total_size
+
         print(template.format(**row))
 
 
-def list_tables(db_path, start_date, end_date, migrated=False, errored=False):
+def list_tables(db_path, start_date, end_date, migrated=False, errored=False, source_db=None, source_host=None, source_user=None):
     db = Database(db_path)
 
     query = 'select * from tables'
+
+    table_sizes = None
+    all_tables_total_size = None
+    if source_db and source_host and source_user:
+        with db:
+            res = db.execute(query)
+            all_tables = {row['source_table'] for row in res}
+
+        table_sizes = get_table_sizes(source_db, source_host, source_user)
+        if table_sizes is not None:
+            all_tables_total_size = sum([size for table, size in table_sizes.items() if table in all_tables])
+
+
 
     filters, params = db._get_date_filters_params(start_date, end_date)
     if migrated:
@@ -404,7 +435,22 @@ def list_tables(db_path, start_date, end_date, migrated=False, errored=False):
     with db:
         res = db.execute(query, *params)
 
-    print_table(res)
+    rows = [
+        {
+            col: val if val is not None else ''
+            for col, val in dict(row).items()
+        }
+        for row in res
+    ]
+
+    total_size = None
+    if table_sizes is not None:
+        source_tables = {row['source_table'] for row in rows}
+        total_size = sum([size for table, size in table_sizes.items() if table in source_tables])
+
+    print_table(rows, table_sizes, total_size, all_tables_total_size)
+    if total_size:
+        print("\nShowing {:.1f}% of total data".format(100 * float(total_size) / all_tables_total_size))
 
 
 def main():
@@ -434,6 +480,9 @@ def main():
     status_parser.add_argument('-E', '--errored', action='store_true', help=(
         'Only show errored tables. Only applies to "list".'
     ))
+    status_parser.add_argument('-D', '--source-db', help='Name for source database, required for row stats.')
+    status_parser.add_argument('-O', '--source-host', help='Name for source host, required for row stats.')
+    status_parser.add_argument('-U', '--source-user', help='Name for source user, required for row stats.')
 
     migrate_parser = subparser.add_parser('migrate')
     migrate_parser.add_argument('db_path', help='Path to sqlite DB containing list of tables to migrate')

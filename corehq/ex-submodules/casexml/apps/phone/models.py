@@ -1,29 +1,48 @@
+import json
+import logging
+import uuid
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
-import architect
-import uuid
-import json
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from casexml.apps.phone.exceptions import IncompatibleSyncLogType, MissingSyncLog
-from corehq.toggles import LEGACY_SYNC_SUPPORT
-from corehq.util.global_request import get_request_domain
-from corehq.util.soft_assert import soft_assert
-from corehq.toggles import ENABLE_LOADTEST_USERS
-from corehq.apps.domain.models import Domain
-from dimagi.ext.couchdbkit import *
-from django.db import models
+
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
+from django.db import models
+
+import architect
+import six
 from memoized import memoized
-from dimagi.utils.couch import LooselyEqualDocumentSchema
-from dimagi.utils.logging import notify_exception
+
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
-from casexml.apps.phone.checksum import Checksum, CaseStateHash
 from casexml.apps.phone.change_publishers import publish_synclog_saved
-import logging
-import six
+from casexml.apps.phone.checksum import CaseStateHash, Checksum
+from casexml.apps.phone.exceptions import (
+    IncompatibleSyncLogType,
+    MissingSyncLog,
+)
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    SafeSaveDocument,
+    SchemaDictProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    SetProperty,
+    StringListProperty,
+    StringProperty,
+)
+from dimagi.utils.couch import LooselyEqualDocumentSchema
+from dimagi.utils.logging import notify_exception
+
+from corehq.apps.domain.models import Domain
+from corehq.toggles import ENABLE_LOADTEST_USERS, LEGACY_SYNC_SUPPORT
+from corehq.util.global_request import get_request_domain
+from corehq.util.soft_assert import soft_assert
 
 
 def _get_logger():
@@ -239,7 +258,6 @@ class SyncLogAssertionError(AssertionError):
         super(SyncLogAssertionError, self).__init__(*args, **kwargs)
 
 
-LOG_FORMAT_LEGACY = 'legacy'
 LOG_FORMAT_SIMPLIFIED = 'simplified'
 LOG_FORMAT_LIVEQUERY = 'livequery'
 
@@ -251,9 +269,10 @@ class UCRSyncLog(Document):
 
 class AbstractSyncLog(SafeSaveDocument):
     date = DateTimeProperty()
-    domain = StringProperty()  # this is only added as of 11/2016 - not guaranteed to be set
+    domain = StringProperty()
     user_id = StringProperty()
-    build_id = StringProperty()  # this is only added as of 11/2016 and only works with app-aware sync
+    build_id = StringProperty()  # only works with app-aware sync
+    app_id = StringProperty()  # only works with app-aware sync
 
     previous_log_id = StringProperty()  # previous sync log, forming a chain
     duration = IntegerProperty()  # in seconds
@@ -321,18 +340,6 @@ class AbstractSyncLog(SafeSaveDocument):
         """
         raise NotImplementedError()
 
-    def get_previous_log(self):
-        """
-        Get the previous sync log, if there was one.  Otherwise returns nothing.
-        """
-        if not self.previous_log_id:
-            return
-
-        try:
-            return get_properly_wrapped_sync_log(self.previous_log_id)
-        except MissingSyncLog:
-            return None
-
     @classmethod
     def from_other_format(cls, other_sync_log):
         """
@@ -360,20 +367,16 @@ def save_synclog_to_sql(synclog_json_object):
     return synclog
 
 
-def delete_synclog(synclog_id):
-    """
-    Deletes synclog object both from Couch and SQL, if the doc
-        isn't found in either couch or SQL an exception is raised
-    """
-    try:
-        synclog = SyncLogSQL.objects.filter(synclog_id=synclog_id).first()
-        if synclog:
-            synclog.delete()
-            return
-    except ValidationError:
-        pass
-
-    raise MissingSyncLog("No synclog object with this synclog_id ({}) is  found".format(synclog_id))
+def delete_synclogs(current_synclog):
+    if current_synclog.user_id and current_synclog.device_id and current_synclog.app_id:
+        SyncLogSQL.objects.filter(
+            user_id=current_synclog.user_id,
+            device_id=current_synclog.device_id,
+            app_id=current_synclog.app_id,
+            date__lt=current_synclog.date
+        ).delete()
+    elif current_synclog.previous_log_id:
+        SyncLogSQL.objects.filter(synclog_id=current_synclog.previous_log_id).delete()
 
 
 def synclog_to_sql_object(synclog_json_object):
@@ -394,15 +397,21 @@ def synclog_to_sql_object(synclog_json_object):
             user_id=synclog_json_object.user_id,
             synclog_id=synclog_id,
             date=synclog_json_object.date,
-            previous_synclog_id=getattr(synclog_json_object, 'previous_log_id', None),
             log_format=synclog_json_object.log_format,
             build_id=synclog_json_object.build_id,
+            app_id=synclog_json_object.app_id,
+            device_id=synclog_json_object.device_id,
             duration=synclog_json_object.duration,
-            last_submitted=synclog_json_object.last_submitted,
             had_state_error=synclog_json_object.had_state_error,
             error_date=synclog_json_object.error_date,
             error_hash=synclog_json_object.error_hash,
         )
+    field_mapping = [
+        ('previous_log_id', 'previous_synclog_id'),
+        ('last_submitted', 'last_submitted'),
+    ]
+    for from_field, to_field in field_mapping:
+        setattr(synclog, to_field, getattr(synclog_json_object, from_field, None))
     synclog.doc = synclog_json_object.to_json()
     return synclog
 
@@ -418,17 +427,18 @@ class SyncLogSQL(models.Model):
     doc = JSONField()
     log_format = models.CharField(
         max_length=10,
-        default=LOG_FORMAT_LEGACY,
         choices=[
             (format, format)
-            for format in [LOG_FORMAT_LEGACY, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LIVEQUERY]
+            for format in [LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LIVEQUERY]
         ]
     )
     build_id = models.CharField(max_length=255, null=True, blank=True)
+    app_id = models.CharField(max_length=255, null=True)
+    device_id = models.CharField(max_length=255, null=True)
     duration = models.PositiveIntegerField(null=True, blank=True)
     last_submitted = models.DateTimeField(db_index=True, null=True, blank=True)
     had_state_error = models.BooleanField(default=False)
-    error_date = models.DateTimeField(db_index=True, null=True, blank=True)
+    error_date = models.DateTimeField(null=True, blank=True)
     error_hash = models.CharField(max_length=255, null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -441,240 +451,6 @@ class SyncLogSQL(models.Model):
                 message='Could not publish change for SyncLog',
                 details={'pk': self.pk}
             )
-
-
-class SyncLog(AbstractSyncLog):
-    """
-    A log of a single sync operation.
-    """
-    log_format = StringProperty(default=LOG_FORMAT_LEGACY)
-    last_seq = StringProperty()  # the last_seq of couch during this sync
-
-    # we need to store a mapping of cases to indices for generating the footprint
-    # cases_on_phone represents the state of all cases the server
-    # thinks the phone has on it and cares about.
-    cases_on_phone = SchemaListProperty(CaseState)
-
-    # dependant_cases_on_phone represents the possible list of cases
-    # also on the phone because they are referenced by a real case's index
-    # (or a dependent case's index).
-    # This list is not necessarily a perfect reflection
-    # of what's on the phone, but is guaranteed to be after pruning
-    dependent_cases_on_phone = SchemaListProperty(CaseState)
-
-    @classmethod
-    def wrap(cls, data):
-        # last_seq used to be int, but is now string for cloudant compatibility
-        if isinstance(data.get('last_seq'), six.integer_types):
-            data['last_seq'] = six.text_type(data['last_seq'])
-        return super(SyncLog, cls).wrap(data)
-
-    def _assert(self, conditional, msg="", case_id=None):
-        if not conditional:
-            _get_logger().warn("assertion failed: %s" % msg)
-            if self.strict:
-                raise SyncLogAssertionError(case_id, msg)
-            else:
-                self.has_assert_errors = True
-
-    def case_count(self):
-        return len(self.cases_on_phone)
-
-    def phone_has_case(self, case_id):
-        """
-        Whether the phone currently has a case, according to this sync log
-        """
-        return self.get_case_state(case_id) is not None
-
-    def get_case_state(self, case_id):
-        """
-        Get the case state object associated with an id, or None if no such
-        object is found
-        """
-        filtered_list = self._case_state_map()[case_id]
-        if filtered_list:
-            self._assert(len(filtered_list) == 1,
-                         "Should be exactly 0 or 1 cases on phone but were %s for %s" %
-                         (len(filtered_list), case_id))
-            return CaseState.wrap(filtered_list[0])
-        return None
-
-    def phone_has_dependent_case(self, case_id):
-        """
-        Whether the phone currently has a dependent case, according to this sync log
-        """
-        return self.get_dependent_case_state(case_id) is not None
-
-    def get_dependent_case_state(self, case_id):
-        """
-        Get the dependent case state object associated with an id, or None if no such
-        object is found
-        """
-        filtered_list = self._dependent_case_state_map()[case_id]
-        if filtered_list:
-            self._assert(len(filtered_list) == 1,
-                         "Should be exactly 0 or 1 dependent cases on phone but were %s for %s" %
-                         (len(filtered_list), case_id))
-            return CaseState.wrap(filtered_list[0])
-        return None
-
-    @memoized
-    def _dependent_case_state_map(self):
-        return self._build_state_map('dependent_cases_on_phone')
-
-    @memoized
-    def _case_state_map(self):
-        return self._build_state_map('cases_on_phone')
-
-    def _build_state_map(self, list_name):
-        state_map = defaultdict(list)
-        # referencing the property via self._doc is because we don't want to needlessly call wrap
-        # (which couchdbkit does not make any effort to cache on repeated calls)
-        # deterministically this change shaved off 10 seconds from an ota restore
-        # of about 300 cases.
-        for case in self._doc[list_name]:
-            state_map[case['case_id']].append(case)
-
-        return state_map
-
-    def _get_case_state_from_anywhere(self, case_id):
-        return self.get_case_state(case_id) or self.get_dependent_case_state(case_id)
-
-    def archive_case(self, case_id):
-        state = self.get_case_state(case_id)
-        if state:
-            self.cases_on_phone.remove(state)
-            self._case_state_map.reset_cache(self)
-            all_indices = [i for case_state in self.cases_on_phone + self.dependent_cases_on_phone
-                           for i in case_state.indices]
-            if any([i.referenced_id == case_id for i in all_indices]):
-                self.dependent_cases_on_phone.append(state)
-                self._dependent_case_state_map.reset_cache(self)
-            return state
-        else:
-            state = self.get_dependent_case_state(case_id)
-            if state:
-                all_indices = [i for case_state in self.cases_on_phone + self.dependent_cases_on_phone
-                               for i in case_state.indices]
-                if not any([i.referenced_id == case_id for i in all_indices]):
-                    self.dependent_cases_on_phone.remove(state)
-                    self._dependent_case_state_map.reset_cache(self)
-                    return state
-
-    def _phone_owns(self, action):
-        # whether the phone thinks it owns an action block.
-        # the only way this can't be true is if the block assigns to an
-        # owner id that's not associated with the user on the phone
-        owner = action.updated_known_properties.get("owner_id")
-        if owner:
-            return owner in self.owner_ids_on_phone
-        return True
-
-    def update_phone_lists(self, xform, case_list):
-        # for all the cases update the relevant lists in the sync log
-        # so that we can build a historical record of what's associated
-        # with the phone
-        removed_states = {}
-        new_indices = set()
-        for case in case_list:
-            actions = case.get_actions_for_form(xform)
-            for action in actions:
-                _get_logger().debug('OLD {}: {}'.format(case.case_id, action.action_type))
-                if action.action_type == const.CASE_ACTION_CREATE:
-                    self._assert(not self.phone_has_case(case.case_id),
-                                 'phone has case being created: %s' % case.case_id)
-                    starter_state = CaseState(case_id=case.case_id, indices=[])
-                    if self._phone_owns(action):
-                        self.cases_on_phone.append(starter_state)
-                        self._case_state_map.reset_cache(self)
-                    else:
-                        removed_states[case.case_id] = starter_state
-                elif action.action_type == const.CASE_ACTION_UPDATE:
-                    if not self._phone_owns(action):
-                        # only action necessary here is in the case of
-                        # reassignment to an owner the phone doesn't own
-                        state = self.archive_case(case.case_id)
-                        if state:
-                            removed_states[case.case_id] = state
-                elif action.action_type == const.CASE_ACTION_INDEX:
-                    # in the case of parallel reassignment and index update
-                    # the phone might not have the case
-                    if self.phone_has_case(case.case_id):
-                        case_state = self.get_case_state(case.case_id)
-                    else:
-                        case_state = self.get_dependent_case_state(case.case_id)
-                    # reconcile indices
-                    if case_state:
-                        for index in action.indices:
-                            new_indices.add(index.referenced_id)
-                        case_state.update_indices(action.indices)
-
-                elif action.action_type == const.CASE_ACTION_CLOSE:
-                    if self.phone_has_case(case.case_id):
-                        state = self.archive_case(case.case_id)
-                        if state:
-                            removed_states[case.case_id] = state
-
-        # if we just removed a state and added an index to it
-        # we have to put it back in our dependent case list
-        readded_any = False
-        for index in new_indices:
-            if index in removed_states:
-                self.dependent_cases_on_phone.append(removed_states[index])
-                readded_any = True
-
-        if readded_any:
-            self._dependent_case_state_map.reset_cache(self)
-
-        if case_list:
-            try:
-                self.save()
-            except ResourceConflict:
-                logging.exception('doc update conflict saving sync log {id}'.format(
-                    id=self._id,
-                ))
-                raise
-
-    def get_footprint_of_cases_on_phone(self):
-        def children(case_state):
-            return [self._get_case_state_from_anywhere(index.referenced_id)
-                    for index in case_state.indices]
-
-        relevant_cases = set()
-        queue = list(self.cases_on_phone)
-        while queue:
-            case_state = queue.pop()
-            # I don't actually understand why something is coming back None
-            # here, but we can probably just ignore it.
-            if case_state is not None and case_state.case_id not in relevant_cases:
-                relevant_cases.add(case_state.case_id)
-                queue.extend(children(case_state))
-        return relevant_cases
-
-    def phone_is_holding_case(self, case_id):
-        """
-        Whether the phone is holding (not purging) a case.
-        """
-        # this is inefficient and could be optimized
-        if self.phone_has_case(case_id):
-            return True
-        else:
-            cs = self.get_dependent_case_state(case_id)
-            if cs and case_id in self.get_footprint_of_cases_on_phone():
-                return True
-            return False
-
-    def __str__(self):
-        return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
-
-    def tests_only_get_cases_on_phone(self):
-        return self.cases_on_phone
-
-    def test_only_clear_cases_on_phone(self):
-        self.cases_on_phone = []
-
-    def test_only_get_dependent_cases_on_phone(self):
-        return self.dependent_cases_on_phone
 
 
 class IndexTree(DocumentSchema):
@@ -1188,18 +964,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
             ', '.join(self.dependent_case_ids_on_phone)))
         _get_logger().debug('index tree after update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree after update: {}'.format(self.extension_index_tree))
-        if made_changes or case_list:
-            try:
-                if made_changes:
-                    _get_logger().debug('made changes, saving.')
-                    self.last_submitted = datetime.utcnow()
-                    self.rev_before_last_submitted = self._rev
-                    self.save()
-            except ResourceConflict:
-                logging.exception('doc update conflict saving sync log {id}'.format(
-                    id=self._id,
-                ))
-                raise
+        if made_changes or not self.last_submitted:
+            _get_logger().debug('made changes')
+            self.last_submitted = datetime.utcnow()
+            self.rev_before_last_submitted = self._rev
+        return made_changes
 
     def purge_dependent_cases(self):
         """
@@ -1213,53 +982,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if dependent_case_id in self.dependent_case_ids_on_phone:
                 # this will be a no-op if the case cannot be purged due to dependencies
                 self.purge(dependent_case_id)
-
-    @classmethod
-    def from_other_format(cls, other_sync_log):
-        """
-        Migrate from the old SyncLog format to this one.
-        """
-        if other_sync_log.log_format == LOG_FORMAT_LIVEQUERY:
-            raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
-                other_sync_log.log_format, LOG_FORMAT_SIMPLIFIED
-            ))
-        if isinstance(other_sync_log, SyncLog):
-            previous_log_footprint = set(other_sync_log.get_footprint_of_cases_on_phone())
-
-            def _add_state_contributions(new_sync_log, case_state, is_dependent=False):
-                if case_state.case_id in previous_log_footprint:
-                    new_sync_log.case_ids_on_phone.add(case_state.case_id)
-                    for index in case_state.indices:
-                        new_sync_log.index_tree.set_index(case_state.case_id, index.identifier,
-                                                          index.referenced_id)
-                    if is_dependent:
-                        new_sync_log.dependent_case_ids_on_phone.add(case_state.case_id)
-
-            ret = cls.wrap(other_sync_log.to_json())
-            for case_state in other_sync_log.cases_on_phone:
-                _add_state_contributions(ret, case_state)
-
-            dependent_case_ids = set()
-            for case_state in other_sync_log.dependent_cases_on_phone:
-                if case_state.case_id in previous_log_footprint:
-                    _add_state_contributions(ret, case_state, is_dependent=True)
-                    dependent_case_ids.add(case_state.case_id)
-
-            # try to purge any dependent cases - the old format does this on
-            # access, but the new format does it ahead of time and always assumes
-            # its current state is accurate.
-            ret.purge_dependent_cases()
-
-            # set and cleanup other properties
-            ret.log_format = LOG_FORMAT_SIMPLIFIED
-            del ret['last_seq']
-            del ret['cases_on_phone']
-            del ret['dependent_cases_on_phone']
-
-            ret.migrated_from = other_sync_log.to_json()
-            return ret
-        else:
-            return super(SimplifiedSyncLog, cls).from_other_format(other_sync_log)
 
     def tests_only_get_cases_on_phone(self):
         # hack - just for tests
@@ -1299,18 +1021,10 @@ def get_properly_wrapped_sync_log(doc_id):
 
 
 def properly_wrap_sync_log(doc, synclog_sql=None):
-    synclog = get_sync_log_class_by_format(doc.get('log_format')).wrap(doc)
+    synclog = SimplifiedSyncLog.wrap(doc)
     if synclog_sql:
         synclog._synclog_sql = synclog_sql
     return synclog
-
-
-def get_sync_log_class_by_format(format):
-    return {
-        LOG_FORMAT_LEGACY: SyncLog,
-        LOG_FORMAT_SIMPLIFIED: SimplifiedSyncLog,
-        LOG_FORMAT_LIVEQUERY: SimplifiedSyncLog,
-    }.get(format, SyncLog)
 
 
 class OwnershipCleanlinessFlag(models.Model):

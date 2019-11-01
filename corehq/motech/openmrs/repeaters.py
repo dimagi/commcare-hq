@@ -123,7 +123,8 @@ class OpenmrsRepeater(CaseRepeater):
             self.url,
             self.username,
             self.plaintext_password,
-            verify=self.verify
+            verify=self.verify,
+            notify_addresses=self.notify_addresses,
         )
 
     @cached_property
@@ -132,6 +133,10 @@ class OpenmrsRepeater(CaseRepeater):
         for form_config in self.openmrs_config.form_configs:
             for obs_mapping in form_config.openmrs_observations:
                 if obs_mapping.value.check_direction(DIRECTION_IMPORT) and obs_mapping.case_property:
+                    # It's possible that an OpenMRS concept appears more
+                    # than once in form_configs. We are using a
+                    # defaultdict(list) so that earlier definitions
+                    # don't get overwritten by later ones:
                     obs_mappings[obs_mapping.concept].append(obs_mapping)
         return obs_mappings
 

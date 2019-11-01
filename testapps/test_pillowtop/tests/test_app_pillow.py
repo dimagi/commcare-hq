@@ -2,7 +2,7 @@ import uuid
 from mock import patch, MagicMock
 
 from django.test import TestCase
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tasks import autogenerate_build, prune_auto_generated_builds

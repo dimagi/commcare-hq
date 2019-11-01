@@ -146,7 +146,7 @@ def get_cached_items_with_count(cached_bytes):
 
 def get_restore_config(project, user, restore_id="", version=V1, state_hash="",
                        items=False, overwrite_cache=False, force_cache=False,
-                       device_id=None, case_sync=None):
+                       device_id=None, case_sync=None, app=None):
     from casexml.apps.phone.restore import (
         RestoreCacheSettings, RestoreConfig, RestoreParams)
 
@@ -160,6 +160,7 @@ def get_restore_config(project, user, restore_id="", version=V1, state_hash="",
             state_hash=state_hash,
             include_item_count=items,
             device_id=device_id,
+            app=app,
         ),
         cache_settings=RestoreCacheSettings(
             overwrite_cache=overwrite_cache,
@@ -306,7 +307,7 @@ class SyncResult(object):
         a sync log returned by this method and the one returned by the
         `log` property may reference different cases. See
         `casexml.apps.case.xform.process_cases_with_casedb` and
-        `casexml.apps.case.util.update_sync_log_with_checks`.
+        `casexml.apps.case.xform._update_sync_logs`.
         """
         return get_properly_wrapped_sync_log(self.restore_id)
 

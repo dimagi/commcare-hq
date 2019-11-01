@@ -11,8 +11,6 @@ from corehq.apps.hqadmin.views.operations import (
 from corehq.apps.hqadmin.views.reports import (
     DownloadGIRView,
     DownloadMALTView,
-    admin_reports_stats_data,
-    stats_data,
     top_five_projects_by_country,
 )
 from corehq.apps.hqadmin.views.system import (

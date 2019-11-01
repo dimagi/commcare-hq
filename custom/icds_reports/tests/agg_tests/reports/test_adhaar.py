@@ -18,7 +18,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -34,7 +34,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -135,7 +135,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'adhaar')
+        self.assertEqual(data['slug'], 'adhaar')
 
     def test_map_data_label(self):
         data = get_adhaar_data_map(
@@ -146,7 +146,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], AADHAR_SEEDED_BENEFICIARIES)
+        self.assertEqual(data['label'], AADHAR_SEEDED_BENEFICIARIES)
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_adhaar_data_map(
@@ -217,21 +217,25 @@ class TestAdhaar(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             {
+                                "in_month": 0,
                                 "y": 0.0,
                                 "x": 1485907200000,
                                 "all": 0
                             },
                             {
+                                "in_month": 0,
                                 "y": 0.0,
                                 "x": 1488326400000,
                                 "all": 0
                             },
                             {
+                                "in_month": 298,
                                 "y": 0.19528178243774574,
                                 "x": 1491004800000,
                                 "all": 1526
                             },
                             {
+                                "in_month": 346,
                                 "y": 0.21490683229813665,
                                 "x": 1493596800000,
                                 "all": 1610

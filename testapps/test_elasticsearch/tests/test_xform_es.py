@@ -2,7 +2,7 @@ from collections import namedtuple
 import uuid
 import datetime
 from django.test import SimpleTestCase
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es import FormES
 from corehq.elastic import get_es_new, send_to_elasticsearch, doc_exists_in_es

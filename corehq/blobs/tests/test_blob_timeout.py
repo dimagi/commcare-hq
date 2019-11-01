@@ -57,7 +57,7 @@ class BlobExpireTest(TestCase):
                 self.db.get(key=self.key)
 
             self.assertEqual(manager.all().count(), pre_expire_count)
-            self.assertRegexpMatches(
+            self.assertRegex(
                 logs.get_output(),
                 r"deleted expired blobs: .+'blob-identifier'",
             )
