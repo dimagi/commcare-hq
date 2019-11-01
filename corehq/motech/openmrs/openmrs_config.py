@@ -165,6 +165,14 @@ class ObservationMapping(DocumentSchema):
     # requires len(OpenmrsRepeater.white_listed_case_types) == 1.)
     case_property = StringProperty(required=False)
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__)
+            and other.concept == self.concept
+            and other.value == self.value
+            and other.case_property == self.case_property
+        )
+
 
 class OpenmrsFormConfig(DocumentSchema):
     xmlns = StringProperty()

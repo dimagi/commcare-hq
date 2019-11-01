@@ -6,6 +6,7 @@ from django.conf import settings
 from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
+from corehq.util.es.interface import ElasticsearchInterface
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_error
 
@@ -135,10 +136,10 @@ def _get_latest_doc_from_index(es_index, sort_field):
         "sort": {sort_field: "desc"},
         "size": 1
     }
-    es = get_es_new()
+    es_interface = ElasticsearchInterface(get_es_new())
 
     try:
-        res = es.search(es_index, body=recent_query)
+        res = es_interface.search(es_index, body=recent_query)
         if 'hits' in res:
             if 'hits' in res['hits']:
                 result = res['hits']['hits'][0]
@@ -157,7 +158,7 @@ def _check_es_rev(index, doc_id, couch_revs):
     doc_id: id to query in ES
     couch_rev: target couch_rev that you want to match
     """
-    es = get_es_new()
+    es_interface = ElasticsearchInterface(get_es_new())
     doc_id_query = {
         "filter": {
             "ids": {"values": [doc_id]}
@@ -166,7 +167,7 @@ def _check_es_rev(index, doc_id, couch_revs):
     }
 
     try:
-        res = es.search(index, body=doc_id_query)
+        res = es_interface.search(index, body=doc_id_query)
         status = False
         message = "Not in sync"
 

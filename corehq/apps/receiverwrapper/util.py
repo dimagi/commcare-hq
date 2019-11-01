@@ -1,6 +1,7 @@
 import re
 from collections import namedtuple
 
+from django.conf import settings
 from django.http import Http404
 
 from couchdbkit import ResourceNotFound
@@ -11,6 +12,7 @@ from couchforms.models import DefaultAuthContext
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
@@ -224,16 +226,46 @@ def from_demo_user(form_json):
 # Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
 DEMO_SUBMIT_MODE = 'demo'
 
+IGNORE_ALL_DEMO_USER_SUBMISSIONS = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+
+
+def _submitted_by_demo_user(form_json, domain):
+    from corehq.apps.users.util import DEMO_USER_ID
+    try:
+        user_id = form_json['meta']['userID']
+    except (KeyError, ValueError):
+        pass
+    else:
+        if user_id and user_id != DEMO_USER_ID:
+            user = CommCareUser.get_by_user_id(user_id, domain)
+            if user and user.is_demo_user:
+                return True
+    return False
+
 
 def should_ignore_submission(request):
     """
+    If IGNORE_ALL_DEMO_USER_SUBMISSIONS is True then ignore submission if from demo user.
+    Else
     If submission request.GET has `submit_mode=demo` and submitting user is not demo_user,
     the submissions should be ignored
     """
+    form_json = None
+    if IGNORE_ALL_DEMO_USER_SUBMISSIONS:
+        instance, _ = couchforms.get_instance_and_attachment(request)
+        try:
+            form_json = convert_xform_to_json(instance)
+        except couchforms.XMLSyntaxError:
+            # let the usual workflow handle response for invalid xml
+            return False
+        else:
+            if _submitted_by_demo_user(form_json, request.domain):
+                return True
+
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
         return False
 
-    instance, _ = couchforms.get_instance_and_attachment(request)
-    form_json = convert_xform_to_json(instance)
-
+    if form_json is None:
+        instance, _ = couchforms.get_instance_and_attachment(request)
+        form_json = convert_xform_to_json(instance)
     return False if from_demo_user(form_json) else True

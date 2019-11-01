@@ -1115,13 +1115,6 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
-COPY_CONDITIONAL_ALERTS = StaticToggle(
-    'copy_conditional_alerts',
-    'Allow copying conditional alerts to another project (or within the same project).',
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_USER],
-)
-
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
@@ -1704,20 +1697,6 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'Do not show modal on mobile that mobile hq experience is bad',
     TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-
-def _enable_bi_integration_preview(domain, enabled):
-    from corehq.feature_previews import BI_INTEGRATION_PREVIEW
-    BI_INTEGRATION_PREVIEW.set(domain, enabled, NAMESPACE_DOMAIN)
-
-
-ODATA = StaticToggle(
-    'odata',
-    'Enable Odata feed.',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-    save_fn=_enable_bi_integration_preview,
 )
 
 
