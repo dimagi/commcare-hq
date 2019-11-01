@@ -2,6 +2,8 @@ from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound
 
+from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id, _get_startkey_endkey_all_records
+from corehq.motech.repeaters.models import RepeatRecord
 from soil import DownloadBase
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -100,3 +102,85 @@ def property_references_parent(case_property):
         case_property.startswith("parent/") or
         case_property.startswith("host/")
     )
+
+
+def operate_on_payloads(payload_ids, domain, action, task=None, from_excel=False):
+    response = {
+        'errors': [],
+        'success': [],
+    }
+
+    success_count = 0
+
+    if task:
+        DownloadBase.set_progress(task, 0, len(payload_ids))
+
+    for payload_id in payload_ids:
+        valid_record = _validate_record(payload_id, domain)
+
+        if valid_record:
+            try:
+                message = ''
+                if action == 'resend':
+                    valid_record.fire(force_send=True)
+                elif action == 'cancel':
+                    valid_record.cancel()
+                    valid_record.save()
+                    message = _("Successfully cancelled payload (id={})").format(payload_id)
+                elif action == 'requeue':
+                    valid_record.requeue()
+                    valid_record.save()
+                    message = _("Successfully requeue payload (id={})").format(payload_id)
+                response['success'].append(message)
+                success_count = success_count + 1
+            except Exception as e:
+                response['errors'].append(_("Could not perform action for payload (id={}): {}").format(payload_id, e))
+
+            if task:
+                DownloadBase.set_progress(task, success_count, len(payload_ids))
+
+    if from_excel:
+        return response
+
+    response["success_count_msg"] = \
+        _("Successfully {action} {count} form(s)".format(action=action, count=success_count))
+
+    return {"messages": response}
+
+
+def generate_ids_and_operate_on_payloads(data, domain, action, task=None, from_excel=False):
+
+    payload_ids = _get_ids(data, domain)
+
+    response = operate_on_payloads(payload_ids, domain, action, task, from_excel)
+
+    return {"messages": response}
+
+
+def _get_ids(data, domain):
+    if not data:
+        return []
+
+    if data.get('payload_id', None):
+        results = get_repeat_records_by_payload_id(domain, data['payload_id'])
+    else:
+        kwargs = {
+            'include_docs': True,
+            'reduce': False,
+            'descending': True,
+        }
+        kwargs.update(_get_startkey_endkey_all_records(domain, data['repeater']))
+        results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
+    ids = [x['id'] for x in results]
+
+    return ids
+
+
+def _validate_record(r, domain):
+    try:
+        payload = RepeatRecord.get(r)
+    except ResourceNotFound:
+        return False
+    if payload.domain != domain:
+        return False
+    return payload
