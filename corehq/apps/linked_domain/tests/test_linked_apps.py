@@ -16,6 +16,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     import_app,
 )
+from corehq.apps.app_manager.suite_xml.post_process.resources import ResourceOverride, get_xform_resource_overrides
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.utils import (
@@ -130,6 +131,30 @@ class TestLinkedApps(BaseLinkedAppsTest):
             id_map_before,
             _get_form_ids_by_xmlns(LinkedApplication.get(self.linked_app._id))
         )
+
+    def test_pull_app_resource_overrides(self):
+        master_app = Application.new_app(self.domain, "Master Application")
+        master_app.linked_whitelist = [self.linked_domain]
+        master_module = master_app.add_module(Module.new_module('M1', None))
+        master_form = master_module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
+        master_app.save()
+        self.addCleanup(master_app.delete)
+
+        linked_app = LinkedApplication.new_app(self.linked_domain, "Linked Application")
+        linked_module = linked_app.add_module(Module.new_module('M1', None))
+        linked_form = linked_module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
+        linked_app.save()
+        self.addCleanup(linked_app.delete)
+
+        self._make_build(master_app, True)
+        update_linked_app(linked_app, master_app._id, 'TestLinkedApps user')
+        linked_app = LinkedApplication.get(linked_app._id)
+
+        overrides = get_xform_resource_overrides(linked_app.domain, linked_app._id)
+        self.assertEqual(len(overrides), 1)
+        override = overrides[master_form.unique_id]
+        self.assertEquals(override.pre_id, master_form.unique_id)
+        self.assertEquals(override.post_id, linked_form.unique_id)
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_multi_master_form_attributes_and_media_versions(self, *args):

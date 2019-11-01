@@ -22,3 +22,13 @@ class SuiteResourceOverridesTest(SimpleTestCase, TestXmlMixin):
             </partial>
         """
         self.assertXmlPartialEqual(expected, self.factory.app.create_suite(), "./xform")
+
+    def test_duplicate_overrides_raises(self):
+        forms = list(self.factory.app.get_module(0).get_forms())
+        add_xform_resource_overrides(self.factory.app.domain, self.factory.app.master_id, {
+            forms[0].unique_id: '123',
+            forms[1].unique_id: '456',
+            forms[2].unique_id: '456',
+        })
+        with self.assertRaises(ResourceOverrideError):
+            self.factory.app.create_suite()
