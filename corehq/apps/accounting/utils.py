@@ -354,19 +354,3 @@ def clear_plan_version_cache():
     from corehq.apps.accounting.models import SoftwarePlan
     for software_plan in SoftwarePlan.objects.all():
         SoftwarePlan.get_version.clear(software_plan)
-
-
-def get_role_edition(role_slug):
-    from corehq.apps.accounting.models import SoftwarePlanVersion
-    all_editions = SoftwarePlanVersion.objects.filter(
-        role__slug=role_slug).distinct(
-        'plan__edition').values_list('plan__edition', flat=True)
-
-    if len(all_editions) == 1:
-        return all_editions[0]
-
-    def _count_edition(edition):
-        return SoftwarePlanVersion.objects.filter(
-            role__slug=role_slug, plan__edition=edition).count()
-
-    return max(all_editions, key=_count_edition)

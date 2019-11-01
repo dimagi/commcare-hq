@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import SoftwarePlanVersion
-from corehq.apps.accounting.utils import ensure_grants, get_role_edition
+from corehq.apps.accounting.utils import ensure_grants
 from corehq.privileges import MAX_PRIVILEGES
 
 
@@ -35,7 +35,7 @@ class Command(BaseCommand):
         # attached to a SoftwarePlanVersion under the Advanced edition.
         # see https://dimagi-dev.atlassian.net/browse/SAASP-10124
         all_plan_slugs = [
-            plan_slug for plan_slug in all_plan_slugs if get_role_edition(plan_slug) not in skipped_editions
+            plan_slug for plan_slug in all_plan_slugs if _get_role_edition(plan_slug) not in skipped_editions
         ]
 
         if not dry_run and not noinput and not _confirm('Are you sure you want to grant {} to {}?'.format(
@@ -95,3 +95,18 @@ def _confirm(msg):
     if not confirm_update:
         return False
     return confirm_update.lower() == 'y'
+
+
+def _get_role_edition(role_slug):
+    all_editions = SoftwarePlanVersion.objects.filter(
+        role__slug=role_slug).distinct(
+        'plan__edition').values_list('plan__edition', flat=True)
+
+    if len(all_editions) == 1:
+        return all_editions[0]
+
+    def _count_edition(edition):
+        return SoftwarePlanVersion.objects.filter(
+            role__slug=role_slug, plan__edition=edition).count()
+
+    return max(all_editions, key=_count_edition)
