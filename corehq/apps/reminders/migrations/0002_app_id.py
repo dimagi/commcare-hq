@@ -14,15 +14,15 @@ from corehq.util.log import with_progress_bar
 def _populate_app_id(apps, schema_editor):
     SurveyKeyword = apps.get_model('reminders', 'SurveyKeyword')
     doc_ids = get_doc_ids_by_class(SurveyKeyword) + get_deleted_doc_ids_by_class(SurveyKeyword)
-
     domain_forms = {}
+
     def add_field(doc):
-        return _add_field(doc, domain_names)
+        return _add_field(doc, domain_forms)
 
     iter_update(SurveyKeyword.get_db(), _add_field, with_progress_bar(doc_ids))
 
 
-def _add_field(doc):
+def _add_field(doc, domain_forms):
     if doc.get('form_unique_id', None):
         domain = doc['domain']
         form_unique_id = doc['form_unique_id']
