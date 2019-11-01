@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.db import migrations, models
 from itertools import chain
 
@@ -7,31 +8,32 @@ from corehq.messaging.scheduling.models.timed_schedule import TimedSchedule
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
-def _update_model(model, domain, app_id_by_form_unique_id):
+def _update_model(model, domain, domain_forms):
     if model.form_unique_id is None:
         return None
 
-    if model.form_unique_id not in app_id_by_form_unique_id:
+    if domain not in domain_forms:
+        domain_forms[domain] = defaultdict(dict)
         apps = get_apps_in_domain(domain)
         for app in apps:
             for module in app.modules:
                 for form in module.get_forms():
-                    app_id_by_form_unique_id[form.unique_id] = app.get_id
+                    domain_forms[domain][form.unique_id] = app.get_id
 
-    model.app_id = app_id_by_form_unique_id.get(model.form_unique_id, None)
+    model.app_id = domain_forms[domain].get(model.form_unique_id, None)
     if model.app_id:
         model.save()
 
 
 @skip_on_fresh_install
 def _populate_app_id(apps, schema_editor):
-    app_id_by_form_unique_id = {}
+    domain_forms = {}
     for schedule in chain(AlertSchedule.objects.all(), TimedSchedule.objects.all()):
         for event in schedule.memoized_events:
             if event.sms_survey_content:
-                _update_model(event.sms_survey_content, schedule.domain, app_id_by_form_unique_id)
+                _update_model(event.sms_survey_content, schedule.domain, domain_forms)
             if event.ivr_survey_content:
-                _update_model(event.ivr_survey_content, schedule.domain, app_id_by_form_unique_id)
+                _update_model(event.ivr_survey_content, schedule.domain, domain_forms)
 
 
 class Migration(migrations.Migration):
