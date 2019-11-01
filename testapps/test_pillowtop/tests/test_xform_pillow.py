@@ -7,10 +7,8 @@ from couchdbkit import ResourceConflict
 from elasticsearch.exceptions import ConnectionError
 from mock import patch
 
-from pillow_retry.models import PillowError
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from dimagi.utils.parsing import string_to_utc_datetime
+from pillow_retry.models import PillowError
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.es import FormES
