@@ -13,6 +13,7 @@ def _populate_domain_forms(domain, domain_forms):
                 for form in module.get_forms():
                     domain_forms[domain][form.unique_id] = app.get_id
 
+
 @skip_on_fresh_install
 def _populate_app_id(apps, schema_editor):
     domain_forms = {}
