@@ -1,6 +1,5 @@
 import datetime
 import logging
-import operator
 from collections import defaultdict, namedtuple
 
 from django.conf import settings
