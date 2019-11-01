@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.db import migrations
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -18,16 +19,18 @@ def _populate_app_id(apps, schema_editor):
 
 
 def _add_field(doc):
-    app_id_by_form_unique_id = {}
+    domain_forms = {}
     if doc.get('form_unique_id', None):
+        domain = doc['domain']
         form_unique_id = doc['form_unique_id']
-        if form_unique_id not in app_id_by_form_unique_id:
-            apps = get_apps_in_domain(doc['domain'])
+        if domain not in domain_forms:
+            domain_forms[domain] = defaultdict(dict)
+            apps = get_apps_in_domain(domain)
             for app in apps:
                 for module in app.modules:
                     for form in module.get_forms():
-                        app_id_by_form_unique_id[form.unique_id] = app.get_id
-        doc['app_id'] = app_id_by_form_unique_id.get(form_unique_id, None)
+                        domain_forms[domain][form.unique_id] = app.get_id
+        doc['app_id'] = domain_forms[domain].get(form_unique_id, None)
         if doc['app_id']:
             return DocUpdate(doc)
 

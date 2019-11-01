@@ -1,21 +1,23 @@
+from collections import defaultdict
 from django.db import migrations, models, transaction
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
-def _update_model(model, domain, app_id_by_form_unique_id):
+def _update_model(model, domain, domain_forms):
     if model.form_unique_id is None:
         return None
 
-    if model.form_unique_id not in app_id_by_form_unique_id:
+    if domain not in domain_forms:
+        domain_forms[domain] = defaultdict(dict)
         apps = get_apps_in_domain(domain)
         for app in apps:
             for module in app.modules:
                 for form in module.get_forms():
-                    app_id_by_form_unique_id[form.unique_id] = app.get_id
+                    domain_forms[domain][form.unique_id] = app.get_id
 
-    model.app_id = app_id_by_form_unique_id.get(model.form_unique_id, None)
+    model.app_id = domain_forms[domain].get(model.form_unique_id, None)
     if model.app_id:
         model.save()
 
@@ -23,10 +25,10 @@ def _update_model(model, domain, app_id_by_form_unique_id):
 @skip_on_fresh_install
 def _populate_app_id(apps, schema_editor):
     Call = apps.get_model('ivr', 'Call')
-    app_id_by_form_unique_id = {}
+    domain_forms = {}
     with transaction.atomic():
         for call in Call.objects.filter(form_unique_id__isnull=False).all():
-            _update_model(call, call.domain, app_id_by_form_unique_id)
+            _update_model(call, call.domain, domain_forms)
 
 
 class Migration(migrations.Migration):
