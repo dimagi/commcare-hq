@@ -1,5 +1,4 @@
 import json
-import uuid
 from functools import partial
 
 from django.contrib import messages
@@ -28,7 +27,7 @@ from corehq.apps.app_manager.models import (
     CustomIcon,
     enable_usercase_if_necessary,
 )
-from corehq.apps.app_manager.util import update_form_unique_ids
+from corehq.apps.app_manager.util import generate_xmlns, update_form_unique_ids
 from corehq.apps.es import FormES
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.exceptions import (
@@ -148,14 +147,14 @@ def validate_langs(request, existing_langs):
 
 def get_blank_form_xml(form_name):
     return render_to_string("app_manager/blank_form.xml", context={
-        'xmlns': str(uuid.uuid4()).upper(),
+        'xmlns': generate_xmlns(),
         'name': form_name,
     })
 
 
 def get_default_followup_form_xml(context):
     """Update context and apply in XML file default_followup_form"""
-    context.update({'xmlns_uuid': str(uuid.uuid4()).upper()})
+    context.update({'xmlns_uuid': generate_xmlns()})
     return render_to_string("app_manager/default_followup_form.xml", context=context)
 
 

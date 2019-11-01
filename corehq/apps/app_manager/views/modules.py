@@ -1,6 +1,5 @@
 import json
 import logging
-import uuid
 from collections import OrderedDict
 from distutils.version import LooseVersion
 
@@ -70,6 +69,7 @@ from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
 )
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import (
+    generate_xmlns,
     is_usercase_in_use,
     is_valid_case_type,
     module_case_hierarchy_has_circular_reference,
@@ -363,7 +363,10 @@ def _case_list_form_options(app, module, case_type_, lang=None):
         for form in mod.get_forms() if form.is_registration_form(case_type_)
     ]
     langs = None if lang is None else [lang]
-    options.update({f.unique_id: trans(f.name, langs) for f in forms})
+    options.update({f.unique_id: {
+        'name': trans(f.name, langs),
+        'post_form_workflow': f.post_form_workflow,
+    } for f in forms})
 
     return {
         'options': options,
@@ -976,13 +979,11 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
     lang, langs = get_langs(request, app)
 
     response_html = render_to_string("app_manager/partials/build_errors.html", {
-        'request': request,
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,
         'domain': domain,
         'langs': langs,
-        'lang': lang,
     })
     if ajax:
         return json_response({'error_html': response_html})
@@ -1081,7 +1082,7 @@ def _init_biometrics_enroll_module(app, lang):
     form_name = _("Enroll New Person")
 
     context = {
-        'xmlns_uuid': str(uuid.uuid4()).upper(),
+        'xmlns_uuid': generate_xmlns(),
         'form_name': form_name,
         'name_label': _("What is your name?"),
         'simprints_enrol_label': _("Scan Fingerprints"),
@@ -1146,7 +1147,7 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
     form_name = _("Followup with Person")
 
     context = {
-        'xmlns_uuid': str(uuid.uuid4()).upper(),
+        'xmlns_uuid': generate_xmlns(),
         'form_name': form_name,
         'lang': lang,
         'placeholder_label': mark_safe(_(

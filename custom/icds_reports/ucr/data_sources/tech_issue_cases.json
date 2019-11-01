@@ -25,16 +25,6 @@
     "india",
     "icds"
   ],
-  "mirrored_engine_ids": [
-    {
-      "server_environment": "icds",
-      "engine_ids": ["icds-ucr-citus"]
-    },
-    {
-      "server_environment": "india",
-      "engine_ids": ["icds-ucr-citus"]
-    }
-  ],
   "config": {
     "table_id": "static-tech_issue_cases",
     "display_name": "Cases - Tech Issue (Static)",
@@ -393,7 +383,7 @@
         "property_value": "ls"
       }
     },
-    "engine_id": "icds-ucr-non-dashboard",
+    "engine_id": "icds-ucr-citus",
     "disable_destructive_rebuild": true
   }
 }

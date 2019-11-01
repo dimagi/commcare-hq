@@ -4,20 +4,22 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
+    'hqwebapp/js/toggles',
     'translations/js/app_translations',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    assertProperties
+    assertProperties,
+    toggles
 ) {
     'use strict';
     $(function () {
         var AppRelease = function (details) {
             var self = {};
             assertProperties.assertRequired(details, ['id', 'app_id', 'active', 'app_name', 'profile_name',
-                'version']);
+                'version', 'build_profile_id']);
             self.id = details.id;
             self.active = ko.observable(details.active);
             self.status = ko.computed(function () {
@@ -26,6 +28,16 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
             self.appName = details.app_name;
             self.version = details.version;
             self.profileName = details.profile_name;
+            var showHostedCCZLink = toggles.toggleEnabled('MANAGE_CCZ_HOSTING');
+            if (showHostedCCZLink) {
+                self.hostedCCZLink = (
+                    initialPageData.reverse('manage_hosted_ccz') +
+                    "?app_id=" + details.app_id + "&version=" + details.version +
+                    "&profile_id=" + details.build_profile_id
+                );
+            } else {
+                self.hostedCCZLink = null;
+            }
             self.domId = "restriction_" + self.id;
             self.errorMessage = ko.observable();
             self.ajaxInProgress = ko.observable(false);
@@ -73,12 +85,13 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
         function manageReleaseSearchViewModel() {
             var self = {};
             self.search = function () {
-                var appId = $("#app-id-search-select").val();
-                var profileId = $("#app-profile-id-input").val() || '';
-                var version = $("#version-input").val() || '';
+                var appId = $("#search-manage-app-releases .app-id-search-select").val();
+                var appBuildProfileId = (
+                    $("#search-manage-app-releases .app-build-profile-id-select").val() || '');
+                var version = $("#search-manage-app-releases .version-input").val() || '';
                 var status = $("#status-input").val() || '';
-                window.location.search = ("build_profile_id=" + profileId + "&app_id=" + appId + "&version=" +
-                    version + "&status=" + status);
+                window.location.search = ("app_build_profile_id=" + appBuildProfileId + "&app_id=" +
+                    appId + "&version=" + version + "&status=" + status);
             };
             self.clear = function () {
                 window.location.search = "";
@@ -93,6 +106,6 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
             });
         }
         var searchViewModel = manageReleaseSearchViewModel();
-        $("#manage-app-releases").koApplyBindings(searchViewModel);
+        $("#search-manage-app-releases").koApplyBindings(searchViewModel);
     });
 });

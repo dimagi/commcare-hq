@@ -12,7 +12,7 @@ import boto3
 from botocore.exceptions import ClientError
 from s3transfer import S3Transfer
 
-from corehq.apps.es import CaseES, FormES, LedgerES
+from corehq.apps.es import CaseES, FormES
 from corehq.blobs.s3db import is_not_found
 from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.util.log import with_progress_bar
@@ -55,7 +55,6 @@ class Command(BaseCommand):
         exporters = list({
             'forms': _get_form_query,
             'cases': functools.partial(_get_query, CaseES),
-            'ledgers': functools.partial(_get_query, LedgerES),
         }.items())
 
         if options['type']:

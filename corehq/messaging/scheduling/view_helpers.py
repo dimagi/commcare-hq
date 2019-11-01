@@ -41,7 +41,7 @@ def get_conditional_alert_rows(domain):
 
     langs = get_language_list(domain)
     for rule in get_conditional_alerts_queryset_by_domain(domain):
-        schedule = rule.get_messaging_rule_schedule()
+        schedule = rule.get_schedule()
         events = schedule.memoized_events
         send_frequency = ScheduleForm.get_send_frequency_by_ui_type(schedule.ui_type)
 
@@ -138,7 +138,7 @@ class ConditionalAlertUploader(object):
                                     id=row['id'], sheet_name=self.sheet_name)))
                 continue
 
-            if not isinstance(rule.get_messaging_rule_schedule().memoized_events[0].content, SMSContent):
+            if not isinstance(rule.get_schedule().memoized_events[0].content, SMSContent):
                 self.msgs.append((messages.error, _("Row {index} in '{sheet_name}' sheet, with rule id {id}, "
                                   "does not use SMS content.").format(index=index, id=row['id'],
                                                                       sheet_name=self.sheet_name)))
@@ -150,12 +150,12 @@ class ConditionalAlertUploader(object):
         # Update the condensed set of rules
         for rule_id, rows in condensed_rows.items():
             rule = rules_by_id[rule_id]
-            schedule = rule.get_messaging_rule_schedule()
+            schedule = rule.get_schedule()
             send_frequency = ScheduleForm.get_send_frequency_by_ui_type(schedule.ui_type)
 
             if send_frequency in (ScheduleForm.SEND_CUSTOM_DAILY, ScheduleForm.SEND_CUSTOM_IMMEDIATE):
                 # Check that user provided one row for each event in the custom schedule
-                all_events = rule.get_messaging_rule_schedule().memoized_events
+                all_events = rule.get_schedule().memoized_events
                 expected = len([e for e in all_events if self.event_is_relevant(e)])
                 actual = len(rows)
                 if expected != actual and actual != len(all_events):
@@ -200,7 +200,7 @@ class ConditionalAlertUploader(object):
         return False
 
     def save_rule_messages(self, rule, rows):
-        schedule = rule.get_messaging_rule_schedule()
+        schedule = rule.get_schedule()
         send_frequency = ScheduleForm.get_send_frequency_by_ui_type(schedule.ui_type)
 
         # Iterate over rule's events
@@ -208,7 +208,7 @@ class ConditionalAlertUploader(object):
             # For standard schedules, the rule may have multiple events (e.g., a daily rule run Mon and Tues
             # will have 2 events), but all events will have the same message, so we only need to look at the
             # first event. Since there's only one message, the user is free to move it between sheets.
-            events = [rule.get_messaging_rule_schedule().memoized_events[0]]
+            events = [rule.get_schedule().memoized_events[0]]
             allow_sheet_swap = True
         else:
             # For custom schedules, each event has its own message, so we need to look at all of them, and they may
@@ -219,7 +219,7 @@ class ConditionalAlertUploader(object):
             #   sheet is updated, the rule will begin processing, so the second sheet's updates will fail). Again,
             #   we assume the order of rows matches the order of events (with the other sheet's rows interleaved).
             #   The user may not move messages between sheets, since we can't match events to messages.
-            events = rule.get_messaging_rule_schedule().memoized_events
+            events = rule.get_schedule().memoized_events
             allow_sheet_swap = len(rows) == len(events)
 
         message_dirty = False

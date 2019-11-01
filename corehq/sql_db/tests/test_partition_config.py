@@ -1,3 +1,4 @@
+from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
@@ -10,7 +11,6 @@ def _get_partition_config(shard_config):
     return {
         'shards': shard_config,
         'groups': {
-            'main': ['default'],
             'proxy': ['proxy'],
             'form_processing': ['db1', 'db2'],
         }
@@ -46,7 +46,7 @@ INVALID_SHARD_RANGE_POWER_2 = _get_partition_config({
 
 db_dict = {'NAME': 'commcarehq', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
 TEST_DATABASES = {
-    'default': db_dict,
+    DEFAULT_DB_ALIAS: db_dict,
     'proxy': db_dict,
     'db1': {'NAME': 'db1', 'USER': 'commcarehq', 'HOST': 'hqdb1', 'PORT': 5432},
     'db2': {'NAME': 'db2', 'USER': 'commcarehq', 'HOST': 'hqdb2', 'PORT': 5432},
@@ -71,7 +71,7 @@ class TestPartitionConfig(SimpleTestCase):
     def test_shard_mapping(self):
         config = PartitionConfig()
         shards = config.get_shards()
-        self.assertEquals(shards, [
+        self.assertEqual(shards, [
             ShardMeta(id=0, dbname='db1', host='hqdb1', port=5432),
             ShardMeta(id=1, dbname='db1', host='hqdb1', port=5432),
             ShardMeta(id=2, dbname='db2', host='hqdb2', port=5432),
@@ -92,7 +92,7 @@ class TestPartitionConfig(SimpleTestCase):
     def test_host_map(self):
         config = PartitionConfig()
         shards = config.get_shards()
-        self.assertEquals(shards, [
+        self.assertEqual(shards, [
             ShardMeta(id=0, dbname='db1', host='localhost', port=5432),
             ShardMeta(id=1, dbname='db2', host='hqdb2', port=5432),
         ])

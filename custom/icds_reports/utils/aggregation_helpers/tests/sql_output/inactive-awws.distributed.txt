@@ -1,4 +1,13 @@
 
+            DELETE FROM icds_reports_aggregateinactiveaww
+                WHERE awc_id IN (
+                    SELECT awc_id from icds_reports_aggregateinactiveaww inactive
+                                        left join awc_location_local awc on inactive.awc_id=awc.doc_id
+                                        where awc.doc_id is null
+                                );
+            
+{}
+
         INSERT INTO "icds_reports_aggregateinactiveaww" (
             awc_id, awc_name, awc_site_code, supervisor_id, supervisor_name,
             block_id, block_name, district_id, district_name, state_id, state_name
@@ -16,9 +25,8 @@
                 loc.state_id as state_id,
                 loc.state_name as state_name
             FROM "awc_location_local" loc
-            WHERE loc.doc_id not in (
-              SELECT aww.awc_id FROM "icds_reports_aggregateinactiveaww" aww
-            ) and loc.doc_id != 'All'
+            LEFT OUTER JOIN "icds_reports_aggregateinactiveaww" aww ON loc.doc_id = aww.awc_id
+            WHERE aww.awc_id IS NULL AND loc.doc_id != 'All'
         )
         
 {}

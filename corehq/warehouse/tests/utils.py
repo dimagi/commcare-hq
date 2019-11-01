@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.management import call_command
+from django.db import DEFAULT_DB_ALIAS
 from django.test import TestCase
 
 from corehq.form_processor.tests.utils import partitioned
@@ -180,7 +181,7 @@ class BaseWarehouseTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super(BaseWarehouseTestCase, cls).setUpClass()
-        cls.using = settings.WAREHOUSE_DATABASE_ALIAS if settings.USE_PARTITIONED_DATABASE else 'default'
+        cls.using = settings.WAREHOUSE_DATABASE_ALIAS if settings.USE_PARTITIONED_DATABASE else DEFAULT_DB_ALIAS
 
 
 def get_slugs_in_reverse_dependency_order():

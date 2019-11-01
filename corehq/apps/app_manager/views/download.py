@@ -447,21 +447,15 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    if ajax and "blank form" in [error.get('type') for error in errors] and not form.form_type == "shadow_form":
+    if ajax and "blank form" in [error.get('type') for error in errors]:
         response_html = ""
     else:
-        if form.form_type == "shadow_form":
-            # Don't display the blank form error if its a shadow form
-            errors = [e for e in errors if e['type'] != "blank form"]
         response_html = render_to_string("app_manager/partials/build_errors.html", {
-            'request': request,
             'app': app,
-            'form': form,
             'build_errors': errors,
             'not_actual_build': True,
             'domain': domain,
             'langs': langs,
-            'lang': lang
         })
 
     if ajax:

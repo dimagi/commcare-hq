@@ -85,7 +85,6 @@ describe('Download Directive', function () {
                 {"name": "July", "id": 7},
                 {"name": "August", "id": 8},
                 {"name": "September", "id": 9},
-                {"name": "October", "id": 10},
             ];
 
             assert.deepEqual(expected, controller.months);
@@ -93,7 +92,7 @@ describe('Download Directive', function () {
 
         it('tests selected month', function () {
             var result = controller.selectedMonth;
-            var expected = 10;
+            var expected = 9;
             assert.equal(expected, result);
         });
 
@@ -241,6 +240,88 @@ describe('Download Directive', function () {
             controller.selectedIndicator = 9;
             var result = controller.isTakeHomeRationReportSelected();
             assert.isFalse(result);
+        });
+
+        it('test to check if current month is enabled after first three days', function () {
+            var fakeDate = new Date(2019, 8, 4);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+            controller.selectedIndicator = 1;
+            controller.selectedYear = fakeDate.getFullYear();
+            controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+                {"name": "August", "id": 8},
+                {"name": "September", "id": 9},
+            ];
+            assert.deepEqual(expected, controller.months);
+            clock.restore();
+        });
+
+        it('test to check if current month is not enabled before first three days', function () {
+            var fakeDate = new Date(2019, 8, 2);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+            controller.selectedIndicator = 1;
+            controller.selectedYear = fakeDate.getFullYear();
+            controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+                {"name": "August", "id": 8},
+            ];
+            assert.deepEqual(expected, controller.months);
+            clock.restore();
+        });
+
+        it('test to check if AWW performance report is downloadable only till last month ' +
+            'after current month 15th ', function () {
+            var fakeDate = new Date(2019, 8, 17);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+            controller.selectedIndicator = 8;
+            controller.selectedYear = fakeDate.getFullYear();
+            controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+                {"name": "August", "id": 8},
+            ];
+            assert.deepEqual(expected, controller.months);
+            clock.restore();
+        });
+
+        it('test to check if AWW performance report is downloadable only till last before month ' +
+            'before current month 15th ', function () {
+            var fakeDate = new Date(2019, 8, 5);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+            controller.selectedIndicator = 8;
+            controller.selectedYear = fakeDate.getFullYear();
+            controller.onSelectYear({id: fakeDate.getFullYear(), value: fakeDate.getFullYear()});
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+            ];
+            assert.deepEqual(expected, controller.months);
+            clock.restore();
         });
 
     });

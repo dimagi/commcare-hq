@@ -6,14 +6,15 @@ from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn, \
     MonthColumn
 from collections import defaultdict
+
 from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.products.models import SQLProduct
-
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
     TableDataFormat, calculate_total_row
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
+
 from custom.intrahealth import PRODUCT_NAMES as INIT_PRODUCT_NAMES
 from custom.intrahealth import PRODUCT_MAPPING
 from custom.intrahealth.report_calcs import _locations_per_type
@@ -3991,8 +3992,11 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
         group_by = [
             self.loc_id_to_get, self.loc_name_to_get,
             'real_date_precise', 'product_is_outstock',
-            'product_id', 'product_name', 'program_id'
+            'product_id', 'product_name', 'program_id',
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
 
         return group_by
 
@@ -4007,6 +4011,10 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
             DatabaseColumn('Product Name', SimpleColumn('product_name')),
             DatabaseColumn('Is product outstock', SimpleColumn('product_is_outstock')),
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -4149,26 +4157,26 @@ class VisiteDeLOperateurPerProductV2DataSource(SqlData, LocationLevelMixin):
 
             return stocks_list_to_return
 
+        fresh_records_dict = {}
         for row in rows:
-            if not rows_to_return:
-                rows_to_return.append(row)
+            pps_id = row['pps_id']
+            product_id = row['product_id']
+            if pps_id not in fresh_records_dict.keys():
+                fresh_records_dict[pps_id] = {
+                    product_id: row
+                }
             else:
-                length = len(rows_to_return)
-                for r in range(0, length):
-                    current_product = rows_to_return[r]
-                    current_location_id = current_product[self.loc_id_to_get] \
-                        if current_product[self.loc_id_to_get] is not None \
-                        else current_product[self.loc_name_to_get]
-                    current_product_id = current_product['product_id']
-                    _row_id = row[self.loc_id_to_get] \
-                        if row[self.loc_id_to_get] is not None else row[self.loc_name_to_get]
-                    if current_location_id == _row_id and current_product_id == row['product_id']:
-                        current_date = current_product['real_date_precise']
-                        new_date = row['real_date_precise']
-                        if new_date > current_date:
-                            rows_to_return[r] = row
-                    elif r == length - 1:
-                        rows_to_return.append(row)
+                if product_id not in fresh_records_dict[pps_id].keys():
+                    fresh_records_dict[pps_id][product_id] = row
+                else:
+                    date = fresh_records_dict[pps_id][product_id]['real_date_precise']
+                    new_date = row['real_date_precise']
+                    if new_date > date:
+                        fresh_records_dict[pps_id][product_id] = row
+
+        for pps_id, products in fresh_records_dict.items():
+            for product, product_data in products.items():
+                rows_to_return.append(product_data)
 
         clean_data = clean_rows(rows_to_return)
 
@@ -4213,6 +4221,9 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
             'real_date_precise', 'product_is_outstock',
             'product_id', 'product_name', 'program_id'
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
 
         return group_by
 
@@ -4227,6 +4238,10 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
             DatabaseColumn('Product Name', SimpleColumn('product_name')),
             DatabaseColumn('Is product outstock', SimpleColumn('product_is_outstock')),
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -4369,26 +4384,26 @@ class TauxDeRuptureRateData(SqlData, LocationLevelMixin):
 
             return stocks_list_to_return
 
+        fresh_records_dict = {}
         for row in rows:
-            if not rows_to_return:
-                rows_to_return.append(row)
+            pps_id = row['pps_id']
+            product_id = row['product_id']
+            if pps_id not in fresh_records_dict.keys():
+                fresh_records_dict[pps_id] = {
+                    product_id: row
+                }
             else:
-                length = len(rows_to_return)
-                for r in range(0, length):
-                    current_product = rows_to_return[r]
-                    current_location_id = current_product[self.loc_id_to_get] \
-                        if current_product[self.loc_id_to_get] is not None \
-                        else current_product[self.loc_name_to_get]
-                    current_product_id = current_product['product_id']
-                    _row_id = row[self.loc_id_to_get] \
-                        if row[self.loc_id_to_get] is not None else row[self.loc_name_to_get]
-                    if current_location_id == _row_id and current_product_id == row['product_id']:
-                        current_date = current_product['real_date_precise']
-                        new_date = row['real_date_precise']
-                        if new_date > current_date:
-                            rows_to_return[r] = row
-                    elif r == length - 1:
-                        rows_to_return.append(row)
+                if product_id not in fresh_records_dict[pps_id].keys():
+                    fresh_records_dict[pps_id][product_id] = row
+                else:
+                    date = fresh_records_dict[pps_id][product_id]['real_date_precise']
+                    new_date = row['real_date_precise']
+                    if new_date > date:
+                        fresh_records_dict[pps_id][product_id] = row
+
+        for pps_id, products in fresh_records_dict.items():
+            for product, product_data in products.items():
+                rows_to_return.append(product_data)
 
         clean_data = clean_rows(rows_to_return)
 
@@ -4433,6 +4448,9 @@ class ConsommationPerProductData(SqlData, LocationLevelMixin):
             'real_date_precise', 'actual_consumption',
             'product_id', 'product_name', 'program_id'
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
 
         return group_by
 
@@ -4447,6 +4465,10 @@ class ConsommationPerProductData(SqlData, LocationLevelMixin):
             DatabaseColumn("Product name", SimpleColumn('product_name')),
             DatabaseColumn("Consumption", SimpleColumn('actual_consumption'))
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -4747,17 +4769,69 @@ class LossRatePerProductData2(VisiteDeLOperateurPerProductDataSource):
 
         return loc_names, data
 
-    @property
-    def rows(self):
+    def flatten_records_by_date(self, records):
+        flatten_records = {}
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date_repeat']) \
+                    or record['product_id'] not in self.products:
+                continue
+
+            if record[self.loc_id]:
+                location = (record[self.loc_id]) + record['product_id']
+            else:
+                continue
+            final_stock = record['final_pna_stock']
+            loss_amt = record['loss_amt']
+            if not flatten_records.get(location):
+                flatten_records[location] = record
+                if not loss_amt:
+                    flatten_records[location]['loss_amt'] = {'html': 0}
+                if not final_stock:
+                    flatten_records[location]['final_pna_stock'] = {'html': 0}
+            else:
+                if final_stock:
+                    flatten_records[location]['final_pna_stock']['html'] += final_stock['html']
+                if loss_amt:
+                    flatten_records[location]['loss_amt']['html'] += loss_amt['html']
+
+        return flatten_records.values()
+
+    def rows(self, for_chart=False):
         records = self.get_data()
+        records = self.flatten_records_by_date(records)
 
-        loc_names, data = self.get_loss_rate_per_month(records)
-        self.total_row = self.calculate_total_row(data)
-        rows = self.parse_loss_rate_to_rows(loc_names, data)
-        return sorted(rows, key=lambda x: x[0]['html'])
+        if not for_chart:
+            loc_names, data = self.get_loss_rate_per_month(records)
+            self.total_row = self.calculate_total_row(data)
+            rows = self.parse_loss_rate_to_rows(loc_names, data)
+            return sorted(rows, key=lambda x: x[0]['html'])
+        else:
+            rows = self._get_data_for_products(records)
+            return sorted(rows, key=lambda x: x), rows
 
-    def transform_rows(self):
-        pass
+    def _get_data_for_products(self, records):
+        products = {}
+        added_products = []
+        for record in records:
+            product_id = record['product_id']
+            product_name = record['product_name']
+            loss_amt = record['loss_amt']['html']
+            final_pna_stock = record['final_pna_stock']['html']
+            if product_id not in added_products and final_pna_stock != 0:
+                added_products.append(product_id)
+                products[product_name] = {
+                    'loss_amt': loss_amt,
+                    'final_pna_stock': final_pna_stock,
+                    'percent': self.percent_fn(loss_amt, final_pna_stock)
+                }
+            elif product_id in added_products and final_pna_stock != 0:
+                products[product_name]['loss_amt'] += loss_amt
+                products[product_name]['final_pna_stock'] += final_pna_stock
+                products[product_name]['percent'] = self.percent_fn(
+                    products[product_name]['loss_amt'], products[product_name]['final_pna_stock']
+                )
+
+        return products
 
     @property
     def headers(self):
@@ -4954,13 +5028,42 @@ class ExpirationRatePerProductData2(LossRatePerProductData2):
                     record['final_pna_stock_valuation']['html']
         return loc_names, data
 
-    @property
-    def rows(self):
+    def rows(self, for_chart=False):
         records = self.get_data()
-        loc_names, data = self.get_expiration_rate_per_month(records)
-        self.total_row = self.calculate_total_row(data)
-        rows = self.parse_expiration_rate_to_rows(loc_names, data)
-        return sorted(rows, key=lambda x: x[0]['html'])
+
+        if not for_chart:
+            loc_names, data = self.get_expiration_rate_per_month(records)
+            self.total_row = self.calculate_total_row(data)
+            rows = self.parse_expiration_rate_to_rows(loc_names, data)
+            return sorted(rows, key=lambda x: x[0]['html'])
+        else:
+            rows = self._get_data_for_products(records)
+            return sorted(rows, key=lambda x: x), rows
+
+    def _get_data_for_products(self, records):
+        products = {}
+        added_products = []
+        for record in records:
+            product_id = record['product_id']
+            product_name = record['product_name']
+            expired_pna_valuation = record['expired_pna_valuation']['html']
+            final_pna_stock_valuation = record['final_pna_stock_valuation']['html']
+            if product_id not in added_products and product_id in self.products and final_pna_stock_valuation != 0:
+                added_products.append(product_id)
+                products[product_name] = {
+                    'expired_pna_valuation': expired_pna_valuation,
+                    'final_pna_stock_valuation': final_pna_stock_valuation,
+                    'percent': self.percent_fn(expired_pna_valuation, final_pna_stock_valuation)
+                }
+            elif product_id in added_products and final_pna_stock_valuation != 0:
+                products[product_name]['expired_pna_valuation'] += expired_pna_valuation
+                products[product_name]['final_pna_stock_valuation'] += final_pna_stock_valuation
+                products[product_name]['percent'] = self.percent_fn(
+                    products[product_name]['expired_pna_valuation'],
+                    products[product_name]['final_pna_stock_valuation']
+                )
+
+        return products
 
 
 class SatisfactionRateAfterDeliveryPerProductData(LocationLevelMixin, VisiteDeLOperateurPerProductDataSource):
@@ -4987,6 +5090,9 @@ class SatisfactionRateAfterDeliveryPerProductData(LocationLevelMixin, VisiteDeLO
             'product_id', 'product_name', 'ideal_topup',
             'amt_delivered_convenience'
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
 
         return group_by
 
@@ -5002,6 +5108,10 @@ class SatisfactionRateAfterDeliveryPerProductData(LocationLevelMixin, VisiteDeLO
             DatabaseColumn("Quantity of the product delivered", SumColumn('amt_delivered_convenience')),
             DatabaseColumn("Quantity of the product suggested", SumColumn('ideal_topup')),
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -5171,11 +5281,16 @@ class ValuationOfPNAStockPerProductV2Data(LocationLevelMixin, VisiteDeLOperateur
 
     @property
     def group_by(self):
-        return [
+        group_by = [
             'real_date_repeat', 'product_id', 'product_name', 'select_programs',
             self.loc_id_to_get, self.loc_name_to_get,
             'final_pna_stock_valuation'
         ]
+        if self.loc_id_to_get != 'pps_id':
+            group_by.append('pps_id')
+            group_by.append('pps_name')
+
+        return group_by
 
     @property
     def columns(self):
@@ -5188,6 +5303,10 @@ class ValuationOfPNAStockPerProductV2Data(LocationLevelMixin, VisiteDeLOperateur
             DatabaseColumn("Programs", SimpleColumn('select_programs')),
             DatabaseColumn("Products stock valuation", SumColumn('final_pna_stock_valuation')),
         ]
+        if self.loc_id_to_get != 'pps_id':
+            columns.append(DatabaseColumn('PPS ID', SimpleColumn('pps_id')))
+            columns.append(DatabaseColumn('PPS Name', SimpleColumn('pps_name')))
+
         return columns
 
     @property
@@ -5407,7 +5526,7 @@ class RecapPassageOneData(IntraHealthSqlData):
             DatabaseColumn(_("Facturable"), SumColumn('billed_consumption')),
             DatabaseColumn("Pertes et Adjustement", SumColumn('loss_amt')),
             DatabaseColumn("Amount billed", SumColumn('amount_billed')),
-            DatabaseColumn("Amount owed", SumColumn('amount_owed')),
+            DatabaseColumn("Delivery amt", SumColumn('delivery_amt_owed')),
             DatabaseColumn("Amt delivered", SumColumn('amt_delivered_convenience')),
             DatabaseColumn("Total loss amt", SumColumn('total_loss_amt')),
             DatabaseColumn("Expired pna", SumColumn('expired_pna')),
@@ -5469,7 +5588,6 @@ class RecapPassageOneData(IntraHealthSqlData):
         rows_by_visit = self.sort_rows_by_visit(rows)
         valid_products = self.program_products
         pps_visits = {}
-
         for doc_id, rows in rows_by_visit.items():
             data = {}
             product_names = set()
@@ -5480,8 +5598,7 @@ class RecapPassageOneData(IntraHealthSqlData):
             for row in rows:
                 product_name = row['product_name']
                 product_id = row['product_id']
-                if valid_products and \
-                   product_id not in valid_products:
+                if valid_products and product_id not in valid_products:
                     continue
                 product_names.add(product_name)
                 if not data.get(product_name):
@@ -5514,23 +5631,25 @@ class RecapPassageOneData(IntraHealthSqlData):
             self.product_names = product_names
 
             rows = []
-            for key in data[product_names[0]]:
-                next_row = [key]
-                for product in product_names:
-                    next_row.append(data[product][key])
+            if product_names:
+                for key in data[product_names[0]]:
+                    next_row = [key]
+                    for product in product_names:
+                        next_row.append(data[product][key])
 
-                rows.append(next_row)
+                    rows.append(next_row)
 
-            facturation_fill = len(rows[0]) - 2
-            facturation_group = ['Facturation Groupe', amount_billed_sum]
-            facturation_group.extend([' ' for _ in range(facturation_fill)])
-            rows.append(facturation_group)
-            pps_visits[doc_id] = {
-                'rows': rows,
-                'title': location,
-                'headers': self.get_headers(),
-                'comment': date,
-            }
+                facturation_fill = len(rows[0]) - 2
+                facturation_group = ['Facturation Groupe', amount_billed_sum]
+                facturation_group.extend([' ' for _ in range(facturation_fill)])
+                rows.append(facturation_group)
+
+                pps_visits[doc_id] = {
+                    'rows': rows,
+                    'title': location,
+                    'headers': self.get_headers(),
+                    'comment': date,
+                }
 
         return pps_visits
 
@@ -5542,17 +5661,33 @@ class RecapPassageOneData(IntraHealthSqlData):
             'Net à Payer': 0,
         }
         valid_products = self.program_products
+        delivery_amt_owed_dict = {}
         for row in rows:
+            pps_name = row['pps_name']
             if valid_products and \
-               row['product_id'] not in valid_products:
+                    row['product_id'] not in valid_products:
                 continue
 
             data['Total Facture'] += self.get_value(row['amount_billed'])
-            data['Net à Payer'] += self.get_value(row['amount_owed'])
+            delivery_amt_owed = self.get_value(row['delivery_amt_owed'])
+            date = row['real_date_repeat'].strftime('%Y/%m/%d')
+            if delivery_amt_owed_dict.get(pps_name, None):
+                delivery_amt_owed_dict[pps_name].add(
+                    (delivery_amt_owed, date)
+                )
+            else:
+                delivery_amt_owed_dict[pps_name] = set()
+                delivery_amt_owed_dict[pps_name].add(
+                    (delivery_amt_owed, date)
+                )
 
         # data['Net à Payer'] = int(data['Total Facture'] * 1.075)
         data['Total Facture'] = round(float(data['Total Facture']), 2)
-        data['Net à Payer'] = round(float(data['Net à Payer']), 2)
+        net_a_payer = 0
+        for pps_values in delivery_amt_owed_dict.values():
+            for pps_value in pps_values:
+                net_a_payer += pps_value[0]
+        data['Net à Payer'] = round(float(net_a_payer), 2)
         rows = []
         headers = data.keys()
         for header in headers:
@@ -5625,7 +5760,7 @@ class RecapPassageTwoData(RecapPassageOneData):
             ])
         columns.extend([
             DatabaseColumn(_('Doc_id'), SimpleColumn('doc_id')),
-            DatabaseColumn(_('Delivery Amt'), SumColumn('delivery_amt_owed')),
+            DatabaseColumn(_('Amount Owed'), SumColumn('amount_owed')),
             DatabaseColumn(_('Delivery Margin'), SumColumn('delivery_total_margin')),
         ])
         return columns
@@ -5653,35 +5788,6 @@ class RecapPassageTwoData(RecapPassageOneData):
         else:
             return None
 
-    def only_latest_visit_data(self, rows):
-        pps_data = {}
-        for row in rows:
-            name = row['pps_id']
-            if not pps_data.get(name, None):
-                pps_data[name] = []
-
-            pps_data[name].append(row)
-
-        relevant = []
-        relevant_doc_ids = {}
-        for id, data in pps_data.items():
-            # TODO: Check if second date with same date should be relevant
-            sorted_visits_info = sorted(data, key=lambda k: k['real_date_repeat'], reverse=True)
-            latest_date = sorted_visits_info[0]['real_date_repeat']
-            latest_doc_for_pps = sorted_visits_info[0]['doc_id']
-
-            for visit in sorted_visits_info:
-                if visit['real_date_repeat'] != latest_date:
-                    break
-                else:
-                    relevant_doc_ids[visit['pps_id']] = latest_doc_for_pps
-
-        for row in rows:
-            if row['doc_id'] == relevant_doc_ids[row['pps_id']]:
-                relevant.append(row)
-
-        return relevant
-
     @property
     def program_name(self):
         program_id = self.config.get('product_program', None)
@@ -5695,7 +5801,6 @@ class RecapPassageTwoData(RecapPassageOneData):
 
     def calculate_table_data(self):
         rows = self.get_data()
-        rows = self.only_latest_visit_data(rows)
 
         product_names = set()
         data = {}
@@ -5803,18 +5908,24 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
     @property
     def billed_consumption_context(self):
-        context = self.create_table_context('billed_consumption', 'Consommations Facturables')
+        context = self.create_table_context(
+            'billed_consumption', 'Consommations Facturables', add_amount_owed_column=True
+        )
 
         return context
 
     @property
     def actual_consumption_context(self):
-        context = self.create_table_context('actual_consumption', 'Consommation Réelle')
+        context = self.create_table_context(
+            'actual_consumption', 'Consommation Réelle', add_latest_visit_column=True
+        )
         return context
 
     @property
     def amt_delivered_convenience_context(self):
-        context = self.create_table_context('amt_delivered_convenience', 'Livraison Total Effectuées')
+        context = self.create_table_context(
+            'amt_delivered_convenience', 'Livraison Total Effectuées', add_sum_of_visits_column=True
+        )
         rows = context['rows']
         new_row = self.create_row_with_column_values_sum('Livraison Effectuées', rows)
         if new_row:
@@ -5824,7 +5935,9 @@ class RecapPassageTwoTables(RecapPassageTwoData):
 
     @property
     def display_total_stock_context(self):
-        context = self.create_table_context('total_stock', 'Stock Disponible Utilisable')
+        context = self.create_table_context(
+            'total_stock', 'Stock Disponible Utilisable', add_availability_column=True
+        )
         rows = context['rows']
         sum_row = self.create_row_with_column_values_sum('SDU avant Livraison', rows)
         if sum_row:
@@ -5834,23 +5947,36 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         context['rows'].append(display_stock_row)
         return context
 
-    def create_table_context(self, displayed_values, title, add_amount_owed_column=True):
+    def create_table_context(self, displayed_values, title, add_amount_owed_column=False,
+                             add_latest_visit_column=False, add_sum_of_visits_column=False,
+                             add_availability_column=False):
         if self.recap_rows is None:
             self.calculate_table_data()
 
         headers = self.get_headers()
-        rows = self.create_table_rows(displayed_values, add_amount_owed_column=add_amount_owed_column)
+        rows = self.create_table_rows(
+            displayed_values, add_amount_owed_column=add_amount_owed_column,
+            add_latest_visit_column=add_latest_visit_column, add_sum_of_visits_column=add_sum_of_visits_column,
+            add_availability_column=add_availability_column
+        )
 
         if add_amount_owed_column:
             headers.add_column(DataTablesColumn('Recouvrement PPS Net à Payer'))
+        if add_latest_visit_column:
+            headers.add_column(DataTablesColumn('Date Dernier Passage'))
+        if add_sum_of_visits_column:
+            headers.add_column(DataTablesColumn('Nombre de Passage'))
+        if add_availability_column:
+            headers.add_column(DataTablesColumn('Taux de Disponibilité de la gamme'))
 
         context = self.create_context(
-            rows=rows, headers=headers,
-            title=title)
+            rows=rows, headers=headers, title=title
+        )
 
         return context
 
-    def create_table_rows(self, displayed_values, add_amount_owed_column=True):
+    def create_table_rows(self, displayed_values, add_amount_owed_column=False, add_latest_visit_column=False,
+                          add_sum_of_visits_column=False, add_availability_column=False):
         rows = []
         data = self.recap_rows
 
@@ -5859,13 +5985,14 @@ class RecapPassageTwoTables(RecapPassageTwoData):
             pps_name = pps_data[0]['pps_name']
             row = [pps_name]
 
-            pps_product_values = self.get_row_product_values(pps_data, displayed_values)
+            most_recent_pps_data = self._get_most_recent_visits(pps_data)
+            pps_product_values = self.get_row_product_values(most_recent_pps_data, displayed_values)
             for name in self.product_names:
                 product_value = pps_product_values.get(name, {'html': 0})
                 row.append(product_value)
 
             if add_amount_owed_column:
-                products_amount = self.get_row_product_values(pps_data, 'amount_owed')
+                products_amount = self.get_row_product_values(most_recent_pps_data, 'amount_owed')
                 amount_sum = {
                     'html': 0
                 }
@@ -5874,6 +6001,21 @@ class RecapPassageTwoTables(RecapPassageTwoData):
                     amount_sum['html'] += product_value['html']
 
                 row.append(amount_sum)
+
+            if add_latest_visit_column:
+                latest_date = self._get_latest_date(most_recent_pps_data)
+
+                row.append(latest_date)
+
+            if add_sum_of_visits_column:
+                visits_for_pps = self._get_visits_for_pps(pps_data)
+
+                row.append(visits_for_pps)
+
+            if add_availability_column:
+                availability = self._get_availability(most_recent_pps_data)
+
+                row.append(availability)
 
             rows.append(row)
 
@@ -5896,7 +6038,7 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         row_values = [0 for column in range(0, number_of_columns)]
         for row in rows:
             for index, column_value in enumerate(row):
-                row_values[index] += column_value['html']
+                row_values[index] += column_value['html'] if not column_value.get('percent', False) else 0
 
         new_row.extend(row_values)
         return new_row
@@ -5905,6 +6047,52 @@ class RecapPassageTwoTables(RecapPassageTwoData):
         rows = self.create_table_rows(value_name, False)
         sum_row = self.create_row_with_column_values_sum(row_name, rows)
         return sum_row
+
+    def _get_most_recent_visits(self, data):
+        data_to_return = []
+        fresh_records_dict = {}
+        for row in data:
+            pps_name = row['pps_name']
+            product_id = row['product_id']
+            if pps_name not in fresh_records_dict.keys():
+                fresh_records_dict[pps_name] = {
+                    product_id: row
+                }
+            else:
+                if product_id not in fresh_records_dict[pps_name].keys():
+                    fresh_records_dict[pps_name][product_id] = row
+                else:
+                    date = fresh_records_dict[pps_name][product_id]['real_date_repeat']
+                    new_date = row['real_date_repeat']
+                    if new_date > date:
+                        fresh_records_dict[pps_name][product_id] = row
+
+        for pps_name, products in fresh_records_dict.items():
+            for product, product_data in products.items():
+                data_to_return.append(product_data)
+
+        return data_to_return
+
+    def _get_latest_date(self, data):
+        return data[0]['real_date_repeat'].strftime('%Y/%m/%d')
+
+    def _get_visits_for_pps(self, data):
+        visits = set()
+        for record in data:
+            visits.add(record['doc_id'])
+
+        return {'html': len(visits)}
+
+    def _get_availability(self, data):
+        products_available = 0
+        for record in data:
+            products_available += 1 if record['total_stock']['html'] else 0
+        availability = round((float(products_available / len(self.product_names)) * 100), 2)
+
+        return {
+            'html': f'{availability}%',
+            'percent': True,
+        }
 
 
 class IndicateursDeBaseData(SqlData, LocationLevelMixin):
@@ -5997,9 +6185,11 @@ class IndicateursDeBaseData(SqlData, LocationLevelMixin):
 
     def is_requested_location(self, location_name):
         if self.config['location_id']:
-            location = SQLLocation.objects.filter(domain=self.config['domain'],
-                                                  location_id=self.config['location_id'])[0]
-
+            try:
+                location = SQLLocation.objects.get(domain=self.config['domain'],
+                                                   location_id=self.config['location_id'])
+            except SQLLocation.DoesNotExist:
+                return False
             if location.location_type.name != 'District':
                 location = SQLLocation.objects.filter(domain=self.config['domain'],
                                                       parent=location.id)

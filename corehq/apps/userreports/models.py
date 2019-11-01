@@ -1009,7 +1009,7 @@ class AsyncIndicator(models.Model):
     saved. Once saved to the data sources, this record will be deleted
     """
     id = models.BigAutoField(primary_key=True)
-    doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
+    doc_id = models.CharField(max_length=255, null=False, unique=True)
     doc_type = models.CharField(max_length=126, null=False)
     domain = models.CharField(max_length=126, null=False, db_index=True)
     indicator_config_ids = ArrayField(
@@ -1124,7 +1124,7 @@ class AsyncIndicator(models.Model):
 
 
 class InvalidUCRData(models.Model):
-    doc_id = models.CharField(max_length=255, null=False, db_index=True)
+    doc_id = models.CharField(max_length=255, null=False)
     doc_type = models.CharField(max_length=126, null=False, db_index=True)
     domain = models.CharField(max_length=126, null=False, db_index=True)
     indicator_config_id = models.CharField(max_length=126, db_index=True)

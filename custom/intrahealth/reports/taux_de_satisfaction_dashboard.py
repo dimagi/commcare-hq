@@ -9,6 +9,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport, DatespanMixin
 from custom.intrahealth.filters import DateRangeFilter, ProgramsAndProductsFilter, YeksiNaaLocationFilter
+from custom.intrahealth.reports.utils import change_id_keys_to_names
 from custom.intrahealth.sqldata import SatisfactionRateAfterDeliveryPerProductData
 from dimagi.utils.dates import force_to_date
 
@@ -17,8 +18,8 @@ from custom.intrahealth.utils import PNAMultiBarChart
 
 class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReportParametersMixin):
     slug = 'taux_de_satisfaction_par_produit_report'
-    comment = 'produits proposés sur produits livrés'
     name = 'Taux de Satisfaction par Produit'
+    comment = 'Quantité de produits livrés / Quantité de produits commandés'
     default_rows = 10
     exportable = True
 
@@ -144,7 +145,6 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
         return context
 
     @property
-    @memoized
     def clean_rows(self):
         return SatisfactionRateAfterDeliveryPerProductData(config=self.config).rows
 
@@ -161,28 +161,28 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                 location_name = quantity['location_name']
                 products = sorted(quantity['products'], key=lambda x: x['product_name'])
                 if location_id in added_locations:
-                    length = len(locations_with_products[location_name])
-                    product_ids = [p['product_id'] for p in locations_with_products[location_name]]
+                    length = len(locations_with_products[location_id])
+                    product_ids = [p['product_id'] for p in locations_with_products[location_id]]
                     for product in products:
                         if product['product_id'] not in product_ids:
-                            locations_with_products[location_name].append({
+                            locations_with_products[location_id].append({
                                 'product_name': product['product_name'],
                                 'product_id': product['product_id'],
                                 'amt_delivered_convenience': product['amt_delivered_convenience'],
                                 'ideal_topup': product['ideal_topup'],
                             })
                     for r in range(0, length):
-                        product_for_location = locations_with_products[location_name][r]
+                        product_for_location = locations_with_products[location_id][r]
                         for product in products:
                             if product_for_location['product_id'] == product['product_id']:
                                 amt_delivered_convenience = product['amt_delivered_convenience']
                                 ideal_topup = product['ideal_topup']
-                                locations_with_products[location_name][r]['amt_delivered_convenience'] += \
+                                locations_with_products[location_id][r]['amt_delivered_convenience'] += \
                                     amt_delivered_convenience
-                                locations_with_products[location_name][r]['ideal_topup'] += ideal_topup
+                                locations_with_products[location_id][r]['ideal_topup'] += ideal_topup
                 else:
                     added_locations.append(location_id)
-                    locations_with_products[location_name] = []
+                    locations_with_products[location_id] = []
                     unique_products_for_location = []
                     products_to_add = []
                     for product in products:
@@ -198,7 +198,9 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
                             products_to_add[index]['ideal_topup'] += ideal_topup
 
                     for product in products_to_add:
-                        locations_with_products[location_name].append(product)
+                        locations_with_products[location_id].append(product)
+
+            locations_with_products = change_id_keys_to_names(self.config['domain'], locations_with_products)
 
             for location, products in locations_with_products.items():
                 products_names = [x['product_name'] for x in products]
@@ -308,37 +310,44 @@ class TauxDeSatisfactionReport(CustomProjectReport, DatespanMixin, ProjectReport
 
         def data_to_chart(quantities_list):
             quantities_to_return = []
-            locations_data = {}
-            added_locations = []
+            products_data = []
+            added_products = []
 
             for quantity in quantities_list:
-                location_name = quantity['location_name']
                 location_id = quantity['location_id']
+                location_name = quantity['location_name']
                 for product in quantity['products']:
+                    product_id = product['product_id']
+                    product_name = product['product_name']
                     amt_delivered_convenience = product['amt_delivered_convenience']
                     ideal_topup = product['ideal_topup']
-                    if location_id not in added_locations:
-                        added_locations.append(location_id)
-                        locations_data[location_id] = {
+                    if product_id not in added_products:
+                        added_products.append(product_id)
+                        product_dict = {
+                            'product_id': product_id,
+                            'product_name': product_name,
+                            'location_id': location_id,
                             'location_name': location_name,
                             'amt_delivered_convenience': amt_delivered_convenience,
                             'ideal_topup': ideal_topup,
                         }
+                        products_data.append(product_dict)
                     else:
-                        locations_data[location_id]['amt_delivered_convenience'] += amt_delivered_convenience
-                        locations_data[location_id]['ideal_topup'] += ideal_topup
+                        for product_data in products_data:
+                            if product_data['product_id'] == product_id:
+                                product_data['amt_delivered_convenience'] += amt_delivered_convenience
+                                product_data['ideal_topup'] += ideal_topup
 
-            sorted_locations_data_values = sorted(locations_data.values(), key=lambda x: x['location_name'])
-            for location_info in sorted_locations_data_values:
-                location_name = location_info['location_name']
-                amt_delivered_convenience = location_info['amt_delivered_convenience']
-                ideal_topup = location_info['ideal_topup']
-                percent = (amt_delivered_convenience / float(ideal_topup) * 100) \
-                    if ideal_topup != 0 else 0
+            products = sorted(products_data, key=lambda x: x['product_name'])
+            for product in products:
+                product_name = product['product_name']
+                amt_delivered_convenience = product['amt_delivered_convenience']
+                ideal_topup = product['ideal_topup']
+                percent = (amt_delivered_convenience / float(ideal_topup)) * 100 if ideal_topup != 0 else 0
                 quantities_to_return.append([
-                    location_name,
+                    product_name,
                     {
-                        'html': '{:.2f} %'.format(percent),
+                        'html': '{}'.format(percent),
                         'sort_key': percent
                     }
                 ])

@@ -1,6 +1,7 @@
 from django.apps import AppConfig, apps
 from django.conf import settings
 from django.core.checks import Error, register, Tags
+from django.db import DEFAULT_DB_ALIAS
 
 
 class SQLDBAppConfig(AppConfig):
@@ -18,7 +19,7 @@ def custom_db_checks(app_configs, **kwargs):
         'SYNCLOGS_SQL_DB_ALIAS'
     ]
     for setting in custom_db_settings:
-        default = getattr(settings, setting) == 'default'
+        default = getattr(settings, setting) == DEFAULT_DB_ALIAS
         custom = not default and getattr(settings, setting) in settings.DATABASES
         if not (default or custom):
             errors.append(
@@ -50,7 +51,7 @@ def check_db_tables(app_configs, **kwargs):
             model_class._default_manager.using(using).all().exists()
         except Exception as e:
             return Error('Error querying model on database "{}": "{}.{}": {}.{}({})'.format(
-                using or 'default',
+                using or DEFAULT_DB_ALIAS,
                 model_class._meta.app_label, model_class.__name__,
                 e.__class__.__module__, e.__class__.__name__,
                 e

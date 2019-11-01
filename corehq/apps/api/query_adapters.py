@@ -8,6 +8,7 @@ from corehq.apps.users.analytics import (
     get_count_of_inactive_commcare_users_in_domain,
     get_inactive_commcare_users_in_domain,
 )
+from dimagi.utils.chunked import chunked
 
 
 class UserQuerySetAdapter(object):
@@ -70,14 +71,7 @@ class GroupQuerySetAdapterES(object):
             result = GroupES().domain(self.domain).sort('name.exact').size(limit).start(item.start).run()
             groups = [WrappedGroup.wrap(group) for group in result.hits]
 
-            user_ids = {user_id for group in groups for user_id in group.users}
-            active_user_ids = set(
-                UserES().domain(self.domain)
-                .user_ids(user_ids)
-                .is_active(True)
-                .values_list('_id', flat=True)
-            )
-
+            active_user_ids = set(self._iter_active_user_ids(groups))
             for group in groups:
                 group._precomputed_active_users = [
                     user_id for user_id in group.users
@@ -86,6 +80,16 @@ class GroupQuerySetAdapterES(object):
             return groups
         raise ValueError(
             'Invalid type of argument. Item should be an instance of slice class.')
+
+    def _iter_active_user_ids(self, groups):
+        all_user_ids = {user_id for group in groups for user_id in group.users}
+        for user_ids_chunk in chunked(all_user_ids, 1000):
+            yield from (
+                UserES().domain(self.domain)
+                .user_ids(user_ids_chunk)
+                .is_active(True)
+                .values_list('_id', flat=True)
+            )
 
 
 class WrappedGroup(Group):

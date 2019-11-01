@@ -90,6 +90,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'is_test': self.domain_object.is_test,
             'use_custom_auto_case_update_limit': 'Y' if self.domain_object.auto_case_update_limit else 'N',
             'auto_case_update_limit': self.domain_object.auto_case_update_limit,
+            'use_custom_odata_feed_limit': 'Y' if self.domain_object.odata_feed_limit else 'N',
+            'odata_feed_limit': self.domain_object.odata_feed_limit,
             'granted_messaging_access': self.domain_object.granted_messaging_access,
         }
         internal_attrs = [
@@ -223,7 +225,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
 
         def _sort_key(toggle):
             return (not (toggle['domain_enabled'] or toggle['user_enabled']),
-                    [t.name for t in toggles.ALL_TAGS].index(toggle['tag']),
+                    toggle['tag_index'],
                     toggle['label'])
 
         unsorted_toggles = [{
@@ -232,6 +234,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
             'description': toggle.description,
             'help_link': toggle.help_link,
             'tag': toggle.tag.name,
+            'tag_index': toggle.tag.index,
             'tag_description': toggle.tag.description,
             'tag_css_class': toggle.tag.css_class,
             'has_domain_namespace': toggles.NAMESPACE_DOMAIN in toggle.namespaces,

@@ -95,8 +95,8 @@ class TestDomainMemberships(TestCase):
         self.assertTrue(self.ccuser.is_member_of('test-domain'))
 
     def testGetMemberships(self):
-        self.assertEquals(self.webuser.get_domain_membership(self.domain).domain, self.domain)
-        self.assertEquals(self.ccuser.get_domain_membership(self.domain).domain, self.domain)
+        self.assertEqual(self.webuser.get_domain_membership(self.domain).domain, self.domain)
+        self.assertEqual(self.ccuser.get_domain_membership(self.domain).domain, self.domain)
 
     def testDefaultPermissions(self):
         self.assertFalse(self.webuser.has_permission(self.domain, 'view_reports'))
@@ -109,9 +109,9 @@ class TestDomainMemberships(TestCase):
         self.ccuser.save()
         self.setUp()  # reload users to clear CouchUser.role
 
-        self.assertEquals(self.webuser.get_domain_membership(self.domain).role_id,
+        self.assertEqual(self.webuser.get_domain_membership(self.domain).role_id,
                           self.ccuser.get_domain_membership(self.domain).role_id)
-        self.assertEquals(self.webuser.role_label(), self.ccuser.role_label())
+        self.assertEqual(self.webuser.role_label(), self.ccuser.role_label())
 
         self.assertTrue(self.webuser.has_permission(self.domain, 'view_reports'))
         self.assertTrue(self.ccuser.has_permission(self.domain, 'view_reports'))
@@ -128,7 +128,7 @@ class TestDomainMemberships(TestCase):
         self.assertFalse(self.webuser.is_member_of(self.domain))
         self.assertFalse(self.webuser2.is_member_of(self.domain))
         self.assertTrue(self.ccuser.is_member_of(self.domain))
-        self.assertEquals(self.ccuser.get_domain_membership(self.domain).domain, self.domain)
+        self.assertEqual(self.ccuser.get_domain_membership(self.domain).domain, self.domain)
 
     def testTransferMembership(self):
         self.webuser.transfer_domain_membership(self.domain, self.webuser2)

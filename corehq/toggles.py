@@ -1,21 +1,34 @@
-import inspect
-from collections import namedtuple
-from functools import wraps
 import hashlib
+import inspect
 import math
+from functools import wraps
 
-from django.contrib import messages
 from django.conf import settings
+from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
+from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
-from corehq.util.quickcache import quickcache
-from toggle.models import Toggle
-from toggle.shortcuts import toggle_enabled, set_toggle
 
-Tag = namedtuple('Tag', 'name css_class description')
+from toggle.models import Toggle
+from toggle.shortcuts import set_toggle, toggle_enabled
+
+from corehq.util.quickcache import quickcache
+
+
+@attrs(frozen=True)
+class Tag:
+    name = attrib(type=str)
+    css_class = attrib(type=str)
+    description = attrib(type=str)
+
+    @property
+    def index(self):
+        return ALL_TAGS.index(self)
+
+
 TAG_CUSTOM = Tag(
     name='One-Off / Custom',
     css_class='warning',
@@ -65,7 +78,7 @@ TAG_SOLUTIONS_LIMITED = Tag(
     css_class='info',
     description="These features are only available for our services projects. This may affect support and "
     "pricing when the project is transitioned to a subscription. Limited Use Solutions Feature Flags cannot be "
-    "enabled by GS before emailing solutions@dimagi.com and requesting the feature."
+    "enabled by GS before emailing solutions-tech@dimagi.com and requesting the feature."
 )
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
@@ -380,11 +393,11 @@ def all_toggles_by_name():
     return all_toggles_by_name_in_scope(globals())
 
 
-def all_toggles_by_name_in_scope(scope_dict):
+def all_toggles_by_name_in_scope(scope_dict, toggle_class=StaticToggle):
     result = {}
     for toggle_name, toggle in scope_dict.items():
         if not toggle_name.startswith('__'):
-            if isinstance(toggle, StaticToggle):
+            if isinstance(toggle, toggle_class):
                 result[toggle_name] = toggle
     return result
 
@@ -1102,13 +1115,6 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
-COPY_CONDITIONAL_ALERTS = StaticToggle(
-    'copy_conditional_alerts',
-    'Allow copying conditional alerts to another project (or within the same project).',
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_USER],
-)
-
 RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'run_auto_case_updates_on_save',
     'Run Auto Case Update rules on each case save.',
@@ -1674,6 +1680,7 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     always_disabled={'icds-cas'},
+    help_link='https://confluence.dimagi.com/display/ccinternal/Manage+Releases+per+Location',
 )
 
 
@@ -1690,20 +1697,6 @@ HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'Do not show modal on mobile that mobile hq experience is bad',
     TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-
-def _enable_bi_integration_preview(domain, enabled):
-    from corehq.feature_previews import BI_INTEGRATION_PREVIEW
-    BI_INTEGRATION_PREVIEW.set(domain, enabled, NAMESPACE_DOMAIN)
-
-
-ODATA = StaticToggle(
-    'odata',
-    'Enable Odata feed.',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-    save_fn=_enable_bi_integration_preview,
 )
 
 
@@ -1745,13 +1738,6 @@ MANAGE_CCZ_HOSTING = StaticToggle(
     [NAMESPACE_USER]
 )
 
-
-PARALLEL_AGGREGATION = StaticToggle(
-    'parallel_agg',
-    'This makes the icds dashboard aggregation run on both distributed and monolith backends',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
 
 SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
     'skip_orm_fixture_upload',
@@ -1798,9 +1784,42 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
 )
 
 
-GROUP_API_USE_ES_BACKEND = StaticToggle(
-    'group_api_use_es_backend',
-    'Use ES backend for Group API',
+# todo: remove after Nov 15, 2019 if no one is using
+GROUP_API_USE_COUCH_BACKEND = StaticToggle(
+    'group_api_use_couch_backend',
+    'Use Old Couch backend for Group API. '
+    'This is an escape hatch for support '
+    'to immediately revert a domain to old behavior.',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+
+PHI_CAS_INTEGRATION = StaticToggle(
+    'phi_cas_integration',
+    'Integrate with PHI Api to search and validate beneficiaries',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
+
+SESSION_MIDDLEWARE_LOGGING = StaticToggle(
+    'session_middleware_logging',
+    'Log all session object method calls on this domain',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+BYPASS_SESSIONS = StaticToggle(
+    'bypass_sessions',
+    'Bypass sessions for select mobile URLS',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+DAILY_INDICATORS = StaticToggle(
+    'daily_indicators',
+    'Enable daily indicators api',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
 )

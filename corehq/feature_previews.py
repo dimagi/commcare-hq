@@ -16,7 +16,6 @@ from .toggles import (
     all_toggles_by_name_in_scope,
     ECD_MIGRATED_DOMAINS,
     ECD_PREVIEW_ENTERPRISE_DOMAINS,
-    ODATA,
 )
 
 
@@ -57,13 +56,13 @@ class FeaturePreview(StaticToggle):
         return has_privilege and can_self_enable
 
 
-@quickcache([])
 def all_previews():
-    return list(all_toggles_by_name_in_scope(globals()).values())
+    return list(all_previews_by_name().values())
 
 
+@quickcache([])
 def all_previews_by_name():
-    return all_toggles_by_name_in_scope(globals())
+    return all_toggles_by_name_in_scope(globals(), toggle_class=FeaturePreview)
 
 
 @quickcache(['domain'])
@@ -191,21 +190,5 @@ EXPLORE_CASE_DATA_PREVIEW = FeaturePreview(
         "ad-hoc data queries or to identify unclean data."
     ),
     can_self_enable_fn=is_eligible_for_ecd_preview,
-    save_fn=clear_project_data_tab_cache,
-)
-
-
-def is_eligible_for_bi_integration_preview(request):
-    return ODATA.enabled_for_request(request)
-
-
-BI_INTEGRATION_PREVIEW = FeaturePreview(
-    slug='bi_integration_preview',
-    label=_("PowerBi / Tableau Integration"),
-    description=_(
-        "Use OData feeds to integrate your CommCare data with Power "
-        "BI or Tableau."
-    ),
-    can_self_enable_fn=is_eligible_for_bi_integration_preview,
     save_fn=clear_project_data_tab_cache,
 )

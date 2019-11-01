@@ -1,5 +1,5 @@
-DELETE FROM "icds_dashboard_daily_feeding_forms" WHERE month=%(month)s
-{"month": "2019-01-01"}
+TRUNCATE "icds_dashboard_daily_feeding_forms"
+{}
 
         INSERT INTO "icds_dashboard_daily_feeding_forms" (
           state_id, supervisor_id, month, case_id, latest_time_end_processed,
