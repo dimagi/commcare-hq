@@ -142,3 +142,23 @@ def count_downloads_for_all_snapshots(domain_id):
         ).one()["value"]
     except TypeError:
         return 0
+
+
+def deleted_domain_exists(domain):
+    row = Domain.get_db().view('domain/deleted_domains', key=domain, reduce=True).one()
+    return bool(row)
+
+
+def domain_exists(domain):
+    row = Domain.get_db().view('domain/domains', key=domain, reduce=True).one()
+    return bool(row)
+
+
+def domain_or_deleted_domain_exists(domain):
+    return domain_exists(domain) or deleted_domain_exists(domain)
+
+
+def iter_all_domains_and_deleted_domains_with_name(domain):
+    """There should only ever be one!"""
+    yield from Domain.view('domain/deleted_domains', key=domain, reduce=False, include_docs=True).all()
+    yield from Domain.view('domain/domains', key=domain, reduce=False, include_docs=True).all()
