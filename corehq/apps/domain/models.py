@@ -653,14 +653,15 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         a name, which shouldn't happen unless max_length is absurdly short.
         '''
         from corehq.apps.domain.utils import get_domain_url_slug
+        from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
         name = get_domain_url_slug(hr_name, max_length=max_length)
         if not name:
             raise NameUnavailableException
-        if Domain.get_by_name(name):
+        if domain_or_deleted_domain_exists(name):
             prefix = name
             while len(prefix):
                 name = next_available_name(prefix, Domain.get_names_by_prefix(prefix + '-'))
-                if Domain.get_by_name(name):
+                if domain_or_deleted_domain_exists(name):
                     # should never happen
                     raise NameUnavailableException
                 if len(name) <= max_length:
@@ -690,6 +691,12 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     def get_names_by_prefix(cls, prefix):
         return [d['key'] for d in Domain.view(
             "domain/domains",
+            startkey=prefix,
+            endkey=prefix + "zzz",
+            reduce=False,
+            include_docs=False
+        ).all()] + [d['key'] for d in Domain.view(
+            "domain/deleted_domains",
             startkey=prefix,
             endkey=prefix + "zzz",
             reduce=False,

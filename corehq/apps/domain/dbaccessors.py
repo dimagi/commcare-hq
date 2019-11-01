@@ -1,5 +1,3 @@
-from dimagi.utils.parsing import json_format_datetime
-
 from corehq.apps.domain.models import Domain
 from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couch_helpers import paginate_view
