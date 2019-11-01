@@ -370,5 +370,4 @@ def get_role_edition(role_slug):
         return SoftwarePlanVersion.objects.filter(
             role__slug=role_slug, plan__edition=edition).count()
 
-    edition_counts = {e: _count_edition(e) for e in all_editions}
-    return max(edition_counts.items(), key=operator.itemgetter(1))[0]
+    return max(all_editions, key=_count_edition)
