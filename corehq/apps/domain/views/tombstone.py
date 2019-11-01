@@ -92,9 +92,6 @@ class TombstoneManagementForm(forms.Form):
 
         self.helper = HQFormHelper()
         self.helper.form_method = 'get'
-        self.helper.form_class = "form-horizontal"
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             'csv_domain_list',
             FormActions(
