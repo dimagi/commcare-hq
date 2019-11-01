@@ -112,8 +112,8 @@ FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
 SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
-KAFKA_PRODUCER_AUDIT_FILE = "%s/%s" % (FILEPATH, "kafka_audit.log")
-KAFKA_PRODUCER_AUDIT_LOG_ENABLED = False
+KAFKA_PRODUCER_AUDIT_FILE = "%s/%s" % (FILEPATH, "commcarehq.kafka_audit.log")
+KAFKA_PRODUCER_AUDIT_LOG_ENABLED = True
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}

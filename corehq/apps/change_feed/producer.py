@@ -1,5 +1,6 @@
 import json
 import logging
+import uuid
 from functools import partial
 
 from django.conf import settings
@@ -40,6 +41,7 @@ class ChangeProducer(object):
     def send_change(self, topic, change_meta):
         message = change_meta.to_json()
         message_json_dump = json.dumps(message).encode('utf-8')
+        change_meta._transaction_id = uuid.uuid4().hex
         try:
             _audit_log(CHANGE_PRE_SEND, change_meta)
             future = self.producer.send(topic, message_json_dump, key=change_meta.document_id)
@@ -70,7 +72,10 @@ def _on_error(change_meta, exc_info):
 
 
 def _audit_log(stage, change_meta):
-    logger.debug('%s,%s,%s', stage, change_meta.document_type, change_meta.document_id)
+    logger.debug(
+        '%s,%s,%s,%s', stage,
+        change_meta.document_type, change_meta.document_id, change_meta._transaction_id
+    )
 
 
 producer = ChangeProducer()
