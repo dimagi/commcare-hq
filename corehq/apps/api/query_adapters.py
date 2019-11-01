@@ -8,10 +8,11 @@ from corehq.apps.users.analytics import (
     get_count_of_inactive_commcare_users_in_domain,
     get_inactive_commcare_users_in_domain,
 )
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.chunked import chunked
 
 
-class UserQuerySetAdapter(object):
+class UserQuerySetAdapterCouch(object):
 
     def __init__(self, domain, show_archived):
         self.domain = domain
@@ -30,6 +31,33 @@ class UserQuerySetAdapter(object):
                 return get_inactive_commcare_users_in_domain(self.domain, start_at=item.start, limit=limit)
             else:
                 return get_active_commcare_users_in_domain(self.domain, start_at=item.start, limit=limit)
+        raise ValueError(
+            'Invalid type of argument. Item should be an instance of slice class.')
+
+
+class UserQuerySetAdapterES(object):
+
+    def __init__(self, domain, show_archived):
+        self.domain = domain
+        self.show_archived = show_archived
+
+    def count(self):
+        return self._query.count()
+
+    __len__ = count
+
+    @property
+    def _query(self):
+        if self.show_archived:
+            return UserES().mobile_users().domain(self.domain).show_only_inactive()
+        else:
+            return UserES().mobile_users().domain(self.domain)
+
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            limit = item.stop - item.start
+            result = self._query.size(limit).start(item.start).run()
+            return [CommCareUser.wrap(user) for user in result.hits]
         raise ValueError(
             'Invalid type of argument. Item should be an instance of slice class.')
 
