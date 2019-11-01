@@ -2,6 +2,7 @@ import logging
 import os
 import signal
 from collections import defaultdict
+from functools import partial
 from itertools import chain, count
 
 import gevent
@@ -201,12 +202,7 @@ class CaseDiffQueue(object):
             self._diff_cases()
 
     def _diff_cases(self):
-        def diff(cases_to_diff):
-            case_ids = list(cases_to_diff)
-            num_forms = sum(cases_to_diff.values())
-            if num_forms > MAX_FORMS_PER_DIFF:
-                # maybe adjust MAX_FORMS_PER_DIFF if this is frequent
-                log.warning("diff case %s with %s forms", case_ids, num_forms)
+        def diff(case_ids):
             couch_cases = []
             to_load = []
             pop_case = self.cases.pop
@@ -216,18 +212,28 @@ class CaseDiffQueue(object):
                     to_load.append(case_id)
                 else:
                     couch_cases.append(case)
+            popped_cases = list(couch_cases)
             couch_cases.extend(CaseAccessorCouch.get_cases(to_load))
-            json_by_id = {c.case_id: c.to_json() for c in couch_cases}
-            diff_cases(json_by_id, statedb=self.statedb)
-            self.cache_hits[0] += len(json_by_id.keys() - to_load)
-            self.cache_hits[1] += len(json_by_id)
-            self.num_diffed_cases += len(json_by_id)
+            prune = (iter if self._is_flushing
+                else partial(prune_premature_diffs, statedb=self.statedb))
+            json_by_id = {c.case_id: c.to_json() for c in prune(couch_cases)}
+            restore_cached(popped_cases, json_by_id)
+            if json_by_id:
+                diff_cases(json_by_id, statedb=self.statedb)
+                self.cache_hits[0] += len(json_by_id.keys() - to_load)
+                self.cache_hits[1] += len(json_by_id)
+                self.num_diffed_cases += len(json_by_id)
 
-        def spawn_diff(cases_to_diff):
+        def restore_cached(popped_cases, diff_ids):
+            for case in popped_cases:
+                if case.case_id not in diff_ids:
+                    self.cases[case.case_id] = case
+
+        def spawn_diff(case_ids):
             # may block due to concurrency limit on diff pool
-            self.diff_batcher.spawn(diff, cases_to_diff)
+            self.diff_batcher.spawn(diff, case_ids)
 
-        self.diff_spawner.spawn(spawn_diff, self.cases_to_diff)
+        self.diff_spawner.spawn(spawn_diff, list(self.cases_to_diff))
         self.cases_to_diff = {}
 
     def process_remaining_diffs(self):
@@ -611,6 +617,26 @@ class CasesReceivedCounter:
         self.queue.clean_break = value
 
 
+def prune_premature_diffs(couch_cases, statedb):
+    n_forms = 0
+    case_ids = []
+    cases_by_id = {c.case_id: c for c in couch_cases}
+    stock_forms = get_stock_forms_by_case_id(list(cases_by_id))
+    recs = [CaseRecord(c, stock_forms.get(c.case_id, [])) for c in couch_cases]
+    for case_id, total_forms, processed_forms in statedb.update_cases(recs):
+        if total_forms <= processed_forms:
+            yield cases_by_id[case_id]
+            case_ids.append(case_id)
+            n_forms += total_forms
+        else:
+            log.debug("pruned premature diff: %s (%s total > %s processed)",
+                case_id, total_forms, processed_forms)
+    if n_forms > MAX_FORMS_PER_DIFF * 5:
+        # maybe adjust MAX_FORMS_PER_DIFF if this is frequent
+        cid = case_ids[0] if len(case_ids) == 1 else case_ids
+        log.warning("diff case %s with %s forms", cid, n_forms)
+
+
 def diff_cases(couch_cases, statedb):
     """Diff a batch of cases
 
@@ -719,7 +745,7 @@ def is_orphaned_case(couch_case):
 
 class CaseRecord(object):
 
-    def __init__(self, case, stock_forms, processed_forms):
+    def __init__(self, case, stock_forms, processed_forms=0):
         self.id = case.case_id
         case_forms = get_case_form_ids(case)
         self.total_forms = len(case_forms) + len(stock_forms)
