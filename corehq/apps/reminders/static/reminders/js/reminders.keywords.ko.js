@@ -2,6 +2,7 @@ hqDefine("reminders/js/reminders.keywords.ko", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/widgets",      // .hqwebapp-select2 for survey dropdown
 ], function (
     $,
     ko,
@@ -25,7 +26,7 @@ hqDefine("reminders/js/reminders.keywords.ko", [
         });
 
         self.senderMessage = ko.observable(initialValues.sender_message);
-        self.senderFormUniqueId = ko.observable(initialValues.sender_form_unique_id);
+        self.senderAppAndFormUniqueId = ko.observable(initialValues.sender_app_and_form_unique_id);
         self.notifyOthers = ko.observable(initialValues.other_recipient_type !== 'none');
 
         self.otherRecipientType = ko.observable(initialValues.other_recipient_type);
@@ -41,9 +42,9 @@ hqDefine("reminders/js/reminders.keywords.ko", [
         });
 
         self.otherRecipientMessage = ko.observable(initialValues.other_recipient_message);
-        self.otherRecipientFormUniqueId = ko.observable(initialValues.other_recipient_form_unique_id);
+        self.otherRecipientAppAndFormUniqueId = ko.observable(initialValues.other_recipient_app_and_form_unique_id);
         self.processStructuredSms = ko.observable(initialValues.process_structured_sms);
-        self.structuredSmsFormUniqueId = ko.observable(initialValues.structured_sms_form_unique_id);
+        self.structuredSmsAppAndFormUniqueId = ko.observable(initialValues.structured_sms_app_and_form_unique_id);
         self.useCustomDelimiter = ko.observable(initialValues.use_custom_delimiter);
         self.delimiter = ko.observable(initialValues.delimiter);
 
