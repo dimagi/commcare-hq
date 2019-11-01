@@ -15,11 +15,9 @@ from corehq.apps.hqadmin.views.reports import (
     top_five_projects_by_country,
 )
 from corehq.apps.hqadmin.views.system import (
-    RecentCouchChangesView,
     SystemInfoView,
     branches_on_staging,
     check_services,
-    download_recent_changes,
     pillow_operation_api,
     system_ajax,
 )
@@ -39,9 +37,6 @@ from corehq.apps.reports.dispatcher import AdminReportDispatcher
 urlpatterns = [
     url(r'^$', default, name="default_admin_report"),
     url(r'^system/$', SystemInfoView.as_view(), name=SystemInfoView.urlname),
-    url(r'^system/recent_changes/$', RecentCouchChangesView.as_view(),
-        name=RecentCouchChangesView.urlname),
-    url(r'^system/recent_changes/download/$', download_recent_changes, name="download_recent_changes"),
     url(r'^system/system_ajax$', system_ajax, name="system_ajax"),
     url(r'^system/check_services$', check_services, name="check_services"),
     url(r'^system/autostaging/$', branches_on_staging, name="branches_on_staging"),
