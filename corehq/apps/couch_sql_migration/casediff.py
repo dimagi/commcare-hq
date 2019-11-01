@@ -207,7 +207,7 @@ class CaseDiffQueue(object):
             if num_forms > MAX_FORMS_PER_DIFF:
                 # maybe adjust MAX_FORMS_PER_DIFF if this is frequent
                 log.warning("diff case %s with %s forms", case_ids, num_forms)
-            couch_cases = {}
+            couch_cases = []
             to_load = []
             pop_case = self.cases.pop
             for case_id in case_ids:
@@ -215,13 +215,13 @@ class CaseDiffQueue(object):
                 if case is None:
                     to_load.append(case_id)
                 else:
-                    couch_cases[case_id] = case.to_json()
-            for case in CaseAccessorCouch.get_cases(to_load):
-                couch_cases[case.case_id] = case.to_json()
-            diff_cases(couch_cases, statedb=self.statedb)
-            self.cache_hits[0] += len(case_ids) - len(to_load)
-            self.cache_hits[1] += len(case_ids)
-            self.num_diffed_cases += len(case_ids)
+                    couch_cases.append(case)
+            couch_cases.extend(CaseAccessorCouch.get_cases(to_load))
+            json_by_id = {c.case_id: c.to_json() for c in couch_cases}
+            diff_cases(json_by_id, statedb=self.statedb)
+            self.cache_hits[0] += len(json_by_id.keys() - to_load)
+            self.cache_hits[1] += len(json_by_id)
+            self.num_diffed_cases += len(json_by_id)
 
         def spawn_diff(cases_to_diff):
             # may block due to concurrency limit on diff pool
@@ -263,7 +263,8 @@ class CaseDiffQueue(object):
             join(pool)
             if complete:
                 log.info("Diffing cases with unprocessed forms...")
-                for case_id, num_forms in self.statedb.iter_cases_with_unprocessed_forms():
+                unproc = self.statedb.iter_cases_with_unprocessed_forms()
+                for case_id, num_forms in unproc:
                     self.enqueue(case_id, num_forms)
             while self.cases_to_diff or pool or diff_pool:
                 if self.cases_to_diff:
