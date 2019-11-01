@@ -10,8 +10,6 @@ from corehq.util.couch import DocUpdate, iter_update
 from corehq.util.django_migrations import skip_on_fresh_install
 from corehq.util.log import with_progress_bar
 
-app_id_by_form_unique_id = {}
-
 
 @skip_on_fresh_install
 def _populate_app_id(apps, schema_editor):
@@ -20,6 +18,7 @@ def _populate_app_id(apps, schema_editor):
 
 
 def _add_field(doc):
+    app_id_by_form_unique_id = {}
     if doc.get('form_unique_id', None):
         form_unique_id = doc['form_unique_id']
         if form_unique_id not in app_id_by_form_unique_id:
