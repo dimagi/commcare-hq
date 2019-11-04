@@ -297,6 +297,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.ivory_coast_mtn',
     'corehq.messaging.smsbackends.karix',
     'corehq.messaging.smsbackends.airtel_tcl',
+    'corehq.messaging.smsbackends.rest_tcl',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.saved_reports',
@@ -1496,6 +1497,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
     'corehq.messaging.smsbackends.karix.models.KarixBackend',
     'corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend',
+    'corehq.messaging.smsbackends.rest_tcl.models.RestTCLBackend',
 ]
 
 # The number of seconds to use as a timeout when making gateway requests

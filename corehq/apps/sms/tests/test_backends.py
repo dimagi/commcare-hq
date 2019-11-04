@@ -42,6 +42,7 @@ from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
+from corehq.messaging.smsbackends.rest_tcl.models import RestTCLBackend
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
@@ -217,6 +218,13 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.airtel_tcl_backend.save()
 
+        cls.rest_tcl_backend = RestTCLBackend(
+            name='REST_TCL',
+            is_global=True,
+            hq_api_id=RestTCLBackend.get_api_id()
+        )
+        cls.rest_tcl_backend.save()
+
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscription()
@@ -241,6 +249,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.ivory_coast_mtn_backend.delete()
         cls.karix_backend.delete()
         cls.airtel_tcl_backend.delete()
+        cls.rest_tcl_backend.delete()
         clear_plan_version_cache()
         super(AllBackendTest, cls).tearDownClass()
 
@@ -334,8 +343,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
     @patch('corehq.messaging.smsbackends.karix.models.KarixBackend.send')
     @patch('corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend.send')
+    @patch('corehq.messaging.smsbackends.rest_tcl.models.RestTCLBackend.send')
     def test_outbound_sms(
             self,
+            rest_tcl_send,
             airtel_tcl_send,
             karix_send,
             ivory_coast_mtn_send,
@@ -374,6 +385,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.ivory_coast_mtn_backend, 'ivory_coast_mtn_test', ivory_coast_mtn_send)
         self._test_outbound_backend(self.karix_backend, 'karix test', karix_send)
         self._test_outbound_backend(self.airtel_tcl_backend, 'airtel tcl test', airtel_tcl_send)
+        self._test_outbound_backend(self.rest_tcl_backend, 'rest tcl test', rest_tcl_send)
 
     @run_with_all_backends
     def test_unicel_inbound_sms(self):

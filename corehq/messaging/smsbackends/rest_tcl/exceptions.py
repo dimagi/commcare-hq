@@ -1,0 +1,4 @@
+
+
+class RestTCLError(Exception):
+    pass
