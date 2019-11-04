@@ -32,7 +32,7 @@ class LSAwcMgtFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
             count(*) as form_count,
             count(*) FILTER (WHERE location_entered is not null and location_entered <> '') as awc_visits
                 FROM "{ucr_tablename}"
-                WHERE state_id=%(state_id)s AND submitted_on >= %(start_date)s AND  
+                WHERE state_id=%(state_id)s AND submitted_on >= %(start_date)s AND
                       submitted_on < %(end_date)s
                 GROUP BY state_id, location_id
         );

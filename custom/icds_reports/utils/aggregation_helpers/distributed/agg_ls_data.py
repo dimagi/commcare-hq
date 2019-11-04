@@ -123,7 +123,7 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
         agg_ls.supervisor_id = ut.supervisor_id;
         """.format(
             tablename=self.tablename,
-            prev_month_table = self.prev_month_table,
+            prev_month_table=self.prev_month_table,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
             awc_table=AGG_LS_AWC_VISIT_TABLE,

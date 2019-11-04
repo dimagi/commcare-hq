@@ -31,9 +31,11 @@ class LSBeneficiaryFormAggDistributedHelper(StateBasedAggregationPartitionedHelp
             location_id as supervisor_id,
             %(start_date)s::DATE AS month,
             count(*) as form_count,
-            count(*) FILTER (WHERE visit_type_entered is not null AND visit_type_entered <> '') as beneficiary_vists
+            count(*) FILTER (
+                        WHERE visit_type_entered is not null AND
+                        visit_type_entered <> '') as beneficiary_vists
             FROM "{ucr_tablename}"
-            WHERE  state_id=%(state_id)s AND submitted_on >= %(start_date)s AND  
+            WHERE  state_id=%(state_id)s AND submitted_on >= %(start_date)s AND
                    submitted_on < %(end_date)s
             GROUP BY state_id,location_id
         );
