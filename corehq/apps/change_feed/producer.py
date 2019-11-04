@@ -68,7 +68,10 @@ def _on_success(change_meta, record_metadata):
 
 def _on_error(change_meta, exc_info):
     _audit_log(CHANGE_ERROR, change_meta)
-    notify_exception(None, 'Problem sending change to Kafka', details=change_meta.to_json(), exec_info=exc_info)
+    notify_exception(
+        None, 'Problem sending change to Kafka (async)',
+        details=change_meta.to_json(), exec_info=exc_info
+    )
 
 
 def _audit_log(stage, change_meta):

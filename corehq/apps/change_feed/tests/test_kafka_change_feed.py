@@ -3,9 +3,6 @@ from copy import deepcopy
 
 from django.test import SimpleTestCase, TestCase
 
-from kafka.future import Future
-from mock import Mock
-
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.feed.interface import ChangeMeta
 from pillowtop.pillow.interface import ConstructedPillow
@@ -17,18 +14,10 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaCheckpointEventHandler,
 )
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
-from corehq.apps.change_feed.producer import (
-    CHANGE_ERROR,
-    CHANGE_PRE_SEND,
-    CHANGE_SENT,
-    KAFKA_AUDIT_LOGGER,
-    ChangeProducer,
-    producer,
-)
+from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import (
     get_multi_topic_first_available_offsets,
 )
-from corehq.util.test_utils import capture_log_output
 
 
 class KafkaChangeFeedTest(SimpleTestCase):
@@ -129,61 +118,7 @@ class KafkaCheckpointTest(TestCase):
         self.assertEqual(feed.get_current_checkpoint_offsets(), current_kafka_offsets)
 
 
-def publish_stub_change(topic, kafka_producer=None):
+def publish_stub_change(topic):
     meta = ChangeMeta(document_id=uuid.uuid4().hex, data_source_type='dummy-type', data_source_name='dummy-name')
-    (kafka_producer or producer).send_change(topic, meta)
+    producer.send_change(topic, meta)
     return meta
-
-
-class TestKafkaAuditLogging(SimpleTestCase):
-    def test_success_synchronous(self):
-        self._test_success(auto_flush=True)
-
-    def test_success_asynchronous(self):
-        self._test_success(auto_flush=False)
-
-    def test_error_synchronous(self):
-        kafka_producer = ChangeProducer()
-        future = Future()
-        future.get = Mock(side_effect=Exception())
-        kafka_producer.producer.send = Mock(return_value=future)
-
-        meta = ChangeMeta(
-            document_id=uuid.uuid4().hex, data_source_type='dummy-type', data_source_name='dummy-name'
-        )
-
-        with capture_log_output(KAFKA_AUDIT_LOGGER) as logs:
-            with self.assertRaises(Exception):
-                kafka_producer.send_change(topics.CASE, meta)
-
-        self._check_logs(logs, meta.document_id, [CHANGE_PRE_SEND, CHANGE_ERROR])
-
-    def test_error_asynchronous(self):
-        kafka_producer = ChangeProducer(auto_flush=False)
-        future = Future()
-        kafka_producer.producer.send = Mock(return_value=future)
-
-        meta = ChangeMeta(
-            document_id=uuid.uuid4().hex, data_source_type='dummy-type', data_source_name='dummy-name'
-        )
-
-        with capture_log_output(KAFKA_AUDIT_LOGGER) as logs:
-            kafka_producer.send_change(topics.CASE, meta)
-            future.failure(Exception())
-
-        self._check_logs(logs, meta.document_id, [CHANGE_PRE_SEND, CHANGE_ERROR])
-
-    def _test_success(self, auto_flush):
-        kafka_producer = ChangeProducer(auto_flush=auto_flush)
-        with capture_log_output(KAFKA_AUDIT_LOGGER) as logs:
-            meta = publish_stub_change(topics.CASE, kafka_producer)
-            if not auto_flush:
-                kafka_producer.flush()
-        self._check_logs(logs, meta.document_id, [CHANGE_PRE_SEND, CHANGE_SENT])
-
-    def _check_logs(self, captured_logs, doc_id, events):
-        lines = captured_logs.get_output().splitlines()
-        self.assertEqual(len(events), len(lines))
-        for event, line in zip(events, lines):
-            self.assertIn(doc_id, line)
-            self.assertIn(event, line)
