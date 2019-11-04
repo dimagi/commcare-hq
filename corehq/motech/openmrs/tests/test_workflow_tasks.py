@@ -18,7 +18,6 @@ def test_concept_directions():
         "case_config": {},
         "form_configs": [form_config_dict]
     })
-
     info = CaseTriggerInfo(
         domain="test-domain",
         case_id="c0ffee",
@@ -27,7 +26,6 @@ def test_concept_directions():
             "/data/malnutrition": "no",
         }
     )
-
     task = CreateVisitsEncountersObsTask(
         requests=None,
         domain="test-domain",
@@ -36,7 +34,9 @@ def test_concept_directions():
         openmrs_config=openmrs_config,
         person_uuid="test-person_uuid",
     )
-    values_for_concept=task._get_values_for_concept(OpenmrsFormConfig.wrap(form_config_dict))
+    values_for_concept = task._get_values_for_concept(
+        OpenmrsFormConfig.wrap(form_config_dict)
+    )
     eq(values_for_concept, {
         # "direction": "out"
         'e7fdcd25-6d11-4d85-a80a-8979785f0f4b': ['eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0'],
