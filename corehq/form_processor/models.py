@@ -19,6 +19,7 @@ from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
 from PIL import Image
 from lxml import etree
+from partial_index import PartialIndex, PQ
 
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import CODES, get_blob_db
@@ -376,6 +377,8 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     commcare_version = models.CharField(max_length=8, blank=True, null=True)
     app_version = models.PositiveIntegerField(null=True, blank=True)
 
+    update_sequence_id = models.BigIntegerField(null=True)
+
     def __init__(self, *args, **kwargs):
         super(XFormInstanceSQL, self).__init__(*args, **kwargs)
         # keep track to avoid refetching to check whether value is updated
@@ -582,7 +585,12 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             ('domain', 'user_id'),
         ]
         indexes = [
-            models.Index(['xmlns'])
+            models.Index(['xmlns']),
+            PartialIndex(
+                fields=['update_sequence_id'],
+                unique=False,
+                where=PQ(update_sequence_id__isnull=False),
+            ),
         ]
 
 
