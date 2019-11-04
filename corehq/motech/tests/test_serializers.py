@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from django.test import SimpleTestCase
 
-from corehq.motech.serializers import to_date_str
+from corehq.motech.serializers import to_date_str, to_integer
 
 
 class SerializerTests(SimpleTestCase):
@@ -26,3 +26,19 @@ class SerializerTests(SimpleTestCase):
         day_int = 1
         date_str = to_date_str(day_int)
         self.assertIsNone(date_str)
+
+    def test_to_integer_none(self):
+        value = to_integer(None)
+        self.assertIsNone(value)
+
+    def test_to_integer_valid_str(self):
+        value = to_integer("123")
+        self.assertEqual(value, 123)
+
+    def test_to_integer_invalid_str(self):
+        value = to_integer("one hundred and twenty three")
+        self.assertIsNone(value)
+
+    def test_to_integer_float(self):
+        value = to_integer(1.23)
+        self.assertEqual(value, 1)

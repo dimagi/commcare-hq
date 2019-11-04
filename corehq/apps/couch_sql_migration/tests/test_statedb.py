@@ -149,6 +149,12 @@ def test_no_action_case_forms():
         eq(db.get_no_action_case_forms(), {"abc", "def"})
 
 
+def test_duplicate_no_action_case_form():
+    with init_db() as db:
+        db.add_no_action_case_form("abc")
+        db.add_no_action_case_form("abc")  # should not raise
+
+
 @with_setup(teardown=delete_db)
 def test_resume_state():
     with init_db(memory=False) as db:
