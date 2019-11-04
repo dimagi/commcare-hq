@@ -26,6 +26,8 @@ Save those backups to somewhere you'll be able to access from the new environmen
 - [Pip](https://pip.pypa.io/en/stable/installing/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/)
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
+- [Pango](https://pango.gnome.org/) 
+  - `sudo apt install libpango1.0-0`
 
 ##### macOS Notes
 
