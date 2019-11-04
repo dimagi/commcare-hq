@@ -234,7 +234,10 @@ def import_patients_with_importer(importer_json):
             # PARAMETERS. If not, OpenMRS will return THE SAME PATIENTS
             # multiple times and they will be assigned to a different
             # user each time.
-            import_patients_of_owner(requests, importer, importer.domain, owner.user_id, location)
+            try:
+                import_patients_of_owner(requests, importer, importer.domain, owner.user_id, location)
+            except ConfigurationError as err:
+                requests.notify_error(str(err))
     elif importer.owner_id:
         if not is_valid_owner(importer.owner_id):
             requests.notify_error(
@@ -243,7 +246,10 @@ def import_patients_with_importer(importer_json):
                 'is invalid.'
             )
             return
-        import_patients_of_owner(requests, importer, importer.domain, importer.owner_id)
+        try:
+            import_patients_of_owner(requests, importer, importer.domain, importer.owner_id)
+        except ConfigurationError as err:
+            requests.notify_error(str(err))
     else:
         requests.notify_error(
             f'Error importing patients for project space "{importer.domain}" from '
