@@ -161,6 +161,13 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
             stop_datetime = to_omrs_datetime(cc_stop_datetime)
         return start_datetime, stop_datetime
 
+    def _get_values_for_concept(self, form_config):
+        return {
+            obs.concept: [obs.value.get_value(self.info)]
+            for obs in form_config.openmrs_observations
+            if obs.value.get_value(self.info)
+        }
+
     def run(self):
         """
         Returns WorkflowTasks for creating visits, encounters and observations
@@ -184,9 +191,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
                         provider_uuid=provider_uuid,
                         start_datetime=start_datetime,
                         stop_datetime=stop_datetime,
-                        values_for_concept={obs.concept: [obs.value.get_value(self.info)]
-                                            for obs in form_config.openmrs_observations
-                                            if obs.value.get_value(self.info)},
+                        values_for_concept=self._get_values_for_concept(form_config),
                         encounter_type=form_config.openmrs_encounter_type,
                         openmrs_form=form_config.openmrs_form,
                         visit_type=form_config.openmrs_visit_type,
