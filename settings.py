@@ -2063,6 +2063,7 @@ DATADOG_DOMAINS = {
     ("production", "rec"),
     ("production", "isth-production"),
     ("production", "sauti-1"),
+    ("production", "ndoh-wbot"),
 }
 
 #### Django Compressor Stuff after localsettings overrides ####
