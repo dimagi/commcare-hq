@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from glob import glob
 from inspect import signature
+from signal import SIGINT
 
 from django.test import SimpleTestCase
 
@@ -426,6 +427,12 @@ class TestCaseDiffProcess(SimpleTestCase):
             with self.assertRaises(mod.ProcessNotAllowed):
                 mod.CaseDiffProcess(statedb)
 
+    def test_clean_break(self):
+        with self.process() as proc:
+            self.assertEqual(proc.get_status(), [0, 0, 0])
+            os.kill(proc.process.pid, SIGINT)
+            self.assertEqual(proc.get_status(), [0, 0, 1])
+
     def test_fake_case_diff_queue_interface(self):
         tested = set()
         for name in dir(FakeCaseDiffQueue):
@@ -477,6 +484,7 @@ class FakeCaseDiffQueue(object):
     def __init__(self, statedb, status_interval=None):
         self.statedb = statedb
         self.stats = {"pending": 0, "cached": "0/0", "loaded": 0, "diffed": 0}
+        self.clean_break = False
 
     def __enter__(self):
         with self.statedb.pop_resume_state(type(self).__name__, {}) as state:
@@ -494,6 +502,8 @@ class FakeCaseDiffQueue(object):
         self.stats["loaded"] += 1
 
     def get_status(self):
+        if self.clean_break:
+            self.stats["diffed"] = 1
         return self.stats
 
 

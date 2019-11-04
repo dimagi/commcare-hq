@@ -162,7 +162,7 @@ class ChunkedUCRProcessorTest(TestCase):
         process_change_patch.assert_has_calls([mock.call(mock.ANY)] * 10)
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
-    @mock.patch('corehq.form_processor.document_stores.ReadonlyCaseDocumentStore.iter_documents')
+    @mock.patch('corehq.form_processor.document_stores.CaseDocumentStore.iter_documents')
     def test_partial_fallback_calls(self, iter_docs_patch, process_change_patch):
         # this is equivalent to failing on last 4 docs, since they are missing in docstore
         docs = [
@@ -175,7 +175,7 @@ class ChunkedUCRProcessorTest(TestCase):
         # since chunked processing failed, normal processing should get called
         process_change_patch.assert_has_calls([mock.call(mock.ANY)] * 4)
 
-    @mock.patch('corehq.form_processor.document_stores.ReadonlyCaseDocumentStore.iter_documents')
+    @mock.patch('corehq.form_processor.document_stores.CaseDocumentStore.iter_documents')
     def test_partial_fallback_data(self, iter_docs_patch):
         docs = [
             get_sample_doc_and_indicators(self.fake_time_now)[0]

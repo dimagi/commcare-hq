@@ -3,7 +3,7 @@ import base64
 from django.test import Client
 from django.urls import reverse
 
-from elasticsearch.exceptions import ConnectionError
+from corehq.util.es.elasticsearch import ConnectionError
 from tastypie.models import ApiKey
 
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -43,7 +43,7 @@ class OdataTestMixin(object):
     @classmethod
     def _setup_accounting(cls):
         cls.account, _ = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by='')
-        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
+        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ADVANCED)
         cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan_version)
 
     @classmethod

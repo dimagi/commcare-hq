@@ -43,13 +43,13 @@ class Command(BaseCommand):
         return list(case_ids_to_rebuild)
 
     def _archive_forms(self):
-        with open("forms_archived.txt", "w+b") as forms_log:
+        with open("forms_archived.txt", "w") as forms_log:
             for form in with_progress_bar(self.forms):
                 forms_log.write("%s\n" % form.form_id)
                 form.archive(trigger_signals=False)
 
     def _remove_ledger_transactions(self):
-        with open("ledger_transactions_removed_case_ids.txt", "w+b") as case_ids_log:
+        with open("ledger_transactions_removed_case_ids.txt", "w") as case_ids_log:
             forms_iterated = 0
             for xform in with_progress_bar(self.forms):
                 forms_iterated += 1
@@ -66,7 +66,7 @@ class Command(BaseCommand):
         user = CouchUser.get_by_user_id(self.user_id)
         reason = "User %s forms archived for domain %s by system" % (user.raw_username, self.domain)
         form_processor_interface = FormProcessorInterface(self.domain)
-        with open("cases_rebuilt.txt", "w+b") as case_log:
+        with open("cases_rebuilt.txt", "w") as case_log:
             for case_id in with_progress_bar(self.case_ids_to_rebuild):
                 case_log.write("%s\n" % case_id)
                 rebuild_case_from_forms(self.domain, case_id, RebuildWithReason(reason=reason))
