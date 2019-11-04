@@ -17,6 +17,8 @@ class DashBoardUsage:
     required_fields = ['state_id', 'state_name', 'district_id', 'district_name', 'block_id', 'block_name']
     location_types = ['state_id', 'district_id', 'block_id']
     agg_required_fields = ['state_id', 'district_id', 'block_id', 'is_launched']
+    location_test_fields = ['state_is_test', 'district_is_test', 'block_is_test', 'supervisor_is_test',
+                            'awc_is_test']
 
     roles = {
         '.nod': 'Nodal Officer',
@@ -168,14 +170,19 @@ class DashBoardUsage:
             }
             if not self.national_user:
                 user_location = logged_in_user_locations[loop_counter]
-                location_type_filter[self.get_location_id_string_from_location_type(
-                    user_location.location_type_name)]: user_location.get_id
+                user_location_type_name = \
+                    self.get_location_id_string_from_location_type(user_location.location_type_name)
+                location_type_filter[user_location_type_name]: user_location.get_id
+            else:
+                user_location_type_name = None
+            for test_location in self.location_test_fields:
+                location_type_filter[test_location] = 0
 
             all_awc_locations = AwcLocation.objects.filter(**location_type_filter).values(*self.required_fields)
             # converting the result set to matrix to fetch ancestors for a given location
             location_matrix, location_ids =\
-                self.convert_rs_to_matrix(all_awc_locations, self.get_location_id_string_from_location_type(
-                    user_location.location_type_name))
+                self.convert_rs_to_matrix(all_awc_locations, user_location_type_name)
+
 
             users = self.get_users_by_location(location_ids)
 
