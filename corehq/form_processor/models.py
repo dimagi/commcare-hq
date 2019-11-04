@@ -364,6 +364,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     problem = models.TextField(null=True)
     date_header = models.DateTimeField(null=True)
     build_id = models.CharField(max_length=255, null=True)
+    build_profile_id = models.CharField(max_length=255, null=True)
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
     initial_processing_complete = models.BooleanField(default=False)
 

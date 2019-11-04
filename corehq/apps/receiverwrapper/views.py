@@ -101,12 +101,14 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             )
 
         app_id, build_id = get_app_and_build_ids(domain, app_id)
+        build_profile_id = request.META.get('buildProfileId')
         submission_post = SubmissionPost(
             instance=instance,
             attachments=attachments,
             domain=domain,
             app_id=app_id,
             build_id=build_id,
+            build_profile_id=build_profile_id,
             auth_context=auth_cls(
                 domain=domain,
                 user_id=user_id,

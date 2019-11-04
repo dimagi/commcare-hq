@@ -63,8 +63,8 @@ class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform ca
 class SubmissionPost(object):
 
     def __init__(self, instance=None, attachments=None, auth_context=None,
-                 domain=None, app_id=None, build_id=None, path=None,
-                 location=None, submit_ip=None, openrosa_headers=None,
+                 domain=None, app_id=None, build_id=None, build_profile_id=None,
+                 path=None, location=None, submit_ip=None, openrosa_headers=None,
                  last_sync_token=None, received_on=None, date_header=None,
                  partial_submission=False, case_db=None, force_logs=False):
         assert domain, "'domain' is required"
@@ -73,6 +73,7 @@ class SubmissionPost(object):
         self.domain = domain
         self.app_id = app_id
         self.build_id = build_id
+        self.build_profile_id = build_profile_id
         # get_location has good default
         self.location = location or couchforms.get_location()
         self.received_on = received_on
@@ -112,6 +113,8 @@ class SubmissionPost(object):
         if self.date_header:
             xform.date_header = self.date_header
 
+        if self.build_profile_id:
+            xform.build_profile_id = self.build_profile_id
         xform.app_id = self.app_id
         xform.build_id = self.build_id
         xform.export_tag = ["domain", "xmlns"]

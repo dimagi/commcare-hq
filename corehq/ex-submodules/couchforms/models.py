@@ -136,6 +136,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
     # almost always a datetime, but if it's not parseable it'll be a string
     date_header = DefaultProperty()
     build_id = StringProperty()
+    build_profile_id = StringProperty()
     export_tag = DefaultProperty(name='#export_tag')
     _blobdb_type_code = CODES.form_xml
 
