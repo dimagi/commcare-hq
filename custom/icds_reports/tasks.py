@@ -1367,6 +1367,7 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
 
     status_record.last_processed_date = datetime.utcnow()
+    status_record.documents_missing = number_documents_missing
     if number_documents_missing == 0:
         status_record.verified_date = datetime.utcnow()
     status_record.save()

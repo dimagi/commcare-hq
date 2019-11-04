@@ -89,6 +89,7 @@ class UcrReconciliationStatus(models.Model):
     )
     doc_type_filter = models.TextField(help_text="Either an XMLNS or case type")
     last_processed_date = models.DateTimeField(null=True)
+    documents_missing = models.IntegerField(null=True)
     verified_date = models.DateTimeField(null=True)
 
     @property
