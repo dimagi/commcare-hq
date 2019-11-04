@@ -3,6 +3,8 @@ from django.core.management.base import BaseCommand
 import attr
 from gevent.pool import Pool
 
+from dimagi.utils.dates import force_to_date
+
 from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.tasks import (
     _agg_awc_table,
@@ -31,6 +33,9 @@ from custom.icds_reports.tasks import (
     create_all_mbt,
     setup_aggregation,
     update_child_health_monthly_table,
+)
+from custom.icds_reports.utils.aggregation_helpers import (
+    previous_month_aggregation_should_run,
 )
 
 STATE_TASKS = {
@@ -92,6 +97,8 @@ class Command(BaseCommand):
         self.setup_tasks()
         agg_record = AggregationRecord.objects.get(agg_uuid=agg_uuid)
         agg_date = agg_record.agg_date
+        if not previous_month_aggregation_should_run(force_to_date(agg_date)):
+            return
         state_ids = agg_record.state_ids
         query = self.function_map[query_name]
         if query.by_state == SINGLE_STATE:

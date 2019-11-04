@@ -1,8 +1,9 @@
-import architect
 import uuid
 
-from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
+from django.db import models
+
+import architect
 
 from dimagi.utils.web import get_ip
 
@@ -69,3 +70,4 @@ class AggregationRecord(models.Model):
     run_date = models.DateField(auto_now_add=True)
     state_ids = ArrayField(models.CharField(max_length=255), null=True)
     agg_uuid = models.UUIDField(unique=True, default=uuid.uuid4)
+    interval = models.IntegerField(null=True)

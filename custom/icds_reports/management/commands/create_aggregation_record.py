@@ -6,10 +6,15 @@ from django.db import IntegrityError
 
 from dateutil.relativedelta import relativedelta
 
+from dimagi.utils.dates import force_to_date
+
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.tasks import setup_aggregation
+from custom.icds_reports.utils.aggregation_helpers import (
+    previous_month_aggregation_should_run,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +37,17 @@ class Command(BaseCommand):
 
         agg_date = self.get_agg_date()
         try:
-            AggregationRecord.objects.create(agg_uuid=self.agg_uuid, agg_date=agg_date, state_ids=state_ids)
+            AggregationRecord.objects.create(
+                agg_uuid=self.agg_uuid,
+                agg_date=agg_date,
+                state_ids=state_ids,
+                interval=interval,
+            )
         except IntegrityError:
             logger.info(f'AggregationRecord {agg_uuid} already created')
-        setup_aggregation(agg_date)
+
+        if previous_month_aggregation_should_run(force_to_date(agg_date)):
+            setup_aggregation(agg_date)
 
     def get_agg_date(self):
         if self.interval == 0:
