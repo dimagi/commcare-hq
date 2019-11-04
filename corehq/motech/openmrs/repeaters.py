@@ -26,7 +26,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.motech.const import DIRECTION_IMPORT
 from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT, XMLNS_OPENMRS
-from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.repeater_helpers import (
     get_case_location_ancestor_repeaters,
@@ -279,7 +278,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         )
 
     if errors:
-        logger.error('Errors encountered sending OpenMRS data: %s', errors)
+        requests.notify_error(f'Errors encountered sending OpenMRS data: {errors}')
         # If the form included multiple patients, some workflows may
         # have succeeded, but don't say everything was OK if any
         # workflows failed. (Of course most forms will only involve one
@@ -287,7 +286,6 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         return OpenmrsResponse(400, 'Bad Request', "Errors: " + pformat_json([str(e) for e in errors]))
 
     if warnings:
-        logger.warning("Warnings encountered sending OpenMRS data: %s", warnings)
         return OpenmrsResponse(201, "Accepted", "Warnings: " + pformat_json([str(e) for e in warnings]))
 
     return OpenmrsResponse(200, "OK")
