@@ -7,10 +7,12 @@ from django.conf import settings
 
 import pytz
 from mock import patch
+from nose.tools import assert_raises_regexp
 
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.const import IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.tasks import (
@@ -22,8 +24,8 @@ TEST_DOMAIN = 'test-domain'
 
 
 @contextmanager
-def get_importer():
-    importer = OpenmrsImporter.wrap({
+def get_importer(column_mapping=None):
+    importer_dict = {
         'domain': TEST_DOMAIN,
         'server_url': 'http://www.example.com/openmrs',
         'username': 'admin',
@@ -82,7 +84,15 @@ def get_importer():
                 'property': 'data_proxima_consulta'
             }
         ],
-    })
+    }
+    if column_mapping:
+        for mapping in importer_dict['column_map']:
+            if mapping['column'] == column_mapping['column']:
+                mapping.update(column_mapping)
+                break
+        else:
+            importer_dict['column_map'].append(column_mapping)
+    importer = OpenmrsImporter.wrap(importer_dict)
     try:
         yield importer
     finally:
@@ -162,6 +172,31 @@ def test_get_case_properties():
             'provincia': 'Maputo',
             'tarv_elegivel': 1
         }
+
+
+def test_bad_data_type():
+    """
+    Notify if column data type is wrong
+    """
+    patient = get_patient()
+    bad_column_mapping = {
+        'column': 'data_proxima_consulta',
+        'data_type': 'omrs_datetime',
+        'commcare_data_type': 'cc_date',
+        'property': 'data_proxima_consulta'
+    }
+    with get_importer(bad_column_mapping) as importer:
+        with assert_raises_regexp(
+            ConfigurationError,
+            'Error importing from <OpenmrsImporter None admin@http://www.example.com/openmrs>: '
+            'Unable to deserialize value 1551564000000 '
+            'in column "data_proxima_consulta" '
+            'for case property "data_proxima_consulta". '
+            'OpenMRS data type is given as "omrs_datetime". '
+            'CommCare data type is given as "cc_date": '
+            'argument of type \'int\' is not iterable'
+        ):
+            get_case_properties(patient, importer)
 
 
 @patch("corehq.motech.openmrs.models.get_timezone_for_domain")
