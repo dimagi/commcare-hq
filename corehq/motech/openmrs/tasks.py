@@ -12,17 +12,18 @@ from celery.task import periodic_task, task
 from jinja2 import Template
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.groups.models import Group
-from corehq.apps.users.cases import get_wrapped_owner
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
+from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.users.cases import get_wrapped_owner
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.atom_feed import (
     get_feed_updates,
     import_encounter,
@@ -79,12 +80,29 @@ def get_openmrs_patients(requests, importer, location=None):
 
 
 def get_case_properties(patient, importer):
+    """
+    Returns case name and dictionary of case properties to update
+
+    Raises ConfigurationError if a value cannot be deserialized using
+    the data types given in a column mapping.
+    """
     name_columns = importer.name_columns.split(' ')
     case_name = ' '.join([patient[column] for column in name_columns])
-    fields_to_update = {
-        m.property: m.deserialize(patient[m.column], importer.get_timezone())
-        for m in importer.column_map
-    }
+    fields_to_update = {}
+    for mapping in importer.column_map:
+        try:
+            fields_to_update[mapping.property] = mapping.deserialize(
+                patient[mapping.column], importer.get_timezone()
+            )
+        except (TypeError, ValueError) as err:
+            raise ConfigurationError(
+                f'Error importing from {importer}: '
+                f'Unable to deserialize value {repr(patient[mapping.column])} '
+                f'in column "{mapping.column}" for case property '
+                f'"{mapping.property}". OpenMRS data type is given as '
+                f'"{mapping.data_type}". CommCare data type is given as '
+                f'"{mapping.commcare_data_type}": {err}'
+            )
     return case_name, fields_to_update
 
 
