@@ -88,8 +88,7 @@ class DashBoardUsage:
             sub_location_types = self.location_types
 
         for result in results_queryset:
-            row_data = [result['state_id'], result['district_id'], result['block_id'], result['supervisor_id'],
-                        result['doc_id']]
+            row_data = [result['state_id'], result['district_id'], result['block_id']]
             location_matrix.append(row_data)
             # adding only descendants to the main location
             for sub_location in sub_location_types:
