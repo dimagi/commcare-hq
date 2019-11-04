@@ -165,7 +165,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         return {
             obs.concept: [obs.value.get_value(self.info)]
             for obs in form_config.openmrs_observations
-            if obs.value.get_value(self.info)
+            if obs.value.check_direction(DIRECTION_EXPORT) and not is_blank(obs.value.get_value(self.info))
         }
 
     def run(self):
@@ -660,3 +660,17 @@ class UpdatePersonPropertiesTask(WorkflowTask):
                 json=properties,
                 raise_for_status=True,
             )
+
+
+# TODO: Refactor once https://github.com/dimagi/commcare-hq/pull/25732 is merged
+def is_blank(value):
+    """
+    Returns True if ``value`` is ``None`` or an empty string.
+    >>> is_blank("")
+    True
+    >>> is_blank(0)
+    False
+    >>> is_blank([])
+    False
+    """
+    return value is None or value == ""
