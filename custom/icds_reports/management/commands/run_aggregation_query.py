@@ -97,7 +97,8 @@ class Command(BaseCommand):
         self.setup_tasks()
         agg_record = AggregationRecord.objects.get(agg_uuid=agg_uuid)
         agg_date = agg_record.agg_date
-        if not previous_month_aggregation_should_run(force_to_date(agg_date)):
+        if (agg_record.interval != 0
+                and not previous_month_aggregation_should_run(force_to_date(agg_date))):
             return
         state_ids = agg_record.state_ids
         query = self.function_map[query_name]

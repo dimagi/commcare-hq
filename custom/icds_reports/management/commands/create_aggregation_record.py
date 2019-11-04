@@ -46,8 +46,11 @@ class Command(BaseCommand):
         except IntegrityError:
             logger.info(f'AggregationRecord {agg_uuid} already created')
 
-        if previous_month_aggregation_should_run(force_to_date(agg_date)):
-            setup_aggregation(agg_date)
+        # if this is a previous month and the previous month should not run
+        if (interval != 0
+                and not previous_month_aggregation_should_run(force_to_date(agg_date))):
+            return
+        setup_aggregation(agg_date)
 
     def get_agg_date(self):
         if self.interval == 0:
