@@ -22,6 +22,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [Python 3.6](https://www.python.org/downloads/)
+- [Python 3.6 distutils](https://docs.python.org/3/library/distutils.html) - `sudo apt-get install python3-distutils`
 - [Pip](https://pip.pypa.io/en/stable/installing/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/)
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
