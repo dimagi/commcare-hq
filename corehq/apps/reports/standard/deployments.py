@@ -92,6 +92,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              prop_name='reporting_metadata.last_builds.build_version',
                              alt_prop_name='reporting_metadata.last_build_for_user.build_version',
                              sql_col='last_form_app_build_version'),
+            DataTablesColumn(_("Build Profile"),
+                             help_text=_("The build profile from the user's last form submission."),
+                             sortable=False),
             DataTablesColumn(_("CommCare Version"),
                              help_text=_("""The CommCare version from the user's last request"""),
                              prop_name='reporting_metadata.last_submissions.commcare_version',
@@ -165,13 +168,15 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return self.request_params.get(SelectApplicationFilter.slug, None)
 
     @quickcache(['app_id'], timeout=60 * 60)
-    def get_app_name(self, app_id):
+    def _get_app(self, app_id):
         try:
-            app = get_app(self.domain, app_id)
+            return get_app(self.domain, app_id)
         except ResourceNotFound:
-            pass
-        else:
-            return app.name
+            return None
+
+    def get_app_name(self, app_id):
+        app = self._get_app(app_id)
+        return app.name if app else None
 
     def get_data_for_app(self, options, app_id):
         try:
@@ -280,6 +285,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
+            last_build_profile_name = None
             build_version = _("Unknown")
             reporting_metadata = user.get('reporting_metadata', {})
             if self.selected_app_id:
@@ -308,6 +314,12 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                         commcare_version = _get_commcare_version(device['commcare_version'])
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
+            if last_sub and last_sub.get('build_profile_id'):
+                last_build_profile_name = _("Unknown")
+                last_build_profile_id = last_sub.get('build_profile_id')
+                app = self._get_app(last_sub['app_id'])
+                if app and last_build_profile_id in app.build_profiles:
+                    last_build_profile_name = app.build_profiles[last_build_profile_id].name
             if last_sync and last_sync.get('sync_date'):
                 last_sync_date = string_to_utc_datetime(last_sync['sync_date'])
             if last_build:
@@ -320,7 +332,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
-                app_name or "---", build_version, commcare_version or '---'
+                app_name or "---", build_version, last_build_profile_name, commcare_version or '---'
             ]
 
             if self.include_location_data():

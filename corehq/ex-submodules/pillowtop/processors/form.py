@@ -43,6 +43,7 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
         received_on = doc.get('received_on')
         app_id = doc.get('app_id')
         version = doc.get('version')
+        build_profile_id = doc.get('build_profile_id')
 
         try:
             metadata = doc['form']['meta']
@@ -50,7 +51,8 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
             metadata = None
 
         if user_id and domain and received_on:
-            mark_latest_submission(domain, user_id, app_id, build_id, version, metadata, received_on)
+            mark_latest_submission(domain, user_id, app_id, build_id, build_profile_id,
+                                   version, metadata, received_on)
 
 
 @quickcache(['domain', 'build_id'], timeout=60 * 60)
@@ -90,7 +92,8 @@ def _last_submission_needs_update(last_submission, received_on_datetime, build_v
     return time_difference > update_frequency
 
 
-def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata, received_on):
+def mark_latest_submission(domain, user_id, app_id, build_id, build_profile_id,
+                           version, metadata, received_on):
     user = CouchUser.get_by_user_id(user_id, domain)
 
     if not user or user.is_deleted():
@@ -128,6 +131,7 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
         last_submission.device_id = device_id
         last_submission.app_id = app_id
         last_submission.build_id = build_id
+        last_submission.build_profile_id = build_profile_id
         last_submission.build_version = app_version_info.build_version
         last_submission.commcare_version = app_version_info.commcare_version
 
