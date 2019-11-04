@@ -36,7 +36,6 @@ from corehq.motech.openmrs.const import (
     XMLNS_OPENMRS,
 )
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
-from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import Requests
@@ -186,12 +185,13 @@ def import_patients_to_domain(domain_name, force=False):
 def import_patients_with_importer(importer_json):
     importer = OpenmrsImporter.wrap(importer_json)
     password = b64_aes_decrypt(importer.password)
-    requests = Requests(importer.domain, importer.server_url, importer.username, password)
+    requests = Requests(importer.domain, importer.server_url, importer.username, password,
+                        notify_addresses=importer.notify_addresses)
     if importer.location_type_name:
         try:
             location_type = LocationType.objects.get(domain=importer.domain, name=importer.location_type_name)
         except LocationType.DoesNotExist:
-            logger.error(
+            requests.notify_error(
                 f'No organization level named "{importer.location_type_name}" '
                 f'found in project space "{importer.domain}".'
             )
@@ -205,7 +205,7 @@ def import_patients_with_importer(importer_json):
             # Assign cases to the first user in the location, not to the location itself
             owner = get_one_commcare_user_at_location(importer.domain, location.location_id)
             if not owner:
-                logger.error(
+                requests.notify_error(
                     f'Project space "{importer.domain}" at location '
                     f'"{location.name}" has no user to own cases imported '
                     f'from OpenMRS Importer "{importer}"'
@@ -219,7 +219,7 @@ def import_patients_with_importer(importer_json):
             import_patients_of_owner(requests, importer, importer.domain, owner.user_id, location)
     elif importer.owner_id:
         if not is_valid_owner(importer.owner_id):
-            logger.error(
+            requests.notify_error(
                 f'Error importing patients for project space "{importer.domain}" '
                 f'from OpenMRS Importer "{importer}": owner_id "{importer.owner_id}" '
                 'is invalid.'
@@ -227,7 +227,7 @@ def import_patients_with_importer(importer_json):
             return
         import_patients_of_owner(requests, importer, importer.domain, importer.owner_id)
     else:
-        logger.error(
+        requests.notify_error(
             f'Error importing patients for project space "{importer.domain}" from '
             f'OpenMRS Importer "{importer}": Unable to determine the owner of '
             'imported cases without either owner_id or location_type_name'
