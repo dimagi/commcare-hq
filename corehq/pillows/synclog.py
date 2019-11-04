@@ -97,7 +97,6 @@ def mark_last_synclog(domain, user_id, app_id, build_id, sync_date, device_id):
         save |= update_latest_builds(user, app_id, sync_date, version)
 
     app_meta = None
-    device_id = device_id
     if device_id:
         if app_id:
             app_meta = DeviceAppMeta(app_id=app_id, build_id=build_id, last_sync=sync_date)
