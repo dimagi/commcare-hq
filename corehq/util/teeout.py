@@ -2,8 +2,6 @@ import sys
 import traceback
 from contextlib import contextmanager
 
-import six
-
 
 @contextmanager
 def tee_output(stream):
@@ -29,7 +27,7 @@ def tee_output(stream):
         etype, exc, tb = sys.exc_info()
         if stream:
             stream.write("".join(traceback.format_exception(etype, exc, tb)))
-        six.reraise(etype, exc, tb)
+        raise exc
     finally:
         if stream:
             if filepath:

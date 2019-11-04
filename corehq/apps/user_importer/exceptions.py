@@ -1,0 +1,2 @@
+class UserUploadError(Exception):
+    pass
