@@ -262,6 +262,7 @@ HQ_APPS = (
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
+    'corehq.apps.user_importer',
     'corehq.apps.users',
     'corehq.apps.settings',
     'corehq.apps.ota',
@@ -897,6 +898,8 @@ NO_DEVICE_LOG_ENVS = list(ICDS_ENVS) + ['production']
 UCR_COMPARISONS = {}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+
+DEFAULT_ODATA_FEED_LIMIT = 25
 
 # used for providing separate landing pages for different URLs
 # default will be used if no hosts match

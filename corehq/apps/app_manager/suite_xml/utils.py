@@ -9,18 +9,18 @@ from corehq.apps.app_manager.suite_xml.xml_models import Suite, Text, XpathEnum
 
 
 def get_select_chain(app, module, include_self=True):
-        select_chain = [module] if include_self else []
-        current_module = module
-        while hasattr(current_module, 'parent_select') and current_module.parent_select.active:
-            current_module = app.get_module_by_unique_id(
-                current_module.parent_select.module_id,
-                error=_("Case list used by parent child selection in '{}' not found").format(
-                      current_module.default_name()),
-            )
-            if current_module in select_chain:
-                raise SuiteValidationError("Circular reference in case hierarchy")
-            select_chain.append(current_module)
-        return select_chain
+    select_chain = [module] if include_self else []
+    current_module = module
+    while hasattr(current_module, 'parent_select') and current_module.parent_select.active:
+        current_module = app.get_module_by_unique_id(
+            current_module.parent_select.module_id,
+            error=_("Case list used by parent child selection in '{}' not found").format(
+                current_module.default_name()),
+        )
+        if current_module in select_chain:
+            raise SuiteValidationError("Circular reference in case hierarchy")
+        select_chain.append(current_module)
+    return select_chain
 
 
 def get_select_chain_meta(app, module):
@@ -79,7 +79,15 @@ def _form_uses_name_enum(form):
     return bool(form.name_enum)
 
 
+def _should_use_root_display(module):
+    # child modules set to display only forms should use their parent module's
+    # name so as not to confuse mobile when the two are combined
+    return module.put_in_root and module.root_module and not module.root_module.put_in_root
+
+
 def get_module_locale_id(module):
+    if _should_use_root_display(module):
+        module = module.root_module
     if not _module_uses_name_enum(module):
         return id_strings.module_locale(module)
 
@@ -90,6 +98,8 @@ def get_form_locale_id(form):
 
 
 def get_module_enum_text(module):
+    if _should_use_root_display(module):
+        module = module.root_module
     if not _module_uses_name_enum(module):
         return None
 

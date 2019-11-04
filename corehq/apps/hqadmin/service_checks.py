@@ -7,6 +7,7 @@ import logging
 import re
 import time
 import uuid
+import urllib3
 from io import BytesIO
 
 from django.conf import settings
@@ -34,7 +35,7 @@ from corehq.celery_monitoring.heartbeat import (
     HeartbeatNeverRecorded,
 )
 from corehq.elastic import refresh_elasticsearch_index, send_to_elasticsearch
-from corehq.util.decorators import change_log_level
+from corehq.util.decorators import change_log_level, ignore_warning
 from corehq.util.timer import TimingContext
 
 
@@ -215,6 +216,7 @@ def check_couch():
     return ServiceStatus(True, "Successfully queried an arbitrary couch view")
 
 
+@ignore_warning(urllib3.exceptions.InsecureRequestWarning)
 def check_formplayer():
     try:
         # Setting verify=False in this request keeps this from failing for urls with self-signed certificates.

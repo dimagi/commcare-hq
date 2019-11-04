@@ -87,6 +87,7 @@ class CaseDiffQueue(object):
         self.cases = LRUDict(self.MAX_MEMORIZED_CASES)
         self.num_diffed_cases = 0
         self.cache_hits = [0, 0]
+        self.clean_break = False
         self._is_flushing = False
 
     def __enter__(self):
@@ -219,7 +220,7 @@ class CaseDiffQueue(object):
 
     def process_remaining_diffs(self):
         log.debug("process remaining diffs")
-        self.flush()
+        self.flush(complete=not self.clean_break)
         for batcher, action in [
             (self.case_batcher, "loaded"),
             (self.diff_spawner, "spawned to diff"),
@@ -279,7 +280,11 @@ class CaseDiffQueue(object):
             state["to_diff"] = list(to_diff)
         if self.num_diffed_cases:
             state["num_diffed_cases"] = self.num_diffed_cases
-        self.statedb.set_resume_state(type(self).__name__, state)
+        try:
+            self.statedb.set_resume_state(type(self).__name__, state)
+        except Exception:
+            log.warning("unable to save state\n%r", state)
+            raise
         log_state = state if log.isEnabledFor(logging.DEBUG) else {
             k: len(v) if hasattr(v, "__len__") else v for k, v in state.items()
         }
@@ -298,6 +303,7 @@ class CaseDiffQueue(object):
     def get_status(self):
         cache_hits, self.cache_hits = self.cache_hits, [0, 0]
         return {
+            "workers": len(self.pool or []) + len(self.diff_pool or []),
             "pending": (
                 len(self.pending_cases)
                 + len(self.pending_loads)
@@ -320,7 +326,7 @@ class CaseDiffQueue(object):
 
 def log_status(status):
     log.info("cases pending=%(pending)s cached=%(cached)s "
-             "loaded=%(loaded)s diffed=%(diffed)s", status)
+             "loaded=%(loaded)s workers=%(workers)s diffed=%(diffed)s", status)
 
 
 def task_switch():
@@ -444,6 +450,7 @@ class CaseDiffProcess(object):
         self.state_path = get_casediff_state_path(statedb.db_filepath)
         self.status_interval = STATUS_INTERVAL
         self.queue_class = queue_class
+        self.num_cases_sent = 0
 
     def __enter__(self):
         log.debug("starting case diff process")
@@ -466,21 +473,30 @@ class CaseDiffProcess(object):
             log.info("stopping case diff process")
         self.request_status()
         self.calls.put((TERMINATE, is_error))
-        self.status_logger.join(timeout=30)
+        self.status_logger.join()
         self.process.join(timeout=30)
         self.statedb.clone_casediff_data_from(self.state_path)
+        log.info("casediff state copied to %s", self.statedb)
         self.stats_pipe.__exit__(*exc_info)
         self.calls_pipe.__exit__(*exc_info)
 
     def update(self, case_ids, form_id):
+        self.num_cases_sent += len(case_ids)
         self.calls.put(("update", case_ids, form_id))
 
     def enqueue(self, case_id):
+        self.num_cases_sent += 1
         self.calls.put(("enqueue", case_id))
 
     def request_status(self):
         log.debug("reqeust status...")
         self.calls.put((STATUS,))
+
+    def log_status(self, status):
+        sending = self.num_cases_sent - status.pop("received")
+        if sending:
+            status["pending"] = f"{sending}+{status['pending']}"
+        log_status(status)
 
     @exit_on_error
     def run_status_logger(self):
@@ -501,8 +517,9 @@ class CaseDiffProcess(object):
                 result = requested
             elif result is not requested:
                 action, status = result
-                log_status(status)
+                self.log_status(status)
                 result = None
+        log.info("casediff process status logger terminated")
 
 
 STATUS = "status"
@@ -522,6 +539,14 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug
     def terminate(is_error):
         raise (ParentError if is_error else GracefulExit)
 
+    def consume(calls, stop=False):
+        while True:
+            action, *args = calls.get()
+            if stop and action != STATUS:
+                log.warning("ignoring %s%r", action, args)
+            else:
+                dispatch(action, *args)
+
     def dispatch(action, *args):
         log.debug("case diff dispatch: %s", action)
         if action in process_actions:
@@ -530,28 +555,30 @@ def run_case_diff_queue(queue_class, calls, stats, state_path, is_rebuild, debug
             getattr(queue, action)(*args)
 
     def on_break(signum, frame):
-        nonlocal clean_break
-        if clean_break:
+        if queue.clean_break:
             raise KeyboardInterrupt
         log.info("clean break... (Ctrl+C to abort)")
-        clean_break = True
+        queue.clean_break = True
 
-    clean_break = False
     signal.signal(signal.SIGINT, on_break)
     process_actions = {STATUS: status, TERMINATE: terminate}
     statedb = StateDB.init(state_path)
     statedb.is_rebuild = is_rebuild
     setup_logging(state_path, debug)
     queue = None
+    consumer = None
     with calls, stats:
         try:
             with queue_class(statedb, status_interval=0) as queue:
+                queue = CasesReceivedCounter(queue)
                 try:
-                    while True:
-                        call = calls.get()
-                        dispatch(*call)
+                    consume(calls)
                 except GracefulExit:
                     pass
+                finally:
+                    consumer = gevent.spawn(consume, calls, stop=True)
+            if consumer is not None:
+                consumer.kill()
         except ParentError:
             log.error("stopped due to error in parent process")
         except Exception:
@@ -582,6 +609,34 @@ class ParentError(Exception):
 
 class ProcessNotAllowed(Exception):
     pass
+
+
+class CasesReceivedCounter:
+
+    def __init__(self, queue):
+        self.queue = queue
+        self.num_cases_received = 0
+
+    def update(self, case_ids, form_id):
+        self.num_cases_received += len(case_ids)
+        self.queue.update(case_ids, form_id)
+
+    def enqueue(self, case_id):
+        self.num_cases_received += 1
+        self.queue.enqueue(case_id)
+
+    def get_status(self):
+        status = self.queue.get_status()
+        status["received"] = self.num_cases_received
+        return status
+
+    @property
+    def clean_break(self):
+        return self.queue.clean_break
+
+    @clean_break.setter
+    def clean_break(self, value):
+        self.queue.clean_break = value
 
 
 def diff_cases(couch_cases, statedb):
