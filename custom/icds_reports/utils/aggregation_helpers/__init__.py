@@ -25,13 +25,13 @@ class AggregationHelper(object):
 
 
 def previous_month_aggregation_should_run(day: date) -> bool:
-    if date.day in (1, 2, 3):
+    if day.day in (1, 2, 3):
         return True
-    if date.day == 11:  # for performance report
+    if day.day == 11:  # for performance report
         return True
-    if date.isoweekday == 6:  # Saturday
+    if day.isoweekday() == 6:  # Saturday
         return True
-    if date.month != (date + timedelta(days=1)).month:  # last day of month
+    if day.month != (day + timedelta(days=1)).month:  # last day of month
         return True
 
     return False
