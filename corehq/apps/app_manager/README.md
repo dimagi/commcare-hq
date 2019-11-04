@@ -43,9 +43,13 @@ A module contains one or more form definitions. Forms, at their most basic, are 
 
 Each form has a `unique_id` which is guaranteed unique only within the application.
 
-Forms also have an xml namespace, abbreviated `xmlns`, which is part of the form's XML definition. The xmlns uniquely identifies the form globally. Reports match form submissions to form definitions using the xmlns plus the app id, which most apps pass along to [secure_post](https://github.com/dimagi/commcare-hq/blob/5d9122ad2ba23986e6b4493eee0eab16cbcc868b/corehq/apps/receiverwrapper/views.py#L304).
+Forms also have an xml namespace, abbreviated `xmlns`, which is part of the form's XML definition.
+Reports match form submissions to form definitions using the xmlns plus the app id, which most apps pass along to
+[secure_post](https://github.com/dimagi/commcare-hq/blob/5d9122ad2ba23986e6b4493eee0eab16cbcc868b/corehq/apps/receiverwrapper/views.py#L304).
+For reports to identify forms accurately, xmlns must be unique within an app.
 
-Within an app, xmlns must be unique so that reports can identify submissions. Duplicate xmlnses in an app will throw an error when a new version of the app is built. When an app is copied, each form in the copy keeps the same XMLNS as the corresponding form in the original. When a form is copied within an app - or when a user uploads XML using an xmlns already in use by another form in the same app - the new form's xmlns will be set to a new value in [save_xform](https://github.com/dimagi/commcare-hq/blob/170690a2fbf8039365fdca852911b4a57fd70a1e/corehq/apps/app_manager/util.py#L171).
+
+Duplicate xmlnses in an app will throw an error when a new version of the app is built. When an app is copied, each form in the copy keeps the same XMLNS as the corresponding form in the original. When a form is copied within an app - or when a user uploads XML using an xmlns already in use by another form in the same app - the new form's xmlns will be set to a new value in [save_xform](https://github.com/dimagi/commcare-hq/blob/170690a2fbf8039365fdca852911b4a57fd70a1e/corehq/apps/app_manager/util.py#L171).
 
 ### Exceptions
 Linked apps use similar workflows to app copy for creating and pulling. See [docs](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/linked_domain#linked-applications) for more detail on how they handle form unique ids and xmlnses.
