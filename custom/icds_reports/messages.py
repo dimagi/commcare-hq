@@ -181,12 +181,12 @@ def lady_supervisor_number_of_vhnds_observed_help_text():
 def awcs_reported_infantometer_text():
     return _(
         'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
-        'AWCs that reported having an Infantometer'
+        'AWCs that reported having an Infantometer. '
     )
 
 
 def awcs_reported_stadiometer_text():
     return _(
         'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
-        'AWCs that reported having an Stadiometer'
+        'AWCs that reported having a Stadiometer. '
     )

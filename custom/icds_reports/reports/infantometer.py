@@ -48,24 +48,24 @@ def get_infantometer_data_map(domain, config, loc_level, show_test=False):
 
     return {
         "slug": "infantometer",
-        "label": "Percentage of AWCs that reported having an infantometer",
+        "label": "Percentage of AWCs that reported having an Infantometer",
         "fills": fills,
         "rightLegend": {
             "average": average,
             "info": _((
                 "Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that "
-                "reported having an infantometer. "
+                "reported having an Infantometer. "
             )),
             "extended_info": [
                 {
                     'indicator': (
-                        'Total number of AWCs with an indicator:'
+                        'Total number of AWCs with an Infantometer:'
                     ),
                     'value': indian_formatted_number(in_month_total)
                 },
                 {
                     'indicator': (
-                        '% of AWCs with an infantometer:'
+                        '% of AWCs with an Infantometer:'
                     ),
                     'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
                 }
@@ -145,7 +145,7 @@ def get_infantometer_data_chart(domain, config, loc_level, show_test=False):
                         'in_month': value['in_month']
                     } for key, value in data['blue'].items()
                 ],
-                "key": "Percentage of AWCs that reported having an infantometer",
+                "key": "Percentage of AWCs that reported having an Infantometer",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE
@@ -218,7 +218,7 @@ def get_infantometer_sector_data(domain, config, loc_level, location_id, show_te
         "tooltips_data": dict(tooltips_data),
         "info": _((
             "Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that "
-            "reported having an infantometer. "
+            "reported having an Infantometer. "
         )),
         "chart_data": [
             {

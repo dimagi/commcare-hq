@@ -48,13 +48,13 @@ def get_stadiometer_data_map(domain, config, loc_level, show_test=False):
 
     return {
         "slug": "stadiometer",
-        "label": "Percentage of AWCs that reported having a stadiometer",
+        "label": "Percentage of AWCs that reported having a Stadiometer",
         "fills": fills,
         "rightLegend": {
             "average": average,
             "info": _((
                 "Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that "
-                "reported having a stadiometer. "
+                "reported having a Stadiometer. "
             )),
             "extended_info": [
                 {
@@ -65,7 +65,7 @@ def get_stadiometer_data_map(domain, config, loc_level, show_test=False):
                 },
                 {
                     'indicator': (
-                        '% of AWCs with a stadiometer:'
+                        '% of AWCs with a Stadiometer:'
                     ),
                     'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
                 }
@@ -145,7 +145,7 @@ def get_stadiometer_data_chart(domain, config, loc_level, show_test=False):
                         'in_month': value['in_month']
                     } for key, value in data['blue'].items()
                 ],
-                "key": "Percentage of AWCs that reported having a stadiometer",
+                "key": "Percentage of AWCs that reported having a Stadiometer",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE
@@ -218,7 +218,7 @@ def get_stadiometer_sector_data(domain, config, loc_level, location_id, show_tes
         "tooltips_data": dict(tooltips_data),
         "info": _((
             "Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that "
-            "reported having a stadiometer. "
+            "reported having a Stadiometer. "
         )),
         "chart_data": [
             {
