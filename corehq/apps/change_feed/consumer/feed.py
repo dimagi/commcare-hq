@@ -1,18 +1,26 @@
 import json
 from copy import copy
+from functools import lru_cache
 
 from django.conf import settings
+from django.db import transaction
+from django.db.models import F
 
 from kafka import KafkaConsumer
 from kafka.common import TopicPartition
 
 from dimagi.utils.logging import notify_error
+from dimagi.utils.modules import to_function
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
 from pillowtop.feed.interface import Change, ChangeFeed, ChangeMeta
 from pillowtop.models import kafka_seq_to_str
 
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
+from corehq.apps.change_feed.models import (
+    PostgresPillowCheckpoint,
+    PostgresPillowSettings,
+)
 from corehq.apps.change_feed.topics import validate_offsets
 
 MIN_TIMEOUT = 500
@@ -201,3 +209,65 @@ def change_from_kafka_message(message):
 
 def change_meta_from_kafka_message(message):
     return ChangeMeta.wrap(json.loads(message))
+
+
+def change_from_postgres_model(change):
+    change_meta = ChangeMeta(
+        document_id=change.get_id,
+        data_source_type='sql',
+        data_source_name='form-sql',
+        document_type=change.doc_type,
+        document_subtype=change.xmlns,
+        domain=change.domain,
+        is_deletion=change.is_deleted,
+        publish_timestamp=change.server_modified_on,
+    )
+    return Change(
+        id=change_meta.document_id,
+        sequence_id=change.update_sequence_id,
+        document=change.to_json(include_attachments=True),
+        deleted=change_meta.is_deletion,
+        metadata=change_meta,
+    )
+
+
+@lru_cache()
+def _model_class_from_name(model_name):
+    return to_function(model_name)
+
+
+class PostgresChangeFeed(ChangeFeed):
+    def __init__(self, pillow_id):
+        self.pillow_id = pillow_id
+
+    def iter_changes(self, since, forever):
+        while True:
+            with transaction.atomic():
+                pillow_settings = PostgresPillowSettings.objects.filter(pillow_id=self.pillow_id).first()
+                checkpoint = (
+                    PostgresPillowCheckpoint.objects
+                    .filter(
+                        pillow_id=self.pillow_id,
+                    )
+                    .order_by('last_modified')
+                    .select_for_update(skip_locked=True)
+                ).first()
+                new_update_seq = checkpoint.update_sequence_id
+
+                model = _model_class_from_name(checkpoint.model)
+                changes = (
+                    model.objects.using(checkpoint.db_alias)
+                    .annotate(remainder=F('update_sequence_id') % settings.modulo)
+                    .filter(
+                        update_sequence_id__isnull=False,
+                        update_sequence_id__gt=checkpoint.update_sequence_id,
+                        remainder=checkpoint.remainder
+                    )
+                )[:pillow_settings.batch_size]
+
+                for change in changes:
+                    new_update_seq = max(change.update_sequence_id, new_update_seq)
+                    yield change_from_postgres_model(change)
+
+                checkpoint.update_sequence_id = new_update_seq
+                checkpoint.save()
