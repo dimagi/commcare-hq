@@ -2,7 +2,7 @@ from django.core.management import BaseCommand
 
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
-from corehq.util.es import AuthorizationException
+from corehq.util.es.elasticsearch import AuthorizationException
 
 
 class Command(BaseCommand):
