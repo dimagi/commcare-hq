@@ -19,11 +19,13 @@
             {% if projects|length == 0 %}
               Project does not exist
             {% elif projects|length == 1 %}
-              {% if project.doc_type == 'Domain-Deleted' %}
-                Project Tombstone
-              {% else %}
-                Normal Project
-              {% endif %}
+              {% with projects.0 as project %}
+                {% if project.doc_type == 'Domain-Deleted' %}
+                  Project Tombstone
+                {% else %}
+                  Normal Project
+                {% endif %}
+              {% endwith %}
             {% else %}
               Multiple Projects with this name!
               {% regroup projects by doc_type as doc_type_list %}
