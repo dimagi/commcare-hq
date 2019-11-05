@@ -322,6 +322,44 @@ class CheckDirectionTests(SimpleTestCase):
         self.assertTrue(can_import_and_export)
 
 
+class CheckSerializeDirectionTests(SimpleTestCase):
+
+    def test_serialize_in(self):
+        value_source = get_constant_spam({"direction": "in"})
+        self.assertIsNone(value_source.serialize("spam"))
+
+    def test_serialize_out(self):
+        value_source = get_constant_spam({"direction": "out"})
+        self.assertEqual(value_source.serialize("spam"), "spam")
+
+    def test_serialize_both(self):
+        value_source = get_constant_spam({"direction": None})
+        self.assertEqual(value_source.serialize("spam"), "spam")
+
+    def test_serialize_default(self):
+        value_source = get_constant_spam()
+        self.assertEqual(value_source.serialize("spam"), "spam")
+
+
+class CheckDeserializeDirectionTests(SimpleTestCase):
+
+    def test_deserialize_in(self):
+        value_source = get_constant_spam({"direction": "in"})
+        self.assertEqual(value_source.deserialize("spam"), "spam")
+
+    def test_deserialize_out(self):
+        value_source = get_constant_spam({"direction": "out"})
+        self.assertIsNone(value_source.deserialize("spam"))
+
+    def test_deserialize_both(self):
+        value_source = get_constant_spam({"direction": None})
+        self.assertEqual(value_source.deserialize("spam"), "spam")
+
+    def test_deserialize_default(self):
+        value_source = get_constant_spam()
+        self.assertEqual(value_source.deserialize("spam"), "spam")
+
+
 def test_doctests():
     results = doctest.testmod(corehq.motech.value_source)
     assert results.failed == 0
