@@ -301,7 +301,7 @@ class _CaseExpressionColumn(ReportColumn):
     http://docs.sqlalchemy.org/en/latest/core/sqlelement.html#sqlalchemy.sql.expression.case
     """
     type = None
-    whens = DictProperty()
+    whens = ListProperty(ListProperty)      # List of (expression, value) tuples
     else_ = StringProperty()
     sortable = BooleanProperty(default=False)
 
@@ -341,7 +341,7 @@ class IntegerBucketsColumn(_CaseExpressionColumn):
     ranges = DictProperty()
 
     def get_whens(self):
-        whens = {}
+        whens = []
         for value, bounds in self.ranges.items():
             if len(bounds) != 2:
                 raise BadSpecError('Range must contain 2 items, contains {}'.format(len(bounds)))
@@ -349,7 +349,7 @@ class IntegerBucketsColumn(_CaseExpressionColumn):
                 bounds = [int(b) for b in bounds]
             except ValueError:
                 raise BadSpecError('Invalid range: [{}, {}]'.format(bounds[0], bounds[1]))
-            whens.update({self._base_expression(bounds): bindparam(None, value)})
+            whens.append([self._base_expression(bounds), bindparam(None, value)])
         return whens
 
     def _base_expression(self, bounds):

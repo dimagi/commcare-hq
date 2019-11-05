@@ -1052,9 +1052,9 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'display': 'under_six_month_olds',
                     'field': 'age_at_registration',
                     'column_id': 'under_six_month_olds',
-                    'whens': {
-                        "age_at_registration < 6": 1,
-                    },
+                    'whens': [
+                        ["age_at_registration < 6", 1],
+                    ],
                     'else_': 0
                 },
                 {
