@@ -1,8 +1,8 @@
 from django.conf import settings
 from corehq.util.es.elasticsearch import NotFoundError
 
-from corehq.util.test_utils import unit_testing_only
-from pillowtop.es_utils import initialize_index
+from corehq.util.test_utils import unit_testing_only, trap_extra_setup
+from pillowtop.es_utils import initialize_index_and_mapping
 
 TEST_ES_PREFIX = 'test_'
 
@@ -14,9 +14,10 @@ def es_index(index):
 
 @unit_testing_only
 def reset_es_index(index_info):
-    from corehq.elastic import get_es_new
-    ensure_index_deleted(index_info.index)
-    initialize_index(get_es_new(), index_info)
+    with trap_extra_setup(ConnectionError):
+        from corehq.elastic import get_es_new
+        ensure_index_deleted(index_info.index)
+        initialize_index_and_mapping(get_es_new(), index_info)
 
 
 @unit_testing_only
