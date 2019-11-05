@@ -3,12 +3,16 @@ import json
 import logging
 from contextlib import contextmanager
 
+from django.conf import settings
+
 import pytz
 from mock import patch
+from nose.tools import assert_raises_regexp
 
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.const import IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.tasks import (
@@ -20,12 +24,13 @@ TEST_DOMAIN = 'test-domain'
 
 
 @contextmanager
-def get_importer():
-    importer = OpenmrsImporter.wrap({
+def get_importer(column_mapping=None):
+    importer_dict = {
         'domain': TEST_DOMAIN,
         'server_url': 'http://www.example.com/openmrs',
         'username': 'admin',
         'password': 'Admin123',
+        'notify_addresses_str': 'admin@example.com',
         'location_id': '',
         'import_frequency': IMPORT_FREQUENCY_MONTHLY,
         'log_level': logging.INFO,
@@ -79,7 +84,15 @@ def get_importer():
                 'property': 'data_proxima_consulta'
             }
         ],
-    })
+    }
+    if column_mapping:
+        for mapping in importer_dict['column_map']:
+            if mapping['column'] == column_mapping['column']:
+                mapping.update(column_mapping)
+                break
+        else:
+            importer_dict['column_map'].append(column_mapping)
+    importer = OpenmrsImporter.wrap(importer_dict)
     try:
         yield importer
     finally:
@@ -159,6 +172,31 @@ def test_get_case_properties():
             'provincia': 'Maputo',
             'tarv_elegivel': 1
         }
+
+
+def test_bad_data_type():
+    """
+    Notify if column data type is wrong
+    """
+    patient = get_patient()
+    bad_column_mapping = {
+        'column': 'data_proxima_consulta',
+        'data_type': 'omrs_datetime',
+        'commcare_data_type': 'cc_date',
+        'property': 'data_proxima_consulta'
+    }
+    with get_importer(bad_column_mapping) as importer:
+        with assert_raises_regexp(
+            ConfigurationError,
+            'Errors importing from <OpenmrsImporter None admin@http://www.example.com/openmrs>:\n'
+            'Unable to deserialize value 1551564000000 '
+            'in column "data_proxima_consulta" '
+            'for case property "data_proxima_consulta". '
+            'OpenMRS data type is given as "omrs_datetime". '
+            'CommCare data type is given as "cc_date": '
+            "argument of type 'int' is not iterable"
+        ):
+            get_case_properties(patient, importer)
 
 
 @patch("corehq.motech.openmrs.models.get_timezone_for_domain")
@@ -269,30 +307,46 @@ class OwnerTests(LocationHierarchyTestCase):
 
     def test_bad_owner(self):
         """
-        An invalid owner_id should log an error
+        Notify on invalid owner_id
         """
         with get_importer() as importer, \
-                patch('corehq.motech.openmrs.tasks.logger') as logger_mock, \
+                patch('corehq.motech.requests.send_mail_async') as send_mail_mock, \
                 patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
             self.assertEqual(importer.owner_id, '123456')
             import_patients_with_importer(importer.to_json())
-            logger_mock.error.assert_called_with(
+            send_mail_mock.delay.assert_called_with(
+                'MOTECH Error',
+
                 'Error importing patients for project space "test-domain" from '
-                'OpenMRS Importer "http://www.example.com/openmrs": owner_id '
-                '"123456" is invalid.'
+                'OpenMRS Importer "<OpenmrsImporter None admin@http://www.example.com/openmrs>": '
+                'owner_id "123456" is invalid.\r\n'
+                'Project space: test-domain\r\n'
+                'Remote API base URL: http://www.example.com/openmrs\r\n'
+                'Remote API username: admin',
+
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=['admin@example.com'],
             )
 
     def test_bad_group(self):
         """
-        Setting owner_id to a NON-case-sharing group should log an error
+        Notify if owner_id is set to a NON-case-sharing group
         """
         with get_importer() as importer, \
-                patch('corehq.motech.openmrs.tasks.logger') as logger_mock, \
+                patch('corehq.motech.requests.send_mail_async') as send_mail_mock, \
                 patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
             importer.owner_id = self.bad_group._id
             import_patients_with_importer(importer.to_json())
-            logger_mock.error.assert_called_with(
+            send_mail_mock.delay.assert_called_with(
+                'MOTECH Error',
+
                 'Error importing patients for project space "test-domain" from '
-                'OpenMRS Importer "http://www.example.com/openmrs": owner_id '
-                f'"{self.bad_group._id}" is invalid.'
+                'OpenMRS Importer "<OpenmrsImporter None admin@http://www.example.com/openmrs>": '
+                f'owner_id "{importer.owner_id}" is invalid.\r\n'
+                'Project space: test-domain\r\n'
+                'Remote API base URL: http://www.example.com/openmrs\r\n'
+                'Remote API username: admin',
+
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=['admin@example.com'],
             )
