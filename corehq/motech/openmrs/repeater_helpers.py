@@ -197,22 +197,14 @@ def create_patient(requests, info, case_config):
         return {
             property_: value_source.get_value(info)
             for property_, value_source in case_config.person_preferred_name.items()
-            if (
-                property_ in NAME_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(info)
-            )
+            if property_ in NAME_PROPERTIES and value_source.get_value(info)
         }
 
     def get_address():
         return {
             property_: value_source.get_value(info)
             for property_, value_source in case_config.person_preferred_address.items()
-            if (
-                property_ in ADDRESS_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(info)
-            )
+            if property_ in ADDRESS_PROPERTIES and value_source.get_value(info)
         }
 
     def get_properties():
