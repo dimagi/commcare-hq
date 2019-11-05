@@ -62,11 +62,11 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                 params: params,
             }).then(
                 function(response) {
-                    gtag.event('Infrastructure Service', 'Fetching data succeeded', 'Infantomter');
+                    gtag.event('Infrastructure Service', 'Fetching data succeeded', 'Infantometer');
                     return response;
                 },
                 function() {
-                    gtag.event('Infrastructure Service', 'Fetching data failed', 'Infantomter');
+                    gtag.event('Infrastructure Service', 'Fetching data failed', 'Infantometer');
                 }
             );
         },
