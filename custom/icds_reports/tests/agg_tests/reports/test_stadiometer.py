@@ -11,20 +11,11 @@ from custom.icds_reports.const import ChartColors, MapColors
 class TestStadiometer(TestCase):
 
     def test_map_data(self):
-        print(get_stadiometer_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            ))
-        assert False
         self.assertDictEqual(
             get_stadiometer_data_map(
                 'icds-cas',
                 config={
-                    'month': (2017, 5, 1),
+                    'month': (2017, 4, 1),
                     'aggregation_level': 1
                 },
                 loc_level='state'
@@ -32,13 +23,13 @@ class TestStadiometer(TestCase):
             {
                 "rightLegend": {
                     "info": awcs_reported_stadiometer_text(),
-                    "average": 3.3333333333333335,
+                    "average": 7.142857142857143,
                     'extended_info': [
                         {
                             'indicator': 'Total number of AWCs with a Stadiometer:',
                             'value': "1"
                         },
-                        {'indicator': '% of AWCs with a Stadiometer:', 'value': '3.33%'}
+                        {'indicator': '% of AWCs with a Stadiometer:', 'value': '7.14%'}
                     ]
                 },
                 "label": "Percentage of AWCs that reported having a Stadiometer",
@@ -47,8 +38,8 @@ class TestStadiometer(TestCase):
                     'st5': {'in_month': 0, 'original_name': ['st5'], 'all': 0, 'fillKey': '0%-25%'},
                     'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'},
                     'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 0, 'fillKey': '0%-25%'},
-                    'st1': {'in_month': 1, 'original_name': ['st1'], 'all': 17, 'fillKey': '0%-25%'},
-                    'st2': {'in_month': 0, 'original_name': ['st2'], 'all': 13, 'fillKey': '0%-25%'},
+                    'st1': {'in_month': 1, 'original_name': ['st1'], 'all': 9, 'fillKey': '0%-25%'},
+                    'st2': {'in_month': 0, 'original_name': ['st2'], 'all': 5, 'fillKey': '0%-25%'},
                     'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
                 },
                 "slug": "stadiometer",
@@ -62,21 +53,11 @@ class TestStadiometer(TestCase):
         )
 
     def test_map_name_is_different_data(self):
-        print(get_stadiometer_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'state_id': 'st1',
-                    'district_id': 'd1',
-                    'aggregation_level': 3
-                },
-                loc_level='block',
-            ))
         self.assertDictEqual(
             get_stadiometer_data_map(
                 'icds-cas',
                 config={
-                    'month': (2017, 5, 1),
+                    'month': (2017, 4, 1),
                     'state_id': 'st1',
                     'district_id': 'd1',
                     'aggregation_level': 3
@@ -86,13 +67,13 @@ class TestStadiometer(TestCase):
             {
                 "rightLegend": {
                     "info": awcs_reported_stadiometer_text(),
-                    "average": 5.882352941176471,
+                    "average": 11.11111111111111,
                     'extended_info': [
                         {
                             'indicator': 'Total number of AWCs with a Stadiometer:',
                             'value': "1"
                         },
-                        {'indicator': '% of AWCs with a Stadiometer:', 'value': '5.88%'}
+                        {'indicator': '% of AWCs with a Stadiometer:', 'value': '11.11%'}
                     ]
                 },
                 "label": "Percentage of AWCs that reported having a Stadiometer",
@@ -103,7 +84,7 @@ class TestStadiometer(TestCase):
                             "b1",
                             "b2"
                         ],
-                        "all": 17,
+                        "all": 9,
                         "fillKey": "0%-25%"
                     }
                 },
@@ -118,11 +99,19 @@ class TestStadiometer(TestCase):
         )
 
     def test_chart_data(self):
+        print(get_stadiometer_data_chart(
+                'icds-cas',
+                config={
+                    'month': (2017, 4, 1),
+                    'aggregation_level': 1
+                },
+                loc_level='state'
+            ))
         self.assertDictEqual(
             get_stadiometer_data_chart(
                 'icds-cas',
                 config={
-                    'month': (2017, 5, 1),
+                    'month': (2017, 4, 1),
                     'aggregation_level': 1
                 },
                 loc_level='state'
@@ -132,6 +121,11 @@ class TestStadiometer(TestCase):
                     {
                         "color": ChartColors.BLUE,
                         "values": [
+                            {
+                                "y": 0.0,
+                                "x": 1483228800000,
+                                "in_month": 0
+                            },
                             {
                                 "y": 0.0,
                                 "x": 1485907200000,
@@ -146,11 +140,6 @@ class TestStadiometer(TestCase):
                                 "y": 0.07142857142857142,
                                 "x": 1491004800000,
                                 "in_month": 1
-                            },
-                            {
-                                "y": 0.03333333333333333,
-                                "x": 1493596800000,
-                                "in_month": 1
                             }
                         ],
                         "strokeWidth": 2,
@@ -159,7 +148,7 @@ class TestStadiometer(TestCase):
                     }
                 ],
                 "top_five": [
-                    {'loc_name': 'st1', 'percent': 5.882352941176471},
+                    {'loc_name': 'st1', 'percent': 11.11111111111111},
                     {'loc_name': 'st2', 'percent': 0.0},
                     {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
@@ -167,7 +156,7 @@ class TestStadiometer(TestCase):
                 ],
                 "location_type": "State",
                 "all_locations": [
-                    {'loc_name': 'st1', 'percent': 5.882352941176471},
+                    {'loc_name': 'st1', 'percent': 11.11111111111111},
                     {'loc_name': 'st2', 'percent': 0.0},
                     {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
@@ -186,24 +175,11 @@ class TestStadiometer(TestCase):
         )
 
     def test_sector_data(self):
-        print(get_stadiometer_sector_data(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'state_id': 'st1',
-                    'district_id': 'd1',
-                    'block_id': 'b2',
-                    'aggregation_level': 4
-                },
-                location_id='b1',
-                loc_level='supervisor'
-            ))
-        assert False
         self.assertDictEqual(
             get_stadiometer_sector_data(
                 'icds-cas',
                 config={
-                    'month': (2017, 5, 1),
+                    'month': (2017, 4, 1),
                     'state_id': 'st1',
                     'district_id': 'd1',
                     'block_id': 'b2',
@@ -215,13 +191,13 @@ class TestStadiometer(TestCase):
             {
                 "info": awcs_reported_stadiometer_text(),
                 "tooltips_data": {
-                    "s2": {
+                    "s3": {
                         "in_month": 0,
-                        "all": 3
+                        "all": 2
                     },
-                    "s1": {
-                        "in_month": 0,
-                        "all": 5
+                    "s4": {
+                        "in_month": 1,
+                        "all": 3
                     }
                 },
                 "chart_data": [
@@ -230,11 +206,15 @@ class TestStadiometer(TestCase):
                         "values": [
                             [
                                 "s1",
+                                0
+                            ],
+                            [
+                                "s3",
                                 0.0
                             ],
                             [
-                                "s2",
-                                0.0
+                                "s4",
+                                0.3333333333333333
                             ]
                         ],
                         "strokeWidth": 2,

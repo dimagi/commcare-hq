@@ -12,7 +12,8 @@ from custom.icds_reports.views import PrevalenceOfUndernutritionView, AwcReports
     EarlyInitiationBreastfeeding, ExclusiveBreastfeedingView, ChildrenInitiatedView, InstitutionalDeliveriesView, \
     ImmunizationCoverageView, AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, \
     EnrolledWomenView, LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
-    FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView
+    FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, InfantometerView, \
+    StadiometerView
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 
@@ -390,6 +391,26 @@ class TestMedicineKitView(Base):
         self._setup_domain_and_user()
         self.view = MedicineKitView.as_view()
         self.url = 'medicine_kit'
+
+
+class TestInfantometerView(Base):
+
+    def setUp(self):
+        self.run_july_third_test = True
+        self.factory = RequestFactory()
+        self._setup_domain_and_user()
+        self.view = InfantometerView.as_view()
+        self.url = 'infantometer'
+
+
+class TestStadiometerView(Base):
+
+    def setUp(self):
+        self.run_july_third_test = True
+        self.factory = RequestFactory()
+        self._setup_domain_and_user()
+        self.view = StadiometerView.as_view()
+        self.url = 'stadiometer'
 
 
 class TestInfantsWeightScaleView(Base):

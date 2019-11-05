@@ -53,16 +53,6 @@ class TestInfantometer(TestCase):
         )
 
     def test_map_name_is_different_data(self):
-        print(get_infantometer_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'state_id': 'st1',
-                    'district_id': 'd1',
-                    'aggregation_level': 3
-                },
-                loc_level='block',
-            ))
         self.assertDictEqual(
             get_infantometer_data_map(
                 'icds-cas',
@@ -80,7 +70,7 @@ class TestInfantometer(TestCase):
                     "average": 5.882352941176471,
                     'extended_info': [
                         {
-                            'indicator': 'Total number of AWCs with an Infantomter:',
+                            'indicator': 'Total number of AWCs with an Infantometer:',
                             'value': "1"
                         },
                         {'indicator': '% of AWCs with an Infantometer:', 'value': '5.88%'}
@@ -177,6 +167,18 @@ class TestInfantometer(TestCase):
         )
 
     def test_sector_data(self):
+        print(get_infantometer_sector_data(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'block_id': 'b2',
+                    'aggregation_level': 4
+                },
+                location_id='b1',
+                loc_level='supervisor'
+            ))
         self.assertDictEqual(
             get_infantometer_sector_data(
                 'icds-cas',
@@ -193,11 +195,11 @@ class TestInfantometer(TestCase):
             {
                 "info": awcs_reported_infantometer_text(),
                 "tooltips_data": {
-                    "s2": {
+                    "s3": {
                         "in_month": 0,
                         "all": 4
                     },
-                    "s1": {
+                    "s4": {
                         "in_month": 1,
                         "all": 5
                     }
@@ -208,7 +210,7 @@ class TestInfantometer(TestCase):
                         "values": [
                             [
                                 "s1",
-                                0.0
+                                0
                             ],
                             [
                                 "s3",

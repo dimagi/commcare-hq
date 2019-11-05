@@ -116,6 +116,14 @@
                         <a href="{$ goToStep('awc_infrastructure/functional_toilet', $location.search()) $}" >{% trans "AWCs Reported functional toilet" %}
                         </a>
                     </li>
+                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/infantometer') !== -1}">
+                        <a href="{$ goToStep('awc_infrastructure/infantomter', $location.search()) $}" >{% trans "AWCs Reported Infantomter" %}
+                        </a>
+                    </li>
+                    <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/stadiometer') !== -1}">
+                        <a href="{$ goToStep('awc_infrastructure/stadiometer', $location.search()) $}" >{% trans "AWCs Reported Stadiometer" %}
+                        </a>
+                    </li>
                     <li ng-class="{'active': $location.path().indexOf('/awc_infrastructure/medicine_kit') !== -1}">
                         <a href="{$ goToStep('awc_infrastructure/medicine_kit', $location.search()) $}" >{% trans "AWCs Reported medicine kits" %}
                         </a>

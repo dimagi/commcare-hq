@@ -284,6 +284,18 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/awc_infrastructure/medicine_kit/:step", {
                 template: "<medicine-kit></medicine-kit>",
             })
+            .when("/awc_infrastructure/infantometer", {
+                redirectTo: "/awc_infrastructure/infantometer/map",
+            })
+            .when("/awc_infrastructure/infantometer/:step", {
+                template: "<infantometer></infantometer>",
+            })
+            .when("/awc_infrastructure/stadiometer", {
+                redirectTo: "/awc_infrastructure/stadiometer/map",
+            })
+            .when("/awc_infrastructure/stadiometer/:step", {
+                template: "<stadiometer></stadiometer>",
+            })
             .when("/awc_infrastructure/infants_weight_scale", {
                 redirectTo: "/awc_infrastructure/infants_weight_scale/map",
             })

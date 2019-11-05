@@ -59,7 +59,7 @@ def get_stadiometer_data_map(domain, config, loc_level, show_test=False):
             "extended_info": [
                 {
                     'indicator': (
-                        'Total number of AWCs with an indicator:'
+                        'Total number of AWCs with a Stadiometer:'
                     ),
                     'value': indian_formatted_number(in_month_total)
                 },
