@@ -112,8 +112,6 @@ FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
 SESSION_ACCESS_LOG_FILE = "%s/%s" % (FILEPATH, "session_access_log.log")
-KAFKA_PRODUCER_AUDIT_FILE = "%s/%s" % (FILEPATH, "commcarehq.kafka_audit.log")
-KAFKA_PRODUCER_AUDIT_LOG_ENABLED = False
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -1139,14 +1137,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 200  # Backup 2000 MB of logs
         },
-        'kafka_audit': {
-            "level": "DEBUG" if KAFKA_PRODUCER_AUDIT_LOG_ENABLED else 'ERROR',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
-            'formatter': 'kafka_audit',
-            'filename': KAFKA_PRODUCER_AUDIT_FILE,
-            'when': 'H',
-            'backupCount': 5
-        },
         'main_couch_sql_datamigration': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -1252,11 +1242,6 @@ LOGGING = {
         'kafka': {
             'handlers': ['file'],
             'level': 'ERROR',
-            'propagate': False,
-        },
-        'kafka_producer_audit': {
-            'handlers': ['kafka_audit'],
-            'level': 'INFO',
             'propagate': False,
         },
         'warehouse': {
