@@ -38,7 +38,6 @@ def get_reindex_commands(alias_name):
         'report_xforms': ['report-xform'],
         'report_cases': ['report-case'],
         'case_search': ['case-search'],
-        'ledgers': ['ledger-v1', 'ledger-v2'],
         'smslogs': ['sms'],
     }
     return pillow_command_map.get(alias_name, [])
