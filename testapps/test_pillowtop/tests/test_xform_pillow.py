@@ -1,14 +1,19 @@
 from decimal import Decimal
 
+from django.test import override_settings
 from django.test.testcases import SimpleTestCase, TestCase
 
 from couchdbkit import ResourceConflict
+from elasticsearch.exceptions import ConnectionError
 from mock import patch
 
+from dimagi.utils.parsing import string_to_utc_datetime
 from pillow_retry.models import PillowError
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.es import FormES
+from corehq.apps.users.models import CommCareUser, UserReportingMetadataStaging
+from corehq.apps.users.tasks import process_reporting_metadata_staging
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -27,15 +32,26 @@ from testapps.test_pillowtop.utils import process_pillow_changes
 
 class XFormPillowTest(TestCase):
     domain = 'xform-pillowtest-domain'
+    username = 'xform-pillowtest-user'
+    password = 'badpassword'
 
     @classmethod
     def setUpClass(cls):
-        super(XFormPillowTest, cls).setUpClass()
+        super().setUpClass()
         cls.process_form_changes = process_pillow_changes('DefaultChangeFeedPillow')
         cls.process_form_changes.add_pillow('xform-pillow', {'skip_ucr': True})
+        cls.user = CommCareUser.create(
+            cls.domain,
+            cls.username,
+            cls.password
+        )
+        cls.metadata = TestFormMetadata(
+            domain=cls.domain,
+            user_id=cls.user._id,
+        )
 
     def setUp(self):
-        super(XFormPillowTest, self).setUp()
+        super().setUp()
         FormProcessorTestUtils.delete_all_xforms()
         with trap_extra_setup(ConnectionError):
             self.elasticsearch = get_es_new()
@@ -44,8 +60,16 @@ class XFormPillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
+        user = CommCareUser.get_by_user_id(self.user._id, self.domain)
+        user.reporting_metadata.last_submissions = []
+        user.save()
         PillowError.objects.all().delete()
-        super(XFormPillowTest, self).tearDown()
+        super().tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+        super().tearDownClass()
 
     @run_with_all_backends
     def test_xform_pillow(self):
@@ -78,6 +102,39 @@ class XFormPillowTest(TestCase):
         self.assertEqual(0, results.total)
 
     @run_with_all_backends
+    @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=False)
+    def test_app_metadata_tracker_non_batch(self):
+        form, metadata = self._create_form_and_sync_to_es()
+        user = CommCareUser.get_by_user_id(self.user._id, self.domain)
+        self.assertEqual(len(user.reporting_metadata.last_submissions), 1)
+        last_submission = user.reporting_metadata.last_submissions[0]
+
+        self.assertEqual(
+            last_submission.submission_date,
+            string_to_utc_datetime(self.metadata.received_on),
+        )
+        self.assertEqual(last_submission.app_id, self.metadata.app_id)
+
+    @run_with_all_backends
+    @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=True)
+    def test_app_metadata_tracker(self):
+        form, metadata = self._create_form_and_sync_to_es()
+        self.assertEqual(UserReportingMetadataStaging.objects.count(), 1)
+        self.assertEqual(UserReportingMetadataStaging.objects.first().user_id, self.user._id)
+
+        process_reporting_metadata_staging()
+        self.assertEqual(UserReportingMetadataStaging.objects.count(), 0)
+        user = CommCareUser.get_by_user_id(self.user._id, self.domain)
+        self.assertEqual(len(user.reporting_metadata.last_submissions), 1)
+        last_submission = user.reporting_metadata.last_submissions[0]
+
+        self.assertEqual(
+            last_submission.submission_date,
+            string_to_utc_datetime(self.metadata.received_on),
+        )
+        self.assertEqual(last_submission.app_id, self.metadata.app_id)
+
+    @run_with_all_backends
     def test_form_pillow_error_in_form_metadata(self):
         self.assertEqual(0, PillowError.objects.filter(pillow='xform-pillow').count())
         with patch('pillowtop.processors.form.mark_latest_submission') as mark_latest_submission:
@@ -92,12 +149,11 @@ class XFormPillowTest(TestCase):
 
     def _create_form_and_sync_to_es(self):
         with self.process_form_changes:
-            metadata = TestFormMetadata(domain=self.domain)
-            form = get_form_ready_to_save(metadata, is_db_test=True)
+            form = get_form_ready_to_save(self.metadata, is_db_test=True)
             form_processor = FormProcessorInterface(domain=self.domain)
             form_processor.save_processed_models([form])
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
-        return form, metadata
+        return form, self.metadata
 
 
 class TransformXformForESTest(SimpleTestCase):

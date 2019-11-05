@@ -54,15 +54,6 @@ def send_upload_fixture_complete_email(email, domain, time_start, time_end, mess
     return
 
 
-@task(serializer='pickle')
-def fixture_download_async(prepare_download, *args, **kw):
-    # deprecated task. no longer called. to be removed after all tasks consumed
-    task = fixture_download_async
-    DownloadBase.set_progress(task, 0, 100)
-    prepare_download(task=task, *args, **kw)
-    DownloadBase.set_progress(task, 100, 100)
-
-
 @task
 def async_fixture_download(table_ids, domain, download_id):
     task = async_fixture_download

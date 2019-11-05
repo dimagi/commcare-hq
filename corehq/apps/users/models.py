@@ -6,6 +6,7 @@ from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import override as override_language
@@ -2773,3 +2774,74 @@ class AnonymousCouchUser(object):
 
     def can_view_roles(self):
         return False
+
+
+class UserReportingMetadataStaging(models.Model):
+    domain = models.TextField()
+    user_id = models.TextField()
+    app_id = models.TextField()
+    modified_on = models.DateTimeField(auto_now=True)
+
+    # should build_id actually be nullable?
+    build_id = models.TextField(null=True)
+
+    # The following properties are null if a user has not submitted a form since their last sync
+    xform_version = models.IntegerField(null=True)
+    form_meta = JSONField(null=True)  # This could be filtered to only the parts we need
+    received_on = models.DateTimeField(null=True)
+
+    # The following properties are null if a user has not synced since their last form submission
+    device_id = models.TextField(null=True)
+    sync_date = models.DateTimeField(null=True)
+
+    @classmethod
+    def add_submission(cls, domain, user_id, app_id, build_id, version, metadata, received_on):
+        obj, created = cls.objects.get_or_create(
+            domain=domain, user_id=user_id, app_id=app_id,
+            defaults={
+                'build_id': build_id,
+                'xform_version': version,
+                'form_meta': metadata,
+                'received_on': received_on,
+            }
+        )
+
+        if created:
+            return
+
+        save = False
+
+        if received_on - obj.received_on > settings.USER_REPORTING_METADATA_UPDATE_FREQUENCY:
+            obj.received_on = received_on
+            save = True
+        if build_id != obj.build_id:
+            obj.build_id = build_id
+            save = True
+
+        if save:
+            obj.form_meta = metadata
+            obj.xform_version = version
+            obj.save()
+
+    @classmethod
+    def add_sync(cls, domain, user_id, app_id, build_id, sync_date, device_id):
+        obj, created = cls.objects.get_or_create(
+            domain=domain, user_id=user_id, app_id=app_id,
+            defaults={
+                'build_id': build_id,
+                'sync_date': sync_date,
+                'device_id': device_id,
+            }
+        )
+
+        if created:
+            return
+
+        if sync_date > obj.sync_date:
+            obj.sync_date = sync_date
+            obj.build_id = build_id
+            obj.device_id = device_id
+            obj.save()
+
+    class Meta(object):
+        unique_together = ('domain', 'user_id', 'app_id')

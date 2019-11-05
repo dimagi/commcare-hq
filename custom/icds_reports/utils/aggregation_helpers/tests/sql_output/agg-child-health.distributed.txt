@@ -1,6 +1,12 @@
 DROP TABLE IF EXISTS staging_agg_child_health
 {}
-CREATE UNLOGGED TABLE staging_agg_child_health (LIKE agg_child_health)
+
+        CREATE TABLE staging_agg_child_health (
+            LIKE agg_child_health
+            INCLUDING INDEXES INCLUDING CONSTRAINTS INCLUDING DEFAULTS,
+            CHECK (month = DATE '2019-01-01')
+        )
+        
 {}
 
             CREATE UNLOGGED TABLE "blah_blah_blah" AS SELECT
@@ -396,6 +402,8 @@ CREATE UNLOGGED TABLE staging_agg_child_health (LIKE agg_child_health)
         INHERITS (agg_child_health)
         
 {}
+DROP TABLE IF EXISTS "previous_agg_child_health_2019-01-01"
+{}
 CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_1" ON "agg_child_health_2019-01-01" (aggregation_level, state_id)
 {}
 CREATE INDEX IF NOT EXISTS "agg_child_health_2019-01-01_idx_2" ON "agg_child_health_2019-01-01" (aggregation_level, gender)
@@ -418,14 +426,17 @@ DROP TABLE IF EXISTS "agg_child_health_2019-01-01_4"
 {}
 DROP TABLE IF EXISTS "agg_child_health_2019-01-01_5"
 {}
-DELETE FROM "agg_child_health_2019-01-01"
+ALTER TABLE IF EXISTS "agg_child_health_2019-01-01" NO INHERIT "agg_child_health"
 {}
 
-            INSERT INTO "agg_child_health_2019-01-01" (
-                SELECT * FROM "staging_agg_child_health"
-                ORDER BY aggregation_level, state_id, district_id, block_id, supervisor_id, awc_id
-            )
+            ALTER TABLE IF EXISTS "agg_child_health_2019-01-01" RENAME TO "previous_agg_child_health_2019-01-01"
             
+{}
+
+            ALTER TABLE IF EXISTS "staging_agg_child_health" RENAME TO "agg_child_health_2019-01-01"
+            
+{}
+ALTER TABLE IF EXISTS "agg_child_health_2019-01-01" INHERIT "agg_child_health"
 {}
 DROP TABLE IF EXISTS staging_agg_child_health
 {}

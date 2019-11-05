@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 
 @contextmanager
-def tee_output(stream):
+def tee_output(stream, sys=sys):
     """Tee stdout and stderr to an additional (combined) output stream
 
     :param stream: File-like object open for writing or file path (str)
