@@ -4,8 +4,9 @@
 
 An application typically has many different `Application` documents: 
 one for the current/primary/canonical application, plus one for each saved build.
-The current app's id is what you'll see in the URL on most app manager pages;
-most pages will redirect to the current app if given the id of an older build.
+The current app's id is what you'll see in the URL on most app manager pages.
+Most pages will redirect to the current app if given the id of an older build,
+since saved builds are essentially read-only.
 
 In saved builds, `copy_of` contains the primary app's id, while it's `None` for the primary app itself.
 The property `master_id` gets the id of the primary app doc, whether it's called on a saved build or on the primary app.
@@ -54,4 +55,6 @@ Duplicate xmlnses in an app will throw an error when a new version of the app is
 ### Exceptions
 Linked apps use similar workflows to app copy for creating and pulling. See [docs](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/linked_domain#linked-applications) for more detail on how they handle form unique ids and xmlnses.
 
-Shadow forms are a variation of advanced forms that "shadow" another form's XML but can have their own settings and actions. Because they don't have their own XML, shadow forms do not have an xmlns but instead inherit their parent's xmlns.
+Shadow forms are a variation of advanced forms that "shadow" another form's XML but can have their own settings and
+actions. Because they don't have their own XML, shadow forms do not have an xmlns but instead inherit their
+source form's xmlns. In reports, submissions from shadow forms show up as coming from their source form.
