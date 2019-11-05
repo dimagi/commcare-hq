@@ -35,6 +35,7 @@ from dimagi.ext.jsonobject import (
     ObjectProperty,
     StringProperty,
 )
+from dimagi.utils.modules import to_function
 
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.sqlreport import AggregateColumn, DatabaseColumn
@@ -327,7 +328,7 @@ class _CaseExpressionColumn(ReportColumn):
         )
 
     def get_whens(self):
-        return self.whens
+        raise NotImplementedError('subclasses must override this')
 
     def get_query_column_ids(self):
         return [self.column_id]
@@ -377,6 +378,41 @@ class SumWhenColumn(_CaseExpressionColumn):
         # syntax, as attempted in commit 02833e28b7aaf5e0a71741244841ad9910ffb1e5
         return True
 
+    def get_whens(self):
+        return self.whens
+
+
+class SumWhenTemplateColumn(SumWhenColumn):
+    type = TypeProperty("sum_when_template")
+
+    @classmethod
+    def restricted_to_static(cls):
+        return False
+
+    def get_whens(self):
+        whens = []
+        for item in self.whens:
+            when, then = item
+            try:
+                expression_class = to_function(when)
+            except ValueError:
+                raise BadSpecError('Badly formatted expression class: {}'.format(when))
+            if not expression_class:
+                raise BadSpecError('Could not find expression class: {}'.format(when))
+            whens.append([expression_class.expression, then])
+        return whens
+
+
+class SumWhenTemplate(object):
+    expression = None
+
+    @property
+    def param_count(self):
+        return len(re.findall(r'{}', self.expression))
+
+
+class YearRangeTemplate(SumWhenTemplate):
+    expression = "year >= 2010 and year < 2020"
 
 
 class PercentageColumn(ReportColumn):

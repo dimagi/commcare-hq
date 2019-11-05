@@ -20,6 +20,7 @@ from corehq.apps.userreports.reports.specs import (
     PercentageColumn,
     PieChartSpec,
     SumWhenColumn,
+    SumWhenTemplateColumn,
 )
 
 
@@ -34,6 +35,7 @@ class ReportColumnFactory(object):
         'location': LocationColumn,
         'percent': PercentageColumn,
         'sum_when': SumWhenColumn,
+        'sum_when_template': SumWhenTemplateColumn,
     }
 
     @classmethod

@@ -7,10 +7,15 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
+from corehq.apps.userreports.reports.specs import SumWhenTemplate
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
+
+
+class UnderSixMonthsTemplate(SumWhenTemplate):
+    expression = "age_at_registration < 6"
 
 
 class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
@@ -1058,6 +1063,16 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
                     'else_': 0
                 },
                 {
+                    'type': 'sum_when_template',
+                    'display': 'under_six_month_olds_template',
+                    'field': 'age_at_registration',
+                    'column_id': 'under_six_month_olds_template',
+                    'whens': [
+                        ["corehq.apps.userreports.tests.test_report_aggregation.UnderSixMonthsTemplate", 1],
+                    ],
+                    'else_': 0
+                },
+                {
                     'type': 'field',
                     'display': 'report_column_display_number',
                     'field': 'indicator_col_id_number',
@@ -1071,9 +1086,9 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         table = view.export_table[0][1]
         self.assertEqual(len(table), 3)
         for table_row in [
-            ['state', 'under_six_month_olds', 'report_column_display_number'],
-            ['MA', 2, 9],
-            ['TN', 0, 1],
+            ['state', 'under_six_month_olds', 'under_six_month_olds_template', 'report_column_display_number'],
+            ['MA', 2, 2, 9],
+            ['TN', 0, 0, 1],
         ]:
             self.assertIn(table_row, table)
 
