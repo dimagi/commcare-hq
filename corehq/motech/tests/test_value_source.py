@@ -393,7 +393,7 @@ def test_doctests():
     assert results.failed == 0
 
 
-def get_constant_spam(update: dict=None) -> ValueSource:
+def get_constant_spam(update: dict = None) -> ValueSource:
     constant_spam = {
         "doc_type": "ConstantValue",
         "value": "spam",
