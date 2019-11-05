@@ -1,14 +1,14 @@
 from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from testil import assert_raises
 
-from corehq.sql_db.config import ShardMeta
+from corehq.sql_db.config import ShardMeta, _get_shard_count, PlProxyConfig
 from corehq.sql_db.management.commands.configure_pl_proxy_cluster import (
     get_shards_to_update,
     parse_existing_shard,
 )
 
-from ..config import PartitionConfig
 from ..exceptions import (
     NonContinuousShardsError,
     NoSuchShardDatabaseError,
@@ -72,23 +72,19 @@ TEST_DATABASES = {
 }
 
 
-@override_settings(USE_PARTITIONED_DATABASE=True)
-@override_settings(PARTITION_DATABASE_CONFIG=TEST_PARTITION_CONFIG)
-@override_settings(DATABASES=TEST_DATABASES)
+@override_settings(DATABASES=TEST_DATABASES, USE_PARTITIONED_DATABASE=True)
 class TestPartitionConfig(SimpleTestCase):
 
     def test_num_shards(self):
-        config = PartitionConfig()
-        self.assertEqual(4, config.num_shards)
+        self.assertEqual(4, _get_shard_count(TEST_PARTITION_CONFIG['shards'].values()))
 
     def test_dbs_by_group(self):
-        config = PartitionConfig()
-        dbs = config.get_form_processing_dbs()
-        self.assertIn('db1', dbs)
-        self.assertIn('db2', dbs)
+        config = PlProxyConfig.from_dict(TEST_PARTITION_CONFIG)
+        self.assertIn('db1', config.shard_map)
+        self.assertIn('db2', config.shard_map)
 
     def test_shard_mapping(self):
-        config = PartitionConfig()
+        config = PlProxyConfig.from_dict(TEST_PARTITION_CONFIG)
         shards = config.get_shards()
         self.assertEqual(shards, [
             ShardMeta(id=0, dbname='db1', host='hqdb1', port=5432),
@@ -98,44 +94,44 @@ class TestPartitionConfig(SimpleTestCase):
         ])
 
     def test_get_shards_on_db(self):
-        config = PartitionConfig()
+        config = PlProxyConfig.from_dict(TEST_PARTITION_CONFIG)
         self.assertEqual([0, 1], config.get_shards_on_db('db1'))
         self.assertEqual([2, 3], config.get_shards_on_db('db2'))
 
     def test_get_shards_on_db_not_found(self):
-        config = PartitionConfig()
+        config = PlProxyConfig.from_dict(TEST_PARTITION_CONFIG)
         with self.assertRaises(NoSuchShardDatabaseError):
             config.get_shards_on_db('db3')
 
-    @override_settings(PARTITION_DATABASE_CONFIG=TEST_PARTITION_CONFIG_HOST_MAP)
     def test_host_map(self):
-        config = PartitionConfig()
+        config = PlProxyConfig.from_dict(TEST_PARTITION_CONFIG_HOST_MAP)
         shards = config.get_shards()
         self.assertEqual(shards, [
             ShardMeta(id=0, dbname='db1', host='localhost', port=5432),
             ShardMeta(id=1, dbname='db2', host='hqdb2', port=5432),
         ])
 
-    @override_settings(PARTITION_DATABASE_CONFIG=INVALID_SHARD_RANGE_START)
-    def test_invalid_shard_range_start(self):
-        with self.assertRaises(NotZeroStartError):
-            PartitionConfig()
-
-    @override_settings(PARTITION_DATABASE_CONFIG=INVALID_SHARD_RANGE_CONTINUOUS)
-    def test_invalid_shard_range_continuous(self):
-        with self.assertRaises(NonContinuousShardsError):
-            PartitionConfig()
-
-    @override_settings(PARTITION_DATABASE_CONFIG=INVALID_SHARD_RANGE_POWER_2)
-    def test_invalid_shard_range_power_2(self):
-        with self.assertRaises(NotPowerOf2Error):
-            PartitionConfig()
-
-    @override_settings(PARTITION_DATABASE_CONFIG=TEST_LEGACY_FORMAT)
     def test_legacy_format(self):
-        config = PartitionConfig()
-        self.assertEqual('proxy', config.get_proxy_db())
-        self.assertEqual({'db1', 'db2'}, set(config.get_form_processing_dbs()))
+        config = PlProxyConfig.from_dict(TEST_LEGACY_FORMAT)
+        self.assertEqual('proxy', config.proxy_db)
+        self.assertEqual({'db1', 'db2'}, set(config.form_processing_dbs))
+
+
+def test_partition_config_validation():
+    def _run_test(config, exception, message):
+        settings = {
+            'DATABASES': TEST_DATABASES,
+        }
+        with override_settings(**settings), assert_raises(exception, msg=message):
+            PlProxyConfig.from_dict(config)
+
+    cases = [
+        (INVALID_SHARD_RANGE_START, NotZeroStartError, None),
+        (INVALID_SHARD_RANGE_CONTINUOUS, NonContinuousShardsError, None),
+        (INVALID_SHARD_RANGE_POWER_2, NotPowerOf2Error, None),
+    ]
+    for config, exception, message in cases:
+        yield _run_test, config, exception, message
 
 
 @override_settings(DATABASES=TEST_DATABASES)

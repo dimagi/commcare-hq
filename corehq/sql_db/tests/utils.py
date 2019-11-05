@@ -53,4 +53,4 @@ class DefaultShardingTestConfigMixIn(object):
         self.assertIn(self.db2, settings.PARTITION_DATABASE_CONFIG['shards'])
         self.assertEqual(settings.PARTITION_DATABASE_CONFIG['shards'][self.db1], [0, 1])
         self.assertEqual(settings.PARTITION_DATABASE_CONFIG['shards'][self.db2], [2, 3])
-        self.assertEqual(set(partition_config.get_form_processing_dbs()), set([self.db1, self.db2]))
+        self.assertEqual(set(partition_config.form_processing_dbs), set([self.db1, self.db2]))

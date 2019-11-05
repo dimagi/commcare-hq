@@ -110,7 +110,7 @@ def _update_pl_proxy_cluster(existing_config, verbose):
             if verbose:
                 print(alter_sql)
 
-            with connections[partition_config.get_proxy_db()].cursor() as cursor:
+            with connections[partition_config.proxy_db].cursor() as cursor:
                 cursor.execute(alter_sql)
         else:
             print('Abort')
@@ -129,7 +129,7 @@ def _get_alter_server_sql(shards_to_update):
 
 
 def create_pl_proxy_cluster(verbose=False, drop_existing=False):
-    proxy_db = partition_config.get_proxy_db()
+    proxy_db = partition_config.proxy_db
 
     if drop_existing:
         with connections[proxy_db].cursor() as cursor:
@@ -153,7 +153,7 @@ def get_drop_server_sql():
 
 
 def _get_existing_cluster_config(cluster_name):
-    proxy_db = partition_config.get_proxy_db()
+    proxy_db = partition_config.proxy_db
     with connections[proxy_db].cursor() as cursor:
         cursor.execute('SELECT * from pg_foreign_server where srvname = %s', [cluster_name])
         results = list(fetchall_as_namedtuple(cursor))
@@ -173,7 +173,7 @@ def get_pl_proxy_server_config_sql(shards):
 
 
 def get_user_mapping_sql():
-    proxy_db = partition_config.get_proxy_db()
+    proxy_db = partition_config.proxy_db
     proxy_db_config = settings.DATABASES[proxy_db].copy()
     proxy_db_config['server_name'] = settings.PL_PROXY_CLUSTER_NAME
     return USER_MAPPING_TEMPLATE.format(**proxy_db_config)

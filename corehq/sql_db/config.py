@@ -1,12 +1,19 @@
 import json
 
 from django.conf import settings
+
+import attr
 from jsonobject.api import JsonObject
 from jsonobject.properties import IntegerProperty, StringProperty
-
 from memoized import memoized
-from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError, \
-    NoSuchShardDatabaseError
+
+from .exceptions import (
+    NonContinuousShardsError,
+    NoSuchShardDatabaseError,
+    NotPowerOf2Error,
+    NotZeroStartError,
+    PartitionValidationError,
+)
 
 FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'
@@ -51,78 +58,31 @@ class DbShard(object):
         )
 
 
-class PartitionConfig(object):
-
-    def __init__(self):
-        assert settings.USE_PARTITIONED_DATABASE
-        self._validate()
-
-    def _validate(self):
-        proxy_db = self.partition_config['proxy']
-        if proxy_db not in self.database_config:
-            raise PartitionValidationError(f'{proxy_db} not in found in DATABASES')
-
-        shards_seen = set()
-        previous_range = None
-        for group, shard_range, in sorted(list(self.partition_config['shards'].items()), key=lambda x: x[1]):
-            if not previous_range:
-                if shard_range[0] != 0:
-                    raise NotZeroStartError('Shard numbering must start at 0')
-            else:
-                if previous_range[1] + 1 != shard_range[0]:
-                    raise NonContinuousShardsError(
-                        'Shards must be numbered consecutively: {} -> {}'.format(
-                            previous_range[1], shard_range[0]
-                        ))
-
-            shards_seen |= set(range(shard_range[0], shard_range[1] + 1))
-            previous_range = shard_range
-
-        num_shards = len(shards_seen)
-
-        if not _is_power_of_2(num_shards):
-            raise NotPowerOf2Error('Total number of shards must be a power of 2: {}'.format(num_shards))
-
-        self._num_shards = num_shards
+@attr.s
+class PlProxyConfig(object):
+    proxy_db = attr.ib()
+    shard_map = attr.ib()
+    # 'host_map' is use to support Docker where external connections are via the docker name
+    # but internal connections are to 'localhost'. See docker/localsettings.py
+    host_map = attr.ib()
+    shard_count = attr.ib()
 
     @property
-    def num_shards(self):
-        return self._num_shards
-
-    @property
-    def partition_config(self):
-        config = settings.PARTITION_DATABASE_CONFIG
-        if 'groups' in config:
-            # convert old format
-            config['proxy'] = config['groups']['proxy'][0]
-            del config['groups']
-        return config
-
-    @property
-    def database_config(self):
-        return settings.DATABASES
-
-    def get_proxy_db(self):
-        return self.partition_config['proxy']
-
-    def get_form_processing_dbs(self):
-        return list(self.partition_config['shards'])
+    def form_processing_dbs(self):
+        return list(self.shard_map)
 
     @memoized
     def _get_django_shards(self):
-        shard_config = self.partition_config['shards']
+        shard_map = self.shard_map
         db_shards = []
-        for db, shard_range in shard_config.items():
+        for db, shard_range in shard_map.items():
             db_shards.extend([DbShard(shard_num, db) for shard_num in range(shard_range[0], shard_range[1] + 1)])
         return sorted(db_shards, key=lambda shard: shard.shard_id)
 
     @memoized
     def get_shards(self):
         """Returns a list of ShardMeta objects sorted by shard ID"""
-
-        # 'host_map' is use to support Docker where external connections are via the docker name
-        # but internal connections are to 'localhost'. See docker/localsettings.py
-        host_map = self.partition_config.get('host_map', {})
+        host_map = self.host_map
         db_shards = self._get_django_shards()
         return [shard.to_shard_meta(host_map) for shard in db_shards]
 
@@ -130,7 +90,7 @@ class PartitionConfig(object):
     def get_shards_on_db(self, db):
         """Given a database name, returns a list of the shard ids that are on that database"""
         try:
-            shard_range = self.partition_config['shards'][db]
+            shard_range = self.shard_map[db]
         except KeyError:
             raise NoSuchShardDatabaseError('No database {} found in shard config'.format(db))
         else:
@@ -141,16 +101,58 @@ class PartitionConfig(object):
         db_shards = self._get_django_shards()
         return {shard.shard_id: shard for shard in db_shards}
 
+    @classmethod
+    def from_settings(cls):
+        assert settings.USE_PARTITIONED_DATABASE
+        return PlProxyConfig.from_dict(settings.PARTITION_DATABASE_CONFIG)
+
+    @classmethod
+    def from_dict(cls, config_dict):
+        if 'groups' in config_dict:
+            # convert old format
+            proxy_db = config_dict['groups']['proxy'][0]
+        else:
+            proxy_db = config_dict['proxy']
+        shard_map = config_dict['shards']
+        host_map = config_dict.get('host_map', {})
+
+        config = PlProxyConfig(proxy_db, shard_map, host_map, _get_shard_count(shard_map.values()))
+        config.validate()
+        return config
+
+    def validate(self):
+        if self.proxy_db not in settings.DATABASES:
+            raise PartitionValidationError(f'{self.proxy_db} not in found in DATABASES')
+
+        previous_range = None
+        for group, shard_range, in sorted(list(self.shard_map.items()), key=lambda x: x[1]):
+            if not previous_range:
+                if shard_range[0] != 0:
+                    raise NotZeroStartError('Shard numbering must start at 0')
+            else:
+                if previous_range[1] + 1 != shard_range[0]:
+                    raise NonContinuousShardsError(
+                        'Shards must be numbered consecutively: {} -> {}'.format(
+                            previous_range[1], shard_range[0]
+                        ))
+
+            previous_range = shard_range
+
+        if not _is_power_of_2(self.shard_count):
+            raise NotPowerOf2Error('Total number of shards must be a power of 2: {}'.format(self.shard_count))
+
 
 def _is_power_of_2(num):
     return num and not (num & (num - 1))
 
 
-def _get_config():
-    if settings.USE_PARTITIONED_DATABASE:
-        return PartitionConfig()
-    else:
-        return object()
+def _get_shard_count(shard_ranges):
+    shards = set()
+    for shard_range in shard_ranges:
+        shards |= set(range(shard_range[0], shard_range[1] + 1))
+    return len(shards)
 
 
-partition_config = _get_config()
+partition_config = None
+if settings.USE_PARTITIONED_DATABASE:
+    partition_config = PlProxyConfig.from_settings()

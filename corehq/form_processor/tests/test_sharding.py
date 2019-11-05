@@ -24,7 +24,7 @@ class ShardingTests(TestCase):
             # https://github.com/nose-devs/nose/issues/946
             raise SkipTest('Only applicable if sharding is setup')
         super(ShardingTests, cls).setUpClass()
-        assert len(partition_config.get_form_processing_dbs()) > 1
+        assert len(partition_config.form_processing_dbs) > 1
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
@@ -37,7 +37,7 @@ class ShardingTests(TestCase):
 
         dbs_with_form = []
         dbs_with_case = []
-        for db in partition_config.get_form_processing_dbs():
+        for db in partition_config.form_processing_dbs:
             form_in_db = XFormInstanceSQL.objects.using(db).filter(form_id=form.form_id).exists()
             if form_in_db:
                 dbs_with_form.append(db)
@@ -59,7 +59,7 @@ class ShardingTests(TestCase):
 
         forms_per_db = {}
         cases_per_db = {}
-        for db in partition_config.get_form_processing_dbs():
+        for db in partition_config.form_processing_dbs:
             forms_per_db[db] = XFormInstanceSQL.objects.using(db).filter(domain=DOMAIN).count()
             cases_per_db[db] = CommCareCaseSQL.objects.using(db).filter(domain=DOMAIN).count()
 
@@ -163,7 +163,7 @@ class ShardAccessorTests(TestCase):
         for db_alias in doc_db_map.values():
             doc_count_per_db[db_alias] += 1
 
-        num_dbs = len(partition_config.get_form_processing_dbs())
+        num_dbs = len(partition_config.form_processing_dbs)
         even_split = int(N // num_dbs)
         tolerance = N * 0.05  # 5% tollerance
         diffs = [abs(even_split - count) for count in doc_count_per_db.values()]
