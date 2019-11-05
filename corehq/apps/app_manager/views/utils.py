@@ -186,9 +186,9 @@ def overwrite_app(app, master_build, report_map=None):
             except KeyError:
                 raise AppEditingError(config.report_id)
 
-    from corehq.apps.app_manager.suite_xml.post_process.resources import add_xform_resource_overrides
+    from corehq.apps.app_manager.suite_xml.post_process.resources import add_xform_overrides
     ids_map = _map_old_form_ids_to_new(wrapped_app, old_form_ids_by_xmlns)
-    add_xform_resource_overrides(app.domain, app.master_id, ids_map)
+    add_xform_overrides(app.domain, app.master_id, ids_map)
     wrapped_app = _update_form_ids(wrapped_app, master_build, ids_map)
 
     # Multimedia versions should be set based on the linked app's versions, not those of the master app.

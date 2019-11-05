@@ -1,12 +1,15 @@
 from django.test import SimpleTestCase
 
+from mock import patch
+
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.util.test_utils import flag_enabled
 
 
+@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
-    def test_that_grid_style_is_added(self):
+    def test_that_grid_style_is_added(self, *args):
         """
         Confirms that style="grid" is added to the root menu
         """
@@ -37,7 +40,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
             root_xpath
         )
 
-    def test_that_root_menu_added(self):
+    def test_that_root_menu_added(self, *args):
         """
         Confirms that a menu is added with id="root" and style="grid"
         when the app normally wouldn't have a menu with id="root".
@@ -55,7 +58,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
             root_xpath
         )
 
-    def test_use_grid_menus_is_false(self):
+    def test_use_grid_menus_is_false(self, *args):
         """
         Confirms that style="grid" is not added to any menus when use_grid_menus is False.
         """
@@ -67,7 +70,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
         style_xpath = './menu[@style="grid"]'
         self.assertXmlDoesNotHaveXpath(suite, style_xpath)
 
-    def test_grid_menu_for_none(self):
+    def test_grid_menu_for_none(self, *args):
         factory = AppFactory(build_version='2.24.3')
         factory.app.create_profile()
         factory.app.grid_form_menus = 'none'
@@ -100,7 +103,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
             m0_xpath
         )
 
-    def test_grid_menu_for_some(self):
+    def test_grid_menu_for_some(self, *args):
         factory = AppFactory(build_version='2.24.3')
         factory.app.create_profile()
         factory.app.grid_form_menus = 'some'
@@ -148,7 +151,7 @@ class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
             root_xpath
         )
 
-    def test_grid_menu_for_all(self):
+    def test_grid_menu_for_all(self, *args):
         factory = AppFactory(build_version='2.24.3')
         factory.app.create_profile()
         factory.app.grid_form_menus = 'all'

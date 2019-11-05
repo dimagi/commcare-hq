@@ -343,7 +343,8 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
             menu_locale_id=menu_locale_id,
         )
 
-    def test_form_suite(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_form_suite(self, *args):
         no_media_xml = self.XML_without_media("forms.m0f0")
         self.assertXmlPartialEqual(no_media_xml, self.app.create_suite(), "./entry/command[@id='m0-f0']/text")
 
@@ -360,7 +361,8 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self._test_correct_icon_translations(self.app, self.form, icon_locale)
         self._test_correct_audio_translations(self.app, self.form, audio_locale)
 
-    def test_module_suite(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_module_suite(self, *args):
         no_media_xml = self.XML_without_media("modules.m0")
         self.assertXmlPartialEqual(no_media_xml, self.app.create_suite(), "././menu[@id='m0']/text")
 
@@ -377,12 +379,14 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self._test_correct_icon_translations(self.app, self.module, icon_locale)
         self._test_correct_audio_translations(self.app, self.module, audio_locale)
 
-    def test_custom_icons_in_modules(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_custom_icons_in_modules(self, *args):
         self._test_custom_icon_in_suite(
             self.module, "modules.m0",
             id_strings.module_custom_icon_locale, "./menu[@id='m0']/display")
 
-    def test_case_list_form_media(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_case_list_form_media(self, *args):
         app = AppFactory.case_list_form_app_factory().app
         app.build_spec = self.min_spec
 
@@ -405,12 +409,14 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self._test_correct_icon_translations(app, app.get_module(0).case_list_form, icon_locale)
         self._test_correct_audio_translations(app, app.get_module(0).case_list_form, audio_locale)
 
-    def test_custom_icons_in_forms(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_custom_icons_in_forms(self, *args):
         self._test_custom_icon_in_suite(
             self.form, "forms.m0f0",
             id_strings.form_custom_icon_locale, "./entry/command[@id='m0-f0']/")
 
-    def test_case_list_menu_media(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_case_list_menu_media(self, *args):
         self.module.case_list.show = True
 
         no_media_xml = self.XML_without_media("case_lists.m0")
@@ -452,7 +458,8 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(en_app_strings['modules.m0.icon'], hin_app_strings['modules.m0.icon'])
         self.assertEqual(en_app_strings['modules.m0.audio'], hin_app_strings['modules.m0.audio'])
 
-    def test_use_default_media_ignore_lang(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_use_default_media_ignore_lang(self, *args):
         # When use_default_media is true and there's media in a non-default language but not the default language
         self.app.langs = ['en', 'hin']
 
@@ -478,6 +485,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
             "./entry/command[@id='m0-f0']/"
         )
 
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_suite_media_with_app_profile(self, *args):
         # Test that suite includes only media relevant to the profile

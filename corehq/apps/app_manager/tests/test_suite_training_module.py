@@ -1,12 +1,15 @@
 from django.test import SimpleTestCase
 
+from mock import patch
+
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
+@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class TrainingModuleSuiteTest(SimpleTestCase, TestXmlMixin):
 
-    def test_training_module(self):
+    def test_training_module(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
         training_module = app.add_module(Module.new_training_module('training module', None))
         app.new_form(training_module.id, "Untitled Form", None)
@@ -30,7 +33,7 @@ class TrainingModuleSuiteTest(SimpleTestCase, TestXmlMixin):
             "./menu"
         )
 
-    def test_training_module_put_in_root(self):
+    def test_training_module_put_in_root(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
         training_module = app.add_module(Module.new_training_module('training module', None))
         training_module.put_in_root = True

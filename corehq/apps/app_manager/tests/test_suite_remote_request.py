@@ -22,6 +22,7 @@ from corehq.apps.builds.models import BuildSpec
 DOMAIN = 'test_domain'
 
 
+@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
@@ -72,7 +73,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ],
         )
 
-    def test_remote_request(self):
+    def test_remote_request(self, *args):
         """
         Suite should include remote-request if searching is configured
         """
@@ -81,7 +82,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('remote_request'), suite, "./remote-request[1]")
 
-    def test_remote_request_custom_detail(self):
+    def test_remote_request_custom_detail(self, *args):
         """Remote requests for modules with custom details point to the custom detail
         """
         self.module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
@@ -90,11 +91,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('remote_request_custom_detail'), suite, "./remote-request[1]")
 
-    def test_duplicate_remote_request(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite')
+    def test_duplicate_remote_request(self, *args):
         """
         Adding a second search config should not affect the initial one.
         """
-        # this tests a bug encountered by enishay
         copy_app = Application.wrap(self.app.to_json())
         copy_app.modules.append(Module.wrap(copy_app.modules[0].to_json()))
         with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
@@ -102,7 +103,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite = copy_app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('remote_request'), suite, "./remote-request[1]")
 
-    def test_case_search_action(self):
+    def test_case_search_action(self, *args):
         """
         Case search action should be added to case list and a new search detail should be created
         """
@@ -125,14 +126,14 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
-    def test_case_search_action_relevant_condition(self):
+    def test_case_search_action_relevant_condition(self, *args):
         condition = "'foo' = 'bar'"
         self.module.search_config.search_button_display_condition = condition
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
         self.assertEqual(condition, suite.xpath('./detail[1]/action/@relevant')[0])
 
-    def test_only_default_properties(self):
+    def test_only_default_properties(self, *args):
         self.module.search_config = CaseSearch(
             default_properties=[
                 DefaultCaseSearchProperty(
@@ -153,7 +154,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_default_only'), suite, "./remote-request[1]")
 
-    def test_blacklisted_owner_ids(self):
+    def test_blacklisted_owner_ids(self, *args):
         self.module.search_config = CaseSearch(
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),

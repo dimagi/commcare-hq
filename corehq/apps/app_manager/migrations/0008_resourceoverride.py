@@ -4,7 +4,7 @@ from django.db import migrations, models
 
 from corehq.apps.app_manager.dbaccessors import wrap_app
 from corehq.apps.app_manager.models import LinkedApplication
-from corehq.apps.app_manager.suite_xml.post_process.resources import add_xform_resource_overrides
+from corehq.apps.app_manager.suite_xml.post_process.resources import add_xform_overrides
 from corehq.apps.linked_domain.applications import get_master_app_by_version
 from corehq.dbaccessors.couchapps.all_docs import (
     get_deleted_doc_ids_by_class,
@@ -36,7 +36,7 @@ def _add_overrides_for_build(doc):
         master_form_unique_id: linked_map[xmlns]
         for xmlns, master_form_unique_id in master_map.items() if xmlns in linked_map
     }
-    add_xform_resource_overrides(linked_build.domain, linked_build.get_id, override_map)
+    add_xform_overrides(linked_build.domain, linked_build.get_id, override_map)
 
 
 def _get_xmlns_map(app):

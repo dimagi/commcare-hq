@@ -1,13 +1,16 @@
 from django.test import SimpleTestCase
 
+from mock import patch
+
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
+@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
 
-    def test_case_list_lookup_wo_image(self):
+    def test_case_list_lookup_wo_image(self, *args):
         callout_action = "callout.commcarehq.org.dummycallout.LAUNCH"
 
         app = Application.new_app('domain', 'Untitled Application')
@@ -28,7 +31,7 @@ class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
             "./detail/lookup"
         )
 
-    def test_case_list_lookup_w_image(self):
+    def test_case_list_lookup_w_image(self, *args):
         action = "callout.commcarehq.org.dummycallout.LAUNCH"
         image = "jr://file/commcare/image/callout"
 
@@ -51,7 +54,7 @@ class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
             "./detail/lookup"
         )
 
-    def test_case_list_lookup_autolaunch(self):
+    def test_case_list_lookup_autolaunch(self, *args):
         action = "callout.commcarehq.org.dummycallout.LAUNCH"
         app = Application.new_app('domain', 'Untitled Application')
         module = app.add_module(Module.new_module('Untitled Module', None))
@@ -72,7 +75,7 @@ class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
             "./detail/lookup"
         )
 
-    def test_case_list_lookup_w_name(self):
+    def test_case_list_lookup_w_name(self, *args):
         action = "callout.commcarehq.org.dummycallout.LAUNCH"
         image = "jr://file/commcare/image/callout"
         name = "ιтѕ α тяαρ ʕ •ᴥ•ʔ"
@@ -97,7 +100,7 @@ class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
             "./detail/lookup"
         )
 
-    def test_case_list_lookup_w_extras_and_responses(self):
+    def test_case_list_lookup_w_extras_and_responses(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
@@ -129,7 +132,7 @@ class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
             "./detail/lookup"
         )
 
-    def test_case_list_lookup_disabled(self):
+    def test_case_list_lookup_disabled(self, *args):
         action = "callout.commcarehq.org.dummycallout.LAUNCH"
         app = Application.new_app('domain', 'Untitled Application')
         module = app.add_module(Module.new_module('Untitled Module', None))
@@ -146,7 +149,7 @@ class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
             "./detail/lookup"
         )
 
-    def test_case_list_lookup_display_results(self):
+    def test_case_list_lookup_display_results(self, *args):
         factory = AppFactory(build_version='2.11.0')
         module, form = factory.new_basic_module('follow_up', 'case')
         case_list = module.case_details.short

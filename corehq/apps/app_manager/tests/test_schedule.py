@@ -105,7 +105,8 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(self.form_1.get_phase(), phase)
         self.assertEqual(self.form_3.get_phase(), None)
 
-    def test_phase_requires_anchor(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_phase_requires_anchor(self, *args):
         self.module.schedule_phases = [
             SchedulePhase(
                 forms=[SchedulePhaseForm(form_id=self.form_3.unique_id)]
@@ -183,7 +184,8 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
 
         self.assertEqual(self.module.schedule_phases[2].anchor, 'burp')
 
-    def test_form_in_phase_requires_schedule(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_form_in_phase_requires_schedule(self, *args):
         self._apply_schedule_phases()
         self.form_3.schedule = None
         with self.assertRaises(ScheduleError):
@@ -231,19 +233,23 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(phase2.get_phase_form_index(self.form_3), 0)
         self.assertIsNone(phase1.get_form(self.form_3))
 
-    def test_schedule_detail(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_schedule_detail(self, *args):
         self._apply_schedule_phases()
 
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('schedule-entry'), suite, "./detail[@id='m1_case_short']")
 
-    def test_schedule_fixture(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_schedule_fixture(self, *args):
         self._apply_schedule_phases()
 
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('schedule-fixture'), suite, './fixture')
 
-    def test_multiple_modules(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite')
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_multiple_modules(self, *args):
         self._apply_schedule_phases()
 
         other_module = self.app.get_module(2)
@@ -280,7 +286,8 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(expected_fixture, suite, './fixture[@id="schedule:m2:p1:f0"]')
         self.assertXmlHasXpath(suite, './fixture[@id="schedule:m1:p1:f0"]')
 
-    def test_form_filtering(self):
+    @patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
+    def test_form_filtering(self, *args):
         self._apply_schedule_phases()
         suite = self.app.create_suite()
         form_ids = (self.form_1.schedule_form_id, self.form_2.schedule_form_id)

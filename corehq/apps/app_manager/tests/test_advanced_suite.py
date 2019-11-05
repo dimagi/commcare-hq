@@ -1,5 +1,7 @@
 from django.test import SimpleTestCase
 
+from mock import patch
+
 from corehq.apps.app_manager.models import (
     AUTO_SELECT_CASE,
     AUTO_SELECT_FIXTURE,
@@ -22,13 +24,14 @@ from corehq.apps.app_manager.tests.util import (
 from corehq.util.test_utils import flag_enabled
 
 
+@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
-    def test_advanced_suite(self):
+    def test_advanced_suite(self, *args):
         self._test_generic_suite('suite-advanced')
 
-    def test_advanced_suite_details(self):
+    def test_advanced_suite_details(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         clinic_module_id = app.get_module(0).unique_id
         other_module_id = app.get_module(1).unique_id
@@ -36,13 +39,13 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         app.get_module(1).get_form(1).actions.load_update_cases[0].details_module = other_module_id
         self.assertXmlEqual(self.get_xml('suite-advanced-details'), app.create_suite())
 
-    def test_advanced_suite_parent_child_custom_ref(self):
+    def test_advanced_suite_parent_child_custom_ref(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         form = app.get_module(1).get_form(2)
         form.actions.load_update_cases[1].case_index.reference_id = 'custom-parent-ref'
         self.assertXmlPartialEqual(self.get_xml('custom-parent-ref'), app.create_suite(), "./entry[4]")
 
-    def test_advanced_suite_case_list_filter(self):
+    def test_advanced_suite_case_list_filter(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         clinic_module = app.get_module(0)
         clinic_module.case_details.short.filter = "(filter = 'danny')"
@@ -56,13 +59,13 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         self.assertXmlEqual(self.get_xml('suite-advanced-filter'), app.create_suite())
 
-    def test_advanced_suite_auto_select_case_mobile(self):
+    def test_advanced_suite_auto_select_case_mobile(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).auto_select_case = True
         self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-case-mobile'), app.create_suite(),
                                    './entry[2]')
 
-    def test_advanced_suite_auto_select_user(self):
+    def test_advanced_suite_auto_select_user(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
             mode=AUTO_SELECT_USER,
@@ -71,7 +74,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-user'), app.create_suite(),
                                    './entry[2]')
 
-    def test_advanced_suite_auto_select_fixture(self):
+    def test_advanced_suite_auto_select_fixture(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
             mode=AUTO_SELECT_FIXTURE,
@@ -81,7 +84,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-fixture'), app.create_suite(),
                                    './entry[2]')
 
-    def test_advanced_suite_auto_select_raw(self):
+    def test_advanced_suite_auto_select_raw(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
             mode=AUTO_SELECT_RAW,
@@ -92,7 +95,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-raw'), app.create_suite(),
                                    './entry[2]')
 
-    def test_advanced_suite_auto_select_case(self):
+    def test_advanced_suite_auto_select_case(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         load_update_cases = app.get_module(1).get_form(0).actions.load_update_cases
         load_update_cases.append(LoadUpdateAction(
@@ -106,7 +109,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-case'), app.create_suite(),
                                    './entry[2]')
 
-    def test_advanced_suite_auto_select_usercase(self):
+    def test_advanced_suite_auto_select_usercase(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases[0].auto_select = AutoSelectCase(
             mode=AUTO_SELECT_USERCASE
@@ -114,7 +117,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('suite-advanced-autoselect-usercase'), app.create_suite(),
                                    './entry[2]')
 
-    def test_advanced_suite_auto_select_with_filter(self):
+    def test_advanced_suite_auto_select_with_filter(self, *args):
         """
         Form filtering should be done using the last 'non-autoload' case being loaded.
         """
@@ -145,7 +148,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         self.assertXmlPartialEqual(menu, suite, "./menu[@id='m1']")
 
-    def test_advanced_suite_load_case_from_fixture(self):
+    def test_advanced_suite_load_case_from_fixture(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
             case_tag="adherence",
@@ -162,7 +165,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('load_case_from_fixture_session'), suite, './entry[2]/session')
         self.assertXmlPartialEqual(self.get_xml('load_case_from_fixture_instance'), suite, './entry[2]/instance')
 
-    def test_advanced_suite_load_case_from_fixture_with_arbitrary_datum(self):
+    def test_advanced_suite_load_case_from_fixture_with_arbitrary_datum(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
             case_tag="adherence",
@@ -183,7 +186,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('load_case_from_fixture_instance'), suite, './entry[2]/instance')
 
     @flag_enabled('MOBILE_UCR')
-    def test_advanced_suite_load_case_from_fixture_with_report_fixture(self):
+    def test_advanced_suite_load_case_from_fixture_with_report_fixture(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
             case_tag="",
@@ -198,7 +201,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_session'), suite, './entry[2]/session')
         self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_instance'), suite, './entry[2]/instance')
 
-    def test_advanced_suite_load_from_fixture(self):
+    def test_advanced_suite_load_from_fixture(self, *args):
         nodeset = "instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]"
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
@@ -215,7 +218,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('load_from_fixture_session'), suite, './entry[2]/session')
         self.assertXmlPartialEqual(self.get_xml('load_from_fixture_instance'), suite, './entry[2]/instance')
 
-    def test_advanced_suite_load_from_fixture_auto_select(self):
+    def test_advanced_suite_load_from_fixture_auto_select(self, *args):
         nodeset = "instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]"
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
@@ -235,7 +238,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite, './entry[2]/session')
         self.assertXmlPartialEqual(self.get_xml('load_from_fixture_instance'), suite, './entry[2]/instance')
 
-    def test_tiered_select_with_advanced_module_as_parent(self):
+    def test_tiered_select_with_advanced_module_as_parent(self, *args):
         app = Application.new_app('domain', "Untitled Application")
 
         parent_module = app.add_module(AdvancedModule.new_module('parent', None))
@@ -255,7 +258,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         self.assertXmlPartialEqual(self.get_xml('advanced_module_parent'), app.create_suite(), "./entry[1]")
 
-    def test_tiered_select_with_advanced_module_as_parent_with_filters(self):
+    def test_tiered_select_with_advanced_module_as_parent_with_filters(self, *args):
         factory = AppFactory(build_version='2.25.0')
         parent_module, parent_form = factory.new_advanced_module('parent', 'parent')
         parent_module.case_details.short.filter = 'parent_filter = 1'

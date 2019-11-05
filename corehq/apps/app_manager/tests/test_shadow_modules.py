@@ -1,9 +1,12 @@
 from django.test import SimpleTestCase
 
+from mock import patch
+
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
+@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
@@ -16,7 +19,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
         self.child_module, self.form2 = self.factory.new_basic_module('child_module', 'parrot',
                                                                       parent_module=self.basic_module)
 
-    def test_all_forms_selected(self):
+    def test_all_forms_selected(self, *args):
         expected = """
         <partial>
           <menu id="m1">
@@ -34,7 +37,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
             "./menu[@id='m1']"
         )
 
-    def test_some_forms_selected(self):
+    def test_some_forms_selected(self, *args):
         self.shadow_module.excluded_form_ids = [self.form0.unique_id]
         expected = """
         <partial>
@@ -52,11 +55,11 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
             "./menu[@id='m1']"
         )
 
-    def test_no_forms_selected(self):
+    def test_no_forms_selected(self, *args):
         self.shadow_module.excluded_form_ids = [self.form0.unique_id, self.form1.unique_id]
         self.assertXmlDoesNotHaveXpath(self.factory.app.create_suite(), "./menu[@id='m1']")
 
-    def test_no_child_forms_selected(self):
+    def test_no_child_forms_selected(self, *args):
         self.shadow_module.excluded_form_ids = [self.form2.unique_id]
         self.assertXmlPartialEqual(
             '''
@@ -312,7 +315,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
         )
 
 
-    def test_form_added(self):
+    def test_form_added(self, *args):
         self.shadow_module.excluded_form_ids = [self.form0.unique_id]
         self.factory.new_form(self.basic_module)
         expected = """
@@ -332,7 +335,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
             "./menu[@id='m1']"
         )
 
-    def test_form_removed(self):
+    def test_form_removed(self, *args):
         self.basic_module.forms.remove(self.form1)
         expected = """
         <partial>
@@ -350,7 +353,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
             "./menu[@id='m1']"
         )
 
-    def test_forms_reordered(self):
+    def test_forms_reordered(self, *args):
         expected_before = """
         <partial>
           <form>http://openrosa.org/formdesigner/firstform</form>
@@ -395,7 +398,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
         self.shadow_module.source_module_id = self.child_case_module.unique_id
         self.shadow_module.parent_select.active = True
 
-    def test_parent_selection_first(self):
+    def test_parent_selection_first(self, *args):
         self._create_parent_selection_app()
         self.shadow_module.parent_select.module_id = self.basic_module.unique_id
 
@@ -425,7 +428,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
             './entry[3]'
         )
 
-    def test_parent_selection_different_module_than_source(self):
+    def test_parent_selection_different_module_than_source(self, *args):
         self._create_parent_selection_app()
         self.additional_basic_module, dummy = self.factory.new_basic_module('additional_basic_module', 'parrot')
         self.child_case_module.parent_select.active = True

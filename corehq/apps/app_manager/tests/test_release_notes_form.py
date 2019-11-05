@@ -21,6 +21,7 @@ class ReleaseFormsSetupMixin(object):
         self.basic_form.xmlns = "http://openrosa.org/formdesigner/{}".format(uuid.uuid4().hex)
 
 
+@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class ReleaseFormsEnabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMixin):
 
     def setUp(self):
@@ -28,7 +29,7 @@ class ReleaseFormsEnabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMix
         self.releases_form.enable_release_notes = True
         super(ReleaseFormsEnabledTest, self).setUp()
 
-    def test_resource(self):
+    def test_resource(self, *args):
         # release form should be as xform-update-info
         suite = self.factory.app.create_suite()
         xpath = "./xform-update-info"
@@ -58,7 +59,7 @@ class ReleaseFormsEnabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMix
         # not included in resource
         self.assertXmlPartialEqual(expected, suite, xpath)
 
-    def test_entry(self):
+    def test_entry(self, *args):
         suite = self.factory.app.create_suite()
         expected = """
             <partial>
@@ -85,7 +86,7 @@ class ReleaseFormsEnabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMix
         # check entry exists
         self.assertXmlPartialEqual(expected, suite, "./entry")
 
-    def test_command(self):
+    def test_command(self, *args):
         # check command in suite/menu exists
         suite = self.factory.app.create_suite()
         expected = """
@@ -112,6 +113,7 @@ class ReleaseFormsEnabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMix
         self.assertXmlPartialEqual(expected, suite, "./menu")
 
 
+@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class ReleaseFormsDisabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMixin):
 
     def setUp(self):
@@ -119,7 +121,7 @@ class ReleaseFormsDisabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMi
         self.releases_form.enable_release_notes = False
         super(ReleaseFormsDisabledTest, self).setUp()
 
-    def test_resource(self):
+    def test_resource(self, *args):
         # release form should be as xform-update-info
         suite = self.factory.app.create_suite()
         xpath = "./xform-update-info"
@@ -136,7 +138,7 @@ class ReleaseFormsDisabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMi
         """
         self.assertXmlPartialEqual(expected, suite, './xform')
 
-    def test_entry(self):
+    def test_entry(self, *args):
         suite = self.factory.app.create_suite()
         expected = """
             <partial>
@@ -154,7 +156,7 @@ class ReleaseFormsDisabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMi
         # check entry exists
         self.assertXmlPartialEqual(expected, suite, "./entry")
 
-    def test_command(self):
+    def test_command(self, *args):
         # check command in suite/menu exists
         suite = self.factory.app.create_suite()
         expected = """

@@ -1,5 +1,7 @@
 from django.test import SimpleTestCase
 
+from mock import patch
+
 from corehq.apps.app_manager.models import (
     AdvancedFormActions,
     AdvancedOpenCaseAction,
@@ -12,6 +14,7 @@ from corehq.apps.app_manager.tests.util import (
 )
 
 
+@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
@@ -51,7 +54,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
 
         self.basic_module = self.factory.new_basic_module("basic_module", "doctor", with_form=False)
 
-    def test_resource_not_added(self):
+    def test_resource_not_added(self, *args):
         # Confirm that shadow forms do not add a <resource> node to the suite file
         suite = self.factory.app.create_suite()
         xpath = "./xform"
@@ -68,7 +71,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
         """
         self.assertXmlPartialEqual(expected, suite, xpath)
 
-    def test_shadow_form_session_matches_parent(self):
+    def test_shadow_form_session_matches_parent(self, *args):
         # Confirm that shadow form session matches shadow parent session.
         # This confirms that the parent load actions are properly transfered to the shadow form
         suite = self.factory.app.create_suite()
@@ -76,7 +79,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
         shadow_form_session = extract_xml_partial(suite, "./entry/command[@id='m0-f1']/../session")
         self.assertXMLEqual(shadow_source_session.decode('utf-8'), shadow_form_session.decode('utf-8'))
 
-    def test_shadow_form_entry_references_source_form(self):
+    def test_shadow_form_entry_references_source_form(self, *args):
         suite = self.factory.app.create_suite()
         xpath = "./entry/command[@id='m0-f1']/../form"
         expected = """
@@ -86,7 +89,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
         """.format(self.form0.xmlns)
         self.assertXmlPartialEqual(expected, suite, xpath)
 
-    def test_shadow_form_action_additions(self):
+    def test_shadow_form_action_additions(self, *args):
         # Confirm that shadow form action additions are reflected in the suite file
         original_actions = self.shadow_form.extra_actions.load_update_cases
         try:
@@ -148,7 +151,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
         """
         self.assertXmlPartialEqual(expected_shadow_session, suite, "./entry/command[@id='m0-f1']/../session")
 
-    def test_shadow_form_action_modifications(self):
+    def test_shadow_form_action_modifications(self, *args):
         # Confirm that shadow form action modifications are reflected in the suite file
         original_actions = self.shadow_form.extra_actions.load_update_cases
         try:
@@ -198,7 +201,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
         """
         self.assertXmlPartialEqual(expected_shadow_session, suite, "./entry/command[@id='m0-f1']/../session")
 
-    def test_shadow_form_action_reordering(self):
+    def test_shadow_form_action_reordering(self, *args):
         # Confirm that the ordering of the actions in the shadow form is used, not the source ordering
 
         source_form_original_actions = self.form0.actions.load_update_cases

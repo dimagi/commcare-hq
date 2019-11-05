@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from corehq.apps.app_manager.exceptions import ResourceOverrideError
-from corehq.apps.app_manager.suite_xml.post_process.resources import add_xform_resource_overrides
+from corehq.apps.app_manager.suite_xml.post_process.resources import add_xform_overrides
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
@@ -20,7 +20,7 @@ class SuiteResourceOverridesTest(TestCase, TestXmlMixin):
 
     def test_overrides(self):
         forms = list(self.factory.app.get_module(0).get_forms())
-        add_xform_resource_overrides(self.factory.app.domain, self.factory.app.master_id, {
+        add_xform_overrides(self.factory.app.domain, self.factory.app.master_id, {
             forms[0].unique_id: '123',
             forms[1].unique_id: '456',
         })
@@ -50,7 +50,7 @@ class SuiteResourceOverridesTest(TestCase, TestXmlMixin):
 
     def test_duplicate_overrides_raises(self):
         forms = list(self.factory.app.get_module(0).get_forms())
-        add_xform_resource_overrides(self.factory.app.domain, self.factory.app.master_id, {
+        add_xform_overrides(self.factory.app.domain, self.factory.app.master_id, {
             forms[0].unique_id: '123',
             forms[1].unique_id: '456',
             forms[2].unique_id: '456',

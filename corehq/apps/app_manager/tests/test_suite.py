@@ -46,6 +46,7 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
 
 
+@mock.patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
@@ -115,23 +116,23 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             'entry/command[@id="m1-f0"]/../session/datum',
         )
 
-    def test_normal_suite(self):
+    def test_normal_suite(self, *args):
         self._test_generic_suite('app', 'normal-suite')
 
-    def test_tiered_select(self):
+    def test_tiered_select(self, *args):
         self._test_generic_suite('tiered-select', 'tiered-select')
 
-    def test_3_tiered_select(self):
+    def test_3_tiered_select(self, *args):
         self._test_generic_suite('tiered-select-3', 'tiered-select-3')
 
-    def test_multisort_suite(self):
+    def test_multisort_suite(self, *args):
         self._test_generic_suite('multi-sort', 'multi-sort')
 
-    def test_sort_only_value_suite(self):
+    def test_sort_only_value_suite(self, *args):
         self._test_generic_suite('sort-only-value', 'sort-only-value')
         self._test_app_strings('sort-only-value')
 
-    def test_sort_cache_suite(self):
+    def test_sort_cache_suite(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         detail = app.modules[0].case_details.short
         detail.sort_elements.append(
@@ -148,7 +149,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='m0_case_short']"
         )
 
-    def test_sort_cache_search(self):
+    def test_sort_cache_search(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.modules[0].search_config = CaseSearch(
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
@@ -168,7 +169,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='m0_search_short']"
         )
 
-    def test_sort_calculation(self):
+    def test_sort_calculation(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
         detail = app.modules[0].case_details.short
         detail.sort_elements.append(
@@ -195,11 +196,11 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='m0_case_short']/field/sort"
         )
 
-    def test_callcenter_suite(self):
+    def test_callcenter_suite(self, *args):
         self._test_generic_suite('call-center')
 
     @commtrack_enabled(True)
-    def test_product_list_custom_data(self):
+    def test_product_list_custom_data(self, *args):
         # product data shouldn't be interpreted as a case index relationship
         app = Application.wrap(self.get_json('suite-advanced'))
         custom_path = 'product_data/is_bedazzled'
@@ -213,7 +214,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             )
 
     @commtrack_enabled(True)
-    def test_autoload_supplypoint(self):
+    def test_autoload_supplypoint(self, *args):
         app = Application.wrap(self.get_json('app'))
         app.modules[0].forms[0].source = re.sub('/data/plain',
                                                 session_var('supply_point_id'),
@@ -225,16 +226,16 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             './entry[1]'
         )
 
-    def test_case_assertions(self):
+    def test_case_assertions(self, *args):
         self._test_generic_suite('app_case_sharing', 'suite-case-sharing')
 
-    def test_no_case_assertions(self):
+    def test_no_case_assertions(self, *args):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
 
-    def test_attached_picture(self):
+    def test_attached_picture(self, *args):
         self._test_generic_suite_partial('app_attached_image', "./detail", 'suite-attached-image')
 
-    def test_copy_form(self):
+    def test_copy_form(self, *args):
         app = Application.new_app('domain', "Untitled Application")
         module = app.add_module(AdvancedModule.new_module('module', None))
         original_form = app.new_form(module.id, "Untitled Form", None)
@@ -249,7 +250,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 self.assertEqual(f.name['en'], 'Copy of {}'.format(original_form.name['en']))
         self.assertEqual(form_count, 2, 'Copy form has copied multiple times!')
 
-    def test_copy_form_to_app(self):
+    def test_copy_form_to_app(self, *args):
         src_app = Application.new_app('domain', "Source Application")
         src_module = src_app.add_module(AdvancedModule.new_module('Source Module', None))
         original_form = src_app.new_form(src_module.id, "Untitled Form", None)
@@ -264,10 +265,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertEqual(len(dst_app_forms), 1)
         self.assertEqual(dst_app_forms[0].name['en'], 'Copy of Untitled Form')
 
-    def test_owner_name(self):
+    def test_owner_name(self, *args):
         self._test_generic_suite('owner-name')
 
-    def test_form_filter(self):
+    def test_form_filter(self, *args):
         """
         Ensure form filter gets added correctly and appropriate instances get added to the entry.
         """
@@ -290,7 +291,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         self.assertXmlPartialEqual(expected, app.create_suite(), "./menu[@id='m1']")
 
-    def test_module_filter(self):
+    def test_module_filter(self, *args):
         """
         Ensure module filter gets added correctly
         """
@@ -306,7 +307,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./menu[@id='m0']"
         )
 
-    def test_module_filter_with_session(self):
+    def test_module_filter_with_session(self, *args):
         app = Application.new_app('domain', "Untitled Application")
         app.build_spec.version = '2.20.0'
         module = app.add_module(Module.new_module('m0', None))
@@ -325,7 +326,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./entry[1]"
         )
 
-    def test_usercase_id_added_update(self):
+    def test_usercase_id_added_update(self, *args):
         app = Application.new_app('domain', "Untitled Application")
 
         child_module = app.add_module(Module.new_module("Untitled Module", None))
@@ -339,7 +340,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
-    def test_usercase_id_added_preload(self):
+    def test_usercase_id_added_preload(self, *args):
         app = Application.new_app('domain', "Untitled Application")
 
         child_module = app.add_module(Module.new_module("Untitled Module", None))
@@ -353,7 +354,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
-    def test_open_case_and_subcase(self):
+    def test_open_case_and_subcase(self, *args):
         app = Application.new_app('domain', "Untitled Application")
 
         module = app.add_module(Module.new_module('parent', None))
@@ -372,7 +373,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         self.assertXmlPartialEqual(self.get_xml('open_case_and_subcase'), app.create_suite(), "./entry[1]")
 
-    def test_update_and_subcase(self):
+    def test_update_and_subcase(self, *args):
         app = Application.new_app('domain', "Untitled Application")
 
         module = app.add_module(Module.new_module('parent', None))
@@ -392,10 +393,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         self.assertXmlPartialEqual(self.get_xml('update_case_and_subcase'), app.create_suite(), "./entry[1]")
 
-    def test_graphing(self):
+    def test_graphing(self, *args):
         self._test_generic_suite('app_graphing', 'suite-graphing')
 
-    def test_fixtures_in_graph(self):
+    def test_fixtures_in_graph(self, *args):
         expected_suite = parse_normalize(self.get_xml('suite-fixture-graphing'), to_string=False)
         actual_suite = parse_normalize(
             Application.wrap(self.get_json('app_fixture_graphing')).create_suite(), to_string=False)
@@ -419,10 +420,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         self.assertXmlEqual(tostring(expected_suite), tostring(actual_suite))
 
-    def test_printing(self):
+    def test_printing(self, *args):
         self._test_generic_suite('app_print_detail', 'suite-print-detail')
 
-    def test_fixture_to_case_selection(self):
+    def test_fixture_to_case_selection(self, *args):
         factory = AppFactory(build_version='2.9.0')
 
         module, form = factory.new_basic_module('my_module', 'cases')
@@ -436,7 +437,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), factory.app.create_suite())
 
-    def test_fixture_to_case_selection_with_form_filtering(self):
+    def test_fixture_to_case_selection_with_form_filtering(self, *args):
         factory = AppFactory(build_version='2.9.0')
 
         module, form = factory.new_basic_module('my_module', 'cases')
@@ -452,7 +453,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection-with-form-filtering'), factory.app.create_suite())
 
-    def test_fixture_to_case_selection_localization(self):
+    def test_fixture_to_case_selection_localization(self, *args):
         factory = AppFactory(build_version='2.9.0')
 
         module, form = factory.new_basic_module('my_module', 'cases')
@@ -467,7 +468,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection-localization'), factory.app.create_suite())
 
-    def test_fixture_to_case_selection_parent_child(self):
+    def test_fixture_to_case_selection_parent_child(self, *args):
         factory = AppFactory(build_version='2.9.0')
 
         m0, m0f0 = factory.new_basic_module('parent', 'parent')
@@ -490,14 +491,14 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection-parent-child'), factory.app.create_suite())
 
-    def test_case_detail_tabs(self):
+    def test_case_detail_tabs(self, *args):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 
-    def test_case_detail_tabs_with_nodesets(self):
+    def test_case_detail_tabs_with_nodesets(self, *args):
         with flag_enabled('DISPLAY_CONDITION_ON_TABS'):
             self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
 
-    def test_case_detail_tabs_with_nodesets_for_sorting(self):
+    def test_case_detail_tabs_with_nodesets_for_sorting(self, *args):
         app = Application.wrap(self.get_json("app_case_detail_tabs_with_nodesets"))
         app.modules[0].case_details.long.sort_nodeset_columns = True
         xml_partial = """
@@ -522,15 +523,15 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             xml_partial, app.create_suite(),
             './detail[@id="m0_case_long"]/detail/field/template/text/xpath[@function="gender"]/../../..')
 
-    def test_case_detail_instance_adding(self):
+    def test_case_detail_instance_adding(self, *args):
         # Tests that post-processing adds instances used in calculations
         # by any of the details (short, long, inline, persistent)
         self._test_generic_suite('app_case_detail_instances', 'suite-case-detail-instances')
 
-    def test_case_tile_suite(self):
+    def test_case_tile_suite(self, *args):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
 
-    def test_case_detail_conditional_enum(self):
+    def test_case_detail_conditional_enum(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
 
         module = app.add_module(Module.new_module('Unititled Module', None))
@@ -608,7 +609,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             'Woman'
         )
 
-    def test_case_detail_calculated_conditional_enum(self):
+    def test_case_detail_calculated_conditional_enum(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
 
         module = app.add_module(Module.new_module('Unititled Module', None))
@@ -660,7 +661,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             'Girl'
         )
 
-    def test_case_detail_icon_mapping(self):
+    def test_case_detail_icon_mapping(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
 
         module = app.add_module(Module.new_module('Untitled Module', None))
@@ -728,7 +729,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             'jr://icons/10-year-old.png'
         )
 
-    def test_case_tile_pull_down(self):
+    def test_case_tile_pull_down(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
 
         module = app.add_module(Module.new_module('Untitled Module', None))
@@ -748,7 +749,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./entry/session"
         )
 
-    def test_inline_case_detail_from_another_module(self):
+    def test_inline_case_detail_from_another_module(self, *args):
         factory = AppFactory()
         module0, form0 = factory.new_advanced_module("m0", "person")
         factory.form_requires_case(form0, "person")
@@ -798,7 +799,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module1.case_details.short.use_case_tiles = False
         self.ensure_module_session_datum_xml(factory, '', '')
 
-    def test_persistent_case_tiles_from_another_module(self):
+    def test_persistent_case_tiles_from_another_module(self, *args):
         factory = AppFactory()
         module0, form0 = factory.new_advanced_module("m0", "person")
         factory.form_requires_case(form0, "person")
@@ -840,7 +841,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module1.case_details.short.use_case_tiles = False
         self.ensure_module_session_datum_xml(factory, '', '')
 
-    def test_persistent_case_tiles_in_advanced_forms(self):
+    def test_persistent_case_tiles_in_advanced_forms(self, *args):
         """
         Test that the detail-persistent attributes is set correctly when persistent
         case tiles are used on advanced forms.
@@ -872,7 +873,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "entry/session/datum"
         )
 
-    def test_persistent_case_tiles_in_advanced_module_case_lists(self):
+    def test_persistent_case_tiles_in_advanced_module_case_lists(self, *args):
         """
         Test that the detail-persistent attributes is set correctly when persistent
         case tiles are used on advanced module case lists
@@ -905,7 +906,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             'entry/command[@id="m0-case-list"]/../session/datum',
         )
 
-    def test_persistent_case_name_in_forms(self):
+    def test_persistent_case_name_in_forms(self, *args):
         """
         Test that the detail-persistent attributes are set correctly when the
         module is configured to persist the case name at the top of the form.
@@ -962,7 +963,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "entry/session/datum"
         )
 
-    def test_persistent_case_name_when_tiles_enabled(self):
+    def test_persistent_case_name_when_tiles_enabled(self, *args):
         """
         Confirm that the persistent case name context is not added when case tiles
         are configured to persist in forms
@@ -994,7 +995,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "entry/session/datum"
         )
 
-    def test_custom_xml_with_wrong_module_index(self):
+    def test_custom_xml_with_wrong_module_index(self, *args):
         factory = AppFactory()
         module, form = factory.new_advanced_module("my_module", "person")
         # This should be 'm0_case_short'
@@ -1002,7 +1003,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with self.assertRaises(SuiteValidationError):
             factory.app.create_suite()
 
-    def test_subcase_repeat_mixed(self):
+    def test_subcase_repeat_mixed(self, *args):
         app = Application.new_app(None, "Untitled Application")
         module_0 = app.add_module(Module.new_module('parent', None))
         module_0.unique_id = 'm0'
@@ -1044,7 +1045,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                                    app.create_suite(),
                                    './entry[1]/session')
 
-    def test_report_module(self):
+    def test_report_module(self, *args):
         from corehq.apps.userreports.tests.utils import get_sample_report_config
 
         app = Application.new_app('domain', "Untitled Application")
@@ -1171,7 +1172,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
             )
 
-    def test_circular_parent_case_ref(self):
+    def test_circular_parent_case_ref(self, *args):
         factory = AppFactory()
         m0, m0f0 = factory.new_basic_module('m0', 'case1')
         m1, m1f0 = factory.new_basic_module('m1', 'case2')
@@ -1181,7 +1182,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with self.assertRaises(SuiteValidationError):
             factory.app.create_suite()
 
-    def test_custom_assertions(self):
+    def test_custom_assertions(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
 
@@ -1219,7 +1220,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertEqual(fr_app_strings['custom_assertion.m0.f0.0'], "fr-0")
         self.assertEqual(fr_app_strings['custom_assertion.m0.f0.1'], "fr-1")
 
-    def test_custom_variables(self):
+    def test_custom_variables(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
         factory.form_requires_case(form, 'case')
@@ -1257,6 +1258,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
 
+@mock.patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
@@ -1265,7 +1267,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.factory = AppFactory(include_xmlns=True)
         self.module, self.form = self.factory.new_basic_module('m0', 'case1')
 
-    def test_custom_instances(self):
+    def test_custom_instances(self, *args):
         instance_id = "foo"
         instance_path = "jr://foo/bar"
         self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
@@ -1279,7 +1281,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "entry/instance"
         )
 
-    def test_duplicate_custom_instances(self):
+    def test_duplicate_custom_instances(self, *args):
         self.factory.form_requires_case(self.form)
         instance_id = "casedb"
         instance_path = "jr://casedb/bar"
@@ -1289,7 +1291,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with self.assertRaises(DuplicateInstanceIdError):
             self.factory.app.create_suite()
 
-    def test_duplicate_regular_instances(self):
+    def test_duplicate_regular_instances(self, *args):
         """Make sure instances aren't getting added multiple times if they are referenced multiple times
         """
         self.factory.form_requires_case(self.form)
@@ -1305,7 +1307,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "entry/instance"
         )
 
-    def test_location_instances(self):
+    def test_location_instances(self, *args):
         self.form.form_filter = "instance('locations')/locations/"
         self.assertXmlPartialEqual(
             """
@@ -1318,7 +1320,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     @mock.patch.object(LocationFixtureConfiguration, 'for_domain')
-    def test_location_instance_during_migration(self, sync_patch):
+    def test_location_instance_during_migration(self, sync_patch, overrides_patch):
         # tests for expectations during migration from hierarchical to flat location fixture
         # Domains with HIERARCHICAL_LOCATION_FIXTURE enabled and with sync_flat_fixture set to False
         # should have hierarchical jr://fixture/commtrack:locations fixture format
@@ -1366,7 +1368,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         configuration_mock_obj.sync_hierarchical_fixture = False
         self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
 
-    def test_unicode_lookup_table_instance(self):
+    def test_unicode_lookup_table_instance(self, *args):
         self.form.form_filter = "instance('item-list:província')/província/"
         self.assertXmlPartialEqual(
             """

@@ -22,13 +22,14 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
+@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'case_list_form')
 
     def _prep_case_list_form_app(self):
         return AppFactory.case_list_form_app_factory()
 
-    def test_case_list_registration_form(self):
+    def test_case_list_registration_form(self, *args):
         factory = self._prep_case_list_form_app()
         app = factory.app
         case_module = app.get_module(0)
@@ -36,7 +37,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         case_module.case_list_form.set_audio('en', 'jr://file/commcare/audio/new_case.mp3')
         self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
 
-    def test_case_list_registration_form_usercase(self):
+    def test_case_list_registration_form_usercase(self, *args):
         factory = self._prep_case_list_form_app()
         app = factory.app
         register_module = app.get_module(1)
@@ -45,7 +46,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         register_form.actions.usercase_preload.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('case-list-form-suite-usercase'), app.create_suite())
 
-    def test_case_list_registration_form_end_for_form_nav(self):
+    def test_case_list_registration_form_end_for_form_nav(self, *args):
         factory = self._prep_case_list_form_app()
         app = factory.app
         registration_form = app.get_module(1).get_form(0)
@@ -57,7 +58,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
             "./entry[2]"
         )
 
-    def test_case_list_registration_form_no_media(self):
+    def test_case_list_registration_form_no_media(self, *args):
         factory = self._prep_case_list_form_app()
         self.assertXmlPartialEqual(
             self.get_xml('case-list-form-suite-no-media-partial'),
@@ -65,7 +66,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
             "./detail[@id='m0_case_short']/action"
         )
 
-    def test_case_list_form_multiple_modules(self):
+    def test_case_list_form_multiple_modules(self, *args):
         factory = self._prep_case_list_form_app()
         case_module1 = factory.app.get_module(0)
 
@@ -82,7 +83,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
             factory.app.create_suite(),
         )
 
-    def test_case_list_registration_form_advanced(self):
+    def test_case_list_registration_form_advanced(self, *args):
         factory = AppFactory(build_version='2.9.0')
 
         register_module, register_form = factory.new_advanced_module('register_dugong', 'dugong')
@@ -97,7 +98,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         }
         self.assertXmlEqual(self.get_xml('case-list-form-advanced'), factory.app.create_suite())
 
-    def test_case_list_registration_form_advanced_autoload(self):
+    def test_case_list_registration_form_advanced_autoload(self, *args):
         factory = AppFactory(build_version='2.9.0')
 
         register_module, register_form = factory.new_advanced_module('register_dugong', 'dugong')
@@ -118,14 +119,14 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         }
         self.assertXmlEqual(self.get_xml('case-list-form-advanced-autoload'), factory.app.create_suite())
 
-    def test_case_list_registration_form_return_to_case_list(self):
+    def test_case_list_registration_form_return_to_case_list(self, *args):
         factory = self._prep_case_list_form_app()
         app = factory.app
         case_module = app.get_module(0)
         case_module.case_list_form.post_form_workflow = WORKFLOW_CASE_LIST
         self.assertXmlEqual(self.get_xml('case_list_form_end_of_form_case_list'), app.create_suite())
 
-    def test_case_list_registration_form_return_to_case_list_clmi_only(self):
+    def test_case_list_registration_form_return_to_case_list_clmi_only(self, *args):
         factory = self._prep_case_list_form_app()
         app = factory.app
         clmi_module = factory.new_basic_module('clmi_only', factory.app.get_module(0).case_type, with_form=False)
@@ -141,7 +142,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual(self.get_xml('case_list_form_end_of_form_case_list_clmi_only'),
                                    factory.app.create_suite(), './entry[2]')
 
-    def test_case_list_form_parent_child_advanced(self):
+    def test_case_list_form_parent_child_advanced(self, *args):
         # * Register house (case type = house, basic)
         #   * Register house form
         # * Register person (case type = person, parent select = 'Register house', advanced)
@@ -168,7 +169,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-advanced'), factory.app.create_suite())
 
-    def test_case_list_form_parent_child_basic(self):
+    def test_case_list_form_parent_child_basic(self, *args):
         # * Register house (case type = house, basic)
         #   * Register house form
         # * Register person (case type = person, parent select = 'Register house', basic)
@@ -202,7 +203,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-basic'), factory.app.create_suite())
 
-    def test_case_list_form_reg_form_creates_child_case(self):
+    def test_case_list_form_reg_form_creates_child_case(self, *args):
         factory = AppFactory(build_version='2.9.0')
         register_person_module, register_person_form = factory.new_basic_module('reg_person_and_stub', 'person')
 
@@ -220,7 +221,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
             self.get_xml('case_list_form_reg_form_creates_child_case'), factory.app.create_suite(), './entry[1]'
         )
 
-    def test_case_list_form_parent_child_submodule_basic(self):
+    def test_case_list_form_parent_child_submodule_basic(self, *args):
         # * Register house (case type = house, basic)
         #   * Register house form
         # * Register person (case type = person, parent select = 'Register house', basic)
@@ -255,7 +256,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-basic'), factory.app.create_suite())
 
-    def test_case_list_form_parent_child_submodule_advanced(self):
+    def test_case_list_form_parent_child_submodule_advanced(self, *args):
         # * Register house (case type = house, basic)
         #   * Register house form
         # * Register person (case type = person, parent select = 'Register house', advanced)
@@ -292,7 +293,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-advanced'), factory.app.create_suite())
 
-    def test_case_list_form_parent_child_submodule_advanced_rename_case_var(self):
+    def test_case_list_form_parent_child_submodule_advanced_rename_case_var(self, *args):
         # Test that the session vars in the entries for the submodule get updated
         # to match the parent (and to avoid naming conflicts).
         # m3-f0: 'case_id_load_house' -> 'case_id_load_house_renamed'
@@ -330,7 +331,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-advanced-rename-var'), factory.app.create_suite())
 
-    def test_case_list_form_parent_child_submodule_mixed(self):
+    def test_case_list_form_parent_child_submodule_mixed(self, *args):
         # * Register house (case type = house, basic)
         #   * Register house form
         # * Register person (case type = person, parent select = 'Register house', advanced)
@@ -366,7 +367,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-submodule-mixed'), factory.app.create_suite())
 
-    def test_target_module_different_datums(self):
+    def test_target_module_different_datums(self, *args):
         # * Registration
         #   * Register patient form
         #     * open case (patient), update user_case
@@ -405,7 +406,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
             factory.app.create_suite(),
             './entry')
 
-    def test_case_list_form_requires_parent_case_but_target_doesnt(self):
+    def test_case_list_form_requires_parent_case_but_target_doesnt(self, *args):
         factory = AppFactory(build_version='2.9.0')
         register_household_module, register_household_form = factory.new_basic_module('new_household', 'household')
         factory.form_opens_case(register_household_form)

@@ -7,6 +7,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
+@patch('corehq.apps.app_manager.suite_xml.post_process.resources.get_xform_overrides', return_value=[])
 class FormFilterErrorTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
@@ -20,7 +21,7 @@ class FormFilterErrorTests(SimpleTestCase, TestXmlMixin):
     def tearDown(self):
         self.suite_xml_is_usercase_in_use_patch.stop()
 
-    def test_error_when_no_case(self):
+    def test_error_when_no_case(self, *args):
         self.suite_xml_is_usercase_in_use_mock.return_value = True
 
         __, reg_form = self.factory.new_basic_module('reg_module', 'mother')
@@ -30,7 +31,7 @@ class FormFilterErrorTests(SimpleTestCase, TestXmlMixin):
         with self.assertRaises(CaseXPathValidationError):
             self.factory.app.create_suite()
 
-    def test_no_error_when_user_case(self):
+    def test_no_error_when_user_case(self, *args):
         self.suite_xml_is_usercase_in_use_mock.return_value = True
 
         __, reg_form = self.factory.new_basic_module('reg_module', 'mother')
@@ -49,7 +50,7 @@ class FormFilterErrorTests(SimpleTestCase, TestXmlMixin):
         """
         self.assertXmlPartialEqual(expected, self.factory.app.create_suite(), './menu')
 
-    def test_no_error_when_case(self):
+    def test_no_error_when_case(self, *args):
         self.suite_xml_is_usercase_in_use_mock.return_value = False
 
         __, update_form = self.factory.new_basic_module('update_mother', 'mother')
