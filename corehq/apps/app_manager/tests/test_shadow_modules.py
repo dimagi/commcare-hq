@@ -314,7 +314,6 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
             "./menu"
         )
 
-
     def test_form_added(self, *args):
         self.shadow_module.excluded_form_ids = [self.form0.unique_id]
         self.factory.new_form(self.basic_module)

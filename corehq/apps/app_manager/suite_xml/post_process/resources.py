@@ -10,7 +10,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import XFormResource
 class ResourceOverride(models.Model):
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
-    root_name = models.CharField(max_length=32, null=False) # matches up with class in suite_xml.xml_models
+    root_name = models.CharField(max_length=32, null=False)  # matches up with class in suite_xml.xml_models
     pre_id = models.CharField(max_length=255, null=False)
     post_id = models.CharField(max_length=255, null=False)
 
@@ -30,6 +30,7 @@ def add_xform_overrides(domain, app_id, pre_to_post_map):
                 post_id=post,
             )
             override.save()
+
 
 def get_xform_overrides(domain, app_id):
     return {
