@@ -15,7 +15,6 @@ from corehq.apps.change_feed.consumer.feed import (
 from corehq.apps.export.models.new import LedgerSectionEntry
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.util.quickcache import quickcache
 
 
