@@ -211,11 +211,7 @@ def create_patient(requests, info, case_config):
         return {
             property_: value_source.get_value(info)
             for property_, value_source in case_config.person_properties.items()
-            if (
-                property_ in PERSON_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(info)
-            )
+            if property_ in PERSON_PROPERTIES and value_source.get_value(info) is not None
         }
 
     def get_identifiers():

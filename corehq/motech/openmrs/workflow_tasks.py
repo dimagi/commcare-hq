@@ -618,11 +618,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_properties.items()
-            if (
-                property_ in PERSON_PROPERTIES and
-                value_source.check_direction(DIRECTION_EXPORT) and
-                value_source.get_value(self.info)
-            )
+            if property_ in PERSON_PROPERTIES and value_source.get_value(self.info) is not None
         }
         if properties:
             self.requests.post(
