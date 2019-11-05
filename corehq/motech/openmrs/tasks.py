@@ -88,21 +88,25 @@ def get_case_properties(patient, importer):
     """
     name_columns = importer.name_columns.split(' ')
     case_name = ' '.join([patient[column] for column in name_columns])
+    errors = []
     fields_to_update = {}
+    tz = importer.get_timezone()
     for mapping in importer.column_map:
+        value = patient[mapping.column]
         try:
-            fields_to_update[mapping.property] = mapping.deserialize(
-                patient[mapping.column], importer.get_timezone()
-            )
+            fields_to_update[mapping.property] = mapping.deserialize(value, tz)
         except (TypeError, ValueError) as err:
-            raise ConfigurationError(
-                f'Error importing from {importer}: '
-                f'Unable to deserialize value {repr(patient[mapping.column])} '
+            errors.append(
+                f'Unable to deserialize value {repr(value)} '
                 f'in column "{mapping.column}" for case property '
                 f'"{mapping.property}". OpenMRS data type is given as '
                 f'"{mapping.data_type}". CommCare data type is given as '
                 f'"{mapping.commcare_data_type}": {err}'
             )
+    if errors:
+        raise ConfigurationError(
+            f'Errors importing from {importer}:\n' + '\n'.join(errors)
+        )
     return case_name, fields_to_update
 
 

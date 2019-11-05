@@ -188,13 +188,13 @@ def test_bad_data_type():
     with get_importer(bad_column_mapping) as importer:
         with assert_raises_regexp(
             ConfigurationError,
-            'Error importing from <OpenmrsImporter None admin@http://www.example.com/openmrs>: '
+            'Errors importing from <OpenmrsImporter None admin@http://www.example.com/openmrs>:\n'
             'Unable to deserialize value 1551564000000 '
             'in column "data_proxima_consulta" '
             'for case property "data_proxima_consulta". '
             'OpenMRS data type is given as "omrs_datetime". '
             'CommCare data type is given as "cc_date": '
-            'argument of type \'int\' is not iterable'
+            "argument of type 'int' is not iterable"
         ):
             get_case_properties(patient, importer)
 
