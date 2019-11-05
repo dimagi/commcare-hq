@@ -104,28 +104,34 @@ class ShardingTests(TestCase):
             self.assertEqual(new_db_alias, old_db_alias)
 
 
-DATABASES = {
-    key: {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': key,
-    } for key in ['default', 'proxy', 'p1', 'p2', 'p3', 'p4', 'p5']
-}
+def _mock_databases():
+    databases = {
+        key: {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': key,
+        } for key in ['default', 'proxy', 'p1', 'p2', 'p3', 'p4', 'p5']
+    }
 
-
-PARTITION_DATABASE_CONFIG = {
-    'shards': {
+    databases['proxy']['PLPROXY'] = {
+        'PROXY': True
+    }
+    shards = {
         'p1': [0, 204],
         'p2': [205, 409],
         'p3': [410, 614],
         'p4': [615, 819],
         'p5': [820, 1023]
-    },
-    'proxy': 'proxy',
-}
+    }
+    for db, config in databases.items():
+        if db in shards:
+            config['PLPROXY'] = {
+                'SHARDS': shards[db]
+            }
+    return databases
 
 
 @use_sql_backend
-@override_settings(PARTITION_DATABASE_CONFIG=PARTITION_DATABASE_CONFIG, DATABASES=DATABASES)
+@override_settings(DATABASES=_mock_databases())
 @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardAccessorTests(TestCase):
 

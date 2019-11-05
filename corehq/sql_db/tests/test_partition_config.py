@@ -1,3 +1,5 @@
+import copy
+
 from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
@@ -16,15 +18,27 @@ from ..exceptions import (
     NotZeroStartError,
 )
 
+db_dict = {'NAME': 'commcarehq', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
+TEST_DATABASES = {
+    DEFAULT_DB_ALIAS: db_dict.copy(),
+    'proxy': db_dict.copy(),
+    'db1': {'NAME': 'db1', 'USER': 'commcarehq', 'HOST': 'hqdb1', 'PORT': 5432},
+    'db2': {'NAME': 'db2', 'USER': 'commcarehq', 'HOST': 'hqdb2', 'PORT': 5432},
+}
+
 
 def _get_partition_config(shard_config):
-    return {
-        'shards': shard_config,
-        'proxy': 'proxy'
-    }
+    databases = copy.deepcopy(TEST_DATABASES)
+    databases['proxy']['PLPROXY'] = {'PROXY': True}
+    for db, config in databases.items():
+        if db in shard_config:
+            config['PLPROXY'] = {
+                'SHARDS': shard_config[db]
+            }
+    return databases
 
 
-TEST_LEGACY_FORMAT = {
+TEST_LEGACY_FORMAT_GROUPS = {
     'shards': {
         'db1': [0, 1],
         'db2': [2, 3],
@@ -33,6 +47,14 @@ TEST_LEGACY_FORMAT = {
         'proxy': ['proxy'],
         'form_processing': ['db1', 'db2'],
     }
+}
+
+TEST_LEGACY_FORMAT = {
+    'shards': {
+        'db1': [0, 1],
+        'db2': [2, 3],
+    },
+    'proxy': 'proxy'
 }
 
 TEST_PARTITION_CONFIG = _get_partition_config({
@@ -44,9 +66,7 @@ TEST_PARTITION_CONFIG_HOST_MAP = _get_partition_config({
     'db1': [0, 0],
     'db2': [1, 1],
 })
-TEST_PARTITION_CONFIG_HOST_MAP['host_map'] = {
-    'hqdb1': 'localhost'
-}
+TEST_PARTITION_CONFIG_HOST_MAP['db1']['PLPROXY']['PLPROXY_HOST'] = 'localhost'
 
 INVALID_SHARD_RANGE_START = _get_partition_config({
     'db1': [1, 2],
@@ -63,20 +83,12 @@ INVALID_SHARD_RANGE_POWER_2 = _get_partition_config({
     'db2': [5, 9],
 })
 
-db_dict = {'NAME': 'commcarehq', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
-TEST_DATABASES = {
-    DEFAULT_DB_ALIAS: db_dict,
-    'proxy': db_dict,
-    'db1': {'NAME': 'db1', 'USER': 'commcarehq', 'HOST': 'hqdb1', 'PORT': 5432},
-    'db2': {'NAME': 'db2', 'USER': 'commcarehq', 'HOST': 'hqdb2', 'PORT': 5432},
-}
-
 
 @override_settings(DATABASES=TEST_DATABASES, USE_PARTITIONED_DATABASE=True)
 class TestPartitionConfig(SimpleTestCase):
 
     def test_num_shards(self):
-        self.assertEqual(4, _get_shard_count(TEST_PARTITION_CONFIG['shards'].values()))
+        self.assertEqual(4, _get_shard_count([[0, 1], [2, 3]]))
 
     def test_dbs_by_group(self):
         config = PlProxyConfig.from_dict(TEST_PARTITION_CONFIG)
@@ -112,7 +124,7 @@ class TestPartitionConfig(SimpleTestCase):
         ])
 
     def test_legacy_format(self):
-        config = PlProxyConfig.from_dict(TEST_LEGACY_FORMAT)
+        config = PlProxyConfig.from_legacy_dict(TEST_LEGACY_FORMAT)
         self.assertEqual('proxy', config.proxy_db)
         self.assertEqual({'db1', 'db2'}, set(config.form_processing_dbs))
 

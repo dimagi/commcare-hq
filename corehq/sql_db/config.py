@@ -104,17 +104,80 @@ class PlProxyConfig(object):
     @classmethod
     def from_settings(cls):
         assert settings.USE_PARTITIONED_DATABASE
-        return PlProxyConfig.from_dict(settings.PARTITION_DATABASE_CONFIG)
+        return (
+            PlProxyConfig.from_dict(settings.DATABASES) or
+            PlProxyConfig.from_legacy_dict(settings.get('PARTITION_DATABASE_CONFIG'))
+        )
 
     @classmethod
     def from_dict(cls, config_dict):
-        if 'groups' in config_dict:
+        """Get config from Django DATABASES dict. Custom porperties in DATABASE config:
+
+        DATABASES = {
+            'db1': {
+                ...
+                'PLPROXY': {
+                    'SHARDS': [0, 1]  # Shard range for this DB
+                    'PLPROXY_HOST': 'other'  # re-map host in plproxy cluster config
+                    'PROXY': False  # True if this DB is the proxy DB
+                }
+            }
+        }
+        """
+        proxy_db = None
+        shard_map = {}
+        host_map = {}
+        has_config = False
+        for alias, config in config_dict.items():
+            plproxy_config = config.get('PLPROXY', {})
+            if not plproxy_config:
+                continue
+
+            has_config = True
+            if plproxy_config.get('PROXY'):
+                if proxy_db:
+                    raise PartitionValidationError('Multiple plproxy databases specified')
+                proxy_db = alias
+
+            shards = plproxy_config.get('SHARDS')
+            if shards:
+                shard_map[alias] = shards
+
+            # 'host_map' is use to support Docker where external connections are via the docker name
+            # but internal connections are to 'localhost'. See docker/localsettings.py
+            mapped_host = plproxy_config.get('PLPROXY_HOST')
+            if mapped_host:
+                host_map[config['HOST']] = mapped_host
+
+        if not has_config:
+            return
+
+        config = PlProxyConfig(proxy_db, shard_map, host_map, _get_shard_count(shard_map.values()))
+        config.validate()
+        return config
+
+    @classmethod
+    def from_legacy_dict(cls, legacy_config):
+        """Legacy format spec:
+        ```
+        config = {
+            'shards': {
+                'db1': [0, 1],
+                'db2': [2, 3],
+            },
+            'proxy': 'proxy'
+        }
+        ```"""
+        if not legacy_config:
+            return
+
+        if 'groups' in legacy_config:
             # convert old format
-            proxy_db = config_dict['groups']['proxy'][0]
+            proxy_db = legacy_config['groups']['proxy'][0]
         else:
-            proxy_db = config_dict['proxy']
-        shard_map = config_dict['shards']
-        host_map = config_dict.get('host_map', {})
+            proxy_db = legacy_config['proxy']
+        shard_map = legacy_config['shards']
+        host_map = legacy_config.get('host_map', {})
 
         config = PlProxyConfig(proxy_db, shard_map, host_map, _get_shard_count(shard_map.values()))
         config.validate()
