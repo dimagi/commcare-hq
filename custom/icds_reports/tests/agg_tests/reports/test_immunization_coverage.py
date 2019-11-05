@@ -56,7 +56,7 @@ class TestImmunizationCoverage(TestCase):
                 'st6': {'all': 0, 'original_name': ['st6'], 'children': 0, 'fillKey': '0%-20%'},
                 'st7': {'all': 1, 'original_name': ['st7'], 'children': 0, 'fillKey': '0%-20%'},
                 'st1': {'all': 568, 'original_name': ['st1'], 'children': 83, 'fillKey': '0%-20%'},
-                'st2': {'all': 618, 'original_name': ['st2'], 'children': 45, 'fillKey': '0%-20%'},
+                'st2': {'all': 617, 'original_name': ['st2'], 'children': 45, 'fillKey': '0%-20%'},
                 'st3': {'all': 0, 'original_name': ['st3'], 'children': 0, 'fillKey': '0%-20%'}
             }
         )
@@ -90,7 +90,7 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], 10.783487784330244)
+        self.assertEqual(data['rightLegend']['average'], 10.79258010118044)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_immunization_coverage_data_map(
@@ -106,7 +106,7 @@ class TestImmunizationCoverage(TestCase):
             [
                 {
                     'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
-                    'value': "1,187"
+                    'value': "1,186"
                 },
                 {
                     'indicator': (
@@ -119,7 +119,7 @@ class TestImmunizationCoverage(TestCase):
                     'indicator': (
                         '% of children who have recieved complete immunizations required by age 1:'
                     ),
-                    'value': '10.78%'
+                    'value': '10.79%'
                 }
             ]
         )
@@ -222,7 +222,7 @@ class TestImmunizationCoverage(TestCase):
                 ],
                 "top_five": [
                     {'loc_name': 'st1', 'percent': 14.612676056338028},
-                    {'loc_name': 'st2', 'percent': 7.281553398058253},
+                    {'loc_name': 'st2', 'percent': 7.293354943273906},
                     {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
@@ -246,15 +246,15 @@ class TestImmunizationCoverage(TestCase):
                                 "in_month": 0
                             },
                             {
-                                "y": 0.10517241379310345,
+                                "y": 0.10526315789473684,
                                 "x": 1491004800000,
-                                "all": 1160,
+                                "all": 1159,
                                 "in_month": 122
                             },
                             {
-                                "y": 0.10783487784330244,
+                                "y": 0.10792580101180438,
                                 "x": 1493596800000,
-                                "all": 1187,
+                                "all": 1186,
                                 "in_month": 128
                             }
                         ],
@@ -263,7 +263,7 @@ class TestImmunizationCoverage(TestCase):
                 ],
                 "all_locations": [
                     {'loc_name': 'st1', 'percent': 14.612676056338028},
-                    {'loc_name': 'st2', 'percent': 7.281553398058253},
+                    {'loc_name': 'st2', 'percent': 7.293354943273906},
                     {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
