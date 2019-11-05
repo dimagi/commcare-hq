@@ -1,18 +1,26 @@
 from datetime import datetime
 
+from django.conf import settings
+from django.db import transaction
+from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
 from couchdbkit import BulkSaveError, ResourceConflict
-from django.urls import reverse
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
+from couchforms.exceptions import UnexpectedDeletedXForm
+from dimagi.utils.couch.bulk import BulkFetchException
+from dimagi.utils.logging import notify_exception
+from soil import DownloadBase
+
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.user_importer.tasks import import_users_and_groups
@@ -22,10 +30,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.models import UserArchivedRebuild
-from couchforms.exceptions import UnexpectedDeletedXForm
-from dimagi.utils.couch.bulk import BulkFetchException
-from dimagi.utils.logging import notify_exception
-from soil import DownloadBase
+from corehq.util.celery_utils import deserialize_run_every_setting
 
 logger = get_task_logger(__name__)
 
@@ -291,3 +296,33 @@ def update_domain_date(user_id, domain):
             and today > domain_membership.last_accessed):
         domain_membership.last_accessed = today
         user.save()
+
+
+@periodic_task(
+    run_every=deserialize_run_every_setting(settings.USER_REPORTING_METADATA_BATCH_SCHEDULE),
+    queue='background_queue',
+)
+def process_reporting_metadata_staging():
+    from corehq.apps.users.models import UserReportingMetadataStaging
+    from corehq.pillows.synclog import mark_last_synclog
+    from pillowtop.processors.form import mark_latest_submission
+
+    records = (
+        UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
+    )[:100]
+    with transaction.atomic():
+        for record in records:
+            if record.received_on:
+                mark_latest_submission(
+                    record.domain, record.user_id, record.app_id, record.build_id,
+                    record.xform_version, record.form_meta, record.received_on
+                )
+            if record.device_id or record.sync_date:
+                mark_last_synclog(
+                    record.domain, record.user_id, record.app_id, record.build_id,
+                    record.sync_date, record.device_id
+                )
+            record.delete()
+
+    if UserReportingMetadataStaging.objects.exists():
+        process_reporting_metadata_staging.delay()
