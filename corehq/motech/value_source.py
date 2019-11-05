@@ -101,9 +101,10 @@ class ValueSource(DocumentSchema):
         type or format for the external system, if necessary, otherwise
         returns the value unchanged.
         """
-        serializer = (serializers.get((self.commcare_data_type, self.external_data_type)) or
-                      serializers.get((None, self.external_data_type)))
-        return serializer(value) if serializer else value
+        if self.check_direction(DIRECTION_EXPORT):
+            serializer = (serializers.get((self.commcare_data_type, self.external_data_type))
+                          or serializers.get((None, self.external_data_type)))
+            return serializer(value) if serializer else value
 
     def deserialize(self, external_value):
         """
@@ -111,9 +112,10 @@ class ValueSource(DocumentSchema):
         type or format for CommCare, if necessary, otherwise returns the
         value unchanged.
         """
-        serializer = (serializers.get((self.external_data_type, self.commcare_data_type)) or
-                      serializers.get((None, self.commcare_data_type)))
-        return serializer(external_value) if serializer else external_value
+        if self.check_direction(DIRECTION_IMPORT):
+            serializer = (serializers.get((self.external_data_type, self.commcare_data_type))
+                          or serializers.get((None, self.commcare_data_type)))
+            return serializer(external_value) if serializer else external_value
 
     def _get_commcare_value(self, case_trigger_info):
         raise NotImplementedError()
@@ -327,11 +329,13 @@ class CasePropertyMap(CaseProperty):
         # not mapped to OpenMRS concepts, e.g. when only the "yes" value
         # of a yes-no question in CommCare is mapped to a concept in
         # OpenMRS.
-        return self.value_map.get(value)
+        if self.check_direction(DIRECTION_EXPORT):
+            return self.value_map.get(value)
 
     def deserialize(self, external_value):
-        reverse_map = {v: k for k, v in self.value_map.items()}
-        return reverse_map.get(external_value)
+        if self.check_direction(DIRECTION_IMPORT):
+            reverse_map = {v: k for k, v in self.value_map.items()}
+            return reverse_map.get(external_value)
 
 
 class FormQuestionMap(FormQuestion):
@@ -341,11 +345,13 @@ class FormQuestionMap(FormQuestion):
     value_map = DictProperty()
 
     def serialize(self, value):
-        return self.value_map.get(value)
+        if self.check_direction(DIRECTION_EXPORT):
+            return self.value_map.get(value)
 
     def deserialize(self, external_value):
-        reverse_map = {v: k for k, v in self.value_map.items()}
-        return reverse_map.get(external_value)
+        if self.check_direction(DIRECTION_IMPORT):
+            reverse_map = {v: k for k, v in self.value_map.items()}
+            return reverse_map.get(external_value)
 
 
 class CaseOwnerAncestorLocationField(ValueSource):
