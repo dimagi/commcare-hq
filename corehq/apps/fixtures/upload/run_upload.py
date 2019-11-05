@@ -41,7 +41,7 @@ def upload_fixture_file(domain, filename, replace, task=None, skip_orm=False):
 
 
 def _run_fixture_upload(domain, workbook, replace=False, task=None):
-    from corehq.apps.users.bulkupload import GroupMemoizer
+    from corehq.apps.user_importer.importer import GroupMemoizer
     return_val = FixtureUploadResult()
     group_memoizer = GroupMemoizer(domain)
     get_location = get_memoized_location_getter(domain)

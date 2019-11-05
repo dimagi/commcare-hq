@@ -1,9 +1,10 @@
-import io
 import json
 import re
 from collections import defaultdict
 from datetime import datetime
 
+from braces.views import JsonRequestResponseMixin
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -19,18 +20,10 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
-
-from braces.views import JsonRequestResponseMixin
-from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
-
-from dimagi.utils.web import json_response
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
 
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
@@ -59,13 +52,12 @@ from corehq.apps.locations.permissions import (
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.users.bulkupload import (
+from corehq.apps.user_importer.importer import (
     UserUploadError,
-    check_duplicate_usernames,
-    check_existing_usernames,
     check_headers,
 )
+from corehq.apps.user_importer.tasks import import_users_and_groups
+from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
@@ -86,7 +78,6 @@ from corehq.apps.users.forms import (
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.tasks import (
     bulk_download_users_async,
-    bulk_upload_async,
     reset_demo_user_restore_task,
     turn_on_demo_mode_task,
 )
@@ -103,13 +94,14 @@ from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
-    StringTypeRequiredError,
     WorkbookJSONError,
     WorksheetNotFound,
-    enforce_string_type,
     get_workbook,
 )
-
+from dimagi.utils.web import json_response
+from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -235,7 +227,6 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     def page_context(self):
-        from corehq.apps.users.views.mobile import GroupsListView
 
         if self.request.is_view_only:
             make_form_readonly(self.commtrack_form)
@@ -981,37 +972,10 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
-        # convert to list here because iterator destroys the row once it has
-        # been read the first time
-        self.user_specs = list(self.user_specs)
-
-        for user_spec in self.user_specs:
-            try:
-                user_spec['username'] = enforce_string_type(user_spec['username'])
-            except StringTypeRequiredError:
-                messages.error(
-                    request,
-                    _("Error: Expected username to be a Text type for username {0}")
-                    .format(user_spec['username'])
-                )
-                return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
-
-        try:
-            check_existing_usernames(self.user_specs, self.domain)
-        except UserUploadError as e:
-            messages.error(request, _(str(e)))
-            return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
-
-        try:
-            check_duplicate_usernames(self.user_specs)
-        except UserUploadError as e:
-            messages.error(request, _(str(e)))
-            return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
-
-        task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
-        task = bulk_upload_async.delay(
+        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
+        task = import_users_and_groups.delay(
             self.domain,
-            self.user_specs,
+            list(self.user_specs),
             list(self.group_specs),
         )
         task_ref.set_task(task)

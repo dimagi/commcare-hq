@@ -26,7 +26,9 @@ from corehq.apps.callcenter.utils import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
-from corehq.apps.users.bulkupload import create_or_update_users_and_groups
+from corehq.apps.user_importer.importer import (
+    create_or_update_users_and_groups,
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.elastic import get_es_new, send_to_elasticsearch
@@ -363,7 +365,6 @@ class CallCenterUtilsUserCaseTests(TestCase):
         results = create_or_update_users_and_groups(
             TEST_DOMAIN,
             list(user_upload),
-            list([]),
         )
         self.assertEqual(results['errors'], [])
 
