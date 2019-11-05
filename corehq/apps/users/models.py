@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
@@ -2810,7 +2810,7 @@ class UserReportingMetadataStaging(models.Model):
 
         save = False
 
-        if received_on - obj.received_on > settings.USER_REPORTING_METADATA_UPDATE_FREQUENCY:
+        if (received_on - obj.received_on) > timedelta(minutes=settings.USER_REPORTING_METADATA_UPDATE_FREQUENCY):
             obj.received_on = received_on
             save = True
         if build_id != obj.build_id:
