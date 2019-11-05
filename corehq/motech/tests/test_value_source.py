@@ -360,6 +360,34 @@ class CheckDeserializeDirectionTests(SimpleTestCase):
         self.assertEqual(value_source.deserialize("spam"), "spam")
 
 
+class GetValueDirectionTests(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.info = CaseTriggerInfo(
+            domain="test-domain",
+            case_id="123456",
+        )
+
+    def test_get_value_in(self):
+        value_source = get_constant_spam({"direction": "in"})
+        self.assertIsNone(value_source.get_value(self.info))
+
+    def test_get_value_out(self):
+        value_source = get_constant_spam({"direction": "out"})
+        value = value_source.get_value(self.info)
+        self.assertEqual(value, "spam")
+
+    def test_get_value_both(self):
+        value_source = get_constant_spam({"direction": None})
+        self.assertEqual(value_source.get_value(self.info), "spam")
+
+    def test_get_value_default(self):
+        value_source = get_constant_spam()
+        self.assertEqual(value_source.get_value(self.info), "spam")
+
+
 def test_doctests():
     results = doctest.testmod(corehq.motech.value_source)
     assert results.failed == 0
