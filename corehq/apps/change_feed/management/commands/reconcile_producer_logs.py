@@ -160,8 +160,7 @@ class Command(BaseCommand):
             with open(log_file, 'r') as f:
                 reader = csv.reader(f)
                 for i, row in enumerate(reader):
-                    date, trans_type, doc_id, transaction_id = row
-                    recon.add_row((date, trans_type, 'case', doc_id, transaction_id))
+                    recon.add_row((row))
 
         # Process all but the last log file before freezing the recon
         for log in logs_to_process[:pre_logs]:
