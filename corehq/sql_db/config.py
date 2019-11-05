@@ -146,28 +146,6 @@ def _is_power_of_2(num):
     return num and not (num & (num - 1))
 
 
-def parse_existing_shard(shard_option):
-    shard_name, options = shard_option.split('=', 1)
-    assert shard_name[0] == 'p'
-    shard_id = int(shard_name[1:])
-    options = options.split(' ')
-    option_kwargs = dict(tuple(option.split('=')) for option in options)
-    if 'port' in option_kwargs:
-        option_kwargs['port'] = int(option_kwargs['port'])
-    return ShardMeta(id=shard_id, **option_kwargs)
-
-
-def get_shards_to_update(existing_shards, new_shards):
-    assert len(existing_shards) == len(new_shards)
-    shards_to_update = []
-    for existing, new in zip(existing_shards, new_shards):
-        assert existing.id == new.id, '{} != {}'.format(existing.id, new.id)
-        if existing != new:
-            shards_to_update.append(new)
-
-    return shards_to_update
-
-
 def _get_config():
     if settings.USE_PARTITIONED_DATABASE:
         return PartitionConfig()

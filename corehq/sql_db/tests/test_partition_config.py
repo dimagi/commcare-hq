@@ -2,9 +2,19 @@ from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from corehq.sql_db.config import parse_existing_shard, ShardMeta, get_shards_to_update
+from corehq.sql_db.config import ShardMeta
+from corehq.sql_db.management.commands.configure_pl_proxy_cluster import (
+    get_shards_to_update,
+    parse_existing_shard,
+)
+
 from ..config import PartitionConfig
-from ..exceptions import NotPowerOf2Error, NotZeroStartError, NonContinuousShardsError, NoSuchShardDatabaseError
+from ..exceptions import (
+    NonContinuousShardsError,
+    NoSuchShardDatabaseError,
+    NotPowerOf2Error,
+    NotZeroStartError,
+)
 
 
 def _get_partition_config(shard_config):

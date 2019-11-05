@@ -1,10 +1,11 @@
 import re
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import connections
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
-from corehq.sql_db.config import partition_config, parse_existing_shard, get_shards_to_update
+from corehq.sql_db.config import ShardMeta, partition_config
 
 SHARD_OPTION_RX = re.compile(r'^p[\d+]')
 
@@ -58,6 +59,17 @@ class Command(BaseCommand):
                 _update_pl_proxy_cluster(existing_config, verbose)
         else:
             create_pl_proxy_cluster(verbose)
+
+
+def parse_existing_shard(shard_option):
+    shard_name, options = shard_option.split('=', 1)
+    assert shard_name[0] == 'p'
+    shard_id = int(shard_name[1:])
+    options = options.split(' ')
+    option_kwargs = dict(tuple(option.split('=')) for option in options)
+    if 'port' in option_kwargs:
+        option_kwargs['port'] = int(option_kwargs['port'])
+    return ShardMeta(id=shard_id, **option_kwargs)
 
 
 def _get_current_shards(existing_config):
@@ -170,3 +182,14 @@ def get_user_mapping_sql():
 def _confirm(msg):
     confirm_update = input(msg + ' [yes / no] ')
     return confirm_update == 'yes'
+
+
+def get_shards_to_update(existing_shards, new_shards):
+    assert len(existing_shards) == len(new_shards)
+    shards_to_update = []
+    for existing, new in zip(existing_shards, new_shards):
+        assert existing.id == new.id, '{} != {}'.format(existing.id, new.id)
+        if existing != new:
+            shards_to_update.append(new)
+
+    return shards_to_update
